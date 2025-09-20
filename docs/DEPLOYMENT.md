@@ -7,6 +7,7 @@ Our deployment strategy follows **Infrastructure as Code** principles with empha
 ## 🏗️ Environment Architecture
 
 ### Development Environment
+
 **Purpose**: Local development and testing
 **Infrastructure**: Local machine + Firebase emulators
 **Access**: Developer machines only
@@ -19,12 +20,14 @@ npm run test:watch       # Continuous testing
 ```
 
 ### Staging Environment
+
 **Purpose**: Pre-production testing and client reviews
 **Infrastructure**: Vercel Preview + Firebase staging project
 **Access**: Development team + stakeholders
 **URL**: Auto-generated Vercel preview URLs
 
 ### Production Environment
+
 **Purpose**: Live application serving real users
 **Infrastructure**: Vercel production + Firebase production project
 **Access**: End users + monitoring systems
@@ -51,6 +54,7 @@ graph TD
 ### Automated Quality Gates
 
 #### Gate 1: Pre-commit Validation
+
 ```bash
 # Runs automatically via Husky
 npm run lint           # ESLint validation
@@ -60,6 +64,7 @@ npm run format         # Code formatting
 ```
 
 #### Gate 2: Pre-deployment Testing
+
 ```bash
 # Runs on GitHub Actions
 npm run build          # Production build
@@ -69,6 +74,7 @@ npm run audit          # Security audit
 ```
 
 #### Gate 3: Post-deployment Verification
+
 ```bash
 # Automated health checks
 curl -f $DEPLOYMENT_URL/api/health
@@ -79,6 +85,7 @@ npm run lighthouse     # Performance audit
 ## 📋 Deployment Checklist
 
 ### Pre-Stage Deployment
+
 - [ ] All stage requirements completed
 - [ ] Unit tests pass with >80% coverage
 - [ ] Integration tests pass
@@ -88,6 +95,7 @@ npm run lighthouse     # Performance audit
 - [ ] Code review completed and approved
 
 ### Stage Deployment Process
+
 - [ ] Create feature branch for stage
 - [ ] Implement stage requirements
 - [ ] Write and run comprehensive tests
@@ -101,6 +109,7 @@ npm run lighthouse     # Performance audit
 - [ ] Monitor production deployment
 
 ### Post-Deployment Verification
+
 - [ ] Health check endpoints responding
 - [ ] Error rates within normal parameters
 - [ ] Performance metrics meet targets
@@ -111,6 +120,7 @@ npm run lighthouse     # Performance audit
 ## 🔧 Infrastructure Configuration
 
 ### Vercel Configuration (vercel.json)
+
 ```json
 {
   "version": 2,
@@ -159,6 +169,7 @@ npm run lighthouse     # Performance audit
 ```
 
 ### GitHub Actions Workflow (.github/workflows/deploy.yml)
+
 ```yaml
 name: Deploy SportsCoach V3
 
@@ -247,6 +258,7 @@ jobs:
 ## 🔐 Environment Variables Management
 
 ### Development Environment (.env.local)
+
 ```bash
 # Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your-development-api-key
@@ -265,12 +277,14 @@ NEXT_PUBLIC_ENV=development
 ```
 
 ### Production Environment (Vercel Dashboard)
+
 - All environment variables configured through Vercel dashboard
 - Production Firebase project credentials
 - Third-party API keys for production services
 - Monitoring and analytics tokens
 
 ### Security Best Practices
+
 - Use Vercel's environment variable encryption
 - Rotate API keys regularly
 - Implement least-privilege access principles
@@ -279,6 +293,7 @@ NEXT_PUBLIC_ENV=development
 ## 📊 Monitoring & Observability
 
 ### Health Check Endpoints
+
 ```typescript
 // pages/api/health.ts
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -290,8 +305,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     checks: {
       database: 'ok',
       auth: 'ok',
-      storage: 'ok'
-    }
+      storage: 'ok',
+    },
   };
 
   res.status(200).json(healthCheck);
@@ -299,6 +314,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 ```
 
 ### Error Tracking with Sentry
+
 ```typescript
 // next.config.js
 const { withSentryConfig } = require('@sentry/nextjs');
@@ -309,21 +325,22 @@ const moduleExports = {
 
 const sentryWebpackPluginOptions = {
   silent: true,
-  org: "sportscoach",
-  project: "sportscoach-v3",
+  org: 'sportscoach',
+  project: 'sportscoach-v3',
 };
 
 module.exports = withSentryConfig(moduleExports, sentryWebpackPluginOptions);
 ```
 
 ### Performance Monitoring
+
 ```typescript
 // lib/analytics.ts
 export const trackPerformance = (metricName: string, value: number) => {
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('event', 'timing_complete', {
       name: metricName,
-      value: Math.round(value)
+      value: Math.round(value),
     });
   }
 };
@@ -337,12 +354,14 @@ export const reportWebVitals = (metric: any) => {
 ## 🚨 Rollback Procedures
 
 ### Automatic Rollback Triggers
+
 - Error rate > 5% for 5 minutes
 - Response time > 5 seconds for 3 minutes
 - Health check failures for 2 minutes
 - Critical security alerts
 
 ### Manual Rollback Process
+
 ```bash
 # 1. Identify last stable deployment
 vercel ls --limit 10
@@ -358,6 +377,7 @@ slack-notify "Emergency rollback completed for SportsCoach V3"
 ```
 
 ### Post-Rollback Actions
+
 1. Investigate root cause of deployment failure
 2. Create hotfix branch for critical issues
 3. Update monitoring and alerting if needed
@@ -367,31 +387,36 @@ slack-notify "Emergency rollback completed for SportsCoach V3"
 ## 📈 Performance Optimization
 
 ### Build Optimization
+
 ```javascript
 // next.config.js
 const nextConfig = {
   experimental: {
-    optimizePackageImports: ['@radix-ui/react-icons']
+    optimizePackageImports: ['@radix-ui/react-icons'],
   },
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
+    removeConsole: process.env.NODE_ENV === 'production',
   },
   output: 'standalone',
   poweredByHeader: false,
-  compress: true
+  compress: true,
 };
 ```
 
 ### CDN and Caching Strategy
+
 ```typescript
 // pages/api/sports/[id].ts
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   // Set cache headers for static content
-  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  res.setHeader(
+    'Cache-Control',
+    'public, max-age=3600, stale-while-revalidate=86400'
+  );
 
   // Return sport data
   res.json(sportData);
@@ -401,6 +426,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 ## 🔄 Database Deployment
 
 ### Firebase Security Rules Deployment
+
 ```bash
 # Deploy Firestore rules
 firebase deploy --only firestore:rules
@@ -413,13 +439,14 @@ firebase deploy --only functions
 ```
 
 ### Database Migration Strategy
+
 ```typescript
 // lib/migrations.ts
 export const runMigrations = async () => {
   const migrations = [
     migration_001_add_user_profiles,
     migration_002_update_quiz_schema,
-    migration_003_add_progress_tracking
+    migration_003_add_progress_tracking,
   ];
 
   for (const migration of migrations) {
@@ -431,24 +458,28 @@ export const runMigrations = async () => {
 ## 📋 Stage-Specific Deployment Notes
 
 ### Stage 1: Foundation
+
 - Set up Vercel project and domains
 - Configure basic CI/CD pipeline
 - Establish monitoring and error tracking
 - Deploy initial project structure
 
 ### Stage 2: Authentication
+
 - Configure Firebase Authentication
 - Set up user management in production
 - Test authentication flows in staging
 - Deploy with user registration enabled
 
 ### Stage 3: Database
+
 - Deploy Firestore security rules
 - Set up production database collections
 - Configure backup and restore procedures
 - Test data migration procedures
 
 ### Stage 4-8: Feature Deployments
+
 - Each stage includes specific configuration
 - Progressive feature rollout using feature flags
 - Performance monitoring for new features
@@ -457,6 +488,7 @@ export const runMigrations = async () => {
 ## 🎯 Success Metrics
 
 ### Deployment Success Criteria
+
 - ✅ Zero-downtime deployment achieved
 - ✅ All health checks pass post-deployment
 - ✅ Performance metrics within target ranges
@@ -465,6 +497,7 @@ export const runMigrations = async () => {
 - ✅ All critical user flows functional
 
 ### Production Readiness Checklist
+
 - [ ] Load testing completed successfully
 - [ ] Security audit passed
 - [ ] Backup and disaster recovery tested

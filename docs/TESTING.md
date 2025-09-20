@@ -7,24 +7,27 @@ Our testing approach follows the **Testing Pyramid** with emphasis on **quality 
 ## 📊 Testing Levels
 
 ### 1. Unit Testing (Foundation)
+
 **Focus**: Individual functions and components in isolation
 **Tools**: Jest + React Testing Library
 **Coverage Target**: 80% for critical business logic
 
 #### What to Test
+
 - Utility functions (data transformation, validation)
 - Custom hooks (authentication, data fetching)
 - Component logic (state management, event handlers)
 - Form validation and error handling
 
 #### Example Test Structure
+
 ```typescript
 // Example: Quiz scoring function test
 describe('calculateQuizScore', () => {
   it('should calculate correct percentage for all correct answers', () => {
     const answers = [
       { questionId: '1', answer: 'A', isCorrect: true },
-      { questionId: '2', answer: 'B', isCorrect: true }
+      { questionId: '2', answer: 'B', isCorrect: true },
     ];
     const score = calculateQuizScore(answers);
     expect(score).toBe(100);
@@ -38,17 +41,20 @@ describe('calculateQuizScore', () => {
 ```
 
 ### 2. Integration Testing (Connections)
+
 **Focus**: Component interactions and API integrations
 **Tools**: React Testing Library + MSW (Mock Service Worker)
 **Coverage**: All major user flows
 
 #### What to Test
+
 - Authentication flows (login, logout, session persistence)
 - Data fetching and state updates
 - Form submissions and API interactions
 - Navigation and route protection
 
 #### Example Test Structure
+
 ```typescript
 // Example: Login flow integration test
 describe('Login Flow', () => {
@@ -72,11 +78,13 @@ describe('Login Flow', () => {
 ```
 
 ### 3. Browser Testing (User Experience)
+
 **Focus**: Real browser interactions and visual testing
 **Tools**: Playwright (via MCP server)
 **Coverage**: All critical user journeys
 
 #### What to Test
+
 - Complete user workflows (registration → quiz → results)
 - Cross-browser compatibility (Chrome, Firefox, Safari)
 - Mobile responsiveness (375px, 768px, 1024px+)
@@ -84,6 +92,7 @@ describe('Login Flow', () => {
 - Performance and loading times
 
 #### Example Browser Test
+
 ```typescript
 // Example: Complete quiz workflow
 test('User can complete quiz end-to-end', async ({ page }) => {
@@ -110,9 +119,11 @@ test('User can complete quiz end-to-end', async ({ page }) => {
 ## 🧪 Testing Procedures by Stage
 
 ### Stage 1: Foundation Testing
+
 **Focus**: Build process and development tools
 
 #### Checklist
+
 - [ ] `npm run dev` starts without errors
 - [ ] `npm run build` completes successfully
 - [ ] `npm run lint` passes with zero warnings
@@ -122,6 +133,7 @@ test('User can complete quiz end-to-end', async ({ page }) => {
 - [ ] Environment variables load properly
 
 #### Browser Testing
+
 ```typescript
 test('Basic application loads correctly', async ({ page }) => {
   await page.goto('/');
@@ -137,21 +149,25 @@ test('Navigation components render', async ({ page }) => {
 ```
 
 ### Stage 2: Authentication Testing
+
 **Focus**: Security and user access flows
 
 #### Unit Tests
+
 - Password validation functions
 - Email format validation
 - Token handling utilities
 - Role permission checks
 
 #### Integration Tests
+
 - Firebase authentication flows
 - Protected route middleware
 - Session persistence
 - Role-based access control
 
 #### Browser Tests
+
 ```typescript
 test('User registration and login flow', async ({ page }) => {
   // Registration
@@ -179,21 +195,25 @@ test('Protected routes redirect unauthenticated users', async ({ page }) => {
 ```
 
 ### Stage 3: Database Testing
+
 **Focus**: Data integrity and performance
 
 #### Unit Tests
+
 - CRUD operation functions
 - Data validation schemas
 - Query optimization functions
 - Error handling utilities
 
 #### Integration Tests
+
 - Firestore service classes
 - Real-time data synchronization
 - Security rule enforcement
 - Data migration procedures
 
 #### Browser Tests
+
 ```typescript
 test('Data persistence across sessions', async ({ page }) => {
   // Login and create data
@@ -207,16 +227,20 @@ test('Data persistence across sessions', async ({ page }) => {
   await authenticateUser(page, 'test@example.com', 'password');
   await page.goto('/profile');
 
-  await expect(page.locator('[data-testid="bio-input"]')).toHaveValue('Test bio content');
+  await expect(page.locator('[data-testid="bio-input"]')).toHaveValue(
+    'Test bio content'
+  );
 });
 ```
 
 ### Stage 4-8: Feature-Specific Testing
+
 Each stage includes specific testing scenarios relevant to the features being implemented.
 
 ## 🔍 Visual Regression Testing
 
 ### Screenshot Comparison Strategy
+
 ```typescript
 test('Visual regression for dashboard', async ({ page }) => {
   await authenticateUser(page, 'test@example.com', 'password');
@@ -235,12 +259,13 @@ test('Visual regression for dashboard', async ({ page }) => {
 ```
 
 ### Mobile Responsiveness Testing
+
 ```typescript
 const devices = [
   { name: 'Mobile', width: 375, height: 667 },
   { name: 'Tablet', width: 768, height: 1024 },
   { name: 'Desktop', width: 1280, height: 720 },
-  { name: 'Large Desktop', width: 1920, height: 1080 }
+  { name: 'Large Desktop', width: 1920, height: 1080 },
 ];
 
 devices.forEach(device => {
@@ -262,22 +287,31 @@ devices.forEach(device => {
 ## ⚡ Performance Testing
 
 ### Core Web Vitals Monitoring
+
 ```typescript
 test('Performance metrics within acceptable ranges', async ({ page }) => {
   await page.goto('/dashboard');
 
   // Measure performance
   const performanceEntry = await page.evaluate(() => {
-    return JSON.parse(JSON.stringify(performance.getEntriesByType('navigation')[0]));
+    return JSON.parse(
+      JSON.stringify(performance.getEntriesByType('navigation')[0])
+    );
   });
 
   // Assert performance thresholds
-  expect(performanceEntry.loadEventEnd - performanceEntry.loadEventStart).toBeLessThan(2000);
-  expect(performanceEntry.domContentLoadedEventEnd - performanceEntry.domContentLoadedEventStart).toBeLessThan(1500);
+  expect(
+    performanceEntry.loadEventEnd - performanceEntry.loadEventStart
+  ).toBeLessThan(2000);
+  expect(
+    performanceEntry.domContentLoadedEventEnd -
+      performanceEntry.domContentLoadedEventStart
+  ).toBeLessThan(1500);
 });
 ```
 
 ### Bundle Size Testing
+
 ```bash
 # Monitor bundle size after each build
 npm run build
@@ -292,6 +326,7 @@ npx bundlesize
 ## 🔒 Security Testing
 
 ### Authentication Security
+
 ```typescript
 test('Session security measures', async ({ page }) => {
   await authenticateUser(page, 'test@example.com', 'password');
@@ -307,7 +342,7 @@ test('Session security measures', async ({ page }) => {
 test('CSRF protection', async ({ page }) => {
   // Attempt to submit form without proper token
   const response = await page.request.post('/api/quiz/submit', {
-    data: { quizId: 'test', answers: [] }
+    data: { quizId: 'test', answers: [] },
   });
 
   expect(response.status()).toBe(403);
@@ -315,23 +350,30 @@ test('CSRF protection', async ({ page }) => {
 ```
 
 ### Data Validation Testing
+
 ```typescript
 test('Input sanitization and validation', async ({ page }) => {
   await authenticateUser(page, 'admin@example.com', 'password');
   await page.goto('/admin/sports/new');
 
   // Test XSS prevention
-  await page.fill('[data-testid="sport-name"]', '<script>alert("xss")</script>');
+  await page.fill(
+    '[data-testid="sport-name"]',
+    '<script>alert("xss")</script>'
+  );
   await page.click('[data-testid="save-sport"]');
 
   // Verify script is escaped, not executed
-  await expect(page.locator('[data-testid="sport-name"]')).not.toContainText('<script>');
+  await expect(page.locator('[data-testid="sport-name"]')).not.toContainText(
+    '<script>'
+  );
 });
 ```
 
 ## 📱 Accessibility Testing
 
 ### WCAG 2.1 AA Compliance
+
 ```typescript
 test('Accessibility standards compliance', async ({ page }) => {
   await page.goto('/dashboard');
@@ -346,7 +388,9 @@ test('Accessibility standards compliance', async ({ page }) => {
   // Check form labels
   const inputs = await page.locator('input').all();
   for (const input of inputs) {
-    const labels = await page.locator(`label[for="${await input.getAttribute('id')}"]`).count();
+    const labels = await page
+      .locator(`label[for="${await input.getAttribute('id')}"]`)
+      .count();
     expect(labels).toBeGreaterThan(0);
   }
 
@@ -356,6 +400,7 @@ test('Accessibility standards compliance', async ({ page }) => {
 ```
 
 ### Keyboard Navigation Testing
+
 ```typescript
 test('Full keyboard navigation support', async ({ page }) => {
   await page.goto('/dashboard');
@@ -374,6 +419,7 @@ test('Full keyboard navigation support', async ({ page }) => {
 ## 🚨 Error Handling Testing
 
 ### Network Failure Scenarios
+
 ```typescript
 test('Graceful handling of network failures', async ({ page }) => {
   // Simulate offline mode
@@ -391,13 +437,16 @@ test('Graceful handling of network failures', async ({ page }) => {
 ```
 
 ### Edge Case Testing
+
 ```typescript
 test('Handles edge cases gracefully', async ({ page }) => {
   await authenticateUser(page, 'test@example.com', 'password');
 
   // Test empty state
   await page.goto('/quiz/empty-quiz');
-  await expect(page.locator('[data-testid="no-questions-message"]')).toBeVisible();
+  await expect(
+    page.locator('[data-testid="no-questions-message"]')
+  ).toBeVisible();
 
   // Test with malformed data
   await page.goto('/quiz/malformed-data');
@@ -408,18 +457,21 @@ test('Handles edge cases gracefully', async ({ page }) => {
 ## 📋 Testing Checklist Template
 
 ### Pre-Stage Testing
+
 - [ ] Previous stage tests still pass
 - [ ] Environment setup complete
 - [ ] Test data prepared
 - [ ] Testing tools configured
 
 ### During Development
+
 - [ ] Unit tests written for new functions
 - [ ] Components tested in isolation
 - [ ] Integration tests cover new flows
 - [ ] Browser tests verify user experience
 
 ### Stage Completion Testing
+
 - [ ] All new functionality tested
 - [ ] Regression tests pass
 - [ ] Performance within acceptable limits
@@ -428,6 +480,7 @@ test('Handles edge cases gracefully', async ({ page }) => {
 - [ ] Security vulnerabilities addressed
 
 ### Production Readiness
+
 - [ ] Load testing completed
 - [ ] Error monitoring active
 - [ ] Backup and recovery tested
@@ -437,6 +490,7 @@ test('Handles edge cases gracefully', async ({ page }) => {
 ## 🔧 Testing Tools Configuration
 
 ### Jest Configuration (jest.config.js)
+
 ```javascript
 module.exports = {
   testEnvironment: 'jsdom',
@@ -461,6 +515,7 @@ module.exports = {
 ```
 
 ### Playwright Configuration (playwright.config.ts)
+
 ```typescript
 import { defineConfig } from '@playwright/test';
 
