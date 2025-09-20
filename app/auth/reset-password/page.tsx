@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { passwordResetSchema, type PasswordResetFormData } from '@/lib/validations/auth';
+import { isAuthError } from '@/lib/errors/auth-errors';
 
 export default function ResetPasswordPage() {
   const { resetPassword } = useAuth();
@@ -34,9 +35,16 @@ export default function ResetPasswordPage() {
       await resetPassword(data.email);
       setIsEmailSent(true);
     } catch (error) {
-      setError('root', {
-        message: error instanceof Error ? error.message : 'Failed to send reset email',
-      });
+      // Handle AuthError properly
+      if (isAuthError(error)) {
+        setError('root', {
+          message: error.userMessage,
+        });
+      } else {
+        setError('root', {
+          message: error instanceof Error ? error.message : 'Failed to send reset email',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -49,9 +57,16 @@ export default function ResetPasswordPage() {
         setIsLoading(true);
         await resetPassword(email);
       } catch (error) {
-        setError('root', {
-          message: error instanceof Error ? error.message : 'Failed to resend email',
-        });
+        // Handle AuthError properly
+        if (isAuthError(error)) {
+          setError('root', {
+            message: error.userMessage,
+          });
+        } else {
+          setError('root', {
+            message: error instanceof Error ? error.message : 'Failed to resend email',
+          });
+        }
       } finally {
         setIsLoading(false);
       }

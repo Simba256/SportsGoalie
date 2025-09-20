@@ -255,14 +255,22 @@ export class UserDisabledError extends AuthError {
 
 // Firebase Error Code Mapping
 const FIREBASE_ERROR_MAPPING: Record<string, new (context: ErrorContext) => AuthError> = {
+  // Authentication errors
   'auth/user-not-found': InvalidCredentialsError,
   'auth/wrong-password': InvalidCredentialsError,
   'auth/invalid-email': InvalidCredentialsError,
-  'auth/email-already-in-use': EmailAlreadyExistsError,
-  'auth/weak-password': WeakPasswordError,
+  'auth/invalid-credential': InvalidCredentialsError, // New Firebase v9+ error code
   'auth/user-disabled': UserDisabledError,
   'auth/too-many-requests': TooManyRequestsError,
+
+  // Registration errors
+  'auth/email-already-in-use': EmailAlreadyExistsError,
+  'auth/weak-password': WeakPasswordError,
+
+  // Network errors
   'auth/network-request-failed': NetworkError,
+
+  // Firestore errors
   'permission-denied': FirestorePermissionError,
 };
 
@@ -294,9 +302,38 @@ export function isAuthError(error: unknown): error is AuthError {
  * Extract Firebase error code from error object
  */
 function getFirebaseErrorCode(error: unknown): string {
+  // Handle Firebase Auth errors
   if (error && typeof error === 'object' && 'code' in error) {
-    return (error as { code: string }).code;
+    const code = (error as { code: string }).code;
+    return code;
   }
+
+  // Handle standard errors that might contain Firebase codes in message
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+
+    // Check for common Firebase error patterns in message
+    if (message.includes('user-not-found') || message.includes('no user record')) {
+      return 'auth/user-not-found';
+    }
+    if (message.includes('wrong-password') || message.includes('invalid password') ||
+        message.includes('invalid-credential') || message.includes('invalid credential')) {
+      return 'auth/invalid-credential';
+    }
+    if (message.includes('invalid-email') || message.includes('invalid email')) {
+      return 'auth/invalid-email';
+    }
+    if (message.includes('email-already-in-use')) {
+      return 'auth/email-already-in-use';
+    }
+    if (message.includes('weak-password')) {
+      return 'auth/weak-password';
+    }
+    if (message.includes('too-many-requests')) {
+      return 'auth/too-many-requests';
+    }
+  }
+
   return 'unknown';
 }
 

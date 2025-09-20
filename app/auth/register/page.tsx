@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
+import { isAuthError } from '@/lib/errors/auth-errors';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -38,11 +39,19 @@ export default function RegisterPage() {
     try {
       setIsLoading(true);
       await registerUser(data);
-      router.push('/dashboard');
+      // After successful registration, redirect to login with verification message
+      router.push('/auth/login?message=verify-email');
     } catch (error) {
-      setError('root', {
-        message: error instanceof Error ? error.message : 'Registration failed',
-      });
+      // Handle AuthError properly
+      if (isAuthError(error)) {
+        setError('root', {
+          message: error.userMessage,
+        });
+      } else {
+        setError('root', {
+          message: error instanceof Error ? error.message : 'Registration failed',
+        });
+      }
     } finally {
       setIsLoading(false);
     }

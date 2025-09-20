@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,12 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
+import { isAuthError } from '@/lib/errors/auth-errors';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, user, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
 
   const {
     register,
@@ -40,9 +42,16 @@ export default function LoginPage() {
       // The login function will update the user state
       // Let the useEffect handle the redirect based on the updated user state
     } catch (error) {
-      setError('root', {
-        message: error instanceof Error ? error.message : 'Login failed',
-      });
+      // Handle AuthError properly
+      if (isAuthError(error)) {
+        setError('root', {
+          message: error.userMessage,
+        });
+      } else {
+        setError('root', {
+          message: error instanceof Error ? error.message : 'Login failed',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +68,15 @@ export default function LoginPage() {
       }
     }
   }, [user, loading, router]);
+
+  // Check for verification message from registration
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get('message');
+    if (message === 'verify-email') {
+      setShowVerificationMessage(true);
+    }
+  }, []);
 
   // Show loading while checking auth state
   if (loading) {
@@ -84,6 +102,21 @@ export default function LoginPage() {
           <CardDescription>Enter your credentials to access your SportsCoach account</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Email Verification Success Message */}
+          {showVerificationMessage && (
+            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
+              <div className="flex items-center gap-2 text-green-800">
+                <CheckCircle className="h-5 w-5" />
+                <div>
+                  <p className="font-medium">Registration Successful!</p>
+                  <p className="text-sm">
+                    We've sent a verification email to your inbox. Please verify your email before signing in.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Email */}
             <div className="space-y-2">

@@ -14,6 +14,12 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { User, AuthState, LoginCredentials, RegisterCredentials, ProfileUpdateData } from '@/types/auth';
+import {
+  createAuthErrorFromFirebase,
+  createErrorContext,
+  EmailVerificationRequiredError,
+  isAuthError
+} from '@/lib/errors/auth-errors';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -123,6 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Login function
   const login = async (credentials: LoginCredentials) => {
+    const context = createErrorContext('login', { email: credentials.email });
+
     try {
       setLoading(true);
       setError(null);
@@ -132,6 +140,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.email,
         credentials.password
       );
+
+      // Check if email is verified BEFORE creating user or setting state
+      if (!userCredential.user.emailVerified) {
+        // Sign out the user immediately since they can't access the app
+        await firebaseSignOut(auth);
+        setLoading(false);
+        setUser(null);
+        throw new EmailVerificationRequiredError(context);
+      }
 
       const user = await createUserFromFirebaseUser(userCredential.user);
       if (user) {
@@ -146,13 +163,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
     } catch (error: unknown) {
       setLoading(false);
-      const errorCode = error instanceof Error && 'code' in error ? (error as { code: string }).code : 'unknown';
-      throw new Error(getFirebaseErrorMessage(errorCode));
+
+      // If it's already an AuthError, just re-throw it
+      if (isAuthError(error)) {
+        throw error;
+      }
+
+      // Convert Firebase errors to AuthError
+      const authError = createAuthErrorFromFirebase(error, context);
+      throw authError;
     }
   };
 
   // Register function
   const register = async (credentials: RegisterCredentials) => {
+    const context = createErrorContext('register', { email: credentials.email });
+
     try {
       setLoading(true);
       setError(null);
@@ -204,11 +230,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatedAt: new Date(),
       });
 
-      setUser(newUser);
+      // Important: Log out the user immediately after registration
+      // They need to verify their email before logging in
+      await firebaseSignOut(auth);
+      setUser(null);
     } catch (error: unknown) {
       setLoading(false);
-      const errorCode = error instanceof Error && 'code' in error ? (error as { code: string }).code : 'unknown';
-      throw new Error(getFirebaseErrorMessage(errorCode));
+
+      // If it's already an AuthError, just re-throw it
+      if (isAuthError(error)) {
+        throw error;
+      }
+
+      // Convert Firebase errors to AuthError
+      const authError = createAuthErrorFromFirebase(error, context);
+      throw authError;
     }
   };
 
@@ -224,11 +260,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Reset password function
   const resetPassword = async (email: string) => {
+    const context = createErrorContext('resetPassword', { email });
+
     try {
       await sendPasswordResetEmail(auth, email);
     } catch (error: unknown) {
-      const errorCode = error instanceof Error && 'code' in error ? (error as { code: string }).code : 'unknown';
-      throw new Error(getFirebaseErrorMessage(errorCode));
+      // Convert Firebase errors to AuthError
+      const authError = createAuthErrorFromFirebase(error, context);
+      throw authError;
     }
   };
 
@@ -287,11 +326,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Check if email is verified before setting user
+        if (!firebaseUser.emailVerified) {
+          // Email not verified, sign out immediately
+          await firebaseSignOut(auth);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         const user = await createUserFromFirebaseUser(firebaseUser);
         setUser(user);
       } else {
         setUser(null);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -310,26 +359,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Helper function to convert Firebase error codes to user-friendly messages
-function getFirebaseErrorMessage(errorCode: string): string {
-  switch (errorCode) {
-    case 'auth/user-not-found':
-      return 'No account found with this email address';
-    case 'auth/wrong-password':
-      return 'Incorrect password';
-    case 'auth/email-already-in-use':
-      return 'An account with this email already exists';
-    case 'auth/weak-password':
-      return 'Password is too weak';
-    case 'auth/invalid-email':
-      return 'Invalid email address';
-    case 'auth/user-disabled':
-      return 'This account has been disabled';
-    case 'auth/too-many-requests':
-      return 'Too many failed attempts. Please try again later';
-    case 'auth/network-request-failed':
-      return 'Network error. Please check your connection';
-    default:
-      return 'An error occurred. Please try again';
-  }
-}
