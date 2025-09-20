@@ -37,22 +37,26 @@ SportsCoach V3 is a comprehensive digital sports coaching platform that combines
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd sportscoach-v3
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
 
    Edit `.env.local` with your Firebase configuration:
+
    ```env
    NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -61,6 +65,7 @@ SportsCoach V3 is a comprehensive digital sports coaching platform that combines
    ```
 
 4. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -114,6 +119,7 @@ sportscoach-v3/
 ## 📖 Documentation
 
 ### Core Documentation
+
 - **[CLAUDE.md](./CLAUDE.md)** - Comprehensive guidance for AI-assisted development
 - **[Development Plan](./docs/PLAN.md)** - Detailed 8-stage development roadmap
 - **[Testing Strategy](./docs/TESTING.md)** - Comprehensive testing procedures
@@ -133,6 +139,7 @@ The project follows an 8-stage development approach:
 8. **Production Optimization** - Performance and deployment
 
 Each stage includes:
+
 - ✅ Clear objectives and deliverables
 - ✅ Comprehensive testing checklist
 - ✅ Quality gates and success criteria
@@ -141,12 +148,15 @@ Each stage includes:
 ## 🧪 Testing
 
 ### Testing Philosophy
+
 Our testing follows the Testing Pyramid approach:
+
 - **Unit Tests**: Critical business logic and utilities
 - **Integration Tests**: Component interactions and API flows
 - **Browser Tests**: Complete user workflows with Playwright
 
 ### Running Tests
+
 ```bash
 # Unit tests
 npm run test
@@ -159,6 +169,7 @@ npm run test:coverage
 ```
 
 ### Testing Checklist
+
 - [ ] All new features have unit tests
 - [ ] Integration tests cover API interactions
 - [ ] Browser tests verify user workflows
@@ -168,11 +179,13 @@ npm run test:coverage
 ## 🚀 Deployment
 
 ### Environment Setup
+
 - **Development**: Local with Firebase emulators
 - **Staging**: Vercel preview deployments
 - **Production**: Vercel with custom domain
 
 ### Deployment Process
+
 1. Complete stage development
 2. Run full test suite
 3. Create pull request
@@ -181,6 +194,7 @@ npm run test:coverage
 6. Manual promotion to production
 
 ### Production Checklist
+
 - [ ] Environment variables configured
 - [ ] Firebase project set up
 - [ ] Custom domain configured
@@ -190,6 +204,7 @@ npm run test:coverage
 ## 🔧 Configuration
 
 ### Firebase Setup
+
 1. Create Firebase project
 2. Enable Authentication, Firestore, and Storage
 3. Configure authentication methods (email/password)
@@ -197,6 +212,7 @@ npm run test:coverage
 5. Add your domain to authorized domains
 
 ### Vercel Deployment
+
 1. Connect GitHub repository
 2. Configure environment variables
 3. Set up custom domain (optional)
@@ -205,6 +221,7 @@ npm run test:coverage
 ## 🤝 Contributing
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
 3. Make changes following coding standards
@@ -214,6 +231,7 @@ npm run test:coverage
 7. Create Pull Request
 
 ### Code Standards
+
 - TypeScript strict mode enabled
 - ESLint and Prettier configured
 - Husky pre-commit hooks for quality
@@ -221,6 +239,7 @@ npm run test:coverage
 - Mobile-first responsive design
 
 ### Pull Request Requirements
+
 - [ ] All tests passing
 - [ ] Code review completed
 - [ ] Documentation updated
@@ -230,12 +249,14 @@ npm run test:coverage
 ## 📊 Performance
 
 ### Target Metrics
+
 - **First Contentful Paint**: < 1.5s
 - **Time to Interactive**: < 3.0s
 - **Cumulative Layout Shift**: < 0.1
 - **Mobile PageSpeed**: > 90
 
 ### Optimization Features
+
 - Next.js automatic code splitting
 - Image optimization with next/image
 - Lazy loading for non-critical components
@@ -244,6 +265,7 @@ npm run test:coverage
 ## 🔒 Security
 
 ### Security Features
+
 - Firebase Authentication with security rules
 - Input validation and sanitization
 - CSRF protection
@@ -251,6 +273,7 @@ npm run test:coverage
 - Environment variable encryption
 
 ### Best Practices
+
 - Regular dependency updates
 - Security audit with npm audit
 - Firebase security rules testing
@@ -259,11 +282,13 @@ npm run test:coverage
 ## 📞 Support
 
 ### Getting Help
+
 - Check existing documentation in `/docs`
 - Review GitHub issues and discussions
 - Contact development team for urgent issues
 
 ### Reporting Issues
+
 1. Check if issue already exists
 2. Provide detailed reproduction steps
 3. Include browser/device information
@@ -283,5 +308,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **SportsCoach V3** - Empowering athletes through digital learning and progress tracking.
+
+<!-- Testing pre-commit hooks -->
 
 For detailed development guidance, see [CLAUDE.md](./CLAUDE.md) and the documentation in `/docs`.
