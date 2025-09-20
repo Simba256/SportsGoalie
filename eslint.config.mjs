@@ -34,6 +34,13 @@ const eslintConfig = [
       "no-debugger": "error",
     }
   },
+  {
+    // Allow console statements in error logger and utilities
+    files: ["lib/errors/*.ts", "lib/utils/*.ts"],
+    rules: {
+      "no-console": "off",
+    }
+  },
 ];
 
 export default eslintConfig;

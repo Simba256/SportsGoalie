@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/lib/auth/context';
 import { passwordResetSchema, type PasswordResetFormData } from '@/lib/validations/auth';
 
 export default function ResetPasswordPage() {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -11,12 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/lib/auth/context';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,7 +36,9 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       await login(data);
-      router.push('/dashboard');
+
+      // The login function will update the user state
+      // Let the useEffect handle the redirect based on the updated user state
     } catch (error) {
       setError('root', {
         message: error instanceof Error ? error.message : 'Login failed',
@@ -45,6 +47,34 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  // Handle redirects for authenticated users
+  useEffect(() => {
+    if (!loading && user) {
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, loading, router]);
+
+  // Show loading while checking auth state
+  if (loading) {
+    return (
+      <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">

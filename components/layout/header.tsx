@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/lib/auth/context';
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -83,10 +84,12 @@ export function Header() {
                 className="flex items-center space-x-2"
               >
                 {user?.photoURL ? (
-                  <img
+                  <Image
                     src={user.photoURL}
                     alt="Profile"
-                    className="h-6 w-6 rounded-full object-cover"
+                    width={24}
+                    height={24}
+                    className="rounded-full object-cover"
                   />
                 ) : (
                   <User className="h-4 w-4" />

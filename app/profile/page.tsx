@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Camera, Loader2, Mail, Shield, User } from 'lucide-react';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/lib/auth/context';
 import { profileUpdateSchema, type ProfileUpdateFormData } from '@/lib/validations/auth';
 
 export default function ProfilePage() {
@@ -126,10 +127,12 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   {user.photoURL ? (
-                    <img
+                    <Image
                       src={user.photoURL}
                       alt="Profile"
-                      className="h-20 w-20 rounded-full object-cover"
+                      width={80}
+                      height={80}
+                      className="rounded-full object-cover"
                     />
                   ) : (
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
@@ -229,11 +232,11 @@ export default function ProfilePage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Member Since</p>
                 <p className="font-medium">
-                  {new Date(user.createdAt).toLocaleDateString('en-US', {
+                  {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                  })}
+                  }) : 'Unknown'}
                 </p>
               </div>
               <div>

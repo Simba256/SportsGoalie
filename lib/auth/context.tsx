@@ -13,14 +13,14 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
-import { User, AuthState, LoginCredentials, RegisterCredentials } from '@/types';
+import { User, AuthState, LoginCredentials, RegisterCredentials, ProfileUpdateData } from '@/types/auth';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  updateUserProfile: (data: Partial<User>) => Promise<void>;
+  updateUserProfile: (data: ProfileUpdateData) => Promise<void>;
   resendEmailVerification: () => Promise<void>;
 }
 
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: firebaseUser.email!,
           displayName: firebaseUser.displayName,
           role: userData.role || 'student',
-          photoURL: firebaseUser.photoURL,
+          photoURL: firebaseUser.photoURL || undefined,
           emailVerified: firebaseUser.emailVerified,
           createdAt: userData.createdAt?.toDate() || new Date(),
           updatedAt: userData.updatedAt?.toDate() || new Date(),
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: firebaseUser.email!,
         displayName: firebaseUser.displayName,
         role: 'student',
-        photoURL: firebaseUser.photoURL,
+        photoURL: firebaseUser.photoURL || undefined,
         emailVerified: firebaseUser.emailVerified,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
     } catch (error: unknown) {
       setLoading(false);
-      const errorCode = error instanceof Error && 'code' in error ? (error as any).code : 'unknown';
+      const errorCode = error instanceof Error && 'code' in error ? (error as { code: string }).code : 'unknown';
       throw new Error(getFirebaseErrorMessage(errorCode));
     }
   };
@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: credentials.email,
         displayName: credentials.displayName,
         role: credentials.role || 'student',
-        photoURL: null,
+        photoURL: undefined,
         emailVerified: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newUser);
     } catch (error: unknown) {
       setLoading(false);
-      const errorCode = error instanceof Error && 'code' in error ? (error as any).code : 'unknown';
+      const errorCode = error instanceof Error && 'code' in error ? (error as { code: string }).code : 'unknown';
       throw new Error(getFirebaseErrorMessage(errorCode));
     }
   };
@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await firebaseSignOut(auth);
       setUser(null);
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Failed to log out');
     }
   };
@@ -227,13 +227,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await sendPasswordResetEmail(auth, email);
     } catch (error: unknown) {
-      const errorCode = error instanceof Error && 'code' in error ? (error as any).code : 'unknown';
+      const errorCode = error instanceof Error && 'code' in error ? (error as { code: string }).code : 'unknown';
       throw new Error(getFirebaseErrorMessage(errorCode));
     }
   };
 
   // Update user profile
-  const updateUserProfile = async (data: Partial<User>) => {
+  const updateUserProfile = async (data: ProfileUpdateData) => {
     if (!state.user) {
       throw new Error('No user logged in');
     }
@@ -245,13 +245,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatedAt: new Date(),
       });
 
-      // Update local state
-      setUser({
+      // Update local state - only update allowed fields
+      const updatedUser: User = {
         ...state.user,
-        ...data,
         updatedAt: new Date(),
-      });
-    } catch (error: unknown) {
+      };
+
+      if (data.displayName !== undefined) {
+        updatedUser.displayName = data.displayName;
+      }
+      if (data.photoURL !== undefined) {
+        updatedUser.photoURL = data.photoURL;
+      }
+      if (data.preferences && state.user.preferences) {
+        updatedUser.preferences = {
+          ...state.user.preferences,
+          ...data.preferences,
+        };
+      }
+
+      setUser(updatedUser);
+    } catch {
       throw new Error('Failed to update profile');
     }
   };
@@ -264,7 +278,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await sendEmailVerification(auth.currentUser);
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Failed to send verification email');
     }
   };
