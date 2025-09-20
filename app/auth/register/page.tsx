@@ -67,7 +67,7 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="register-form">
             {/* Display Name */}
             <div className="space-y-2">
               <Label htmlFor="displayName">Full Name</Label>
@@ -76,9 +76,10 @@ export default function RegisterPage() {
                 placeholder="Enter your full name"
                 {...register('displayName')}
                 aria-invalid={!!errors.displayName}
+                data-testid="display-name-input"
               />
               {errors.displayName && (
-                <p className="text-sm text-destructive">{errors.displayName.message}</p>
+                <p className="text-sm text-destructive" data-testid="display-name-error">{errors.displayName.message}</p>
               )}
             </div>
 
@@ -91,8 +92,9 @@ export default function RegisterPage() {
                 placeholder="Enter your email"
                 {...register('email')}
                 aria-invalid={!!errors.email}
+                data-testid="email-input"
               />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              {errors.email && <p className="text-sm text-destructive" data-testid="email-error">{errors.email.message}</p>}
             </div>
 
             {/* Password */}
@@ -105,6 +107,7 @@ export default function RegisterPage() {
                   placeholder="Enter your password"
                   {...register('password')}
                   aria-invalid={!!errors.password}
+                  data-testid="password-input"
                 />
                 <Button
                   type="button"
@@ -113,6 +116,7 @@ export default function RegisterPage() {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  data-testid="toggle-password"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -122,7 +126,7 @@ export default function RegisterPage() {
                 </Button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p className="text-sm text-destructive" data-testid="password-error">{errors.password.message}</p>
               )}
             </div>
 
@@ -136,6 +140,7 @@ export default function RegisterPage() {
                   placeholder="Confirm your password"
                   {...register('confirmPassword')}
                   aria-invalid={!!errors.confirmPassword}
+                  data-testid="confirm-password-input"
                 />
                 <Button
                   type="button"
@@ -144,6 +149,7 @@ export default function RegisterPage() {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  data-testid="toggle-confirm-password"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -153,7 +159,7 @@ export default function RegisterPage() {
                 </Button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-destructive" data-testid="confirm-password-error">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -167,6 +173,7 @@ export default function RegisterPage() {
                     value="student"
                     {...register('role')}
                     className="h-4 w-4 text-primary"
+                    data-testid="role-student"
                   />
                   <span className="text-sm">Student</span>
                 </label>
@@ -176,11 +183,12 @@ export default function RegisterPage() {
                     value="admin"
                     {...register('role')}
                     className="h-4 w-4 text-primary"
+                    data-testid="role-admin"
                   />
                   <span className="text-sm">Admin</span>
                 </label>
               </div>
-              {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
+              {errors.role && <p className="text-sm text-destructive" data-testid="role-error">{errors.role.message}</p>}
             </div>
 
             {/* Terms Agreement */}
@@ -190,6 +198,7 @@ export default function RegisterPage() {
                   type="checkbox"
                   {...register('agreeToTerms')}
                   className="mt-1 h-4 w-4 text-primary"
+                  data-testid="agree-terms-checkbox"
                 />
                 <span className="text-sm text-muted-foreground">
                   I agree to the{' '}
@@ -203,12 +212,12 @@ export default function RegisterPage() {
                 </span>
               </label>
               {errors.agreeToTerms && (
-                <p className="text-sm text-destructive">{errors.agreeToTerms.message}</p>
+                <p className="text-sm text-destructive" data-testid="agree-terms-error">{errors.agreeToTerms.message}</p>
               )}
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="register-submit">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -221,7 +230,7 @@ export default function RegisterPage() {
 
             {/* Error Message */}
             {errors.root && (
-              <div className="rounded-md bg-destructive/15 p-3">
+              <div className="rounded-md bg-destructive/15 p-3" data-testid="register-error">
                 <p className="text-sm text-destructive">{errors.root.message}</p>
               </div>
             )}
@@ -231,7 +240,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-primary hover:underline">
+              <Link href="/auth/login" className="text-primary hover:underline" data-testid="login-link">
                 Sign in
               </Link>
             </p>

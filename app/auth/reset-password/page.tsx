@@ -110,6 +110,7 @@ export default function ResetPasswordPage() {
                 onClick={handleResendEmail}
                 disabled={isLoading}
                 className="w-full"
+                data-testid="resend-email-button"
               >
                 {isLoading ? (
                   <>
@@ -147,7 +148,7 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="reset-password-form">
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
@@ -159,12 +160,13 @@ export default function ResetPasswordPage() {
                 aria-invalid={!!errors.email}
                 autoComplete="email"
                 autoFocus
+                data-testid="email-input"
               />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              {errors.email && <p className="text-sm text-destructive" data-testid="email-error">{errors.email.message}</p>}
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="reset-password-submit">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -177,7 +179,7 @@ export default function ResetPasswordPage() {
 
             {/* Error Message */}
             {errors.root && (
-              <div className="rounded-md bg-destructive/15 p-3">
+              <div className="rounded-md bg-destructive/15 p-3" data-testid="reset-password-error">
                 <p className="text-sm text-destructive">{errors.root.message}</p>
               </div>
             )}
@@ -188,6 +190,7 @@ export default function ResetPasswordPage() {
             <Link
               href="/auth/login"
               className="inline-flex items-center text-sm text-primary hover:underline"
+              data-testid="back-to-login-link"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
               Back to Login
@@ -198,7 +201,7 @@ export default function ResetPasswordPage() {
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
               Remember your password?{' '}
-              <Link href="/auth/login" className="text-primary hover:underline">
+              <Link href="/auth/login" className="text-primary hover:underline" data-testid="signin-instead-link">
                 Sign in instead
               </Link>
             </p>

@@ -117,7 +117,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -128,8 +128,9 @@ export default function LoginPage() {
                 {...register('email')}
                 aria-invalid={!!errors.email}
                 autoComplete="email"
+                data-testid="email-input"
               />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              {errors.email && <p className="text-sm text-destructive" data-testid="email-error">{errors.email.message}</p>}
             </div>
 
             {/* Password */}
@@ -139,6 +140,7 @@ export default function LoginPage() {
                 <Link
                   href="/auth/reset-password"
                   className="text-sm text-primary hover:underline"
+                  data-testid="forgot-password-link"
                 >
                   Forgot password?
                 </Link>
@@ -151,6 +153,7 @@ export default function LoginPage() {
                   {...register('password')}
                   aria-invalid={!!errors.password}
                   autoComplete="current-password"
+                  data-testid="password-input"
                 />
                 <Button
                   type="button"
@@ -159,6 +162,7 @@ export default function LoginPage() {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  data-testid="toggle-password"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -168,7 +172,7 @@ export default function LoginPage() {
                 </Button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p className="text-sm text-destructive" data-testid="password-error">{errors.password.message}</p>
               )}
             </div>
 
@@ -179,6 +183,7 @@ export default function LoginPage() {
                 type="checkbox"
                 {...register('rememberMe')}
                 className="h-4 w-4 text-primary"
+                data-testid="remember-me-checkbox"
               />
               <Label
                 htmlFor="rememberMe"
@@ -189,7 +194,7 @@ export default function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="login-submit">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -202,7 +207,7 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {errors.root && (
-              <div className="rounded-md bg-destructive/15 p-3">
+              <div className="rounded-md bg-destructive/15 p-3" data-testid="login-error">
                 <p className="text-sm text-destructive">{errors.root.message}</p>
               </div>
             )}
@@ -229,7 +234,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link href="/auth/register" className="text-primary hover:underline">
+              <Link href="/auth/register" className="text-primary hover:underline" data-testid="register-link">
                 Create account
               </Link>
             </p>
