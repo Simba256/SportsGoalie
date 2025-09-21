@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -22,7 +23,9 @@ export default function Home() {
           achieve your athletic goals.
         </p>
         <div className="flex gap-4 justify-center">
-          <Button size="lg">Get Started</Button>
+          <Button size="lg" asChild>
+            <Link href="/sports">Explore Sports</Link>
+          </Button>
           <Button variant="outline" size="lg">
             Learn More
           </Button>
@@ -88,7 +91,9 @@ export default function Home() {
           SportsCoach. Start learning today and track your progress every step
           of the way.
         </p>
-        <Button size="lg">Sign Up Now</Button>
+        <Button size="lg" asChild>
+          <Link href="/auth/register">Sign Up Now</Link>
+        </Button>
       </section>
     </div>
   );

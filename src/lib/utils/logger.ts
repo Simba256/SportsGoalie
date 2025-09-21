@@ -182,18 +182,33 @@ class Logger {
     const prefix = entry.context ? `[${entry.context}]` : '';
     const message = `${prefix} ${entry.message}`;
 
+    // Helper to safely log data
+    const logWithData = (logFn: any, msg: string, data: any) => {
+      if (data && typeof data === 'object' && !(data instanceof Error)) {
+        try {
+          logFn(msg, data);
+        } catch (err) {
+          logFn(msg);
+        }
+      } else if (data) {
+        logFn(msg, data);
+      } else {
+        logFn(msg);
+      }
+    };
+
     switch (entry.level) {
       case 'debug':
-        console.debug(`🔍 ${message}`, entry.data || '');
+        logWithData(console.debug, `🔍 ${message}`, entry.data);
         break;
       case 'info':
-        console.info(`ℹ️ ${message}`, entry.data || '');
+        logWithData(console.info, `ℹ️ ${message}`, entry.data);
         break;
       case 'warn':
-        console.warn(`⚠️ ${message}`, entry.data || '');
+        logWithData(console.warn, `⚠️ ${message}`, entry.data);
         break;
       case 'error':
-        console.error(`❌ ${message}`, entry.data || '');
+        logWithData(console.error, `❌ ${message}`, entry.data);
         if (this.config.includeStack && entry.data instanceof Error) {
           console.error(entry.data.stack);
         }

@@ -10,6 +10,7 @@ import {
   SearchFilters,
   DifficultyLevel,
 } from '@/types';
+import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import {
   createDefaultSportMetadata,
@@ -217,15 +218,11 @@ export class SportsService extends BaseDatabaseService {
 
   async getAllSports(options: QueryOptions & SearchFilters = {}): Promise<ApiResponse<PaginatedResponse<Sport>>> {
     const queryOptions: QueryOptions = {
-      orderBy: [
-        { field: 'isFeatured', direction: 'desc' },
-        { field: 'order', direction: 'asc' },
-        { field: 'name', direction: 'asc' },
-      ],
+      // Remove ordering to avoid index requirement - will sort client-side
       ...options,
     };
 
-    // Add filters
+    // Restore active filter now that permissions are fixed
     const whereClause = [
       { field: 'isActive', operator: '==' as const, value: true },
     ];
@@ -248,7 +245,35 @@ export class SportsService extends BaseDatabaseService {
 
     queryOptions.where = whereClause;
 
-    return this.query<Sport>(this.SPORTS_COLLECTION, queryOptions);
+    logger.info('Querying Firebase for sports', { queryOptions });
+
+    try {
+      const result = await this.query<Sport>(this.SPORTS_COLLECTION, queryOptions);
+      logger.info('Sports query result', { success: result.success, itemCount: result.data?.items?.length || 0 });
+
+      // Apply client-side sorting to avoid index requirements
+      if (result.success && result.data) {
+        result.data.items.sort((a, b) => {
+          // Sort by isFeatured (featured first), then order, then name
+          if (a.isFeatured !== b.isFeatured) {
+            return b.isFeatured ? 1 : -1;
+          }
+          if (a.order !== b.order) {
+            return a.order - b.order;
+          }
+          return a.name.localeCompare(b.name);
+        });
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error in getAllSports', error);
+      return {
+        success: false,
+        error: { message: `Failed to fetch sports: ${error instanceof Error ? error.message : 'Unknown error'}` },
+        timestamp: new Date(),
+      };
+    }
   }
 
   async getFeaturedSports(limit: number = 6): Promise<ApiResponse<PaginatedResponse<Sport>>> {
@@ -263,50 +288,67 @@ export class SportsService extends BaseDatabaseService {
   }
 
   async searchSports(searchQuery: string, filters: SearchFilters = {}): Promise<ApiResponse<PaginatedResponse<Sport>>> {
-    // For full-text search, this would integrate with Algolia or similar
-    // For now, we'll do a simple name/description search
-    const queryOptions: QueryOptions = {
-      orderBy: [{ field: 'name', direction: 'asc' }],
-      limit: filters.duration?.max || 50,
-    };
+    try {
+      // For full-text search, this would integrate with Algolia or similar
+      // For now, we'll do a simple name/description search
+      const queryOptions: QueryOptions = {
+        orderBy: [{ field: 'name', direction: 'asc' }],
+        limit: filters.duration?.max || 50,
+      };
 
-    const whereClause = [
-      { field: 'isActive', operator: '==' as const, value: true },
-    ];
+      const whereClause = [
+        { field: 'isActive', operator: '==' as const, value: true },
+      ];
 
-    if (filters.difficulty && filters.difficulty.length > 0) {
-      whereClause.push({
-        field: 'difficulty',
-        operator: 'in' as const,
-        value: filters.difficulty,
-      });
+      if (filters.difficulty && filters.difficulty.length > 0) {
+        whereClause.push({
+          field: 'difficulty',
+          operator: 'in' as const,
+          value: filters.difficulty,
+        });
+      }
+
+      if (filters.categories && filters.categories.length > 0) {
+        whereClause.push({
+          field: 'category',
+          operator: 'in' as const,
+          value: filters.categories,
+        });
+      }
+
+      queryOptions.where = whereClause;
+
+      const result = await this.query<Sport>(this.SPORTS_COLLECTION, queryOptions);
+
+      // Return error result if query fails
+      if (!result.success) {
+        return result;
+      }
+
+      // Client-side filtering for search query (in production, use proper search engine)
+      if (result.success && result.data && searchQuery) {
+        const filteredItems = result.data.items.filter(sport =>
+          sport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          sport.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          sport.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+
+        result.data.items = filteredItems;
+        result.data.total = filteredItems.length;
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error in searchSports', { error });
+      return {
+        success: false,
+        error: {
+          code: 'SEARCH_ERROR',
+          message: 'An error occurred while searching sports',
+        },
+        timestamp: new Date(),
+      };
     }
-
-    if (filters.categories && filters.categories.length > 0) {
-      whereClause.push({
-        field: 'category',
-        operator: 'in' as const,
-        value: filters.categories,
-      });
-    }
-
-    queryOptions.where = whereClause;
-
-    const result = await this.query<Sport>(this.SPORTS_COLLECTION, queryOptions);
-
-    // Client-side filtering for search query (in production, use proper search engine)
-    if (result.success && result.data && searchQuery) {
-      const filteredItems = result.data.items.filter(sport =>
-        sport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sport.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sport.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-
-      result.data.items = filteredItems;
-      result.data.total = filteredItems.length;
-    }
-
-    return result;
   }
 
   // Skills CRUD operations
@@ -452,10 +494,10 @@ export class SportsService extends BaseDatabaseService {
       streak: {
         current: 0,
         longest: 0,
-        lastActiveDate: new Date() as any,
+        lastActiveDate: Timestamp.fromDate(new Date()),
       },
-      startedAt: new Date() as any,
-      lastAccessedAt: new Date() as any,
+      startedAt: Timestamp.fromDate(new Date()),
+      lastAccessedAt: Timestamp.fromDate(new Date()),
     };
 
     // Get total skills count
@@ -506,7 +548,7 @@ export class SportsService extends BaseDatabaseService {
 
     return this.update<SportProgress>(
       this.SPORT_PROGRESS_COLLECTION,
-      (progressResult.data as any).id,
+      progressResult.data.id,
       updates
     );
   }
@@ -525,7 +567,7 @@ export class SportsService extends BaseDatabaseService {
       timeSpent: 0,
       bookmarked: false,
       notes: '',
-      lastAccessedAt: new Date() as any,
+      lastAccessedAt: Timestamp.fromDate(new Date()),
     };
 
     return this.create<SkillProgress>(this.SKILL_PROGRESS_COLLECTION, progressData);
@@ -570,7 +612,7 @@ export class SportsService extends BaseDatabaseService {
 
     return this.update<SkillProgress>(
       this.SKILL_PROGRESS_COLLECTION,
-      (progressResult.data as any).id,
+      progressResult.data.id,
       updates
     );
   }

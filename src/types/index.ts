@@ -227,6 +227,7 @@ export interface QuizAnswer {
 
 // Progress Types
 export interface SportProgress {
+  id: string;
   userId: string;
   sportId: string;
   status: ProgressStatus;
@@ -244,6 +245,7 @@ export interface SportProgress {
 }
 
 export interface SkillProgress {
+  id: string;
   userId: string;
   skillId: string;
   sportId: string;

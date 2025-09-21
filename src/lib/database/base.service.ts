@@ -25,6 +25,7 @@ import {
   disableNetwork,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { logger } from '../utils/logger';
 import {
   ApiResponse,
   PaginatedResponse,
