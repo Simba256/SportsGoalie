@@ -9,16 +9,71 @@ import {
   QueryOptions,
   DifficultyLevel,
 } from '@/types';
+import { logger } from '../../utils/logger';
 
+/**
+ * Service for managing quizzes, quiz questions, and quiz attempts in the SportsCoach application.
+ *
+ * This service provides comprehensive functionality for:
+ * - CRUD operations for quizzes and quiz questions
+ * - Quiz attempt management and scoring
+ * - Quiz eligibility checking and validation
+ * - Analytics and reporting for quiz performance
+ * - Real-time subscriptions for quiz attempts
+ *
+ * @example
+ * ```typescript
+ * // Create a new quiz
+ * const result = await quizService.createQuiz({
+ *   title: 'Basketball Fundamentals Quiz',
+ *   description: 'Test your knowledge of basketball basics',
+ *   skillId: 'skill123',
+ *   sportId: 'sport456',
+ *   difficulty: 'beginner',
+ *   estimatedTimeToComplete: 15,
+ *   passingScore: 70,
+ *   maxAttempts: 3,
+ *   isActive: true,
+ *   questionsCount: 10
+ * });
+ *
+ * // Start a quiz attempt
+ * const attempt = await quizService.startQuizAttempt('user123', 'quiz456', 'skill789', 'sport123');
+ * ```
+ */
 export class QuizService extends BaseDatabaseService {
   private readonly QUIZZES_COLLECTION = 'quizzes';
   private readonly QUIZ_QUESTIONS_COLLECTION = 'quiz_questions';
   private readonly QUIZ_ATTEMPTS_COLLECTION = 'quiz_attempts';
 
   // Quiz CRUD operations
+  /**
+   * Creates a new quiz in the database.
+   *
+   * @param quiz - Quiz data excluding auto-generated fields
+   * @returns Promise resolving to API response with created quiz ID
+   *
+   * @example
+   * ```typescript
+   * const result = await quizService.createQuiz({
+   *   title: 'Soccer Skills Assessment',
+   *   description: 'Evaluate your soccer technique knowledge',
+   *   skillId: 'soccer-dribbling',
+   *   sportId: 'soccer',
+   *   difficulty: 'intermediate',
+   *   estimatedTimeToComplete: 20,
+   *   passingScore: 75,
+   *   maxAttempts: 2,
+   *   isActive: true,
+   *   questionsCount: 15
+   * });
+   * ```
+   */
   async createQuiz(
     quiz: Omit<Quiz, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>
   ): Promise<ApiResponse<{ id: string }>> {
+    logger.database('create', this.QUIZZES_COLLECTION, undefined, { title: quiz.title, skillId: quiz.skillId });
+
     const quizData = {
       ...quiz,
       metadata: {
@@ -30,11 +85,44 @@ export class QuizService extends BaseDatabaseService {
       },
     };
 
-    return this.create<Quiz>(this.QUIZZES_COLLECTION, quizData);
+    const result = await this.create<Quiz>(this.QUIZZES_COLLECTION, quizData);
+
+    if (result.success) {
+      logger.info('Quiz created successfully', 'QuizService', { quizId: result.data?.id, title: quiz.title });
+    } else {
+      logger.error('Quiz creation failed', 'QuizService', result.error);
+    }
+
+    return result;
   }
 
+  /**
+   * Retrieves a quiz by its ID.
+   *
+   * @param quizId - The ID of the quiz to retrieve
+   * @returns Promise resolving to API response with quiz data or null if not found
+   *
+   * @example
+   * ```typescript
+   * const result = await quizService.getQuiz('quiz123');
+   * if (result.success && result.data) {
+   *   console.log(`Found quiz: ${result.data.title}`);
+   * }
+   * ```
+   */
   async getQuiz(quizId: string): Promise<ApiResponse<Quiz | null>> {
-    return this.getById<Quiz>(this.QUIZZES_COLLECTION, quizId);
+    logger.database('read', this.QUIZZES_COLLECTION, quizId);
+    const result = await this.getById<Quiz>(this.QUIZZES_COLLECTION, quizId);
+
+    if (result.success && result.data) {
+      logger.debug('Quiz retrieved successfully', 'QuizService', { quizId, title: result.data.title });
+    } else if (result.success && !result.data) {
+      logger.warn('Quiz not found', 'QuizService', { quizId });
+    } else {
+      logger.error('Quiz retrieval failed', 'QuizService', result.error);
+    }
+
+    return result;
   }
 
   async updateQuiz(
@@ -175,15 +263,44 @@ export class QuizService extends BaseDatabaseService {
   }
 
   // Quiz Attempts
+  /**
+   * Starts a new quiz attempt for a user.
+   *
+   * @param userId - The ID of the user taking the quiz
+   * @param quizId - The ID of the quiz to attempt
+   * @param skillId - The ID of the associated skill
+   * @param sportId - The ID of the associated sport
+   * @returns Promise resolving to API response with attempt ID and number
+   *
+   * @example
+   * ```typescript
+   * const result = await quizService.startQuizAttempt(
+   *   'user123',
+   *   'quiz456',
+   *   'skill789',
+   *   'sport123'
+   * );
+   * if (result.success) {
+   *   console.log(`Started attempt #${result.data.attemptNumber}`);
+   * }
+   * ```
+   */
   async startQuizAttempt(
     userId: string,
     quizId: string,
     skillId: string,
     sportId: string
   ): Promise<ApiResponse<{ id: string; attemptNumber: number }>> {
+    logger.info('Starting quiz attempt', 'QuizService', { userId, quizId, skillId, sportId });
+
     // Check if user is eligible to take quiz
     const eligibilityResult = await this.checkQuizEligibility(userId, quizId);
     if (!eligibilityResult.success || !eligibilityResult.data?.eligible) {
+      logger.warn('Quiz attempt not eligible', 'QuizService', {
+        userId,
+        quizId,
+        reason: eligibilityResult.data?.reason
+      });
       return {
         success: false,
         error: {
@@ -222,6 +339,13 @@ export class QuizService extends BaseDatabaseService {
       // Update quiz metadata
       await this.incrementField(this.QUIZZES_COLLECTION, quizId, 'metadata.totalAttempts');
 
+      logger.info('Quiz attempt started successfully', 'QuizService', {
+        attemptId: result.data!.id,
+        userId,
+        quizId,
+        attemptNumber: attemptData.attemptNumber
+      });
+
       return {
         success: true,
         data: {
@@ -232,6 +356,7 @@ export class QuizService extends BaseDatabaseService {
       };
     }
 
+    logger.error('Quiz attempt creation failed', 'QuizService', result.error);
     return result;
   }
 

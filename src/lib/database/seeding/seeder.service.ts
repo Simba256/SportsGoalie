@@ -17,6 +17,7 @@ import {
   AppSettings,
   ApiResponse,
 } from '@/types';
+import { logger } from '../../utils/logger';
 
 export class SeederService extends BaseDatabaseService {
   private readonly SPORTS_COLLECTION = 'sports';
@@ -51,10 +52,10 @@ export class SeederService extends BaseDatabaseService {
     appSettingsCreated: boolean;
   }>> {
     try {
-      console.log('🌱 Starting database seeding...');
+      logger.info('Starting database seeding', 'SeederService');
 
       if (options.force) {
-        console.log('🗑️ Clearing existing data...');
+        logger.info('🗑️ Clearing existing data...');
         await this.clearAllData();
       }
 
@@ -68,7 +69,7 @@ export class SeederService extends BaseDatabaseService {
       };
 
       // 1. Seed Sports
-      console.log('🏀 Seeding sports...');
+      logger.info('🏀 Seeding sports...');
       const sportsToSeed = options.includeAdditionalSports
         ? [...sampleSports, ...generateAdditionalSports()]
         : sampleSports;
@@ -83,14 +84,14 @@ export class SeederService extends BaseDatabaseService {
         if (result.success) {
           this.seededData.sports.set(sport.name, result.data!.id);
           results.sportsCreated++;
-          console.log(`  ✅ Created sport: ${sport.name}`);
+          logger.info(`  ✅ Created sport: ${sport.name}`);
         } else {
-          console.log(`  ❌ Failed to create sport: ${sport.name}`);
+          logger.info(`  ❌ Failed to create sport: ${sport.name}`);
         }
       }
 
       // 2. Seed Skills
-      console.log('🎯 Seeding skills...');
+      logger.info('🎯 Seeding skills...');
       const basketballSportId = this.seededData.sports.get('Basketball');
 
       if (basketballSportId) {
@@ -105,18 +106,18 @@ export class SeederService extends BaseDatabaseService {
           if (result.success) {
             this.seededData.skills.set(skill.name, result.data!.id);
             results.skillsCreated++;
-            console.log(`  ✅ Created skill: ${skill.name}`);
+            logger.info(`  ✅ Created skill: ${skill.name}`);
 
             // Update sport skills count
             await this.incrementField(this.SPORTS_COLLECTION, basketballSportId, 'skillsCount');
           } else {
-            console.log(`  ❌ Failed to create skill: ${skill.name}`);
+            logger.info(`  ❌ Failed to create skill: ${skill.name}`);
           }
         }
       }
 
       // 3. Seed Quizzes
-      console.log('📝 Seeding quizzes...');
+      logger.info('📝 Seeding quizzes...');
       const basicDribblingSkillId = this.seededData.skills.get('Basic Dribbling');
       const shootingFormSkillId = this.seededData.skills.get('Shooting Form');
 
@@ -136,15 +137,15 @@ export class SeederService extends BaseDatabaseService {
           if (result.success) {
             this.seededData.quizzes.set(quiz.title, result.data!.id);
             results.quizzesCreated++;
-            console.log(`  ✅ Created quiz: ${quiz.title}`);
+            logger.info(`  ✅ Created quiz: ${quiz.title}`);
           } else {
-            console.log(`  ❌ Failed to create quiz: ${quiz.title}`);
+            logger.info(`  ❌ Failed to create quiz: ${quiz.title}`);
           }
         }
       }
 
       // 4. Seed Quiz Questions
-      console.log('❓ Seeding quiz questions...');
+      logger.info('❓ Seeding quiz questions...');
       const dribblingQuizId = this.seededData.quizzes.get('Basic Dribbling Knowledge Check');
       const shootingQuizId = this.seededData.quizzes.get('Shooting Form Assessment');
 
@@ -161,15 +162,15 @@ export class SeederService extends BaseDatabaseService {
           const result = await this.create<QuizQuestion>(this.QUIZ_QUESTIONS_COLLECTION, questionData);
           if (result.success) {
             results.questionsCreated++;
-            console.log(`  ✅ Created question: ${question.question.substring(0, 50)}...`);
+            logger.info(`  ✅ Created question: ${question.question.substring(0, 50)}...`);
           } else {
-            console.log(`  ❌ Failed to create question: ${question.question.substring(0, 50)}...`);
+            logger.info(`  ❌ Failed to create question: ${question.question.substring(0, 50)}...`);
           }
         }
       }
 
       // 5. Seed Achievements
-      console.log('🏆 Seeding achievements...');
+      logger.info('🏆 Seeding achievements...');
       for (const achievement of sampleAchievements) {
         let achievementData = { ...achievement };
 
@@ -185,14 +186,14 @@ export class SeederService extends BaseDatabaseService {
         if (result.success) {
           this.seededData.achievements.set(achievement.name, result.data!.id);
           results.achievementsCreated++;
-          console.log(`  ✅ Created achievement: ${achievement.name}`);
+          logger.info(`  ✅ Created achievement: ${achievement.name}`);
         } else {
-          console.log(`  ❌ Failed to create achievement: ${achievement.name}`);
+          logger.info(`  ❌ Failed to create achievement: ${achievement.name}`);
         }
       }
 
       // 6. Seed App Settings
-      console.log('⚙️ Seeding app settings...');
+      logger.info('⚙️ Seeding app settings...');
       const settingsData = {
         ...sampleAppSettings,
         updatedBy: options.adminUserId,
@@ -201,13 +202,13 @@ export class SeederService extends BaseDatabaseService {
       const settingsResult = await this.create<AppSettings>(this.APP_SETTINGS_COLLECTION, settingsData);
       if (settingsResult.success) {
         results.appSettingsCreated = true;
-        console.log('  ✅ Created app settings');
+        logger.info('  ✅ Created app settings');
       } else {
-        console.log('  ❌ Failed to create app settings');
+        logger.info('  ❌ Failed to create app settings');
       }
 
-      console.log('🎉 Database seeding completed!');
-      console.log(`📊 Summary:
+      logger.info('🎉 Database seeding completed!');
+      logger.info(`📊 Summary:
         - Sports: ${results.sportsCreated}
         - Skills: ${results.skillsCreated}
         - Quizzes: ${results.quizzesCreated}
@@ -223,7 +224,7 @@ export class SeederService extends BaseDatabaseService {
       };
 
     } catch (error) {
-      console.error('❌ Seeding failed:', error);
+      logger.error('Seeding failed', 'SeederService', error);
       return {
         success: false,
         error: {
@@ -241,7 +242,7 @@ export class SeederService extends BaseDatabaseService {
     includeAdditional: boolean = false
   ): Promise<ApiResponse<{ created: number }>> {
     try {
-      console.log('🏀 Seeding sports only...');
+      logger.info('🏀 Seeding sports only...');
 
       const sportsToSeed = includeAdditional
         ? [...sampleSports, ...generateAdditionalSports()]
@@ -258,7 +259,7 @@ export class SeederService extends BaseDatabaseService {
         const result = await this.create<Sport>(this.SPORTS_COLLECTION, sportData);
         if (result.success) {
           created++;
-          console.log(`  ✅ Created sport: ${sport.name}`);
+          logger.info(`  ✅ Created sport: ${sport.name}`);
         }
       }
 
@@ -284,7 +285,7 @@ export class SeederService extends BaseDatabaseService {
 
   async seedAchievements(): Promise<ApiResponse<{ created: number }>> {
     try {
-      console.log('🏆 Seeding achievements only...');
+      logger.info('🏆 Seeding achievements only...');
 
       let created = 0;
 
@@ -292,7 +293,7 @@ export class SeederService extends BaseDatabaseService {
         const result = await this.create<Achievement>(this.ACHIEVEMENTS_COLLECTION, achievement);
         if (result.success) {
           created++;
-          console.log(`  ✅ Created achievement: ${achievement.name}`);
+          logger.info(`  ✅ Created achievement: ${achievement.name}`);
         }
       }
 
@@ -340,7 +341,7 @@ export class SeederService extends BaseDatabaseService {
 
   async clearAllData(): Promise<ApiResponse<void>> {
     try {
-      console.log('🗑️ Clearing all seeded data...');
+      logger.info('🗑️ Clearing all seeded data...');
 
       const collections = [
         this.QUIZ_QUESTIONS_COLLECTION,
@@ -361,11 +362,11 @@ export class SeederService extends BaseDatabaseService {
           }));
 
           await this.batchWrite(deleteOperations);
-          console.log(`  🗑️ Cleared ${result.data.items.length} items from ${collectionName}`);
+          logger.info(`  🗑️ Cleared ${result.data.items.length} items from ${collectionName}`);
         }
       }
 
-      console.log('✅ All data cleared');
+      logger.info('✅ All data cleared');
 
       return {
         success: true,
@@ -450,7 +451,7 @@ export class SeederService extends BaseDatabaseService {
         email: 'demo@sportscoach.com',
       };
 
-      console.log('👤 Demo user info prepared');
+      logger.info('👤 Demo user info prepared');
 
       return {
         success: true,

@@ -10,7 +10,51 @@ import {
   SearchFilters,
   DifficultyLevel,
 } from '@/types';
+import { logger } from '../../utils/logger';
+import {
+  createDefaultSportMetadata,
+  createDefaultSkillMetadata,
+  validateSportData,
+  validateSkillData,
+  buildSportsQueryFilters,
+  buildSkillsQueryFilters,
+  calculateSportProgress,
+  calculateSkillProgress,
+  updateSportMetadataOnCompletion,
+  updateSkillMetadataOnCompletion,
+} from '../utils/sport-helpers';
 
+/**
+ * Service for managing sports, skills, and user progress in the SportsCoach application.
+ *
+ * This service provides comprehensive functionality for:
+ * - CRUD operations for sports and skills
+ * - Progress tracking for users
+ * - Analytics and reporting
+ * - Real-time subscriptions
+ * - Batch operations for data management
+ *
+ * @example
+ * ```typescript
+ * // Create a new sport
+ * const result = await sportsService.createSport({
+ *   name: 'Basketball',
+ *   description: 'Learn basketball fundamentals',
+ *   difficulty: 'beginner',
+ *   category: 'team-sports',
+ *   estimatedTimeToComplete: 120,
+ *   isActive: true,
+ *   isFeatured: true,
+ *   order: 1,
+ *   imageUrl: 'https://example.com/basketball.jpg',
+ *   prerequisites: [],
+ *   tags: ['team', 'indoor', 'ball-game']
+ * });
+ *
+ * // Get user's sport progress
+ * const progress = await sportsService.getSportProgress('user123', 'sport456');
+ * ```
+ */
 export class SportsService extends BaseDatabaseService {
   private readonly SPORTS_COLLECTION = 'sports';
   private readonly SKILLS_COLLECTION = 'skills';
@@ -18,33 +62,140 @@ export class SportsService extends BaseDatabaseService {
   private readonly SKILL_PROGRESS_COLLECTION = 'skill_progress';
 
   // Sports CRUD operations
+  /**
+   * Creates a new sport in the database.
+   *
+   * @param sport - Sport data excluding auto-generated fields
+   * @returns Promise resolving to API response with created sport ID
+   *
+   * @example
+   * ```typescript
+   * const result = await sportsService.createSport({
+   *   name: 'Tennis',
+   *   description: 'Learn tennis fundamentals and techniques',
+   *   difficulty: 'intermediate',
+   *   category: 'racket-sports',
+   *   estimatedTimeToComplete: 180,
+   *   isActive: true,
+   *   isFeatured: false,
+   *   order: 5,
+   *   imageUrl: 'https://example.com/tennis.jpg',
+   *   prerequisites: [],
+   *   tags: ['individual', 'outdoor', 'racket']
+   * });
+   * ```
+   */
   async createSport(
     sport: Omit<Sport, 'id' | 'createdAt' | 'updatedAt' | 'skillsCount' | 'metadata'>
   ): Promise<ApiResponse<{ id: string }>> {
+    logger.database('create', this.SPORTS_COLLECTION, undefined, { name: sport.name });
+
+    // Validate sport data
+    const validation = validateSportData(sport);
+    if (!validation.valid) {
+      logger.warn('Sport creation failed validation', 'SportsService', { errors: validation.errors });
+      return {
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.errors.join(', '),
+        },
+        timestamp: new Date(),
+      };
+    }
+
     const sportData = {
       ...sport,
       skillsCount: 0,
-      metadata: {
-        totalEnrollments: 0,
-        totalCompletions: 0,
-        averageRating: 0,
-        totalRatings: 0,
-        averageCompletionTime: 0,
-      },
+      metadata: createDefaultSportMetadata(),
     };
 
-    return this.create<Sport>(this.SPORTS_COLLECTION, sportData);
+    const result = await this.create<Sport>(this.SPORTS_COLLECTION, sportData);
+
+    if (result.success) {
+      logger.info('Sport created successfully', 'SportsService', { sportId: result.data?.id, name: sport.name });
+    } else {
+      logger.error('Sport creation failed', 'SportsService', result.error);
+    }
+
+    return result;
   }
 
+  /**
+   * Retrieves a sport by its ID.
+   *
+   * @param sportId - The ID of the sport to retrieve
+   * @returns Promise resolving to API response with sport data or null if not found
+   *
+   * @example
+   * ```typescript
+   * const result = await sportsService.getSport('sport123');
+   * if (result.success && result.data) {
+   *   console.log(`Found sport: ${result.data.name}`);
+   * }
+   * ```
+   */
   async getSport(sportId: string): Promise<ApiResponse<Sport | null>> {
-    return this.getById<Sport>(this.SPORTS_COLLECTION, sportId);
+    logger.database('read', this.SPORTS_COLLECTION, sportId);
+    const result = await this.getById<Sport>(this.SPORTS_COLLECTION, sportId);
+
+    if (result.success && result.data) {
+      logger.debug('Sport retrieved successfully', 'SportsService', { sportId, name: result.data.name });
+    } else if (result.success && !result.data) {
+      logger.warn('Sport not found', 'SportsService', { sportId });
+    } else {
+      logger.error('Sport retrieval failed', 'SportsService', result.error);
+    }
+
+    return result;
   }
 
+  /**
+   * Updates an existing sport with new data.
+   *
+   * @param sportId - The ID of the sport to update
+   * @param updates - Partial sport data to update
+   * @returns Promise resolving to API response indicating success or failure
+   *
+   * @example
+   * ```typescript
+   * const result = await sportsService.updateSport('sport123', {
+   *   description: 'Updated description with new information',
+   *   isFeatured: true
+   * });
+   * ```
+   */
   async updateSport(
     sportId: string,
     updates: Partial<Omit<Sport, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>>
   ): Promise<ApiResponse<void>> {
-    return this.update<Sport>(this.SPORTS_COLLECTION, sportId, updates);
+    logger.database('update', this.SPORTS_COLLECTION, sportId, updates);
+
+    // Validate updates if name is being changed
+    if (updates.name || updates.estimatedTimeToComplete || updates.order) {
+      const validation = validateSportData(updates);
+      if (!validation.valid) {
+        logger.warn('Sport update failed validation', 'SportsService', { sportId, errors: validation.errors });
+        return {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: validation.errors.join(', '),
+          },
+          timestamp: new Date(),
+        };
+      }
+    }
+
+    const result = await this.update<Sport>(this.SPORTS_COLLECTION, sportId, updates);
+
+    if (result.success) {
+      logger.info('Sport updated successfully', 'SportsService', { sportId });
+    } else {
+      logger.error('Sport update failed', 'SportsService', result.error);
+    }
+
+    return result;
   }
 
   async deleteSport(sportId: string): Promise<ApiResponse<void>> {

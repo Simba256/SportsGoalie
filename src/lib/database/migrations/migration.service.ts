@@ -4,6 +4,7 @@ import {
   MigrationState,
   ApiResponse,
 } from '@/types';
+import { logger } from '../../utils/logger';
 
 export class MigrationService extends BaseDatabaseService {
   private readonly MIGRATIONS_COLLECTION = 'migrations';
@@ -17,13 +18,13 @@ export class MigrationService extends BaseDatabaseService {
       name: 'Initial Schema Setup',
       description: 'Set up initial database collections and indexes',
       up: async () => {
-        console.log('🔧 Running migration: Initial Schema Setup');
+        logger.info('Running migration: Initial Schema Setup', 'MigrationService');
         // Migration logic for setting up initial schema
         // This would typically include creating indexes, etc.
         await this.setupInitialIndexes();
       },
       down: async () => {
-        console.log('🔄 Rolling back migration: Initial Schema Setup');
+        logger.info('Rolling back migration: Initial Schema Setup', 'MigrationService');
         // Rollback logic
         await this.removeInitialIndexes();
       },
@@ -34,11 +35,11 @@ export class MigrationService extends BaseDatabaseService {
       name: 'Add User Preferences',
       description: 'Add preferences field to user documents',
       up: async () => {
-        console.log('🔧 Running migration: Add User Preferences');
+        logger.info('Running migration: Add User Preferences', 'MigrationService');
         await this.addUserPreferencesField();
       },
       down: async () => {
-        console.log('🔄 Rolling back migration: Add User Preferences');
+        logger.info('Rolling back migration: Add User Preferences', 'MigrationService');
         await this.removeUserPreferencesField();
       },
     },
@@ -48,11 +49,11 @@ export class MigrationService extends BaseDatabaseService {
       name: 'Update Quiz Metadata',
       description: 'Add new metadata fields to quiz documents',
       up: async () => {
-        console.log('🔧 Running migration: Update Quiz Metadata');
+        logger.info('Running migration: Update Quiz Metadata', 'MigrationService');
         await this.updateQuizMetadataStructure();
       },
       down: async () => {
-        console.log('🔄 Rolling back migration: Update Quiz Metadata');
+        logger.info('Rolling back migration: Update Quiz Metadata', 'MigrationService');
         await this.revertQuizMetadataStructure();
       },
     },
@@ -62,11 +63,11 @@ export class MigrationService extends BaseDatabaseService {
       name: 'Add Achievement Rarity',
       description: 'Add rarity field to achievement documents',
       up: async () => {
-        console.log('🔧 Running migration: Add Achievement Rarity');
+        logger.info('Running migration: Add Achievement Rarity', 'MigrationService');
         await this.addAchievementRarityField();
       },
       down: async () => {
-        console.log('🔄 Rolling back migration: Add Achievement Rarity');
+        logger.info('Rolling back migration: Add Achievement Rarity', 'MigrationService');
         await this.removeAchievementRarityField();
       },
     },
@@ -76,11 +77,11 @@ export class MigrationService extends BaseDatabaseService {
       name: 'Add Content Analytics',
       description: 'Add analytics tracking fields to content documents',
       up: async () => {
-        console.log('🔧 Running migration: Add Content Analytics');
+        logger.info('Running migration: Add Content Analytics', 'MigrationService');
         await this.addContentAnalyticsFields();
       },
       down: async () => {
-        console.log('🔄 Rolling back migration: Add Content Analytics');
+        logger.info('Rolling back migration: Add Content Analytics', 'MigrationService');
         await this.removeContentAnalyticsFields();
       },
     },
@@ -157,7 +158,7 @@ export class MigrationService extends BaseDatabaseService {
     executedMigrations: string[];
   }>> {
     try {
-      console.log('🚀 Starting migration process...');
+      logger.info('Starting migration process', 'MigrationService');
 
       const stateResult = await this.getCurrentMigrationState();
       if (!stateResult.success || !stateResult.data) {
@@ -180,7 +181,7 @@ export class MigrationService extends BaseDatabaseService {
       );
 
       if (pendingMigrations.length === 0) {
-        console.log('✅ No pending migrations found');
+        logger.info('No pending migrations found', 'MigrationService');
         return {
           success: true,
           data: {
@@ -193,7 +194,7 @@ export class MigrationService extends BaseDatabaseService {
         };
       }
 
-      console.log(`📋 Found ${pendingMigrations.length} pending migrations`);
+      logger.info(`Found ${pendingMigrations.length} pending migrations`, 'MigrationService');
 
       // Sort migrations by version to ensure proper order
       pendingMigrations.sort((a, b) => this.compareVersions(a.version, b.version));
@@ -204,7 +205,7 @@ export class MigrationService extends BaseDatabaseService {
       // Execute migrations sequentially
       for (const migration of pendingMigrations) {
         try {
-          console.log(`🔧 Running migration: ${migration.name} (${migration.version})`);
+          logger.info(`Running migration: ${migration.name} (${migration.version})`, 'MigrationService');
 
           // Record migration start
           await this.recordMigrationExecution(migration, 'started');
@@ -218,21 +219,21 @@ export class MigrationService extends BaseDatabaseService {
           executedMigrationIds.push(migration.id);
           lastVersion = migration.version;
 
-          console.log(`✅ Completed migration: ${migration.name}`);
+          logger.info(`Completed migration: ${migration.name}`, 'MigrationService');
 
         } catch (error) {
-          console.error(`❌ Migration failed: ${migration.name}`, error);
+          logger.error(`Migration failed: ${migration.name}`, 'MigrationService', error);
 
           // Record migration failure
           await this.recordMigrationExecution(migration, 'failed', error);
 
           // Attempt rollback
           try {
-            console.log(`🔄 Attempting rollback for: ${migration.name}`);
+            logger.info(`Attempting rollback for: ${migration.name}`, 'MigrationService');
             await migration.down();
-            console.log(`✅ Rollback successful for: ${migration.name}`);
+            logger.info(`Rollback successful for: ${migration.name}`, 'MigrationService');
           } catch (rollbackError) {
-            console.error(`❌ Rollback failed for: ${migration.name}`, rollbackError);
+            logger.error(`Rollback failed for: ${migration.name}`, 'MigrationService', rollbackError);
           }
 
           return {
@@ -260,7 +261,7 @@ export class MigrationService extends BaseDatabaseService {
         }
       );
 
-      console.log(`🎉 Migration process completed! Updated to version ${lastVersion}`);
+      logger.info(`Migration process completed! Updated to version ${lastVersion}`, 'MigrationService');
 
       return {
         success: true,
@@ -292,7 +293,7 @@ export class MigrationService extends BaseDatabaseService {
     executedMigrations: string[];
   }>> {
     try {
-      console.log(`🔄 Starting rollback to version ${targetVersion}...`);
+      logger.info(`Starting rollback to version ${targetVersion}`, 'MigrationService');
 
       const stateResult = await this.getCurrentMigrationState();
       if (!stateResult.success || !stateResult.data) {
@@ -317,7 +318,7 @@ export class MigrationService extends BaseDatabaseService {
         .sort((a, b) => this.compareVersions(b.version, a.version)); // Reverse order for rollback
 
       if (migrationsToRollback.length === 0) {
-        console.log('✅ No migrations to rollback');
+        logger.info('No migrations to rollback', 'MigrationService');
         return {
           success: true,
           data: {
@@ -330,14 +331,14 @@ export class MigrationService extends BaseDatabaseService {
         };
       }
 
-      console.log(`📋 Found ${migrationsToRollback.length} migrations to rollback`);
+      logger.info(`Found ${migrationsToRollback.length} migrations to rollback`, 'MigrationService');
 
       const rolledBackMigrationIds: string[] = [];
 
       // Execute rollbacks sequentially
       for (const migration of migrationsToRollback) {
         try {
-          console.log(`🔄 Rolling back migration: ${migration.name} (${migration.version})`);
+          logger.info(`Rolling back migration: ${migration.name} (${migration.version})`, 'MigrationService');
 
           // Record rollback start
           await this.recordMigrationExecution(migration, 'rollback_started');
@@ -350,10 +351,10 @@ export class MigrationService extends BaseDatabaseService {
 
           rolledBackMigrationIds.push(migration.id);
 
-          console.log(`✅ Rolled back migration: ${migration.name}`);
+          logger.info(`Rolled back migration: ${migration.name}`, 'MigrationService');
 
         } catch (error) {
-          console.error(`❌ Rollback failed: ${migration.name}`, error);
+          logger.error(`Rollback failed: ${migration.name}`, 'MigrationService', error);
 
           // Record rollback failure
           await this.recordMigrationExecution(migration, 'rollback_failed', error);
@@ -396,7 +397,7 @@ export class MigrationService extends BaseDatabaseService {
         }
       );
 
-      console.log(`🎉 Rollback process completed! Rolled back to version ${newVersion}`);
+      logger.info(`Rollback process completed! Rolled back to version ${newVersion}`, 'MigrationService');
 
       return {
         success: true,
@@ -526,7 +527,7 @@ export class MigrationService extends BaseDatabaseService {
 
       await this.create(this.MIGRATIONS_COLLECTION, record);
     } catch (recordError) {
-      console.error('Failed to record migration execution:', recordError);
+      logger.error('Failed to record migration execution', 'MigrationService', recordError);
       // Don't throw here as it would interrupt the migration process
     }
   }
@@ -553,19 +554,19 @@ export class MigrationService extends BaseDatabaseService {
   private async setupInitialIndexes(): Promise<void> {
     // In a real implementation, this would create Firestore indexes
     // For now, we'll just log the action
-    console.log('  🔧 Setting up initial database indexes...');
+    logger.info('Setting up initial database indexes', 'MigrationService');
     // await this.createIndex('users', ['email']);
     // await this.createIndex('sports', ['category', 'difficulty']);
     // etc.
   }
 
   private async removeInitialIndexes(): Promise<void> {
-    console.log('  🔄 Removing initial database indexes...');
+    logger.info('Removing initial database indexes', 'MigrationService');
     // Rollback logic for index removal
   }
 
   private async addUserPreferencesField(): Promise<void> {
-    console.log('  🔧 Adding preferences field to user documents...');
+    logger.info('Adding preferences field to user documents', 'MigrationService');
 
     const usersResult = await this.query('users', { limit: 1000 });
     if (usersResult.success && usersResult.data) {
@@ -593,18 +594,18 @@ export class MigrationService extends BaseDatabaseService {
 
       if (operations.length > 0) {
         await this.batchWrite(operations);
-        console.log(`  ✅ Updated ${operations.length} user documents`);
+        logger.info(`Updated ${operations.length} user documents`, 'MigrationService');
       }
     }
   }
 
   private async removeUserPreferencesField(): Promise<void> {
-    console.log('  🔄 Removing preferences field from user documents...');
+    logger.info('Removing preferences field from user documents', 'MigrationService');
     // Rollback logic - would need to use admin SDK to remove fields
   }
 
   private async updateQuizMetadataStructure(): Promise<void> {
-    console.log('  🔧 Updating quiz metadata structure...');
+    logger.info('Updating quiz metadata structure', 'MigrationService');
 
     const quizzesResult = await this.query('quizzes', { limit: 1000 });
     if (quizzesResult.success && quizzesResult.data) {
@@ -623,18 +624,18 @@ export class MigrationService extends BaseDatabaseService {
 
       if (operations.length > 0) {
         await this.batchWrite(operations);
-        console.log(`  ✅ Updated ${operations.length} quiz documents`);
+        logger.info(`Updated ${operations.length} quiz documents`, 'MigrationService');
       }
     }
   }
 
   private async revertQuizMetadataStructure(): Promise<void> {
-    console.log('  🔄 Reverting quiz metadata structure...');
+    logger.info('Reverting quiz metadata structure', 'MigrationService');
     // Rollback logic
   }
 
   private async addAchievementRarityField(): Promise<void> {
-    console.log('  🔧 Adding rarity field to achievement documents...');
+    logger.info('Adding rarity field to achievement documents', 'MigrationService');
 
     const achievementsResult = await this.query('achievements', { limit: 1000 });
     if (achievementsResult.success && achievementsResult.data) {
@@ -651,18 +652,18 @@ export class MigrationService extends BaseDatabaseService {
 
       if (operations.length > 0) {
         await this.batchWrite(operations);
-        console.log(`  ✅ Updated ${operations.length} achievement documents`);
+        logger.info(`Updated ${operations.length} achievement documents`, 'MigrationService');
       }
     }
   }
 
   private async removeAchievementRarityField(): Promise<void> {
-    console.log('  🔄 Removing rarity field from achievement documents...');
+    logger.info('Removing rarity field from achievement documents', 'MigrationService');
     // Rollback logic
   }
 
   private async addContentAnalyticsFields(): Promise<void> {
-    console.log('  🔧 Adding analytics fields to content documents...');
+    logger.info('Adding analytics fields to content documents', 'MigrationService');
 
     const contentResult = await this.query('content', { limit: 1000 });
     if (contentResult.success && contentResult.data) {
@@ -685,13 +686,13 @@ export class MigrationService extends BaseDatabaseService {
 
       if (operations.length > 0) {
         await this.batchWrite(operations);
-        console.log(`  ✅ Updated ${operations.length} content documents`);
+        logger.info(`Updated ${operations.length} content documents`, 'MigrationService');
       }
     }
   }
 
   private async removeContentAnalyticsFields(): Promise<void> {
-    console.log('  🔄 Removing analytics fields from content documents...');
+    logger.info('Removing analytics fields from content documents', 'MigrationService');
     // Rollback logic
   }
 }

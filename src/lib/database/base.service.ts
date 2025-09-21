@@ -469,7 +469,7 @@ export class BaseDatabaseService {
         }
       },
       (error) => {
-        console.error(`Error in document subscription for ${collectionName}:${id}:`, error);
+        logger.error(`Error in document subscription for ${collectionName}:${id}`, 'BaseDatabaseService', error);
         callback({
           type: 'removed',
           data: {} as T,
@@ -526,7 +526,7 @@ export class BaseDatabaseService {
         });
       },
       (error: any) => {
-        console.error(`Error in collection subscription for ${collectionName}:`, error);
+        logger.error(`Error in collection subscription for ${collectionName}`, 'BaseDatabaseService', error);
       }
     );
   }

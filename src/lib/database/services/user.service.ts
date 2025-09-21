@@ -12,7 +12,41 @@ import {
   QueryOptions,
   UserRole,
 } from '@/types';
+import { logger } from '../../utils/logger';
 
+/**
+ * Service for managing users, user progress, achievements, and notifications in the SportsCoach application.
+ *
+ * This service provides comprehensive functionality for:
+ * - User account management and profile operations
+ * - User progress tracking and statistics
+ * - Achievement system and gamification
+ * - Notification management
+ * - User analytics and reporting
+ * - Real-time subscriptions for user data
+ *
+ * @example
+ * ```typescript
+ * // Create a new user
+ * const result = await userService.createUser({
+ *   email: 'john@example.com',
+ *   displayName: 'John Doe',
+ *   role: 'student',
+ *   emailVerified: true,
+ *   isActive: true,
+ *   profile: {
+ *     firstName: 'John',
+ *     lastName: 'Doe',
+ *     dateOfBirth: new Date('1990-01-01'),
+ *     country: 'US'
+ *   }
+ * });
+ *
+ * // Track user progress
+ * const progress = await userService.getUserProgress('user123');
+ * await userService.addExperiencePoints('user123', 50, 'quiz_completion');
+ * ```
+ */
 export class UserService extends BaseDatabaseService {
   private readonly USERS_COLLECTION = 'users';
   private readonly USER_PROGRESS_COLLECTION = 'user_progress';
@@ -20,12 +54,39 @@ export class UserService extends BaseDatabaseService {
   private readonly NOTIFICATIONS_COLLECTION = 'notifications';
 
   // User CRUD operations
+  /**
+   * Creates a new user account in the database.
+   *
+   * @param user - User data excluding auto-generated fields
+   * @returns Promise resolving to API response with created user ID
+   *
+   * @example
+   * ```typescript
+   * const result = await userService.createUser({
+   *   email: 'jane@example.com',
+   *   displayName: 'Jane Smith',
+   *   role: 'student',
+   *   emailVerified: true,
+   *   isActive: true,
+   *   profile: {
+   *     firstName: 'Jane',
+   *     lastName: 'Smith',
+   *     dateOfBirth: new Date('1992-05-15'),
+   *     country: 'CA',
+   *     favoritesSports: ['tennis', 'swimming']
+   *   }
+   * });
+   * ```
+   */
   async createUser(
     user: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'lastLoginAt'>
   ): Promise<ApiResponse<{ id: string }>> {
+    logger.database('create', this.USERS_COLLECTION, undefined, { email: user.email, displayName: user.displayName });
+
     // Check if user with email already exists
     const existingUserResult = await this.getUserByEmail(user.email);
     if (existingUserResult.success && existingUserResult.data) {
+      logger.warn('User creation failed - email already exists', 'UserService', { email: user.email });
       return {
         success: false,
         error: {
@@ -46,13 +107,48 @@ export class UserService extends BaseDatabaseService {
     if (result.success) {
       // Initialize user progress
       await this.initializeUserProgress(result.data!.id);
+      logger.info('User created successfully', 'UserService', {
+        userId: result.data!.id,
+        email: user.email,
+        displayName: user.displayName
+      });
+    } else {
+      logger.error('User creation failed', 'UserService', result.error);
     }
 
     return result;
   }
 
+  /**
+   * Retrieves a user by their ID.
+   *
+   * @param userId - The ID of the user to retrieve
+   * @returns Promise resolving to API response with user data or null if not found
+   *
+   * @example
+   * ```typescript
+   * const result = await userService.getUser('user123');
+   * if (result.success && result.data) {
+   *   console.log(`Found user: ${result.data.displayName}`);
+   * }
+   * ```
+   */
   async getUser(userId: string): Promise<ApiResponse<User | null>> {
-    return this.getById<User>(this.USERS_COLLECTION, userId);
+    logger.database('read', this.USERS_COLLECTION, userId);
+    const result = await this.getById<User>(this.USERS_COLLECTION, userId);
+
+    if (result.success && result.data) {
+      logger.debug('User retrieved successfully', 'UserService', {
+        userId,
+        displayName: result.data.displayName
+      });
+    } else if (result.success && !result.data) {
+      logger.warn('User not found', 'UserService', { userId });
+    } else {
+      logger.error('User retrieval failed', 'UserService', result.error);
+    }
+
+    return result;
   }
 
   async getUserByEmail(email: string): Promise<ApiResponse<User | null>> {
@@ -312,11 +408,32 @@ export class UserService extends BaseDatabaseService {
     return this.updateUserProgress(userId, { overallStats: updatedStats });
   }
 
+  /**
+   * Adds experience points to a user and handles level progression.
+   *
+   * @param userId - The ID of the user to add points to
+   * @param points - The number of experience points to add
+   * @param source - The source of the experience points (e.g., 'quiz_completion', 'skill_mastery')
+   * @returns Promise resolving to API response with new level information
+   *
+   * @example
+   * ```typescript
+   * const result = await userService.addExperiencePoints(
+   *   'user123',
+   *   100,
+   *   'quiz_completion'
+   * );
+   * if (result.success && result.data.leveledUp) {
+   *   console.log(`User leveled up to level ${result.data.newLevel}!`);
+   * }
+   * ```
+   */
   async addExperiencePoints(
     userId: string,
     points: number,
     source: string
   ): Promise<ApiResponse<{ newLevel: number; leveledUp: boolean }>> {
+    logger.info('Adding experience points', 'UserService', { userId, points, source });
     const progressResult = await this.getUserProgress(userId);
     if (!progressResult.success || !progressResult.data) {
       return {
@@ -345,6 +462,14 @@ export class UserService extends BaseDatabaseService {
 
     // Create notification if user leveled up
     if (leveledUp) {
+      logger.info('User leveled up', 'UserService', {
+        userId,
+        oldLevel,
+        newLevel,
+        points,
+        source
+      });
+
       await this.createNotification(userId, {
         type: 'achievement',
         title: 'Level Up!',

@@ -30,47 +30,124 @@ export type {
 // Database initialization helper
 import { migrationService } from './migrations/migration.service';
 import { seederService } from './seeding/seeder.service';
+import { logger, withPerformanceLogging } from '../utils/logger';
 
+/**
+ * Configuration options for database initialization
+ */
 export interface DatabaseInitOptions {
+  /** Whether to run database migrations (default: true) */
   runMigrations?: boolean;
+  /** Whether to seed the database with sample data (default: false) */
   seedData?: boolean;
+  /** Admin user ID required for seeding operations */
   adminUserId?: string;
-  force?: boolean; // Clear existing data before seeding
+  /** Clear existing data before seeding (default: false) */
+  force?: boolean;
+  /** Include additional sports in the seeding data (default: false) */
   includeAdditionalSports?: boolean;
 }
 
+/**
+ * Result of database initialization operation
+ */
+export interface DatabaseInitResult {
+  /** Whether the initialization was successful */
+  success: boolean;
+  /** Migration operation results */
+  migrations?: {
+    migrationsRun: number;
+    currentVersion: string;
+    latestVersion: string;
+  };
+  /** Seeding operation results */
+  seeding?: {
+    sportsCreated: number;
+    skillsCreated: number;
+    quizzesCreated: number;
+    achievementsCreated: number;
+  };
+  /** Array of error messages if any operations failed */
+  errors?: string[];
+}
+
+/**
+ * Central database management class for SportsCoach V3
+ *
+ * Provides high-level operations for database initialization, health checking,
+ * and maintenance operations. This class orchestrates migrations, seeding,
+ * and provides a unified interface for database management.
+ *
+ * @example
+ * ```typescript
+ * // Initialize database with migrations and seeding
+ * const result = await DatabaseManager.initialize({
+ *   runMigrations: true,
+ *   seedData: true,
+ *   adminUserId: 'admin-123',
+ *   includeAdditionalSports: true
+ * });
+ *
+ * if (result.success) {
+ *   console.log('Database ready for use');
+ * }
+ * ```
+ */
 export class DatabaseManager {
   /**
    * Initialize the database with migrations and optional seeding
+   *
+   * This method performs a complete database setup including running pending
+   * migrations and optionally seeding the database with sample data. It's designed
+   * to be idempotent and safe to run multiple times.
+   *
+   * @param options - Configuration options for initialization
+   * @returns Promise resolving to initialization result with detailed status
+   *
+   * @example
+   * ```typescript
+   * // Basic initialization with migrations only
+   * const result = await DatabaseManager.initialize();
+   *
+   * // Full initialization with seeding
+   * const result = await DatabaseManager.initialize({
+   *   seedData: true,
+   *   adminUserId: 'admin-user-id',
+   *   force: true, // Clear existing data
+   *   includeAdditionalSports: true
+   * });
+   * ```
    */
-  static async initialize(options: DatabaseInitOptions = {}): Promise<{
-    success: boolean;
-    migrations?: any;
-    seeding?: any;
-    errors?: string[];
-  }> {
+  static async initialize(options: DatabaseInitOptions = {}): Promise<DatabaseInitResult> {
     const errors: string[] = [];
     let migrationResult;
     let seedingResult;
 
     try {
-      console.log('🚀 Initializing SportsCoach V3 Database...');
+      logger.info('Initializing SportsCoach V3 Database', 'DatabaseManager', options);
 
       // Run migrations if requested
       if (options.runMigrations !== false) {
-        console.log('📦 Running database migrations...');
+        logger.info('Running database migrations', 'DatabaseManager');
         migrationResult = await migrationService.runPendingMigrations();
 
         if (!migrationResult.success) {
-          errors.push(`Migration failed: ${migrationResult.error?.message}`);
+          const errorMsg = `Migration failed: ${migrationResult.error?.message}`;
+          errors.push(errorMsg);
+          logger.error(errorMsg, 'DatabaseManager', migrationResult.error);
         } else {
-          console.log(`✅ Migrations completed: ${migrationResult.data?.migrationsRun} migrations run`);
+          const migrationsRun = migrationResult.data?.migrationsRun || 0;
+          logger.info(`Migrations completed successfully: ${migrationsRun} migrations run`, 'DatabaseManager');
         }
       }
 
       // Seed data if requested
       if (options.seedData && options.adminUserId) {
-        console.log('🌱 Seeding database with sample data...');
+        logger.info('Seeding database with sample data', 'DatabaseManager', {
+          adminUserId: options.adminUserId,
+          force: options.force,
+          includeAdditionalSports: options.includeAdditionalSports,
+        });
 
         seedingResult = await seederService.seedAll({
           adminUserId: options.adminUserId,
@@ -79,19 +156,26 @@ export class DatabaseManager {
         });
 
         if (!seedingResult.success) {
-          errors.push(`Seeding failed: ${seedingResult.error?.message}`);
+          const errorMsg = `Seeding failed: ${seedingResult.error?.message}`;
+          errors.push(errorMsg);
+          logger.error(errorMsg, 'DatabaseManager', seedingResult.error);
         } else {
-          console.log('✅ Database seeding completed successfully');
-          console.log(`📊 Seeded: ${seedingResult.data?.sportsCreated} sports, ${seedingResult.data?.skillsCreated} skills, ${seedingResult.data?.quizzesCreated} quizzes`);
+          const stats = seedingResult.data;
+          logger.info('Database seeding completed successfully', 'DatabaseManager', {
+            sportsCreated: stats?.sportsCreated,
+            skillsCreated: stats?.skillsCreated,
+            quizzesCreated: stats?.quizzesCreated,
+            achievementsCreated: stats?.achievementsCreated,
+          });
         }
       }
 
       const success = errors.length === 0;
 
       if (success) {
-        console.log('🎉 Database initialization completed successfully!');
+        logger.info('Database initialization completed successfully', 'DatabaseManager');
       } else {
-        console.error('❌ Database initialization completed with errors:', errors);
+        logger.error('Database initialization completed with errors', 'DatabaseManager', { errors });
       }
 
       return {
@@ -102,7 +186,7 @@ export class DatabaseManager {
       };
 
     } catch (error) {
-      console.error('💥 Database initialization failed:', error);
+      logger.error('Database initialization failed with exception', 'DatabaseManager', error);
       return {
         success: false,
         errors: [`Initialization failed: ${error}`],
@@ -155,7 +239,7 @@ export class DatabaseManager {
       };
 
     } catch (error) {
-      console.error('Failed to get database status:', error);
+      logger.error('Failed to get database status', 'DatabaseManager', error);
       throw error;
     }
   }
@@ -168,7 +252,7 @@ export class DatabaseManager {
     message: string;
   }> {
     try {
-      console.log('⚠️  Resetting database - this will clear all data!');
+      logger.warn('Resetting database - this will clear all data!', 'DatabaseManager');
 
       // Clear all data
       const clearResult = await seederService.clearAllData();
@@ -189,7 +273,7 @@ export class DatabaseManager {
         throw new Error(`Failed to re-initialize: ${initResult.errors?.join(', ')}`);
       }
 
-      console.log('✅ Database reset completed successfully');
+      logger.info('Database reset completed successfully', 'DatabaseManager');
 
       return {
         success: true,
@@ -197,7 +281,7 @@ export class DatabaseManager {
       };
 
     } catch (error) {
-      console.error('❌ Database reset failed:', error);
+      logger.error('Database reset failed', 'DatabaseManager', error);
       return {
         success: false,
         message: `Database reset failed: ${error}`,
@@ -216,7 +300,7 @@ export class DatabaseManager {
       const result = await seederService.validateDataIntegrity();
       return result.data || { valid: false, issues: ['Validation failed'] };
     } catch (error) {
-      console.error('Database integrity validation failed:', error);
+      logger.error('Database integrity validation failed', 'DatabaseManager', error);
       return {
         valid: false,
         issues: [`Validation error: ${error}`],
@@ -274,6 +358,6 @@ export const DatabaseHelpers = {
     sportsService.clearCache();
     quizService.clearCache();
     userService.clearCache();
-    console.log('🧹 All caches cleared');
+    logger.info('All caches cleared', 'DatabaseHelpers');
   },
 };
