@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/lib/auth/context';
-import { mockFirebaseAuth, mockFirebaseFirestore, createMockFirebaseUser } from '../utils/test-utils';
+import { mockFirebaseAuth, mockFirebaseFirestore, createMockFirebaseUser } from '../../utils/test-utils';
 import { EmailVerificationRequiredError, InvalidCredentialsError } from '@/lib/errors/auth-errors';
 
 // Mock Firebase modules

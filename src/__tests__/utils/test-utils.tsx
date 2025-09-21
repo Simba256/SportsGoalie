@@ -2,7 +2,33 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import { User } from '@/types/auth';
+import type { User } from 'firebase/auth';
+
+// Define our app user type
+interface AppUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: 'student' | 'admin';
+  emailVerified: boolean;
+  photoURL?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt?: Date;
+  preferences?: {
+    theme: 'light' | 'dark';
+    notifications: {
+      email: boolean;
+      push: boolean;
+      quiz: boolean;
+      progress: boolean;
+    };
+    privacy: {
+      profileVisible: boolean;
+      progressVisible: boolean;
+    };
+  };
+}
 
 // Mock user data for testing
 export const mockUsers = {
@@ -58,7 +84,7 @@ export const mockUseAuth = vi.fn();
 // Custom render function that includes providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   authState?: {
-    user?: User | null;
+    user?: AppUser | null;
     loading?: boolean;
     error?: string | null;
     isAuthenticated?: boolean;
