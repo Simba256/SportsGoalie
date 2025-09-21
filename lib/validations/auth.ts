@@ -61,16 +61,16 @@ export const profileUpdateSchema = z.object({
       theme: z.enum(['light', 'dark', 'system']).optional(),
       notifications: z
         .object({
-          email: z.boolean(),
-          push: z.boolean(),
-          quiz: z.boolean(),
-          progress: z.boolean(),
+          email: z.boolean().optional(),
+          push: z.boolean().optional(),
+          quiz: z.boolean().optional(),
+          progress: z.boolean().optional(),
         })
         .optional(),
       privacy: z
         .object({
-          profileVisible: z.boolean(),
-          progressVisible: z.boolean(),
+          profileVisible: z.boolean().optional(),
+          progressVisible: z.boolean().optional(),
         })
         .optional(),
     })

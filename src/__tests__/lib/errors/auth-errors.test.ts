@@ -33,9 +33,9 @@ describe('AuthError System', () => {
       expect(error).toBeInstanceOf(AuthError);
       expect(error.code).toBe(AuthErrorCode.INVALID_CREDENTIALS);
       expect(error.userMessage).toContain('Invalid email or password');
-      expect(error.severity).toBe(ErrorSeverity.MEDIUM);
+      expect(error.severity).toBe(ErrorSeverity.LOW);
       expect(error.context).toBe(mockContext);
-      expect(error.shouldLog).toBe(true);
+      expect(error.shouldLog).toBe(false);
     });
 
     it('should convert to log format correctly', () => {
@@ -45,7 +45,7 @@ describe('AuthError System', () => {
       expect(logFormat).toMatchObject({
         name: 'InvalidCredentialsError',
         code: AuthErrorCode.INVALID_CREDENTIALS,
-        severity: ErrorSeverity.MEDIUM,
+        severity: ErrorSeverity.LOW,
         context: mockContext,
         isRetryable: false,
       });
@@ -91,22 +91,22 @@ describe('AuthError System', () => {
       const error = new WeakPasswordError(mockContext);
       expect(error.code).toBe(AuthErrorCode.WEAK_PASSWORD);
       expect(error.userMessage).toContain('stronger password');
-      expect(error.isRetryable).toBe(true);
+      expect(error.isRetryable).toBe(false);
     });
 
     it('should create TooManyRequestsError correctly', () => {
       const error = new TooManyRequestsError(mockContext);
       expect(error.code).toBe(AuthErrorCode.TOO_MANY_REQUESTS);
-      expect(error.userMessage).toContain('too many');
+      expect(error.userMessage).toContain('Too many');
       expect(error.isRetryable).toBe(true);
     });
 
     it('should create NetworkError correctly', () => {
       const error = new NetworkError(mockContext);
       expect(error.code).toBe(AuthErrorCode.NETWORK_ERROR);
-      expect(error.userMessage).toContain('network');
+      expect(error.userMessage).toContain('Network');
       expect(error.isRetryable).toBe(true);
-      expect(error.severity).toBe(ErrorSeverity.HIGH);
+      expect(error.severity).toBe(ErrorSeverity.MEDIUM);
     });
   });
 

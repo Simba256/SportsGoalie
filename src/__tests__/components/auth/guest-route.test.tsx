@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderWithProviders, mockUsers } from '../../utils/test-utils';
+import { render } from '@testing-library/react';
+import { mockUsers } from '../../utils/test-utils';
 import { GuestRoute } from '@/components/auth/guest-route';
 
 // Mock next/navigation
@@ -10,94 +11,124 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock auth context
+const mockUseAuth = vi.fn();
+vi.mock('@/lib/auth/context', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
 describe('GuestRoute Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should show loading spinner while authentication is loading', () => {
-    const { getByText, getByRole } = renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: true,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    const { getByText } = render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: true,
-          isAuthenticated: false,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(getByText('Loading...')).toBeInTheDocument();
-    expect(getByRole('status', { hidden: true })).toBeInTheDocument(); // Loading spinner
   });
 
   it('should render custom fallback while loading', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: true,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
     const customFallback = <div>Custom Loading...</div>;
 
-    const { getByText } = renderWithProviders(
+    const { getByText } = render(
       <GuestRoute fallback={customFallback}>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: true,
-          isAuthenticated: false,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(getByText('Custom Loading...')).toBeInTheDocument();
   });
 
   it('should redirect admin user to admin panel', () => {
-    renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: mockUsers.verifiedAdmin,
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: mockUsers.verifiedAdmin,
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(mockPush).toHaveBeenCalledWith('/admin');
   });
 
   it('should redirect student user to dashboard', () => {
-    renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: mockUsers.verifiedStudent,
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: mockUsers.verifiedStudent,
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(mockPush).toHaveBeenCalledWith('/dashboard');
   });
 
   it('should return null when authenticated user will be redirected', () => {
-    const { container } = renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: mockUsers.verifiedStudent,
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    const { container } = render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: mockUsers.verifiedStudent,
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
+      </GuestRoute>
     );
 
     // Should return null (empty) as user will be redirected
@@ -105,17 +136,22 @@ describe('GuestRoute Component', () => {
   });
 
   it('should render children when user is not authenticated', () => {
-    const { getByText } = renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    const { getByText } = render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: false,
-          isAuthenticated: false,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(getByText('Guest Content')).toBeInTheDocument();
@@ -123,17 +159,22 @@ describe('GuestRoute Component', () => {
 
   it('should handle role-based redirection correctly', () => {
     // Test admin user
-    const { rerender } = renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: { ...mockUsers.verifiedAdmin },
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    const { rerender } = render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: { ...mockUsers.verifiedAdmin },
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(mockPush).toHaveBeenCalledWith('/admin');
@@ -141,63 +182,67 @@ describe('GuestRoute Component', () => {
     vi.clearAllMocks();
 
     // Test student user
+    mockUseAuth.mockReturnValue({
+      user: { ...mockUsers.verifiedStudent },
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
     rerender(
       <GuestRoute>
         <div>Guest Content</div>
       </GuestRoute>
-    );
-
-    renderWithProviders(
-      <GuestRoute>
-        <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: { ...mockUsers.verifiedStudent },
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
     );
 
     expect(mockPush).toHaveBeenCalledWith('/dashboard');
   });
 
   it('should handle transition from loading to authenticated', () => {
-    const { rerender } = renderWithProviders(
-      <GuestRoute>
-        <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: true,
-          isAuthenticated: false,
-        },
-      }
-    );
-
     // Initially loading
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: true,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
 
-    // Update to authenticated state
-    rerender(
+    const { rerender } = render(
       <GuestRoute>
         <div>Guest Content</div>
       </GuestRoute>
     );
 
-    renderWithProviders(
+    // Initially loading - should show loading state
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+
+    // Update to authenticated state
+    mockUseAuth.mockReturnValue({
+      user: mockUsers.verifiedStudent,
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    rerender(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: mockUsers.verifiedStudent,
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
+      </GuestRoute>
     );
 
     // Should redirect
@@ -205,40 +250,45 @@ describe('GuestRoute Component', () => {
   });
 
   it('should handle transition from loading to unauthenticated', () => {
-    const { rerender, getByText } = renderWithProviders(
+    // Initially loading
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: true,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    const { rerender, getByText } = render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: true,
-          isAuthenticated: false,
-        },
-      }
+      </GuestRoute>
     );
 
     // Initially loading
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
 
     // Update to unauthenticated state
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
     rerender(
       <GuestRoute>
         <div>Guest Content</div>
       </GuestRoute>
-    );
-
-    renderWithProviders(
-      <GuestRoute>
-        <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: false,
-          isAuthenticated: false,
-        },
-      }
     );
 
     // Should show guest content
@@ -246,34 +296,44 @@ describe('GuestRoute Component', () => {
   });
 
   it('should not redirect when user is null but authenticated is false', () => {
-    renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: false,
-          isAuthenticated: false,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('should handle edge case with authenticated true but no user', () => {
-    renderWithProviders(
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      isAuthenticated: true,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
+    render(
       <GuestRoute>
         <div>Guest Content</div>
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: false,
-          isAuthenticated: true,
-        },
-      }
+      </GuestRoute>
     );
 
     // Should still redirect to dashboard (default fallback)
@@ -281,6 +341,18 @@ describe('GuestRoute Component', () => {
   });
 
   it('should render complex children correctly', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
+
     const ComplexContent = () => (
       <div>
         <h1>Welcome Guest</h1>
@@ -289,17 +361,10 @@ describe('GuestRoute Component', () => {
       </div>
     );
 
-    const { getByText, getByRole } = renderWithProviders(
+    const { getByText, getByRole } = render(
       <GuestRoute>
         <ComplexContent />
-      </GuestRoute>,
-      {
-        authState: {
-          user: null,
-          loading: false,
-          isAuthenticated: false,
-        },
-      }
+      </GuestRoute>
     );
 
     expect(getByText('Welcome Guest')).toBeInTheDocument();

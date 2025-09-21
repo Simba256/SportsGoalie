@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import { AuthProvider } from '@/lib/auth/context';
 import { User } from '@/types/auth';
 
 // Mock user data for testing
@@ -52,44 +52,8 @@ export const mockUsers = {
   },
 } as const;
 
-// Mock AuthContext provider for testing
-interface MockAuthProviderProps {
-  children: React.ReactNode;
-  user?: User | null;
-  loading?: boolean;
-  error?: string | null;
-  isAuthenticated?: boolean;
-}
-
-export const MockAuthProvider: React.FC<MockAuthProviderProps> = ({
-  children,
-  user = null,
-  loading = false,
-  error = null,
-  isAuthenticated = !!user,
-}) => {
-  const mockAuthValue = {
-    user,
-    loading,
-    error,
-    isAuthenticated,
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-    resetPassword: vi.fn(),
-    updateUserProfile: vi.fn(),
-    resendEmailVerification: vi.fn(),
-  };
-
-  // Mock the AuthContext directly
-  const MockedAuthContext = React.createContext(mockAuthValue);
-
-  return (
-    <MockedAuthContext.Provider value={mockAuthValue}>
-      {children}
-    </MockedAuthContext.Provider>
-  );
-};
+// Mock useAuth hook
+export const mockUseAuth = vi.fn();
 
 // Custom render function that includes providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -107,15 +71,26 @@ export function renderWithProviders(
 ) {
   const { authState = {}, ...renderOptions } = options;
 
-  function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <MockAuthProvider {...authState}>
-        {children}
-      </MockAuthProvider>
-    );
-  }
+  // Mock the useAuth hook with the provided state
+  const mockAuthValue = {
+    user: authState.user || null,
+    loading: authState.loading || false,
+    error: authState.error || null,
+    isAuthenticated: authState.isAuthenticated ?? !!authState.user,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    resetPassword: vi.fn(),
+    updateUserProfile: vi.fn(),
+    resendEmailVerification: vi.fn(),
+  };
 
-  return render(ui, { wrapper: Wrapper, ...renderOptions });
+  mockUseAuth.mockReturnValue(mockAuthValue);
+
+  return {
+    ...render(ui, renderOptions),
+    user: userEvent.setup(),
+  };
 }
 
 // Utility functions for testing
@@ -140,19 +115,24 @@ export const mockConsoleWarn = () => {
 
 // Firebase mock helpers
 export const mockFirebaseAuth = {
+  currentUser: null,
   signInWithEmailAndPassword: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
-  signOut: vi.fn(),
-  sendPasswordResetEmail: vi.fn(),
-  sendEmailVerification: vi.fn(),
-  updateProfile: vi.fn(),
+  signOut: vi.fn().mockResolvedValue(undefined),
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmailVerification: vi.fn().mockResolvedValue(undefined),
+  updateProfile: vi.fn().mockResolvedValue(undefined),
+  onAuthStateChanged: vi.fn((callback) => {
+    callback(null);
+    return vi.fn(); // unsubscribe function
+  }),
 };
 
 export const mockFirebaseFirestore = {
   doc: vi.fn(),
   getDoc: vi.fn(),
-  setDoc: vi.fn(),
-  updateDoc: vi.fn(),
+  setDoc: vi.fn().mockResolvedValue(undefined),
+  updateDoc: vi.fn().mockResolvedValue(undefined),
 };
 
 // Helper to create mock Firebase user

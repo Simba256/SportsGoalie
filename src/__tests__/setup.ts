@@ -49,6 +49,27 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: vi.fn(),
 }));
 
+// Mock Auth Context
+vi.mock('@/lib/auth/context', () => {
+  const mockUseAuth = vi.fn(() => ({
+    user: null,
+    loading: false,
+    error: null,
+    isAuthenticated: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    resetPassword: vi.fn(),
+    updateUserProfile: vi.fn(),
+    resendEmailVerification: vi.fn(),
+  }));
+
+  return {
+    useAuth: mockUseAuth,
+    AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 // Cleanup after each test case
 afterEach(() => {
   cleanup();

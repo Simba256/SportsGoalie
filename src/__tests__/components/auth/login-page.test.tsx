@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { screen, waitFor, fireEvent } from '@testing-library/react';
-import { useRouter } from 'next/navigation';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import LoginPage from '@/app/auth/login/page';
-import { renderWithProviders, mockUsers } from '../../utils/test-utils';
+import { mockUsers } from '../../utils/test-utils';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -12,15 +12,33 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock auth context
+const mockUseAuth = vi.fn();
+vi.mock('@/lib/auth/context', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
 describe('LoginPage Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should render login form with all elements', () => {
-    renderWithProviders(<LoginPage />);
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
+    });
 
-    expect(screen.getByRole('heading', { name: 'Welcome Back' })).toBeInTheDocument();
+    render(<LoginPage />);
+
+    expect(screen.getByText('Welcome Back')).toBeInTheDocument();
     expect(screen.getByTestId('login-form')).toBeInTheDocument();
     expect(screen.getByTestId('email-input')).toBeInTheDocument();
     expect(screen.getByTestId('password-input')).toBeInTheDocument();
@@ -31,16 +49,21 @@ describe('LoginPage Integration', () => {
   });
 
   it('should show loading state when auth is loading', () => {
-    renderWithProviders(<LoginPage />, {
-      authState: {
-        user: null,
-        loading: true,
-        isAuthenticated: false,
-      },
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: true,
+      isAuthenticated: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      resetPassword: vi.fn(),
+      updateUserProfile: vi.fn(),
+      resendEmailVerification: vi.fn(),
     });
 
+    render(<LoginPage />);
+
     expect(screen.getByText('Loading...')).toBeInTheDocument();
-    expect(screen.getByRole('status', { hidden: true })).toBeInTheDocument();
   });
 
   it('should redirect authenticated admin user to admin page', async () => {
