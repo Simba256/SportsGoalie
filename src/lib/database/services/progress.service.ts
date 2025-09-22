@@ -55,7 +55,7 @@ export class ProgressService {
       const cacheKey = `user_progress_${userId}`;
       const cached = this.cache.get<UserProgress>(cacheKey);
       if (cached) {
-        logger.info('Retrieved user progress from cache', { userId });
+        logger.info('Retrieved user progress from cache', 'ProgressService', { userId });
         return { success: true, data: cached, timestamp: new Date() };
       }
 
@@ -85,17 +85,20 @@ export class ProgressService {
         await setDoc(docRef, initialProgress);
         this.cache.set(cacheKey, initialProgress);
 
-        logger.info('Created initial user progress', { userId });
+        logger.info('Created initial user progress', 'ProgressService', { userId });
         return { success: true, data: initialProgress, timestamp: new Date() };
       }
 
       const progress = { id: docSnapshot.id, ...docSnapshot.data() } as UserProgress;
       this.cache.set(cacheKey, progress);
 
-      logger.info('Retrieved user progress', { userId, level: progress.overallStats.level });
+      logger.info('Retrieved user progress', 'ProgressService', { userId, level: progress.overallStats.level });
       return { success: true, data: progress, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get user progress', { userId, error });
+      logger.error('Failed to get user progress', 'ProgressService', {
+        userId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -135,10 +138,14 @@ export class ProgressService {
       const progress = { id: doc.id, ...doc.data() } as SportProgress;
       this.cache.set(cacheKey, progress);
 
-      logger.info('Retrieved sport progress', { userId, sportId, progress: progress.progressPercentage });
+      logger.info('Retrieved sport progress', 'ProgressService', { userId, sportId, progress: progress.progressPercentage });
       return { success: true, data: progress, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get sport progress', { userId, sportId, error });
+      logger.error('Failed to get sport progress', 'ProgressService', {
+        userId,
+        sportId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -180,7 +187,11 @@ export class ProgressService {
 
       return { success: true, data: progress, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get skill progress', { userId, skillId, error });
+      logger.error('Failed to get skill progress', 'ProgressService', {
+        userId,
+        skillId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -256,7 +267,7 @@ export class ProgressService {
           this.cache.delete(`sport_progress_${userId}_${sportId}`);
           this.cache.delete(`user_progress_${userId}`);
 
-          logger.info('Updated sport progress', {
+          logger.info('Updated sport progress', 'ProgressService', {
             userId,
             sportId,
             status: currentProgress.status,
@@ -267,7 +278,11 @@ export class ProgressService {
         });
       });
     } catch (error) {
-      logger.error('Failed to update sport progress', { userId, sportId, error });
+      logger.error('Failed to update sport progress', 'ProgressService', {
+        userId,
+        sportId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -344,7 +359,7 @@ export class ProgressService {
           this.cache.delete(`sport_progress_${userId}_${sportId}`);
           this.cache.delete(`user_progress_${userId}`);
 
-          logger.info('Updated skill progress', {
+          logger.info('Updated skill progress', 'ProgressService', {
             userId,
             skillId,
             sportId,
@@ -356,7 +371,12 @@ export class ProgressService {
         });
       });
     } catch (error) {
-      logger.error('Failed to update skill progress', { userId, skillId, sportId, error });
+      logger.error('Failed to update skill progress', 'ProgressService', {
+        userId,
+        skillId,
+        sportId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -396,12 +416,16 @@ export class ProgressService {
         // Invalidate cache
         this.cache.delete(`skill_progress_${userId}_${skillId}`);
 
-        logger.info('Updated video progress', { userId, skillId, progress: videoProgress.progressPercentage });
+        logger.info('Updated video progress', 'ProgressService', { userId, skillId, progress: videoProgress.progressPercentage });
       }
 
       return { success: true, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to update video progress', { userId, skillId, error });
+      logger.error('Failed to update video progress', 'ProgressService', {
+        userId,
+        skillId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -460,11 +484,15 @@ export class ProgressService {
           await this.checkQuizAchievements(userId, score, passed);
         });
 
-        logger.info('Recorded quiz completion', { userId, quizId, score, passed });
+        logger.info('Recorded quiz completion', 'ProgressService', { userId, quizId, score, passed });
         return { success: true, timestamp: new Date() };
       });
     } catch (error) {
-      logger.error('Failed to record quiz completion', { userId, quizId, error });
+      logger.error('Failed to record quiz completion', 'ProgressService', {
+        userId,
+        quizId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -501,10 +529,13 @@ export class ProgressService {
 
       this.cache.set(cacheKey, achievements);
 
-      logger.info('Retrieved user achievements', { userId, count: achievements.length });
+      logger.info('Retrieved user achievements', 'ProgressService', { userId, count: achievements.length });
       return { success: true, data: achievements, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get user achievements', { userId, error });
+      logger.error('Failed to get user achievements', 'ProgressService', {
+        userId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -617,10 +648,14 @@ export class ProgressService {
       this.cache.delete(`user_achievements_${userId}`);
       this.cache.delete(`user_progress_${userId}`);
 
-      logger.info('Awarded achievement', { userId, achievementId, points: achievement.points });
+      logger.info('Awarded achievement', 'ProgressService', { userId, achievementId, points: achievement.points });
       return { success: true, data: userAchievement, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to award achievement', { userId, achievementId, error });
+      logger.error('Failed to award achievement', 'ProgressService', {
+        userId,
+        achievementId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -690,10 +725,13 @@ export class ProgressService {
       // Check for streak achievements
       await this.checkStreakAchievements(userId, newStreak, longestStreak);
 
-      logger.info('Updated user streak', { userId, currentStreak: newStreak, longestStreak });
+      logger.info('Updated user streak', 'ProgressService', { userId, currentStreak: newStreak, longestStreak });
       return { success: true, data: streakInfo, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to update streak', { userId, error });
+      logger.error('Failed to update streak', 'ProgressService', {
+        userId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {
@@ -729,7 +767,10 @@ export class ProgressService {
 
       return { success: true, data: analytics, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get learning analytics', { userId, error });
+      logger.error('Failed to get learning analytics', 'ProgressService', {
+        userId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         success: false,
         error: {

@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Quiz } from '@/types/quiz';
 import { firebaseService } from '@/lib/firebase/service';
 
@@ -39,7 +40,7 @@ interface QuizWithStats extends Quiz {
   stats?: QuizStats;
 }
 
-export default function QuizzesPage() {
+function QuizzesPageContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState<QuizWithStats[]>([]);
@@ -299,5 +300,13 @@ export default function QuizzesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function QuizzesPage() {
+  return (
+    <ProtectedRoute>
+      <QuizzesPageContent />
+    </ProtectedRoute>
   );
 }

@@ -41,14 +41,14 @@ export function Header() {
           >
             Sports
           </Link>
-          <Link
-            href="/quizzes"
-            className="text-sm font-medium transition-colors hover:text-primary"
-          >
-            Quizzes
-          </Link>
           {isAuthenticated && (
             <>
+              <Link
+                href="/quizzes"
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
+                Quizzes
+              </Link>
               <Link
                 href="/dashboard"
                 className="text-sm font-medium transition-colors hover:text-primary"
@@ -157,15 +157,15 @@ export function Header() {
             >
               Sports
             </Link>
-            <Link
-              href="/quizzes"
-              className="block text-sm font-medium transition-colors hover:text-primary"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Quizzes
-            </Link>
             {isAuthenticated ? (
               <>
+                <Link
+                  href="/quizzes"
+                  className="block text-sm font-medium transition-colors hover:text-primary"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Quizzes
+                </Link>
                 <Link
                   href="/dashboard"
                   className="block text-sm font-medium transition-colors hover:text-primary"

@@ -20,7 +20,7 @@ export interface BaseQuestion {
   id: string;
   type: QuestionType;
   title: string;
-  description?: string;
+  content: string;
   media?: QuestionMedia[]; // Support for multiple images/videos
   points: number;
   difficulty: DifficultyLevel;
@@ -41,12 +41,13 @@ export interface MultipleChoiceOption {
   isCorrect: boolean;
   explanation?: string;
   media?: QuestionMedia; // Option can have media too
+  order: number;
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
   type: 'multiple-choice';
   options: MultipleChoiceOption[];
-  allowMultipleAnswers: boolean;
+  allowMultiple: boolean;
   shuffleOptions: boolean;
 }
 

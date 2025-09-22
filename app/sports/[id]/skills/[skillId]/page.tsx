@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { quizService } from '@/lib/database/services/quiz.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -125,6 +126,25 @@ export default function SkillDetailPage() {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+  };
+
+  const handleTakeQuiz = async () => {
+    if (!skillId) return;
+
+    try {
+      const quizzesResult = await quizService.getQuizzesBySkill(skillId);
+
+      if (quizzesResult.success && quizzesResult.data.items.length > 0) {
+        const quiz = quizzesResult.data.items[0];
+        router.push(`/quiz/${quiz.id}`);
+      } else {
+        alert('Quiz not available yet. Please check back later!');
+        console.log('No quiz found for skill:', skillId);
+      }
+    } catch (error) {
+      alert('Unable to load quiz. Please try again later.');
+      console.error('Error navigating to quiz:', error);
+    }
   };
 
   if (state.loading) {
@@ -404,7 +424,7 @@ export default function SkillDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <Button>
+                      <Button onClick={handleTakeQuiz}>
                         Take Quiz
                       </Button>
                     </div>
@@ -443,8 +463,8 @@ export default function SkillDetailPage() {
           {activeTab === 'resources' && (
             <div className="space-y-4">
               {skill.externalResources && skill.externalResources.length > 0 ? (
-                skill.externalResources.map((resource) => (
-                  <Card key={resource.id}>
+                skill.externalResources.map((resource, index) => (
+                  <Card key={resource.id || `resource-${index}`}>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">

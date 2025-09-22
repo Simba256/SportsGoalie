@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   User as FirebaseUser,
   onAuthStateChanged,
@@ -41,6 +42,7 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [state, setState] = useState<AuthState>({
     user: null,
     loading: true,
@@ -253,6 +255,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await firebaseSignOut(auth);
       setUser(null);
+      // Navigate to landing page after successful logout
+      router.push('/');
     } catch {
       throw new Error('Failed to log out');
     }

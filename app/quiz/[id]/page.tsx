@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import {
   Quiz,
   QuizAttempt,
@@ -35,7 +36,7 @@ import {
 import { firebaseService } from '@/lib/firebase/service';
 import { useAuth } from '@/lib/auth/context';
 
-export default function QuizTakingPage() {
+function QuizTakingPageContent() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -594,5 +595,13 @@ export default function QuizTakingPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function QuizTakingPage() {
+  return (
+    <ProtectedRoute>
+      <QuizTakingPageContent />
+    </ProtectedRoute>
   );
 }

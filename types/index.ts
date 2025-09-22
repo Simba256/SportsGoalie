@@ -72,7 +72,7 @@ export interface QuizAnswer {
   pointsEarned: number;
 }
 
-export interface UserProgress {
+export interface UserSkillProgress {
   id: string;
   userId: string;
   skillId: string;

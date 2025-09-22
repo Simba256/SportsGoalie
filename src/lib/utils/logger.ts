@@ -175,6 +175,41 @@ class Logger {
   }
 
   /**
+   * Creates a safe version of data for logging by handling circular references
+   * @private
+   */
+  private createSafeLogData(data: any): any {
+    const seen = new WeakSet();
+
+    const replacer = (key: string, value: any) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return '[Circular Reference]';
+        }
+        seen.add(value);
+      }
+
+      // Handle functions
+      if (typeof value === 'function') {
+        return '[Function]';
+      }
+
+      // Handle undefined
+      if (value === undefined) {
+        return '[Undefined]';
+      }
+
+      return value;
+    };
+
+    try {
+      return JSON.parse(JSON.stringify(data, replacer));
+    } catch (err) {
+      return { dataType: typeof data, error: 'Could not serialize data' };
+    }
+  }
+
+  /**
    * Outputs log entry to console with appropriate formatting
    * @private
    */
@@ -184,16 +219,31 @@ class Logger {
 
     // Helper to safely log data
     const logWithData = (logFn: any, msg: string, data: any) => {
-      if (data && typeof data === 'object' && !(data instanceof Error)) {
+      if (!data) {
+        logFn(msg);
+        return;
+      }
+
+      if (typeof data === 'object' && !(data instanceof Error)) {
+        try {
+          // Test if the object can be serialized safely
+          JSON.stringify(data);
+          logFn(msg, data);
+        } catch (err) {
+          // If serialization fails, try to create a safe version
+          try {
+            const safeData = this.createSafeLogData(data);
+            logFn(msg, safeData);
+          } catch (fallbackErr) {
+            logFn(msg + ' [data logging failed]');
+          }
+        }
+      } else {
         try {
           logFn(msg, data);
         } catch (err) {
-          logFn(msg);
+          logFn(msg + ' [data logging failed]');
         }
-      } else if (data) {
-        logFn(msg, data);
-      } else {
-        logFn(msg);
       }
     };
 

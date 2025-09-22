@@ -164,6 +164,7 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
         text: '',
         isCorrect: false,
         explanation: '',
+        order: options.length,
       };
       setCurrentQuestion(prev => ({
         ...prev,
@@ -192,9 +193,9 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
           <Switch
-            checked={mcQuestion.allowMultipleAnswers || false}
+            checked={mcQuestion.allowMultiple || false}
             onCheckedChange={(checked) =>
-              setCurrentQuestion(prev => ({ ...prev, allowMultipleAnswers: checked }))
+              setCurrentQuestion(prev => ({ ...prev, allowMultiple: checked }))
             }
           />
           <Label>Allow Multiple Answers</Label>
@@ -367,49 +368,26 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       return;
     }
 
-    // Validate using Zod schema
-    try {
-      const validationResult = questionSchema.safeParse(currentQuestion);
-
-      if (!validationResult.success) {
-        const firstError = validationResult.error.errors[0];
-        toast.error('Question validation failed', {
-          description: firstError.message,
-        });
-        console.error('Question validation errors:', validationResult.error.errors);
-        return;
-      }
-
-      // Use validated question data
-      const validatedQuestion = validationResult.data;
-    } catch (error) {
-      toast.error('Invalid question data', {
-        description: 'Please check all fields and try again.',
-      });
-      console.error('Question validation error:', error);
-      return;
-    }
-
-    // Build question data, omitting undefined optional fields
+    // Build complete question data before validation
     const questionData: Partial<Question> = {
       id: editingIndex !== null ? questions[editingIndex].id : Date.now().toString(),
       type: currentQuestion.type!,
-      title: currentQuestion.title!,
-      content: currentQuestion.content!,
+      title: currentQuestion.title!.trim(),
+      content: currentQuestion.content!.trim(),
       media: currentQuestion.media || [],
-      points: currentQuestion.points!,
+      points: currentQuestion.points || 1,
       difficulty: currentQuestion.difficulty!,
-      order: currentQuestion.order!,
+      order: currentQuestion.order ?? questions.length,
       tags: currentQuestion.tags || [],
-      isRequired: currentQuestion.isRequired!,
+      isRequired: currentQuestion.isRequired ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
       createdBy: 'admin',
     };
 
-    // Only add optional fields if they have values
+    // Add optional fields if they have values
     if (currentQuestion.explanation && currentQuestion.explanation.trim()) {
-      questionData.explanation = currentQuestion.explanation;
+      questionData.explanation = currentQuestion.explanation.trim();
     }
 
     if (currentQuestion.timeLimit && currentQuestion.timeLimit > 0) {
@@ -417,19 +395,48 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     }
 
     // Add question-type specific data
-    Object.keys(currentQuestion).forEach(key => {
-      if (!questionData.hasOwnProperty(key) && currentQuestion[key as keyof typeof currentQuestion] !== undefined) {
-        questionData[key] = currentQuestion[key as keyof typeof currentQuestion];
-      }
-    });
-
-    if (editingIndex !== null) {
-      onUpdateQuestion(editingIndex, questionData);
-    } else {
-      onAddQuestion(questionData);
+    if (currentQuestion.type === 'multiple-choice') {
+      const mcQuestion = currentQuestion as Partial<MultipleChoiceQuestion>;
+      questionData.options = mcQuestion.options || [];
+      questionData.allowMultiple = mcQuestion.allowMultiple || false;
+      questionData.shuffleOptions = mcQuestion.shuffleOptions ?? true;
     }
 
-    handleCloseDialog();
+    // Validate using Zod schema
+    try {
+      const validationResult = questionSchema.safeParse(questionData);
+
+      if (!validationResult.success) {
+        const errors = validationResult.error?.errors || [];
+        const firstError = errors[0];
+        const errorMessage = firstError ? firstError.message : 'Unknown validation error';
+
+        toast.error('Question validation failed', {
+          description: errorMessage,
+        });
+        console.error('Question validation errors:', errors);
+        console.error('Question data being validated:', questionData);
+        return;
+      }
+
+      // Use validated question data
+      const validatedQuestion = validationResult.data;
+
+      if (editingIndex !== null) {
+        onUpdateQuestion(editingIndex, validatedQuestion);
+      } else {
+        onAddQuestion(validatedQuestion);
+      }
+
+      handleCloseDialog();
+    } catch (error) {
+      toast.error('Invalid question data', {
+        description: 'Please check all fields and try again.',
+      });
+      console.error('Question validation error:', error);
+      console.error('Question data:', questionData);
+      return;
+    }
   };
 
   return (

@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { useSportEnrollment } from '@/src/hooks/useEnrollment';
+import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -16,6 +19,9 @@ import {
   CheckCircle,
   Star,
   Trophy,
+  Heart,
+  HeartOff,
+  Loader2,
 } from 'lucide-react';
 
 interface SportDetailState {
@@ -30,6 +36,12 @@ export default function SportDetailPage() {
   const params = useParams();
   const router = useRouter();
   const sportId = params.id as string;
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+
+  // Debug auth state
+  useEffect(() => {
+    console.log('Auth state changed:', { user: !!user, id: user?.id, authLoading, isAuthenticated });
+  }, [user, authLoading, isAuthenticated]);
 
   const [state, setState] = useState<SportDetailState>({
     sport: null,
@@ -40,6 +52,17 @@ export default function SportDetailPage() {
   });
 
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'all'>('all');
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+  // Use enrollment hook for the sport
+  const {
+    enrolled,
+    progress,
+    loading: enrollmentLoading,
+    enroll,
+    unenroll,
+  } = useSportEnrollment(sportId);
 
   useEffect(() => {
     if (!sportId) return;
@@ -115,6 +138,83 @@ export default function SportDetailPage() {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+  };
+
+  // Handle enrollment in sport
+  const handleStartLearning = async () => {
+    console.log('handleStartLearning called, user state:', user);
+    console.log('Auth loading state:', { user: !!user, id: user?.id });
+
+    if (!user) {
+      toast.error("Please log in to start learning this sport.");
+      router.push('/auth/login');
+      return;
+    }
+
+    if (enrolled) {
+      // If already enrolled, navigate to first skill or continue where left off
+      if (state.skills.length > 0) {
+        // Find next skill to learn or first skill if none started
+        const nextSkill = state.skills.find(skill =>
+          !progress?.completedSkills.includes(skill.id)
+        ) || state.skills[0];
+
+        router.push(`/sports/${sportId}/skills/${nextSkill.id}`);
+      } else {
+        toast.error("This sport doesn't have any skills yet.");
+      }
+      return;
+    }
+
+    // Enroll in the sport
+    try {
+      console.log('Starting enrollment process...');
+      const success = await enroll();
+      console.log('Enrollment success:', success);
+
+      if (success) {
+        toast.success(`Successfully enrolled in ${state.sport?.name}! Start learning now!`);
+
+        // Navigate to first skill if available
+        if (state.skills.length > 0) {
+          router.push(`/sports/${sportId}/skills/${state.skills[0].id}`);
+        } else {
+          // If no skills, navigate to dashboard to see progress
+          router.push('/dashboard');
+        }
+      } else {
+        toast.error("Enrollment failed. Please check the console for details and try again.");
+      }
+    } catch (error) {
+      console.error('Enrollment error in component:', error);
+      toast.error("An unexpected error occurred. Please check the console and try again.");
+    }
+  };
+
+  // Handle favorites (placeholder for now)
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      toast.error("Please log in to save favorites.");
+      router.push('/auth/login');
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      // TODO: Implement favorites functionality in backend
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+
+      setIsFavorited(!isFavorited);
+      toast.success(
+        isFavorited
+          ? `${state.sport?.name} removed from favorites`
+          : `${state.sport?.name} added to favorites`
+      );
+    } catch (error) {
+      toast.error("Failed to update favorites. Please try again.");
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   const filteredSkills = selectedDifficulty === 'all'
@@ -429,16 +529,67 @@ export default function SportDetailPage() {
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <h3 className="text-xl font-semibold">Ready to start learning {sport.name}?</h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Begin your journey with {sport.skillsCount} comprehensive skills designed to take you from beginner to advanced level.
-            </p>
+            {enrolled ? (
+              <>
+                <h3 className="text-xl font-semibold">Continue learning {sport.name}</h3>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  You're enrolled! Progress: {Math.round(progress?.progressPercentage || 0)}% complete
+                  ({progress?.completedSkills.length || 0}/{progress?.totalSkills || 0} skills)
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold">Ready to start learning {sport.name}?</h3>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Begin your journey with {sport.skillsCount} comprehensive skills designed to take you from beginner to advanced level.
+                </p>
+              </>
+            )}
             <div className="flex gap-4 justify-center">
-              <Button size="lg">
-                Start Learning
+              <Button
+                size="lg"
+                onClick={handleStartLearning}
+                disabled={enrollmentLoading || state.skillsLoading}
+              >
+                {enrollmentLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {enrolled ? 'Loading...' : 'Enrolling...'}
+                  </>
+                ) : enrolled ? (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Continue Learning
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Start Learning
+                  </>
+                )}
               </Button>
-              <Button variant="outline" size="lg">
-                Save to Favorites
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleToggleFavorite}
+                disabled={favoriteLoading}
+              >
+                {favoriteLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : isFavorited ? (
+                  <>
+                    <Heart className="w-4 h-4 mr-2 fill-current text-red-500" />
+                    Remove from Favorites
+                  </>
+                ) : (
+                  <>
+                    <Heart className="w-4 h-4 mr-2" />
+                    Save to Favorites
+                  </>
+                )}
               </Button>
             </div>
           </div>

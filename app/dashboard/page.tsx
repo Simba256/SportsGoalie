@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, BookOpen, Target, Trophy, TrendingUp, Calendar, Award, Flame } from 'lucide-react';
+import { BarChart, BookOpen, Target, Trophy, TrendingUp, Calendar, Award, Flame, Play, CheckCircle, Clock, Users } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
+import { useEnrollment } from '@/src/hooks/useEnrollment';
 import { StatsCards } from '@/components/analytics/StatsCards';
 import { ProgressChart } from '@/components/analytics/ProgressChart';
 
@@ -24,25 +25,10 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { user } = useAuth();
   const { userProgress, loading, error } = useProgress();
+  const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
 
-  // Generate sample data for charts (in a real app, this would come from the service)
-  const generateSampleProgressData = () => {
-    const dates = [];
-    const today = new Date();
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      dates.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        skillsCompleted: Math.floor(Math.random() * 3),
-        timeSpent: Math.floor(Math.random() * 4) + 1,
-        quizScore: Math.floor(Math.random() * 30) + 70,
-      });
-    }
-    return dates;
-  };
 
-  if (loading) {
+  if (loading || enrollmentsLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-32">
@@ -67,23 +53,25 @@ function DashboardContent() {
   // }
 
   const stats = userProgress?.overallStats;
-  const progressData = generateSampleProgressData();
+
+  // Use real progress data from user's activity - empty array if no data available
+  const progressData = userProgress?.progressHistory || [];
 
   const statsCards = [
     {
       title: 'Completed Quizzes',
       value: stats?.quizzesCompleted || 0,
       description: stats?.quizzesCompleted ? 'Keep up the great work!' : 'Start your first quiz!',
-      trend: 'up' as const,
-      trendValue: '+12%',
+      trend: stats?.quizzesCompleted ? 'up' : 'neutral' as const,
+      trendValue: '',
       icon: <Trophy className="h-4 w-4" />,
     },
     {
       title: 'Skills Completed',
       value: stats?.skillsCompleted || 0,
       description: stats?.skillsCompleted ? 'Skills mastered' : 'Explore sports skills',
-      trend: 'up' as const,
-      trendValue: '+8%',
+      trend: stats?.skillsCompleted ? 'up' : 'neutral' as const,
+      trendValue: '',
       icon: <BookOpen className="h-4 w-4" />,
     },
     {
@@ -91,7 +79,7 @@ function DashboardContent() {
       value: stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '-',
       description: stats?.averageQuizScore ? 'Great performance!' : 'Complete quizzes to see progress',
       trend: stats?.averageQuizScore && stats.averageQuizScore > 75 ? 'up' : 'neutral' as const,
-      trendValue: stats?.averageQuizScore ? '+5%' : '',
+      trendValue: '',
       icon: <Target className="h-4 w-4" />,
     },
     {
@@ -99,7 +87,7 @@ function DashboardContent() {
       value: `${stats?.currentStreak || 0} days`,
       description: stats?.currentStreak ? 'Keep the momentum!' : 'Start your learning streak',
       trend: stats?.currentStreak && stats.currentStreak > 3 ? 'up' : 'neutral' as const,
-      trendValue: stats?.currentStreak ? '+1 day' : '',
+      trendValue: '',
       icon: <Flame className="h-4 w-4" />,
     },
   ];
@@ -138,6 +126,236 @@ function DashboardContent() {
           title="30-Day Learning Progress"
           description="Your learning activity and performance over the last 30 days"
         />
+
+        {/* Enrolled Sports Progress Cards */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center space-x-2">
+                <Trophy className="h-6 w-6 text-primary" />
+                <span>Your Sports Progress</span>
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Track your progress across all enrolled sports and continue your learning journey.
+              </p>
+            </div>
+            {enrolledSports.length > 0 && (
+              <Link href="/sports">
+                <Button variant="outline">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Browse More Sports
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {enrollmentsError ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="text-destructive text-sm">{enrollmentsError}</div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : enrolledSports.length === 0 ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-16">
+                <div className="text-center max-w-md">
+                  <div className="h-24 w-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+                    <Users className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">No Sports Enrolled Yet</h3>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    Start your sports learning journey by enrolling in your first sport.
+                    Explore our comprehensive catalog and begin mastering new skills today.
+                  </p>
+                  <Link href="/sports">
+                    <Button className="bg-primary hover:bg-primary/90">
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Explore Sports Catalog
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {enrolledSports.map(({ sport, progress }) => {
+                const getStatusColor = (status: string) => {
+                  switch (status) {
+                    case 'completed':
+                      return {
+                        badge: 'bg-green-100 text-green-700 border-green-200',
+                        progress: 'bg-green-500',
+                        card: 'border-green-200 bg-green-50/30'
+                      };
+                    case 'in_progress':
+                      return {
+                        badge: 'bg-blue-100 text-blue-700 border-blue-200',
+                        progress: 'bg-blue-500',
+                        card: 'border-blue-200 bg-blue-50/30'
+                      };
+                    default:
+                      return {
+                        badge: 'bg-gray-100 text-gray-700 border-gray-200',
+                        progress: 'bg-gray-400',
+                        card: 'border-gray-200'
+                      };
+                  }
+                };
+
+                const getStatusIcon = (status: string) => {
+                  switch (status) {
+                    case 'completed':
+                      return <CheckCircle className="h-4 w-4" />;
+                    case 'in_progress':
+                      return <Play className="h-4 w-4" />;
+                    default:
+                      return <Clock className="h-4 w-4" />;
+                  }
+                };
+
+                const getStatusText = (status: string) => {
+                  switch (status) {
+                    case 'completed':
+                      return 'Completed';
+                    case 'in_progress':
+                      return 'In Progress';
+                    default:
+                      return 'Not Started';
+                  }
+                };
+
+                const statusColors = getStatusColor(progress.status);
+                const progressPercentage = Math.round(progress.progressPercentage);
+
+                return (
+                  <Card
+                    key={sport.id}
+                    className={`group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${statusColors.card}`}
+                  >
+                    <Link href={`/sports/${sport.id}`} className="block">
+                      <CardContent className="p-6">
+                        {/* Sport Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            {sport.imageUrl ? (
+                              <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted ring-2 ring-background shadow-sm">
+                                <img
+                                  src={sport.imageUrl}
+                                  alt={sport.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center ring-2 ring-background shadow-sm">
+                                <Trophy className="h-6 w-6 text-primary" />
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
+                                {sport.name}
+                              </h3>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs font-medium mt-1 ${statusColors.badge}`}
+                              >
+                                {getStatusIcon(progress.status)}
+                                <span className="ml-1">{getStatusText(progress.status)}</span>
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Sport Description */}
+                        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed">
+                          {sport.description}
+                        </p>
+
+                        {/* Progress Section */}
+                        <div className="space-y-4">
+                          {/* Progress Bar with Percentage */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-muted-foreground">Progress</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-2xl font-bold text-foreground">
+                                  {progressPercentage}%
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({progress.completedSkills.length}/{progress.totalSkills})
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 ease-out ${statusColors.progress}`}
+                                style={{ width: `${progressPercentage}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {progress.completedSkills.length} of {progress.totalSkills} skills completed
+                            </div>
+                          </div>
+
+                          {/* Stats Row */}
+                          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-foreground">
+                                {Math.round(progress.timeSpent / 60)}h
+                              </div>
+                              <div className="text-xs text-muted-foreground">Time Spent</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-foreground">
+                                {progress.streak?.current || 0}
+                              </div>
+                              <div className="text-xs text-muted-foreground">Day Streak</div>
+                            </div>
+                          </div>
+
+                          {/* Last Activity */}
+                          {progress.lastAccessedAt && (
+                            <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border/50">
+                              Last accessed: {new Date(progress.lastAccessedAt.toDate()).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </div>
+                          )}
+
+                          {/* Action Button */}
+                          <Button
+                            className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                            variant={progress.status === 'completed' ? 'outline' : 'default'}
+                          >
+                            {progress.status === 'completed' ? (
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Review & Practice
+                              </>
+                            ) : progress.status === 'in_progress' ? (
+                              <>
+                                <Play className="mr-2 h-4 w-4" />
+                                Continue Learning
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="mr-2 h-4 w-4" />
+                                Start Learning
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Link>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Dashboard Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
