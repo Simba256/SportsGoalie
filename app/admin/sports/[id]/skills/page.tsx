@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
+import { AdminRoute } from '@/components/auth/protected-route';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { Button } from '@/components/ui/button';
@@ -63,7 +64,7 @@ const defaultFormData: SkillFormData = {
   prerequisites: [],
 };
 
-export default function AdminSkillsPage() {
+function AdminSkillsContent() {
   const params = useParams();
   const router = useRouter();
   const sportId = params.id as string;
@@ -629,5 +630,13 @@ export default function AdminSkillsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminSkillsPage() {
+  return (
+    <AdminRoute>
+      <AdminSkillsContent />
+    </AdminRoute>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   CheckCircle,
   XCircle,
@@ -79,7 +80,9 @@ export default function QuizResultsPage() {
       ]);
 
       if (!quizData || !attemptData) {
-        alert('Results not found');
+        toast.error('Results not found', {
+          description: 'The quiz results could not be found.',
+        });
         router.push('/');
         return;
       }
@@ -129,7 +132,9 @@ export default function QuizResultsPage() {
       setResult(resultData);
     } catch (error) {
       console.error('Error loading results:', error);
-      alert('Failed to load results');
+      toast.error('Failed to load results', {
+        description: 'Please try refreshing the page or contact support.',
+      });
     } finally {
       setLoading(false);
     }
@@ -191,7 +196,7 @@ export default function QuizResultsPage() {
     }
   };
 
-  const getUserAnswerText = (question: Question, answer: any): string => {
+  const getUserAnswerText = (question: Question, answer: string | boolean | string[]): string => {
     if (!answer) return 'No answer provided';
 
     switch (question.type) {

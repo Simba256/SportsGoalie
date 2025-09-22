@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Sport, DifficultyLevel } from '@/types';
+import { AdminRoute } from '@/components/auth/protected-route';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { Button } from '@/components/ui/button';
@@ -61,7 +62,7 @@ const defaultFormData: SportFormData = {
   order: 0,
 };
 
-export default function AdminSportsPage() {
+function AdminSportsContent() {
   const [state, setState] = useState<AdminSportsState>({
     sports: [],
     loading: true,
@@ -571,5 +572,13 @@ export default function AdminSportsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminSportsPage() {
+  return (
+    <AdminRoute>
+      <AdminSportsContent />
+    </AdminRoute>
   );
 }

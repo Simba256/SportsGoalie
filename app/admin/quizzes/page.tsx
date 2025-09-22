@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
+import { toast } from 'sonner';
+import { AdminRoute } from '@/components/auth/protected-route';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +21,7 @@ import { firebaseService } from '@/lib/firebase/service';
 import { cacheOrFetch } from '@/lib/utils/cache.service';
 import Link from 'next/link';
 
-export default function QuizzesAdminPage() {
+function QuizzesAdminContent() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [sports, setSports] = useState<Sport[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -60,7 +62,9 @@ export default function QuizzesAdminPage() {
       setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
     } catch (error) {
       console.error('Error deleting quiz:', error);
-      alert('Failed to delete quiz');
+      toast.error('Failed to delete quiz', {
+        description: 'Please try again or contact support if the problem persists.',
+      });
     }
   };
 
@@ -252,5 +256,13 @@ export default function QuizzesAdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function QuizzesAdminPage() {
+  return (
+    <AdminRoute>
+      <QuizzesAdminContent />
+    </AdminRoute>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Clock, ArrowLeft, ArrowRight, CheckCircle, Play } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -43,7 +44,7 @@ export default function QuizTakingPage() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [attempt, setAttempt] = useState<QuizAttempt | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<{ [questionId: string]: any }>({});
+  const [answers, setAnswers] = useState<{ [questionId: string]: string | boolean | string[] }>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -77,7 +78,9 @@ export default function QuizTakingPage() {
       setLoading(true);
       const quizData = await firebaseService.getDocument('quizzes', quizId);
       if (!quizData) {
-        alert('Quiz not found');
+        toast.error('Quiz not found', {
+          description: 'The requested quiz could not be found.',
+        });
         router.push('/');
         return;
       }
@@ -88,7 +91,9 @@ export default function QuizTakingPage() {
       }
     } catch (error) {
       console.error('Error loading quiz:', error);
-      alert('Failed to load quiz');
+      toast.error('Failed to load quiz', {
+        description: 'Please try refreshing the page or contact support.',
+      });
     } finally {
       setLoading(false);
     }
@@ -119,11 +124,13 @@ export default function QuizTakingPage() {
       setIsTimerActive(true);
     } catch (error) {
       console.error('Error starting quiz:', error);
-      alert('Failed to start quiz');
+      toast.error('Failed to start quiz', {
+        description: 'Please try again or contact support if the problem persists.',
+      });
     }
   };
 
-  const handleAnswerChange = (questionId: string, answer: any) => {
+  const handleAnswerChange = (questionId: string, answer: string | boolean | string[]) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer,
@@ -170,13 +177,15 @@ export default function QuizTakingPage() {
       router.push(`/quiz/${quizId}/results/${attempt.id}`);
     } catch (error) {
       console.error('Error submitting quiz:', error);
-      alert('Failed to submit quiz');
+      toast.error('Failed to submit quiz', {
+        description: 'Your answers may not have been saved. Please try again.',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const checkAnswer = (question: Question, userAnswer: any): boolean => {
+  const checkAnswer = (question: Question, userAnswer: string | boolean | string[]): boolean => {
     switch (question.type) {
       case 'multiple-choice':
         const mcQuestion = question as MultipleChoiceQuestion;

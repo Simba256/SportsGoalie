@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { AuthProvider } from '@/lib/auth/context';
+import { Toaster } from '@/components/ui/sonner';
 
 import './globals.css';
 
@@ -39,6 +40,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

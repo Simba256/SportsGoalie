@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { completeQuizSchema } from '@/lib/validations/quiz';
+import { AdminRoute } from '@/components/auth/protected-route';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,11 +23,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Quiz, QuizSettings, Question } from '@/types/quiz';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { firebaseService } from '@/lib/firebase/service';
-import { storageService } from '@/lib/firebase/storage.service';
 import { QuestionBuilder } from '@/components/admin/QuestionBuilder';
 import Link from 'next/link';
 
-export default function CreateQuizPage() {
+function CreateQuizContent() {
   const router = useRouter();
   const [sports, setSports] = useState<Sport[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -80,7 +82,7 @@ export default function CreateQuizPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     // Convert "none" values to undefined for optional fields
     const processedValue = value === "none" ? undefined : value;
     setQuizData(prev => ({
@@ -89,7 +91,7 @@ export default function CreateQuizPage() {
     }));
   };
 
-  const handleSettingsChange = (field: string, value: any) => {
+  const handleSettingsChange = (field: string, value: string | number | boolean) => {
     setQuizData(prev => ({
       ...prev,
       settings: {
@@ -141,31 +143,33 @@ export default function CreateQuizPage() {
   };
 
   const handleSaveQuiz = async () => {
-    if (!quizData.title?.trim()) {
-      alert('Please enter a quiz title');
-      return;
-    }
+    // Validate quiz data using Zod schema
+    const validationResult = completeQuizSchema.safeParse({
+      ...quizData,
+      questions: quizData.questions || [],
+    });
 
-    if (!quizData.questions?.length) {
-      alert('Please add at least one question');
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      toast.error('Validation Error', {
+        description: firstError.message,
+      });
+      console.error('Validation errors:', validationResult.error.issues);
       return;
     }
 
     try {
       setSaveLoading(true);
 
-      const finalQuizData: Omit<Quiz, 'id'> = {
-        title: quizData.title,
-        description: quizData.description || '',
-        sportId: quizData.sportId || undefined,
-        skillId: quizData.skillId || undefined,
-        coverImage: quizData.coverImage,
-        instructions: quizData.instructions,
-        questions: quizData.questions,
+      // Build quiz data using validated data, omitting undefined optional fields
+      const finalQuizData: Partial<Quiz> = {
+        title: validationResult.data.title,
+        description: validationResult.data.description || '',
+        questions: validationResult.data.questions,
         settings: quizData.settings!,
         difficulty: quizData.difficulty!,
         estimatedDuration: quizData.estimatedDuration!,
-        tags: quizData.tags!,
+        tags: quizData.tags || [],
         isActive: quizData.isActive!,
         isPublished: quizData.isPublished!,
         category: quizData.category!,
@@ -175,13 +179,34 @@ export default function CreateQuizPage() {
         metadata: calculateMetadata(),
       };
 
+      // Only add optional fields if they have values
+      if (quizData.sportId && quizData.sportId !== 'none') {
+        finalQuizData.sportId = quizData.sportId;
+      }
+
+      if (quizData.skillId && quizData.skillId !== 'none') {
+        finalQuizData.skillId = quizData.skillId;
+      }
+
+      if (quizData.coverImage && quizData.coverImage.trim()) {
+        finalQuizData.coverImage = quizData.coverImage;
+      }
+
+      if (quizData.instructions && quizData.instructions.trim()) {
+        finalQuizData.instructions = quizData.instructions;
+      }
+
       const docId = await firebaseService.addDocument('quizzes', finalQuizData);
 
-      alert('Quiz created successfully!');
+      toast.success('Quiz created successfully!', {
+        description: 'Your quiz has been saved and is ready for use.',
+      });
       router.push(`/admin/quizzes/${docId}`);
     } catch (error) {
       console.error('Error creating quiz:', error);
-      alert('Failed to create quiz');
+      toast.error('Failed to create quiz', {
+        description: 'Please try again or contact support if the problem persists.',
+      });
     } finally {
       setSaveLoading(false);
     }
@@ -479,5 +504,13 @@ export default function CreateQuizPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function CreateQuizPage() {
+  return (
+    <AdminRoute>
+      <CreateQuizContent />
+    </AdminRoute>
   );
 }

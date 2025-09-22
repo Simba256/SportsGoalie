@@ -64,8 +64,21 @@ export function ProtectedRoute({
 
 // Wrapper for admin-only pages
 export function AdminRoute({ children, ...props }: Omit<ProtectedRouteProps, 'requiredRole'>) {
+  const { user, isAuthenticated } = useAuth();
+
+  // Determine redirect target based on authentication status
+  const getRedirectTarget = () => {
+    if (!isAuthenticated) {
+      return '/auth/login'; // Not logged in -> login page
+    }
+    if (user?.role === 'student') {
+      return '/dashboard'; // Regular user -> user dashboard
+    }
+    return '/auth/login'; // Fallback to login
+  };
+
   return (
-    <ProtectedRoute requiredRole="admin" redirectTo="/dashboard" {...props}>
+    <ProtectedRoute requiredRole="admin" redirectTo={getRedirectTarget()} {...props}>
       {children}
     </ProtectedRoute>
   );

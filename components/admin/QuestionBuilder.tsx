@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Upload, X, Play, Image as ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { questionSchema } from '@/lib/validations/quiz';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -114,7 +116,9 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       return media;
     } catch (error) {
       console.error('Error uploading media:', error);
-      alert('Failed to upload media');
+      toast.error('Failed to upload media', {
+        description: 'Please try again or check your file format.',
+      });
       return null;
     }
   };
@@ -167,7 +171,7 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       }));
     };
 
-    const updateOption = (index: number, field: string, value: any) => {
+    const updateOption = (index: number, field: string, value: string | boolean) => {
       const updatedOptions = options.map((opt, i) =>
         i === index ? { ...opt, [field]: value } : opt
       );
@@ -355,12 +359,39 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
   };
 
   const handleSaveQuestion = () => {
+    // First check basic required fields
     if (!currentQuestion.title?.trim() || !currentQuestion.content?.trim()) {
-      alert('Please fill in the title and content');
+      toast.error('Required fields missing', {
+        description: 'Please fill in both title and content fields.',
+      });
       return;
     }
 
-    const questionData: Question = {
+    // Validate using Zod schema
+    try {
+      const validationResult = questionSchema.safeParse(currentQuestion);
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast.error('Question validation failed', {
+          description: firstError.message,
+        });
+        console.error('Question validation errors:', validationResult.error.errors);
+        return;
+      }
+
+      // Use validated question data
+      const validatedQuestion = validationResult.data;
+    } catch (error) {
+      toast.error('Invalid question data', {
+        description: 'Please check all fields and try again.',
+      });
+      console.error('Question validation error:', error);
+      return;
+    }
+
+    // Build question data, omitting undefined optional fields
+    const questionData: Partial<Question> = {
       id: editingIndex !== null ? questions[editingIndex].id : Date.now().toString(),
       type: currentQuestion.type!,
       title: currentQuestion.title!,
@@ -368,16 +399,29 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       media: currentQuestion.media || [],
       points: currentQuestion.points!,
       difficulty: currentQuestion.difficulty!,
-      explanation: currentQuestion.explanation,
-      timeLimit: currentQuestion.timeLimit,
       order: currentQuestion.order!,
       tags: currentQuestion.tags || [],
       isRequired: currentQuestion.isRequired!,
       createdAt: new Date(),
       updatedAt: new Date(),
       createdBy: 'admin',
-      ...currentQuestion,
-    } as Question;
+    };
+
+    // Only add optional fields if they have values
+    if (currentQuestion.explanation && currentQuestion.explanation.trim()) {
+      questionData.explanation = currentQuestion.explanation;
+    }
+
+    if (currentQuestion.timeLimit && currentQuestion.timeLimit > 0) {
+      questionData.timeLimit = currentQuestion.timeLimit;
+    }
+
+    // Add question-type specific data
+    Object.keys(currentQuestion).forEach(key => {
+      if (!questionData.hasOwnProperty(key) && currentQuestion[key as keyof typeof currentQuestion] !== undefined) {
+        questionData[key] = currentQuestion[key as keyof typeof currentQuestion];
+      }
+    });
 
     if (editingIndex !== null) {
       onUpdateQuestion(editingIndex, questionData);
