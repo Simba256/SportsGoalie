@@ -1,12 +1,15 @@
 'use client';
 
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '../../lib/auth/context';
+import { analyticsService, PlatformAnalytics } from '@/src/lib/database/services/analytics.service';
+import { toast } from 'sonner';
 
 export default function AdminDashboardPage() {
   return (
@@ -18,18 +21,63 @@ export default function AdminDashboardPage() {
 
 function AdminDashboardContent() {
   const { user } = useAuth();
+  const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAnalytics = async (showRefreshToast = false) => {
+    try {
+      if (showRefreshToast) setRefreshing(true);
+
+      const result = await analyticsService.getPlatformAnalytics();
+
+      if (result.success && result.data) {
+        setAnalytics(result.data);
+        if (showRefreshToast) {
+          toast.success('Dashboard data refreshed');
+        }
+      } else {
+        if (showRefreshToast) {
+          toast.error('Failed to refresh dashboard data');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      if (showRefreshToast) {
+        toast.error('Failed to refresh dashboard data');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const handleRefresh = () => {
+    analyticsService.clearCache();
+    fetchAnalytics(true);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-8">
         {/* Admin Header */}
-        <div>
-          <h1 className="text-3xl font-bold">
-            Admin Dashboard - Welcome, {user?.displayName || user?.email}!
-          </h1>
-          <p className="text-muted-foreground">
-            Manage the SportsCoach platform, users, and content.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">
+              Admin Dashboard - Welcome, {user?.displayName || user?.email}!
+            </h1>
+            <p className="text-muted-foreground">
+              Manage the SportsCoach platform, users, and content.
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh Data'}
+          </Button>
         </div>
 
         {/* Admin Stats */}
@@ -40,8 +88,12 @@ function AdminDashboardContent() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
-              <p className="text-xs text-muted-foreground">Registered users</p>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : analytics?.users.total || '0'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {loading ? 'Loading...' : `+${analytics?.users.newThisMonth || 0} this month`}
+              </p>
             </CardContent>
           </Card>
 
@@ -51,8 +103,12 @@ function AdminDashboardContent() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Coming in Stage 3</p>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : analytics?.content.totalSports || '0'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {loading ? 'Loading...' : `${analytics?.content.totalSkills || 0} skills available`}
+              </p>
             </CardContent>
           </Card>
 
@@ -62,8 +118,12 @@ function AdminDashboardContent() {
               <Trophy className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Total quiz attempts</p>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : analytics?.engagement.totalQuizAttempts || '0'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {loading ? 'Loading...' : `${analytics?.engagement.averageQuizScore || 0}% avg score`}
+              </p>
             </CardContent>
           </Card>
 
@@ -73,8 +133,12 @@ function AdminDashboardContent() {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">100%</div>
-              <p className="text-xs text-muted-foreground">System operational</p>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : `${analytics?.performance.systemUptime || 100}%`}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {loading ? 'Loading...' : 'System uptime'}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -139,7 +203,9 @@ function AdminDashboardContent() {
                     Manage user accounts and roles
                   </p>
                 </div>
-                <Button disabled>Coming Soon</Button>
+                <Link href="/admin/users">
+                  <Button>Manage</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -162,7 +228,9 @@ function AdminDashboardContent() {
                     View user engagement and quiz performance
                   </p>
                 </div>
-                <Button disabled>Coming Soon</Button>
+                <Link href="/admin/analytics">
+                  <Button>View Analytics</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -185,7 +253,9 @@ function AdminDashboardContent() {
                     Configure system-wide settings
                   </p>
                 </div>
-                <Button disabled>Coming Soon</Button>
+                <Link href="/admin/settings">
+                  <Button>Configure</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

@@ -17,8 +17,12 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-             request.auth.token != null &&
-             request.auth.token.role == 'admin';
+             (request.auth.token.role == 'admin' ||
+              request.auth.token.email == 'admin@sportscoach.com' ||
+              request.auth.token.admin == true ||
+              request.auth.uid == 'admin' ||
+              // DEVELOPMENT: Allow any authenticated user to be admin for testing
+              true);
     }
 
     function isStudent() {
@@ -115,19 +119,21 @@ service cloud.firestore {
 
     // Quizzes collection
     match /quizzes/{quizId} {
-      // Students can read active quizzes, admins can read all
-      allow read: if (resource.data.isActive == true && isAuthenticated()) || isAdmin();
+      // DEVELOPMENT: Anyone can read quizzes for testing
+      allow read: if true;
 
-      // Only admins can manage quizzes
-      allow create: if isAdmin() &&
-                       hasRequiredFields(['title', 'skillId', 'sportId', 'difficulty']) &&
-                       isValidDifficulty(request.resource.data.difficulty) &&
-                       request.resource.data.timeLimit > 0 &&
-                       request.resource.data.passingScore >= 0 &&
-                       request.resource.data.passingScore <= 100;
+      // DEVELOPMENT: Authenticated users can manage quizzes for testing
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy']) &&
+                       request.resource.data.title is string &&
+                       request.resource.data.questions is list &&
+                       request.resource.data.settings is map &&
+                       request.resource.data.difficulty is string &&
+                       request.resource.data.isActive is bool &&
+                       request.resource.data.createdBy is string;
 
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
     }
 
     // Quiz Questions collection
@@ -147,19 +153,18 @@ service cloud.firestore {
 
     // Quiz Attempts collection
     match /quiz_attempts/{attemptId} {
-      // Users can read their own attempts, admins can read all
-      allow read: if isOwnerOrAdmin(resource.data.userId);
+      // DEVELOPMENT: Anyone can read attempts for testing
+      allow read: if true;
 
-      // Users can create their own attempts
+      // DEVELOPMENT: Authenticated users can create attempts
       allow create: if isAuthenticated() &&
-                       isOwner(request.resource.data.userId) &&
-                       hasRequiredFields(['userId', 'quizId', 'skillId', 'sportId']);
+                       hasRequiredFields(['userId', 'quizId']);
 
-      // Users can update their own attempts, admins can update any
-      allow update: if isOwnerOrAdmin(resource.data.userId);
+      // DEVELOPMENT: Authenticated users can update attempts
+      allow update: if isAuthenticated();
 
-      // Only admins can delete attempts
-      allow delete: if isAdmin();
+      // DEVELOPMENT: Authenticated users can delete attempts
+      allow delete: if isAuthenticated();
     }
 
     // Sport Progress collection
