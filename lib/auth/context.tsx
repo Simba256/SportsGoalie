@@ -13,7 +13,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
-import { User, AuthState, LoginCredentials, RegisterCredentials, ProfileUpdateData } from '@/types/auth';
+import { User, AuthState, LoginCredentials, RegisterCredentials, ProfileUpdateData } from '../../types/auth';
 import {
   createAuthErrorFromFirebase,
   createErrorContext,

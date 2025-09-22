@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Sport, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MediaUpload } from '@/components/admin/media-upload';
 import {
   Plus,
   Edit,
@@ -71,6 +73,8 @@ export default function AdminSportsPage() {
 
   const [formData, setFormData] = useState<SportFormData>(defaultFormData);
   const [saving, setSaving] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadSports();
@@ -128,6 +132,7 @@ export default function AdminSportsPage() {
 
   const handleCancel = () => {
     setFormData(defaultFormData);
+    setUploadedFiles([]);
     setState(prev => ({ ...prev, editingId: null, showCreateForm: false }));
   };
 
@@ -135,13 +140,43 @@ export default function AdminSportsPage() {
     setSaving(true);
 
     try {
+      // Upload image if a new file was selected
+      let imageUrl = formData.imageUrl;
+      if (uploadedFiles.length > 0) {
+        setUploading(true);
+        const uploadResult = await storageService.uploadFile(
+          uploadedFiles[0],
+          STORAGE_CONFIGS.SPORT_IMAGES
+        );
+
+        if (uploadResult.success && uploadResult.url) {
+          imageUrl = uploadResult.url;
+        } else {
+          setState(prev => ({
+            ...prev,
+            error: uploadResult.error || 'Failed to upload image',
+          }));
+          setUploading(false);
+          setSaving(false);
+          return;
+        }
+        setUploading(false);
+      }
+
+      // Update form data with uploaded image URL
+      const finalFormData = {
+        ...formData,
+        imageUrl,
+        createdBy: 'admin', // Add required createdBy field
+      };
+
       let result;
       if (state.editingId) {
         // Update existing sport
-        result = await sportsService.updateSport(state.editingId, formData);
+        result = await sportsService.updateSport(state.editingId, finalFormData);
       } else {
         // Create new sport
-        result = await sportsService.createSport(formData);
+        result = await sportsService.createSport(finalFormData);
       }
 
       if (result.success) {
@@ -160,6 +195,7 @@ export default function AdminSportsPage() {
       }));
     } finally {
       setSaving(false);
+      setUploading(false);
     }
   };
 
@@ -357,14 +393,34 @@ export default function AdminSportsPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">Image URL</Label>
-              <Input
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                placeholder="https://example.com/image.jpg"
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can enter a URL directly or upload an image below
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Upload Sport Image</Label>
+                <MediaUpload
+                  onUpload={setUploadedFiles}
+                  acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
+                  maxFiles={1}
+                  maxSizePerFile={2}
+                />
+                {uploadedFiles.length > 0 && (
+                  <p className="text-sm text-green-600">
+                    ✓ Image ready for upload: {uploadedFiles[0].name}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -400,11 +456,11 @@ export default function AdminSportsPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSave} disabled={saving || uploading} className="flex items-center gap-2">
                 <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save'}
+                {uploading ? 'Uploading...' : saving ? 'Saving...' : 'Save'}
               </Button>
-              <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleCancel} disabled={saving || uploading} className="flex items-center gap-2">
                 <X className="w-4 h-4" />
                 Cancel
               </Button>

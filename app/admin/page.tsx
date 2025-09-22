@@ -1,11 +1,12 @@
 'use client';
 
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target } from 'lucide-react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { useAuth } from '@/lib/auth/context';
+import { useAuth } from '../../lib/auth/context';
 
 export default function AdminDashboardPage() {
   return (
@@ -98,7 +99,24 @@ function AdminDashboardContent() {
                     Add and edit sports categories and skills
                   </p>
                 </div>
-                <Button disabled>Coming Soon</Button>
+                <Link href="/admin/sports">
+                  <Button>Manage</Button>
+                </Link>
+              </div>
+
+              <div className="flex items-center space-x-4 rounded-lg border p-4">
+                <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <HelpCircle className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Manage Quizzes</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create and manage interactive quizzes
+                  </p>
+                </div>
+                <Link href="/admin/quizzes">
+                  <Button>Manage</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

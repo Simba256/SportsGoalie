@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -79,6 +80,7 @@ export default function AdminSkillsPage() {
   const [formData, setFormData] = useState<SkillFormData>(defaultFormData);
   const [saving, setSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!sportId) return;
@@ -97,6 +99,7 @@ export default function AdminSkillsPage() {
       if (!sportResult.success || !sportResult.data) {
         setState(prev => ({
           ...prev,
+          sport: null,
           error: 'Sport not found',
           loading: false,
         }));
@@ -106,7 +109,7 @@ export default function AdminSkillsPage() {
       if (!skillsResult.success) {
         setState(prev => ({
           ...prev,
-          sport: sportResult.data,
+          sport: sportResult.data || null,
           error: skillsResult.error?.message || 'Failed to load skills',
           loading: false,
         }));
@@ -115,7 +118,7 @@ export default function AdminSkillsPage() {
 
       setState(prev => ({
         ...prev,
-        sport: sportResult.data,
+        sport: sportResult.data || null,
         skills: skillsResult.data?.items || [],
         loading: false,
       }));
@@ -161,35 +164,62 @@ export default function AdminSkillsPage() {
     setSaving(true);
 
     try {
-      let result;
+      // Upload media if new files were selected
+      let mediaUrls: string[] = [];
+      if (uploadedFiles.length > 0) {
+        setUploading(true);
+        const uploadResults = await storageService.uploadFiles(
+          uploadedFiles,
+          STORAGE_CONFIGS.SKILL_MEDIA
+        );
+
+        mediaUrls = uploadResults
+          .filter(result => result.success && result.url)
+          .map(result => result.url!);
+
+        if (mediaUrls.length !== uploadedFiles.length) {
+          setState(prev => ({
+            ...prev,
+            error: 'Some media files failed to upload',
+          }));
+          setUploading(false);
+          setSaving(false);
+          return;
+        }
+        setUploading(false);
+      }
+
+      // Prepare skill data with uploaded media
       const skillData = {
         ...formData,
         sportId,
+        createdBy: 'admin', // Add required createdBy field
         externalResources: [],
         media: uploadedFiles.length > 0 ? {
           text: formData.content,
           images: uploadedFiles
             .filter(file => file.type.startsWith('image/'))
             .map((file, index) => ({
-              id: `img-${index}`,
-              url: URL.createObjectURL(file), // In production, upload to storage first
+              id: `img-${Date.now()}-${index}`,
+              url: mediaUrls[uploadedFiles.indexOf(file)],
               alt: file.name,
-              caption: '',
+              caption: file.name,
               order: index,
             })),
           videos: uploadedFiles
             .filter(file => file.type.startsWith('video/'))
             .map((file, index) => ({
-              id: `vid-${index}`,
-              youtubeId: '', // Would be set after processing
+              id: `vid-${Date.now()}-${index}`,
+              youtubeId: '',
               title: file.name,
-              duration: 0, // Would be determined after upload
+              duration: 0,
               thumbnail: '',
               order: index,
             })),
         } : undefined,
       };
 
+      let result;
       if (state.editingId) {
         result = await sportsService.updateSkill(state.editingId, skillData);
       } else {
@@ -212,6 +242,7 @@ export default function AdminSkillsPage() {
       }));
     } finally {
       setSaving(false);
+      setUploading(false);
     }
   };
 
@@ -487,11 +518,11 @@ export default function AdminSkillsPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSave} disabled={saving || uploading} className="flex items-center gap-2">
                 <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save'}
+                {uploading ? 'Uploading...' : saving ? 'Saving...' : 'Save'}
               </Button>
-              <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleCancel} disabled={saving || uploading} className="flex items-center gap-2">
                 <X className="w-4 h-4" />
                 Cancel
               </Button>
