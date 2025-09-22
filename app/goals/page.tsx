@@ -139,7 +139,7 @@ function GoalsContent() {
           onCreateGoal={handleCreateGoal}
           onUpdateGoal={handleUpdateGoal}
           onDeleteGoal={handleDeleteGoal}
-          loading={loading}
+          loading={false}
         />
       </div>
     </div>

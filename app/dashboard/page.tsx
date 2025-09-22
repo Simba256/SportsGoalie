@@ -52,18 +52,19 @@ function DashboardContent() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <h3 className="text-lg font-medium mb-2">Unable to load dashboard</h3>
-            <p className="text-muted-foreground">{error}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Don't show error for missing progress data - this is normal for new users
+  // if (error) {
+  //   return (
+  //     <div className="container mx-auto px-4 py-8">
+  //       <Card>
+  //         <CardContent className="p-6 text-center">
+  //           <h3 className="text-lg font-medium mb-2">Unable to load dashboard</h3>
+  //           <p className="text-muted-foreground">{error}</p>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   const stats = userProgress?.overallStats;
   const progressData = generateSampleProgressData();
