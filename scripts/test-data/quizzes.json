@@ -1,0 +1,188 @@
+{
+  "basketball-shooting-quiz": {
+    "sportId": "basketball",
+    "skillId": "basketball-shooting",
+    "title": "Basketball Shooting Fundamentals Quiz",
+    "description": "Test your knowledge of basic basketball shooting technique",
+    "difficulty": "beginner",
+    "estimatedDuration": 10,
+    "tags": [
+      "shooting",
+      "fundamentals"
+    ],
+    "isActive": true,
+    "isPublished": true,
+    "category": "skills-assessment",
+    "instructions": "Answer all questions about basketball shooting fundamentals. You need 70% to pass.",
+    "settings": {
+      "timeLimit": 15,
+      "shuffleQuestions": false,
+      "showProgressBar": true,
+      "allowReview": true,
+      "allowBacktrack": true,
+      "passingScore": 70,
+      "maxAttempts": 3,
+      "showCorrectAnswers": true,
+      "showExplanations": true,
+      "showScoreImmediately": true,
+      "requireAllQuestions": true
+    },
+    "questions": [
+      {
+        "type": "multiple-choice",
+        "title": "Shooting Stance",
+        "content": "What is the correct stance for shooting a basketball?",
+        "points": 10,
+        "difficulty": "beginner",
+        "explanation": "A balanced stance with feet shoulder-width apart provides the best foundation for accurate shooting.",
+        "timeLimit": 30,
+        "order": 1,
+        "tags": [
+          "stance",
+          "fundamentals"
+        ],
+        "isRequired": true,
+        "options": [
+          {
+            "id": "1",
+            "text": "Feet shoulder-width apart, balanced stance",
+            "isCorrect": true,
+            "explanation": "Correct! This provides stability and balance.",
+            "order": 1
+          },
+          {
+            "id": "2",
+            "text": "Feet together, narrow stance",
+            "isCorrect": false,
+            "explanation": "Too narrow - lacks stability.",
+            "order": 2
+          },
+          {
+            "id": "3",
+            "text": "Wide stance with feet far apart",
+            "isCorrect": false,
+            "explanation": "Too wide - reduces mobility and balance.",
+            "order": 3
+          },
+          {
+            "id": "4",
+            "text": "One foot forward, staggered stance",
+            "isCorrect": false,
+            "explanation": "Creates imbalance for shooting.",
+            "order": 4
+          }
+        ],
+        "allowMultiple": false,
+        "shuffleOptions": false
+      }
+    ],
+    "metadata": {
+      "totalQuestions": 1,
+      "totalPoints": 10,
+      "averageScore": 0,
+      "completionRate": 0,
+      "averageDuration": 10,
+      "totalAttempts": 0,
+      "ratings": {
+        "average": 0,
+        "count": 0
+      }
+    },
+    "createdAt": "2025-09-22T21:57:50.284Z",
+    "updatedAt": "2025-09-22T21:57:50.284Z",
+    "createdBy": "test-script"
+  },
+  "soccer-ball-control-quiz": {
+    "sportId": "soccer",
+    "skillId": "soccer-ball-control",
+    "title": "Soccer Ball Control Quiz",
+    "description": "Test your knowledge of soccer ball control fundamentals",
+    "difficulty": "beginner",
+    "estimatedDuration": 10,
+    "tags": [
+      "ball-control",
+      "fundamentals"
+    ],
+    "isActive": true,
+    "isPublished": true,
+    "category": "skills-assessment",
+    "instructions": "Answer questions about soccer ball control techniques.",
+    "settings": {
+      "timeLimit": 15,
+      "shuffleQuestions": false,
+      "showProgressBar": true,
+      "allowReview": true,
+      "allowBacktrack": true,
+      "passingScore": 70,
+      "maxAttempts": 3,
+      "showCorrectAnswers": true,
+      "showExplanations": true,
+      "showScoreImmediately": true,
+      "requireAllQuestions": true
+    },
+    "questions": [
+      {
+        "type": "multiple-choice",
+        "title": "First Touch Technique",
+        "content": "What is the key to a good first touch in soccer?",
+        "points": 10,
+        "difficulty": "beginner",
+        "explanation": "A soft, cushioned touch that brings the ball under control is essential.",
+        "timeLimit": 30,
+        "order": 1,
+        "tags": [
+          "first-touch",
+          "control"
+        ],
+        "isRequired": true,
+        "options": [
+          {
+            "id": "1",
+            "text": "Soft, cushioned contact that brings ball under control",
+            "isCorrect": true,
+            "explanation": "Correct! This maintains possession effectively.",
+            "order": 1
+          },
+          {
+            "id": "2",
+            "text": "Hard contact to stop the ball quickly",
+            "isCorrect": false,
+            "explanation": "Too hard - ball will bounce away.",
+            "order": 2
+          },
+          {
+            "id": "3",
+            "text": "Let the ball bounce first",
+            "isCorrect": false,
+            "explanation": "This reduces control and wastes time.",
+            "order": 3
+          },
+          {
+            "id": "4",
+            "text": "Always use your strongest foot",
+            "isCorrect": false,
+            "explanation": "Use the most appropriate foot for the situation.",
+            "order": 4
+          }
+        ],
+        "allowMultiple": false,
+        "shuffleOptions": false
+      }
+    ],
+    "metadata": {
+      "totalQuestions": 1,
+      "totalPoints": 10,
+      "averageScore": 0,
+      "completionRate": 0,
+      "averageDuration": 10,
+      "totalAttempts": 0,
+      "ratings": {
+        "average": 0,
+        "count": 0
+      }
+    },
+    "createdAt": "2025-09-22T21:57:50.284Z",
+    "updatedAt": "2025-09-22T21:57:50.284Z",
+    "createdBy": "test-script"
+  }
+}

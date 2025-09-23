@@ -100,6 +100,7 @@ service cloud.firestore {
                        isValidDifficulty(request.resource.data.difficulty);
 
       allow update: if isAdmin();
+      // Prevent deleting sports that have skills or quizzes associated
       allow delete: if isAdmin();
     }
 
@@ -109,11 +110,19 @@ service cloud.firestore {
       allow read: if resource.data.isActive == true || isAdmin();
 
       // Only admins can create, update, delete skills
+      // Every skill MUST have a valid sportId that exists
       allow create: if isAdmin() &&
                        hasRequiredFields(['name', 'description', 'sportId', 'difficulty']) &&
-                       isValidDifficulty(request.resource.data.difficulty);
+                       isValidDifficulty(request.resource.data.difficulty) &&
+                       request.resource.data.sportId is string &&
+                       request.resource.data.sportId.size() > 0 &&
+                       exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId));
 
-      allow update: if isAdmin();
+      allow update: if isAdmin() &&
+                       (request.resource.data.sportId == resource.data.sportId ||
+                        (request.resource.data.sportId is string &&
+                         request.resource.data.sportId.size() > 0 &&
+                         exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId))));
       allow delete: if isAdmin();
     }
 
@@ -123,16 +132,31 @@ service cloud.firestore {
       allow read: if (resource.data.isActive == true && isAuthenticated()) || isAdmin();
 
       // Only admins can manage quizzes
+      // Every quiz MUST have both valid sportId AND skillId
       allow create: if isAdmin() &&
-                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy']) &&
+                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy', 'sportId', 'skillId']) &&
                        request.resource.data.title is string &&
                        request.resource.data.questions is list &&
                        request.resource.data.settings is map &&
                        request.resource.data.difficulty is string &&
                        request.resource.data.isActive is bool &&
-                       request.resource.data.createdBy is string;
+                       request.resource.data.createdBy is string &&
+                       request.resource.data.sportId is string &&
+                       request.resource.data.sportId.size() > 0 &&
+                       request.resource.data.skillId is string &&
+                       request.resource.data.skillId.size() > 0 &&
+                       exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)) &&
+                       exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId));
 
-      allow update: if isAdmin();
+      allow update: if isAdmin() &&
+                       (request.resource.data.sportId == resource.data.sportId ||
+                        (request.resource.data.sportId is string &&
+                         request.resource.data.sportId.size() > 0 &&
+                         exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)))) &&
+                       (request.resource.data.skillId == resource.data.skillId ||
+                        (request.resource.data.skillId is string &&
+                         request.resource.data.skillId.size() > 0 &&
+                         exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId))));
       allow delete: if isAdmin();
     }
 

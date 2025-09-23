@@ -129,8 +129,8 @@ export interface Quiz {
   id: string;
   title: string;
   description?: string;
-  sportId?: string; // Optional: associate with a sport
-  skillId?: string; // Optional: associate with a skill
+  sportId: string; // MANDATORY: Every quiz must be associated with a sport
+  skillId: string; // MANDATORY: Every quiz must be associated with a skill
   coverImage?: string;
   instructions?: string;
   questions: Question[];

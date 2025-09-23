@@ -148,8 +148,8 @@ export interface SkillMetadata {
 // Quiz Types
 export interface Quiz {
   id: string;
-  skillId: string;
-  sportId: string;
+  skillId: string; // MANDATORY: Every quiz must be associated with a skill
+  sportId: string; // MANDATORY: Every quiz must be associated with a sport
   title: string;
   description: string;
   difficulty: DifficultyLevel;

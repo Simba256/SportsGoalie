@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
+import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import {
   ArrowLeft,
   Plus,
@@ -82,6 +83,9 @@ function AdminSkillsContent() {
   const [saving, setSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  // Custom confirmation dialog for delete operations
+  const { dialog, showDeleteConfirmation, setLoading } = useDeleteConfirmation();
 
   useEffect(() => {
     if (!sportId) return;
@@ -162,6 +166,22 @@ function AdminSkillsContent() {
   };
 
   const handleSave = async () => {
+    // Client-side validation
+    if (!formData.name.trim()) {
+      setState(prev => ({ ...prev, error: 'Skill name is required' }));
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setState(prev => ({ ...prev, error: 'Skill description is required' }));
+      return;
+    }
+
+    if (formData.learningObjectives.length === 0) {
+      setState(prev => ({ ...prev, error: 'At least one learning objective is required' }));
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -191,12 +211,16 @@ function AdminSkillsContent() {
       }
 
       // Prepare skill data with uploaded media
-      const skillData = {
+      const skillData: any = {
         ...formData,
         sportId,
         createdBy: 'admin', // Add required createdBy field
         externalResources: [],
-        media: uploadedFiles.length > 0 ? {
+      };
+
+      // Only add media field if there are uploaded files
+      if (uploadedFiles.length > 0) {
+        skillData.media = {
           text: formData.content,
           images: uploadedFiles
             .filter(file => file.type.startsWith('image/'))
@@ -217,8 +241,8 @@ function AdminSkillsContent() {
               thumbnail: '',
               order: index,
             })),
-        } : undefined,
-      };
+        };
+      }
 
       let result;
       if (state.editingId) {
@@ -236,10 +260,11 @@ function AdminSkillsContent() {
           error: result.error?.message || 'Failed to save skill',
         }));
       }
-    } catch {
+    } catch (error) {
+      console.error('Skill creation error:', error);
       setState(prev => ({
         ...prev,
-        error: 'An unexpected error occurred while saving',
+        error: `An unexpected error occurred while saving: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }));
     } finally {
       setSaving(false);
@@ -247,27 +272,33 @@ function AdminSkillsContent() {
     }
   };
 
-  const handleDelete = async (skillId: string) => {
-    if (!confirm('Are you sure you want to delete this skill? This cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const result = await sportsService.deleteSkill(skillId);
-      if (result.success) {
-        await loadData();
-      } else {
-        setState(prev => ({
-          ...prev,
-          error: result.error?.message || 'Failed to delete skill',
-        }));
-      }
-    } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred while deleting',
-      }));
-    }
+  const handleDelete = (skillId: string, skillName: string) => {
+    showDeleteConfirmation({
+      title: 'Delete Skill',
+      description: `Are you sure you want to delete "${skillName}"? This action cannot be undone and will remove all associated data.`,
+      itemName: 'skill',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const result = await sportsService.deleteSkill(skillId);
+          if (result.success) {
+            await loadData();
+          } else {
+            setState(prev => ({
+              ...prev,
+              error: result.error?.message || 'Failed to delete skill',
+            }));
+          }
+        } catch {
+          setState(prev => ({
+            ...prev,
+            error: 'An unexpected error occurred while deleting',
+          }));
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
@@ -456,10 +487,13 @@ function AdminSkillsContent() {
               <textarea
                 id="objectives"
                 value={formData.learningObjectives.join('\n')}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  learningObjectives: e.target.value.split('\n').filter(Boolean)
-                }))}
+                onChange={(e) => {
+                  const objectives = e.target.value.split('\n').filter(line => line.trim() !== '');
+                  setFormData(prev => ({
+                    ...prev,
+                    learningObjectives: objectives
+                  }));
+                }}
                 placeholder="Master basic dribbling technique&#10;Understand ball control fundamentals&#10;Practice coordination drills"
                 className="w-full border rounded px-3 py-2 min-h-[120px]"
               />
@@ -616,7 +650,7 @@ function AdminSkillsContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(skill.id)}
+                        onClick={() => handleDelete(skill.id, skill.name)}
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -629,6 +663,9 @@ function AdminSkillsContent() {
           </div>
         )}
       </div>
+
+      {/* Custom confirmation dialog */}
+      {dialog}
     </div>
   );
 }

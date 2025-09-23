@@ -123,16 +123,31 @@ service cloud.firestore {
       allow read: if true;
 
       // DEVELOPMENT: Authenticated users can manage quizzes for testing
+      // Every quiz MUST have both valid sportId AND skillId
       allow create: if isAuthenticated() &&
-                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy']) &&
+                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy', 'sportId', 'skillId']) &&
                        request.resource.data.title is string &&
                        request.resource.data.questions is list &&
                        request.resource.data.settings is map &&
                        request.resource.data.difficulty is string &&
                        request.resource.data.isActive is bool &&
-                       request.resource.data.createdBy is string;
+                       request.resource.data.createdBy is string &&
+                       request.resource.data.sportId is string &&
+                       request.resource.data.sportId.size() > 0 &&
+                       request.resource.data.skillId is string &&
+                       request.resource.data.skillId.size() > 0 &&
+                       exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)) &&
+                       exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId));
 
-      allow update: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+                       (request.resource.data.sportId == resource.data.sportId ||
+                        (request.resource.data.sportId is string &&
+                         request.resource.data.sportId.size() > 0 &&
+                         exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)))) &&
+                       (request.resource.data.skillId == resource.data.skillId ||
+                        (request.resource.data.skillId is string &&
+                         request.resource.data.skillId.size() > 0 &&
+                         exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId))));
       allow delete: if isAuthenticated();
     }
 

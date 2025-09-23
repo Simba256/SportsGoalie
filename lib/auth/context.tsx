@@ -75,18 +75,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        return {
+        const user: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email!,
           displayName: firebaseUser.displayName,
           role: userData.role || 'student',
-          photoURL: firebaseUser.photoURL || undefined,
           emailVerified: firebaseUser.emailVerified,
           createdAt: userData.createdAt?.toDate() || new Date(),
           updatedAt: userData.updatedAt?.toDate() || new Date(),
           lastLoginAt: new Date(),
           preferences: userData.preferences,
         };
+
+        // Only add photoURL if it exists
+        if (firebaseUser.photoURL) {
+          user.photoURL = firebaseUser.photoURL;
+        }
+
+        return user;
       }
 
       // If user document doesn't exist, create it
@@ -95,7 +101,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: firebaseUser.email!,
         displayName: firebaseUser.displayName,
         role: 'student',
-        photoURL: firebaseUser.photoURL || undefined,
         emailVerified: firebaseUser.emailVerified,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -115,11 +120,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       };
 
-      await setDoc(userDocRef, {
+      // Only add photoURL if it has a value
+      if (firebaseUser.photoURL) {
+        newUser.photoURL = firebaseUser.photoURL;
+      }
+
+      // Create the document without undefined fields
+      const docData = {
         ...newUser,
         createdAt: new Date(),
         updatedAt: new Date(),
+      };
+
+      // Remove any undefined fields before saving to Firestore
+      Object.keys(docData).forEach(key => {
+        if (docData[key as keyof typeof docData] === undefined) {
+          delete docData[key as keyof typeof docData];
+        }
       });
+
+      await setDoc(userDocRef, docData);
 
       return newUser;
     } catch (error) {
@@ -205,7 +225,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: credentials.email,
         displayName: credentials.displayName,
         role: credentials.role || 'student',
-        photoURL: undefined,
         emailVerified: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -225,12 +244,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       };
 
+      // Only add photoURL if it has a value
+      if (userCredential.user.photoURL) {
+        newUser.photoURL = userCredential.user.photoURL;
+      }
+
       const userDocRef = doc(db, 'users', newUser.id);
-      await setDoc(userDocRef, {
+      // Create the document without undefined fields
+      const docData = {
         ...newUser,
         createdAt: new Date(),
         updatedAt: new Date(),
+      };
+
+      // Remove any undefined fields before saving to Firestore
+      Object.keys(docData).forEach(key => {
+        if (docData[key as keyof typeof docData] === undefined) {
+          delete docData[key as keyof typeof docData];
+        }
       });
+
+      await setDoc(userDocRef, docData);
 
       // Important: Log out the user immediately after registration
       // They need to verify their email before logging in

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
+import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import {
   Plus,
   Edit,
@@ -76,6 +77,9 @@ function AdminSportsContent() {
   const [saving, setSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  // Custom confirmation dialog for delete operations
+  const { dialog, showDeleteConfirmation, setLoading } = useDeleteConfirmation();
 
   useEffect(() => {
     loadSports();
@@ -200,27 +204,33 @@ function AdminSportsContent() {
     }
   };
 
-  const handleDelete = async (sportId: string) => {
-    if (!confirm('Are you sure you want to delete this sport? This cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const result = await sportsService.deleteSport(sportId);
-      if (result.success) {
-        await loadSports();
-      } else {
-        setState(prev => ({
-          ...prev,
-          error: result.error?.message || 'Failed to delete sport',
-        }));
-      }
-    } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred while deleting',
-      }));
-    }
+  const handleDelete = (sportId: string, sportName: string) => {
+    showDeleteConfirmation({
+      title: 'Delete Sport',
+      description: `Are you sure you want to delete "${sportName}"? This action cannot be undone and will remove all associated skills and data.`,
+      itemName: 'sport',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const result = await sportsService.deleteSport(sportId);
+          if (result.success) {
+            await loadSports();
+          } else {
+            setState(prev => ({
+              ...prev,
+              error: result.error?.message || 'Failed to delete sport',
+            }));
+          }
+        } catch {
+          setState(prev => ({
+            ...prev,
+            error: 'An unexpected error occurred while deleting',
+          }));
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const filteredSports = state.sports.filter(sport =>
@@ -544,22 +554,34 @@ function AdminSportsContent() {
                         size="sm"
                         onClick={() => window.open(`/sports/${sport.id}`, '_blank')}
                         className="h-8 w-8 p-0"
+                        title="View Public Page"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => window.open(`/admin/sports/${sport.id}/skills`, '_blank')}
+                        className="h-8 w-8 p-0"
+                        title="Manage Skills"
+                      >
+                        <Users className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(sport)}
                         className="h-8 w-8 p-0"
+                        title="Edit Sport"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(sport.id)}
+                        onClick={() => handleDelete(sport.id, sport.name)}
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        title="Delete Sport"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -571,6 +593,9 @@ function AdminSportsContent() {
           </div>
         )}
       </div>
+
+      {/* Custom confirmation dialog */}
+      {dialog}
     </div>
   );
 }

@@ -1,0 +1,142 @@
+{
+  "basketball-shooting": {
+    "sportId": "basketball",
+    "name": "Basic Shooting Technique",
+    "description": "Learn proper shooting form, stance, and follow-through for consistent basketball shots",
+    "difficulty": "beginner",
+    "estimatedTimeToComplete": 45,
+    "content": "<h2>Basic Shooting Technique</h2><p>Master the fundamentals of basketball shooting including proper stance, grip, and follow-through.</p>",
+    "externalResources": [],
+    "learningObjectives": [
+      "Master proper shooting stance",
+      "Develop consistent follow-through",
+      "Understand arc and release point",
+      "Practice shooting rhythm"
+    ],
+    "tags": [
+      "shooting",
+      "fundamentals",
+      "technique"
+    ],
+    "hasVideo": true,
+    "hasQuiz": true,
+    "isActive": true,
+    "order": 1,
+    "prerequisites": [],
+    "metadata": {
+      "totalCompletions": 0,
+      "averageCompletionTime": 45,
+      "averageRating": 0,
+      "totalRatings": 0,
+      "difficulty": "beginner"
+    },
+    "createdAt": "2025-09-22T21:57:50.283Z",
+    "updatedAt": "2025-09-22T21:57:50.283Z",
+    "createdBy": "test-script"
+  },
+  "basketball-dribbling": {
+    "sportId": "basketball",
+    "name": "Ball Handling Fundamentals",
+    "description": "Develop essential dribbling skills and ball control techniques",
+    "difficulty": "beginner",
+    "estimatedTimeToComplete": 40,
+    "content": "<h2>Ball Handling Fundamentals</h2><p>Learn essential dribbling techniques for better ball control on the court.</p>",
+    "externalResources": [],
+    "learningObjectives": [
+      "Master basic dribbling motions",
+      "Develop hand-eye coordination",
+      "Learn protective dribbling",
+      "Practice change of pace"
+    ],
+    "tags": [
+      "dribbling",
+      "ball-control",
+      "fundamentals"
+    ],
+    "hasVideo": true,
+    "hasQuiz": true,
+    "isActive": true,
+    "order": 2,
+    "prerequisites": [],
+    "metadata": {
+      "totalCompletions": 0,
+      "averageCompletionTime": 40,
+      "averageRating": 0,
+      "totalRatings": 0,
+      "difficulty": "beginner"
+    },
+    "createdAt": "2025-09-22T21:57:50.283Z",
+    "updatedAt": "2025-09-22T21:57:50.283Z",
+    "createdBy": "test-script"
+  },
+  "soccer-ball-control": {
+    "sportId": "soccer",
+    "name": "Ball Control Basics",
+    "description": "Master fundamental ball control techniques including first touch and close control",
+    "difficulty": "beginner",
+    "estimatedTimeToComplete": 35,
+    "content": "<h2>Ball Control Basics</h2><p>Learn essential ball control skills that form the foundation of soccer technique.</p>",
+    "externalResources": [],
+    "learningObjectives": [
+      "Develop soft first touch",
+      "Master close ball control",
+      "Learn juggling techniques",
+      "Practice receiving with both feet"
+    ],
+    "tags": [
+      "ball-control",
+      "touch",
+      "fundamentals"
+    ],
+    "hasVideo": true,
+    "hasQuiz": true,
+    "isActive": true,
+    "order": 1,
+    "prerequisites": [],
+    "metadata": {
+      "totalCompletions": 0,
+      "averageCompletionTime": 35,
+      "averageRating": 0,
+      "totalRatings": 0,
+      "difficulty": "beginner"
+    },
+    "createdAt": "2025-09-22T21:57:50.283Z",
+    "updatedAt": "2025-09-22T21:57:50.283Z",
+    "createdBy": "test-script"
+  },
+  "soccer-passing": {
+    "sportId": "soccer",
+    "name": "Basic Passing Techniques",
+    "description": "Learn accurate short and medium-range passing techniques",
+    "difficulty": "beginner",
+    "estimatedTimeToComplete": 40,
+    "content": "<h2>Basic Passing Techniques</h2><p>Master the fundamentals of accurate passing in soccer.</p>",
+    "externalResources": [],
+    "learningObjectives": [
+      "Master inside foot passing",
+      "Develop passing accuracy",
+      "Learn weight of pass",
+      "Practice one-touch passing"
+    ],
+    "tags": [
+      "passing",
+      "accuracy",
+      "fundamentals"
+    ],
+    "hasVideo": true,
+    "hasQuiz": true,
+    "isActive": true,
+    "order": 2,
+    "prerequisites": [],
+    "metadata": {
+      "totalCompletions": 0,
+      "averageCompletionTime": 40,
+      "averageRating": 0,
+      "totalRatings": 0,
+      "difficulty": "beginner"
+    },
+    "createdAt": "2025-09-22T21:57:50.283Z",
+    "updatedAt": "2025-09-22T21:57:50.283Z",
+    "createdBy": "test-script"
+  }
+}

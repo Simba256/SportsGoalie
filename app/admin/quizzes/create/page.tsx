@@ -179,14 +179,23 @@ function CreateQuizContent() {
         metadata: calculateMetadata(),
       };
 
-      // Only add optional fields if they have values
-      if (quizData.sportId && quizData.sportId !== 'none') {
-        finalQuizData.sportId = quizData.sportId;
+      // MANDATORY: Every quiz must have both sportId and skillId
+      if (!quizData.sportId || quizData.sportId.trim() === '') {
+        toast.error('Sport is required', {
+          description: 'Every quiz must be associated with a sport.',
+        });
+        return;
       }
 
-      if (quizData.skillId && quizData.skillId !== 'none') {
-        finalQuizData.skillId = quizData.skillId;
+      if (!quizData.skillId || quizData.skillId.trim() === '') {
+        toast.error('Skill is required', {
+          description: 'Every quiz must be associated with a skill.',
+        });
+        return;
       }
+
+      finalQuizData.sportId = quizData.sportId;
+      finalQuizData.skillId = quizData.skillId;
 
       if (quizData.coverImage && quizData.coverImage.trim()) {
         finalQuizData.coverImage = quizData.coverImage;
@@ -298,13 +307,12 @@ function CreateQuizContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="sport">Sport (Optional)</Label>
-                  <Select value={quizData.sportId || "none"} onValueChange={(value) => handleInputChange('sportId', value)}>
+                  <Label htmlFor="sport">Sport *</Label>
+                  <Select value={quizData.sportId || ""} onValueChange={(value) => handleInputChange('sportId', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a sport" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Sport</SelectItem>
                       {sports.map((sport) => (
                         <SelectItem key={sport.id} value={sport.id}>
                           {sport.name}
@@ -312,12 +320,13 @@ function CreateQuizContent() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-sm text-gray-500 mt-1">Every quiz must be associated with a sport</p>
                 </div>
 
                 <div>
-                  <Label htmlFor="skill">Skill (Optional)</Label>
+                  <Label htmlFor="skill">Skill *</Label>
                   <Select
-                    value={quizData.skillId || "none"}
+                    value={quizData.skillId || ""}
                     onValueChange={(value) => handleInputChange('skillId', value)}
                     disabled={!quizData.sportId}
                   >
@@ -325,7 +334,6 @@ function CreateQuizContent() {
                       <SelectValue placeholder="Select a skill" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Skill</SelectItem>
                       {filteredSkills.map((skill) => (
                         <SelectItem key={skill.id} value={skill.id}>
                           {skill.name}
@@ -333,6 +341,7 @@ function CreateQuizContent() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-sm text-gray-500 mt-1">Every quiz must be associated with a skill</p>
                 </div>
 
                 <div>

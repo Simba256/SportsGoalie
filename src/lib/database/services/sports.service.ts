@@ -355,6 +355,51 @@ export class SportsService extends BaseDatabaseService {
   async createSkill(
     skill: Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>
   ): Promise<ApiResponse<{ id: string }>> {
+    logger.database('create', this.SKILLS_COLLECTION, undefined, { name: skill.name, sportId: skill.sportId });
+
+    // MANDATORY: Validate that the sport exists
+    if (!skill.sportId || skill.sportId.trim() === '') {
+      logger.warn('Skill creation failed: sportId is required', 'SportsService', { skillName: skill.name });
+      return {
+        success: false,
+        error: {
+          code: 'SPORT_ID_REQUIRED',
+          message: 'Every skill must be associated with a valid sport',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    const sportResult = await this.getSport(skill.sportId);
+    if (!sportResult.success || !sportResult.data) {
+      logger.warn('Skill creation failed: sport not found', 'SportsService', {
+        skillName: skill.name,
+        sportId: skill.sportId
+      });
+      return {
+        success: false,
+        error: {
+          code: 'SPORT_NOT_FOUND',
+          message: `Sport with ID ${skill.sportId} does not exist`,
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Validate skill data
+    const validation = validateSkillData(skill);
+    if (!validation.valid) {
+      logger.warn('Skill creation failed validation', 'SportsService', { errors: validation.errors });
+      return {
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.errors.join(', '),
+        },
+        timestamp: new Date(),
+      };
+    }
+
     const skillData = {
       ...skill,
       metadata: {
@@ -371,6 +416,13 @@ export class SportsService extends BaseDatabaseService {
     if (result.success) {
       // Increment sport skills count
       await this.incrementField(this.SPORTS_COLLECTION, skill.sportId, 'skillsCount');
+      logger.info('Skill created successfully', 'SportsService', {
+        skillId: result.data?.id,
+        skillName: skill.name,
+        sportId: skill.sportId
+      });
+    } else {
+      logger.error('Skill creation failed', 'SportsService', result.error);
     }
 
     return result;

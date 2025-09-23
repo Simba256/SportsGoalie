@@ -1,0 +1,64 @@
+{
+  "basketball": {
+    "name": "Basketball",
+    "description": "Learn basketball fundamentals including shooting, dribbling, and game strategy",
+    "icon": "🏀",
+    "color": "#FF7F00",
+    "category": "team-sports",
+    "difficulty": "beginner",
+    "estimatedTimeToComplete": 180,
+    "skillsCount": 2,
+    "imageUrl": "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800",
+    "tags": [
+      "team",
+      "indoor",
+      "ball-game",
+      "competitive"
+    ],
+    "prerequisites": [],
+    "isActive": true,
+    "isFeatured": true,
+    "order": 1,
+    "metadata": {
+      "totalEnrollments": 0,
+      "totalCompletions": 0,
+      "averageRating": 0,
+      "totalRatings": 0,
+      "averageCompletionTime": 180
+    },
+    "createdAt": "2025-09-22T21:57:50.240Z",
+    "updatedAt": "2025-09-22T21:57:50.283Z",
+    "createdBy": "test-script"
+  },
+  "soccer": {
+    "name": "Soccer",
+    "description": "Master soccer skills from basic ball control to advanced techniques",
+    "icon": "⚽",
+    "color": "#00AA00",
+    "category": "team-sports",
+    "difficulty": "beginner",
+    "estimatedTimeToComplete": 240,
+    "skillsCount": 2,
+    "imageUrl": "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800",
+    "tags": [
+      "team",
+      "outdoor",
+      "ball-game",
+      "endurance"
+    ],
+    "prerequisites": [],
+    "isActive": true,
+    "isFeatured": true,
+    "order": 2,
+    "metadata": {
+      "totalEnrollments": 0,
+      "totalCompletions": 0,
+      "averageRating": 0,
+      "totalRatings": 0,
+      "averageCompletionTime": 240
+    },
+    "createdAt": "2025-09-22T21:57:50.283Z",
+    "updatedAt": "2025-09-22T21:57:50.283Z",
+    "createdBy": "test-script"
+  }
+}

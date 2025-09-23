@@ -72,7 +72,91 @@ export class QuizService extends BaseDatabaseService {
   async createQuiz(
     quiz: Omit<Quiz, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>
   ): Promise<ApiResponse<{ id: string }>> {
-    logger.database('create', this.QUIZZES_COLLECTION, undefined, { title: quiz.title, skillId: quiz.skillId });
+    logger.database('create', this.QUIZZES_COLLECTION, undefined, {
+      title: quiz.title,
+      skillId: quiz.skillId,
+      sportId: quiz.sportId
+    });
+
+    // MANDATORY: Validate that both sportId and skillId are provided and exist
+    if (!quiz.sportId || quiz.sportId.trim() === '') {
+      logger.warn('Quiz creation failed: sportId is required', 'QuizService', { quizTitle: quiz.title });
+      return {
+        success: false,
+        error: {
+          code: 'SPORT_ID_REQUIRED',
+          message: 'Every quiz must be associated with a valid sport',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    if (!quiz.skillId || quiz.skillId.trim() === '') {
+      logger.warn('Quiz creation failed: skillId is required', 'QuizService', { quizTitle: quiz.title });
+      return {
+        success: false,
+        error: {
+          code: 'SKILL_ID_REQUIRED',
+          message: 'Every quiz must be associated with a valid skill',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Import sports service to validate relationships
+    const { sportsService } = await import('./sports.service');
+
+    // Check if sport exists
+    const sportResult = await sportsService.getSport(quiz.sportId);
+    if (!sportResult.success || !sportResult.data) {
+      logger.warn('Quiz creation failed: sport not found', 'QuizService', {
+        quizTitle: quiz.title,
+        sportId: quiz.sportId
+      });
+      return {
+        success: false,
+        error: {
+          code: 'SPORT_NOT_FOUND',
+          message: `Sport with ID ${quiz.sportId} does not exist`,
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Check if skill exists
+    const skillResult = await sportsService.getSkill(quiz.skillId);
+    if (!skillResult.success || !skillResult.data) {
+      logger.warn('Quiz creation failed: skill not found', 'QuizService', {
+        quizTitle: quiz.title,
+        skillId: quiz.skillId
+      });
+      return {
+        success: false,
+        error: {
+          code: 'SKILL_NOT_FOUND',
+          message: `Skill with ID ${quiz.skillId} does not exist`,
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Validate that the skill belongs to the sport
+    if (skillResult.data.sportId !== quiz.sportId) {
+      logger.warn('Quiz creation failed: skill does not belong to sport', 'QuizService', {
+        quizTitle: quiz.title,
+        skillId: quiz.skillId,
+        skillSportId: skillResult.data.sportId,
+        expectedSportId: quiz.sportId
+      });
+      return {
+        success: false,
+        error: {
+          code: 'SKILL_SPORT_MISMATCH',
+          message: `Skill ${quiz.skillId} does not belong to sport ${quiz.sportId}`,
+        },
+        timestamp: new Date(),
+      };
+    }
 
     const quizData = {
       ...quiz,
@@ -88,7 +172,12 @@ export class QuizService extends BaseDatabaseService {
     const result = await this.create<Quiz>(this.QUIZZES_COLLECTION, quizData);
 
     if (result.success) {
-      logger.info('Quiz created successfully', 'QuizService', { quizId: result.data?.id, title: quiz.title });
+      logger.info('Quiz created successfully', 'QuizService', {
+        quizId: result.data?.id,
+        title: quiz.title,
+        sportId: quiz.sportId,
+        skillId: quiz.skillId
+      });
     } else {
       logger.error('Quiz creation failed', 'QuizService', result.error);
     }
