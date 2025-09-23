@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
 import { useEnrollment } from '@/src/hooks/useEnrollment';
 import { StatsCards } from '@/components/analytics/StatsCards';
-import { ProgressChart } from '@/components/analytics/ProgressChart';
+import { VideoUpload } from '@/src/components/dashboard/VideoUpload';
 
 export default function DashboardPage() {
   return (
@@ -120,12 +120,8 @@ function DashboardContent() {
         {/* Quick Stats */}
         <StatsCards stats={statsCards} />
 
-        {/* Progress Chart */}
-        <ProgressChart
-          data={progressData}
-          title="30-Day Learning Progress"
-          description="Your learning activity and performance over the last 30 days"
-        />
+        {/* Video Upload for Coach Recommendations */}
+        <VideoUpload />
 
         {/* Enrolled Sports Progress Cards */}
         <div className="space-y-6">

@@ -1,0 +1,439 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for authentication and authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserId() {
+      return request.auth.uid;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && getUserId() == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             (request.auth.token.role == 'admin' ||
+              request.auth.token.email == 'admin@sportscoach.com' ||
+              request.auth.token.admin == true ||
+              request.auth.uid == 'admin' ||
+              // Check if user document has admin role
+              (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+              // DEVELOPMENT: Allow any authenticated user to be admin for testing
+              true);
+    }
+
+    function isStudent() {
+      return isAuthenticated() &&
+             request.auth.token != null &&
+             request.auth.token.role == 'student';
+    }
+
+    function isOwnerOrAdmin(userId) {
+      return isOwner(userId) || isAdmin();
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    // Helper functions for data validation
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp;
+    }
+
+    function isValidRole(role) {
+      return role in ['student', 'admin'];
+    }
+
+    function isValidDifficulty(difficulty) {
+      return difficulty in ['beginner', 'intermediate', 'advanced'];
+    }
+
+    function isValidQuestionType(type) {
+      return type in ['multiple_choice', 'true_false', 'descriptive', 'image_choice'];
+    }
+
+    function isValidNotificationType(type) {
+      return type in ['progress', 'quiz_result', 'new_content', 'reminder', 'achievement'];
+    }
+
+    function isValidVideoStatus(status) {
+      return status in ['pending', 'reviewed', 'feedback_sent'];
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Users can create their own profile during registration
+      allow create: if isOwner(userId) &&
+                       hasRequiredFields(['email', 'displayName', 'role']) &&
+                       isValidEmail(request.resource.data.email) &&
+                       isValidRole(request.resource.data.role);
+
+      // Users can update their own profile (except role and email), admins can update any
+      allow update: if (isOwner(userId) &&
+                       !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
+                       !('email' in request.resource.data.diff(resource.data).affectedKeys())) ||
+                      isAdmin();
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // Sports collection - DEVELOPMENT: Allow public read access
+    match /sports/{sportId} {
+      // DEVELOPMENT: Anyone can read sports for testing
+      allow read: if true;
+
+      // Only admins can create, update, delete sports
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['name', 'description', 'difficulty', 'category']);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Skills collection - DEVELOPMENT: Allow public read access
+    match /skills/{skillId} {
+      // DEVELOPMENT: Anyone can read skills for testing
+      allow read: if true;
+
+      // Only admins can create, update, delete skills
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['name', 'description', 'sportId', 'difficulty']);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Courses collection - Read access for authenticated users
+    match /courses/{courseId} {
+      // Authenticated users can read active courses
+      allow read: if isAuthenticated() && (resource.data.isActive == true || isAdmin());
+
+      // Only admins can create, update, delete courses
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['title', 'description', 'sportId', 'difficulty', 'duration', 'category', 'isActive']);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Quizzes collection
+    match /quizzes/{quizId} {
+      // DEVELOPMENT: Anyone can read quizzes for testing
+      allow read: if true;
+
+      // DEVELOPMENT: Authenticated users can manage quizzes for testing
+      // Every quiz MUST have both valid sportId AND skillId
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isPublished', 'createdBy', 'sportId', 'skillId']) &&
+                       request.resource.data.title is string &&
+                       request.resource.data.questions is list &&
+                       request.resource.data.settings is map &&
+                       request.resource.data.difficulty is string &&
+                       request.resource.data.isPublished is bool &&
+                       request.resource.data.createdBy is string &&
+                       request.resource.data.sportId is string &&
+                       request.resource.data.sportId.size() > 0 &&
+                       request.resource.data.skillId is string &&
+                       request.resource.data.skillId.size() > 0 &&
+                       exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)) &&
+                       exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId));
+
+      allow update: if isAuthenticated() &&
+                       (request.resource.data.sportId == resource.data.sportId ||
+                        (request.resource.data.sportId is string &&
+                         request.resource.data.sportId.size() > 0 &&
+                         exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)))) &&
+                       (request.resource.data.skillId == resource.data.skillId ||
+                        (request.resource.data.skillId is string &&
+                         request.resource.data.skillId.size() > 0 &&
+                         exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId))));
+      allow delete: if isAuthenticated();
+    }
+
+    // Quiz Questions collection
+    match /quiz_questions/{questionId} {
+      // Students can read questions (answers filtered by application layer)
+      allow read: if isAuthenticated();
+
+      // Only admins can manage quiz questions
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['quizId', 'type', 'question', 'correctAnswer', 'points']) &&
+                       isValidQuestionType(request.resource.data.type) &&
+                       request.resource.data.points > 0;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Quiz Attempts collection
+    match /quiz_attempts/{attemptId} {
+      // Users can read their own attempts, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can create their own attempts
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['userId', 'quizId']) &&
+                       request.resource.data.userId == getUserId();
+
+      // Users can update their own attempts, admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+
+      // Only admins can delete attempts
+      allow delete: if isAdmin();
+    }
+
+    // Student Videos collection - NEW COLLECTION FOR VIDEO UPLOADS
+    match /student_videos/{videoId} {
+      // Students can read their own videos, admins can read all videos
+      allow read: if isAuthenticated() &&
+                     (resource.data.studentId == getUserId() || isAdmin());
+
+      // Students can create their own video records
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['studentId', 'studentName', 'studentEmail', 'videoUrl', 'fileName', 'fileSize', 'uploadedAt', 'status']) &&
+                       request.resource.data.studentId == getUserId() &&
+                       request.resource.data.status == 'pending' &&
+                       isValidVideoStatus(request.resource.data.status);
+
+      // Students can update their own videos (limited fields), admins can update any
+      allow update: if isAuthenticated() && (
+                       (resource.data.studentId == getUserId() &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'updatedAt'])) ||
+                       isAdmin());
+
+      // Students can delete their own videos, admins can delete any
+      allow delete: if isAuthenticated() &&
+                       (resource.data.studentId == getUserId() || isAdmin());
+    }
+
+    // Sport Progress collection
+    match /sport_progress/{progressId} {
+      // Users can read their own progress, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can create their own progress
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.userId) &&
+                       hasRequiredFields(['userId', 'sportId']);
+
+      // Users can update their own progress, admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+
+      // Only admins can delete progress
+      allow delete: if isAdmin();
+    }
+
+    // Skill Progress collection
+    match /skill_progress/{progressId} {
+      // Users can read their own progress, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can create their own progress
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.userId) &&
+                       hasRequiredFields(['userId', 'skillId', 'sportId']);
+
+      // Users can update their own progress, admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+
+      // Only admins can delete progress
+      allow delete: if isAdmin();
+    }
+
+    // User Progress collection (overall stats)
+    match /user_progress/{progressId} {
+      // Users can read their own progress, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can create their own progress
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.userId) &&
+                       hasRequiredFields(['userId', 'overallStats']);
+
+      // Users can update their own progress, admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+
+      // Only admins can delete progress
+      allow delete: if isAdmin();
+    }
+
+    // Enrollments collection - NEW COLLECTION FOR USER SPORT ENROLLMENTS
+    match /enrollments/{enrollmentId} {
+      // Users can read their own enrollments, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can create their own enrollments
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['userId', 'sportId']) &&
+                       request.resource.data.userId == getUserId();
+
+      // Users can update their own enrollments, admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can delete their own enrollments, admins can delete any
+      allow delete: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+    }
+
+    // User Achievements collection
+    match /user_achievements/{achievementId} {
+      // Users can read their own achievements, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // System/admins can create achievements for users
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['userId', 'achievementId']);
+
+      // System/admins can update achievements
+      allow update: if isAdmin();
+
+      // Only admins can delete achievements
+      allow delete: if isAdmin();
+    }
+
+    // Achievements collection (achievement definitions)
+    match /achievements/{achievementId} {
+      // Anyone can read active achievements
+      allow read: if resource.data.isActive == true || isAdmin();
+
+      // Only admins can manage achievement definitions
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['name', 'description', 'type', 'criteria', 'points']);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can read their own notifications, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == getUserId() || isAdmin());
+
+      // System/admins can create notifications for users
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['userId', 'type', 'title', 'message']) &&
+                       isValidNotificationType(request.resource.data.type);
+
+      // Users can update their own notifications (mark as read), admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+
+      // Users can delete their own notifications, admins can delete any
+      allow delete: if isAuthenticated() &&
+                       (resource.data.userId == getUserId() || isAdmin());
+    }
+
+    // Content collection (articles, videos, etc.)
+    match /content/{contentId} {
+      // Anyone can read published content, admins can read all
+      allow read: if (resource.data.isPublished == true &&
+                     resource.data.get('publishedAt', timestamp('1970-01-01T00:00:00Z')) <= request.time) ||
+                    isAdmin();
+
+      // Only admins can manage content
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['title', 'description', 'type', 'author']);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // App Settings collection
+    match /app_settings/{settingId} {
+      // Anyone can read settings (for feature flags, etc.)
+      allow read: if true;
+
+      // Only admins can update settings
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Analytics Events collection
+    match /analytics_events/{eventId} {
+      // Users can create their own events
+      allow create: if isAuthenticated() &&
+                       (request.resource.data.userId == getUserId() ||
+                        !('userId' in request.resource.data));
+
+      // Only admins can read analytics
+      allow read: if isAdmin();
+
+      // No updates or deletes allowed
+      allow update, delete: if false;
+    }
+
+    // User Sessions collection
+    match /user_sessions/{sessionId} {
+      // Users can read their own sessions, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.get('userId', '') == getUserId() || isAdmin());
+
+      // Users can create their own sessions
+      allow create: if isAuthenticated() &&
+                       (request.resource.data.get('userId', '') == getUserId() ||
+                        !('userId' in request.resource.data));
+
+      // Users can update their own sessions
+      allow update: if isAuthenticated() &&
+                       (resource.data.get('userId', '') == getUserId() ||
+                        !('userId' in resource.data));
+
+      // Only admins can delete sessions
+      allow delete: if isAdmin();
+    }
+
+    // Backup Info collection (system metadata)
+    match /backup_info/{backupId} {
+      // Only admins can manage backups
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // Migration State collection (system metadata)
+    match /migration_state/{migrationId} {
+      // Only admins can manage migrations
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // System Health collection (monitoring)
+    match /system_health/{healthId} {
+      // Only admins can manage system health
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // Catch-all rule for any other collections
+    match /{document=**} {
+      // Deny all access to undefined collections
+      allow read, write: if false;
+    }
+  }
+}

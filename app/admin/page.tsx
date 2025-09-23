@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw } from 'lucide-react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, Database } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { analyticsService, PlatformAnalytics } from '@/lib/database/services/analytics.service';
+import { seedCourses } from '@/lib/database/seeding/seed-courses';
 import { toast } from 'sonner';
 
 export default function AdminDashboardPage() {
@@ -24,6 +25,7 @@ function AdminDashboardContent() {
   const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const fetchAnalytics = async (showRefreshToast = false) => {
     try {
@@ -59,6 +61,19 @@ function AdminDashboardContent() {
   const handleRefresh = () => {
     analyticsService.clearCache();
     fetchAnalytics(true);
+  };
+
+  const handleSeedCourses = async () => {
+    setSeeding(true);
+    try {
+      await seedCourses();
+      toast.success('Courses seeded successfully!');
+    } catch (error) {
+      console.error('Error seeding courses:', error);
+      toast.error('Failed to seed courses');
+    } finally {
+      setSeeding(false);
+    }
   };
 
   return (
@@ -187,12 +202,27 @@ function AdminDashboardContent() {
 
           <Card>
             <CardHeader>
-              <CardTitle>User Management</CardTitle>
+              <CardTitle>Student Support</CardTitle>
               <CardDescription>
-                Monitor and manage user accounts and permissions.
+                Review student videos and provide personalized coaching.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4 rounded-lg border p-4">
+                <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
+                  <Video className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Video Reviews</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review student training videos and provide feedback
+                  </p>
+                </div>
+                <Link href="/admin/video-reviews">
+                  <Button>Review Videos</Button>
+                </Link>
+              </div>
+
               <div className="flex items-center space-x-4 rounded-lg border p-4">
                 <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
                   <Users className="h-6 w-6 text-green-600" />
@@ -256,6 +286,25 @@ function AdminDashboardContent() {
                 <Link href="/admin/settings">
                   <Button>Configure</Button>
                 </Link>
+              </div>
+
+              <div className="flex items-center space-x-4 rounded-lg border p-4">
+                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Database className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Seed Course Data</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Initialize the courses collection with sample data
+                  </p>
+                </div>
+                <Button
+                  onClick={handleSeedCourses}
+                  disabled={seeding}
+                  variant="outline"
+                >
+                  {seeding ? 'Seeding...' : 'Seed Courses'}
+                </Button>
               </div>
             </CardContent>
           </Card>
