@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
-import { userService } from '@/src/lib/database/services/user.service';
+import { userService } from '@/lib/database/services/user.service';
 import { User, UserRole } from '@/types';
 import { toast } from 'sonner';
 

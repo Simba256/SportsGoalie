@@ -61,9 +61,8 @@ function QuizzesPageContent() {
     try {
       setLoading(true);
 
-      // Get all published and active quizzes
+      // Get all published quizzes
       const quizzesData = await firebaseService.getCollection('quizzes', [
-        { field: 'isActive', operator: '==', value: true },
         { field: 'isPublished', operator: '==', value: true },
       ]);
 

@@ -359,7 +359,7 @@ function AdminSkillsContent() {
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header */}
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+        <Button variant="ghost" onClick={() => router.push('/admin/sports')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Sports Management
         </Button>

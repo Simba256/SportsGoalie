@@ -39,7 +39,7 @@ import {
   Cell,
 } from 'recharts';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { analyticsService, PlatformAnalytics, UserEngagementData, ContentPopularity, SystemHealth } from '@/src/lib/database/services/analytics.service';
+import { analyticsService, PlatformAnalytics, UserEngagementData, ContentPopularity, SystemHealth } from '@/lib/database/services/analytics.service';
 import { toast } from 'sonner';
 
 export default function AdminAnalyticsPage() {

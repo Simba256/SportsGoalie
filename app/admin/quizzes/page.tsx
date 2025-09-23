@@ -18,6 +18,7 @@ import {
 import { Quiz } from '@/types/quiz';
 import { Sport, Skill } from '@/types';
 import { firebaseService } from '@/lib/firebase/service';
+import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import { cacheOrFetch } from '@/lib/utils/cache.service';
 import Link from 'next/link';
 
@@ -29,6 +30,9 @@ function QuizzesAdminContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+
+  const { dialog, showDeleteConfirmation } = useDeleteConfirmation();
+  const [bulkUpdateLoading, setBulkUpdateLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -54,17 +58,69 @@ function QuizzesAdminContent() {
     }
   };
 
-  const handleDeleteQuiz = async (quizId: string) => {
-    if (!confirm('Are you sure you want to delete this quiz?')) return;
+  const handleDeleteQuiz = (quizId: string, quizTitle: string) => {
+    showDeleteConfirmation({
+      title: 'Delete Quiz',
+      description: `Are you sure you want to delete "${quizTitle}"? This action cannot be undone and will remove all associated data.`,
+      itemName: 'quiz',
+      onConfirm: async () => {
+        try {
+          await firebaseService.deleteDocument('quizzes', quizId);
+          setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
+          toast.success('Quiz deleted successfully');
+        } catch (error) {
+          console.error('Error deleting quiz:', error);
+          toast.error('Failed to delete quiz', {
+            description: 'Please try again or contact support if the problem persists.',
+          });
+        }
+      },
+    });
+  };
 
+  const handleBulkActivateQuizzes = async () => {
     try {
-      await firebaseService.deleteDocument('quizzes', quizId);
-      setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
-    } catch (error) {
-      console.error('Error deleting quiz:', error);
-      toast.error('Failed to delete quiz', {
-        description: 'Please try again or contact support if the problem persists.',
+      setBulkUpdateLoading(true);
+
+      const updatePromises = quizzes.map(async (quiz) => {
+        // Only update quizzes that aren't already published
+        // Check for strict boolean true values
+        if (quiz.isPublished !== true) {
+          try {
+            await firebaseService.updateDocument('quizzes', quiz.id, {
+              isPublished: true,
+              updatedAt: new Date(),
+            });
+            return { success: true, id: quiz.id };
+          } catch (error) {
+            console.error(`Failed to update quiz ${quiz.id}:`, error);
+            return { success: false, id: quiz.id, error };
+          }
+        }
+        return { success: true, id: quiz.id, skipped: true };
       });
+
+      const results = await Promise.all(updatePromises);
+      const updated = results.filter(r => r.success && !r.skipped).length;
+      const failed = results.filter(r => !r.success).length;
+
+      if (updated > 0) {
+        toast.success(`${updated} quiz(es) published successfully`);
+        await loadData(); // Reload the quiz list
+      }
+
+      if (failed > 0) {
+        toast.error(`Failed to update ${failed} quiz(es)`);
+      }
+
+      if (updated === 0 && failed === 0) {
+        toast.info('All quizzes are already published');
+      }
+    } catch (error) {
+      console.error('Error in bulk update:', error);
+      toast.error('Failed to update quizzes');
+    } finally {
+      setBulkUpdateLoading(false);
     }
   };
 
@@ -107,12 +163,22 @@ function QuizzesAdminContent() {
           <h1 className="text-3xl font-bold text-gray-900">Quiz Management</h1>
           <p className="text-gray-600 mt-2">Create and manage interactive quizzes</p>
         </div>
-        <Link href="/admin/quizzes/create">
-          <Button className="flex items-center gap-2">
-            <Plus size={20} />
-            Create Quiz
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleBulkActivateQuizzes}
+            disabled={bulkUpdateLoading || quizzes.length === 0}
+            className="flex items-center gap-2"
+          >
+            {bulkUpdateLoading ? 'Publishing...' : 'Publish All Quizzes'}
           </Button>
-        </Link>
+          <Link href="/admin/quizzes/create">
+            <Button className="flex items-center gap-2">
+              <Plus size={20} />
+              Create Quiz
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -173,7 +239,7 @@ function QuizzesAdminContent() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDeleteQuiz(quiz.id)}
+                    onClick={() => handleDeleteQuiz(quiz.id, quiz.title)}
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 size={16} />
@@ -204,8 +270,8 @@ function QuizzesAdminContent() {
                   >
                     {quiz.difficulty}
                   </Badge>
-                  <Badge variant={quiz.isActive ? 'default' : 'secondary'}>
-                    {quiz.isActive ? 'Active' : 'Inactive'}
+                  <Badge variant={quiz.isPublished ? 'default' : 'outline'}>
+                    {quiz.isPublished ? 'Published' : 'Draft'}
                   </Badge>
                 </div>
 
@@ -255,6 +321,7 @@ function QuizzesAdminContent() {
           )}
         </div>
       )}
+      {dialog}
     </div>
   );
 }

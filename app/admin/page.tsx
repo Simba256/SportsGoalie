@@ -7,8 +7,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { useAuth } from '../../lib/auth/context';
-import { analyticsService, PlatformAnalytics } from '@/src/lib/database/services/analytics.service';
+import { useAuth } from '@/lib/auth/context';
+import { analyticsService, PlatformAnalytics } from '@/lib/database/services/analytics.service';
 import { toast } from 'sonner';
 
 export default function AdminDashboardPage() {

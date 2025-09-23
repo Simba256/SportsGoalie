@@ -8,7 +8,7 @@ import {
   type RegisterFormData,
   type PasswordResetFormData,
   type ProfileUpdateFormData,
-} from '@/lib/validations/auth';
+} from '@/lib/validation/auth';
 
 describe('Authentication Validation Schemas', () => {
   describe('Login Schema', () => {

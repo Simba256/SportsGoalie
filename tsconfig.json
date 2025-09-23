@@ -21,8 +21,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*", "./*"],
-      "@/components/*": ["./src/components/*", "./components/*"],
-      "@/lib/*": ["./src/lib/*", "./lib/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
       "@/types/*": ["./src/types/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/app/*": ["./app/*"]

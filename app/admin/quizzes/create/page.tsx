@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { completeQuizSchema } from '@/lib/validations/quiz';
+import { completeQuizSchema } from '@/lib/validation/quiz';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

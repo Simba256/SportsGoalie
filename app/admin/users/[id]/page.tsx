@@ -39,7 +39,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { userService } from '@/src/lib/database/services/user.service';
+import { userService } from '@/lib/database/services/user.service';
 import { User as UserType, UserRole, UserProgress, Notification } from '@/types';
 import { toast } from 'sonner';
 

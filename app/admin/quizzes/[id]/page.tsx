@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Quiz, QuizAttempt } from '@/types';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { quizService } from '@/src/lib/database/services/quiz.service';
+import { quizService } from '@/lib/database/services/quiz.service';
+import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,8 @@ function QuizDetailContent() {
     error: null,
     deleting: false,
   });
+
+  const { dialog, showDeleteConfirmation } = useDeleteConfirmation();
 
   useEffect(() => {
     if (!quizId) return;
@@ -86,31 +89,36 @@ function QuizDetailContent() {
     router.push(`/admin/quizzes/${quizId}/edit`);
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
-      return;
-    }
+  const handleDelete = () => {
+    if (!state.quiz) return;
 
-    setState(prev => ({ ...prev, deleting: true }));
+    showDeleteConfirmation({
+      title: 'Delete Quiz',
+      description: `Are you sure you want to delete "${state.quiz.title}"? This action cannot be undone and will remove all associated data.`,
+      itemName: 'quiz',
+      onConfirm: async () => {
+        setState(prev => ({ ...prev, deleting: true }));
 
-    try {
-      const result = await quizService.deleteQuiz(quizId);
-      if (result.success) {
-        router.push('/admin/quizzes');
-      } else {
-        setState(prev => ({
-          ...prev,
-          error: result.error?.message || 'Failed to delete quiz',
-          deleting: false,
-        }));
-      }
-    } catch (err) {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred while deleting',
-        deleting: false,
-      }));
-    }
+        try {
+          const result = await quizService.deleteQuiz(quizId);
+          if (result.success) {
+            router.push('/admin/quizzes');
+          } else {
+            setState(prev => ({
+              ...prev,
+              error: result.error?.message || 'Failed to delete quiz',
+              deleting: false,
+            }));
+          }
+        } catch (err) {
+          setState(prev => ({
+            ...prev,
+            error: 'An unexpected error occurred while deleting',
+            deleting: false,
+          }));
+        }
+      },
+    });
   };
 
   const handlePreview = () => {
@@ -490,6 +498,7 @@ function QuizDetailContent() {
           </Card>
         </div>
       </div>
+      {dialog}
     </div>
   );
 }

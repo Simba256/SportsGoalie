@@ -19,6 +19,15 @@ import {
 import { db } from './config';
 
 /**
+ * Interface for query constraints
+ */
+export interface WhereConstraint {
+  field: string;
+  operator: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'array-contains' | 'array-contains-any' | 'in' | 'not-in';
+  value: any;
+}
+
+/**
  * Generic Firebase service for CRUD operations
  */
 class FirebaseService {
@@ -53,11 +62,22 @@ class FirebaseService {
    */
   async getCollection<T = DocumentData>(
     collectionName: string,
-    constraints: QueryConstraint[] = []
+    constraints: (QueryConstraint | WhereConstraint)[] = []
   ): Promise<T[]> {
     try {
       const collectionRef = collection(db, collectionName);
-      const q = constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef;
+
+      // Convert WhereConstraint objects to QueryConstraint objects
+      const queryConstraints: QueryConstraint[] = constraints.map(constraint => {
+        if ('field' in constraint && 'operator' in constraint && 'value' in constraint) {
+          // It's a WhereConstraint object, convert it
+          return where(constraint.field, constraint.operator, constraint.value);
+        }
+        // It's already a QueryConstraint
+        return constraint as QueryConstraint;
+      });
+
+      const q = queryConstraints.length > 0 ? query(collectionRef, ...queryConstraints) : collectionRef;
       const querySnapshot = await getDocs(q);
 
       const documents: T[] = [];

@@ -202,7 +202,7 @@ export const useDeleteConfirmation = () => {
     title?: string
     description?: string
     itemName?: string
-    onConfirm?: () => void
+    onConfirm?: () => void | Promise<void>
     onCancel?: () => void
   }) => {
     const itemName = options.itemName || "item"
@@ -212,10 +212,18 @@ export const useDeleteConfirmation = () => {
       confirmText: "Delete",
       cancelText: "Cancel",
       variant: "destructive",
-      onConfirm: options.onConfirm,
+      onConfirm: async () => {
+        try {
+          await options.onConfirm?.()
+          hideDialog()
+        } catch (error) {
+          console.error('Delete action failed:', error)
+          setLoading(false)
+        }
+      },
       onCancel: options.onCancel,
     })
-  }, [showDialog])
+  }, [showDialog, hideDialog, setLoading])
 
   return {
     dialog,

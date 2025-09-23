@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
-import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
+import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
 
 export default function RegisterPage() {
