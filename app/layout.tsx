@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { AuthProvider } from '@/lib/auth/context';
 import { Toaster } from '@/components/ui/sonner';
+import { Chatbot } from '@/components/ui/chatbot';
 
 import './globals.css';
 
@@ -41,6 +42,7 @@ export default function RootLayout({
             <Footer />
           </div>
           <Toaster />
+          <Chatbot />
         </AuthProvider>
       </body>
     </html>
