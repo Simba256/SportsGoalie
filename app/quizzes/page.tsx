@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Quiz } from '@/types/quiz';
-import { firebaseService } from '@/lib/firebase/service';
+import { quizService } from '@/lib/database/services/quiz.service';
 
 interface QuizStats {
   totalAttempts: number;
@@ -61,19 +61,15 @@ function QuizzesPageContent() {
     try {
       setLoading(true);
 
-      // Get all published quizzes
-      const quizzesData = await firebaseService.getCollection('quizzes', [
-        { field: 'isPublished', operator: '==', value: true },
-      ]);
+      // Get all published quizzes using quiz service
+      const quizzesResult = await quizService.getPublishedQuizzes();
 
-      if (quizzesData) {
+      if (quizzesResult.success && quizzesResult.data) {
         const quizzesWithStats = await Promise.all(
-          quizzesData.map(async (quiz) => {
+          quizzesResult.data.items.map(async (quiz) => {
             try {
-              // Get quiz attempt statistics
-              const attempts = await firebaseService.getCollection('quiz_attempts', [
-                { field: 'quizId', operator: '==', value: quiz.id },
-              ]);
+              // Get quiz attempt statistics using quiz service
+              const attemptsResult = await quizService.getQuizAttempts(quiz.id);
 
               let stats: QuizStats = {
                 totalAttempts: 0,
@@ -81,8 +77,9 @@ function QuizzesPageContent() {
                 passRate: 0,
               };
 
-              if (attempts && attempts.length > 0) {
-                const totalScore = attempts.reduce((sum, attempt) => sum + attempt.score, 0);
+              if (attemptsResult.success && attemptsResult.data && attemptsResult.data.items.length > 0) {
+                const attempts = attemptsResult.data.items;
+                const totalScore = attempts.reduce((sum, attempt) => sum + attempt.percentage, 0);
                 const passedCount = attempts.filter(attempt => attempt.passed).length;
 
                 stats = {
@@ -104,6 +101,8 @@ function QuizzesPageContent() {
         );
 
         setQuizzes(quizzesWithStats);
+      } else {
+        throw new Error(quizzesResult.error?.message || 'Failed to load quizzes');
       }
     } catch (error) {
       console.error('Error loading quizzes:', error);

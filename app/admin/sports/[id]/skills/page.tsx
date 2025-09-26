@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
 import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
+import { HTMLEditorWithAI } from '@/components/ui/html-editor-with-ai';
 import {
   ArrowLeft,
   Plus,
@@ -472,17 +473,6 @@ function AdminSkillsContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content">Content (HTML)</Label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                placeholder="Detailed skill content in HTML format..."
-                className="w-full border rounded px-3 py-2 min-h-[200px] font-mono text-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="objectives">Learning Objectives (one per line)</Label>
               <textarea
                 id="objectives"
@@ -498,6 +488,17 @@ function AdminSkillsContent() {
                 className="w-full border rounded px-3 py-2 min-h-[120px]"
               />
             </div>
+
+            <HTMLEditorWithAI
+              label="Content (HTML)"
+              value={formData.content}
+              onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+              placeholder="Enter detailed skill content in HTML format, or use AI to generate professional content..."
+              skillName={formData.name}
+              description={formData.description}
+              difficulty={formData.difficulty}
+              objectives={formData.learningObjectives}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (comma-separated)</Label>

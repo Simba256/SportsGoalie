@@ -3,10 +3,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SportsPage from '../../../../app/sports/page';
-import { sportsService } from '../../lib/database/services/sports.service';
+import { sportsService } from '../../../lib/database/services/sports.service';
 
 // Mock the sports service
-jest.mock('../../lib/database/services/sports.service', () => ({
+jest.mock('../../../lib/database/services/sports.service', () => ({
   sportsService: {
     getAllSports: jest.fn(),
     searchSports: jest.fn(),

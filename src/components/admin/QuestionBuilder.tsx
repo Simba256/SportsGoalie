@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Upload, X, Play, Image as ImageIcon } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { questionSchema } from '@/lib/validation/quiz';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>({
-    type: 'multiple-choice',
+    type: 'multiple_choice',
     title: '',
     content: '',
     points: 1,
@@ -68,7 +69,7 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
 
   const resetForm = () => {
     setCurrentQuestion({
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       title: '',
       content: '',
       points: 1,
@@ -359,6 +360,150 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     );
   };
 
+  const renderFillInBlankEditor = () => {
+    const fibQuestion = currentQuestion as Partial<FillInBlankQuestion>;
+
+    const addCorrectAnswer = () => {
+      const newAnswers = [...(fibQuestion.correctAnswers || []), ''];
+      setCurrentQuestion(prev => ({ ...prev, correctAnswers: newAnswers }));
+    };
+
+    const updateCorrectAnswer = (index: number, value: string) => {
+      const newAnswers = [...(fibQuestion.correctAnswers || [])];
+      newAnswers[index] = value;
+      setCurrentQuestion(prev => ({ ...prev, correctAnswers: newAnswers }));
+    };
+
+    const removeCorrectAnswer = (index: number) => {
+      const newAnswers = (fibQuestion.correctAnswers || []).filter((_, i) => i !== index);
+      setCurrentQuestion(prev => ({ ...prev, correctAnswers: newAnswers }));
+    };
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label>Correct Answers</Label>
+          <div className="space-y-2">
+            {(fibQuestion.correctAnswers || []).map((answer, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <Input
+                  value={answer}
+                  onChange={(e) => updateCorrectAnswer(index, e.target.value)}
+                  placeholder={`Answer ${index + 1}`}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeCorrectAnswer(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCorrectAnswer}
+              disabled={(fibQuestion.correctAnswers || []).length >= 5}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Answer
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={fibQuestion.caseSensitive || false}
+            onCheckedChange={(checked) =>
+              setCurrentQuestion(prev => ({ ...prev, caseSensitive: checked }))
+            }
+          />
+          <Label>Case Sensitive</Label>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMatchingEditor = () => {
+    const matchQuestion = currentQuestion as Partial<MatchingQuestion>;
+
+    const addPair = () => {
+      const newPairs = [...(matchQuestion.pairs || []), {
+        id: Date.now().toString(),
+        left: '',
+        right: '',
+        order: (matchQuestion.pairs || []).length
+      }];
+      setCurrentQuestion(prev => ({ ...prev, pairs: newPairs }));
+    };
+
+    const updatePair = (index: number, field: 'left' | 'right', value: string) => {
+      const newPairs = [...(matchQuestion.pairs || [])];
+      newPairs[index] = { ...newPairs[index], [field]: value };
+      setCurrentQuestion(prev => ({ ...prev, pairs: newPairs }));
+    };
+
+    const removePair = (index: number) => {
+      const newPairs = (matchQuestion.pairs || []).filter((_, i) => i !== index);
+      setCurrentQuestion(prev => ({ ...prev, pairs: newPairs }));
+    };
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label>Matching Pairs</Label>
+          <div className="space-y-3">
+            {(matchQuestion.pairs || []).map((pair, index) => (
+              <div key={index} className="grid grid-cols-2 gap-2 items-center">
+                <Input
+                  value={pair.left}
+                  onChange={(e) => updatePair(index, 'left', e.target.value)}
+                  placeholder={`Left item ${index + 1}`}
+                />
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={pair.right}
+                    onChange={(e) => updatePair(index, 'right', e.target.value)}
+                    placeholder={`Right item ${index + 1}`}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removePair(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addPair}
+              disabled={(matchQuestion.pairs || []).length >= 8}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Pair
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={matchQuestion.shufflePairs || false}
+            onCheckedChange={(checked) =>
+              setCurrentQuestion(prev => ({ ...prev, shufflePairs: checked }))
+            }
+          />
+          <Label>Shuffle Pairs</Label>
+        </div>
+      </div>
+    );
+  };
+
   const handleSaveQuestion = () => {
     // First check basic required fields
     if (!currentQuestion.title?.trim() || !currentQuestion.content?.trim()) {
@@ -380,8 +525,8 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       order: currentQuestion.order ?? questions.length,
       tags: currentQuestion.tags || [],
       isRequired: currentQuestion.isRequired ?? true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Timestamp.fromDate(new Date()),
+      updatedAt: Timestamp.fromDate(new Date()),
       createdBy: 'admin',
     };
 
@@ -395,11 +540,27 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     }
 
     // Add question-type specific data
-    if (currentQuestion.type === 'multiple-choice') {
+    if (currentQuestion.type === 'multiple_choice') {
       const mcQuestion = currentQuestion as Partial<MultipleChoiceQuestion>;
       questionData.options = mcQuestion.options || [];
       questionData.allowMultiple = mcQuestion.allowMultiple || false;
       questionData.shuffleOptions = mcQuestion.shuffleOptions ?? true;
+    } else if (currentQuestion.type === 'true_false') {
+      const tfQuestion = currentQuestion as Partial<TrueFalseQuestion>;
+      questionData.correctAnswer = tfQuestion.correctAnswer;
+    } else if (currentQuestion.type === 'fill_in_blank') {
+      const fibQuestion = currentQuestion as Partial<FillInBlankQuestion>;
+      questionData.correctAnswers = fibQuestion.correctAnswers || [];
+      questionData.caseSensitive = fibQuestion.caseSensitive ?? false;
+    } else if (currentQuestion.type === 'descriptive') {
+      const descQuestion = currentQuestion as Partial<DescriptiveQuestion>;
+      questionData.maxLength = descQuestion.maxLength || 500;
+      questionData.autoGrade = descQuestion.autoGrade ?? false;
+      questionData.keywords = descQuestion.keywords || [];
+    } else if (currentQuestion.type === 'matching') {
+      const matchQuestion = currentQuestion as Partial<MatchingQuestion>;
+      questionData.pairs = matchQuestion.pairs || [];
+      questionData.shufflePairs = matchQuestion.shufflePairs ?? true;
     }
 
     // Validate using Zod schema
@@ -473,10 +634,10 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                          <SelectItem value="true-false">True/False</SelectItem>
+                          <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                          <SelectItem value="true_false">True/False</SelectItem>
                           <SelectItem value="descriptive">Descriptive</SelectItem>
-                          <SelectItem value="fill-in-blank">Fill in the Blank</SelectItem>
+                          <SelectItem value="fill_in_blank">Fill in the Blank</SelectItem>
                           <SelectItem value="matching">Matching</SelectItem>
                         </SelectContent>
                       </Select>
@@ -608,9 +769,11 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
                     />
                   </div>
 
-                  {currentQuestion.type === 'multiple-choice' && renderMultipleChoiceEditor()}
-                  {currentQuestion.type === 'true-false' && renderTrueFalseEditor()}
+                  {currentQuestion.type === 'multiple_choice' && renderMultipleChoiceEditor()}
+                  {currentQuestion.type === 'true_false' && renderTrueFalseEditor()}
                   {currentQuestion.type === 'descriptive' && renderDescriptiveEditor()}
+                  {currentQuestion.type === 'fill_in_blank' && renderFillInBlankEditor()}
+                  {currentQuestion.type === 'matching' && renderMatchingEditor()}
 
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={handleCloseDialog}>

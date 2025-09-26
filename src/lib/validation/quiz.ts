@@ -102,7 +102,7 @@ export const baseQuestionSchema = z.object({
 });
 
 export const multipleChoiceQuestionSchema = baseQuestionSchema.extend({
-  type: z.literal('multiple-choice'),
+  type: z.literal('multiple_choice'),
   options: z
     .array(questionOptionSchema)
     .min(2, 'Must have at least 2 options')
@@ -120,7 +120,7 @@ export const multipleChoiceQuestionSchema = baseQuestionSchema.extend({
 });
 
 export const trueFalseQuestionSchema = baseQuestionSchema.extend({
-  type: z.literal('true-false'),
+  type: z.literal('true_false'),
   correctAnswer: z.boolean({
     required_error: 'Correct answer is required for true/false questions',
   }),
@@ -141,7 +141,7 @@ export const descriptiveQuestionSchema = baseQuestionSchema.extend({
 });
 
 export const fillInBlankQuestionSchema = baseQuestionSchema.extend({
-  type: z.literal('fill-in-blank'),
+  type: z.literal('fill_in_blank'),
   correctAnswers: z
     .array(z.string().min(1, 'Answer cannot be empty').max(100))
     .min(1, 'Must have at least one correct answer')

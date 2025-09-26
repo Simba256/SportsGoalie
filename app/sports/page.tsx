@@ -6,8 +6,10 @@ import { sportsService } from '@/lib/database/services/sports.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { LoadingState, LoadingCard } from '@/components/ui/loading';
 import Link from 'next/link';
-import { Search, Filter, Clock, Users } from 'lucide-react';
+import { Search, Filter, Clock, Users, Sparkles } from 'lucide-react';
 
 interface SportsPageState {
   sports: Sport[];
@@ -51,7 +53,7 @@ export default function SportsPage() {
       } else {
         setState(prev => ({
           ...prev,
-          error: result.error?.message || 'Failed to load sports',
+          error: result.error?.message || 'Failed to load courses',
           loading: false,
         }));
       }
@@ -87,13 +89,13 @@ export default function SportsPage() {
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
       case 'beginner':
-        return 'text-green-600 bg-green-100';
+        return 'text-emerald-700 bg-emerald-100 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-900 dark:border-emerald-800';
       case 'intermediate':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-amber-700 bg-amber-100 border-amber-200 dark:text-amber-300 dark:bg-amber-900 dark:border-amber-800';
       case 'advanced':
-        return 'text-red-600 bg-red-100';
+        return 'text-rose-700 bg-rose-100 border-rose-200 dark:text-rose-300 dark:bg-rose-900 dark:border-rose-800';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-slate-700 bg-slate-100 border-slate-200 dark:text-slate-300 dark:bg-slate-900 dark:border-slate-800';
     }
   };
 
@@ -107,29 +109,34 @@ export default function SportsPage() {
   if (state.loading && state.sports.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Loading sports catalog...</p>
-          </div>
-        </div>
+        <Breadcrumb items={[{ label: 'Courses', current: true }]} className="mb-6" />
+        <LoadingState message="Loading courses catalog..." />
+        <LoadingCard count={6} className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Breadcrumb */}
+      <Breadcrumb items={[{ label: 'Courses', current: true }]} />
+
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Sports Catalog</h1>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Courses Catalog
+              </h1>
+              <Sparkles className="w-6 h-6 text-blue-500" />
+            </div>
             <p className="text-muted-foreground">
-              Discover and master new sports skills with our comprehensive learning platform
+              Discover and master new skills with our comprehensive learning platform
             </p>
           </div>
-          <div className="text-sm text-muted-foreground">
-            {state.totalCount} sport{state.totalCount !== 1 ? 's' : ''} available
+          <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+            {state.totalCount} course{state.totalCount !== 1 ? 's' : ''} available
           </div>
         </div>
 
@@ -140,7 +147,7 @@ export default function SportsPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 type="text"
-                placeholder="Search sports by name, description, or tags..."
+                placeholder="Search courses by name, description, or tags..."
                 value={state.searchQuery}
                 onChange={(e) => setState(prev => ({ ...prev, searchQuery: e.target.value }))}
                 className="pl-10"
@@ -161,7 +168,7 @@ export default function SportsPage() {
           </Button>
 
           {(state.searchQuery || Object.keys(state.filters).length > 0) && (
-            <Button variant="ghost" onClick={clearFilters}>
+            <Button variant="secondary" onClick={clearFilters}>
               Clear All
             </Button>
           )}
@@ -262,7 +269,7 @@ export default function SportsPage() {
               <span>{state.error}</span>
             </div>
             <Button
-              variant="outline"
+              variant="warning"
               size="sm"
               onClick={() => loadSports(state.searchQuery, state.filters)}
               className="mt-2"
@@ -273,16 +280,16 @@ export default function SportsPage() {
         </Card>
       )}
 
-      {/* Sports Grid */}
+      {/* Courses Grid */}
       {state.sports.length === 0 && !state.loading ? (
         <Card className="p-8">
           <div className="text-center space-y-4">
             <div className="text-6xl">🔍</div>
-            <h3 className="text-lg font-medium">No sports found</h3>
+            <h3 className="text-lg font-medium">No courses found</h3>
             <p className="text-muted-foreground">
               Try adjusting your search terms or filters to find what you're looking for.
             </p>
-            <Button variant="outline" onClick={clearFilters}>
+            <Button variant="secondary" onClick={clearFilters}>
               Clear Filters
             </Button>
           </div>
@@ -313,7 +320,7 @@ export default function SportsPage() {
                       {sport.icon} {sport.name}
                     </CardTitle>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(sport.difficulty)}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(sport.difficulty)}`}
                     >
                       {sport.difficulty}
                     </span>
@@ -377,7 +384,10 @@ export default function SportsPage() {
       {/* Loading State for Pagination */}
       {state.loading && state.sports.length > 0 && (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary/20 border-t-primary"></div>
+            <span className="text-sm">Loading more courses...</span>
+          </div>
         </div>
       )}
     </div>

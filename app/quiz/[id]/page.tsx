@@ -33,7 +33,8 @@ import {
   QuestionMedia,
   QuestionAnswer,
 } from '@/types/quiz';
-import { firebaseService } from '@/lib/firebase/service';
+import { Timestamp } from 'firebase/firestore';
+import { quizService } from '@/lib/database/services/quiz.service';
 import { useAuth } from '@/lib/auth/context';
 
 function QuizTakingPageContent() {
@@ -77,18 +78,21 @@ function QuizTakingPageContent() {
   const loadQuiz = async () => {
     try {
       setLoading(true);
-      const quizData = await firebaseService.getDocument('quizzes', quizId);
-      if (!quizData) {
+      const quizResult = await quizService.getQuiz(quizId);
+
+      if (!quizResult.success || !quizResult.data) {
         toast.error('Quiz not found', {
           description: 'The requested quiz could not be found.',
         });
         router.push('/');
         return;
       }
-      setQuiz(quizData as Quiz);
 
-      if (quizData.settings?.timeLimit) {
-        setTimeRemaining(quizData.settings.timeLimit * 60);
+      const quizData = quizResult.data;
+      setQuiz(quizData);
+
+      if (quizData.estimatedTimeToComplete) {
+        setTimeRemaining(quizData.estimatedTimeToComplete * 60);
       }
     } catch (error) {
       console.error('Error loading quiz:', error);
@@ -104,25 +108,28 @@ function QuizTakingPageContent() {
     if (!quiz || !user) return;
 
     try {
-      const attemptData: Omit<QuizAttempt, 'id'> = {
-        quizId: quiz.id,
-        userId: user.id,
-        startedAt: new Date(),
-        timeSpent: 0,
-        score: 0,
-        pointsEarned: 0,
-        totalPoints: quiz.metadata.totalPoints,
-        passingScore: quiz.settings.passingScore,
-        passed: false,
-        attemptNumber: 1,
-        answers: [],
-        status: 'in-progress',
-      };
+      // Use quiz service to start attempt with proper skill/sport IDs
+      const attemptResult = await quizService.startQuizAttempt(
+        user.id,
+        quiz.id,
+        quiz.skillId,
+        quiz.sportId
+      );
 
-      const attemptId = await firebaseService.addDocument('quiz_attempts', attemptData);
-      setAttempt({ id: attemptId, ...attemptData });
-      setShowInstructions(false);
-      setIsTimerActive(true);
+      if (!attemptResult.success || !attemptResult.data) {
+        throw new Error(attemptResult.error?.message || 'Failed to start quiz attempt');
+      }
+
+      // Get the created attempt data
+      const createdAttemptResult = await quizService.getQuizAttempt(attemptResult.data.id);
+
+      if (createdAttemptResult.success && createdAttemptResult.data) {
+        setAttempt(createdAttemptResult.data);
+        setShowInstructions(false);
+        setIsTimerActive(true);
+      } else {
+        throw new Error('Failed to retrieve quiz attempt data');
+      }
     } catch (error) {
       console.error('Error starting quiz:', error);
       toast.error('Failed to start quiz', {
@@ -164,7 +171,7 @@ function QuizTakingPageContent() {
       const passed = percentage >= quiz.settings.passingScore;
 
       const updatedAttempt: Partial<QuizAttempt> = {
-        submittedAt: new Date(),
+        submittedAt: Timestamp.fromDate(new Date()),
         score: percentage,
         pointsEarned: totalScore,
         passed,
@@ -173,7 +180,12 @@ function QuizTakingPageContent() {
         timeSpent: quiz.settings.timeLimit ? (quiz.settings.timeLimit * 60 - (timeRemaining || 0)) : 0,
       };
 
-      await firebaseService.updateDocument('quiz_attempts', attempt.id, updatedAttempt);
+      // Complete the quiz attempt using quiz service
+      const completeResult = await quizService.completeQuizAttempt(attempt.id, updatedAttempt.timeSpent || 0);
+
+      if (!completeResult.success) {
+        throw new Error(completeResult.error?.message || 'Failed to complete quiz');
+      }
 
       router.push(`/quiz/${quizId}/results/${attempt.id}`);
     } catch (error) {

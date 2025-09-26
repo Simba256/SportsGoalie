@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -217,6 +218,37 @@ export class BaseDatabaseService {
       return {
         success: true,
         data: { id: docRef.id },
+        message: 'Document created successfully',
+        timestamp: new Date(),
+      };
+    }, options.retries);
+  }
+
+  /**
+   * Creates a document with a specific ID (useful for user progress where ID should match userId)
+   */
+  async createWithId<T>(
+    collectionName: string,
+    id: string,
+    data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
+    options: { validateSchema?: boolean; retries?: number } = {}
+  ): Promise<ApiResponse<{ id: string }>> {
+    return this.executeWithRetry(async () => {
+      const docData = {
+        ...data,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      const docRef = doc(db, collectionName, id);
+      await setDoc(docRef, docData);
+
+      // Invalidate related cache
+      this.invalidateCache(`${collectionName}:*`);
+
+      return {
+        success: true,
+        data: { id },
         message: 'Document created successfully',
         timestamp: new Date(),
       };

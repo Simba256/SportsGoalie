@@ -20,9 +20,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'SportsCoach V3 - Digital Sports Learning Platform',
+  title: 'SmarterGoalie - Digital Learning Platform',
   description:
     'Learn sports skills, track your progress, and assess your knowledge through interactive quizzes.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/icon-192.svg',
+  },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -31,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

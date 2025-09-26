@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { firebaseService } from '@/lib/firebase/service';
+import { userService } from '@/lib/database/services/user.service';
+import { sportsService } from '@/lib/database/services/sports.service';
 import { videoReviewService } from '@/lib/database/services/video-review.service';
 
 // Initialize Anthropic client
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the system prompt with user context
-    const systemPrompt = `You are SportsCoach AI, a helpful assistant for the SportsCoach platform - a comprehensive sports learning and coaching application. You help users with:
+    const systemPrompt = `You are SmarterGoalie AI, a helpful assistant for the SmarterGoalie platform - a comprehensive sports learning and coaching application. You help users with:
 
 1. **Learning & Training**: Answer questions about sports techniques, training methods, and skill development
 2. **Platform Navigation**: Help users find features, courses, quizzes, and progress tracking
@@ -105,38 +106,21 @@ ${userContext}
 
 async function getUserContext(userId: string): Promise<string> {
   try {
-    // Get user data
-    const user = await firebaseService.getDocument('users', userId);
-    if (!user) {
+    // Get comprehensive user data with progress using service layer
+    const userDataResult = await userService.getUserWithProgress(userId);
+    if (!userDataResult.success || !userDataResult.data) {
       return 'User not found in system.';
     }
 
-    // Get user enrollments
-    const enrollments = await firebaseService.getCollection('enrollments', [
-      { field: 'userId', operator: '==', value: userId }
-    ]);
-
-    // Get user progress
-    const userProgress = await firebaseService.getCollection('user_progress', [
-      { field: 'userId', operator: '==', value: userId }
-    ]);
-
-    // Get sport progress
-    const sportProgress = await firebaseService.getCollection('sport_progress', [
-      { field: 'userId', operator: '==', value: userId }
-    ]);
-
-    // Get quiz attempts
-    const quizAttempts = await firebaseService.getCollection('quiz_attempts', [
-      { field: 'userId', operator: '==', value: userId }
-    ]);
+    const { user, sportProgress, userProgress, quizAttempts } = userDataResult.data;
 
     // Get video submissions
     const videoResult = await videoReviewService.getStudentVideos(userId);
     const videos = videoResult.success ? videoResult.data || [] : [];
 
-    // Get sports data for reference
-    const sports = await firebaseService.getCollection('sports');
+    // Get sports data for reference using service layer
+    const sportsResult = await sportsService.getAllSports();
+    const sports = sportsResult.success ? sportsResult.data?.items || [] : [];
     const sportsMap = new Map(sports.map(sport => [sport.id, sport]));
 
     // Build context string
@@ -150,12 +134,15 @@ async function getUserContext(userId: string): Promise<string> {
 `;
 
     // Add enrollment information
-    if (enrollments.length > 0) {
-      context += `**Enrolled Sports (${enrollments.length}):**\n`;
-      enrollments.forEach(enrollment => {
+    if (sportProgress.length > 0) {
+      context += `**Enrolled Sports (${sportProgress.length}):**\n`;
+      sportProgress.forEach(enrollment => {
         const sport = sportsMap.get(enrollment.sportId);
         const sportName = sport ? sport.name : enrollment.sportId;
-        context += `- ${sportName} (enrolled: ${new Date(enrollment.enrolledAt).toLocaleDateString()})\n`;
+        const enrollmentDate = enrollment.startedAt && typeof enrollment.startedAt === 'object' && 'toDate' in enrollment.startedAt
+          ? enrollment.startedAt.toDate()
+          : new Date(enrollment.startedAt || Date.now());
+        context += `- ${sportName} (enrolled: ${enrollmentDate.toLocaleDateString()})\n`;
       });
       context += '\n';
     } else {
@@ -193,12 +180,12 @@ async function getUserContext(userId: string): Promise<string> {
     // Add recent quiz performance
     if (quizAttempts.length > 0) {
       const recentAttempts = quizAttempts
-        .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+        .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
         .slice(0, 5);
 
       context += `**Recent Quiz Performance:**\n`;
       recentAttempts.forEach(attempt => {
-        context += `- Score: ${Math.round(attempt.score)}% (${attempt.passed ? 'Passed' : 'Failed'}) on ${new Date(attempt.completedAt).toLocaleDateString()}\n`;
+        context += `- Score: ${Math.round(attempt.score)}% (${attempt.passed ? 'Passed' : 'Failed'}) on ${new Date(attempt.submittedAt).toLocaleDateString()}\n`;
       });
       context += '\n';
     }

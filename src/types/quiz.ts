@@ -1,7 +1,8 @@
 import { DifficultyLevel } from './index';
+import { Timestamp } from 'firebase/firestore';
 
-// Question Types
-export type QuestionType = 'multiple-choice' | 'true-false' | 'descriptive' | 'fill-in-blank' | 'matching';
+// Question Types - Import from main types to ensure consistency
+export { QuestionType } from './index';
 
 // Media Types for Questions
 export interface QuestionMedia {
@@ -29,8 +30,8 @@ export interface BaseQuestion {
   order: number;
   tags?: string[];
   isRequired: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   createdBy: string;
 }
 
@@ -124,6 +125,15 @@ export interface QuizSettings {
   requireAllQuestions: boolean;
 }
 
+// Quiz Metadata
+export interface QuizMetadata {
+  totalAttempts: number;
+  totalCompletions: number;
+  averageScore: number;
+  averageTimeSpent: number; // minutes
+  passRate: number; // percentage
+}
+
 // Main Quiz Interface
 export interface Quiz {
   id: string;
@@ -141,51 +151,48 @@ export interface Quiz {
   isActive: boolean;
   isPublished: boolean;
   category: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   createdBy: string;
   metadata: QuizMetadata;
 }
 
-export interface QuizMetadata {
-  totalQuestions: number;
-  totalPoints: number;
-  averageScore: number;
-  completionRate: number;
-  averageDuration: number; // In minutes
-  totalAttempts: number;
-  ratings: {
-    average: number;
-    count: number;
-  };
-}
 
 // Quiz Attempt & Answers
 export interface QuestionAnswer {
   questionId: string;
-  questionType: QuestionType;
-  answer: any; // Different types based on question type
+  questionType?: QuestionType; // Optional for backward compatibility
+  answer: string | number | string[]; // Support multiple answer types but avoid 'any'
   isCorrect?: boolean;
-  pointsEarned: number;
+  pointsEarned?: number; // Optional for compatibility
   timeSpent: number; // In seconds
-  attempts: number;
+  attempts?: number; // Optional for compatibility
+  skipped?: boolean; // Optional for compatibility
 }
+
+// Alias for compatibility with existing code
+export type QuizAnswer = QuestionAnswer;
 
 export interface QuizAttempt {
   id: string;
-  quizId: string;
   userId: string;
+  quizId: string;
+  skillId: string;
+  sportId: string;
   answers: QuestionAnswer[];
-  startedAt: Date;
-  submittedAt?: Date;
+  score: number; // Points earned
+  maxScore: number; // Total points possible
+  percentage: number; // Score as percentage
+  pointsEarned: number; // Same as score for compatibility
+  totalPoints: number; // Same as maxScore for compatibility
+  passed: boolean;
   timeSpent: number; // Total time in seconds
-  score: number; // Percentage (0-100)
-  pointsEarned: number;
-  totalPoints: number;
+  attemptNumber: number;
+  isCompleted: boolean;
   status: 'in-progress' | 'submitted' | 'timed-out' | 'abandoned';
   passingScore: number;
-  passed: boolean;
-  attemptNumber: number;
+  startedAt: Timestamp;
+  submittedAt?: Timestamp;
   feedback?: string;
   reviewData?: QuizReview;
 }

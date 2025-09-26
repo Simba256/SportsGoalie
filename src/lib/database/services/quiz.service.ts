@@ -10,6 +10,7 @@ import {
   DifficultyLevel,
 } from '@/types';
 import { logger } from '../../utils/logger';
+import { TimestampPatterns } from '../../utils/timestamp';
 
 /**
  * Service for managing quizzes, quiz questions, and quiz attempts in the SportsCoach application.
@@ -285,6 +286,114 @@ export class QuizService extends BaseDatabaseService {
     return this.query<Quiz>(this.QUIZZES_COLLECTION, queryOptions);
   }
 
+  /**
+   * Gets all published/active quizzes for public consumption.
+   * Used by the quizzes listing page.
+   */
+  async getPublishedQuizzes(
+    options: QueryOptions = {}
+  ): Promise<ApiResponse<PaginatedResponse<Quiz>>> {
+    logger.database('query', this.QUIZZES_COLLECTION, undefined, {
+      operation: 'getPublishedQuizzes',
+      constraints: [{ field: 'isActive', operator: '==', value: true }]
+    });
+
+    const queryOptions: QueryOptions = {
+      where: [
+        { field: 'isActive', operator: '==', value: true },
+      ],
+      orderBy: [{ field: 'title', direction: 'asc' }],
+      ...options,
+    };
+
+    const result = await this.query<Quiz>(this.QUIZZES_COLLECTION, queryOptions);
+
+    if (result.success) {
+      logger.info('Published quizzes retrieved successfully', 'QuizService', {
+        count: result.data?.items.length || 0
+      });
+    } else {
+      logger.error('Failed to retrieve published quizzes', 'QuizService', result.error);
+    }
+
+    return result;
+  }
+
+  /**
+   * Gets quiz with its statistics/analytics data.
+   * Used for detailed quiz information with performance metrics.
+   */
+  async getQuizWithStatistics(quizId: string): Promise<ApiResponse<{
+    quiz: Quiz;
+    analytics: {
+      totalAttempts: number;
+      totalCompletions: number;
+      completionRate: number;
+      passRate: number;
+      averageScore: number;
+      averageTimeSpent: number;
+    };
+  } | null>> {
+    logger.database('read', this.QUIZZES_COLLECTION, quizId, { includeAnalytics: true });
+
+    // Get quiz and analytics in parallel
+    const [quizResult, analyticsResult] = await Promise.all([
+      this.getQuiz(quizId),
+      this.getQuizAnalytics(quizId)
+    ]);
+
+    if (!quizResult.success || !quizResult.data) {
+      logger.warn('Quiz not found for statistics', 'QuizService', { quizId });
+      return {
+        success: false,
+        error: {
+          code: 'QUIZ_NOT_FOUND',
+          message: 'Quiz not found'
+        },
+        timestamp: new Date()
+      };
+    }
+
+    if (!analyticsResult.success) {
+      logger.warn('Failed to get quiz analytics', 'QuizService', {
+        quizId,
+        error: analyticsResult.error
+      });
+      // Return quiz without analytics rather than failing
+      return {
+        success: true,
+        data: {
+          quiz: quizResult.data,
+          analytics: {
+            totalAttempts: 0,
+            totalCompletions: 0,
+            completionRate: 0,
+            passRate: 0,
+            averageScore: 0,
+            averageTimeSpent: 0,
+          }
+        },
+        timestamp: new Date()
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        quiz: quizResult.data,
+        analytics: {
+          totalAttempts: analyticsResult.data!.totalAttempts,
+          totalCompletions: analyticsResult.data!.totalCompletions,
+          completionRate: analyticsResult.data!.completionRate,
+          passRate: analyticsResult.data!.passRate,
+          averageScore: analyticsResult.data!.averageScore,
+          averageTimeSpent: analyticsResult.data!.averageTimeSpent,
+        }
+      },
+      timestamp: new Date()
+    };
+  }
+
   // Quiz Questions CRUD operations
   async createQuizQuestion(
     question: Omit<QuizQuestion, 'id' | 'createdAt' | 'updatedAt'>
@@ -413,7 +522,7 @@ export class QuizService extends BaseDatabaseService {
       timeSpent: 0,
       attemptNumber: eligibilityResult.data.attemptNumber,
       isCompleted: false,
-      startedAt: new Date() as any,
+      startedAt: TimestampPatterns.forDatabase(),
     };
 
     // Get quiz questions to calculate max score
@@ -580,8 +689,7 @@ export class QuizService extends BaseDatabaseService {
       passed,
       timeSpent: totalTimeSpent,
       isCompleted: true,
-      completedAt: new Date() as any,
-      submittedAt: new Date() as any,
+      submittedAt: TimestampPatterns.forDatabase(),
     });
 
     // Update quiz metadata
@@ -609,6 +717,42 @@ export class QuizService extends BaseDatabaseService {
 
   async getQuizAttempt(attemptId: string): Promise<ApiResponse<QuizAttempt | null>> {
     return this.getById<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptId);
+  }
+
+  /**
+   * Gets all quiz attempts for a specific quiz (used for statistics).
+   * This is used by frontend pages that need quiz attempt data.
+   */
+  async getQuizAttempts(
+    quizId: string,
+    options: QueryOptions = {}
+  ): Promise<ApiResponse<PaginatedResponse<QuizAttempt>>> {
+    logger.database('query', this.QUIZ_ATTEMPTS_COLLECTION, undefined, {
+      operation: 'getQuizAttempts',
+      quizId,
+      constraints: [{ field: 'quizId', operator: '==', value: quizId }]
+    });
+
+    const queryOptions: QueryOptions = {
+      where: [
+        { field: 'quizId', operator: '==', value: quizId }
+      ],
+      orderBy: [{ field: 'startedAt', direction: 'desc' }],
+      ...options,
+    };
+
+    const result = await this.query<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, queryOptions);
+
+    if (result.success) {
+      logger.debug('Quiz attempts retrieved successfully', 'QuizService', {
+        quizId,
+        count: result.data?.items.length || 0
+      });
+    } else {
+      logger.error('Failed to retrieve quiz attempts', 'QuizService', result.error);
+    }
+
+    return result;
   }
 
   async getUserQuizAttempts(
@@ -884,6 +1028,94 @@ export class QuizService extends BaseDatabaseService {
         }
       }
     );
+  }
+
+  // Batch operations
+  /**
+   * Bulk updates multiple quizzes with provided data.
+   * Used for admin operations like bulk publishing or status changes.
+   *
+   * @param updates - Array of quiz updates with ID and data
+   * @returns Promise resolving to API response indicating success or failure
+   *
+   * @example
+   * ```typescript
+   * const result = await quizService.bulkUpdateQuizzes([
+   *   { id: 'quiz1', data: { isPublished: true } },
+   *   { id: 'quiz2', data: { isPublished: true, updatedAt: new Date() } }
+   * ]);
+   * ```
+   */
+  async bulkUpdateQuizzes(
+    updates: Array<{ id: string; data: Partial<Quiz> }>
+  ): Promise<ApiResponse<{ updated: number; failed: number; results: Array<{ id: string; success: boolean; error?: string }> }>> {
+    logger.database('batch_update', this.QUIZZES_COLLECTION, undefined, { count: updates.length });
+
+    if (updates.length === 0) {
+      return {
+        success: true,
+        data: { updated: 0, failed: 0, results: [] },
+        timestamp: new Date(),
+      };
+    }
+
+    const results: Array<{ id: string; success: boolean; error?: string }> = [];
+    let updated = 0;
+    let failed = 0;
+
+    // Use batchWrite for atomic operations
+    const batchOperations = updates.map(({ id, data }) => ({
+      type: 'update' as const,
+      collection: this.QUIZZES_COLLECTION,
+      id,
+      data: {
+        ...data,
+        updatedAt: new Date(),
+      },
+    }));
+
+    try {
+      const batchResult = await this.batchWrite(batchOperations);
+
+      if (batchResult.success) {
+        updated = updates.length;
+        results.push(...updates.map(u => ({ id: u.id, success: true })));
+        logger.info('Bulk quiz update completed successfully', 'QuizService', { updated });
+      } else {
+        failed = updates.length;
+        results.push(...updates.map(u => ({
+          id: u.id,
+          success: false,
+          error: batchResult.error?.message || 'Unknown error'
+        })));
+        logger.error('Bulk quiz update failed', 'QuizService', batchResult.error);
+      }
+
+      return {
+        success: batchResult.success,
+        data: { updated, failed, results },
+        error: batchResult.error,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Bulk quiz update error', 'QuizService', { error });
+      failed = updates.length;
+      results.push(...updates.map(u => ({
+        id: u.id,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })));
+
+      return {
+        success: false,
+        data: { updated: 0, failed, results },
+        error: {
+          code: 'BULK_UPDATE_ERROR',
+          message: 'Failed to perform bulk update',
+        },
+        timestamp: new Date(),
+      };
+    }
   }
 }
 

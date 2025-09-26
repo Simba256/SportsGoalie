@@ -493,6 +493,35 @@ export class SportsService extends BaseDatabaseService {
     });
   }
 
+  /**
+   * Retrieves all skills across all sports.
+   * Used for admin interfaces and bulk operations.
+   *
+   * @param options - Query options for filtering and pagination
+   * @returns Promise resolving to API response with paginated skills
+   */
+  async getAllSkills(options: QueryOptions = {}): Promise<ApiResponse<PaginatedResponse<Skill>>> {
+    logger.database('query', this.SKILLS_COLLECTION, undefined, options);
+
+    const queryOptions: QueryOptions = {
+      where: [{ field: 'isActive', operator: '==', value: true }],
+      orderBy: [{ field: 'order', direction: 'asc' }],
+      ...options,
+    };
+
+    const result = await this.query<Skill>(this.SKILLS_COLLECTION, queryOptions);
+
+    if (result.success) {
+      logger.info('All skills retrieved successfully', 'SportsService', {
+        count: result.data?.items?.length || 0
+      });
+    } else {
+      logger.error('Failed to retrieve all skills', 'SportsService', result.error);
+    }
+
+    return result;
+  }
+
   async getSkillPrerequisites(skillId: string): Promise<ApiResponse<Skill[]>> {
     const skillResult = await this.getSkill(skillId);
     if (!skillResult.success || !skillResult.data) {

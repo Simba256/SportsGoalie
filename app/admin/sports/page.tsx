@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
 import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
+import { IconPicker } from '@/components/ui/icon-picker';
 import {
   Plus,
   Edit,
@@ -51,7 +52,7 @@ interface SportFormData {
 const defaultFormData: SportFormData = {
   name: '',
   description: '',
-  icon: '🏀',
+  icon: '',
   color: '#3B82F6',
   category: '',
   difficulty: 'beginner',
@@ -99,7 +100,7 @@ function AdminSportsContent() {
       } else {
         setState(prev => ({
           ...prev,
-          error: result.error?.message || 'Failed to load sports',
+          error: result.error?.message || 'Failed to load courses',
           loading: false,
         }));
       }
@@ -142,6 +143,17 @@ function AdminSportsContent() {
   };
 
   const handleSave = async () => {
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setState(prev => ({ ...prev, error: 'Course name is required' }));
+      return;
+    }
+
+    if (!formData.icon.trim()) {
+      setState(prev => ({ ...prev, error: 'Please select an icon for the course' }));
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -190,7 +202,7 @@ function AdminSportsContent() {
       } else {
         setState(prev => ({
           ...prev,
-          error: result.error?.message || 'Failed to save sport',
+          error: result.error?.message || 'Failed to save course',
         }));
       }
     } catch {
@@ -206,9 +218,9 @@ function AdminSportsContent() {
 
   const handleDelete = (sportId: string, sportName: string) => {
     showDeleteConfirmation({
-      title: 'Delete Sport',
+      title: 'Delete Course',
       description: `Are you sure you want to delete "${sportName}"? This action cannot be undone and will remove all associated skills and data.`,
-      itemName: 'sport',
+      itemName: 'course',
       onConfirm: async () => {
         setLoading(true);
         try {
@@ -218,7 +230,7 @@ function AdminSportsContent() {
           } else {
             setState(prev => ({
               ...prev,
-              error: result.error?.message || 'Failed to delete sport',
+              error: result.error?.message || 'Failed to delete course',
             }));
           }
         } catch {
@@ -258,7 +270,7 @@ function AdminSportsContent() {
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Loading sports...</p>
+            <p className="text-muted-foreground">Loading courses...</p>
           </div>
         </div>
       </div>
@@ -270,14 +282,14 @@ function AdminSportsContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sports Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Course Management</h1>
           <p className="text-muted-foreground">
-            Manage sports content and settings
+            Manage course content and settings
           </p>
         </div>
         <Button onClick={handleCreate} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          Add Sport
+          Add Course
         </Button>
       </div>
 
@@ -286,7 +298,7 @@ function AdminSportsContent() {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           type="text"
-          placeholder="Search sports..."
+          placeholder="Search courses..."
           value={state.searchQuery}
           onChange={(e) => setState(prev => ({ ...prev, searchQuery: e.target.value }))}
           className="pl-10"
@@ -318,10 +330,10 @@ function AdminSportsContent() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {state.editingId ? 'Edit Sport' : 'Create New Sport'}
+              {state.editingId ? 'Edit Course' : 'Create New Course'}
             </CardTitle>
             <CardDescription>
-              {state.editingId ? 'Update sport information' : 'Add a new sport to the catalog'}
+              {state.editingId ? 'Update course information' : 'Add a new course to the catalog'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -332,7 +344,7 @@ function AdminSportsContent() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Sport name"
+                  placeholder="Course name"
                 />
               </div>
 
@@ -347,12 +359,10 @@ function AdminSportsContent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="icon">Icon (Emoji)</Label>
-                <Input
-                  id="icon"
+                <IconPicker
+                  label="Course Icon"
                   value={formData.icon}
-                  onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                  placeholder="🏀"
+                  onChange={(icon) => setFormData(prev => ({ ...prev, icon }))}
                 />
               </div>
 
@@ -399,7 +409,7 @@ function AdminSportsContent() {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Sport description..."
+                placeholder="Course description..."
                 className="w-full border rounded px-3 py-2 min-h-[100px]"
               />
             </div>
@@ -419,7 +429,7 @@ function AdminSportsContent() {
               </div>
 
               <div className="space-y-2">
-                <Label>Upload Sport Image</Label>
+                <Label>Upload Course Image</Label>
                 <MediaUpload
                   onUpload={setUploadedFiles}
                   acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
@@ -482,15 +492,15 @@ function AdminSportsContent() {
 
       {/* Sports List */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Sports ({filteredSports.length})</h2>
+        <h2 className="text-xl font-semibold">Courses ({filteredSports.length})</h2>
 
         {filteredSports.length === 0 ? (
           <Card className="p-8">
             <div className="text-center space-y-4">
               <div className="text-6xl">🔍</div>
-              <h3 className="text-lg font-medium">No sports found</h3>
+              <h3 className="text-lg font-medium">No courses found</h3>
               <p className="text-muted-foreground">
-                {state.searchQuery ? 'Try adjusting your search terms.' : 'Start by creating your first sport.'}
+                {state.searchQuery ? 'Try adjusting your search terms.' : 'Start by creating your first course.'}
               </p>
             </div>
           </Card>
@@ -572,7 +582,7 @@ function AdminSportsContent() {
                         size="sm"
                         onClick={() => handleEdit(sport)}
                         className="h-8 w-8 p-0"
-                        title="Edit Sport"
+                        title="Edit Course"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -581,7 +591,7 @@ function AdminSportsContent() {
                         size="sm"
                         onClick={() => handleDelete(sport.id, sport.name)}
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        title="Delete Sport"
+                        title="Delete Course"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

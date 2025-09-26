@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Timestamp } from 'firebase/firestore';
 import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { completeQuizSchema } from '@/lib/validation/quiz';
@@ -20,9 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Quiz, QuizSettings, Question } from '@/types/quiz';
+import { Quiz, QuizSettings, Question, QuizMetadata } from '@/types/quiz';
 import { Sport, Skill, DifficultyLevel } from '@/types';
-import { firebaseService } from '@/lib/firebase/service';
+import { sportsService } from '@/lib/database/services/sports.service';
+import { quizService } from '@/lib/database/services/quiz.service';
 import { QuestionBuilder } from '@/components/admin/QuestionBuilder';
 import Link from 'next/link';
 
@@ -69,12 +71,18 @@ function CreateQuizContent() {
   const loadSportsAndSkills = async () => {
     try {
       setLoading(true);
-      const [sportsData, skillsData] = await Promise.all([
-        firebaseService.getCollection('sports'),
-        firebaseService.getCollection('skills')
+      const [sportsResult, skillsResult] = await Promise.all([
+        sportsService.getAllSports(),
+        sportsService.getAllSkills()
       ]);
-      setSports(sportsData as Sport[]);
-      setSkills(skillsData as Skill[]);
+
+      if (sportsResult.success && sportsResult.data) {
+        setSports(sportsResult.data.items);
+      }
+
+      if (skillsResult.success && skillsResult.data) {
+        setSkills(skillsResult.data.items);
+      }
     } catch (error) {
       console.error('Error loading sports and skills:', error);
     } finally {
@@ -123,22 +131,14 @@ function CreateQuizContent() {
     }));
   };
 
-  const calculateMetadata = () => {
-    const questions = quizData.questions || [];
-    const totalQuestions = questions.length;
-    const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-
+  const calculateMetadata = (): QuizMetadata => {
+    // Return default metadata for new quiz - analytics will update these over time
     return {
-      totalQuestions,
-      totalPoints,
-      averageScore: 0,
-      completionRate: 0,
-      averageDuration: quizData.estimatedDuration || 0,
       totalAttempts: 0,
-      ratings: {
-        average: 0,
-        count: 0
-      }
+      totalCompletions: 0,
+      averageScore: 0,
+      averageTimeSpent: 0, // minutes
+      passRate: 0 // percentage
     };
   };
 
@@ -173,8 +173,8 @@ function CreateQuizContent() {
         isActive: quizData.isActive!,
         isPublished: quizData.isPublished!,
         category: quizData.category!,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date()),
         createdBy: 'admin',
         metadata: calculateMetadata(),
       };
@@ -205,7 +205,13 @@ function CreateQuizContent() {
         finalQuizData.instructions = quizData.instructions;
       }
 
-      const docId = await firebaseService.addDocument('quizzes', finalQuizData);
+      const result = await quizService.createQuiz(finalQuizData);
+
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to create quiz');
+      }
+
+      const docId = result.data!.id;
 
       toast.success('Quiz created successfully!', {
         description: 'Your quiz has been saved and is ready for use.',

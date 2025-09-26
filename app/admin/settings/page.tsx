@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
 function SettingsContent() {
   const [settings, setSettings] = useState<PlatformSettings>({
     general: {
-      siteName: 'SportsCoach V3',
+      siteName: 'SmarterGoalie',
       siteDescription: 'A modern sports learning platform',
       contactEmail: 'contact@sportscoach.com',
       supportEmail: 'support@sportscoach.com',

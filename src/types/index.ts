@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 export type UserRole = 'student' | 'admin';
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed';
-export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'image_choice';
+export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'image_choice' | 'fill_in_blank' | 'matching';
 export type MediaType = 'image' | 'video' | 'youtube';
 export type ContentType = 'video' | 'article' | 'tutorial';
 export type NotificationType = 'progress' | 'quiz_result' | 'new_content' | 'reminder' | 'achievement';
@@ -145,34 +145,9 @@ export interface SkillMetadata {
   difficulty: DifficultyLevel;
 }
 
-// Quiz Types
-export interface Quiz {
-  id: string;
-  skillId: string; // MANDATORY: Every quiz must be associated with a skill
-  sportId: string; // MANDATORY: Every quiz must be associated with a sport
-  title: string;
-  description: string;
-  difficulty: DifficultyLevel;
-  timeLimit: number; // minutes
-  passingScore: number; // percentage
-  maxAttempts: number;
-  allowReview: boolean;
-  shuffleQuestions: boolean;
-  showAnswersAfterCompletion: boolean;
-  isActive: boolean;
-  metadata: QuizMetadata;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  createdBy: string;
-}
+// Quiz Types - Import comprehensive Quiz interface from quiz.ts to avoid duplication
+export { Quiz, QuizSettings, Question, QuizMetadata, QuizAttempt, QuestionAnswer, QuizAnswer } from './quiz';
 
-export interface QuizMetadata {
-  totalAttempts: number;
-  totalCompletions: number;
-  averageScore: number;
-  averageTimeSpent: number; // minutes
-  passRate: number; // percentage
-}
 
 export interface QuizQuestion {
   id: string;
@@ -198,32 +173,7 @@ export interface QuestionMedia {
   alt?: string; // for images
 }
 
-export interface QuizAttempt {
-  id: string;
-  userId: string;
-  quizId: string;
-  skillId: string;
-  sportId: string;
-  answers: QuizAnswer[];
-  score: number;
-  maxScore: number;
-  percentage: number;
-  passed: boolean;
-  timeSpent: number; // minutes
-  attemptNumber: number;
-  isCompleted: boolean;
-  startedAt: Timestamp;
-  completedAt?: Timestamp;
-  submittedAt?: Timestamp;
-}
 
-export interface QuizAnswer {
-  questionId: string;
-  answer: string | number;
-  isCorrect: boolean;
-  timeSpent: number; // seconds
-  skipped: boolean;
-}
 
 // Progress Types
 export interface SportProgress {

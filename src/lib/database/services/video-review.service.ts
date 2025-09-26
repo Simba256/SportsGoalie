@@ -1,5 +1,7 @@
-import { firebaseService } from '@/lib/firebase/service';
+import { BaseDatabaseService } from '../base.service';
 import { Timestamp } from 'firebase/firestore';
+import { logger } from '../../utils/logger';
+import { ApiResponse } from '@/types';
 
 export interface StudentVideo {
   id: string;
@@ -49,8 +51,8 @@ export interface ServiceResult<T> {
   };
 }
 
-class VideoReviewService {
-  private collection = 'student_videos';
+class VideoReviewService extends BaseDatabaseService {
+  private readonly STUDENT_VIDEOS_COLLECTION = 'student_videos';
 
   /**
    * Upload video metadata to database
@@ -60,9 +62,9 @@ class VideoReviewService {
       const videoRecord = {
         ...data,
         status: 'pending' as const,
-        uploadedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        uploadedAt: Timestamp.fromDate(new Date()),
+        createdAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date())
       };
 
       const videoId = await firebaseService.addDocument(this.collection, videoRecord);
@@ -72,7 +74,7 @@ class VideoReviewService {
         data: videoId
       };
     } catch (error) {
-      console.error('Error creating video record:', error);
+      logger.error('Failed to create video record', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -87,9 +89,13 @@ class VideoReviewService {
    */
   async getAllVideosForReview(): Promise<ServiceResult<StudentVideo[]>> {
     try {
+      logger.database('query', this.collection, undefined, { constraints: [{ field: 'status', operator: 'in', value: ['pending', 'reviewed', 'feedback_sent'] }] });
+
       const videos = await firebaseService.getCollection<StudentVideo>(this.collection, [
         { field: 'status', operator: 'in', value: ['pending', 'reviewed', 'feedback_sent'] }
       ]);
+
+      logger.database('query-result', this.collection, undefined, { count: videos.length, statuses: videos.map(v => ({ id: v.id, status: v.status })) });
 
       // Sort by upload date (newest first)
       const sortedVideos = videos.sort((a, b) => {
@@ -98,12 +104,13 @@ class VideoReviewService {
         return dateB.getTime() - dateA.getTime();
       });
 
+      logger.database('query-success', this.collection, undefined, { resultCount: sortedVideos.length });
       return {
         success: true,
         data: sortedVideos
       };
     } catch (error) {
-      console.error('Error getting videos for review:', error);
+      logger.error('Failed to get videos for review', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -127,7 +134,7 @@ class VideoReviewService {
         data: videos
       };
     } catch (error) {
-      console.error('Error getting videos by status:', error);
+      logger.error('Failed to get videos by status', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -158,7 +165,7 @@ class VideoReviewService {
         data: sortedVideos
       };
     } catch (error) {
-      console.error('Error getting student videos:', error);
+      logger.error('Failed to get student videos', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -189,7 +196,7 @@ class VideoReviewService {
         data: video
       };
     } catch (error) {
-      console.error('Error getting video:', error);
+      logger.error('Failed to get video', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -209,14 +216,14 @@ class VideoReviewService {
     try {
       await firebaseService.updateDocument(this.collection, videoId, {
         status,
-        updatedAt: new Date()
+        updatedAt: Timestamp.fromDate(new Date())
       });
 
       return {
         success: true
       };
     } catch (error) {
-      console.error('Error updating video status:', error);
+      logger.error('Failed to update video status', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -237,8 +244,8 @@ class VideoReviewService {
       const updateData = {
         ...feedback,
         status: 'feedback_sent' as const,
-        reviewedAt: new Date(),
-        updatedAt: new Date()
+        reviewedAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date())
       };
 
       await firebaseService.updateDocument(this.collection, videoId, updateData);
@@ -247,7 +254,7 @@ class VideoReviewService {
         success: true
       };
     } catch (error) {
-      console.error('Error submitting coach feedback:', error);
+      logger.error('Failed to submit coach feedback', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -268,7 +275,7 @@ class VideoReviewService {
         success: true
       };
     } catch (error) {
-      console.error('Error deleting video record:', error);
+      logger.error('Failed to delete video record', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -318,7 +325,7 @@ class VideoReviewService {
         }
       };
     } catch (error) {
-      console.error('Error getting video analytics:', error);
+      logger.error('Failed to get video analytics', 'VideoReviewService', error);
       return {
         success: false,
         error: {
@@ -348,7 +355,7 @@ class VideoReviewService {
         data: filteredVideos
       };
     } catch (error) {
-      console.error('Error searching videos:', error);
+      logger.error('Failed to search videos', 'VideoReviewService', error);
       return {
         success: false,
         error: {

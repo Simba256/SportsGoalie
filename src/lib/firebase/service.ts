@@ -65,11 +65,17 @@ class FirebaseService {
     constraints: (QueryConstraint | WhereConstraint)[] = []
   ): Promise<T[]> {
     try {
+      console.log(`🔥 [FirebaseService] Getting collection: ${collectionName}`, {
+        constraints,
+        constraintsLength: constraints.length
+      });
+
       const collectionRef = collection(db, collectionName);
 
       // Convert WhereConstraint objects to QueryConstraint objects
       const queryConstraints: QueryConstraint[] = constraints.map(constraint => {
         if ('field' in constraint && 'operator' in constraint && 'value' in constraint) {
+          console.log(`🔥 [FirebaseService] Converting constraint:`, constraint);
           // It's a WhereConstraint object, convert it
           return where(constraint.field, constraint.operator, constraint.value);
         }
@@ -78,7 +84,11 @@ class FirebaseService {
       });
 
       const q = queryConstraints.length > 0 ? query(collectionRef, ...queryConstraints) : collectionRef;
+
+      console.log(`🔥 [FirebaseService] Executing Firestore query for ${collectionName}...`);
       const querySnapshot = await getDocs(q);
+
+      console.log(`🔥 [FirebaseService] Query executed, got ${querySnapshot.docs.length} documents`);
 
       const documents: T[] = [];
       querySnapshot.forEach((doc) => {
@@ -89,6 +99,7 @@ class FirebaseService {
         } as T);
       });
 
+      console.log(`✅ [FirebaseService] Returning ${documents.length} documents from ${collectionName}`);
       return documents;
     } catch (error) {
       console.error(`Error getting collection ${collectionName}:`, error);

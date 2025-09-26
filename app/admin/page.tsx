@@ -86,10 +86,10 @@ function AdminDashboardContent() {
               Admin Dashboard - Welcome, {user?.displayName || user?.email}!
             </h1>
             <p className="text-muted-foreground">
-              Manage the SportsCoach platform, users, and content.
+              Manage the SmarterGoalie platform, users, and content.
             </p>
           </div>
-          <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+          <Button variant="success" onClick={handleRefresh} disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
@@ -301,7 +301,7 @@ function AdminDashboardContent() {
                 <Button
                   onClick={handleSeedCourses}
                   disabled={seeding}
-                  variant="outline"
+                  variant="warning"
                 >
                   {seeding ? 'Seeding...' : 'Seed Courses'}
                 </Button>

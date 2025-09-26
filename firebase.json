@@ -1,6 +1,9 @@
 {
   "firestore": {
-    "rules": "firestore-dev.rules"
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "rules/storage"
   },
   "emulators": {
     "firestore": {

@@ -15,12 +15,10 @@ service cloud.firestore {
       return isAuthenticated() && getUserId() == userId;
     }
 
+    // SECURE: Admin validation using custom claims only
     function isAdmin() {
-      return isAuthenticated() &&
-             (request.auth.token.role == 'admin' ||
-              request.auth.token.email == 'admin@sportscoach.com' ||
-              request.auth.token.admin == true ||
-              request.auth.uid == 'admin');
+      return request.auth != null &&
+             request.auth.token.role == 'admin';
     }
 
     function isStudent() {
@@ -46,8 +44,8 @@ service cloud.firestore {
       return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
     }
 
-    function isValidTimestamp(timestamp) {
-      return timestamp is timestamp;
+    function isValidTimestamp(ts) {
+      return ts is timestamp;
     }
 
     function isValidRole(role) {
@@ -72,12 +70,12 @@ service cloud.firestore {
       allow read: if isOwnerOrAdmin(userId);
 
       // Users can create their own profile during registration
+      // Allow creation with unverified email during registration
       allow create: if isOwner(userId) &&
-                       isEmailVerified() &&
                        hasRequiredFields(['email', 'displayName', 'role']) &&
                        isValidEmail(request.resource.data.email) &&
                        isValidRole(request.resource.data.role) &&
-                       request.resource.data.emailVerified == true;
+                       request.resource.data.emailVerified is bool;
 
       // Users can update their own profile (except role and email), admins can update any
       allow update: if (isOwner(userId) &&
@@ -89,28 +87,27 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Sports collection - content management
+    // Sports collection (These ARE the courses - main course catalog)
     match /sports/{sportId} {
-      // Anyone can read active sports
-      allow read: if resource.data.isActive == true || isAdmin();
+      // PUBLIC: Anyone can read courses/sports for course discovery
+      allow read: if true;
 
-      // Only admins can create, update, delete sports
+      // Only admins can create, update, delete courses/sports
       allow create: if isAdmin() &&
                        hasRequiredFields(['name', 'description', 'difficulty', 'category']) &&
                        isValidDifficulty(request.resource.data.difficulty);
 
       allow update: if isAdmin();
-      // Prevent deleting sports that have skills or quizzes associated
       allow delete: if isAdmin();
     }
 
-    // Skills collection - content management
+    // Skills collection - belongs to courses/sports
     match /skills/{skillId} {
-      // Anyone can read active skills
-      allow read: if resource.data.isActive == true || isAdmin();
+      // PUBLIC: Anyone can read skills for course discovery
+      allow read: if true;
 
       // Only admins can create, update, delete skills
-      // Every skill MUST have a valid sportId that exists
+      // Every skill MUST have a valid sportId (courseId) that exists
       allow create: if isAdmin() &&
                        hasRequiredFields(['name', 'description', 'sportId', 'difficulty']) &&
                        isValidDifficulty(request.resource.data.difficulty) &&
@@ -126,13 +123,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Quizzes collection
+    // Quizzes collection - belongs to both courses/sports and skills
     match /quizzes/{quizId} {
-      // Students can read active quizzes, admins can read all
-      allow read: if (resource.data.isActive == true && isAuthenticated()) || isAdmin();
+      // PUBLIC: Anyone can read quizzes for course discovery
+      allow read: if true;
 
       // Only admins can manage quizzes
-      // Every quiz MUST have both valid sportId AND skillId
+      // Every quiz MUST have both valid sportId (courseId) AND skillId
       allow create: if isAdmin() &&
                        hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy', 'sportId', 'skillId']) &&
                        request.resource.data.title is string &&
@@ -192,7 +189,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Sport Progress collection
+    // Sport Progress collection (Course Progress - since sports ARE courses)
     match /sport_progress/{progressId} {
       // Users can read their own progress, admins can read all
       allow read: if isOwnerOrAdmin(resource.data.userId);
@@ -226,18 +223,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // User Progress collection (overall stats)
-    match /user_progress/{progressId} {
+    // User Progress collection (overall stats) - users can access their own progress by userId
+    match /user_progress/{userId} {
       // Users can read their own progress, admins can read all
-      allow read: if isOwnerOrAdmin(resource.data.userId);
+      allow read: if isOwnerOrAdmin(userId);
 
       // Users can create their own progress
       allow create: if isAuthenticated() &&
-                       isOwner(request.resource.data.userId) &&
+                       isOwner(userId) &&
                        hasRequiredFields(['userId', 'overallStats']);
 
       // Users can update their own progress, admins can update any
-      allow update: if isOwnerOrAdmin(resource.data.userId);
+      allow update: if isOwnerOrAdmin(userId);
 
       // Only admins can delete progress
       allow delete: if isAdmin();
@@ -304,10 +301,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // App Settings collection
+    // App Settings collection - SECURE: Only admins can read system settings
     match /app_settings/{settingId} {
-      // Anyone can read settings (for feature flags, etc.)
-      allow read: if true;
+      // SECURITY FIX: Only admins can access system settings
+      allow read: if isAdmin();
 
       // Only admins can update settings
       allow create, update, delete: if isAdmin();
@@ -363,6 +360,29 @@ service cloud.firestore {
       // Only admins can manage system health
       allow read, create, update, delete: if isAdmin();
     }
+
+    // Student Videos collection (video review system)
+    match /student_videos/{videoId} {
+      // Students can read their own videos, admins can read all
+      allow read: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can list videos (filtered by query constraints in application)
+      allow list: if isAuthenticated();
+
+      // Students can create video records for themselves
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.studentId) &&
+                       hasRequiredFields(['studentId', 'studentName', 'studentEmail', 'videoUrl', 'storagePath', 'fileName', 'fileSize']);
+
+      // Only admins can update video records (status, feedback, etc.)
+      allow update: if isAdmin();
+
+      // Only admins can delete video records
+      allow delete: if isAdmin();
+    }
+
+    // REMOVED: Courses collection (since sports ARE the courses)
+    // No separate /courses collection needed
 
     // Catch-all rule for any other collections
     match /{document=**} {

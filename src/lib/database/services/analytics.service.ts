@@ -173,13 +173,13 @@ export class AnalyticsService extends BaseDatabaseService {
     logger.info('Fetching user engagement data', 'AnalyticsService', { days });
 
     try {
-      // Query real user activity data from sport_progress and quiz_attempts collections
+      // Query real user activity data from sportProgress and quiz_attempts collections
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
       // For now, return empty data until we have real activity tracking
-      // This would be implemented to query daily user activity from sport_progress and quiz_attempts
+      // This would be implemented to query daily user activity from sportProgress and quiz_attempts
       const engagementData: UserEngagementData[] = [];
 
       for (let i = days - 1; i >= 0; i--) {
@@ -336,7 +336,8 @@ export class AnalyticsService extends BaseDatabaseService {
     }
 
     const sports = sportsResult.data.items;
-    const totalSkills = sports.reduce((sum, sport) => sum + (sport.skills?.length || 0), 0);
+    // Use skillsCount from sport metadata instead of trying to access nested skills
+    const totalSkills = sports.reduce((sum, sport) => sum + sport.skillsCount, 0);
 
     const contentStats = {
       totalSports: sports.length,
@@ -359,10 +360,12 @@ export class AnalyticsService extends BaseDatabaseService {
         totalQuizAttempts: 0, // Would be calculated from quiz_attempts collection when implemented
         averageQuizScore: 0, // Would be calculated from quiz results when implemented
         completionRate: progressData.length > 0 ?
-          Math.round((progressData.filter((p: any) => p.status === 'completed').length / progressData.length) * 100) : 0,
-        activeUsersToday: progressData.filter((p: any) => {
+          Math.round((progressData.filter(p => p.status === 'completed').length / progressData.length) * 100) : 0,
+        activeUsersToday: progressData.filter(p => {
           const today = new Date().toDateString();
-          const lastAccessed = p.lastAccessedAt?.toDate?.()?.toDateString();
+          const lastAccessed = p.lastAccessedAt && typeof p.lastAccessedAt.toDate === 'function'
+            ? p.lastAccessedAt.toDate().toDateString()
+            : null;
           return lastAccessed === today;
         }).length,
       };

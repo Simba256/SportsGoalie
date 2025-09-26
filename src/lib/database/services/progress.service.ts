@@ -1,21 +1,5 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  increment,
-  Timestamp,
-  writeBatch,
-  runTransaction,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { BaseDatabaseService } from '../base.service';
+import { Timestamp } from 'firebase/firestore';
 import {
   SportProgress,
   SkillProgress,
@@ -36,12 +20,12 @@ import { cacheService } from '@/lib/utils/cache.service';
  * Service for managing user progress tracking, analytics, and achievements
  * Handles sport progress, skill progress, achievements, and statistics
  */
-export class ProgressService {
+export class ProgressService extends BaseDatabaseService {
   private static readonly COLLECTIONS = {
-    SPORT_PROGRESS: 'sportProgress',
-    SKILL_PROGRESS: 'skillProgress',
-    USER_PROGRESS: 'userProgress',
-    USER_ACHIEVEMENTS: 'userAchievements',
+    SPORT_PROGRESS: 'sport_progress',
+    SKILL_PROGRESS: 'skill_progress',
+    USER_PROGRESS: 'user_progress',
+    USER_ACHIEVEMENTS: 'user_achievements',
     ACHIEVEMENTS: 'achievements',
   } as const;
 

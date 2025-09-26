@@ -63,7 +63,7 @@ export default function RegisterPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
           <CardDescription>
-            Enter your information below to create your SportsCoach account
+            Enter your information below to create your SmarterGoalie account
           </CardDescription>
         </CardHeader>
         <CardContent>

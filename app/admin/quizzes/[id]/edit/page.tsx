@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Quiz } from '@/types/quiz';
 import { Sport, Skill, DifficultyLevel } from '@/types';
-import { firebaseService } from '@/lib/firebase/service';
+import { sportsService } from '@/lib/database/services/sports.service';
 import { quizService } from '@/lib/database/services/quiz.service';
 
 function EditQuizContent() {
@@ -56,10 +56,10 @@ function EditQuizContent() {
       setLoading(true);
 
       // Load quiz data, sports, and skills in parallel
-      const [quizResult, sportsData, skillsData] = await Promise.all([
+      const [quizResult, sportsResult, skillsResult] = await Promise.all([
         quizService.getQuiz(quizId),
-        firebaseService.getCollection('sports'),
-        firebaseService.getCollection('skills')
+        sportsService.getAllSports(),
+        sportsService.getAllSkills()
       ]);
 
       if (quizResult.success && quizResult.data) {
@@ -83,8 +83,13 @@ function EditQuizContent() {
         return;
       }
 
-      setSports(sportsData || []);
-      setSkills(skillsData || []);
+      if (sportsResult.success && sportsResult.data) {
+        setSports(sportsResult.data.items);
+      }
+
+      if (skillsResult.success && skillsResult.data) {
+        setSkills(skillsResult.data.items);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load quiz data');

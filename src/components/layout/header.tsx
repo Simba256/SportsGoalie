@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { LogoWithText } from '@/components/ui/logo';
 import { useAuth } from '@/lib/auth/context';
 
 export function Header() {
@@ -27,9 +28,8 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center space-x-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary" />
-            <span className="text-xl font-bold">SportsCoach</span>
+          <Link href="/" className="group">
+            <LogoWithText className="transition-all duration-200 group-hover:scale-105" />
           </Link>
         </div>
 
@@ -37,40 +37,45 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-6">
           <Link
             href="/sports"
-            className="text-sm font-medium transition-colors hover:text-primary"
+            className="text-sm font-medium transition-colors hover:text-blue-600 relative group"
           >
-            Sports
+            Courses
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-200"></span>
           </Link>
           {isAuthenticated && (
             <>
               <Link
                 href="/quizzes"
-                className="text-sm font-medium transition-colors hover:text-primary"
+                className="text-sm font-medium transition-colors hover:text-blue-600 relative group"
               >
                 Quizzes
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-200"></span>
               </Link>
               {user?.role !== 'admin' && (
                 <>
                   <Link
                     href="/dashboard"
-                    className="text-sm font-medium transition-colors hover:text-primary"
+                    className="text-sm font-medium transition-colors hover:text-blue-600 relative group"
                   >
                     Dashboard
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-200"></span>
                   </Link>
                   <Link
                     href="/progress"
-                    className="text-sm font-medium transition-colors hover:text-primary"
+                    className="text-sm font-medium transition-colors hover:text-blue-600 relative group"
                   >
                     Progress
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-200"></span>
                   </Link>
                 </>
               )}
               {user?.role === 'admin' && (
                 <Link
                   href="/admin"
-                  className="text-sm font-medium transition-colors hover:text-primary"
+                  className="text-sm font-medium transition-colors hover:text-orange-600 relative group"
                 >
                   Admin
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 group-hover:w-full transition-all duration-200"></span>
                 </Link>
               )}
             </>
@@ -159,7 +164,7 @@ export function Header() {
               className="block text-sm font-medium transition-colors hover:text-primary"
               onClick={() => setIsMenuOpen(false)}
             >
-              Sports
+              Courses
             </Link>
             {isAuthenticated ? (
               <>

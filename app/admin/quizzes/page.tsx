@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Quiz } from '@/types/quiz';
 import { Sport, Skill } from '@/types';
-import { firebaseService } from '@/lib/firebase/service';
+import { quizService } from '@/lib/database/services/quiz.service';
+import { sportsService } from '@/lib/database/services/sports.service';
 import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import { cacheOrFetch } from '@/lib/utils/cache.service';
 import Link from 'next/link';
@@ -42,15 +43,29 @@ function QuizzesAdminContent() {
     try {
       setLoading(true);
 
-      const [quizzesData, sportsData, skillsData] = await Promise.all([
-        cacheOrFetch('admin-quizzes', () => firebaseService.getCollection('quizzes')),
-        cacheOrFetch('admin-sports', () => firebaseService.getCollection('sports')),
-        cacheOrFetch('admin-skills', () => firebaseService.getCollection('skills'))
+      // Load data using proper service layer
+      const [quizzesResult, sportsResult] = await Promise.all([
+        quizService.query('quizzes', {}), // Get all quizzes for admin
+        sportsService.getAllSports()
       ]);
 
-      setQuizzes(quizzesData as Quiz[]);
-      setSports(sportsData as Sport[]);
-      setSkills(skillsData as Skill[]);
+      if (quizzesResult.success && quizzesResult.data) {
+        setQuizzes(quizzesResult.data.items);
+      }
+
+      if (sportsResult.success && sportsResult.data) {
+        setSports(sportsResult.data.items);
+
+        // Load skills separately - get all skills from all sports
+        const allSkills: Skill[] = [];
+        for (const sport of sportsResult.data.items) {
+          const skillsResult = await sportsService.getSkillsBySport(sport.id);
+          if (skillsResult.success && skillsResult.data) {
+            allSkills.push(...skillsResult.data);
+          }
+        }
+        setSkills(allSkills);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -65,9 +80,13 @@ function QuizzesAdminContent() {
       itemName: 'quiz',
       onConfirm: async () => {
         try {
-          await firebaseService.deleteDocument('quizzes', quizId);
-          setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
-          toast.success('Quiz deleted successfully');
+          const deleteResult = await quizService.deleteQuiz(quizId);
+          if (deleteResult.success) {
+            setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
+            toast.success('Quiz deleted successfully');
+          } else {
+            throw new Error(deleteResult.error?.message || 'Failed to delete quiz');
+          }
         } catch (error) {
           console.error('Error deleting quiz:', error);
           toast.error('Failed to delete quiz', {
@@ -82,39 +101,34 @@ function QuizzesAdminContent() {
     try {
       setBulkUpdateLoading(true);
 
-      const updatePromises = quizzes.map(async (quiz) => {
-        // Only update quizzes that aren't already published
-        // Check for strict boolean true values
-        if (quiz.isPublished !== true) {
-          try {
-            await firebaseService.updateDocument('quizzes', quiz.id, {
-              isPublished: true,
-              updatedAt: new Date(),
-            });
-            return { success: true, id: quiz.id };
-          } catch (error) {
-            console.error(`Failed to update quiz ${quiz.id}:`, error);
-            return { success: false, id: quiz.id, error };
-          }
-        }
-        return { success: true, id: quiz.id, skipped: true };
-      });
+      // Filter quizzes that need to be published
+      const quizzesToUpdate = quizzes.filter(quiz => quiz.isPublished !== true);
 
-      const results = await Promise.all(updatePromises);
-      const updated = results.filter(r => r.success && !r.skipped).length;
-      const failed = results.filter(r => !r.success).length;
-
-      if (updated > 0) {
-        toast.success(`${updated} quiz(es) published successfully`);
-        await loadData(); // Reload the quiz list
-      }
-
-      if (failed > 0) {
-        toast.error(`Failed to update ${failed} quiz(es)`);
-      }
-
-      if (updated === 0 && failed === 0) {
+      if (quizzesToUpdate.length === 0) {
         toast.info('All quizzes are already published');
+        setBulkUpdateLoading(false);
+        return;
+      }
+
+      // Use service layer for bulk update
+      const updates = quizzesToUpdate.map(quiz => ({
+        id: quiz.id,
+        data: { isPublished: true }
+      }));
+
+      const result = await quizService.bulkUpdateQuizzes(updates);
+
+      if (result.success && result.data) {
+        if (result.data.updated > 0) {
+          toast.success(`${result.data.updated} quiz(es) published successfully`);
+          await loadData(); // Reload the quiz list
+        }
+
+        if (result.data.failed > 0) {
+          toast.error(`Failed to update ${result.data.failed} quiz(es)`);
+        }
+      } else {
+        throw new Error(result.error?.message || 'Failed to update quizzes');
       }
     } catch (error) {
       console.error('Error in bulk update:', error);

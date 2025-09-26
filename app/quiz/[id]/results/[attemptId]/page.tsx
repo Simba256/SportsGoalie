@@ -48,7 +48,7 @@ interface QuizResult {
     };
   };
 }
-import { firebaseService } from '@/lib/firebase/service';
+import { quizService } from '@/lib/database/services/quiz.service';
 import { useAuth } from '@/lib/auth/context';
 import Link from 'next/link';
 
@@ -74,10 +74,13 @@ export default function QuizResultsPage() {
     try {
       setLoading(true);
 
-      const [quizData, attemptData] = await Promise.all([
-        firebaseService.getDocument('quizzes', quizId),
-        firebaseService.getDocument('quiz_attempts', attemptId),
+      const [quizResult, attemptResult] = await Promise.all([
+        quizService.getQuiz(quizId),
+        quizService.getQuizAttempt(attemptId),
       ]);
+
+      const quizData = quizResult.success ? quizResult.data : null;
+      const attemptData = attemptResult.success ? attemptResult.data : null;
 
       if (!quizData || !attemptData) {
         toast.error('Results not found', {

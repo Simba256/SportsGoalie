@@ -12,7 +12,9 @@ import {
   QueryOptions,
   UserRole,
 } from '@/types';
+import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
+import { TimestampPatterns } from '../../utils/timestamp';
 
 /**
  * Service for managing users, user progress, achievements, and notifications in the SportsCoach application.
@@ -170,7 +172,7 @@ export class UserService extends BaseDatabaseService {
     updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'email'>>
   ): Promise<ApiResponse<void>> {
     // Don't allow email updates through this method
-    const { email, ...safeUpdates } = updates as any;
+    const { email, ...safeUpdates } = updates as Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'email'>>;
     return this.update<User>(this.USERS_COLLECTION, userId, safeUpdates);
   }
 
@@ -216,7 +218,7 @@ export class UserService extends BaseDatabaseService {
 
   async updateLastLogin(userId: string): Promise<ApiResponse<void>> {
     return this.update<User>(this.USERS_COLLECTION, userId, {
-      lastLoginAt: new Date() as any,
+      lastLoginAt: TimestampPatterns.forDatabase(),
     });
   }
 
@@ -245,14 +247,14 @@ export class UserService extends BaseDatabaseService {
     // Soft delete by marking as inactive
     return this.update<User>(this.USERS_COLLECTION, userId, {
       isActive: false,
-      deactivatedAt: new Date() as any,
+      deactivatedAt: Timestamp.fromDate(new Date()),
     });
   }
 
   async reactivateUser(userId: string): Promise<ApiResponse<void>> {
     return this.update<User>(this.USERS_COLLECTION, userId, {
       isActive: true,
-      reactivatedAt: new Date() as any,
+      reactivatedAt: Timestamp.fromDate(new Date()),
     });
   }
 
@@ -264,7 +266,7 @@ export class UserService extends BaseDatabaseService {
       searchTerm?: string;
     } = {}
   ): Promise<ApiResponse<PaginatedResponse<User>>> {
-    const whereClause: any[] = [];
+    const whereClause: Array<{field: string, operator: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'in' | 'not-in' | 'array-contains' | 'array-contains-any', value: string | boolean | UserRole}> = [];
 
     if (options.role) {
       whereClause.push({ field: 'role', operator: '==', value: options.role });
@@ -329,24 +331,16 @@ export class UserService extends BaseDatabaseService {
         experiencePoints: 0,
       },
       achievements: [],
-      lastUpdated: new Date() as any,
+      lastUpdated: TimestampPatterns.forDatabase(),
     };
 
-    return this.create<UserProgress>(this.USER_PROGRESS_COLLECTION, progressData);
+    // Use userId as document ID to match security rules expectation: /user_progress/{userId}
+    return this.createWithId<UserProgress>(this.USER_PROGRESS_COLLECTION, userId, progressData);
   }
 
   async getUserProgress(userId: string): Promise<ApiResponse<UserProgress | null>> {
-    const result = await this.query<UserProgress>(this.USER_PROGRESS_COLLECTION, {
-      where: [{ field: 'userId', operator: '==', value: userId }],
-      limit: 1,
-    });
-
-    return {
-      success: result.success,
-      data: result.data?.items[0] || null,
-      error: result.error,
-      timestamp: new Date(),
-    };
+    // Since document ID is now userId, we can fetch directly by ID (more efficient)
+    return this.getById<UserProgress>(this.USER_PROGRESS_COLLECTION, userId);
   }
 
   async updateUserProgress(
@@ -357,28 +351,15 @@ export class UserService extends BaseDatabaseService {
     if (!progressResult.success || !progressResult.data) {
       // Initialize if doesn't exist
       await this.initializeUserProgress(userId);
-      const newProgressResult = await this.getUserProgress(userId);
-      if (!newProgressResult.success || !newProgressResult.data) {
-        return {
-          success: false,
-          error: {
-            code: 'PROGRESS_INIT_FAILED',
-            message: 'Failed to initialize user progress',
-          },
-          timestamp: new Date(),
-        };
-      }
     }
-
-    const progressData = progressResult.data || (await this.getUserProgress(userId)).data!;
-    const progressId = (progressData as any).id;
 
     const updateData = {
       ...updates,
-      lastUpdated: new Date() as any,
+      lastUpdated: Timestamp.fromDate(new Date()),
     };
 
-    return this.update<UserProgress>(this.USER_PROGRESS_COLLECTION, progressId, updateData);
+    // Since document ID is userId, we can update directly by userId
+    return this.update<UserProgress>(this.USER_PROGRESS_COLLECTION, userId, updateData);
   }
 
   async updateOverallStats(
@@ -527,11 +508,11 @@ export class UserService extends BaseDatabaseService {
       }
 
       // Update existing achievement
-      const achievementData = (existing as any).id;
+      const achievementData = existing.id;
       await this.update<UserAchievement>(this.USER_ACHIEVEMENTS_COLLECTION, achievementData, {
         progress,
         isCompleted: progress >= 100,
-        unlockedAt: progress >= 100 ? new Date() as any : undefined,
+        unlockedAt: progress >= 100 ? Timestamp.fromDate(new Date()) : undefined,
       });
 
       return {
@@ -547,7 +528,7 @@ export class UserService extends BaseDatabaseService {
       achievementId,
       progress,
       isCompleted: progress >= 100,
-      unlockedAt: progress >= 100 ? new Date() as any : undefined,
+      unlockedAt: progress >= 100 ? Timestamp.fromDate(new Date()) : undefined,
       isNotified: false,
     };
 
@@ -639,7 +620,7 @@ export class UserService extends BaseDatabaseService {
     const operations = notificationsResult.data.items.map(notification => ({
       type: 'update' as const,
       collection: this.NOTIFICATIONS_COLLECTION,
-      id: (notification as any).id,
+      id: notification.id,
       data: { isRead: true },
     }));
 
@@ -749,6 +730,80 @@ export class UserService extends BaseDatabaseService {
         }
       }
     );
+  }
+
+  /**
+   * Retrieves comprehensive user data with progress information.
+   * Used for chatbot and analytics that need complete user context.
+   *
+   * @param userId - The user ID to retrieve data for
+   * @returns Promise resolving to user with all progress data
+   */
+  async getUserWithProgress(userId: string): Promise<ApiResponse<{
+    user: User;
+    sportProgress: Record<string, unknown>[];
+    userProgress: Record<string, unknown>[];
+    quizAttempts: Record<string, unknown>[];
+  }>> {
+    logger.database('read', 'user_with_progress', userId);
+
+    try {
+      // Get user data
+      const userResult = await this.getUser(userId);
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      // Get all related progress data in parallel
+      const [sportProgressResult, userProgressResult, quizAttemptsResult] = await Promise.all([
+        this.query('sport_progress', {
+          where: [{ field: 'userId', operator: '==', value: userId }],
+        }),
+        this.query('user_progress', {
+          where: [{ field: 'userId', operator: '==', value: userId }],
+        }),
+        this.query('quiz_attempts', {
+          where: [{ field: 'userId', operator: '==', value: userId }],
+        }),
+      ]);
+
+      const result = {
+        user: userResult.data,
+        sportProgress: sportProgressResult.success ? sportProgressResult.data?.items || [] : [],
+        userProgress: userProgressResult.success ? userProgressResult.data?.items || [] : [],
+        quizAttempts: quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [],
+      };
+
+      logger.info('User with progress retrieved successfully', 'UserService', {
+        userId,
+        sportProgressCount: result.sportProgress.length,
+        userProgressCount: result.userProgress.length,
+        quizAttemptsCount: result.quizAttempts.length,
+      });
+
+      return {
+        success: true,
+        data: result,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to retrieve user with progress', 'UserService', { userId, error });
+      return {
+        success: false,
+        error: {
+          code: 'USER_PROGRESS_FETCH_ERROR',
+          message: 'Failed to retrieve user progress data',
+        },
+        timestamp: new Date(),
+      };
+    }
   }
 }
 

@@ -69,7 +69,7 @@ function DashboardContent() {
     {
       title: 'Skills Completed',
       value: stats?.skillsCompleted || 0,
-      description: stats?.skillsCompleted ? 'Skills mastered' : 'Explore sports skills',
+      description: stats?.skillsCompleted ? 'Skills mastered' : 'Explore course skills',
       trend: stats?.skillsCompleted ? 'up' : 'neutral' as const,
       trendValue: '',
       icon: <BookOpen className="h-4 w-4" />,
@@ -123,23 +123,23 @@ function DashboardContent() {
         {/* Video Upload for Coach Recommendations */}
         <VideoUpload />
 
-        {/* Enrolled Sports Progress Cards */}
+        {/* Enrolled Courses Progress Cards */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold flex items-center space-x-2">
                 <Trophy className="h-6 w-6 text-primary" />
-                <span>Your Sports Progress</span>
+                <span>Your Course Progress</span>
               </h2>
               <p className="text-muted-foreground mt-1">
-                Track your progress across all enrolled sports and continue your learning journey.
+                Track your progress across all enrolled courses and continue your learning journey.
               </p>
             </div>
             {enrolledSports.length > 0 && (
               <Link href="/sports">
                 <Button variant="outline">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Browse More Sports
+                  Browse More Courses
                 </Button>
               </Link>
             )}
@@ -160,15 +160,15 @@ function DashboardContent() {
                   <div className="h-24 w-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
                     <Users className="h-12 w-12 text-muted-foreground" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">No Sports Enrolled Yet</h3>
+                  <h3 className="text-xl font-semibold mb-3">No Courses Enrolled Yet</h3>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Start your sports learning journey by enrolling in your first sport.
+                    Start your learning journey by enrolling in your first course.
                     Explore our comprehensive catalog and begin mastering new skills today.
                   </p>
                   <Link href="/sports">
                     <Button className="bg-primary hover:bg-primary/90">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      Explore Sports Catalog
+                      Explore Course Catalog
                     </Button>
                   </Link>
                 </div>
@@ -360,7 +360,7 @@ function DashboardContent() {
             <CardHeader>
               <CardTitle>Start Learning</CardTitle>
               <CardDescription>
-                Explore our sports library and begin your learning journey.
+                Explore our course library and begin your learning journey.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -370,9 +370,9 @@ function DashboardContent() {
                     <BookOpen className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium">Browse Sports</h3>
+                    <h3 className="font-medium">Browse Courses</h3>
                     <p className="text-sm text-muted-foreground">
-                      Discover sports and skills to master
+                      Discover courses and skills to master
                     </p>
                   </div>
                 </div>
@@ -410,13 +410,13 @@ function DashboardContent() {
             <CardHeader>
               <CardTitle>Overall Progress</CardTitle>
               <CardDescription>
-                Your journey across all sports and skills.
+                Your journey across all courses and skills.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Sports Completed</span>
+                  <span>Courses Completed</span>
                   <span className="font-medium">{stats?.sportsCompleted || 0}/6</span>
                 </div>
                 <Progress value={((stats?.sportsCompleted || 0) / 6) * 100} className="h-2" />
@@ -494,7 +494,7 @@ function DashboardContent() {
                   <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">No activity yet</h3>
                   <p className="text-muted-foreground mb-4">
-                    Start learning sports skills and taking quizzes to see your progress here.
+                    Start learning course skills and taking quizzes to see your progress here.
                   </p>
                   <Link href="/sports">
                     <Button>Get Started</Button>

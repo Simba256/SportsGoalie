@@ -27,18 +27,18 @@ import {
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { videoReviewService, StudentVideo } from '@/lib/database/services/video-review.service';
-import { firebaseService } from '@/lib/firebase/service';
-import { Course } from '@/types/course';
+import { sportsService } from '@/lib/database/services/sports.service';
+import { Sport } from '@/types';
 
 function VideoReviewsContent() {
   const { user } = useAuth();
   const [videos, setVideos] = useState<StudentVideo[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<StudentVideo | null>(null);
   const [feedback, setFeedback] = useState('');
-  const [recommendedCourses, setRecommendedCourses] = useState<string[]>([]);
-  const [selectedCourseToAdd, setSelectedCourseToAdd] = useState<string>('');
+  const [recommendedSports, setRecommendedSports] = useState<string[]>([]);
+  const [selectedSportToAdd, setSelectedSportToAdd] = useState<string>('');
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,30 +51,41 @@ function VideoReviewsContent() {
     try {
       setLoading(true);
 
-      // Load videos and courses in parallel
-      const [videosResult, coursesData] = await Promise.all([
+      console.log('🚀 [Admin Video Reviews] Starting to load videos');
+      console.log('🔐 [Admin Video Reviews] Current user:', {
+        email: user?.email,
+        uid: user?.uid,
+        role: user?.role
+      });
+
+      // Load videos and sports in parallel using proper services
+      console.log('📹 [Admin Video Reviews] Calling getAllVideosForReview...');
+      const [videosResult, sportsResult] = await Promise.all([
         videoReviewService.getAllVideosForReview(),
-        firebaseService.getCollection<Course>('courses', [
-          { field: 'isActive', operator: '==', value: true }
-        ])
+        sportsService.getAllSports()
       ]);
 
+      console.log('📹 [Admin Video Reviews] Videos result:', {
+        success: videosResult.success,
+        dataLength: videosResult.data?.length,
+        error: videosResult.error,
+        data: videosResult.data
+      });
+
       if (videosResult.success && videosResult.data) {
+        console.log('✅ [Admin Video Reviews] Setting videos:', videosResult.data.length, 'videos');
         setVideos(videosResult.data);
       } else {
-        console.error('Error loading videos:', videosResult.error);
+        console.error('❌ [Admin Video Reviews] Error loading videos:', videosResult.error);
         toast.error('Failed to load videos');
       }
 
-      if (coursesData) {
-        // Sort courses by sport and title
-        const sortedCourses = coursesData.sort((a, b) => {
-          if (a.sportId !== b.sportId) {
-            return a.sportId.localeCompare(b.sportId);
-          }
-          return a.title.localeCompare(b.title);
+      if (sportsResult.success && sportsResult.data) {
+        // Sort sports by name
+        const sortedSports = sportsResult.data.items.sort((a, b) => {
+          return a.name.localeCompare(b.name);
         });
-        setCourses(sortedCourses);
+        setSports(sortedSports);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -93,34 +104,34 @@ function VideoReviewsContent() {
     });
     setSelectedVideo(video);
     setFeedback(video.coachFeedback || '');
-    setRecommendedCourses(video.recommendedCourses || []);
+    setRecommendedSports(video.recommendedSports || []);
   };
 
-  const addRecommendedCourse = () => {
-    if (selectedCourseToAdd && !recommendedCourses.includes(selectedCourseToAdd)) {
-      const course = courses.find(c => c.id === selectedCourseToAdd);
-      if (course) {
-        setRecommendedCourses([...recommendedCourses, course.title]);
-        setSelectedCourseToAdd('');
+  const addRecommendedSport = () => {
+    if (selectedSportToAdd && !recommendedSports.includes(selectedSportToAdd)) {
+      const sport = sports.find(c => c.id === selectedSportToAdd);
+      if (sport) {
+        setRecommendedSports([...recommendedSports, sport.title]);
+        setSelectedSportToAdd('');
       }
     }
   };
 
-  const getFilteredCourses = () => {
-    if (!selectedVideo?.sport) return courses;
+  const getFilteredSports = () => {
+    if (!selectedVideo?.sport) return sports;
 
-    // Filter courses by the sport of the video being reviewed
-    return courses.filter(course => {
+    // Filter sports by the sport of the video being reviewed
+    return sports.filter(sport => {
       // For now, we'll match by sport name since we don't have sport ID mapping
       // In a real app, you'd want to match by sport ID
-      return course.title.toLowerCase().includes(selectedVideo.sport?.toLowerCase() || '') ||
-             course.sportId.toLowerCase() === selectedVideo.sport?.toLowerCase() ||
-             course.tags.some(tag => tag.toLowerCase().includes(selectedVideo.sport?.toLowerCase() || ''));
+      return sport.title.toLowerCase().includes(selectedVideo.sport?.toLowerCase() || '') ||
+             sport.sportId.toLowerCase() === selectedVideo.sport?.toLowerCase() ||
+             sport.tags.some(tag => tag.toLowerCase().includes(selectedVideo.sport?.toLowerCase() || ''));
     });
   };
 
-  const removeCourse = (course: string) => {
-    setRecommendedCourses(recommendedCourses.filter(c => c !== course));
+  const removeSport = (sport: string) => {
+    setRecommendedSports(recommendedSports.filter(c => c !== sport));
   };
 
   const submitFeedback = async () => {
@@ -134,7 +145,7 @@ function VideoReviewsContent() {
     try {
       const result = await videoReviewService.submitCoachFeedback(selectedVideo.id, {
         coachFeedback: feedback,
-        recommendedCourses: recommendedCourses,
+        recommendedSports: recommendedSports,
         reviewedBy: user?.email || 'coach@example.com'
       });
 
@@ -142,7 +153,7 @@ function VideoReviewsContent() {
         toast.success('Feedback sent to student successfully!');
         setSelectedVideo(null);
         setFeedback('');
-        setRecommendedCourses([]);
+        setRecommendedSports([]);
         await loadVideos(); // Reload videos to get updated data
       } else {
         toast.error(result.error?.message || 'Failed to submit feedback');
@@ -424,38 +435,38 @@ function VideoReviewsContent() {
                           />
                         </div>
 
-                        {/* Recommended Courses */}
+                        {/* Recommended Sports */}
                         <div className="space-y-4">
-                          <Label className="text-base font-medium">Recommended Courses</Label>
+                          <Label className="text-base font-medium">Recommended Sports</Label>
 
                           {video.status !== 'feedback_sent' && (
                             <div className="flex gap-2">
-                              <Select value={selectedCourseToAdd} onValueChange={setSelectedCourseToAdd}>
+                              <Select value={selectedSportToAdd} onValueChange={setSelectedSportToAdd}>
                                 <SelectTrigger className="flex-1">
-                                  <SelectValue placeholder="Select a course to recommend..." />
+                                  <SelectValue placeholder="Select a sport to recommend..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {getFilteredCourses().map((course) => (
-                                    <SelectItem key={course.id} value={course.id}>
+                                  {getFilteredSports().map((sport) => (
+                                    <SelectItem key={sport.id} value={sport.id}>
                                       <div className="flex flex-col">
-                                        <span className="font-medium">{course.title}</span>
+                                        <span className="font-medium">{sport.title}</span>
                                         <span className="text-xs text-gray-500">
-                                          {course.difficulty} • {course.duration}h • {course.category}
+                                          {sport.difficulty} • {sport.duration}h • {sport.category}
                                         </span>
                                       </div>
                                     </SelectItem>
                                   ))}
-                                  {getFilteredCourses().length === 0 && (
-                                    <SelectItem value="no-courses" disabled>
-                                      No courses available for this sport
+                                  {getFilteredSports().length === 0 && (
+                                    <SelectItem value="no-sports" disabled>
+                                      No sports available for this sport
                                     </SelectItem>
                                   )}
                                 </SelectContent>
                               </Select>
                               <Button
-                                onClick={addRecommendedCourse}
+                                onClick={addRecommendedSport}
                                 variant="outline"
-                                disabled={!selectedCourseToAdd}
+                                disabled={!selectedSportToAdd}
                               >
                                 Add
                               </Button>
@@ -463,16 +474,16 @@ function VideoReviewsContent() {
                           )}
 
                           <div className="flex flex-wrap gap-2">
-                            {recommendedCourses.map((course, index) => (
+                            {recommendedSports.map((sport, index) => (
                               <Badge
                                 key={index}
                                 variant="secondary"
                                 className="flex items-center gap-1"
                               >
-                                {course}
+                                {sport}
                                 {video.status !== 'feedback_sent' && (
                                   <button
-                                    onClick={() => removeCourse(course)}
+                                    onClick={() => removeSport(sport)}
                                     className="ml-1 text-red-500 hover:text-red-700"
                                   >
                                     ×
