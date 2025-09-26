@@ -242,6 +242,30 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({ className }) => {
     }
   };
 
+  const formatFirestoreDate = (timestamp: any) => {
+    // Handle Firestore Timestamp objects
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString();
+    }
+    // Handle regular Date objects
+    if (timestamp instanceof Date) {
+      return timestamp.toLocaleDateString();
+    }
+    // Handle string dates
+    if (typeof timestamp === 'string') {
+      const parsedDate = new Date(timestamp);
+      if (isNaN(parsedDate.getTime())) {
+        return 'Invalid date';
+      }
+      return parsedDate.toLocaleDateString();
+    }
+    // Handle objects with seconds/nanoseconds (Firestore timestamp serialized)
+    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000).toLocaleDateString();
+    }
+    return 'Unknown date';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -394,7 +418,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({ className }) => {
                       <div className="flex items-center space-x-4 text-xs text-muted-foreground mb-2">
                         <span>{formatFileSize(video.fileSize)}</span>
                         <span>•</span>
-                        <span>Uploaded {new Date(video.uploadedAt).toLocaleDateString()}</span>
+                        <span>Uploaded {formatFirestoreDate(video.uploadedAt)}</span>
                       </div>
                       {video.sport && (
                         <div className="text-xs text-muted-foreground mb-2">
@@ -433,7 +457,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({ className }) => {
 
                           {video.reviewedAt && (
                             <div className="text-xs text-green-600 mt-2">
-                              Reviewed on {new Date(video.reviewedAt).toLocaleDateString()}
+                              Reviewed on {formatFirestoreDate(video.reviewedAt)}
                             </div>
                           )}
                         </div>

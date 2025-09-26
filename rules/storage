@@ -26,10 +26,14 @@ service firebase.storage {
 
     // Student videos - students can only access their own folder
     match /videos/{userId}/{fileName} {
-      // Students can read and write their own videos
-      allow read, write: if request.auth != null &&
-                            request.auth.uid == userId &&
-                            isValidVideoFile();
+      // Students can read their own videos
+      allow read: if request.auth != null &&
+                    request.auth.uid == userId;
+
+      // Students can write their own videos with validation
+      allow write: if request.auth != null &&
+                     request.auth.uid == userId &&
+                     isValidVideoFile();
 
       // Admins can read all videos for review
       allow read: if isAdmin();

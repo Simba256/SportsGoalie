@@ -46,7 +46,7 @@ export interface MultipleChoiceOption {
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
-  type: 'multiple-choice';
+  type: 'multiple_choice';
   options: MultipleChoiceOption[];
   allowMultiple: boolean;
   shuffleOptions: boolean;
@@ -54,7 +54,7 @@ export interface MultipleChoiceQuestion extends BaseQuestion {
 
 // True/False Question
 export interface TrueFalseQuestion extends BaseQuestion {
-  type: 'true-false';
+  type: 'true_false';
   correctAnswer: boolean;
   trueExplanation?: string;
   falseExplanation?: string;
@@ -72,34 +72,9 @@ export interface DescriptiveQuestion extends BaseQuestion {
 
 // Fill in the Blank Question
 export interface FillInBlankQuestion extends BaseQuestion {
-  type: 'fill-in-blank';
-  template: string; // Text with {blank} placeholders
-  blanks: {
-    id: string;
-    acceptedAnswers: string[]; // Multiple acceptable answers
-    caseSensitive: boolean;
-    exactMatch: boolean;
-  }[];
-}
-
-// Matching Question
-export interface MatchingPair {
-  id: string;
-  left: {
-    text: string;
-    media?: QuestionMedia;
-  };
-  right: {
-    text: string;
-    media?: QuestionMedia;
-  };
-}
-
-export interface MatchingQuestion extends BaseQuestion {
-  type: 'matching';
-  pairs: MatchingPair[];
-  shuffleLeft: boolean;
-  shuffleRight: boolean;
+  type: 'fill_in_blank';
+  correctAnswers: string[];
+  caseSensitive: boolean;
 }
 
 // Union type for all question types
@@ -107,8 +82,7 @@ export type Question =
   | MultipleChoiceQuestion
   | TrueFalseQuestion
   | DescriptiveQuestion
-  | FillInBlankQuestion
-  | MatchingQuestion;
+  | FillInBlankQuestion;
 
 // Quiz Configuration
 export interface QuizSettings {

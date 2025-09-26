@@ -99,6 +99,9 @@ export const baseQuestionSchema = z.object({
   tags: z.array(z.string().max(30)).max(10, 'Cannot exceed 10 tags').default([]),
   media: z.array(questionMediaSchema).max(5, 'Cannot exceed 5 media files').default([]),
   order: z.number().min(0),
+  createdAt: z.any(), // Firebase Timestamp
+  updatedAt: z.any(), // Firebase Timestamp
+  createdBy: z.string(),
 });
 
 export const multipleChoiceQuestionSchema = baseQuestionSchema.extend({
@@ -149,35 +152,12 @@ export const fillInBlankQuestionSchema = baseQuestionSchema.extend({
   caseSensitive: z.boolean().default(false),
 });
 
-export const matchingPairSchema = z.object({
-  id: z.string(),
-  left: z
-    .string()
-    .min(1, 'Left item is required')
-    .max(100, 'Left item must be less than 100 characters'),
-  right: z
-    .string()
-    .min(1, 'Right item is required')
-    .max(100, 'Right item must be less than 100 characters'),
-  order: z.number().min(0),
-});
-
-export const matchingQuestionSchema = baseQuestionSchema.extend({
-  type: z.literal('matching'),
-  pairs: z
-    .array(matchingPairSchema)
-    .min(3, 'Must have at least 3 pairs')
-    .max(8, 'Cannot exceed 8 pairs'),
-  shufflePairs: z.boolean().default(true),
-});
-
 // Union type for all question types
 export const questionSchema = z.discriminatedUnion('type', [
   multipleChoiceQuestionSchema,
   trueFalseQuestionSchema,
   descriptiveQuestionSchema,
   fillInBlankQuestionSchema,
-  matchingQuestionSchema,
 ]);
 
 // Complete quiz schema
@@ -219,4 +199,3 @@ export type MultipleChoiceQuestion = z.infer<typeof multipleChoiceQuestionSchema
 export type TrueFalseQuestion = z.infer<typeof trueFalseQuestionSchema>;
 export type DescriptiveQuestion = z.infer<typeof descriptiveQuestionSchema>;
 export type FillInBlankQuestion = z.infer<typeof fillInBlankQuestionSchema>;
-export type MatchingQuestion = z.infer<typeof matchingQuestionSchema>;

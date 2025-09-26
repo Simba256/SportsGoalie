@@ -19,8 +19,8 @@ export const progressStatusSchema = z.enum(['not_started', 'in_progress', 'compl
   errorMap: () => ({ message: 'Status must be not_started, in_progress, or completed' }),
 });
 
-export const questionTypeSchema = z.enum(['multiple_choice', 'true_false', 'descriptive', 'image_choice', 'fill_in_blank', 'matching'], {
-  errorMap: () => ({ message: 'Question type must be multiple_choice, true_false, descriptive, image_choice, fill_in_blank, or matching' }),
+export const questionTypeSchema = z.enum(['multiple_choice', 'true_false', 'descriptive', 'fill_in_blank'], {
+  errorMap: () => ({ message: 'Question type must be multiple_choice, true_false, descriptive, or fill_in_blank' }),
 });
 
 export const mediaTypeSchema = z.enum(['image', 'video', 'youtube'], {

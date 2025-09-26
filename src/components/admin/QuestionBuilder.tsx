@@ -34,9 +34,7 @@ import {
   TrueFalseQuestion,
   DescriptiveQuestion,
   FillInBlankQuestion,
-  MatchingQuestion,
   MultipleChoiceOption,
-  MatchingPair,
 } from '@/types/quiz';
 import { DifficultyLevel } from '@/types';
 import { storageService } from '@/lib/firebase/storage.service';
@@ -426,83 +424,6 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     );
   };
 
-  const renderMatchingEditor = () => {
-    const matchQuestion = currentQuestion as Partial<MatchingQuestion>;
-
-    const addPair = () => {
-      const newPairs = [...(matchQuestion.pairs || []), {
-        id: Date.now().toString(),
-        left: '',
-        right: '',
-        order: (matchQuestion.pairs || []).length
-      }];
-      setCurrentQuestion(prev => ({ ...prev, pairs: newPairs }));
-    };
-
-    const updatePair = (index: number, field: 'left' | 'right', value: string) => {
-      const newPairs = [...(matchQuestion.pairs || [])];
-      newPairs[index] = { ...newPairs[index], [field]: value };
-      setCurrentQuestion(prev => ({ ...prev, pairs: newPairs }));
-    };
-
-    const removePair = (index: number) => {
-      const newPairs = (matchQuestion.pairs || []).filter((_, i) => i !== index);
-      setCurrentQuestion(prev => ({ ...prev, pairs: newPairs }));
-    };
-
-    return (
-      <div className="space-y-4">
-        <div>
-          <Label>Matching Pairs</Label>
-          <div className="space-y-3">
-            {(matchQuestion.pairs || []).map((pair, index) => (
-              <div key={index} className="grid grid-cols-2 gap-2 items-center">
-                <Input
-                  value={pair.left}
-                  onChange={(e) => updatePair(index, 'left', e.target.value)}
-                  placeholder={`Left item ${index + 1}`}
-                />
-                <div className="flex items-center space-x-2">
-                  <Input
-                    value={pair.right}
-                    onChange={(e) => updatePair(index, 'right', e.target.value)}
-                    placeholder={`Right item ${index + 1}`}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removePair(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addPair}
-              disabled={(matchQuestion.pairs || []).length >= 8}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Pair
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={matchQuestion.shufflePairs || false}
-            onCheckedChange={(checked) =>
-              setCurrentQuestion(prev => ({ ...prev, shufflePairs: checked }))
-            }
-          />
-          <Label>Shuffle Pairs</Label>
-        </div>
-      </div>
-    );
-  };
 
   const handleSaveQuestion = () => {
     // First check basic required fields
@@ -557,10 +478,6 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       questionData.maxLength = descQuestion.maxLength || 500;
       questionData.autoGrade = descQuestion.autoGrade ?? false;
       questionData.keywords = descQuestion.keywords || [];
-    } else if (currentQuestion.type === 'matching') {
-      const matchQuestion = currentQuestion as Partial<MatchingQuestion>;
-      questionData.pairs = matchQuestion.pairs || [];
-      questionData.shufflePairs = matchQuestion.shufflePairs ?? true;
     }
 
     // Validate using Zod schema
@@ -638,7 +555,6 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
                           <SelectItem value="true_false">True/False</SelectItem>
                           <SelectItem value="descriptive">Descriptive</SelectItem>
                           <SelectItem value="fill_in_blank">Fill in the Blank</SelectItem>
-                          <SelectItem value="matching">Matching</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -773,7 +689,6 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
                   {currentQuestion.type === 'true_false' && renderTrueFalseEditor()}
                   {currentQuestion.type === 'descriptive' && renderDescriptiveEditor()}
                   {currentQuestion.type === 'fill_in_blank' && renderFillInBlankEditor()}
-                  {currentQuestion.type === 'matching' && renderMatchingEditor()}
 
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={handleCloseDialog}>

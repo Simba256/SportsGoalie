@@ -61,7 +61,7 @@ function QuizzesAdminContent() {
         for (const sport of sportsResult.data.items) {
           const skillsResult = await sportsService.getSkillsBySport(sport.id);
           if (skillsResult.success && skillsResult.data) {
-            allSkills.push(...skillsResult.data);
+            allSkills.push(...skillsResult.data.items);
           }
         }
         setSkills(allSkills);

@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 export type UserRole = 'student' | 'admin';
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed';
-export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'image_choice' | 'fill_in_blank' | 'matching';
+export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'fill_in_blank';
 export type MediaType = 'image' | 'video' | 'youtube';
 export type ContentType = 'video' | 'article' | 'tutorial';
 export type NotificationType = 'progress' | 'quiz_result' | 'new_content' | 'reminder' | 'achievement';

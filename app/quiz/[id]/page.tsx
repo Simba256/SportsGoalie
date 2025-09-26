@@ -200,7 +200,7 @@ function QuizTakingPageContent() {
 
   const checkAnswer = (question: Question, userAnswer: string | boolean | string[]): boolean => {
     switch (question.type) {
-      case 'multiple-choice':
+      case 'multiple_choice':
         const mcQuestion = question as MultipleChoiceQuestion;
         const correctOptions = mcQuestion.options.filter(opt => opt.isCorrect).map(opt => opt.id);
         if (mcQuestion.allowMultipleAnswers) {
@@ -211,11 +211,11 @@ function QuizTakingPageContent() {
           return correctOptions.includes(userAnswer);
         }
 
-      case 'true-false':
+      case 'true_false':
         const tfQuestion = question as TrueFalseQuestion;
         return userAnswer === tfQuestion.correctAnswer;
 
-      case 'fill-in-blank':
+      case 'fill_in_blank':
         const fibQuestion = question as FillInBlankQuestion;
         if (!Array.isArray(userAnswer)) return false;
         return fibQuestion.blanks.every((blank, index) => {
@@ -282,13 +282,13 @@ function QuizTakingPageContent() {
 
   const renderQuestion = (question: Question) => {
     switch (question.type) {
-      case 'multiple-choice':
+      case 'multiple_choice':
         return renderMultipleChoice(question as MultipleChoiceQuestion);
-      case 'true-false':
+      case 'true_false':
         return renderTrueFalse(question as TrueFalseQuestion);
       case 'descriptive':
         return renderDescriptive(question as DescriptiveQuestion);
-      case 'fill-in-blank':
+      case 'fill_in_blank':
         return renderFillInBlank(question as FillInBlankQuestion);
       case 'matching':
         return renderMatching(question as MatchingQuestion);

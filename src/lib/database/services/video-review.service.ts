@@ -2,6 +2,7 @@ import { BaseDatabaseService } from '../base.service';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { ApiResponse } from '@/types';
+import { firebaseService } from '../../firebase/service';
 
 export interface StudentVideo {
   id: string;
@@ -53,6 +54,10 @@ export interface ServiceResult<T> {
 
 class VideoReviewService extends BaseDatabaseService {
   private readonly STUDENT_VIDEOS_COLLECTION = 'student_videos';
+
+  get collection(): string {
+    return this.STUDENT_VIDEOS_COLLECTION;
+  }
 
   /**
    * Upload video metadata to database

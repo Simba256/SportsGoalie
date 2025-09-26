@@ -413,7 +413,7 @@ function QuizDetailContent() {
                           <h4 className="font-medium mb-1">{question.title}</h4>
                           <p className="text-sm text-muted-foreground mb-3">{question.content}</p>
 
-                          {question.type === 'multiple-choice' && question.options && (
+                          {question.type === 'multiple_choice' && question.options && (
                             <div className="space-y-1">
                               {question.options.map((option, optIndex) => (
                                 <div key={optIndex} className="flex items-center gap-2 text-sm">

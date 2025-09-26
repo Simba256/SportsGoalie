@@ -1,5 +1,19 @@
 import { BaseDatabaseService } from '../base.service';
-import { Timestamp } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  runTransaction,
+  increment,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import {
   SportProgress,
   SkillProgress,

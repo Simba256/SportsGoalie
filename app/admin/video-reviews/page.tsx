@@ -104,30 +104,23 @@ function VideoReviewsContent() {
     });
     setSelectedVideo(video);
     setFeedback(video.coachFeedback || '');
-    setRecommendedSports(video.recommendedSports || []);
+    setRecommendedSports(video.recommendedCourses || []);
   };
 
   const addRecommendedSport = () => {
     if (selectedSportToAdd && !recommendedSports.includes(selectedSportToAdd)) {
       const sport = sports.find(c => c.id === selectedSportToAdd);
       if (sport) {
-        setRecommendedSports([...recommendedSports, sport.title]);
+        setRecommendedSports([...recommendedSports, sport.name]);
         setSelectedSportToAdd('');
       }
     }
   };
 
   const getFilteredSports = () => {
-    if (!selectedVideo?.sport) return sports;
-
-    // Filter sports by the sport of the video being reviewed
-    return sports.filter(sport => {
-      // For now, we'll match by sport name since we don't have sport ID mapping
-      // In a real app, you'd want to match by sport ID
-      return sport.title.toLowerCase().includes(selectedVideo.sport?.toLowerCase() || '') ||
-             sport.sportId.toLowerCase() === selectedVideo.sport?.toLowerCase() ||
-             sport.tags.some(tag => tag.toLowerCase().includes(selectedVideo.sport?.toLowerCase() || ''));
-    });
+    // Always return all available sports/courses for selection
+    // This allows coaches to recommend any course regardless of the video's sport
+    return sports;
   };
 
   const removeSport = (sport: string) => {
@@ -145,7 +138,7 @@ function VideoReviewsContent() {
     try {
       const result = await videoReviewService.submitCoachFeedback(selectedVideo.id, {
         coachFeedback: feedback,
-        recommendedSports: recommendedSports,
+        recommendedCourses: recommendedSports,
         reviewedBy: user?.email || 'coach@example.com'
       });
 
@@ -180,6 +173,30 @@ function VideoReviewsContent() {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatFirestoreDate = (timestamp: any) => {
+    // Handle Firestore Timestamp objects
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString();
+    }
+    // Handle regular Date objects
+    if (timestamp instanceof Date) {
+      return timestamp.toLocaleDateString();
+    }
+    // Handle string dates
+    if (typeof timestamp === 'string') {
+      const parsedDate = new Date(timestamp);
+      if (isNaN(parsedDate.getTime())) {
+        return 'Invalid date';
+      }
+      return parsedDate.toLocaleDateString();
+    }
+    // Handle objects with seconds/nanoseconds (Firestore timestamp serialized)
+    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000).toLocaleDateString();
+    }
+    return 'Unknown date';
   };
 
   const getStatusBadge = (status: StudentVideo['status']) => {
@@ -298,7 +315,7 @@ function VideoReviewsContent() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">Uploaded:</span>
-                      <span>{video.uploadedAt.toLocaleDateString()}</span>
+                      <span>{formatFirestoreDate(video.uploadedAt)}</span>
                     </div>
                   </div>
 
@@ -310,7 +327,7 @@ function VideoReviewsContent() {
 
                   {video.status === 'feedback_sent' && video.reviewedAt && (
                     <div className="text-xs text-gray-500 text-center pt-2 border-t">
-                      Reviewed on {video.reviewedAt.toLocaleDateString()}
+                      Reviewed on {formatFirestoreDate(video.reviewedAt)}
                     </div>
                   )}
 
@@ -435,30 +452,25 @@ function VideoReviewsContent() {
                           />
                         </div>
 
-                        {/* Recommended Sports */}
+                        {/* Recommended Courses */}
                         <div className="space-y-4">
-                          <Label className="text-base font-medium">Recommended Sports</Label>
+                          <Label className="text-base font-medium">Recommended Courses</Label>
 
                           {video.status !== 'feedback_sent' && (
                             <div className="flex gap-2">
                               <Select value={selectedSportToAdd} onValueChange={setSelectedSportToAdd}>
                                 <SelectTrigger className="flex-1">
-                                  <SelectValue placeholder="Select a sport to recommend..." />
+                                  <SelectValue placeholder="Select a course to recommend..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {getFilteredSports().map((sport) => (
                                     <SelectItem key={sport.id} value={sport.id}>
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">{sport.title}</span>
-                                        <span className="text-xs text-gray-500">
-                                          {sport.difficulty} • {sport.duration}h • {sport.category}
-                                        </span>
-                                      </div>
+                                      {sport.name}
                                     </SelectItem>
                                   ))}
                                   {getFilteredSports().length === 0 && (
                                     <SelectItem value="no-sports" disabled>
-                                      No sports available for this sport
+                                      No courses available
                                     </SelectItem>
                                   )}
                                 </SelectContent>

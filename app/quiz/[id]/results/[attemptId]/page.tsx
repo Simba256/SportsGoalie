@@ -176,16 +176,16 @@ export default function QuizResultsPage() {
 
   const getCorrectAnswerText = (question: Question): string => {
     switch (question.type) {
-      case 'multiple-choice':
+      case 'multiple_choice':
         const mcQuestion = question as MultipleChoiceQuestion;
         const correctOptions = mcQuestion.options.filter(opt => opt.isCorrect);
         return correctOptions.map(opt => opt.text).join(', ');
 
-      case 'true-false':
+      case 'true_false':
         const tfQuestion = question as TrueFalseQuestion;
         return tfQuestion.correctAnswer ? 'True' : 'False';
 
-      case 'fill-in-blank':
+      case 'fill_in_blank':
         return 'See explanation';
 
       case 'descriptive':
@@ -203,7 +203,7 @@ export default function QuizResultsPage() {
     if (!answer) return 'No answer provided';
 
     switch (question.type) {
-      case 'multiple-choice':
+      case 'multiple_choice':
         const mcQuestion = question as MultipleChoiceQuestion;
         if (Array.isArray(answer.selectedOptions)) {
           const selectedTexts = answer.selectedOptions
@@ -213,13 +213,13 @@ export default function QuizResultsPage() {
         }
         return 'No selection';
 
-      case 'true-false':
+      case 'true_false':
         return answer.selectedOptions?.[0] === 'true' ? 'True' : 'False';
 
       case 'descriptive':
         return answer.textAnswer || 'No answer provided';
 
-      case 'fill-in-blank':
+      case 'fill_in_blank':
         return Array.isArray(answer.selectedOptions)
           ? answer.selectedOptions.join(', ')
           : 'No answer provided';

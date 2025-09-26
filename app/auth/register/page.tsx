@@ -68,6 +68,8 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="register-form">
+            {/* Hidden role field - all registrations are students */}
+            <input type="hidden" {...register('role')} value="student" />
             {/* Display Name */}
             <div className="space-y-2">
               <Label htmlFor="displayName">Full Name</Label>
@@ -163,33 +165,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Role Selection */}
-            <div className="space-y-2">
-              <Label>Account Type</Label>
-              <div className="flex space-x-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="student"
-                    {...register('role')}
-                    className="h-4 w-4 text-primary"
-                    data-testid="role-student"
-                  />
-                  <span className="text-sm">Student</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="admin"
-                    {...register('role')}
-                    className="h-4 w-4 text-primary"
-                    data-testid="role-admin"
-                  />
-                  <span className="text-sm">Admin</span>
-                </label>
-              </div>
-              {errors.role && <p className="text-sm text-destructive" data-testid="role-error">{errors.role.message}</p>}
-            </div>
 
             {/* Terms Agreement */}
             <div className="space-y-2">
