@@ -270,6 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // They need to verify their email before logging in
       await firebaseSignOut(auth);
       setUser(null);
+      setLoading(false); // Reset loading state after successful registration
     } catch (error: unknown) {
       setLoading(false);
 

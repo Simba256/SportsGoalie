@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
+import { toast } from 'sonner';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,6 +40,13 @@ export default function RegisterPage() {
     try {
       setIsLoading(true);
       await registerUser(data);
+
+      // Show success notification
+      toast.success('Account created successfully!', {
+        description: 'Please check your email to verify your account before logging in.',
+        duration: 6000,
+      });
+
       // After successful registration, redirect to login with verification message
       router.push('/auth/login?message=verify-email');
     } catch (error) {
@@ -47,9 +55,16 @@ export default function RegisterPage() {
         setError('root', {
           message: error.userMessage,
         });
+        toast.error('Registration failed', {
+          description: error.userMessage,
+        });
       } else {
+        const errorMessage = error instanceof Error ? error.message : 'Registration failed';
         setError('root', {
-          message: error instanceof Error ? error.message : 'Registration failed',
+          message: errorMessage,
+        });
+        toast.error('Registration failed', {
+          description: errorMessage,
         });
       }
     } finally {

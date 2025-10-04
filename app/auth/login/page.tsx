@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { isAuthError } from '@/lib/errors/auth-errors';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, user, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,12 +72,11 @@ export default function LoginPage() {
 
   // Check for verification message from registration
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const message = urlParams.get('message');
+    const message = searchParams.get('message');
     if (message === 'verify-email') {
       setShowVerificationMessage(true);
     }
-  }, []);
+  }, [searchParams]);
 
   // Show loading while checking auth state
   if (loading) {
