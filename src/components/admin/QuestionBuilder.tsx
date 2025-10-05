@@ -96,11 +96,16 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
 
   const handleMediaUpload = async (file: File, targetPath: string) => {
     try {
-      const url = await storageService.uploadFile(file, 'SKILL_MEDIA');
+      const result = await storageService.uploadFile(file, { folder: 'skills/media' });
+
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
       const media: QuestionMedia = {
         id: Date.now().toString(),
         type: file.type.startsWith('video/') ? 'video' : 'image',
-        url,
+        url: result.url,
         alt: file.name,
         order: 0,
       };
@@ -116,7 +121,7 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     } catch (error) {
       console.error('Error uploading media:', error);
       toast.error('Failed to upload media', {
-        description: 'Please try again or check your file format.',
+        description: error instanceof Error ? error.message : 'Please try again or check your file format.',
       });
       return null;
     }
