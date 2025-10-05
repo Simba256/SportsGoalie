@@ -268,7 +268,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
+      console.log('🔍 Creating Firestore document with data:', {
+        ...docData,
+        createdAt: 'Date object',
+        updatedAt: 'Date object',
+      });
+
       await setDoc(userDocRef, docData);
+
+      console.log('✅ Firestore document created successfully');
 
       // Important: Log out the user immediately after registration
       // They need to verify their email before logging in
@@ -277,6 +285,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false); // Reset loading state after successful registration
     } catch (error: unknown) {
       setLoading(false);
+
+      // Log the actual error for debugging
+      console.error('❌ Registration error:', error);
+      if (error && typeof error === 'object' && 'code' in error) {
+        console.error('Error code:', (error as { code: string }).code);
+      }
 
       // If it's already an AuthError, just re-throw it
       if (isAuthError(error)) {
