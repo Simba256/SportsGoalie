@@ -49,19 +49,19 @@ service cloud.firestore {
     }
 
     function isValidRole(role) {
-      return role in ['student', 'admin'];
+      return role == 'student' || role == 'admin';
     }
 
     function isValidDifficulty(difficulty) {
-      return difficulty in ['beginner', 'intermediate', 'advanced'];
+      return difficulty == 'beginner' || difficulty == 'intermediate' || difficulty == 'advanced';
     }
 
     function isValidQuestionType(type) {
-      return type in ['multiple_choice', 'true_false', 'descriptive', 'image_choice'];
+      return type == 'multiple_choice' || type == 'true_false' || type == 'descriptive' || type == 'image_choice';
     }
 
     function isValidNotificationType(type) {
-      return type in ['progress', 'quiz_result', 'new_content', 'reminder', 'achievement'];
+      return type == 'progress' || type == 'quiz_result' || type == 'new_content' || type == 'reminder' || type == 'achievement';
     }
 
     // Users collection
@@ -71,10 +71,14 @@ service cloud.firestore {
 
       // Users can create their own profile during registration
       // Allow creation with unverified email during registration
-      allow create: if isOwner(userId) &&
-                       hasRequiredFields(['email', 'displayName', 'role']) &&
-                       isValidEmail(request.resource.data.email) &&
-                       isValidRole(request.resource.data.role) &&
+      allow create: if isAuthenticated() &&
+                       getUserId() == userId &&
+                       request.resource.data.email is string &&
+                       request.resource.data.email.size() > 0 &&
+                       request.resource.data.displayName is string &&
+                       request.resource.data.displayName.size() > 0 &&
+                       request.resource.data.role is string &&
+                       (request.resource.data.role == 'student' || request.resource.data.role == 'admin') &&
                        request.resource.data.emailVerified is bool;
 
       // Users can update their own profile (except role and email), admins can update any

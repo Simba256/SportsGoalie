@@ -126,8 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Create the document without undefined fields
+      // Don't include 'id' in the document data - it's already the document ID
+      const { id, ...userDataWithoutId } = newUser;
       const docData = {
-        ...newUser,
+        ...userDataWithoutId,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -251,8 +253,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const userDocRef = doc(db, 'users', newUser.id);
       // Create the document without undefined fields
+      // Don't include 'id' in the document data - it's already the document ID
+      const { id, ...userDataWithoutId } = newUser;
       const docData = {
-        ...newUser,
+        ...userDataWithoutId,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
