@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -15,13 +15,40 @@ import { useAuth } from '@/lib/auth/context';
 import { loginSchema, type LoginFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
 
+// Component that uses useSearchParams - must be wrapped in Suspense
+function VerificationMessage() {
+  const searchParams = useSearchParams();
+  const [showMessage, setShowMessage] = useState(false);
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message === 'verify-email') {
+      setShowMessage(true);
+    }
+  }, [searchParams]);
+
+  if (!showMessage) return null;
+
+  return (
+    <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
+      <div className="flex items-center gap-2 text-green-800">
+        <CheckCircle className="h-5 w-5" />
+        <div>
+          <p className="font-medium">Registration Successful!</p>
+          <p className="text-sm">
+            We've sent a verification email to your inbox. Please verify your email before signing in.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, user, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
 
   const {
     register,
@@ -70,14 +97,6 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  // Check for verification message from registration
-  useEffect(() => {
-    const message = searchParams.get('message');
-    if (message === 'verify-email') {
-      setShowVerificationMessage(true);
-    }
-  }, [searchParams]);
-
   // Show loading while checking auth state
   if (loading) {
     return (
@@ -103,19 +122,9 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           {/* Email Verification Success Message */}
-          {showVerificationMessage && (
-            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
-              <div className="flex items-center gap-2 text-green-800">
-                <CheckCircle className="h-5 w-5" />
-                <div>
-                  <p className="font-medium">Registration Successful!</p>
-                  <p className="text-sm">
-                    We've sent a verification email to your inbox. Please verify your email before signing in.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          <Suspense fallback={null}>
+            <VerificationMessage />
+          </Suspense>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
             {/* Email */}
