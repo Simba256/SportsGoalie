@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User as FirebaseUser,
@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null,
     isAuthenticated: false,
   });
+  const isRegisteringRef = useRef(false);
 
   const setLoading = (loading: boolean) => {
     setState((prev) => ({ ...prev, loading }));
@@ -204,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const context = createErrorContext('register', { email: credentials.email });
 
     try {
+      isRegisteringRef.current = true; // Prevent auth state listener from signing out
       setLoading(true);
       setError(null);
 
@@ -300,6 +302,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Convert Firebase errors to AuthError
       const authError = createAuthErrorFromFirebase(error, context);
       throw authError;
+    } finally {
+      isRegisteringRef.current = false; // Reset flag
     }
   };
 
@@ -384,7 +388,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Check if email is verified before setting user
-        if (!firebaseUser.emailVerified) {
+        // Skip this check if we're currently registering a new user
+        if (!firebaseUser.emailVerified && !isRegisteringRef.current) {
           // Email not verified, sign out immediately
           await firebaseSignOut(auth);
           setUser(null);
