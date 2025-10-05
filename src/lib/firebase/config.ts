@@ -24,23 +24,18 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Validate required environment variables only in production
-const requiredEnvVars = [
-  'NEXT_PUBLIC_FIREBASE_API_KEY',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-];
+// Validate required environment variables by checking the actual config values
+const missingVars = [];
+if (!firebaseConfig.apiKey) missingVars.push('NEXT_PUBLIC_FIREBASE_API_KEY');
+if (!firebaseConfig.authDomain) missingVars.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
+if (!firebaseConfig.projectId) missingVars.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+if (!firebaseConfig.storageBucket) missingVars.push('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET');
 
-const missingEnvVars = requiredEnvVars.filter(
-  (envVar) => !process.env[envVar]
-);
-
-if (missingEnvVars.length > 0 && process.env.NODE_ENV === 'production') {
+if (missingVars.length > 0 && process.env.NODE_ENV === 'production') {
   console.error(
-    `❌ Missing required Firebase environment variables: ${missingEnvVars.join(', ')}`
+    `❌ Missing required Firebase environment variables: ${missingVars.join(', ')}`
   );
-  console.error('Please check your .env.local file');
+  console.error('Please check your environment variables in Vercel');
 }
 
 // Initialize Firebase (prevent duplicate app initialization)
@@ -109,17 +104,17 @@ export const validateFirebaseConfig = (): {
 } => {
   const warnings: string[] = [];
 
-  if (!process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID) {
+  if (!firebaseConfig.measurementId) {
     warnings.push('NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID is missing (Analytics will be disabled)');
   }
 
-  if (!process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID) {
+  if (!firebaseConfig.messagingSenderId) {
     warnings.push('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID is missing (FCM will be disabled)');
   }
 
   return {
-    isValid: missingEnvVars.length === 0,
-    missingVars: missingEnvVars,
+    isValid: missingVars.length === 0,
+    missingVars: missingVars,
     warnings,
   };
 };
