@@ -782,7 +782,7 @@ export class QuizService extends BaseDatabaseService {
     try {
       // BYPASS base service - use direct Firestore write since we know it works
       const { collection: firestoreCollection, addDoc, serverTimestamp } = await import('firebase/firestore');
-      const { db } = await import('../firebase/config');
+      const { db } = await import('@/lib/firebase/config');
 
       // Create document with all data at once
       const docRef = await addDoc(firestoreCollection(db, this.QUIZ_ATTEMPTS_COLLECTION), {
