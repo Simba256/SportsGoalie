@@ -71,6 +71,26 @@ service firebase.storage {
       allow read, write, delete: if isAdmin();
     }
 
+    // Skills media (images, videos for quiz questions, etc.) - admin only
+    match /skills/media/{fileName} {
+      // Anyone can read skill media
+      allow read: if true;
+
+      // Only admins can upload/manage skill media
+      allow write, delete: if isAdmin() &&
+                              request.resource.size <= 20 * 1024 * 1024; // 20MB limit
+    }
+
+    // Sports images - admin only
+    match /sports/images/{fileName} {
+      // Anyone can read sport images
+      allow read: if true;
+
+      // Only admins can upload/manage sport images
+      allow write, delete: if isAdmin() &&
+                              request.resource.size <= 2 * 1024 * 1024; // 2MB limit
+    }
+
     // Default deny - any other paths are blocked
     match /{allPaths=**} {
       allow read, write: if false;

@@ -132,18 +132,24 @@ export default function SkillDetailPage() {
     if (!skillId) return;
 
     try {
+      console.log('Fetching quizzes for skillId:', skillId);
       const quizzesResult = await quizService.getQuizzesBySkill(skillId);
+
+      console.log('Quiz query result:', quizzesResult);
 
       if (quizzesResult.success && quizzesResult.data.items.length > 0) {
         const quiz = quizzesResult.data.items[0];
+        console.log('Found quiz:', quiz);
         router.push(`/quiz/${quiz.id}`);
       } else {
         alert('Quiz not available yet. Please check back later!');
         console.log('No quiz found for skill:', skillId);
+        console.log('Query result:', quizzesResult);
       }
     } catch (error) {
       alert('Unable to load quiz. Please try again later.');
       console.error('Error navigating to quiz:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
     }
   };
 
