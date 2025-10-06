@@ -719,6 +719,13 @@ export class QuizService extends BaseDatabaseService {
     return this.getById<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptId);
   }
 
+  async updateQuizAttempt(
+    attemptId: string,
+    updates: Partial<Omit<QuizAttempt, 'id' | 'createdAt' | 'updatedAt'>>
+  ): Promise<ApiResponse<void>> {
+    return this.update<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptId, updates);
+  }
+
   /**
    * Gets all quiz attempts for a specific quiz (used for statistics).
    * This is used by frontend pages that need quiz attempt data.

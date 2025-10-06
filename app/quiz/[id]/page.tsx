@@ -52,6 +52,8 @@ function QuizTakingPageContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [incompleteAttempt, setIncompleteAttempt] = useState<QuizAttempt | null>(null);
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
 
   useEffect(() => {
     if (quizId) {
@@ -93,6 +95,20 @@ function QuizTakingPageContent() {
 
       if (quizData.estimatedTimeToComplete) {
         setTimeRemaining(quizData.estimatedTimeToComplete * 60);
+      }
+
+      // Check for incomplete attempts
+      if (user) {
+        const attemptsResult = await quizService.getUserQuizAttempts(user.id, {
+          quizId,
+          completed: false,
+        });
+
+        if (attemptsResult.success && attemptsResult.data.items.length > 0) {
+          const incomplete = attemptsResult.data.items[0];
+          setIncompleteAttempt(incomplete);
+          setShowIncompleteDialog(true);
+        }
       }
     } catch (error) {
       console.error('Error loading quiz:', error);
@@ -136,6 +152,52 @@ function QuizTakingPageContent() {
         description: 'Please try again or contact support if the problem persists.',
       });
     }
+  };
+
+  const handleAbandonIncomplete = async () => {
+    if (!incompleteAttempt) return;
+
+    try {
+      // Mark the incomplete attempt as abandoned by updating its status
+      await quizService.updateQuizAttempt(incompleteAttempt.id, {
+        status: 'abandoned',
+        isCompleted: true,
+      });
+
+      setIncompleteAttempt(null);
+      setShowIncompleteDialog(false);
+      toast.success('Previous attempt abandoned', {
+        description: 'You can now start a fresh quiz attempt.',
+      });
+    } catch (error) {
+      console.error('Error abandoning attempt:', error);
+      toast.error('Failed to abandon previous attempt', {
+        description: 'Please try again.',
+      });
+    }
+  };
+
+  const handleResumeIncomplete = () => {
+    if (!incompleteAttempt) return;
+
+    // Resume the incomplete attempt
+    setAttempt(incompleteAttempt);
+    setShowIncompleteDialog(false);
+    setShowInstructions(false);
+    setIsTimerActive(true);
+
+    // Restore previous answers if any
+    if (incompleteAttempt.answers && incompleteAttempt.answers.length > 0) {
+      const restoredAnswers: { [questionId: string]: string | boolean | string[] } = {};
+      incompleteAttempt.answers.forEach(ans => {
+        restoredAnswers[ans.questionId] = ans.answer;
+      });
+      setAnswers(restoredAnswers);
+    }
+
+    toast.info('Resuming previous attempt', {
+      description: 'Your previous answers have been restored.',
+    });
   };
 
   const handleAnswerChange = (questionId: string, answer: string | boolean | string[]) => {
@@ -469,6 +531,26 @@ function QuizTakingPageContent() {
   if (showInstructions) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Incomplete Attempt Dialog */}
+        <Dialog open={showIncompleteDialog} onOpenChange={setShowIncompleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Incomplete Quiz Attempt Found</DialogTitle>
+              <DialogDescription>
+                You have an incomplete attempt for this quiz. Would you like to resume where you left off or start fresh?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 mt-4">
+              <Button onClick={handleResumeIncomplete} variant="default">
+                Resume Previous Attempt
+              </Button>
+              <Button onClick={handleAbandonIncomplete} variant="outline">
+                Abandon & Start Fresh
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">{quiz.title}</CardTitle>
