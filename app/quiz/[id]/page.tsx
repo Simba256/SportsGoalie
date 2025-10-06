@@ -140,10 +140,7 @@ function QuizTakingPageContent() {
         throw new Error(eligibilityResult.data?.reason || 'You are not eligible to take this quiz at this time.');
       }
 
-      // Show the quiz UI first
-      setShowInstructions(false);
-
-      // NOW create the attempt after quiz UI is visible
+      // Create the attempt - questions won't show until attempt is set
       const attemptResult = await quizService.startQuizAttempt(
         user.id,
         quiz.id,
@@ -152,8 +149,6 @@ function QuizTakingPageContent() {
       );
 
       if (!attemptResult.success || !attemptResult.data) {
-        // If creation fails, go back to instructions
-        setShowInstructions(true);
         throw new Error(attemptResult.error?.message || 'Failed to start quiz attempt');
       }
 
@@ -162,9 +157,9 @@ function QuizTakingPageContent() {
 
       if (createdAttemptResult.success && createdAttemptResult.data) {
         setAttempt(createdAttemptResult.data);
+        setShowInstructions(false);
         setIsTimerActive(true);
       } else {
-        setShowInstructions(true);
         throw new Error('Failed to retrieve quiz attempt data');
       }
     } catch (error) {
@@ -549,7 +544,8 @@ function QuizTakingPageContent() {
     );
   }
 
-  if (showInstructions) {
+  // Show instructions if we haven't started OR if we're still creating the attempt
+  if (showInstructions || !attempt) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Incomplete Attempt Dialog */}
