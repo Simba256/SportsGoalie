@@ -91,6 +91,16 @@ service firebase.storage {
                               request.resource.size <= 2 * 1024 * 1024; // 2MB limit
     }
 
+    // Learning videos - shown to students who answer incorrectly
+    match /learning-videos/{fileName} {
+      // Anyone can read learning videos (students need to watch them)
+      allow read: if true;
+
+      // Only admins can upload/manage learning videos
+      allow write, delete: if isAdmin() &&
+                              request.resource.size <= 100 * 1024 * 1024; // 100MB limit
+    }
+
     // Default deny - any other paths are blocked
     match /{allPaths=**} {
       allow read, write: if false;

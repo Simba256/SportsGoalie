@@ -144,8 +144,15 @@ export default function QuizResultsPage() {
   };
 
   const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    if (!seconds || seconds === 0) return '0:00';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
@@ -199,33 +206,52 @@ export default function QuizResultsPage() {
     }
   };
 
-  const getUserAnswerText = (question: Question, answer: string | boolean | string[]): string => {
-    if (!answer) return 'No answer provided';
+  const getUserAnswerText = (question: Question, userAnswer: any): string => {
+    if (!userAnswer || userAnswer.answer === undefined || userAnswer.answer === null) {
+      return 'No answer provided';
+    }
+
+    const answer = userAnswer.answer;
 
     switch (question.type) {
       case 'multiple_choice':
         const mcQuestion = question as MultipleChoiceQuestion;
-        if (Array.isArray(answer.selectedOptions)) {
-          const selectedTexts = answer.selectedOptions
+        if (Array.isArray(answer)) {
+          // Multiple selection - array of option IDs
+          const selectedTexts = answer
             .map((optId: string) => mcQuestion.options.find(opt => opt.id === optId)?.text)
             .filter(Boolean);
-          return selectedTexts.join(', ') || 'No selection';
+          return selectedTexts.length > 0 ? selectedTexts.join(', ') : 'No selection';
+        } else if (typeof answer === 'string') {
+          // Single selection - single option ID
+          const selectedOption = mcQuestion.options.find(opt => opt.id === answer);
+          return selectedOption ? selectedOption.text : 'No selection';
         }
         return 'No selection';
 
       case 'true_false':
-        return answer.selectedOptions?.[0] === 'true' ? 'True' : 'False';
+        if (typeof answer === 'boolean') {
+          return answer ? 'True' : 'False';
+        } else if (typeof answer === 'string') {
+          return answer === 'true' ? 'True' : 'False';
+        }
+        return 'No selection';
 
       case 'descriptive':
-        return answer.textAnswer || 'No answer provided';
+        return typeof answer === 'string' && answer.trim() ? answer : 'No answer provided';
 
       case 'fill_in_blank':
-        return Array.isArray(answer.selectedOptions)
-          ? answer.selectedOptions.join(', ')
-          : 'No answer provided';
+        if (Array.isArray(answer)) {
+          return answer.filter(a => a && a.trim()).join(', ') || 'No answer provided';
+        }
+        return 'No answer provided';
 
       case 'matching':
-        return answer.textAnswer || 'See details';
+        if (typeof answer === 'object' && answer !== null) {
+          const pairs = Object.entries(answer).map(([key, value]) => `${key}: ${value}`);
+          return pairs.length > 0 ? pairs.join(', ') : 'No answer provided';
+        }
+        return 'No answer provided';
 
       default:
         return 'N/A';
@@ -272,13 +298,13 @@ export default function QuizResultsPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Score</span>
-                  <span className={`text-2xl font-bold ${getGradeColor(attempt.score)}`}>
-                    {attempt.score.toFixed(1)}% ({getGradeLetter(attempt.score)})
+                  <span className={`text-2xl font-bold ${getGradeColor(attempt.percentage)}`}>
+                    {attempt.percentage.toFixed(1)}% ({getGradeLetter(attempt.percentage)})
                   </span>
                 </div>
-                <Progress value={attempt.score} className="h-3" />
+                <Progress value={attempt.percentage} className="h-3" />
                 <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>{attempt.pointsEarned} / {attempt.totalPoints} points</span>
+                  <span>{attempt.score} / {attempt.maxScore} points</span>
                   <span>Passing: {quiz.settings.passingScore}%</span>
                 </div>
               </div>
@@ -332,7 +358,11 @@ export default function QuizResultsPage() {
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Completed:</span>
               <span className="font-medium">
-                {attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleDateString() : 'N/A'}
+                {attempt.submittedAt
+                  ? (typeof attempt.submittedAt === 'object' && 'toDate' in attempt.submittedAt
+                      ? attempt.submittedAt.toDate().toLocaleDateString()
+                      : new Date(attempt.submittedAt).toLocaleDateString())
+                  : 'N/A'}
               </span>
             </div>
           </CardContent>
@@ -375,6 +405,7 @@ export default function QuizResultsPage() {
               {quiz.questions.map((question, index) => {
                 const answer = attempt.answers.find(a => a.questionId === question.id);
                 const isCorrect = answer?.isCorrect || false;
+                const pointsEarned = answer?.pointsEarned ?? (isCorrect ? question.points : 0);
 
                 return (
                   <AccordionItem key={question.id} value={question.id}>
@@ -392,7 +423,7 @@ export default function QuizResultsPage() {
                           </div>
                         </div>
                         <Badge variant={isCorrect ? 'default' : 'destructive'}>
-                          {answer?.pointsEarned || 0} / {question.points} pts
+                          {pointsEarned} / {question.points} pts
                         </Badge>
                       </div>
                     </AccordionTrigger>
@@ -424,6 +455,25 @@ export default function QuizResultsPage() {
                           <div>
                             <h5 className="font-medium text-sm text-gray-600 mb-1">Explanation:</h5>
                             <p className="text-sm text-gray-700">{question.explanation}</p>
+                          </div>
+                        )}
+
+                        {!isCorrect && question.learningVideoUrl && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h5 className="font-medium text-sm text-blue-900 mb-2">📺 Learning Video</h5>
+                            <p className="text-sm text-blue-800 mb-3">
+                              Watch this video to better understand this topic:
+                            </p>
+                            <video
+                              controls
+                              className="w-full rounded-lg shadow-md"
+                              preload="metadata"
+                            >
+                              <source src={question.learningVideoUrl} type="video/mp4" />
+                              <source src={question.learningVideoUrl} type="video/webm" />
+                              <source src={question.learningVideoUrl} type="video/ogg" />
+                              Your browser does not support the video tag.
+                            </video>
                           </div>
                         )}
                       </div>

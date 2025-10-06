@@ -51,6 +51,7 @@ function QuizTakingPageContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     if (quizId) {
@@ -114,6 +115,7 @@ function QuizTakingPageContent() {
     // Simply start the quiz - no database writes needed until submission
     setShowInstructions(false);
     setIsTimerActive(true);
+    setQuizStartTime(Date.now()); // Record start time for accurate time tracking
 
     toast.success('Quiz started!', {
       description: 'Answer all questions and submit when ready.',
@@ -132,32 +134,6 @@ function QuizTakingPageContent() {
 
     try {
       setSubmitting(true);
-
-      // DEBUG: Check auth state
-      const { auth } = await import('@/lib/firebase/config');
-      const currentUser = auth.currentUser;
-      console.log('=== AUTH DEBUG ===');
-      console.log('Auth currentUser:', currentUser);
-      console.log('Auth UID:', currentUser?.uid);
-      console.log('User from context:', user);
-      console.log('User ID from context:', user.id);
-      console.log('Do they match?', currentUser?.uid === user.id);
-
-      // DEBUG: Test direct Firestore write
-      const { db } = await import('@/lib/firebase/config');
-      const { collection, addDoc } = await import('firebase/firestore');
-      console.log('=== TESTING DIRECT WRITE ===');
-      try {
-        const testDoc = await addDoc(collection(db, 'quiz_attempts'), {
-          userId: user.id,
-          quizId: quiz.id,
-          skillId: quiz.skillId,
-          sportId: quiz.sportId,
-        });
-        console.log('✅ Direct write SUCCESS! Doc ID:', testDoc.id);
-      } catch (directError) {
-        console.error('❌ Direct write FAILED:', directError);
-      }
 
       // Calculate answers and score
       const quizAnswers: QuestionAnswer[] = quiz.questions.map(question => {
@@ -178,7 +154,11 @@ function QuizTakingPageContent() {
       const totalScore = quizAnswers.reduce((sum, answer) => sum + (answer.pointsEarned || 0), 0);
       const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
       const passed = percentage >= quiz.settings.passingScore;
-      const timeSpent = quiz.settings.timeLimit ? (quiz.settings.timeLimit * 60 - (timeRemaining || 0)) : 0;
+
+      // Calculate actual time spent in seconds
+      const timeSpent = quizStartTime
+        ? Math.floor((Date.now() - quizStartTime) / 1000)
+        : 0;
 
       // Save completion record (not an "attempt", just a completion/submission)
       const submissionResult = await quizService.saveQuizCompletion({

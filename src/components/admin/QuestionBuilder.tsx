@@ -127,6 +127,41 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     }
   };
 
+  const handleLearningVideoUpload = async (file: File) => {
+    try {
+      toast.info('Uploading learning video...', {
+        description: 'Please wait while we upload your video.',
+      });
+
+      const result = await storageService.uploadFile(file, { folder: 'learning-videos' });
+
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      setCurrentQuestion(prev => ({
+        ...prev,
+        learningVideoUrl: result.url,
+      }));
+
+      toast.success('Learning video uploaded successfully!', {
+        description: 'This video will be shown to students who answer incorrectly.',
+      });
+    } catch (error) {
+      console.error('Error uploading learning video:', error);
+      toast.error('Failed to upload learning video', {
+        description: error instanceof Error ? error.message : 'Please try again or check your file format.',
+      });
+    }
+  };
+
+  const handleRemoveLearningVideo = () => {
+    setCurrentQuestion(prev => ({
+      ...prev,
+      learningVideoUrl: undefined,
+    }));
+  };
+
   const handleRemoveMedia = (mediaId: string, targetPath: string) => {
     if (targetPath === 'question') {
       setCurrentQuestion(prev => ({
@@ -461,6 +496,10 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       questionData.explanation = currentQuestion.explanation.trim();
     }
 
+    if (currentQuestion.learningVideoUrl && currentQuestion.learningVideoUrl.trim()) {
+      questionData.learningVideoUrl = currentQuestion.learningVideoUrl.trim();
+    }
+
     if (currentQuestion.timeLimit && currentQuestion.timeLimit > 0) {
       questionData.timeLimit = currentQuestion.timeLimit;
     }
@@ -688,6 +727,67 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
                       placeholder="Explanation shown after answering"
                       rows={2}
                     />
+                  </div>
+
+                  <div>
+                    <Label>Learning Video (Optional)</Label>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Upload a video that will be shown ONLY to students who answer this question incorrectly.
+                    </p>
+                    <div className="mt-2">
+                      {currentQuestion.learningVideoUrl ? (
+                        <div className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Play size={20} className="text-blue-600" />
+                              <div>
+                                <p className="text-sm font-medium">Learning video uploaded</p>
+                                <a
+                                  href={currentQuestion.learningVideoUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline"
+                                >
+                                  View video
+                                </a>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleRemoveLearningVideo}
+                              className="text-red-600"
+                            >
+                              <X size={16} className="mr-1" />
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleLearningVideoUpload(file);
+                              }
+                            }}
+                            className="hidden"
+                            id="learning-video-upload"
+                          />
+                          <label htmlFor="learning-video-upload">
+                            <Button variant="outline" className="cursor-pointer" asChild>
+                              <span>
+                                <Upload size={16} className="mr-2" />
+                                Upload Learning Video
+                              </span>
+                            </Button>
+                          </label>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {currentQuestion.type === 'multiple_choice' && renderMultipleChoiceEditor()}

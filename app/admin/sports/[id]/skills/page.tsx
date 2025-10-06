@@ -45,7 +45,6 @@ interface SkillFormData {
   learningObjectives: string[];
   tags: string[];
   hasVideo: boolean;
-  hasQuiz: boolean;
   isActive: boolean;
   order: number;
   prerequisites: string[];
@@ -60,7 +59,6 @@ const defaultFormData: SkillFormData = {
   learningObjectives: [],
   tags: [],
   hasVideo: false,
-  hasQuiz: false,
   isActive: true,
   order: 0,
   prerequisites: [],
@@ -147,7 +145,6 @@ function AdminSkillsContent() {
       learningObjectives: skill.learningObjectives,
       tags: skill.tags,
       hasVideo: skill.hasVideo,
-      hasQuiz: skill.hasQuiz,
       isActive: skill.isActive,
       order: skill.order,
       prerequisites: skill.prerequisites,
@@ -535,22 +532,19 @@ function AdminSkillsContent() {
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={formData.hasQuiz}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hasQuiz: e.target.checked }))}
-                  className="rounded"
-                />
-                <span>Has Quiz</span>
-              </label>
-
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
                   className="rounded"
                 />
                 <span>Active</span>
               </label>
+            </div>
+
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-900">
+                <strong>Note:</strong> Quizzes are managed separately through the Quiz Management section.
+                Students will see quiz options automatically when quizzes are created for this skill.
+              </p>
             </div>
 
             <div className="flex gap-2">
@@ -628,12 +622,6 @@ function AdminSkillsContent() {
                           <div className="flex items-center gap-1">
                             <Play className="w-4 h-4" />
                             <span>Video</span>
-                          </div>
-                        )}
-                        {skill.hasQuiz && (
-                          <div className="flex items-center gap-1">
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Quiz</span>
                           </div>
                         )}
                       </div>

@@ -483,12 +483,6 @@ export default function SportDetailPage() {
                             <span className="text-xs">Video</span>
                           </div>
                         )}
-                        {skill.hasQuiz && (
-                          <div className="flex items-center gap-1">
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-xs">Quiz</span>
-                          </div>
-                        )}
                       </div>
                     </div>
 

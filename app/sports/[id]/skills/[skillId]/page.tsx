@@ -28,6 +28,8 @@ interface SkillDetailState {
   prerequisites: Skill[];
   loading: boolean;
   error: string | null;
+  hasQuizzes: boolean;
+  quizzesLoading: boolean;
 }
 
 export default function SkillDetailPage() {
@@ -42,6 +44,8 @@ export default function SkillDetailPage() {
     prerequisites: [],
     loading: true,
     error: null,
+    hasQuizzes: false,
+    quizzesLoading: true,
   });
 
   const [activeTab, setActiveTab] = useState<'content' | 'objectives' | 'resources'>('content');
@@ -94,11 +98,49 @@ export default function SkillDetailPage() {
           prerequisites,
           loading: false,
         }));
+
+        // Check if quizzes exist for this skill
+        checkForQuizzes(skillId);
       } catch (error) {
         setState(prev => ({
           ...prev,
           error: 'An unexpected error occurred',
           loading: false,
+        }));
+      }
+    };
+
+    const checkForQuizzes = async (skillId: string) => {
+      try {
+        setState(prev => ({ ...prev, quizzesLoading: true }));
+        console.log('🔍 Checking for quizzes for skillId:', skillId);
+        const quizzesResult = await quizService.getQuizzesBySkill(skillId);
+        console.log('📊 Quiz query result:', quizzesResult);
+
+        const hasQuizzes = quizzesResult.success && quizzesResult.data.items.length > 0;
+
+        if (hasQuizzes) {
+          console.log('✅ Found quizzes:', quizzesResult.data.items.map(q => ({
+            id: q.id,
+            title: q.title,
+            isActive: q.isActive,
+            isPublished: q.isPublished
+          })));
+        } else {
+          console.log('❌ No active quizzes found. Check if quiz is marked as active and published.');
+        }
+
+        setState(prev => ({
+          ...prev,
+          hasQuizzes,
+          quizzesLoading: false,
+        }));
+      } catch (error) {
+        console.error('Error checking for quizzes:', error);
+        setState(prev => ({
+          ...prev,
+          hasQuizzes: false,
+          quizzesLoading: false,
         }));
       }
     };
@@ -268,9 +310,9 @@ export default function SkillDetailPage() {
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
                 {skill.hasVideo && <Play className="w-5 h-5 text-green-600" />}
-                {skill.hasQuiz && <CheckCircle className="w-5 h-5 text-blue-600" />}
+                {state.hasQuizzes && <CheckCircle className="w-5 h-5 text-blue-600" />}
                 <span className="text-xl font-semibold">
-                  {[skill.hasVideo && 'Video', skill.hasQuiz && 'Quiz'].filter(Boolean).join(' + ') || 'Text'}
+                  {[skill.hasVideo && 'Video', state.hasQuizzes && 'Quiz'].filter(Boolean).join(' + ') || 'Text'}
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">Content Type</p>
@@ -416,8 +458,17 @@ export default function SkillDetailPage() {
                 </Card>
               )}
 
-              {/* Quiz Section */}
-              {skill.hasQuiz && (
+              {/* Quiz Section - Dynamically shown if quizzes exist */}
+              {state.quizzesLoading ? (
+                <Card className="bg-gray-50 border-gray-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <p className="text-sm text-gray-600">Checking for quizzes...</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : state.hasQuizzes ? (
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
@@ -436,7 +487,7 @@ export default function SkillDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              ) : null}
             </div>
           )}
 

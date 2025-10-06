@@ -96,6 +96,10 @@ export const baseQuestionSchema = z.object({
     .string()
     .max(500, 'Explanation must be less than 500 characters')
     .optional(),
+  learningVideoUrl: z
+    .string()
+    .url('Invalid learning video URL')
+    .optional(),
   tags: z.array(z.string().max(30)).max(10, 'Cannot exceed 10 tags').default([]),
   media: z.array(questionMediaSchema).max(5, 'Cannot exceed 5 media files').default([]),
   order: z.number().min(0),

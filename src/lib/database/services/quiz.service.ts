@@ -246,6 +246,7 @@ export class QuizService extends BaseDatabaseService {
       where: [
         { field: 'skillId', operator: '==', value: skillId },
         { field: 'isActive', operator: '==', value: true },
+        { field: 'isPublished', operator: '==', value: true },
       ],
       orderBy: [{ field: 'difficulty', direction: 'asc' }],
       ...options,
@@ -804,11 +805,8 @@ export class QuizService extends BaseDatabaseService {
         submittedAt: serverTimestamp(),
       });
 
-      // Update quiz metadata
-      await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalAttempts');
-      if (data.passed) {
-        await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalCompletions');
-      }
+      // NOTE: Quiz metadata updates removed because students don't have permission to update quizzes
+      // In the future, these stats should be computed on-demand or via Cloud Functions
 
       logger.info('Quiz completion saved successfully', 'QuizService', {
         completionId: docRef.id,

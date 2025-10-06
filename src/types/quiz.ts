@@ -26,6 +26,7 @@ export interface BaseQuestion {
   points: number;
   difficulty: DifficultyLevel;
   explanation?: string;
+  learningVideoUrl?: string; // Video shown to students who answer incorrectly
   timeLimit?: number; // In seconds, optional per-question time limit
   order: number;
   tags?: string[];

@@ -244,15 +244,6 @@ export default function SportsPage() {
                     />
                     <span className="text-sm">Has Video Content</span>
                   </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={state.filters.hasQuiz || false}
-                      onChange={(e) => handleFilterChange({ hasQuiz: e.target.checked })}
-                      className="rounded"
-                    />
-                    <span className="text-sm">Has Quizzes</span>
-                  </label>
                 </div>
               </div>
             </div>

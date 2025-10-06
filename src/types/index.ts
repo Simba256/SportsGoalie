@@ -97,7 +97,7 @@ export interface Skill {
   learningObjectives: string[];
   tags: string[];
   hasVideo: boolean;
-  hasQuiz: boolean;
+  hasQuiz: boolean; // @deprecated - Quiz availability is now determined dynamically by querying the database
   isActive: boolean;
   order: number;
   metadata: SkillMetadata;
