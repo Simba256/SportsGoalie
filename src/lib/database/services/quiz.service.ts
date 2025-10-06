@@ -522,12 +522,31 @@ export class QuizService extends BaseDatabaseService {
       ? questionsResult.data.items.reduce((sum, q) => sum + q.points, 0)
       : 0;
 
-    // Create with ONLY required fields first to avoid permission issues
-    const attemptData = {
+    logger.info('Creating quiz attempt with data', 'QuizService', {
       userId,
       quizId,
       skillId,
       sportId,
+      attemptNumber: eligibilityResult.data.attemptNumber,
+      totalPoints,
+      passingScore,
+    });
+
+    // Create with minimal data first - Firestore rules only require these 4 fields
+    const result = await this.create<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, {
+      userId,
+      quizId,
+      skillId,
+      sportId,
+    });
+
+    if (!result.success) {
+      logger.error('Failed to create minimal quiz attempt', 'QuizService', result.error);
+      return result;
+    }
+
+    // Now update with full data after creation succeeds
+    const updateResult = await this.update<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, result.data!.id, {
       answers: [],
       score: 0,
       maxScore: totalPoints,
@@ -541,50 +560,31 @@ export class QuizService extends BaseDatabaseService {
       status: 'in-progress' as const,
       passingScore,
       startedAt: TimestampPatterns.forDatabase(),
-    };
-
-    logger.info('Creating quiz attempt with data', 'QuizService', {
-      userId,
-      quizId,
-      skillId,
-      sportId,
-      attemptNumber: eligibilityResult.data.attemptNumber,
-      totalPoints,
-      passingScore,
     });
 
-    const result = await this.create<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptData);
-
-    if (!result.success) {
-      logger.error('Failed to create quiz attempt', 'QuizService', {
-        error: result.error,
-        attemptData: { userId, quizId, skillId, sportId }
-      });
+    if (!updateResult.success) {
+      logger.error('Failed to update quiz attempt with full data', 'QuizService', updateResult.error);
+      // Attempt was created but update failed - still return the attempt ID
     }
 
-    if (result.success) {
-      // Update quiz metadata
-      await this.incrementField(this.QUIZZES_COLLECTION, quizId, 'metadata.totalAttempts');
+    // Update quiz metadata
+    await this.incrementField(this.QUIZZES_COLLECTION, quizId, 'metadata.totalAttempts');
 
-      logger.info('Quiz attempt started successfully', 'QuizService', {
-        attemptId: result.data!.id,
-        userId,
-        quizId,
-        attemptNumber: attemptData.attemptNumber
-      });
+    logger.info('Quiz attempt started successfully', 'QuizService', {
+      attemptId: result.data!.id,
+      userId,
+      quizId,
+      attemptNumber: eligibilityResult.data.attemptNumber
+    });
 
-      return {
-        success: true,
-        data: {
-          id: result.data!.id,
-          attemptNumber: attemptData.attemptNumber,
-        },
-        timestamp: new Date(),
-      };
-    }
-
-    logger.error('Quiz attempt creation failed', 'QuizService', result.error);
-    return result;
+    return {
+      success: true,
+      data: {
+        id: result.data!.id,
+        attemptNumber: eligibilityResult.data.attemptNumber,
+      },
+      timestamp: new Date(),
+    };
   }
 
   async submitQuizAnswer(
