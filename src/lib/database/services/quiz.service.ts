@@ -492,34 +492,21 @@ export class QuizService extends BaseDatabaseService {
     logger.info('Starting quiz attempt', 'QuizService', { userId, quizId, skillId, sportId });
 
     // Check if user is eligible to take quiz
-    let eligibilityResult;
-    try {
-      eligibilityResult = await this.checkQuizEligibility(userId, quizId);
-    } catch (error) {
-      logger.error('Error checking quiz eligibility', 'QuizService', { error, userId, quizId });
-      // If eligibility check fails, assume user is eligible for first attempt
-      eligibilityResult = {
-        success: true,
-        data: {
-          eligible: true,
-          attemptNumber: 1,
-          attemptsRemaining: -1,
-        },
-        timestamp: new Date(),
-      };
-    }
+    const eligibilityResult = await this.checkQuizEligibility(userId, quizId);
 
     if (!eligibilityResult.success || !eligibilityResult.data?.eligible) {
       logger.warn('Quiz attempt not eligible', 'QuizService', {
         userId,
         quizId,
-        reason: eligibilityResult.data?.reason
+        reason: eligibilityResult.data?.reason || 'Eligibility check failed',
+        attemptNumber: eligibilityResult.data?.attemptNumber,
+        attemptsRemaining: eligibilityResult.data?.attemptsRemaining,
       });
       return {
         success: false,
         error: {
           code: 'QUIZ_NOT_ELIGIBLE',
-          message: eligibilityResult.data?.reason || 'Not eligible to take this quiz',
+          message: eligibilityResult.data?.reason || 'Not eligible to take this quiz. You may have exceeded maximum attempts or have an incomplete attempt.',
         },
         timestamp: new Date(),
       };
