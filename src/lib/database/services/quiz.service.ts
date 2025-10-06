@@ -509,6 +509,10 @@ export class QuizService extends BaseDatabaseService {
       };
     }
 
+    // Get quiz to get passing score
+    const quizResult = await this.getQuiz(quizId);
+    const passingScore = quizResult.success && quizResult.data ? quizResult.data.settings.passingScore : 70;
+
     const attemptData: Omit<QuizAttempt, 'id' | 'createdAt' | 'updatedAt'> = {
       userId,
       quizId,
@@ -518,17 +522,23 @@ export class QuizService extends BaseDatabaseService {
       score: 0,
       maxScore: 0,
       percentage: 0,
+      pointsEarned: 0,
+      totalPoints: 0,
       passed: false,
       timeSpent: 0,
       attemptNumber: eligibilityResult.data.attemptNumber,
       isCompleted: false,
+      status: 'in-progress',
+      passingScore,
       startedAt: TimestampPatterns.forDatabase(),
     };
 
     // Get quiz questions to calculate max score
     const questionsResult = await this.getQuizQuestions(quizId, { includeAnswers: true });
     if (questionsResult.success && questionsResult.data) {
-      attemptData.maxScore = questionsResult.data.items.reduce((sum, q) => sum + q.points, 0);
+      const totalPoints = questionsResult.data.items.reduce((sum, q) => sum + q.points, 0);
+      attemptData.maxScore = totalPoints;
+      attemptData.totalPoints = totalPoints;
     }
 
     const result = await this.create<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptData);
