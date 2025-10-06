@@ -492,7 +492,23 @@ export class QuizService extends BaseDatabaseService {
     logger.info('Starting quiz attempt', 'QuizService', { userId, quizId, skillId, sportId });
 
     // Check if user is eligible to take quiz
-    const eligibilityResult = await this.checkQuizEligibility(userId, quizId);
+    let eligibilityResult;
+    try {
+      eligibilityResult = await this.checkQuizEligibility(userId, quizId);
+    } catch (error) {
+      logger.error('Error checking quiz eligibility', 'QuizService', { error, userId, quizId });
+      // If eligibility check fails, assume user is eligible for first attempt
+      eligibilityResult = {
+        success: true,
+        data: {
+          eligible: true,
+          attemptNumber: 1,
+          attemptsRemaining: -1,
+        },
+        timestamp: new Date(),
+      };
+    }
+
     if (!eligibilityResult.success || !eligibilityResult.data?.eligible) {
       logger.warn('Quiz attempt not eligible', 'QuizService', {
         userId,
@@ -540,7 +556,24 @@ export class QuizService extends BaseDatabaseService {
       startedAt: TimestampPatterns.forDatabase(),
     };
 
+    logger.info('Creating quiz attempt with data', 'QuizService', {
+      userId,
+      quizId,
+      skillId,
+      sportId,
+      attemptNumber: eligibilityResult.data.attemptNumber,
+      totalPoints,
+      passingScore,
+    });
+
     const result = await this.create<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptData);
+
+    if (!result.success) {
+      logger.error('Failed to create quiz attempt', 'QuizService', {
+        error: result.error,
+        attemptData: { userId, quizId, skillId, sportId }
+      });
+    }
 
     if (result.success) {
       // Update quiz metadata
