@@ -44,7 +44,6 @@ function QuizTakingPageContent() {
   const quizId = params.id as string;
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [attempt, setAttempt] = useState<QuizAttempt | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [questionId: string]: string | boolean | string[] }>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
