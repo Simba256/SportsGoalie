@@ -121,9 +121,18 @@ function QuizTakingPageContent() {
   };
 
   const startQuiz = async () => {
-    if (!quiz || !user) return;
+    if (!quiz || !user) {
+      toast.error('Authentication required', {
+        description: 'Please sign in to take this quiz.',
+      });
+      return;
+    }
 
     try {
+      // Log for debugging
+      console.log('Current user:', { id: user.id, email: user.email });
+      console.log('Quiz data:', { id: quiz.id, skillId: quiz.skillId, sportId: quiz.sportId });
+
       // Use quiz service to start attempt with proper skill/sport IDs
       const attemptResult = await quizService.startQuizAttempt(
         user.id,

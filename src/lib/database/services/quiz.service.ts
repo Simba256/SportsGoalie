@@ -509,37 +509,36 @@ export class QuizService extends BaseDatabaseService {
       };
     }
 
-    // Get quiz to get passing score
+    // Get quiz to get passing score and calculate max score
     const quizResult = await this.getQuiz(quizId);
     const passingScore = quizResult.success && quizResult.data ? quizResult.data.settings.passingScore : 70;
 
-    const attemptData: Omit<QuizAttempt, 'id' | 'createdAt' | 'updatedAt'> = {
+    // Get quiz questions to calculate max score
+    const questionsResult = await this.getQuizQuestions(quizId, { includeAnswers: true });
+    const totalPoints = questionsResult.success && questionsResult.data
+      ? questionsResult.data.items.reduce((sum, q) => sum + q.points, 0)
+      : 0;
+
+    // Create with ONLY required fields first to avoid permission issues
+    const attemptData = {
       userId,
       quizId,
       skillId,
       sportId,
       answers: [],
       score: 0,
-      maxScore: 0,
+      maxScore: totalPoints,
       percentage: 0,
       pointsEarned: 0,
-      totalPoints: 0,
+      totalPoints: totalPoints,
       passed: false,
       timeSpent: 0,
       attemptNumber: eligibilityResult.data.attemptNumber,
       isCompleted: false,
-      status: 'in-progress',
+      status: 'in-progress' as const,
       passingScore,
       startedAt: TimestampPatterns.forDatabase(),
     };
-
-    // Get quiz questions to calculate max score
-    const questionsResult = await this.getQuizQuestions(quizId, { includeAnswers: true });
-    if (questionsResult.success && questionsResult.data) {
-      const totalPoints = questionsResult.data.items.reduce((sum, q) => sum + q.points, 0);
-      attemptData.maxScore = totalPoints;
-      attemptData.totalPoints = totalPoints;
-    }
 
     const result = await this.create<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, attemptData);
 
