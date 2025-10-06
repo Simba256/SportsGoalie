@@ -52,8 +52,6 @@ function QuizTakingPageContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
-  const [incompleteAttempt, setIncompleteAttempt] = useState<QuizAttempt | null>(null);
-  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
 
   useEffect(() => {
     if (quizId) {
@@ -96,20 +94,6 @@ function QuizTakingPageContent() {
       if (quizData.estimatedTimeToComplete) {
         setTimeRemaining(quizData.estimatedTimeToComplete * 60);
       }
-
-      // Check for incomplete attempts
-      if (user) {
-        const attemptsResult = await quizService.getUserQuizAttempts(user.id, {
-          quizId,
-          completed: false,
-        });
-
-        if (attemptsResult.success && attemptsResult.data.items.length > 0) {
-          const incomplete = attemptsResult.data.items[0];
-          setIncompleteAttempt(incomplete);
-          setShowIncompleteDialog(true);
-        }
-      }
     } catch (error) {
       console.error('Error loading quiz:', error);
       toast.error('Failed to load quiz', {
@@ -128,91 +112,12 @@ function QuizTakingPageContent() {
       return;
     }
 
-    try {
-      // Log for debugging
-      console.log('Current user:', { id: user.id, email: user.email });
-      console.log('Quiz data:', { id: quiz.id, skillId: quiz.skillId, sportId: quiz.sportId });
-
-      // ONLY check eligibility first - don't create attempt yet
-      const eligibilityResult = await quizService.checkQuizEligibility(user.id, quiz.id);
-
-      if (!eligibilityResult.success || !eligibilityResult.data?.eligible) {
-        throw new Error(eligibilityResult.data?.reason || 'You are not eligible to take this quiz at this time.');
-      }
-
-      // Create the attempt - questions won't show until attempt is set
-      const attemptResult = await quizService.startQuizAttempt(
-        user.id,
-        quiz.id,
-        quiz.skillId,
-        quiz.sportId
-      );
-
-      if (!attemptResult.success || !attemptResult.data) {
-        throw new Error(attemptResult.error?.message || 'Failed to start quiz attempt');
-      }
-
-      // Get the created attempt data
-      const createdAttemptResult = await quizService.getQuizAttempt(attemptResult.data.id);
-
-      if (createdAttemptResult.success && createdAttemptResult.data) {
-        setAttempt(createdAttemptResult.data);
-        setShowInstructions(false);
-        setIsTimerActive(true);
-      } else {
-        throw new Error('Failed to retrieve quiz attempt data');
-      }
-    } catch (error) {
-      console.error('Error starting quiz:', error);
-      toast.error('Failed to start quiz', {
-        description: error instanceof Error ? error.message : 'Please try again or contact support if the problem persists.',
-      });
-    }
-  };
-
-  const handleAbandonIncomplete = async () => {
-    if (!incompleteAttempt) return;
-
-    try {
-      // Mark the incomplete attempt as abandoned by updating its status
-      await quizService.updateQuizAttempt(incompleteAttempt.id, {
-        status: 'abandoned',
-        isCompleted: true,
-      });
-
-      setIncompleteAttempt(null);
-      setShowIncompleteDialog(false);
-      toast.success('Previous attempt abandoned', {
-        description: 'You can now start a fresh quiz attempt.',
-      });
-    } catch (error) {
-      console.error('Error abandoning attempt:', error);
-      toast.error('Failed to abandon previous attempt', {
-        description: 'Please try again.',
-      });
-    }
-  };
-
-  const handleResumeIncomplete = () => {
-    if (!incompleteAttempt) return;
-
-    // Resume the incomplete attempt
-    setAttempt(incompleteAttempt);
-    setShowIncompleteDialog(false);
+    // Simply start the quiz - no database writes needed until submission
     setShowInstructions(false);
     setIsTimerActive(true);
 
-    // Restore previous answers if any
-    if (incompleteAttempt.answers && incompleteAttempt.answers.length > 0) {
-      const restoredAnswers: { [questionId: string]: string | boolean | string[] } = {};
-      incompleteAttempt.answers.forEach(ans => {
-        restoredAnswers[ans.questionId] = ans.answer;
-      });
-      setAnswers(restoredAnswers);
-    }
-
-    toast.info('Resuming previous attempt', {
-      description: 'Your previous answers have been restored.',
+    toast.success('Quiz started!', {
+      description: 'Answer all questions and submit when ready.',
     });
   };
 
@@ -224,11 +129,12 @@ function QuizTakingPageContent() {
   };
 
   const handleSubmitQuiz = async () => {
-    if (!quiz || !attempt || !user) return;
+    if (!quiz || !user) return;
 
     try {
       setSubmitting(true);
 
+      // Calculate answers and score
       const quizAnswers: QuestionAnswer[] = quiz.questions.map(question => {
         const userAnswer = answers[question.id];
         const isCorrect = checkAnswer(question, userAnswer);
@@ -240,32 +146,35 @@ function QuizTakingPageContent() {
           isCorrect,
           pointsEarned: isCorrect ? question.points : 0,
           timeSpent: 0,
-          attempts: 1,
         };
       });
 
-      const totalScore = quizAnswers.reduce((sum, answer) => sum + answer.pointsEarned, 0);
-      const percentage = (totalScore / quiz.metadata.totalPoints) * 100;
+      const maxScore = quiz.questions.reduce((sum, q) => sum + q.points, 0);
+      const totalScore = quizAnswers.reduce((sum, answer) => sum + (answer.pointsEarned || 0), 0);
+      const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
       const passed = percentage >= quiz.settings.passingScore;
+      const timeSpent = quiz.settings.timeLimit ? (quiz.settings.timeLimit * 60 - (timeRemaining || 0)) : 0;
 
-      const updatedAttempt: Partial<QuizAttempt> = {
-        submittedAt: Timestamp.fromDate(new Date()),
-        score: percentage,
-        pointsEarned: totalScore,
-        passed,
+      // Save completion record (not an "attempt", just a completion/submission)
+      const submissionResult = await quizService.saveQuizCompletion({
+        userId: user.id,
+        quizId: quiz.id,
+        skillId: quiz.skillId,
+        sportId: quiz.sportId,
         answers: quizAnswers,
-        status: 'submitted',
-        timeSpent: quiz.settings.timeLimit ? (quiz.settings.timeLimit * 60 - (timeRemaining || 0)) : 0,
-      };
+        score: totalScore,
+        maxScore,
+        percentage,
+        passed,
+        timeSpent,
+      });
 
-      // Complete the quiz attempt using quiz service
-      const completeResult = await quizService.completeQuizAttempt(attempt.id, updatedAttempt.timeSpent || 0);
-
-      if (!completeResult.success) {
-        throw new Error(completeResult.error?.message || 'Failed to complete quiz');
+      if (!submissionResult.success || !submissionResult.data) {
+        throw new Error(submissionResult.error?.message || 'Failed to submit quiz');
       }
 
-      router.push(`/quiz/${quizId}/results/${attempt.id}`);
+      // Redirect to results page
+      router.push(`/quiz/${quizId}/results/${submissionResult.data.id}`);
     } catch (error) {
       console.error('Error submitting quiz:', error);
       toast.error('Failed to submit quiz', {
@@ -544,30 +453,10 @@ function QuizTakingPageContent() {
     );
   }
 
-  // Show instructions if we haven't started OR if we're still creating the attempt
-  if (showInstructions || !attempt) {
+  // Show instructions until user clicks Start Quiz
+  if (showInstructions) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Incomplete Attempt Dialog */}
-        <Dialog open={showIncompleteDialog} onOpenChange={setShowIncompleteDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Incomplete Quiz Attempt Found</DialogTitle>
-              <DialogDescription>
-                You have an incomplete attempt for this quiz. Would you like to resume where you left off or start fresh?
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-3 mt-4">
-              <Button onClick={handleResumeIncomplete} variant="default">
-                Resume Previous Attempt
-              </Button>
-              <Button onClick={handleAbandonIncomplete} variant="outline">
-                Abandon & Start Fresh
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">{quiz.title}</CardTitle>
@@ -601,9 +490,6 @@ function QuizTakingPageContent() {
                   <span className="font-medium">Time Limit:</span> {quiz.settings.timeLimit} minutes
                 </div>
               )}
-              <div>
-                <span className="font-medium">Attempts Allowed:</span> {quiz.settings.maxAttempts}
-              </div>
             </div>
 
             <div className="flex justify-center">

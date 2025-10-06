@@ -756,6 +756,59 @@ export class QuizService extends BaseDatabaseService {
   }
 
   /**
+   * Save a quiz completion/submission record
+   * This is a simplified version that just saves the final results
+   * No attempt tracking, no eligibility checks - just store the completion
+   */
+  async saveQuizCompletion(data: {
+    userId: string;
+    quizId: string;
+    skillId: string;
+    sportId: string;
+    answers: any[];
+    score: number;
+    maxScore: number;
+    percentage: number;
+    passed: boolean;
+    timeSpent: number;
+  }): Promise<ApiResponse<{ id: string }>> {
+    logger.info('Saving quiz completion', 'QuizService', {
+      userId: data.userId,
+      quizId: data.quizId,
+      score: data.score,
+      passed: data.passed,
+    });
+
+    const completionData = {
+      ...data,
+      isCompleted: true,
+      status: 'submitted' as const,
+      startedAt: TimestampPatterns.forDatabase(),
+      submittedAt: TimestampPatterns.forDatabase(),
+    };
+
+    const result = await this.create<any>(this.QUIZ_ATTEMPTS_COLLECTION, completionData);
+
+    if (result.success) {
+      // Update quiz metadata
+      await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalAttempts');
+      if (data.passed) {
+        await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalCompletions');
+      }
+
+      logger.info('Quiz completion saved successfully', 'QuizService', {
+        completionId: result.data?.id,
+        userId: data.userId,
+        quizId: data.quizId,
+      });
+    } else {
+      logger.error('Failed to save quiz completion', 'QuizService', result.error);
+    }
+
+    return result;
+  }
+
+  /**
    * Gets all quiz attempts for a specific quiz (used for statistics).
    * This is used by frontend pages that need quiz attempt data.
    */

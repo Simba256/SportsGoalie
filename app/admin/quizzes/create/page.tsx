@@ -56,7 +56,6 @@ function CreateQuizContent() {
       allowReview: true,
       allowBacktrack: true,
       passingScore: 70,
-      maxAttempts: 3,
       showCorrectAnswers: true,
       showExplanations: true,
       showScoreImmediately: true,
@@ -415,17 +414,6 @@ function CreateQuizContent() {
                       value={quizData.settings?.timeLimit || ''}
                       onChange={(e) => handleSettingsChange('timeLimit', e.target.value ? parseInt(e.target.value) : undefined)}
                       placeholder="No time limit"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="maxAttempts">Maximum Attempts</Label>
-                    <Input
-                      id="maxAttempts"
-                      type="number"
-                      min="1"
-                      value={quizData.settings?.maxAttempts}
-                      onChange={(e) => handleSettingsChange('maxAttempts', parseInt(e.target.value))}
                     />
                   </div>
 
