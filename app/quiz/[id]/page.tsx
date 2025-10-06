@@ -133,7 +133,17 @@ function QuizTakingPageContent() {
       console.log('Current user:', { id: user.id, email: user.email });
       console.log('Quiz data:', { id: quiz.id, skillId: quiz.skillId, sportId: quiz.sportId });
 
-      // Use quiz service to start attempt with proper skill/sport IDs
+      // ONLY check eligibility first - don't create attempt yet
+      const eligibilityResult = await quizService.checkQuizEligibility(user.id, quiz.id);
+
+      if (!eligibilityResult.success || !eligibilityResult.data?.eligible) {
+        throw new Error(eligibilityResult.data?.reason || 'You are not eligible to take this quiz at this time.');
+      }
+
+      // Show the quiz UI first
+      setShowInstructions(false);
+
+      // NOW create the attempt after quiz UI is visible
       const attemptResult = await quizService.startQuizAttempt(
         user.id,
         quiz.id,
@@ -142,6 +152,8 @@ function QuizTakingPageContent() {
       );
 
       if (!attemptResult.success || !attemptResult.data) {
+        // If creation fails, go back to instructions
+        setShowInstructions(true);
         throw new Error(attemptResult.error?.message || 'Failed to start quiz attempt');
       }
 
@@ -150,15 +162,15 @@ function QuizTakingPageContent() {
 
       if (createdAttemptResult.success && createdAttemptResult.data) {
         setAttempt(createdAttemptResult.data);
-        setShowInstructions(false);
         setIsTimerActive(true);
       } else {
+        setShowInstructions(true);
         throw new Error('Failed to retrieve quiz attempt data');
       }
     } catch (error) {
       console.error('Error starting quiz:', error);
       toast.error('Failed to start quiz', {
-        description: 'Please try again or contact support if the problem persists.',
+        description: error instanceof Error ? error.message : 'Please try again or contact support if the problem persists.',
       });
     }
   };
