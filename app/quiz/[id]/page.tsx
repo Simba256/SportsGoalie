@@ -133,6 +133,32 @@ function QuizTakingPageContent() {
     try {
       setSubmitting(true);
 
+      // DEBUG: Check auth state
+      const { auth } = await import('@/lib/firebase/config');
+      const currentUser = auth.currentUser;
+      console.log('=== AUTH DEBUG ===');
+      console.log('Auth currentUser:', currentUser);
+      console.log('Auth UID:', currentUser?.uid);
+      console.log('User from context:', user);
+      console.log('User ID from context:', user.id);
+      console.log('Do they match?', currentUser?.uid === user.id);
+
+      // DEBUG: Test direct Firestore write
+      const { db } = await import('@/lib/firebase/config');
+      const { collection, addDoc } = await import('firebase/firestore');
+      console.log('=== TESTING DIRECT WRITE ===');
+      try {
+        const testDoc = await addDoc(collection(db, 'quiz_attempts'), {
+          userId: user.id,
+          quizId: quiz.id,
+          skillId: quiz.skillId,
+          sportId: quiz.sportId,
+        });
+        console.log('✅ Direct write SUCCESS! Doc ID:', testDoc.id);
+      } catch (directError) {
+        console.error('❌ Direct write FAILED:', directError);
+      }
+
       // Calculate answers and score
       const quizAnswers: QuestionAnswer[] = quiz.questions.map(question => {
         const userAnswer = answers[question.id];

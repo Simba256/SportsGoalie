@@ -779,51 +779,59 @@ export class QuizService extends BaseDatabaseService {
       passed: data.passed,
     });
 
-    // Create with ONLY required fields first (Firestore rules requirement)
-    const result = await this.create<any>(this.QUIZ_ATTEMPTS_COLLECTION, {
-      userId: data.userId,
-      quizId: data.quizId,
-      skillId: data.skillId,
-      sportId: data.sportId,
-    });
+    try {
+      // BYPASS base service - use direct Firestore write since we know it works
+      const { collection: firestoreCollection, addDoc, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('../firebase/config');
 
-    if (!result.success) {
-      logger.error('Failed to create quiz completion record', 'QuizService', result.error);
-      return result;
+      // Create document with all data at once
+      const docRef = await addDoc(firestoreCollection(db, this.QUIZ_ATTEMPTS_COLLECTION), {
+        userId: data.userId,
+        quizId: data.quizId,
+        skillId: data.skillId,
+        sportId: data.sportId,
+        answers: data.answers,
+        score: data.score,
+        maxScore: data.maxScore,
+        percentage: data.percentage,
+        passed: data.passed,
+        timeSpent: data.timeSpent,
+        isCompleted: true,
+        status: 'submitted',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        startedAt: serverTimestamp(),
+        submittedAt: serverTimestamp(),
+      });
+
+      // Update quiz metadata
+      await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalAttempts');
+      if (data.passed) {
+        await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalCompletions');
+      }
+
+      logger.info('Quiz completion saved successfully', 'QuizService', {
+        completionId: docRef.id,
+        userId: data.userId,
+        quizId: data.quizId,
+      });
+
+      return {
+        success: true,
+        data: { id: docRef.id },
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to save quiz completion', 'QuizService', { error });
+      return {
+        success: false,
+        error: {
+          code: 'SAVE_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to save completion',
+        },
+        timestamp: new Date(),
+      };
     }
-
-    // Now update with all the completion data
-    const updateResult = await this.update<any>(this.QUIZ_ATTEMPTS_COLLECTION, result.data!.id, {
-      answers: data.answers,
-      score: data.score,
-      maxScore: data.maxScore,
-      percentage: data.percentage,
-      passed: data.passed,
-      timeSpent: data.timeSpent,
-      isCompleted: true,
-      status: 'submitted' as const,
-      startedAt: TimestampPatterns.forDatabase(),
-      submittedAt: TimestampPatterns.forDatabase(),
-    });
-
-    if (!updateResult.success) {
-      logger.error('Failed to update quiz completion with full data', 'QuizService', updateResult.error);
-      // Still return success since the record was created
-    }
-
-    // Update quiz metadata
-    await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalAttempts');
-    if (data.passed) {
-      await this.incrementField(this.QUIZZES_COLLECTION, data.quizId, 'metadata.totalCompletions');
-    }
-
-    logger.info('Quiz completion saved successfully', 'QuizService', {
-      completionId: result.data?.id,
-      userId: data.userId,
-      quizId: data.quizId,
-    });
-
-    return result;
   }
 
   /**
