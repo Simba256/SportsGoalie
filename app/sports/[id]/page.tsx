@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Sport, Skill, DifficultyLevel } from '@/types';
+import { Sport, Skill, DifficultyLevel, QuizAttempt } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { quizService } from '@/lib/database/services/quiz.service';
 import { useSportEnrollment } from '@/src/hooks/useEnrollment';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,13 @@ interface SportDetailState {
   error: string | null;
 }
 
+interface SkillProgress {
+  [skillId: string]: {
+    percentage: number;
+    passed: boolean;
+  } | null;
+}
+
 export default function SportDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -54,6 +62,7 @@ export default function SportDetailPage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'all'>('all');
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [skillProgress, setSkillProgress] = useState<SkillProgress>({});
 
   // Use enrollment hook for the sport
   const {
@@ -117,6 +126,46 @@ export default function SportDetailPage() {
 
     loadSportData();
   }, [sportId]);
+
+  // Load quiz progress for each skill
+  useEffect(() => {
+    if (!user || !state.skills.length) return;
+
+    const loadSkillProgress = async () => {
+      const progressMap: SkillProgress = {};
+
+      // Load quiz attempts for all skills in parallel
+      await Promise.all(
+        state.skills.map(async (skill) => {
+          try {
+            // Get the latest quiz attempt for this skill
+            const attemptsResult = await quizService.getUserQuizAttempts(user.id, {
+              skillId: skill.id,
+              completed: true,
+              limit: 1,
+            });
+
+            if (attemptsResult.success && attemptsResult.data?.items.length > 0) {
+              const latestAttempt = attemptsResult.data.items[0];
+              progressMap[skill.id] = {
+                percentage: latestAttempt.percentage,
+                passed: latestAttempt.passed,
+              };
+            } else {
+              progressMap[skill.id] = null;
+            }
+          } catch (error) {
+            console.error(`Failed to load progress for skill ${skill.id}:`, error);
+            progressMap[skill.id] = null;
+          }
+        })
+      );
+
+      setSkillProgress(progressMap);
+    };
+
+    loadSkillProgress();
+  }, [user, state.skills]);
 
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
@@ -509,6 +558,45 @@ export default function SportDetailPage() {
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span>Prerequisites:</span>
                         <span>{skill.prerequisites.length} skill{skill.prerequisites.length !== 1 ? 's' : ''}</span>
+                      </div>
+                    )}
+
+                    {/* Progress Bar - Latest Quiz Score */}
+                    {user && skillProgress[skill.id] && (
+                      <div className="space-y-2 pt-3 border-t border-border/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted-foreground">Latest Score</span>
+                          <div className="flex items-center space-x-1">
+                            <span className={`text-lg font-bold ${
+                              skillProgress[skill.id]!.passed
+                                ? 'text-green-600'
+                                : 'text-amber-600'
+                            }`}>
+                              {Math.round(skillProgress[skill.id]!.percentage)}%
+                            </span>
+                            {skillProgress[skill.id]!.passed && (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ease-out ${
+                              skillProgress[skill.id]!.passed
+                                ? 'bg-green-500'
+                                : 'bg-amber-500'
+                            }`}
+                            style={{ width: `${skillProgress[skill.id]!.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {user && skillProgress[skill.id] === null && (
+                      <div className="pt-3 border-t border-border/50">
+                        <div className="text-xs text-muted-foreground text-center">
+                          No quiz attempts yet
+                        </div>
                       </div>
                     )}
                   </CardContent>

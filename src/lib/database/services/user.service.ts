@@ -339,8 +339,124 @@ export class UserService extends BaseDatabaseService {
   }
 
   async getUserProgress(userId: string): Promise<ApiResponse<UserProgress | null>> {
-    // Since document ID is now userId, we can fetch directly by ID (more efficient)
-    return this.getById<UserProgress>(this.USER_PROGRESS_COLLECTION, userId);
+    // Get base progress record
+    const progressResult = await this.getById<UserProgress>(this.USER_PROGRESS_COLLECTION, userId);
+
+    if (!progressResult.success || !progressResult.data) {
+      return progressResult;
+    }
+
+    // Calculate real stats from quiz attempts
+    try {
+      const { quizService } = await import('./quiz.service');
+      const { enrollmentService } = await import('./enrollment.service');
+
+      // Get all user's quiz attempts
+      const attemptsResult = await quizService.getUserQuizAttempts(userId, {
+        completed: true,
+        limit: 10000
+      });
+
+      // Get enrolled sports for skills/sports completed count
+      const enrolledSportsResult = await enrollmentService.getUserEnrolledSports(userId);
+
+      const attempts = attemptsResult.success ? attemptsResult.data?.items || [] : [];
+      const enrolledSports = enrolledSportsResult.success ? enrolledSportsResult.data || [] : [];
+
+      // Calculate real stats
+      const quizzesCompleted = attempts.length;
+      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+      const averageQuizScore = quizzesCompleted > 0
+        ? Math.round(attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizzesCompleted)
+        : 0;
+
+      // Count completed skills and sports
+      const completedSkillIds = new Set<string>();
+      attempts.forEach(attempt => {
+        if (attempt.passed && attempt.skillId) {
+          completedSkillIds.add(attempt.skillId);
+        }
+      });
+
+      const completedSportsCount = enrolledSports.filter(
+        ({ progress }) => progress.status === 'completed'
+      ).length;
+
+      // Calculate streak from quiz attempt dates
+      const attemptDates = attempts
+        .map(a => {
+          if (a.submittedAt) {
+            const date = a.submittedAt.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt);
+            return date.toISOString().split('T')[0];
+          }
+          return null;
+        })
+        .filter((d): d is string => d !== null)
+        .sort()
+        .reverse();
+
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let streakCount = 0;
+      let maxStreakCount = 0;
+      const today = new Date().toISOString().split('T')[0];
+
+      for (let i = 0; i < attemptDates.length; i++) {
+        const date = attemptDates[i];
+        const prevDate = i > 0 ? attemptDates[i - 1] : null;
+
+        if (i === 0) {
+          const daysDiff = Math.floor(
+            (new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          if (daysDiff <= 1) {
+            streakCount = 1;
+            currentStreak = 1;
+          }
+        } else if (prevDate) {
+          const daysBetween = Math.floor(
+            (new Date(prevDate).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          if (daysBetween === 1) {
+            streakCount++;
+            if (i === attemptDates.length - 1 || streakCount === attemptDates.length) {
+              currentStreak = streakCount;
+            }
+          } else {
+            maxStreakCount = Math.max(maxStreakCount, streakCount);
+            streakCount = 1;
+          }
+        }
+        maxStreakCount = Math.max(maxStreakCount, streakCount);
+      }
+      longestStreak = maxStreakCount;
+
+      // Update progress data with calculated values
+      const updatedProgress: UserProgress = {
+        ...progressResult.data,
+        overallStats: {
+          ...progressResult.data.overallStats,
+          totalTimeSpent,
+          skillsCompleted: completedSkillIds.size,
+          sportsCompleted: completedSportsCount,
+          quizzesCompleted,
+          averageQuizScore,
+          currentStreak,
+          longestStreak: Math.max(longestStreak, progressResult.data.overallStats.longestStreak || 0),
+        },
+      };
+
+      return {
+        success: true,
+        data: updatedProgress,
+        error: progressResult.error,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to calculate real user progress', 'UserService', error);
+      // Return base progress if calculation fails
+      return progressResult;
+    }
   }
 
   async updateUserProgress(

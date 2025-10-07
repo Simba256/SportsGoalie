@@ -173,24 +173,59 @@ export class AnalyticsService extends BaseDatabaseService {
     logger.info('Fetching user engagement data', 'AnalyticsService', { days });
 
     try {
-      // Query real user activity data from sportProgress and quiz_attempts collections
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+      // Query all quiz attempts
+      const quizAttemptsResult = await this.query<any>('quiz_attempts', {
+        where: [{ field: 'isCompleted', operator: '==', value: true }],
+        limit: 10000
+      });
 
-      // For now, return empty data until we have real activity tracking
-      // This would be implemented to query daily user activity from sportProgress and quiz_attempts
+      const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+
+      // Group quiz attempts by date
+      const attemptsByDate = new Map<string, any[]>();
+      const usersByDate = new Map<string, Set<string>>();
+
+      quizAttempts.forEach(attempt => {
+        if (attempt.submittedAt) {
+          const date = attempt.submittedAt.toDate
+            ? attempt.submittedAt.toDate()
+            : new Date(attempt.submittedAt);
+          const dateStr = date.toISOString().split('T')[0];
+
+          // Group attempts by date
+          if (!attemptsByDate.has(dateStr)) {
+            attemptsByDate.set(dateStr, []);
+          }
+          attemptsByDate.get(dateStr)!.push(attempt);
+
+          // Track unique users by date
+          if (!usersByDate.has(dateStr)) {
+            usersByDate.set(dateStr, new Set());
+          }
+          usersByDate.get(dateStr)!.add(attempt.userId);
+        }
+      });
+
+      // Build engagement data for each day
       const engagementData: UserEngagementData[] = [];
 
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const dayAttempts = attemptsByDate.get(dateStr) || [];
+        const activeUsers = usersByDate.get(dateStr)?.size || 0;
+        const quizAttemptsCount = dayAttempts.length;
+        const averageScore = quizAttemptsCount > 0
+          ? Math.round(dayAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizAttemptsCount)
+          : 0;
 
         engagementData.push({
-          date: date.toISOString().split('T')[0],
-          activeUsers: 0, // Would query distinct users with activity on this date
-          quizAttempts: 0, // Would query quiz attempts on this date
-          averageScore: 0, // Would calculate average score for this date
+          date: dateStr,
+          activeUsers,
+          quizAttempts: quizAttemptsCount,
+          averageScore,
         });
       }
 
@@ -350,30 +385,50 @@ export class AnalyticsService extends BaseDatabaseService {
   }
 
   private async getEngagementAnalytics() {
-    // Query real engagement data from sport_progress collection
+    // Query real engagement data from sport_progress and quiz_attempts collections
     try {
-      const progressResult = await this.query<any>('sport_progress', {});
+      const [progressResult, quizAttemptsResult] = await Promise.all([
+        this.query<any>('sport_progress', {}),
+        this.query<any>('quiz_attempts', {
+          where: [{ field: 'isCompleted', operator: '==', value: true }],
+          limit: 10000
+        }),
+      ]);
 
       const progressData = progressResult.success ? progressResult.data?.items || [] : [];
+      const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+
+      // Calculate total quiz attempts and average score
+      const totalQuizAttempts = quizAttempts.length;
+      const averageQuizScore = totalQuizAttempts > 0
+        ? Math.round(quizAttempts.reduce((sum, attempt) => sum + (attempt.percentage || 0), 0) / totalQuizAttempts)
+        : 0;
+
+      // Calculate completion rate from sport progress
+      const completionRate = progressData.length > 0
+        ? Math.round((progressData.filter(p => p.status === 'completed').length / progressData.length) * 100)
+        : 0;
+
+      // Calculate active users today
+      const today = new Date().toDateString();
+      const activeUsersToday = progressData.filter(p => {
+        const lastAccessed = p.lastAccessedAt && typeof p.lastAccessedAt.toDate === 'function'
+          ? p.lastAccessedAt.toDate().toDateString()
+          : null;
+        return lastAccessed === today;
+      }).length;
 
       const engagementStats = {
-        totalQuizAttempts: 0, // Would be calculated from quiz_attempts collection when implemented
-        averageQuizScore: 0, // Would be calculated from quiz results when implemented
-        completionRate: progressData.length > 0 ?
-          Math.round((progressData.filter(p => p.status === 'completed').length / progressData.length) * 100) : 0,
-        activeUsersToday: progressData.filter(p => {
-          const today = new Date().toDateString();
-          const lastAccessed = p.lastAccessedAt && typeof p.lastAccessedAt.toDate === 'function'
-            ? p.lastAccessedAt.toDate().toDateString()
-            : null;
-          return lastAccessed === today;
-        }).length,
+        totalQuizAttempts,
+        averageQuizScore,
+        completionRate,
+        activeUsersToday,
       };
 
       return { success: true, data: engagementStats };
     } catch (error) {
       logger.error('Failed to fetch engagement analytics', 'AnalyticsService', error);
-      // Return zero values instead of mock data
+      // Return zero values on error
       return {
         success: true,
         data: {

@@ -9,6 +9,7 @@ import {
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { sportsService } from './sports.service';
+import { quizService } from './quiz.service';
 
 /**
  * Service for managing sports enrollment and progress.
@@ -122,20 +123,134 @@ export class EnrollmentService extends BaseDatabaseService {
       };
     }
 
-    // Get sport details for each progress record
+    // Get sport details for each progress record and calculate live progress
     const enrolledSports: Array<{ sport: Sport; progress: SportProgress }> = [];
 
     for (const progress of progressResult.data.items) {
       const sportResult = await sportsService.getSport(progress.sportId);
-      if (sportResult.success && sportResult.data) {
-        enrolledSports.push({
-          sport: sportResult.data,
-          progress: progress,
+      if (!sportResult.success || !sportResult.data) continue;
+
+      const sport = sportResult.data;
+
+      // Get all skills for this sport
+      const skillsResult = await sportsService.getSkillsBySport(sport.id);
+      const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
+      const totalSkills = skills.length;
+
+      // Calculate progress based on quiz attempts
+      let totalScore = 0;
+      let totalTime = 0;
+      const completedSkillIds: string[] = [];
+      const attemptDates = new Set<string>();
+
+      for (const skill of skills) {
+        // Get user's best quiz attempt for this skill
+        const attemptsResult = await quizService.getUserQuizAttempts(userId, {
+          skillId: skill.id,
+          completed: true,
+          limit: 100, // Get all completed attempts
         });
+
+        if (attemptsResult.success && attemptsResult.data && attemptsResult.data.items.length > 0) {
+          const attempts = attemptsResult.data.items;
+
+          // Find best attempt (highest percentage)
+          const bestAttempt = attempts.reduce((best, current) =>
+            current.percentage > best.percentage ? current : best
+          );
+
+          totalScore += bestAttempt.percentage;
+
+          // Sum time from all attempts for this skill
+          const skillTime = attempts.reduce((sum, attempt) => sum + (attempt.timeSpent || 0), 0);
+          totalTime += skillTime;
+
+          // Track dates for streak calculation
+          for (const attempt of attempts) {
+            if (attempt.submittedAt) {
+              const date = attempt.submittedAt.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt);
+              attemptDates.add(date.toISOString().split('T')[0]);
+            }
+          }
+
+          // Mark skill as completed if passed
+          if (bestAttempt.passed) {
+            completedSkillIds.push(skill.id);
+          }
+        } else {
+          // No attempts for this skill, counts as 0%
+          totalScore += 0;
+        }
       }
+
+      // Calculate average percentage (unattempted skills count as 0%)
+      const progressPercentage = totalSkills > 0 ? totalScore / totalSkills : 0;
+
+      // Calculate streak
+      const sortedDates = Array.from(attemptDates).sort().reverse();
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let streakCount = 0;
+      let maxStreakCount = 0;
+      const today = new Date().toISOString().split('T')[0];
+
+      for (let i = 0; i < sortedDates.length; i++) {
+        const date = sortedDates[i];
+        const prevDate = i > 0 ? sortedDates[i - 1] : null;
+
+        if (i === 0) {
+          // Check if most recent activity is today or yesterday
+          const daysDiff = Math.floor((new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+          if (daysDiff <= 1) {
+            streakCount = 1;
+            currentStreak = 1;
+          }
+        } else if (prevDate) {
+          const daysBetween = Math.floor((new Date(prevDate).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+          if (daysBetween === 1) {
+            streakCount++;
+            if (i === sortedDates.length - 1 || streakCount === sortedDates.length) {
+              currentStreak = streakCount;
+            }
+          } else {
+            maxStreakCount = Math.max(maxStreakCount, streakCount);
+            streakCount = 1;
+          }
+        }
+        maxStreakCount = Math.max(maxStreakCount, streakCount);
+      }
+      longestStreak = maxStreakCount;
+
+      // Determine status
+      let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
+      if (completedSkillIds.length === totalSkills && totalSkills > 0) {
+        status = 'completed';
+      } else if (completedSkillIds.length > 0) {
+        status = 'in_progress';
+      }
+
+      // Update progress with calculated values
+      const updatedProgress: SportProgress = {
+        ...progress,
+        progressPercentage: Math.round(progressPercentage * 10) / 10, // Round to 1 decimal
+        timeSpent: totalTime,
+        completedSkills: completedSkillIds,
+        totalSkills,
+        status,
+        streak: {
+          current: currentStreak,
+          longest: longestStreak,
+          lastActiveDate: progress.streak?.lastActiveDate || Timestamp.fromDate(new Date()),
+        },
+      };
+
+      enrolledSports.push({
+        sport,
+        progress: updatedProgress,
+      });
     }
 
-    logger.debug('Retrieved enrolled sports', 'EnrollmentService', {
+    logger.debug('Retrieved enrolled sports with calculated progress', 'EnrollmentService', {
       userId,
       count: enrolledSports.length
     });

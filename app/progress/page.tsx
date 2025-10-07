@@ -21,61 +21,6 @@ export default function ProgressPage() {
 function ProgressContent() {
   const { userProgress, loading, error } = useProgress();
 
-  // Generate sample data for demonstration
-  const generateProgressData = () => {
-    const dates = [];
-    const today = new Date();
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      dates.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        skillsCompleted: Math.floor(Math.random() * 3),
-        timeSpent: Math.floor(Math.random() * 4) + 1,
-        quizScore: Math.floor(Math.random() * 30) + 70,
-      });
-    }
-    return dates;
-  };
-
-  const generateSkillData = () => [
-    {
-      skillName: 'Basketball Shooting',
-      progress: 85,
-      timeSpent: 12,
-      difficulty: 'intermediate' as const,
-      completed: false,
-    },
-    {
-      skillName: 'Soccer Dribbling',
-      progress: 100,
-      timeSpent: 8,
-      difficulty: 'beginner' as const,
-      completed: true,
-    },
-    {
-      skillName: 'Tennis Serve',
-      progress: 60,
-      timeSpent: 5,
-      difficulty: 'advanced' as const,
-      completed: false,
-    },
-    {
-      skillName: 'Swimming Freestyle',
-      progress: 40,
-      timeSpent: 7,
-      difficulty: 'intermediate' as const,
-      completed: false,
-    },
-    {
-      skillName: 'Baseball Pitching',
-      progress: 90,
-      timeSpent: 15,
-      difficulty: 'advanced' as const,
-      completed: false,
-    },
-  ];
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -100,8 +45,11 @@ function ProgressContent() {
   }
 
   const stats = userProgress?.overallStats;
-  const progressData = generateProgressData();
-  const skillData = generateSkillData();
+
+  // Generate empty data array for charts (real data would come from analytics service)
+  // For now, show placeholder message for charts
+  const progressData: any[] = [];
+  const skillData: any[] = [];
 
   const statsCards = [
     {

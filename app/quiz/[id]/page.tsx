@@ -29,7 +29,6 @@ import {
   TrueFalseQuestion,
   DescriptiveQuestion,
   FillInBlankQuestion,
-  MatchingQuestion,
   QuestionMedia,
   QuestionAnswer,
 } from '@/types/quiz';
@@ -129,26 +128,87 @@ function QuizTakingPageContent() {
     }));
   };
 
+  const gradeWithAI = async (question: Question, userAnswer: string | string[]) => {
+    const fibQuestion = question.type === 'fill_in_blank' ? question as FillInBlankQuestion : null;
+    const descQuestion = question.type === 'descriptive' ? question as DescriptiveQuestion : null;
+
+    const response = await fetch('/api/ai/grade-answer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        questionText: question.title,
+        questionContent: question.content,
+        userAnswer,
+        correctAnswer: fibQuestion?.correctAnswers,
+        sampleAnswer: descQuestion?.sampleAnswer,
+        rubric: descQuestion?.rubric,
+        maxPoints: question.points,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('AI grading API error:', errorData);
+      throw new Error(`Failed to grade answer with AI: ${errorData.error || response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  };
+
   const handleSubmitQuiz = async () => {
     if (!quiz || !user) return;
 
     try {
       setSubmitting(true);
 
-      // Calculate answers and score
-      const quizAnswers: QuestionAnswer[] = quiz.questions.map(question => {
-        const userAnswer = answers[question.id];
-        const isCorrect = checkAnswer(question, userAnswer);
+      // Calculate answers and score with AI grading for fill-in-blank and descriptive questions
+      const quizAnswers: QuestionAnswer[] = await Promise.all(
+        quiz.questions.map(async question => {
+          const userAnswer = answers[question.id];
 
-        return {
-          questionId: question.id,
-          questionType: question.type,
-          answer: userAnswer,
-          isCorrect,
-          pointsEarned: isCorrect ? question.points : 0,
-          timeSpent: 0,
-        };
-      });
+          // Use AI grading for fill-in-blank and descriptive questions
+          if ((question.type === 'fill_in_blank' || question.type === 'descriptive') && userAnswer) {
+            try {
+              const gradingResult = await gradeWithAI(question, userAnswer);
+
+              return {
+                questionId: question.id,
+                questionType: question.type,
+                answer: userAnswer,
+                isCorrect: gradingResult.isCorrect,
+                pointsEarned: gradingResult.pointsEarned,
+                timeSpent: 0,
+              };
+            } catch (error) {
+              console.error('AI grading failed, falling back to simple check:', error);
+              // Fallback to simple checking if AI fails
+              const isCorrect = checkAnswer(question, userAnswer);
+              return {
+                questionId: question.id,
+                questionType: question.type,
+                answer: userAnswer,
+                isCorrect,
+                pointsEarned: isCorrect ? question.points : 0,
+                timeSpent: 0,
+              };
+            }
+          }
+
+          // Use regular checking for MCQ and True/False
+          const isCorrect = checkAnswer(question, userAnswer);
+          return {
+            questionId: question.id,
+            questionType: question.type,
+            answer: userAnswer,
+            isCorrect,
+            pointsEarned: isCorrect ? question.points : 0,
+            timeSpent: 0,
+          };
+        })
+      );
 
       const maxScore = quiz.questions.reduce((sum, q) => sum + q.points, 0);
       const totalScore = quizAnswers.reduce((sum, answer) => sum + (answer.pointsEarned || 0), 0);
@@ -210,24 +270,20 @@ function QuizTakingPageContent() {
       case 'fill_in_blank':
         const fibQuestion = question as FillInBlankQuestion;
         if (!Array.isArray(userAnswer)) return false;
-        return fibQuestion.blanks.every((blank, index) => {
-          const answer = userAnswer[index]?.toLowerCase().trim();
-          return blank.acceptedAnswers.some(accepted =>
-            blank.caseSensitive
-              ? (blank.exactMatch ? answer === accepted : answer.includes(accepted))
-              : (blank.exactMatch ? answer === accepted.toLowerCase() : answer.includes(accepted.toLowerCase()))
-          );
+        return fibQuestion.correctAnswers.every((correctAnswer, index) => {
+          const answer = userAnswer[index];
+          if (!answer) return false;
+          const normalizedAnswer = fibQuestion.caseSensitive
+            ? answer.trim()
+            : answer.trim().toLowerCase();
+          const normalizedCorrect = fibQuestion.caseSensitive
+            ? correctAnswer.trim()
+            : correctAnswer.trim().toLowerCase();
+          return normalizedAnswer === normalizedCorrect;
         });
 
       case 'descriptive':
         return false;
-
-      case 'matching':
-        const matchQuestion = question as MatchingQuestion;
-        if (!userAnswer || typeof userAnswer !== 'object') return false;
-        return matchQuestion.pairs.every(pair =>
-          userAnswer[pair.left.text] === pair.right.text
-        );
 
       default:
         return false;
@@ -282,8 +338,6 @@ function QuizTakingPageContent() {
         return renderDescriptive(question as DescriptiveQuestion);
       case 'fill_in_blank':
         return renderFillInBlank(question as FillInBlankQuestion);
-      case 'matching':
-        return renderMatching(question as MatchingQuestion);
       default:
         return null;
     }
@@ -382,17 +436,10 @@ function QuizTakingPageContent() {
 
     return (
       <div className="space-y-4">
-        <div
-          className="prose"
-          dangerouslySetInnerHTML={{
-            __html: question.template.replace(/{blank}/g, (_, index) =>
-              `<input type="text" class="border rounded px-2 py-1 mx-1" placeholder="Answer ${index + 1}" />`
-            ),
-          }}
-        />
-        {question.blanks.map((blank, index) => (
-          <div key={blank.id}>
-            <Label>Blank {index + 1}</Label>
+        <p className="text-gray-700 mb-4">{question.content}</p>
+        {question.correctAnswers.map((_, index) => (
+          <div key={index}>
+            <Label>Answer {index + 1}</Label>
             <Input
               value={answer[index] || ''}
               onChange={(e) => {
@@ -400,7 +447,7 @@ function QuizTakingPageContent() {
                 newAnswers[index] = e.target.value;
                 handleAnswerChange(question.id, newAnswers);
               }}
-              placeholder={`Answer for blank ${index + 1}`}
+              placeholder={`Enter answer ${index + 1}`}
             />
           </div>
         ))}
@@ -408,39 +455,6 @@ function QuizTakingPageContent() {
     );
   };
 
-  const renderMatching = (question: MatchingQuestion) => {
-    const answer = answers[question.id] || {};
-
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">Match items from the left column with items from the right column:</p>
-        {question.pairs.map((pair) => (
-          <div key={pair.id} className="grid grid-cols-2 gap-4 items-center">
-            <div className="p-3 border rounded">
-              {pair.left.text}
-            </div>
-            <select
-              value={answer[pair.left.text] || ''}
-              onChange={(e) =>
-                handleAnswerChange(question.id, {
-                  ...answer,
-                  [pair.left.text]: e.target.value,
-                })
-              }
-              className="p-2 border rounded"
-            >
-              <option value="">Select match...</option>
-              {question.pairs.map((p) => (
-                <option key={p.id} value={p.right.text}>
-                  {p.right.text}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   if (loading) {
     return (

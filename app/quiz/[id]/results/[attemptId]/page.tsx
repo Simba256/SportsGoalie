@@ -9,8 +9,6 @@ import {
   Clock,
   RotateCcw,
   Home,
-  Download,
-  Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +27,8 @@ import {
   Question,
   MultipleChoiceQuestion,
   TrueFalseQuestion,
+  FillInBlankQuestion,
+  DescriptiveQuestion,
 } from '@/types/quiz';
 
 interface QuizResult {
@@ -171,11 +171,7 @@ export default function QuizResultsPage() {
     return 'F';
   };
 
-  const canRetakeQuiz = () => {
-    if (!quiz || !user) return false;
-
-    return quiz.settings.maxAttempts > 1;
-  };
+  const isFirstAttempt = attempt?.attemptNumber === 1;
 
   const handleRetakeQuiz = () => {
     router.push(`/quiz/${quizId}`);
@@ -193,13 +189,12 @@ export default function QuizResultsPage() {
         return tfQuestion.correctAnswer ? 'True' : 'False';
 
       case 'fill_in_blank':
-        return 'See explanation';
+        const fibQuestion = question as FillInBlankQuestion;
+        return fibQuestion.correctAnswers.join(', ');
 
       case 'descriptive':
-        return 'Manual grading required';
-
-      case 'matching':
-        return 'See explanation';
+        const descQuestion = question as DescriptiveQuestion;
+        return descQuestion.sampleAnswer || 'No sample answer provided';
 
       default:
         return 'N/A';
@@ -443,12 +438,15 @@ export default function QuizResultsPage() {
                               {getUserAnswerText(question, answer)}
                             </p>
                           </div>
-                          <div>
-                            <h5 className="font-medium text-sm text-gray-600 mb-1">Correct Answer:</h5>
-                            <p className="text-sm text-green-700">
-                              {getCorrectAnswerText(question)}
-                            </p>
-                          </div>
+                          {/* Only show correct answer if not first attempt OR if answer was correct */}
+                          {(!isFirstAttempt || isCorrect) && (
+                            <div>
+                              <h5 className="font-medium text-sm text-gray-600 mb-1">Correct Answer:</h5>
+                              <p className="text-sm text-green-700">
+                                {getCorrectAnswerText(question)}
+                              </p>
+                            </div>
+                          )}
                         </div>
 
                         {quiz.settings.showExplanations && question.explanation && (
@@ -494,21 +492,9 @@ export default function QuizResultsPage() {
           </Button>
         </Link>
 
-        {canRetakeQuiz() && !attempt.passed && (
-          <Button onClick={handleRetakeQuiz}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Retake Quiz
-          </Button>
-        )}
-
-        <Button variant="outline">
-          <Share2 className="mr-2 h-4 w-4" />
-          Share Results
-        </Button>
-
-        <Button variant="outline">
-          <Download className="mr-2 h-4 w-4" />
-          Download Certificate
+        <Button onClick={handleRetakeQuiz}>
+          <RotateCcw className="mr-2 h-4 w-4" />
+          Retake Quiz
         </Button>
       </div>
     </div>

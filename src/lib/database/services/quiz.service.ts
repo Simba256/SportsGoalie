@@ -534,17 +534,27 @@ export class QuizService extends BaseDatabaseService {
     });
 
     // Create with minimal data first - Firestore rules only require these 4 fields
+    logger.info('Creating quiz attempt with attemptNumber', 'QuizService', {
+      attemptNumber: eligibilityResult.data.attemptNumber
+    });
+
     const result = await this.create<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, {
       userId,
       quizId,
       skillId,
       sportId,
+      attemptNumber: eligibilityResult.data.attemptNumber,
     });
 
     if (!result.success) {
       logger.error('Failed to create minimal quiz attempt', 'QuizService', result.error);
       return result;
     }
+
+    logger.info('Quiz attempt created with ID', 'QuizService', {
+      attemptId: result.data!.id,
+      attemptNumber: eligibilityResult.data.attemptNumber
+    });
 
     // Now update with full data after creation succeeds
     const updateResult = await this.update<QuizAttempt>(this.QUIZ_ATTEMPTS_COLLECTION, result.data!.id, {
@@ -566,6 +576,11 @@ export class QuizService extends BaseDatabaseService {
     if (!updateResult.success) {
       logger.error('Failed to update quiz attempt with full data', 'QuizService', updateResult.error);
       // Attempt was created but update failed - still return the attempt ID
+    } else {
+      logger.info('Quiz attempt updated with full data', 'QuizService', {
+        attemptId: result.data!.id,
+        attemptNumber: eligibilityResult.data.attemptNumber
+      });
     }
 
     // Update quiz metadata
@@ -782,8 +797,23 @@ export class QuizService extends BaseDatabaseService {
 
     try {
       // BYPASS base service - use direct Firestore write since we know it works
-      const { collection: firestoreCollection, addDoc, serverTimestamp } = await import('firebase/firestore');
+      const { collection: firestoreCollection, addDoc, serverTimestamp, query, where, getDocs } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/config');
+
+      // Calculate attempt number by counting previous completed attempts
+      const attemptsQuery = query(
+        firestoreCollection(db, this.QUIZ_ATTEMPTS_COLLECTION),
+        where('userId', '==', data.userId),
+        where('quizId', '==', data.quizId),
+        where('isCompleted', '==', true)
+      );
+      const attemptsSnapshot = await getDocs(attemptsQuery);
+      const attemptNumber = attemptsSnapshot.size + 1;
+
+      logger.info('Creating quiz completion with attemptNumber', 'QuizService', {
+        attemptNumber,
+        previousCompletedAttempts: attemptsSnapshot.size
+      });
 
       // Create document with all data at once
       const docRef = await addDoc(firestoreCollection(db, this.QUIZ_ATTEMPTS_COLLECTION), {
@@ -797,6 +827,7 @@ export class QuizService extends BaseDatabaseService {
         percentage: data.percentage,
         passed: data.passed,
         timeSpent: data.timeSpent,
+        attemptNumber: attemptNumber,
         isCompleted: true,
         status: 'submitted',
         createdAt: serverTimestamp(),
