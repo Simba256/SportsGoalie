@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth/context';
 import { analyticsService, PlatformAnalytics } from '@/lib/database/services/analytics.service';
 import { seedCourses } from '@/lib/database/seeding/seed-courses';
 import { toast } from 'sonner';
+import { TokenDiagnostic } from '@/components/admin/token-diagnostic';
 
 export default function AdminDashboardPage() {
   return (
@@ -79,6 +80,9 @@ function AdminDashboardContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-8">
+        {/* Token Diagnostic - Temporary for debugging */}
+        <TokenDiagnostic />
+
         {/* Admin Header */}
         <div className="flex items-center justify-between">
           <div>
