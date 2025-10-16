@@ -3,7 +3,7 @@
     "rules": "firestore.rules"
   },
   "storage": {
-    "rules": "rules/storage"
+    "rules": "storage.rules"
   },
   "emulators": {
     "firestore": {

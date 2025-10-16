@@ -1,0 +1,28 @@
+# SportsCoach V3 - Development Docker image
+# Optimized for hot-reload and fast development
+
+FROM node:20-alpine
+
+# Install dependencies for development
+RUN apk add --no-cache libc6-compat git
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install ALL dependencies (including dev dependencies)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Set environment
+ENV NODE_ENV development
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Start development server with hot reload
+CMD ["npm", "run", "dev"]

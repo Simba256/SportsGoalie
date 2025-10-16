@@ -61,7 +61,11 @@ service cloud.firestore {
     }
 
     function isValidNotificationType(type) {
-      return type == 'progress' || type == 'quiz_result' || type == 'new_content' || type == 'reminder' || type == 'achievement';
+      return type == 'progress' || type == 'quiz_result' || type == 'new_content' || type == 'reminder' || type == 'achievement' || type == 'admin_message';
+    }
+
+    function isValidMessageType(type) {
+      return type == 'instruction' || type == 'feedback' || type == 'general' || type == 'video_review';
     }
 
     // Users collection
@@ -290,6 +294,35 @@ service cloud.firestore {
       allow delete: if isOwnerOrAdmin(resource.data.userId);
     }
 
+    // Messages collection (admin-to-student messaging)
+    match /messages/{messageId} {
+      // Students can read messages sent to them, admins can read all messages
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.toUserId == getUserId());
+
+      // Only admins can create messages
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['fromUserId', 'toUserId', 'subject', 'message', 'type', 'isRead']) &&
+                       request.resource.data.fromUserId == getUserId() &&
+                       request.resource.data.subject is string &&
+                       request.resource.data.subject.size() > 0 &&
+                       request.resource.data.subject.size() <= 200 &&
+                       request.resource.data.message is string &&
+                       request.resource.data.message.size() > 0 &&
+                       request.resource.data.message.size() <= 10000 &&
+                       isValidMessageType(request.resource.data.type) &&
+                       request.resource.data.attachments is list &&
+                       request.resource.data.attachments.size() <= 3 &&
+                       request.resource.data.isRead == false;
+
+      // Only recipient can mark as read (update isRead and readAt fields only)
+      allow update: if isAuthenticated() &&
+                       resource.data.toUserId == getUserId() &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt', 'updatedAt']);
+
+      // Only recipient can delete their own messages
+      allow delete: if isAuthenticated() && resource.data.toUserId == getUserId();
+    }
+
     // Content collection (articles, videos, etc.)
     match /content/{contentId} {
       // Anyone can read published content, admins can read all
@@ -378,7 +411,7 @@ service cloud.firestore {
                        isOwner(request.resource.data.studentId) &&
                        hasRequiredFields(['studentId', 'studentName', 'studentEmail', 'videoUrl', 'storagePath', 'fileName', 'fileSize']);
 
-      // Only admins can update video records (status, feedback, etc.)
+      // Only admins can update video records (status, feedback, feedbackMessageId, etc.)
       allow update: if isAdmin();
 
       // Only admins can delete video records

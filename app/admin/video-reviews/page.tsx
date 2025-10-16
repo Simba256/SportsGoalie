@@ -28,6 +28,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { videoReviewService, StudentVideo } from '@/lib/database/services/video-review.service';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { userService } from '@/lib/database/services/user.service';
+import { VideoFeedbackComposer } from '@/components/messages/VideoFeedbackComposer';
 import { Sport } from '@/types';
 
 function VideoReviewsContent() {
@@ -42,6 +44,8 @@ function VideoReviewsContent() {
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showVideoFeedbackComposer, setShowVideoFeedbackComposer] = useState(false);
+  const [selectedVideoForMessage, setSelectedVideoForMessage] = useState<StudentVideo | null>(null);
 
   useEffect(() => {
     loadVideos();
@@ -157,6 +161,11 @@ function VideoReviewsContent() {
     } finally {
       setSubmittingFeedback(false);
     }
+  };
+
+  const handleSendDetailedFeedback = (video: StudentVideo) => {
+    setSelectedVideoForMessage(video);
+    setShowVideoFeedbackComposer(true);
   };
 
   const filteredVideos = videos.filter(video => {
@@ -331,31 +340,32 @@ function VideoReviewsContent() {
                     </div>
                   )}
 
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        className="w-full"
-                        onClick={() => handleReviewVideo(video)}
-                        variant={video.status === 'pending' ? 'default' : 'outline'}
-                      >
-                        {video.status === 'pending' ? (
-                          <>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Review Video
-                          </>
-                        ) : video.status === 'reviewed' ? (
-                          <>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Complete Review
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            View Feedback
-                          </>
-                        )}
-                      </Button>
-                    </DialogTrigger>
+                  <div className="space-y-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          className="w-full"
+                          onClick={() => handleReviewVideo(video)}
+                          variant={video.status === 'pending' ? 'default' : 'outline'}
+                        >
+                          {video.status === 'pending' ? (
+                            <>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Review Video
+                            </>
+                          ) : video.status === 'reviewed' ? (
+                            <>
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Complete Review
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              View Feedback
+                            </>
+                          )}
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Review Video - {video.fileName}</DialogTitle>
@@ -531,10 +541,40 @@ function VideoReviewsContent() {
                       </div>
                     </DialogContent>
                   </Dialog>
+
+                    <Button
+                      className="w-full"
+                      variant="secondary"
+                      onClick={() => handleSendDetailedFeedback(video)}
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Send Detailed Feedback
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+        )}
+
+        {/* Video Feedback Composer Modal */}
+        {user && selectedVideoForMessage && (
+          <VideoFeedbackComposer
+            isOpen={showVideoFeedbackComposer}
+            onClose={() => {
+              setShowVideoFeedbackComposer(false);
+              setSelectedVideoForMessage(null);
+            }}
+            studentId={selectedVideoForMessage.userId}
+            studentName={selectedVideoForMessage.studentName}
+            adminUserId={user.id}
+            videoUrl={selectedVideoForMessage.videoUrl}
+            videoReviewId={selectedVideoForMessage.id}
+            onMessageSent={() => {
+              loadVideos();
+              toast.success('Video feedback sent successfully');
+            }}
+          />
         )}
       </div>
     </div>

@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  # Next.js Application (Development)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: sportscoach-app
+    ports:
+      - "3001:3000"
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      # Exclude node_modules from mount (use container's version)
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    env_file:
+      - .env.local
+    networks:
+      - sportscoach-network
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+  # Firebase Emulator Suite (Optional - for local testing)
+  firebase-emulator:
+    image: node:20-alpine
+    container_name: sportscoach-firebase
+    working_dir: /app
+    ports:
+      - "4000:4000"   # Emulator UI
+      - "9099:9099"   # Auth Emulator
+      - "8080:8080"   # Firestore Emulator
+      - "9199:9199"   # Storage Emulator
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: >
+      sh -c "npm install -g firebase-tools &&
+             firebase emulators:start --project demo-sportscoach"
+    networks:
+      - sportscoach-network
+    restart: unless-stopped
+    profiles:
+      - with-emulators
+
+networks:
+  sportscoach-network:
+    driver: bridge

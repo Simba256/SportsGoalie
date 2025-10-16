@@ -6,7 +6,7 @@ export type ProgressStatus = 'not_started' | 'in_progress' | 'completed';
 export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'fill_in_blank';
 export type MediaType = 'image' | 'video' | 'youtube';
 export type ContentType = 'video' | 'article' | 'tutorial';
-export type NotificationType = 'progress' | 'quiz_result' | 'new_content' | 'reminder' | 'achievement';
+export type NotificationType = 'progress' | 'quiz_result' | 'new_content' | 'reminder' | 'achievement' | 'admin_message';
 export type AchievementType = 'progress' | 'quiz' | 'streak' | 'time' | 'special';
 
 // User Types
@@ -320,6 +320,8 @@ export interface NotificationData {
   contentId?: string;
   actionUrl?: string;
   achievementId?: string;
+  messageId?: string;        // Link to message for admin_message notifications
+  messageType?: string;       // Type of message (instruction, feedback, etc.)
 }
 
 // Achievement Types
@@ -657,3 +659,6 @@ export interface ServiceHealth {
   error?: string;
   lastChecked: Date;
 }
+
+// Message Types - Export from message.ts
+export { Message, MessageAttachment, MessageType, AttachmentType, CreateMessageInput, MessageQueryOptions, MessageStats } from './message';

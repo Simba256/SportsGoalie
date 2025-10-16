@@ -101,3 +101,9 @@ storybook-static/
 
 client_data/
 scripts/
+
+
+*.md
+.dockerignore
+
+docs/

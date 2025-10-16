@@ -19,6 +19,7 @@ import {
   Edit,
   Save,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,7 +41,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { userService } from '@/lib/database/services/user.service';
-import { User as UserType, UserRole, UserProgress, Notification } from '@/types';
+import { messageService } from '@/lib/database/services/message.service';
+import { User as UserType, UserRole, UserProgress, Notification, Message } from '@/types';
+import { MessageComposer } from '@/components/messages/MessageComposer';
+import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 
 export default function AdminUserDetailsPage() {
@@ -54,14 +58,18 @@ export default function AdminUserDetailsPage() {
 function UserDetailsContent() {
   const params = useParams();
   const router = useRouter();
+  const { user: currentUser } = useAuth();
   const userId = params.id as string;
 
   const [user, setUser] = useState<UserType | null>(null);
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<UserType | null>(null);
+  const [showMessageComposer, setShowMessageComposer] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -90,6 +98,23 @@ function UserDetailsContent() {
       toast.error('Failed to load user data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMessages = async () => {
+    if (!currentUser) return;
+
+    try {
+      setLoadingMessages(true);
+      const result = await messageService.getUserMessages(userId, { limit: 20 });
+      if (result.success && result.data) {
+        setMessages(result.data.items);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('Failed to load messages');
+    } finally {
+      setLoadingMessages(false);
     }
   };
 
@@ -191,6 +216,15 @@ function UserDetailsContent() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            {!isEditing && currentUser && (
+              <Button
+                variant="outline"
+                onClick={() => setShowMessageComposer(true)}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Send Message
+              </Button>
+            )}
             {isEditing ? (
               <>
                 <Button variant="outline" onClick={handleCancelEdit}>
@@ -254,6 +288,7 @@ function UserDetailsContent() {
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="messages" onClick={fetchMessages}>Messages</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -505,6 +540,81 @@ function UserDetailsContent() {
             </div>
           </TabsContent>
 
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <Card>
+              <CardHeader>
+                <CardTitle>Messages</CardTitle>
+                <CardDescription>
+                  Messages sent to this student
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingMessages ? (
+                  <div className="text-center py-8">
+                    <div className="text-muted-foreground">Loading messages...</div>
+                  </div>
+                ) : messages.length > 0 ? (
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`p-4 border rounded-lg ${
+                          message.isRead ? 'bg-muted/50' : 'bg-background'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h4 className="font-medium">{message.subject}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {message.type.replace('_', ' ')}
+                              </Badge>
+                              {!message.isRead && (
+                                <Badge variant="default" className="text-xs">
+                                  Unread
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {message.message.length > 150
+                                ? message.message.substring(0, 150) + '...'
+                                : message.message}
+                            </p>
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                <Mail className="h-3 w-3" />
+                                <span>{message.attachments.length} attachment(s)</span>
+                              </div>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Sent {new Date(message.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">No messages sent yet</p>
+                    {currentUser && (
+                      <Button
+                        className="mt-4"
+                        variant="outline"
+                        onClick={() => setShowMessageComposer(true)}
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Send First Message
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Notifications Tab */}
           <TabsContent value="notifications">
             <Card>
@@ -622,6 +732,21 @@ function UserDetailsContent() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Message Composer Modal */}
+        {currentUser && (
+          <MessageComposer
+            isOpen={showMessageComposer}
+            onClose={() => setShowMessageComposer(false)}
+            studentId={userId}
+            studentName={user.displayName}
+            adminUserId={currentUser.id}
+            onMessageSent={() => {
+              fetchMessages();
+              toast.success('Message sent successfully');
+            }}
+          />
+        )}
       </div>
     </div>
   );
