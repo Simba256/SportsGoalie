@@ -514,7 +514,7 @@ function AdminSkillsContent() {
                 onUpload={setUploadedFiles}
                 acceptedTypes={['image/*', 'video/*']}
                 maxFiles={10}
-                maxSizePerFile={50}
+                maxSizePerFile={100}
               />
             </div>
 

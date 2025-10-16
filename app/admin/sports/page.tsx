@@ -434,7 +434,7 @@ function AdminSportsContent() {
                   onUpload={setUploadedFiles}
                   acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
                   maxFiles={1}
-                  maxSizePerFile={2}
+                  maxSizePerFile={10}
                 />
                 {uploadedFiles.length > 0 && (
                   <p className="text-sm text-green-600">

@@ -22,7 +22,7 @@ export function MediaUpload({
   onUpload,
   acceptedTypes = ['image/*', 'video/*'],
   maxFiles = 5,
-  maxSizePerFile = 10,
+  maxSizePerFile = 100,
   className = '',
 }: MediaUploadProps) {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
