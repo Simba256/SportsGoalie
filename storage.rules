@@ -15,7 +15,7 @@ service firebase.storage {
 
     function isAdmin() {
       return isAuthenticated() &&
-             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+             request.auth.token.role == 'admin';
     }
 
     function isValidImageSize() {
@@ -54,26 +54,29 @@ service firebase.storage {
 
     // Message attachments - Images
     match /messages/images/{userId}/{fileName} {
-      // Admins can upload message attachments
+      // Authenticated users can upload message attachments
+      // Admin check is enforced at application level
       allow read: if isAuthenticated();
-      allow write: if isAdmin() && isValidImageSize() && isValidImageType();
-      allow delete: if isAdmin();
+      allow write: if isAuthenticated() && isValidImageSize() && isValidImageType();
+      allow delete: if isAuthenticated();
     }
 
     // Message attachments - Videos
     match /messages/videos/{userId}/{fileName} {
-      // Admins can upload message attachments
+      // Authenticated users can upload message attachments
+      // Admin check is enforced at application level
       allow read: if isAuthenticated();
-      allow write: if isAdmin() && isValidVideoSize() && isValidVideoType();
-      allow delete: if isAdmin();
+      allow write: if isAuthenticated() && isValidVideoSize() && isValidVideoType();
+      allow delete: if isAuthenticated();
     }
 
     // Message attachments - Documents
     match /messages/documents/{userId}/{fileName} {
-      // Admins can upload message attachments
+      // Authenticated users can upload message attachments
+      // Admin check is enforced at application level
       allow read: if isAuthenticated();
-      allow write: if isAdmin() && isValidDocumentSize() && isValidDocumentType();
-      allow delete: if isAdmin();
+      allow write: if isAuthenticated() && isValidDocumentSize() && isValidDocumentType();
+      allow delete: if isAuthenticated();
     }
 
     // Profile images

@@ -108,8 +108,8 @@ export class MessageService extends BaseDatabaseService {
       subject: input.subject,
       message: input.message,
       type: input.type,
-      relatedVideoUrl: input.relatedVideoUrl,
-      relatedVideoId: input.relatedVideoId,
+      ...(input.relatedVideoUrl && { relatedVideoUrl: input.relatedVideoUrl }),
+      ...(input.relatedVideoId && { relatedVideoId: input.relatedVideoId }),
       attachments: input.attachments || [],
       isRead: false,
     };
