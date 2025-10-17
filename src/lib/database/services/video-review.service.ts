@@ -250,7 +250,7 @@ class VideoReviewService extends BaseDatabaseService {
   ): Promise<ServiceResult<void>> {
     try {
       // First, get the video details to extract student info
-      const videoResult = await this.getVideoById(videoId);
+      const videoResult = await this.getVideo(videoId);
       if (!videoResult.success || !videoResult.data) {
         return {
           success: false,
