@@ -46,6 +46,13 @@ import { User as UserType, UserRole, UserProgress, Notification, Message } from 
 import { MessageComposer } from '@/components/messages/MessageComposer';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
+import { studentAnalyticsService } from '@/lib/database/services/student-analytics.service';
+import type { StudentAnalytics, QuizPerformanceData, ProgressOverTimeData, SkillPerformanceData } from '@/lib/database/services/student-analytics.service';
+import { QuizPerformanceChart } from '@/src/components/admin/analytics/QuizPerformanceChart';
+import { ProgressOverTimeChart } from '@/src/components/admin/analytics/ProgressOverTimeChart';
+import { SkillPerformanceTable } from '@/src/components/admin/analytics/SkillPerformanceTable';
+import { ActivityTimeline } from '@/src/components/admin/analytics/ActivityTimeline';
+import { EngagementMetrics } from '@/src/components/admin/analytics/EngagementMetrics';
 
 export default function AdminUserDetailsPage() {
   return (
@@ -70,6 +77,13 @@ function UserDetailsContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<UserType | null>(null);
   const [showMessageComposer, setShowMessageComposer] = useState(false);
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<StudentAnalytics | null>(null);
+  const [quizPerformance, setQuizPerformance] = useState<QuizPerformanceData[]>([]);
+  const [progressOverTime, setProgressOverTime] = useState<ProgressOverTimeData[]>([]);
+  const [skillPerformance, setSkillPerformance] = useState<SkillPerformanceData[]>([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -115,6 +129,46 @@ function UserDetailsContent() {
       toast.error('Failed to load messages');
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+
+      // Fetch all analytics data in parallel
+      const [
+        analyticsResult,
+        quizPerfResult,
+        progressResult,
+        skillPerfResult
+      ] = await Promise.all([
+        studentAnalyticsService.getStudentAnalytics(userId),
+        studentAnalyticsService.getQuizPerformance(userId),
+        studentAnalyticsService.getProgressOverTime(userId, 30),
+        studentAnalyticsService.getSkillPerformance(userId)
+      ]);
+
+      if (analyticsResult.success && analyticsResult.data) {
+        setAnalytics(analyticsResult.data);
+      }
+
+      if (quizPerfResult.success && quizPerfResult.data) {
+        setQuizPerformance(quizPerfResult.data);
+      }
+
+      if (progressResult.success && progressResult.data) {
+        setProgressOverTime(progressResult.data);
+      }
+
+      if (skillPerfResult.success && skillPerfResult.data) {
+        setSkillPerformance(skillPerfResult.data);
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
+      setLoadingAnalytics(false);
     }
   };
 
@@ -287,6 +341,7 @@ function UserDetailsContent() {
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="analytics" onClick={fetchAnalytics}>Analytics</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="messages" onClick={fetchMessages}>Messages</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -441,6 +496,43 @@ function UserDetailsContent() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            {loadingAnalytics ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-muted-foreground">Loading analytics...</div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Engagement Metrics */}
+                {analytics && (
+                  <EngagementMetrics
+                    currentStreak={analytics.engagement.currentStreak}
+                    longestStreak={analytics.engagement.longestStreak}
+                    activeDays={analytics.overview.activeDays}
+                    averageSessionDuration={analytics.engagement.averageSessionDuration}
+                    studyPattern={analytics.engagement.studyPattern}
+                    totalTimeSpent={analytics.overview.totalTimeSpent}
+                  />
+                )}
+
+                {/* Progress Over Time Chart */}
+                <ProgressOverTimeChart data={progressOverTime} />
+
+                {/* Quiz Performance */}
+                <QuizPerformanceChart data={quizPerformance} />
+
+                {/* Skill Performance Table */}
+                <SkillPerformanceTable data={skillPerformance} />
+
+                {/* Activity Timeline */}
+                {analytics && (
+                  <ActivityTimeline activities={analytics.recentActivity} />
+                )}
+              </div>
+            )}
           </TabsContent>
 
           {/* Progress Tab */}
