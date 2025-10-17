@@ -107,10 +107,11 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         this.query<SportProgress>('sport_progress', {
           where: [{ field: 'userId', operator: '==', value: userId }]
         }),
+        // Query quiz attempts - filter by status='submitted' OR isCompleted=true for compatibility
         this.query<QuizAttempt>('quiz_attempts', {
           where: [
             { field: 'userId', operator: '==', value: userId },
-            { field: 'isCompleted', operator: '==', value: true }
+            { field: 'status', operator: '==', value: 'submitted' }
           ]
         }),
         this.query<SkillProgress>('skill_progress', {
@@ -123,6 +124,11 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const quizzes = quizAttempts.data?.items || [];
       const skills = skillProgress.data?.items || [];
       const progress = userProgress.data;
+
+      // Initialize default user progress if it doesn't exist
+      if (!progress) {
+        logger.warn('User progress not found, using defaults', 'StudentAnalyticsService', { userId });
+      }
 
       // Calculate overview metrics
       const totalTimeSpent = progress?.overallStats.totalTimeSpent || 0;
@@ -242,7 +248,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const attemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
         where: [
           { field: 'userId', operator: '==', value: userId },
-          { field: 'isCompleted', operator: '==', value: true }
+          { field: 'status', operator: '==', value: 'submitted' }
         ]
       });
 
@@ -319,7 +325,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         this.query<QuizAttempt>('quiz_attempts', {
           where: [
             { field: 'userId', operator: '==', value: userId },
-            { field: 'isCompleted', operator: '==', value: true }
+            { field: 'status', operator: '==', value: 'submitted' }
           ]
         }),
         this.query<SkillProgress>('skill_progress', {
