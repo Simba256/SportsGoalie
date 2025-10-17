@@ -45,8 +45,8 @@ export default function MessageDetailPage() {
         setMessage(result.data);
 
         // Mark as read if not already read
-        if (!result.data.isRead) {
-          await messageService.markAsRead(messageId);
+        if (!result.data.isRead && user.id) {
+          await messageService.markAsRead(messageId, user.id);
         }
       } else {
         toast.error('Message not found');

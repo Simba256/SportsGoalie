@@ -300,7 +300,9 @@ service cloud.firestore {
       allow read: if isAdmin() || (isAuthenticated() && resource.data.toUserId == getUserId());
 
       // Only admins can create messages
-      allow create: if isAdmin() &&
+      // Check admin status from users collection since custom claims may not be set
+      allow create: if isAuthenticated() &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
                        hasRequiredFields(['fromUserId', 'toUserId', 'subject', 'message', 'type', 'isRead']) &&
                        request.resource.data.fromUserId == getUserId() &&
                        request.resource.data.subject is string &&
