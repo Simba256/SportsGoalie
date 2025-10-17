@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Play, X, FileVideo, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileVideo, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -193,78 +192,6 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({ className }) => {
     }
   };
 
-  const removeVideo = async (videoId: string) => {
-    try {
-      const result = await videoReviewService.deleteVideoRecord(videoId);
-      if (result.success) {
-        setUploadedVideos(prev => prev.filter(video => video.id !== videoId));
-        toast.success('Video removed');
-      } else {
-        toast.error('Failed to remove video');
-      }
-    } catch (error) {
-      console.error('Error removing video:', error);
-      toast.error('Failed to remove video');
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const getStatusBadge = (status: StudentVideo['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending Review</Badge>;
-      case 'reviewed':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Under Review</Badge>;
-      case 'feedback_sent':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Feedback Available</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const getStatusIcon = (status: StudentVideo['status']) => {
-    switch (status) {
-      case 'pending':
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      case 'reviewed':
-        return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
-      case 'feedback_sent':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      default:
-        return null;
-    }
-  };
-
-  const formatFirestoreDate = (timestamp: any) => {
-    // Handle Firestore Timestamp objects
-    if (timestamp && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate().toLocaleDateString();
-    }
-    // Handle regular Date objects
-    if (timestamp instanceof Date) {
-      return timestamp.toLocaleDateString();
-    }
-    // Handle string dates
-    if (typeof timestamp === 'string') {
-      const parsedDate = new Date(timestamp);
-      if (isNaN(parsedDate.getTime())) {
-        return 'Invalid date';
-      }
-      return parsedDate.toLocaleDateString();
-    }
-    // Handle objects with seconds/nanoseconds (Firestore timestamp serialized)
-    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) {
-      return new Date(timestamp.seconds * 1000).toLocaleDateString();
-    }
-    return 'Unknown date';
-  };
 
   if (loading) {
     return (
@@ -390,92 +317,23 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({ className }) => {
         </CardContent>
       </Card>
 
-      {/* Uploaded Videos */}
+      {/* Note about video feedback */}
       {uploadedVideos.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Uploaded Videos</CardTitle>
-            <CardDescription>
-              Track the status of your uploaded videos and view coach feedback
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {uploadedVideos.map((video) => (
-              <div
-                key={video.id}
-                className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Play className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <p className="font-medium text-sm truncate">{video.fileName}</p>
-                        {getStatusIcon(video.status)}
-                      </div>
-                      <div className="flex items-center space-x-4 text-xs text-muted-foreground mb-2">
-                        <span>{formatFileSize(video.fileSize)}</span>
-                        <span>•</span>
-                        <span>Uploaded {formatFirestoreDate(video.uploadedAt)}</span>
-                      </div>
-                      {video.sport && (
-                        <div className="text-xs text-muted-foreground mb-2">
-                          Sport: {video.sport}
-                        </div>
-                      )}
-                      <div className="mb-3">
-                        {getStatusBadge(video.status)}
-                      </div>
-
-                      {/* Video Description */}
-                      {video.description && (
-                        <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
-                          <strong>Your note:</strong> {video.description}
-                        </div>
-                      )}
-
-                      {/* Coach Feedback */}
-                      {video.status === 'feedback_sent' && video.coachFeedback && (
-                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <h4 className="font-medium text-sm text-green-800 mb-2">Coach Feedback</h4>
-                          <p className="text-sm text-green-700 mb-3">{video.coachFeedback}</p>
-
-                          {video.recommendedCourses && video.recommendedCourses.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-xs text-green-800 mb-2">Recommended Courses</h5>
-                              <div className="flex flex-wrap gap-1">
-                                {video.recommendedCourses.map((course, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs bg-white">
-                                    {course}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {video.reviewedAt && (
-                            <div className="text-xs text-green-600 mt-2">
-                              Reviewed on {formatFirestoreDate(video.reviewedAt)}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeVideo(video.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+        <Card className="border-blue-200 bg-blue-50/30">
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-3">
+              <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
               </div>
-            ))}
+              <div className="flex-1">
+                <h4 className="font-medium text-sm text-blue-900 mb-1">
+                  {uploadedVideos.length} video{uploadedVideos.length !== 1 ? 's' : ''} uploaded successfully
+                </h4>
+                <p className="text-sm text-blue-700">
+                  Your videos are being reviewed by our coaches. You'll receive detailed feedback in your Messages inbox when the review is complete.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
