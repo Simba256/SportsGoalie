@@ -61,7 +61,7 @@ function MessagesContent() {
       setLoading(true);
 
       // Fetch messages sent by admin
-      const result = await messageService.getSentMessages(currentUser.id, { limit: 100 });
+      const result = await messageService.getAdminSentMessages(currentUser.id, { limit: 100 });
 
       if (result.success && result.data) {
         setMessages(result.data.items);

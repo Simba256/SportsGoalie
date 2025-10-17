@@ -378,11 +378,16 @@ export class MessageService extends BaseDatabaseService {
    * Gets the count of unread messages for a user.
    *
    * @param userId - The user ID
-   * @returns Promise resolving to unread message count
+   * @returns Promise resolving to API response with unread message count
    */
-  async getUnreadCount(userId: string): Promise<number> {
+  async getUnreadCount(userId: string): Promise<ApiResponse<number>> {
     const result = await this.getUserMessages(userId, { isRead: false, limit: 1000 });
-    return result.data?.total || 0;
+    return {
+      success: result.success,
+      data: result.data?.total || 0,
+      error: result.error,
+      timestamp: new Date(),
+    };
   }
 
   /**
