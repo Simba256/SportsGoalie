@@ -140,11 +140,15 @@ function VideoReviewsContent() {
     setSubmittingFeedback(true);
 
     try {
-      const result = await videoReviewService.submitCoachFeedback(selectedVideo.id, {
-        coachFeedback: feedback,
-        recommendedCourses: recommendedSports,
-        reviewedBy: user?.email || 'coach@example.com'
-      });
+      const result = await videoReviewService.submitCoachFeedback(
+        selectedVideo.id,
+        {
+          coachFeedback: feedback,
+          recommendedCourses: recommendedSports,
+          reviewedBy: user?.email || 'coach@example.com'
+        },
+        user?.id // Pass admin user ID to create message
+      );
 
       if (result.success) {
         toast.success('Feedback sent to student successfully!');

@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { ApiResponse } from '@/types';
 import { firebaseService } from '../../firebase/service';
+import { messageService } from './message.service';
 
 export interface StudentVideo {
   id: string;
@@ -240,12 +241,28 @@ class VideoReviewService extends BaseDatabaseService {
 
   /**
    * Submit coach feedback for a video
+   * This method now also creates a message for the student
    */
   async submitCoachFeedback(
     videoId: string,
-    feedback: CoachFeedback
+    feedback: CoachFeedback,
+    adminUserId?: string
   ): Promise<ServiceResult<void>> {
     try {
+      // First, get the video details to extract student info
+      const videoResult = await this.getVideoById(videoId);
+      if (!videoResult.success || !videoResult.data) {
+        return {
+          success: false,
+          error: {
+            message: 'Video not found'
+          }
+        };
+      }
+
+      const video = videoResult.data;
+
+      // Update the video document with feedback
       const updateData = {
         ...feedback,
         status: 'feedback_sent' as const,
@@ -254,6 +271,28 @@ class VideoReviewService extends BaseDatabaseService {
       };
 
       await firebaseService.updateDocument(this.collection, videoId, updateData);
+
+      // Create a message for the student
+      // If adminUserId is not provided, extract from reviewedBy email or use studentId as fallback
+      const fromUserId = adminUserId || video.studentId; // Fallback to studentId if admin not provided
+
+      try {
+        await messageService.createMessage(fromUserId, {
+          toUserId: video.studentId,
+          subject: 'Video Review Feedback',
+          message: feedback.coachFeedback,
+          type: 'video_review',
+          relatedVideoUrl: video.videoUrl,
+          relatedVideoId: videoId,
+          attachments: []
+        });
+
+        logger.info('Video feedback message created', 'VideoReviewService', { videoId, studentId: video.studentId });
+      } catch (messageError) {
+        // Log the error but don't fail the entire operation
+        logger.error('Failed to create message for video feedback', 'VideoReviewService', messageError);
+        // Continue anyway - feedback was saved to video document
+      }
 
       return {
         success: true
