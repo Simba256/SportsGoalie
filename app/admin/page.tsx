@@ -189,12 +189,12 @@ function AdminDashboardContent() {
 
               <div className="flex items-center space-x-4 rounded-lg border p-4">
                 <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <HelpCircle className="h-6 w-6 text-purple-600" />
+                  <Video className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium">Manage Quizzes</h3>
+                  <h3 className="font-medium">Manage Video Quizzes</h3>
                   <p className="text-sm text-muted-foreground">
-                    Create and manage interactive quizzes
+                    Create and manage interactive video-based quizzes
                   </p>
                 </div>
                 <Link href="/admin/quizzes">

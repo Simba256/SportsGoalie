@@ -420,6 +420,61 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Video Quizzes collection - Interactive video-based quizzes
+    match /video_quizzes/{quizId} {
+      // PUBLIC: Anyone can read video quizzes for course discovery
+      allow read: if true;
+
+      // Only admins can manage video quizzes
+      // Every video quiz MUST have both valid sportId AND skillId, plus videoUrl
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy', 'sportId', 'skillId', 'videoUrl', 'videoDuration']) &&
+                       request.resource.data.title is string &&
+                       request.resource.data.questions is list &&
+                       request.resource.data.settings is map &&
+                       request.resource.data.difficulty is string &&
+                       request.resource.data.isActive is bool &&
+                       request.resource.data.createdBy is string &&
+                       request.resource.data.sportId is string &&
+                       request.resource.data.sportId.size() > 0 &&
+                       request.resource.data.skillId is string &&
+                       request.resource.data.skillId.size() > 0 &&
+                       request.resource.data.videoUrl is string &&
+                       request.resource.data.videoUrl.size() > 0 &&
+                       request.resource.data.videoDuration is number &&
+                       request.resource.data.videoDuration > 0 &&
+                       exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)) &&
+                       exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId));
+
+      allow update: if isAdmin() &&
+                       (request.resource.data.sportId == resource.data.sportId ||
+                        (request.resource.data.sportId is string &&
+                         request.resource.data.sportId.size() > 0 &&
+                         exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)))) &&
+                       (request.resource.data.skillId == resource.data.skillId ||
+                        (request.resource.data.skillId is string &&
+                         request.resource.data.skillId.size() > 0 &&
+                         exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId))));
+      allow delete: if isAdmin();
+    }
+
+    // Video Quiz Progress collection - Student progress through video quizzes
+    match /video_quiz_progress/{progressId} {
+      // Users can read their own progress, admins can read all
+      allow read: if isOwnerOrAdmin(resource.data.userId);
+
+      // Users can create their own progress
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.userId) &&
+                       hasRequiredFields(['userId', 'videoQuizId', 'skillId', 'sportId']);
+
+      // Users can update their own progress, admins can update any
+      allow update: if isOwnerOrAdmin(resource.data.userId);
+
+      // Only admins can delete progress
+      allow delete: if isAdmin();
+    }
+
     // REMOVED: Courses collection (since sports ARE the courses)
     // No separate /courses collection needed
 

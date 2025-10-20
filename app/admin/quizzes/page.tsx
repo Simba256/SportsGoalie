@@ -1,13 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
-import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { videoQuizService } from '@/lib/database/services/video-quiz.service';
+import { VideoQuiz } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -15,335 +22,403 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Quiz } from '@/types/quiz';
-import { Sport, Skill } from '@/types';
-import { quizService } from '@/lib/database/services/quiz.service';
-import { sportsService } from '@/lib/database/services/sports.service';
-import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
-import { cacheOrFetch } from '@/lib/utils/cache.service';
-import Link from 'next/link';
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Eye,
+  Video,
+  Clock,
+  Target,
+  Users,
+  Loader2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-function QuizzesAdminContent() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
+function AdminQuizzesPageContent() {
+  const router = useRouter();
+  const [quizzes, setQuizzes] = useState<VideoQuiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSport, setSelectedSport] = useState<string>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-
-  const { dialog, showDeleteConfirmation } = useDeleteConfirmation();
-  const [bulkUpdateLoading, setBulkUpdateLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    loadData();
+    loadQuizzes();
   }, []);
 
-  const loadData = async () => {
+  const loadQuizzes = async () => {
     try {
       setLoading(true);
+      const result = await videoQuizService.getPublishedVideoQuizzes({
+        limit: 100,
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+      });
 
-      // Load data using proper service layer
-      const [quizzesResult, sportsResult] = await Promise.all([
-        quizService.query('quizzes', {}), // Get all quizzes for admin
-        sportsService.getAllSports()
-      ]);
-
-      if (quizzesResult.success && quizzesResult.data) {
-        setQuizzes(quizzesResult.data.items);
-      }
-
-      if (sportsResult.success && sportsResult.data) {
-        setSports(sportsResult.data.items);
-
-        // Load skills separately - get all skills from all sports
-        const allSkills: Skill[] = [];
-        for (const sport of sportsResult.data.items) {
-          const skillsResult = await sportsService.getSkillsBySport(sport.id);
-          if (skillsResult.success && skillsResult.data) {
-            allSkills.push(...skillsResult.data.items);
-          }
-        }
-        setSkills(allSkills);
+      if (result.success && result.data) {
+        setQuizzes(result.data.items);
+      } else {
+        toast.error('Failed to load video quizzes');
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading quizzes:', error);
+      toast.error('Failed to load video quizzes');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteQuiz = (quizId: string, quizTitle: string) => {
-    showDeleteConfirmation({
-      title: 'Delete Quiz',
-      description: `Are you sure you want to delete "${quizTitle}"? This action cannot be undone and will remove all associated data.`,
-      itemName: 'quiz',
-      onConfirm: async () => {
-        try {
-          const deleteResult = await quizService.deleteQuiz(quizId);
-          if (deleteResult.success) {
-            setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
-            toast.success('Quiz deleted successfully');
-          } else {
-            throw new Error(deleteResult.error?.message || 'Failed to delete quiz');
-          }
-        } catch (error) {
-          console.error('Error deleting quiz:', error);
-          toast.error('Failed to delete quiz', {
-            description: 'Please try again or contact support if the problem persists.',
-          });
-        }
-      },
-    });
-  };
+  const handleDelete = async (quizId: string, quizTitle: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${quizTitle}"? This action cannot be undone.`
+    );
 
-  const handleBulkActivateQuizzes = async () => {
+    if (!confirmed) return;
+
     try {
-      setBulkUpdateLoading(true);
+      const result = await videoQuizService.deleteVideoQuiz(quizId);
 
-      // Filter quizzes that need to be published
-      const quizzesToUpdate = quizzes.filter(quiz => quiz.isPublished !== true);
-
-      if (quizzesToUpdate.length === 0) {
-        toast.info('All quizzes are already published');
-        setBulkUpdateLoading(false);
-        return;
-      }
-
-      // Use service layer for bulk update
-      const updates = quizzesToUpdate.map(quiz => ({
-        id: quiz.id,
-        data: { isPublished: true }
-      }));
-
-      const result = await quizService.bulkUpdateQuizzes(updates);
-
-      if (result.success && result.data) {
-        if (result.data.updated > 0) {
-          toast.success(`${result.data.updated} quiz(es) published successfully`);
-          await loadData(); // Reload the quiz list
-        }
-
-        if (result.data.failed > 0) {
-          toast.error(`Failed to update ${result.data.failed} quiz(es)`);
-        }
+      if (result.success) {
+        toast.success('Video quiz deleted successfully');
+        loadQuizzes();
       } else {
-        throw new Error(result.error?.message || 'Failed to update quizzes');
+        toast.error('Failed to delete video quiz');
       }
     } catch (error) {
-      console.error('Error in bulk update:', error);
-      toast.error('Failed to update quizzes');
-    } finally {
-      setBulkUpdateLoading(false);
+      console.error('Error deleting quiz:', error);
+      toast.error('Failed to delete video quiz');
     }
   };
 
-  const filteredQuizzes = quizzes.filter(quiz => {
-    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSport = selectedSport === 'all' || quiz.sportId === selectedSport;
-    const matchesDifficulty = selectedDifficulty === 'all' || quiz.difficulty === selectedDifficulty;
+  const handleToggleStatus = async (quiz: VideoQuiz) => {
+    try {
+      const result = await videoQuizService.updateVideoQuiz(quiz.id, {
+        isActive: !quiz.isActive,
+      });
 
-    return matchesSearch && matchesSport && matchesDifficulty;
+      if (result.success) {
+        toast.success(
+          `Video quiz ${quiz.isActive ? 'deactivated' : 'activated'} successfully`
+        );
+        loadQuizzes();
+      } else {
+        toast.error('Failed to update video quiz status');
+      }
+    } catch (error) {
+      console.error('Error updating quiz status:', error);
+      toast.error('Failed to update video quiz status');
+    }
+  };
+
+  // Filter quizzes
+  const filteredQuizzes = quizzes.filter((quiz) => {
+    const matchesSearch =
+      searchQuery === '' ||
+      quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quiz.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesDifficulty =
+      difficultyFilter === 'all' || quiz.difficulty === difficultyFilter;
+
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && quiz.isActive && quiz.isPublished) ||
+      (statusFilter === 'inactive' && !quiz.isActive) ||
+      (statusFilter === 'draft' && !quiz.isPublished);
+
+    return matchesSearch && matchesDifficulty && matchesStatus;
   });
 
-  const getSportName = (sportId?: string) => {
-    if (!sportId) return 'General';
-    const sport = sports.find(s => s.id === sportId);
-    return sport?.name || 'Unknown Sport';
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const getSkillName = (skillId?: string) => {
-    if (!skillId) return null;
-    const skill = skills.find(s => s.id === skillId);
-    return skill?.name;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading quizzes...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quiz Management</h1>
-          <p className="text-gray-600 mt-2">Create and manage interactive quizzes</p>
+          <h1 className="text-3xl font-bold mb-2">Video Quizzes</h1>
+          <p className="text-gray-600">
+            Manage interactive video-based quizzes
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleBulkActivateQuizzes}
-            disabled={bulkUpdateLoading || quizzes.length === 0}
-            className="flex items-center gap-2"
-          >
-            {bulkUpdateLoading ? 'Publishing...' : 'Publish All Quizzes'}
-          </Button>
-          <Link href="/admin/quizzes/create">
-            <Button className="flex items-center gap-2">
-              <Plus size={20} />
-              Create Quiz
-            </Button>
-          </Link>
-        </div>
+        <Button onClick={() => router.push('/admin/quizzes/create')} size="lg">
+          <Plus className="mr-2 h-5 w-5" />
+          Create Video Quiz
+        </Button>
       </div>
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <Input
-            placeholder="Search quizzes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search quizzes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-        <Select value={selectedSport} onValueChange={setSelectedSport}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Filter by sport" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sports</SelectItem>
-            {sports.map((sport) => (
-              <SelectItem key={sport.id} value={sport.id}>
-                {sport.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            {/* Difficulty Filter */}
+            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Difficulties</SelectItem>
+                <SelectItem value="beginner">Beginner</SelectItem>
+                <SelectItem value="intermediate">Intermediate</SelectItem>
+                <SelectItem value="advanced">Advanced</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Filter by difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Difficulties</SelectItem>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
-          </SelectContent>
-        </Select>
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Video className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Quizzes</p>
+                <p className="text-2xl font-bold">{quizzes.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Target className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-2xl font-bold">
+                  {quizzes.filter((q) => q.isActive && q.isPublished).length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Users className="h-5 w-5 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Attempts</p>
+                <p className="text-2xl font-bold">
+                  {quizzes.reduce((sum, q) => sum + (q.metadata?.totalAttempts || 0), 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Clock className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Avg. Duration</p>
+                <p className="text-2xl font-bold">
+                  {Math.round(
+                    quizzes.reduce((sum, q) => sum + q.videoDuration, 0) / (quizzes.length || 1) / 60
+                  ) || 0}m
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredQuizzes.map((quiz) => (
-          <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg line-clamp-2">{quiz.title}</CardTitle>
-                <div className="flex gap-1 ml-2">
-                  <Link href={`/admin/quizzes/${quiz.id}`}>
-                    <Button variant="ghost" size="sm">
-                      <Eye size={16} />
-                    </Button>
-                  </Link>
-                  <Link href={`/admin/quizzes/${quiz.id}/edit`}>
-                    <Button variant="ghost" size="sm">
-                      <Edit size={16} />
-                    </Button>
-                  </Link>
+      {/* Quizzes List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : filteredQuizzes.length === 0 ? (
+        <Card>
+          <CardContent className="pt-12 pb-12 text-center">
+            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No video quizzes found</h3>
+            <p className="text-gray-600 mb-6">
+              {searchQuery || difficultyFilter !== 'all' || statusFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Get started by creating your first video quiz'}
+            </p>
+            {!searchQuery && difficultyFilter === 'all' && statusFilter === 'all' && (
+              <Button onClick={() => router.push('/admin/quizzes/create')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Video Quiz
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredQuizzes.map((quiz) => (
+            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg line-clamp-1 mb-2">
+                      {quiz.title}
+                    </CardTitle>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge
+                        variant={
+                          quiz.difficulty === 'beginner'
+                            ? 'default'
+                            : quiz.difficulty === 'intermediate'
+                            ? 'secondary'
+                            : 'destructive'
+                        }
+                      >
+                        {quiz.difficulty}
+                      </Badge>
+                      <Badge variant={quiz.isActive && quiz.isPublished ? 'default' : 'outline'}>
+                        {quiz.isActive && quiz.isPublished
+                          ? 'Active'
+                          : !quiz.isPublished
+                          ? 'Draft'
+                          : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/quiz/video/${quiz.id}`)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Preview
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/admin/quizzes/${quiz.id}/edit`)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleToggleStatus(quiz)}>
+                        <Target className="mr-2 h-4 w-4" />
+                        {quiz.isActive ? 'Deactivate' : 'Activate'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(quiz.id, quiz.title)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {quiz.description && (
+                  <p className="text-sm text-gray-600 line-clamp-2">
+                    {quiz.description}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600">
+                      {formatDuration(quiz.videoDuration)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600">
+                      {quiz.questions.length} questions
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600">
+                      {quiz.metadata?.totalAttempts || 0} attempts
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600">
+                      {quiz.metadata?.averageScore?.toFixed(0) || 0}% avg
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleDeleteQuiz(quiz.id, quiz.title)}
-                    className="text-red-600 hover:text-red-700"
+                    className="flex-1"
+                    onClick={() => router.push(`/admin/quizzes/${quiz.id}/edit`)}
                   >
-                    <Trash2 size={16} />
+                    <Edit className="mr-2 h-3 w-3" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => router.push(`/quiz/video/${quiz.id}`)}
+                  >
+                    <Eye className="mr-2 h-3 w-3" />
+                    Preview
                   </Button>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {quiz.description && (
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {quiz.description}
-                </p>
-              )}
-
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">
-                    {getSportName(quiz.sportId)}
-                  </Badge>
-                  {quiz.skillId && (
-                    <Badge variant="outline">
-                      {getSkillName(quiz.skillId)}
-                    </Badge>
-                  )}
-                  <Badge
-                    variant={quiz.difficulty === 'beginner' ? 'default' :
-                            quiz.difficulty === 'intermediate' ? 'secondary' : 'destructive'}
-                  >
-                    {quiz.difficulty}
-                  </Badge>
-                  <Badge variant={quiz.isPublished ? 'default' : 'outline'}>
-                    {quiz.isPublished ? 'Published' : 'Draft'}
-                  </Badge>
-                </div>
-
-                <div className="text-sm text-gray-500 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Questions:</span>
-                    <span>{quiz.metadata.totalQuestions}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Est. Duration:</span>
-                    <span>{quiz.estimatedDuration} min</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Points:</span>
-                    <span>{quiz.metadata.totalPoints}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Attempts:</span>
-                    <span>{quiz.metadata.totalAttempts}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredQuizzes.length === 0 && (
-        <div className="text-center py-12">
-          <Filter className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No quizzes found</h3>
-          <p className="mt-1 text-gray-500">
-            {searchTerm || selectedSport !== 'all' || selectedDifficulty !== 'all'
-              ? 'Try adjusting your search or filters'
-              : 'Get started by creating your first quiz'
-            }
-          </p>
-          {!searchTerm && selectedSport === 'all' && selectedDifficulty === 'all' && (
-            <div className="mt-6">
-              <Link href="/admin/quizzes/create">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Quiz
-                </Button>
-              </Link>
-            </div>
-          )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
-      {dialog}
     </div>
   );
 }
 
-export default function QuizzesAdminPage() {
+export default function AdminQuizzesPage() {
   return (
     <AdminRoute>
-      <QuizzesAdminContent />
+      <AdminQuizzesPageContent />
     </AdminRoute>
   );
 }

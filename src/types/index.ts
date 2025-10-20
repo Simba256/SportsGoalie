@@ -148,6 +148,22 @@ export interface SkillMetadata {
 // Quiz Types - Import comprehensive Quiz interface from quiz.ts to avoid duplication
 export { Quiz, QuizSettings, Question, QuizMetadata, QuizAttempt, QuestionAnswer, QuizAnswer } from './quiz';
 
+// Video Quiz Types - Import video quiz types
+export {
+  VideoQuiz,
+  VideoQuizQuestion,
+  VideoQuizSettings,
+  VideoQuizMetadata,
+  VideoQuizProgress,
+  VideoQuestionAnswer,
+  VideoQuizQuestionWithState,
+  VideoPlayerState,
+  VideoQuizPlayerProps,
+  QuestionOverlayProps,
+  VideoControlsProps,
+  DropOffPoint
+} from './video-quiz';
+
 
 export interface QuizQuestion {
   id: string;
