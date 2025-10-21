@@ -39,6 +39,18 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const lastCheckedTime = useRef(0);
   const triggeredQuestions = useRef(new Set<string>());
 
+  // Reset triggered questions when questions prop changes
+  useEffect(() => {
+    console.log('🔄 [VideoQuizPlayer] Questions prop changed:', {
+      questionsCount: questions?.length,
+      firstQuestion: questions?.[0],
+    });
+    // Clear triggered questions when new questions arrive
+    if (questions && questions.length > 0) {
+      triggeredQuestions.current.clear();
+    }
+  }, [questions]);
+
   // Seek to initial time when player is ready
   useEffect(() => {
     if (loadingState === 'ready' && initialTime > 0 && playerRef.current) {
@@ -59,27 +71,52 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         return prev;
       });
 
-      // Only check every 0.5 seconds to avoid performance issues
-      if (Math.abs(currentSeconds - lastCheckedTime.current) < 0.5) {
-        return;
-      }
-      lastCheckedTime.current = currentSeconds;
+      // Don't skip checks - we need to check every progress update for questions
+      // The progressInterval is already set to 1000ms to control frequency
 
       // Report progress to parent (less frequently)
       if (onProgressUpdate) {
         onProgressUpdate(currentSeconds, duration);
       }
 
+      // Debug: Log progress checking
+      if (Math.floor(currentSeconds) % 5 === 0 && Math.abs(currentSeconds - Math.floor(currentSeconds)) < 0.1) {
+        console.log('⏰ [VideoQuizPlayer] Progress check:', {
+          currentSeconds,
+          questionsCount: questions?.length,
+          questionsAvailable: questions,
+          triggeredQuestions: Array.from(triggeredQuestions.current),
+        });
+      }
+
       // Find if we've reached a question timestamp
+      // Check within a 1-second window to ensure we don't miss it
       const nextQuestion = questions.find(
-        (q) =>
-          !q.answered &&
-          !triggeredQuestions.current.has(q.id) &&
-          currentSeconds >= q.timestamp &&
-          currentSeconds < q.timestamp + 0.5
+        (q) => {
+          const isNotAnswered = !q.answered;
+          const isNotTriggered = !triggeredQuestions.current.has(q.id);
+          const isInTimeWindow = currentSeconds >= q.timestamp && currentSeconds <= q.timestamp + 1.0;
+
+          if (isNotAnswered && isNotTriggered && isInTimeWindow) {
+            console.log('📍 [VideoQuizPlayer] Found question in time window:', {
+              questionId: q.id,
+              questionTimestamp: q.timestamp,
+              currentTime: currentSeconds,
+              isNotAnswered,
+              isNotTriggered,
+            });
+            return true;
+          }
+          return false;
+        }
       );
 
       if (nextQuestion) {
+        console.log('🎯 [VideoQuizPlayer] Triggering question:', {
+          questionId: nextQuestion.id,
+          timestamp: nextQuestion.timestamp,
+          currentTime: currentSeconds,
+        });
         triggeredQuestions.current.add(nextQuestion.id);
         setPlaying(false);
         setCurrentQuestion(nextQuestion);
@@ -229,7 +266,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           onBuffer={handleBuffer}
           onBufferEnd={handleBufferEnd}
           onEnded={handleEnded}
-          progressInterval={1000}
+          progressInterval={500}
           config={{
             file: {
               attributes: {
