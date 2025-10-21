@@ -751,6 +751,30 @@ export class BaseDatabaseService {
     }
   }
 
+  // Legacy helper methods for backward compatibility
+  protected async documentExists(collectionName: string, id: string): Promise<boolean> {
+    return this.exists(collectionName, id);
+  }
+
+  protected async getDocument<T>(collectionName: string, id: string): Promise<T | null> {
+    const result = await this.getById<T>(collectionName, id);
+    return result.data || null;
+  }
+
+  protected async addDocument<T = any>(
+    collectionName: string,
+    data: any
+  ): Promise<string> {
+    const result = await this.create<T>(collectionName, data);
+    if (!result.success || !result.data) {
+      throw new DatabaseError(
+        result.error?.message || 'Failed to create document',
+        result.error?.code || 'CREATE_FAILED'
+      );
+    }
+    return result.data.id;
+  }
+
   async count(
     collectionName: string,
     options: QueryOptions = {}
