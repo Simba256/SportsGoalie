@@ -52,6 +52,26 @@ function VideoQuizPageContent() {
 
       const quiz = quizResult.data;
 
+      // DEBUG: Log what we received from the service
+      console.log('📊 Quiz data received:', {
+        quizId: quiz.id,
+        title: quiz.title,
+        questionsField: quiz.questions,
+        questionsIsArray: Array.isArray(quiz.questions),
+        questionsLength: quiz.questions?.length,
+        firstQuestion: quiz.questions?.[0],
+        allFields: Object.keys(quiz),
+      });
+
+      // Ensure questions is an array
+      if (!quiz.questions) {
+        console.error('❌ No questions field in quiz data');
+        quiz.questions = [];
+      } else if (!Array.isArray(quiz.questions)) {
+        console.error('❌ Questions field is not an array:', typeof quiz.questions);
+        quiz.questions = [];
+      }
+
       // Create fresh progress for this attempt (not saved to database)
       const freshProgress: VideoQuizProgress = {
         id: `progress_${user!.id}_${quizId}`,
@@ -63,7 +83,7 @@ function VideoQuizPageContent() {
         questionsAnswered: [],
         questionsRemaining: quiz.questions.length,
         score: 0,
-        maxScore: quiz.questions.reduce((sum, q) => sum + q.points, 0),
+        maxScore: quiz.questions.reduce((sum, q) => sum + (q.points || 0), 0),
         percentage: 0,
         passed: false,
         isCompleted: false,

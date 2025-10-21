@@ -237,6 +237,16 @@ export class VideoQuizService extends BaseDatabaseService {
         };
       }
 
+      // DEBUG: Log what was fetched from Firestore
+      logger.debug('Video quiz fetched from Firestore', 'VideoQuizService', {
+        quizId,
+        hasQuestions: !!quiz.questions,
+        questionsIsArray: Array.isArray(quiz.questions),
+        questionsLength: quiz.questions?.length,
+        firstQuestion: quiz.questions?.[0],
+        allFields: Object.keys(quiz),
+      });
+
       return {
         success: true,
         data: quiz,

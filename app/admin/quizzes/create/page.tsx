@@ -358,6 +358,7 @@ function CreateVideoQuizContent() {
         isPublished: quizData.isPublished || false,
         questions: quizData.questions,
         settings: quizData.settings!,
+        estimatedDuration: Math.ceil((quizData.videoDuration || 300) / 60), // Convert seconds to minutes
         createdBy: user.id,
       };
 

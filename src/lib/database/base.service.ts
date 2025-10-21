@@ -758,6 +758,20 @@ export class BaseDatabaseService {
 
   protected async getDocument<T>(collectionName: string, id: string): Promise<T | null> {
     const result = await this.getById<T>(collectionName, id);
+
+    // DEBUG: Log for video quiz fetching
+    if (collectionName === 'video_quizzes' && result.data) {
+      console.log('🔍 [BaseDatabaseService] Video quiz raw data from Firestore:', {
+        id,
+        hasData: !!result.data,
+        dataKeys: result.data ? Object.keys(result.data) : [],
+        hasQuestions: !!(result.data as any)?.questions,
+        questionsType: typeof (result.data as any)?.questions,
+        questionsIsArray: Array.isArray((result.data as any)?.questions),
+        questionsLength: (result.data as any)?.questions?.length,
+      });
+    }
+
     return result.data || null;
   }
 
