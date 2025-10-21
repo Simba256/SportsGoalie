@@ -37,11 +37,11 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     current: VideoQuizQuestionWithState | null;
     showOverlay: boolean;
     answeredCount: number;
-  }>({
+  }>(() => ({
     current: null,
     showOverlay: false,
-    answeredCount: 0,
-  });
+    answeredCount: questions ? questions.filter(q => q.answered).length : 0,
+  }));
 
   // Refs for tracking without causing re-renders
   const triggeredQuestions = useRef(new Set<string>());
@@ -62,8 +62,8 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     questionsRef.current = questions;
     if (questions && questions.length > 0) {
       console.log('🔄 [VideoQuizPlayer] Questions updated:', questions.length);
-      const answered = questions.filter(q => q.answered).length;
-      setQuestionState(prev => ({ ...prev, answeredCount: answered }));
+      // Don't update state here - it causes infinite loops when showing questions
+      // The answered count is managed through handleAnswerSubmit
     }
   }, [questions]);
 
