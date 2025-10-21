@@ -52,7 +52,8 @@ function AdminQuizzesPageContent() {
   const loadQuizzes = async () => {
     try {
       setLoading(true);
-      const result = await videoQuizService.getPublishedVideoQuizzes({
+      // Admin should see ALL quizzes, not just published ones
+      const result = await videoQuizService.getVideoQuizzes({
         limit: 100,
         orderBy: [{ field: 'createdAt', direction: 'desc' }],
       });

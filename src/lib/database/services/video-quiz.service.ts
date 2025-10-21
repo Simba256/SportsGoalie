@@ -293,7 +293,40 @@ export class VideoQuizService extends BaseDatabaseService {
   }
 
   /**
-   * Gets all published video quizzes.
+   * Gets all video quizzes (for admin).
+   */
+  async getVideoQuizzes(
+    options?: QueryOptions
+  ): Promise<ApiResponse<PaginatedResponse<VideoQuiz>>> {
+    logger.database('query', this.VIDEO_QUIZZES_COLLECTION, undefined, { admin: true });
+
+    try {
+      const result = await this.queryDocuments<VideoQuiz>(
+        this.VIDEO_QUIZZES_COLLECTION,
+        options || {}
+      );
+
+      return {
+        success: true,
+        data: result,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to fetch video quizzes', 'VideoQuizService', error as Error);
+      return {
+        success: false,
+        error: {
+          code: 'VIDEO_QUIZZES_FETCH_FAILED',
+          message: 'Failed to fetch video quizzes',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Gets all published video quizzes (for students).
    */
   async getPublishedVideoQuizzes(
     options?: QueryOptions

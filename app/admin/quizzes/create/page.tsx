@@ -307,12 +307,12 @@ function CreateVideoQuizContent() {
       return;
     }
 
-    if (!quizData.videoDuration || quizData.videoDuration <= 0) {
-      toast.error('Video duration is invalid', {
-        description: 'Please validate the video URL first',
-      });
-      return;
-    }
+    // Allow saving without duration for Google Drive videos (will be detected during playback)
+    // if (!quizData.videoDuration || quizData.videoDuration <= 0) {
+    //   toast.warning('Video duration not set', {
+    //     description: 'Duration will be detected when the video loads',
+    //   });
+    // }
 
     if (!quizData.questions || quizData.questions.length === 0) {
       toast.error('At least one question is required');
