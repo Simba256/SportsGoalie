@@ -442,7 +442,7 @@ service cloud.firestore {
                        request.resource.data.videoUrl is string &&
                        request.resource.data.videoUrl.size() > 0 &&
                        request.resource.data.videoDuration is number &&
-                       request.resource.data.videoDuration > 0 &&
+                       request.resource.data.videoDuration >= 0 &&
                        exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)) &&
                        exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId));
 

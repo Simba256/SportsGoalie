@@ -53,9 +53,10 @@ function AdminQuizzesPageContent() {
     try {
       setLoading(true);
       // Admin should see ALL quizzes, not just published ones
+      // Temporarily remove orderBy to test if that's causing permission issues
       const result = await videoQuizService.getVideoQuizzes({
         limit: 100,
-        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        // orderBy: [{ field: 'createdAt', direction: 'desc' }],
       });
 
       if (result.success && result.data) {
