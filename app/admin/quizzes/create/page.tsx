@@ -170,9 +170,20 @@ function CreateVideoQuizContent() {
       });
     } catch (error) {
       console.error('Video validation error:', error);
-      toast.warning('Could not validate video automatically', {
-        description: 'The video will be saved. Duration will be detected during playback.',
-      });
+
+      // Check if it's a CORS error (common with Firebase Storage)
+      const isCorsError = error instanceof Error &&
+        (error.message.includes('CORS') || error.message.includes('Failed to load video'));
+
+      if (isCorsError) {
+        toast.info('Video uploaded successfully', {
+          description: 'Duration will be auto-detected when students view the video.',
+        });
+      } else {
+        toast.warning('Could not validate video automatically', {
+          description: 'The video will be saved. Duration will be detected during playback.',
+        });
+      }
 
       // Still allow saving with the URL
       const processedUrl = convertGoogleDriveUrl(url);
