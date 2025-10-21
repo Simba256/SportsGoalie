@@ -32,30 +32,37 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const [loadingState, setLoadingState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [initialPlayStarted, setInitialPlayStarted] = useState(false);
 
-  // Question state
-  const [currentQuestion, setCurrentQuestion] = useState<VideoQuizQuestionWithState | null>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [answeredCount, setAnsweredCount] = useState(0);
+  // Question state - single state to prevent multiple updates
+  const [questionState, setQuestionState] = useState<{
+    current: VideoQuizQuestionWithState | null;
+    showOverlay: boolean;
+    answeredCount: number;
+  }>({
+    current: null,
+    showOverlay: false,
+    answeredCount: 0,
+  });
 
   // Refs for tracking without causing re-renders
   const triggeredQuestions = useRef(new Set<string>());
   const processingQuestion = useRef(false);
   const playingRef = useRef(playing);
   const currentTimeRef = useRef(0);
+  const questionsRef = useRef(questions);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update playing ref when state changes
+  // Update refs when state changes
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
 
-  // Reset triggered questions when questions change
+  // Update questions ref when prop changes
   useEffect(() => {
+    questionsRef.current = questions;
     if (questions && questions.length > 0) {
-      console.log('🔄 [VideoQuizPlayer] Questions updated, resetting triggers');
-      triggeredQuestions.current.clear();
-      processingQuestion.current = false;
+      console.log('🔄 [VideoQuizPlayer] Questions updated:', questions.length);
       const answered = questions.filter(q => q.answered).length;
-      setAnsweredCount(answered);
+      setQuestionState(prev => ({ ...prev, answeredCount: answered }));
     }
   }, [questions]);
 
@@ -66,16 +73,19 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     }
   }, [loadingState, initialTime]);
 
-  // Question checker - completely independent from React Player
+  // Question checker - runs once on mount
   useEffect(() => {
-    if (!questions || questions.length === 0) {
-      return;
-    }
+    console.log('📍 [VideoQuizPlayer] Starting question checker');
 
-    console.log('📍 [VideoQuizPlayer] Starting question checker interval');
+    const checkForQuestions = () => {
+      // Use refs to avoid stale closures
+      const currentQuestions = questionsRef.current;
 
-    const checkInterval = setInterval(() => {
-      // Skip if we're already processing a question or overlay is showing
+      if (!currentQuestions || currentQuestions.length === 0) {
+        return;
+      }
+
+      // Skip if already processing or not playing
       if (processingQuestion.current || !playingRef.current) {
         return;
       }
@@ -83,7 +93,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
       const currentSeconds = currentTimeRef.current;
 
       // Check each question
-      for (const question of questions) {
+      for (const question of currentQuestions) {
         // Skip if already triggered or answered
         if (triggeredQuestions.current.has(question.id) || question.answered) {
           continue;
@@ -91,31 +101,35 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
 
         // Check if we're within range of the question timestamp
         if (Math.abs(currentSeconds - question.timestamp) < 0.3) {
-          console.log('🎯 [VideoQuizPlayer] Question triggered at:', {
-            questionId: question.id,
-            timestamp: question.timestamp,
-            currentTime: currentSeconds,
-          });
+          console.log('🎯 [VideoQuizPlayer] Question triggered:', question.id);
 
-          // Mark as processing to prevent re-triggers
+          // Mark as processing
           processingQuestion.current = true;
           triggeredQuestions.current.add(question.id);
 
-          // Trigger the question display
+          // Single state update to prevent multiple renders
           setPlaying(false);
-          setCurrentQuestion(question);
-          setShowOverlay(true);
+          setQuestionState(prev => ({
+            ...prev,
+            current: question,
+            showOverlay: true,
+          }));
 
           break;
         }
       }
-    }, 200); // Check every 200ms
+    };
+
+    // Set up interval
+    intervalRef.current = setInterval(checkForQuestions, 250);
 
     return () => {
-      console.log('🛑 [VideoQuizPlayer] Clearing question checker interval');
-      clearInterval(checkInterval);
+      console.log('🛑 [VideoQuizPlayer] Clearing question checker');
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     };
-  }, [questions]); // Only depend on questions array
+  }, []); // Run once on mount, no dependencies
 
   // Simple progress handler - only tracks time
   const handleProgress = useCallback((state: OnProgressProps) => {
@@ -138,22 +152,24 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   // Handle question answer
   const handleAnswerSubmit = useCallback(
     (answer: string | string[]) => {
-      if (!currentQuestion) return;
+      if (!questionState.current) return;
 
       console.log('✅ [VideoQuizPlayer] Answer submitted:', {
-        questionId: currentQuestion.id,
+        questionId: questionState.current.id,
         answer,
       });
 
       // Notify parent
-      onQuestionAnswer(currentQuestion.id, answer);
+      onQuestionAnswer(questionState.current.id, answer);
 
-      // Update UI
-      setAnsweredCount(prev => prev + 1);
+      // Single state update
+      setQuestionState(prev => ({
+        current: null,
+        showOverlay: false,
+        answeredCount: prev.answeredCount + 1,
+      }));
 
-      // Clear question and resume
-      setCurrentQuestion(null);
-      setShowOverlay(false);
+      // Reset processing flag
       processingQuestion.current = false;
 
       // Resume playback after a short delay
@@ -163,13 +179,14 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
 
       // Check if quiz is complete
       const totalAnswered = triggeredQuestions.current.size;
-      if (questions && totalAnswered >= questions.length && onComplete) {
+      const totalQuestions = questionsRef.current?.length || 0;
+      if (totalAnswered >= totalQuestions && onComplete) {
         setTimeout(() => {
           onComplete();
         }, 1000);
       }
     },
-    [currentQuestion, questions, onQuestionAnswer, onComplete]
+    [questionState.current, onQuestionAnswer, onComplete]
   );
 
   // Handle seeking
@@ -177,9 +194,10 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     (time: number) => {
       currentTimeRef.current = time;
 
-      if (settings.requireSequentialAnswers && questions) {
+      const currentQuestions = questionsRef.current;
+      if (settings.requireSequentialAnswers && currentQuestions) {
         // Check for unanswered questions before seek point
-        const unanswered = questions.find(
+        const unanswered = currentQuestions.find(
           q => !q.answered &&
                !triggeredQuestions.current.has(q.id) &&
                q.timestamp < time
@@ -193,15 +211,18 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           processingQuestion.current = true;
           triggeredQuestions.current.add(unanswered.id);
           setPlaying(false);
-          setCurrentQuestion(unanswered);
-          setShowOverlay(true);
+          setQuestionState(prev => ({
+            ...prev,
+            current: unanswered,
+            showOverlay: true,
+          }));
           return;
         }
       }
 
       playerRef.current?.seekTo(time, 'seconds');
     },
-    [questions, settings.requireSequentialAnswers]
+    [settings.requireSequentialAnswers]
   );
 
   // Handle playback rate change
@@ -243,8 +264,9 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const handleEnded = useCallback(() => {
     setPlaying(false);
 
-    if (questions) {
-      const unanswered = questions.filter(
+    const currentQuestions = questionsRef.current;
+    if (currentQuestions) {
+      const unanswered = currentQuestions.filter(
         q => !q.answered && !triggeredQuestions.current.has(q.id)
       );
 
@@ -254,11 +276,11 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         onComplete();
       }
     }
-  }, [questions, onComplete]);
+  }, [onComplete]);
 
   // Calculate question number for overlay
-  const questionNumber = currentQuestion && questions
-    ? questions.findIndex(q => q.id === currentQuestion.id) + 1
+  const questionNumber = questionState.current && questionsRef.current
+    ? questionsRef.current.findIndex(q => q.id === questionState.current!.id) + 1
     : 0;
 
   return (
@@ -350,11 +372,11 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         )}
 
         {/* Question Overlay */}
-        {showOverlay && currentQuestion && (
+        {questionState.showOverlay && questionState.current && (
           <QuestionOverlay
-            question={currentQuestion}
+            question={questionState.current}
             questionNumber={questionNumber}
-            totalQuestions={questions?.length || 0}
+            totalQuestions={questionsRef.current?.length || 0}
             onAnswer={handleAnswerSubmit}
           />
         )}
@@ -370,14 +392,14 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           onPlayPause={() => setPlaying(!playing)}
           onSeek={handleSeek}
           onPlaybackRateChange={settings?.allowPlaybackSpeedChange ? handlePlaybackRateChange : undefined}
-          disabled={showOverlay}
+          disabled={questionState.showOverlay}
         />
       )}
 
       {/* Progress Indicator */}
       {settings.showProgressBar && questions && questions.length > 0 && (
         <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-medium z-20">
-          {answeredCount} / {questions.length} answered
+          {questionState.answeredCount} / {questions.length} answered
         </div>
       )}
     </div>
