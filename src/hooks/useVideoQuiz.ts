@@ -98,28 +98,32 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     return mappedQuestions;
   });
 
-  // Update questionsWithState when quiz data arrives
+  // Update questionsWithState when quiz data arrives (only on mount/quiz change)
   useEffect(() => {
-    if (quiz && quiz.questions) {
-      console.log('🔄 [useVideoQuiz] Quiz data changed, updating questionsWithState:', {
-        quizQuestions: quiz.questions,
-        questionsCount: quiz.questions?.length,
-        firstQuestion: quiz.questions?.[0],
-      });
+    if (quiz && quiz.questions && quiz.questions.length > 0) {
+      console.log('🔄 [useVideoQuiz] Quiz data arrived, checking if update needed');
 
-      const mappedQuestions = quiz.questions.map((q) => ({
-        ...q,
-        answered: initialProgress?.questionsAnswered.some((a) => a.questionId === q.id) || false,
-      }));
+      setQuestionsWithState((currentState) => {
+        // Only update if the questions are actually different (prevent infinite loop)
+        if (currentState.length === 0) {
+          const mappedQuestions = quiz.questions.map((q) => ({
+            ...q,
+            answered: false, // Start with all questions unanswered
+            userAnswer: undefined,
+            isCorrect: undefined,
+          }));
 
-      setQuestionsWithState(mappedQuestions);
+          console.log('✅ [useVideoQuiz] Initialized questionsWithState:', {
+            mappedQuestionsCount: mappedQuestions.length,
+            firstMappedQuestion: mappedQuestions[0],
+          });
 
-      console.log('✅ [useVideoQuiz] Updated questionsWithState:', {
-        mappedQuestionsCount: mappedQuestions.length,
-        firstMappedQuestion: mappedQuestions[0],
+          return mappedQuestions;
+        }
+        return currentState;
       });
     }
-  }, [quiz, initialProgress]);
+  }, [quiz?.id]); // Only depend on quiz ID to avoid infinite loops
 
   const watchStartTime = useRef<number>(Date.now());
   const lastSaveTime = useRef<number>(Date.now());
@@ -232,9 +236,14 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
         };
       });
 
-      // Update question state
-      setQuestionsWithState((prev) =>
-        prev.map((q) =>
+      // Update question state - use callback to ensure we have latest state
+      setQuestionsWithState((prev) => {
+        if (!prev || !Array.isArray(prev)) {
+          console.error('❌ [useVideoQuiz] Invalid questionsWithState:', prev);
+          return prev || [];
+        }
+
+        return prev.map((q) =>
           q.id === questionId
             ? {
                 ...q,
@@ -243,8 +252,8 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
                 isCorrect,
               }
             : q
-        )
-      );
+        );
+      });
     },
     [quiz, checkAnswer]
   );
