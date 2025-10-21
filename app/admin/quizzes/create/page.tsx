@@ -369,6 +369,9 @@ function CreateVideoQuizContent() {
         nullFields: Object.keys(quizToCreate).filter(key => quizToCreate[key as keyof typeof quizToCreate] === null),
         settings: quizData.settings,
         questions: quizData.questions,
+        questionsCount: quizData.questions?.length,
+        questionsIsArray: Array.isArray(quizData.questions),
+        firstQuestion: quizData.questions?.[0],
       });
 
       const result = await videoQuizService.createVideoQuiz(quizToCreate);

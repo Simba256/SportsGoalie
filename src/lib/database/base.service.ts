@@ -782,6 +782,17 @@ export class BaseDatabaseService {
     // Remove undefined fields before passing to Firestore
     const sanitizedData = this.removeUndefinedFields(data);
 
+    // DEBUG: Log for video quizzes
+    if (collectionName === 'video_quizzes') {
+      console.log('🔧 [BaseDatabaseService] Sanitized data for Firestore:', {
+        hasQuestions: !!sanitizedData.questions,
+        questionsCount: sanitizedData.questions?.length,
+        questionsIsArray: Array.isArray(sanitizedData.questions),
+        firstQuestion: sanitizedData.questions?.[0],
+        allKeys: Object.keys(sanitizedData),
+      });
+    }
+
     const result = await this.create<T>(collectionName, sanitizedData);
     if (!result.success || !result.data) {
       throw new DatabaseError(

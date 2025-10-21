@@ -165,6 +165,14 @@ export class VideoQuizService extends BaseDatabaseService {
       };
 
       // DEBUG: Log the exact data being sent to Firestore
+      console.log('📦 [VideoQuizService] Preparing to save quiz:', {
+        hasQuestions: !!videoQuizData.questions,
+        questionsCount: videoQuizData.questions?.length,
+        questionsIsArray: Array.isArray(videoQuizData.questions),
+        firstQuestion: videoQuizData.questions?.[0],
+        questionsField: videoQuizData.questions,
+      });
+
       logger.debug('Creating video quiz with data', 'VideoQuizService', {
         videoQuizData: JSON.stringify(videoQuizData, (key, value) => {
           if (value === undefined) {
@@ -186,9 +194,23 @@ export class VideoQuizService extends BaseDatabaseService {
 
       const docId = await this.addDocument(this.VIDEO_QUIZZES_COLLECTION, videoQuizData);
 
+      // DEBUG: Verify what was saved
+      console.log('✅ [VideoQuizService] Quiz created with ID:', docId);
+
+      // Immediately read it back to verify
+      const verifyQuiz = await this.getDocument<VideoQuiz>(this.VIDEO_QUIZZES_COLLECTION, docId);
+      console.log('🔄 [VideoQuizService] Verification read after create:', {
+        docId,
+        hasQuiz: !!verifyQuiz,
+        hasQuestions: !!verifyQuiz?.questions,
+        questionsCount: verifyQuiz?.questions?.length,
+        firstQuestion: verifyQuiz?.questions?.[0],
+      });
+
       logger.info('Video quiz created successfully', 'VideoQuizService', {
         quizId: docId,
         title: quiz.title,
+        questionsCount: verifyQuiz?.questions?.length || 0,
       });
 
       return {
@@ -238,13 +260,53 @@ export class VideoQuizService extends BaseDatabaseService {
       }
 
       // DEBUG: Log what was fetched from Firestore
-      logger.debug('Video quiz fetched from Firestore', 'VideoQuizService', {
+      console.log('🔍 [VideoQuizService] Raw quiz from Firestore:', {
         quizId,
         hasQuestions: !!quiz.questions,
         questionsIsArray: Array.isArray(quiz.questions),
         questionsLength: quiz.questions?.length,
+        questionsType: typeof quiz.questions,
         firstQuestion: quiz.questions?.[0],
         allFields: Object.keys(quiz),
+        rawQuestions: quiz.questions,
+      });
+
+      // Ensure questions field exists and is an array
+      if (!quiz.questions) {
+        console.warn('⚠️ Quiz has no questions field, initializing as empty array');
+        quiz.questions = [];
+      } else if (!Array.isArray(quiz.questions)) {
+        console.warn('⚠️ Questions field is not an array:', typeof quiz.questions);
+        // Try to convert if it's an object with numeric keys (like from Firestore)
+        if (typeof quiz.questions === 'object') {
+          const questionsArray = Object.values(quiz.questions);
+          console.log('📋 Converting questions object to array:', questionsArray);
+          quiz.questions = questionsArray as any;
+        } else {
+          quiz.questions = [];
+        }
+      }
+
+      // Ensure each question has required fields
+      quiz.questions = quiz.questions.map((q: any, index: number) => {
+        // Make sure question has an ID
+        if (!q.id) {
+          q.id = `q_${quizId}_${index}`;
+        }
+        // Make sure question has points
+        if (q.points === undefined || q.points === null) {
+          q.points = 10; // Default points
+        }
+        // Make sure question has required field
+        if (q.required === undefined) {
+          q.required = true;
+        }
+        return q;
+      });
+
+      logger.debug('Video quiz processed', 'VideoQuizService', {
+        quizId,
+        finalQuestionsCount: quiz.questions.length,
       });
 
       return {
