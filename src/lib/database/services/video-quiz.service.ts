@@ -301,16 +301,17 @@ export class VideoQuizService extends BaseDatabaseService {
     logger.database('query', this.VIDEO_QUIZZES_COLLECTION, undefined, { admin: true });
 
     try {
-      const result = await this.queryDocuments<VideoQuiz>(
+      const result = await this.query<VideoQuiz>(
         this.VIDEO_QUIZZES_COLLECTION,
         options || {}
       );
 
-      return {
-        success: true,
-        data: result,
-        timestamp: new Date(),
-      };
+      if (!result.success) {
+        logger.error('Query failed', 'VideoQuizService', result.error);
+        return result;
+      }
+
+      return result;
     } catch (error) {
       logger.error('Failed to fetch video quizzes', 'VideoQuizService', error as Error);
       return {
@@ -339,7 +340,7 @@ export class VideoQuizService extends BaseDatabaseService {
         { field: 'isPublished', operator: '==' as const, value: true },
       ];
 
-      const result = await this.queryDocuments<VideoQuiz>(
+      const result = await this.query<VideoQuiz>(
         this.VIDEO_QUIZZES_COLLECTION,
         {
           ...options,
@@ -347,11 +348,12 @@ export class VideoQuizService extends BaseDatabaseService {
         }
       );
 
-      return {
-        success: true,
-        data: result,
-        timestamp: new Date(),
-      };
+      if (!result.success) {
+        logger.error('Query failed', 'VideoQuizService', result.error);
+        return result;
+      }
+
+      return result;
     } catch (error) {
       logger.error('Failed to fetch published video quizzes', 'VideoQuizService', error as Error);
       return {
@@ -376,7 +378,7 @@ export class VideoQuizService extends BaseDatabaseService {
     logger.database('query', this.VIDEO_QUIZZES_COLLECTION, undefined, { skillId });
 
     try {
-      const result = await this.queryDocuments<VideoQuiz>(
+      const result = await this.query<VideoQuiz>(
         this.VIDEO_QUIZZES_COLLECTION,
         {
           ...options,
@@ -388,11 +390,12 @@ export class VideoQuizService extends BaseDatabaseService {
         }
       );
 
-      return {
-        success: true,
-        data: result,
-        timestamp: new Date(),
-      };
+      if (!result.success) {
+        logger.error('Query failed', 'VideoQuizService', result.error);
+        return result;
+      }
+
+      return result;
     } catch (error) {
       logger.error('Failed to fetch video quizzes by skill', 'VideoQuizService', error as Error, {
         skillId,
