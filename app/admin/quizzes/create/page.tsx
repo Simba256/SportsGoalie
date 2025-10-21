@@ -20,11 +20,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Save, Loader2, Video, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Video, AlertCircle, Upload, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { storage } from '@/lib/firebase/config';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 function CreateVideoQuizContent() {
   const router = useRouter();
@@ -35,6 +37,9 @@ function CreateVideoQuizContent() {
   const [videoUrl, setVideoUrl] = useState('');
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [videoValidating, setVideoValidating] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'url' | 'upload'>('url');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   const [quizData, setQuizData] = useState<Partial<VideoQuiz>>({
     title: '',
@@ -94,20 +99,60 @@ function CreateVideoQuizContent() {
       return;
     }
 
+    // Helper to convert Google Drive URLs to direct video URLs
+    const convertGoogleDriveUrl = (inputUrl: string): string => {
+      // Check if it's a Google Drive URL
+      const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+      const match = inputUrl.match(driveRegex);
+
+      if (match && match[1]) {
+        // Convert to direct video URL format
+        return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+      }
+
+      return inputUrl;
+    };
+
     setVideoValidating(true);
     try {
+      // Convert Google Drive URLs if needed
+      const processedUrl = convertGoogleDriveUrl(url);
+
+      // For Google Drive URLs, we can't always validate duration due to CORS
+      // but we can set it up for playback
+      if (url.includes('drive.google.com')) {
+        toast.info('Google Drive video detected', {
+          description: 'Duration will be detected when the video plays. Make sure the video is publicly accessible.',
+        });
+
+        setQuizData(prev => ({
+          ...prev,
+          videoUrl: processedUrl,
+          videoDuration: 0, // Will be set when video loads in player
+        }));
+
+        setVideoValidating(false);
+        return;
+      }
+
       // Create a video element to validate and get duration
       const video = document.createElement('video');
-      video.src = url;
+      video.src = processedUrl;
       video.preload = 'metadata';
+      video.crossOrigin = 'anonymous';
 
       await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Video validation timeout'));
+        }, 10000); // 10 second timeout
+
         video.onloadedmetadata = () => {
+          clearTimeout(timeout);
           if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
             setVideoDuration(Math.floor(video.duration));
             setQuizData(prev => ({
               ...prev,
-              videoUrl: url,
+              videoUrl: processedUrl,
               videoDuration: Math.floor(video.duration),
             }));
             toast.success('Video validated successfully', {
@@ -118,16 +163,97 @@ function CreateVideoQuizContent() {
             reject(new Error('Invalid video duration'));
           }
         };
-        video.onerror = () => reject(new Error('Failed to load video'));
+        video.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('Failed to load video'));
+        };
       });
     } catch (error) {
       console.error('Video validation error:', error);
-      toast.error('Failed to validate video', {
-        description: 'Please check the video URL and try again',
+      toast.warning('Could not validate video automatically', {
+        description: 'The video will be saved. Duration will be detected during playback.',
       });
-      setVideoDuration(0);
+
+      // Still allow saving with the URL
+      const processedUrl = convertGoogleDriveUrl(url);
+      setQuizData(prev => ({
+        ...prev,
+        videoUrl: processedUrl,
+        videoDuration: 0,
+      }));
     } finally {
       setVideoValidating(false);
+    }
+  };
+
+  const handleVideoFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast.error('Please select a valid video file');
+      return;
+    }
+
+    // Validate file size (max 500MB)
+    const maxSize = 500 * 1024 * 1024; // 500MB
+    if (file.size > maxSize) {
+      toast.error('Video file is too large', {
+        description: 'Maximum file size is 500MB',
+      });
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Create a unique file name
+      const timestamp = Date.now();
+      const fileName = `video-quizzes/${timestamp}-${file.name}`;
+      const storageRef = ref(storage, fileName);
+
+      // Start upload
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          // Track upload progress
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        },
+        (error) => {
+          console.error('Upload error:', error);
+          toast.error('Failed to upload video', {
+            description: error.message,
+          });
+          setUploading(false);
+        },
+        async () => {
+          // Upload complete, get download URL
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+            toast.success('Video uploaded successfully');
+
+            // Validate the uploaded video
+            await validateVideoUrl(downloadURL);
+
+            setUploading(false);
+            setUploadProgress(0);
+          } catch (error) {
+            console.error('Error getting download URL:', error);
+            toast.error('Failed to get video URL');
+            setUploading(false);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload video');
+      setUploading(false);
     }
   };
 
@@ -402,39 +528,100 @@ function CreateVideoQuizContent() {
               <Alert>
                 <Video className="h-4 w-4" />
                 <AlertDescription>
-                  Enter a direct video URL (MP4, WebM, or streaming URL). The video must be publicly accessible.
+                  Provide a video by entering a URL or uploading a file directly.
                 </AlertDescription>
               </Alert>
 
-              <div>
-                <Label htmlFor="videoUrl">Video URL *</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="videoUrl"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://example.com/video.mp4"
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() => validateVideoUrl(videoUrl)}
-                    disabled={!videoUrl || videoValidating}
-                    variant="outline"
-                  >
-                    {videoValidating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Validating...
-                      </>
-                    ) : (
-                      'Validate'
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Click "Validate" to check the video and auto-detect duration
-                </p>
+              {/* Video Input Mode Selector */}
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                <Button
+                  variant={uploadMode === 'url' ? 'default' : 'ghost'}
+                  className="flex-1"
+                  onClick={() => setUploadMode('url')}
+                  type="button"
+                >
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  Video URL
+                </Button>
+                <Button
+                  variant={uploadMode === 'upload' ? 'default' : 'ghost'}
+                  className="flex-1"
+                  onClick={() => setUploadMode('upload')}
+                  type="button"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload File
+                </Button>
               </div>
+
+              {/* URL Input Mode */}
+              {uploadMode === 'url' && (
+                <div>
+                  <Label htmlFor="videoUrl">Video URL *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="videoUrl"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder="https://example.com/video.mp4 or Google Drive link"
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => validateVideoUrl(videoUrl)}
+                      disabled={!videoUrl || videoValidating}
+                      variant="outline"
+                      type="button"
+                    >
+                      {videoValidating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Validating...
+                        </>
+                      ) : (
+                        'Validate'
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Supports direct video URLs, YouTube, Vimeo, and Google Drive links
+                  </p>
+                </div>
+              )}
+
+              {/* File Upload Mode */}
+              {uploadMode === 'upload' && (
+                <div>
+                  <Label htmlFor="videoFile">Upload Video File *</Label>
+                  <div className="mt-2">
+                    <Input
+                      id="videoFile"
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoFileUpload}
+                      disabled={uploading}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum file size: 500MB. Supported formats: MP4, WebM, MOV
+                    </p>
+                  </div>
+
+                  {uploading && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Uploading...</span>
+                        <span className="text-sm text-gray-600">{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {videoDuration > 0 && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">

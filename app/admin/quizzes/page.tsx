@@ -59,12 +59,20 @@ function AdminQuizzesPageContent() {
 
       if (result.success && result.data) {
         setQuizzes(result.data.items);
+        if (result.data.items.length === 0) {
+          console.log('No video quizzes found in database');
+        }
       } else {
-        toast.error('Failed to load video quizzes');
+        console.error('Failed to load video quizzes:', result.error);
+        toast.error('Failed to load video quizzes', {
+          description: result.error?.message || 'Please try again',
+        });
       }
     } catch (error) {
       console.error('Error loading quizzes:', error);
-      toast.error('Failed to load video quizzes');
+      toast.error('Failed to load video quizzes', {
+        description: 'An unexpected error occurred',
+      });
     } finally {
       setLoading(false);
     }
