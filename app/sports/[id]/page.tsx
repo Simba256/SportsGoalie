@@ -138,11 +138,20 @@ export default function SportDetailPage() {
       await Promise.all(
         state.skills.map(async (skill) => {
           try {
+            console.log(`📚 Loading progress for skill ${skill.id}`);
+
             // Get the latest video quiz attempt for this skill
             const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, {
               skillId: skill.id,
               completed: true,
               limit: 1,
+            });
+
+            console.log(`📈 Progress result for skill ${skill.id}:`, {
+              success: attemptsResult.success,
+              hasData: !!attemptsResult.data,
+              itemsCount: attemptsResult.data?.items?.length || 0,
+              error: attemptsResult.error,
             });
 
             if (attemptsResult.success && attemptsResult.data?.items.length > 0) {
@@ -151,8 +160,10 @@ export default function SportDetailPage() {
                 percentage: latestAttempt.percentage,
                 passed: latestAttempt.passed,
               };
+              console.log(`✅ Found progress for skill ${skill.id}:`, progressMap[skill.id]);
             } else {
               progressMap[skill.id] = null;
+              console.log(`❌ No progress found for skill ${skill.id}`);
             }
           } catch (error) {
             console.error(`Failed to load progress for skill ${skill.id}:`, error);

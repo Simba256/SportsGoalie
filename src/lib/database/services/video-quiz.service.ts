@@ -724,10 +724,23 @@ export class VideoQuizService extends BaseDatabaseService {
         limit: filters?.limit || 10,
       };
 
+      // Debug logging
+      console.log('🔍 [VideoQuizService] Querying video quiz progress:', {
+        collection: this.VIDEO_QUIZ_PROGRESS_COLLECTION,
+        whereConditions,
+        queryOptions,
+      });
+
       const result = await this.query<VideoQuizProgress>(
         this.VIDEO_QUIZ_PROGRESS_COLLECTION,
         queryOptions
       );
+
+      console.log('📊 [VideoQuizService] Query result:', {
+        success: result.success,
+        itemsCount: result.data?.items?.length || 0,
+        error: result.error,
+      });
 
       return result;
     } catch (error) {
