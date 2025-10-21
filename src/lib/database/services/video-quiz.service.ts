@@ -6,6 +6,7 @@ import {
   ApiResponse,
   PaginatedResponse,
   QueryOptions,
+  WhereClause,
   DifficultyLevel,
 } from '@/types';
 import { logger } from '../../utils/logger';
@@ -694,34 +695,38 @@ export class VideoQuizService extends BaseDatabaseService {
       completed?: boolean;
       limit?: number;
     }
-  ): Promise<ApiResponse<QueryResult<VideoQuizProgress>>> {
+  ): Promise<ApiResponse<PaginatedResponse<VideoQuizProgress>>> {
     logger.database('query', this.VIDEO_QUIZ_PROGRESS_COLLECTION, undefined, {
       userId,
       filters,
     });
 
     try {
-      const constraints: any[] = [{ field: 'userId', operator: '==', value: userId }];
+      const whereConditions: WhereClause[] = [
+        { field: 'userId', operator: '==', value: userId }
+      ];
 
       if (filters?.skillId) {
-        constraints.push({ field: 'skillId', operator: '==', value: filters.skillId });
+        whereConditions.push({ field: 'skillId', operator: '==', value: filters.skillId });
       }
 
       if (filters?.sportId) {
-        constraints.push({ field: 'sportId', operator: '==', value: filters.sportId });
+        whereConditions.push({ field: 'sportId', operator: '==', value: filters.sportId });
       }
 
       if (filters?.completed !== undefined) {
-        constraints.push({ field: 'isCompleted', operator: '==', value: filters.completed });
+        whereConditions.push({ field: 'isCompleted', operator: '==', value: filters.completed });
       }
+
+      const queryOptions: QueryOptions = {
+        where: whereConditions,
+        orderBy: [{ field: 'completedAt', direction: 'desc' }],
+        limit: filters?.limit || 10,
+      };
 
       const result = await this.query<VideoQuizProgress>(
         this.VIDEO_QUIZ_PROGRESS_COLLECTION,
-        {
-          where: constraints,
-          orderBy: { field: 'completedAt', direction: 'desc' },
-          limit: filters?.limit || 10,
-        }
+        queryOptions
       );
 
       return result;
