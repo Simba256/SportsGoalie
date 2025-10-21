@@ -397,7 +397,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           playbackRate={playbackRate}
           currentTime={currentTime}
           duration={duration}
-          onPlayPause={() => setPlaying(!playing)}
+          onPlayPause={() => setPlaying(prev => !prev)}
           onSeek={handleSeek}
           onPlaybackRateChange={settings?.allowPlaybackSpeedChange ? handlePlaybackRateChange : undefined}
           disabled={questionState.showOverlay}
