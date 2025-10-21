@@ -32,15 +32,19 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [buffering, setBuffering] = useState(false);
   const [loadingState, setLoadingState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [currentQuestion, setCurrentQuestion] = useState<VideoQuizQuestionWithState | null>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
   const [initialPlayStarted, setInitialPlayStarted] = useState(false);
   const [answeredCount, setAnsweredCount] = useState(0); // Track answered count in state
+
+  // Question overlay state - consolidated to prevent multiple state updates
+  const [questionOverlay, setQuestionOverlay] = useState<{
+    show: boolean;
+    question: VideoQuizQuestionWithState | null;
+  }>({ show: false, question: null });
 
   const lastCheckedTime = useRef(0);
   const triggeredQuestions = useRef(new Set<string>());
   const questionsRef = useRef(questions);
-  const isProcessingQuestion = useRef(false); // Prevent multiple triggers
+  const currentTimeRef = useRef(0); // Track current time in ref to avoid state in interval
 
   // Update questions ref when prop changes
   useEffect(() => {
@@ -52,7 +56,6 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     // Clear triggered questions when new questions arrive
     if (questions && questions.length > 0) {
       triggeredQuestions.current.clear();
-      isProcessingQuestion.current = false;
       // Update answered count based on questions prop
       const answered = questions.filter(q => q.answered).length;
       setAnsweredCount(answered);
@@ -66,15 +69,75 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     }
   }, [loadingState, initialTime]);
 
-  // Check for question triggers during playback
+  // Separate question checker - runs independently from ReactPlayer
+  useEffect(() => {
+    // Don't check if overlay is already showing or video not playing
+    if (questionOverlay.show || !playing || !questions || questions.length === 0) {
+      return;
+    }
+
+    const checkForQuestions = () => {
+      const currentSeconds = currentTimeRef.current;
+      const currentQuestions = questionsRef.current;
+
+      // Debug logging
+      if (Math.floor(currentSeconds) % 5 === 0 && Math.floor(currentSeconds) !== lastCheckedTime.current) {
+        lastCheckedTime.current = Math.floor(currentSeconds);
+        console.log('⏰ [VideoQuizPlayer] Question check:', {
+          currentSeconds,
+          questionsCount: currentQuestions.length,
+          triggeredCount: triggeredQuestions.current.size,
+          playing,
+        });
+      }
+
+      // Check each question
+      for (const question of currentQuestions) {
+        // Skip if already triggered or answered
+        if (triggeredQuestions.current.has(question.id) || question.answered) {
+          continue;
+        }
+
+        // Check if we've reached this question's timestamp
+        const timeDiff = Math.abs(currentSeconds - question.timestamp);
+        if (timeDiff < 0.5) {
+          console.log('🎯 [VideoQuizPlayer] Question timestamp reached:', {
+            questionId: question.id,
+            timestamp: question.timestamp,
+            currentTime: currentSeconds,
+            timeDiff,
+          });
+
+          // Mark as triggered
+          triggeredQuestions.current.add(question.id);
+
+          // Defer state updates to next tick to avoid conflicts
+          setTimeout(() => {
+            setPlaying(false);
+            setQuestionOverlay({ show: true, question });
+          }, 0);
+
+          break;
+        }
+      }
+    };
+
+    // Check for questions every 100ms when playing
+    const interval = setInterval(checkForQuestions, 100);
+
+    return () => clearInterval(interval);
+  }, [playing, questionOverlay.show, questions]);
+
+  // Simple progress handler - only updates time, no question logic
   const handleProgress = useCallback(
     (state: OnProgressProps) => {
       const currentSeconds = state.playedSeconds;
-      const currentQuestions = questionsRef.current; // Use ref instead of prop
 
-      // Update current time for UI display (throttled to reduce re-renders)
+      // Update time ref for question checker
+      currentTimeRef.current = currentSeconds;
+
+      // Update current time state for UI (throttled)
       setCurrentTime((prev) => {
-        // Only update if difference is significant (> 0.1 seconds)
         if (Math.abs(prev - currentSeconds) > 0.1) {
           return currentSeconds;
         }
@@ -85,84 +148,31 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
       if (onProgressUpdate) {
         onProgressUpdate(currentSeconds, duration);
       }
-
-      // Early returns to prevent processing
-      if (!currentQuestions || currentQuestions.length === 0) {
-        return;
-      }
-
-      // If we're already processing a question, don't check for new ones
-      // Use ref instead of state to avoid dependency issues
-      if (isProcessingQuestion.current) {
-        return;
-      }
-
-      // Debug logging every 5 seconds
-      if (Math.floor(currentSeconds) % 5 === 0 && Math.floor(currentSeconds) !== lastCheckedTime.current) {
-        lastCheckedTime.current = Math.floor(currentSeconds);
-        console.log('⏰ [VideoQuizPlayer] Progress check:', {
-          currentSeconds,
-          questionsCount: currentQuestions.length,
-          triggeredCount: triggeredQuestions.current.size,
-          isProcessing: isProcessingQuestion.current,
-        });
-      }
-
-      // Check each question to see if we've reached its timestamp
-      for (const question of currentQuestions) {
-        // Skip if already triggered or answered
-        if (triggeredQuestions.current.has(question.id) || question.answered) {
-          continue;
-        }
-
-        // Check if we've reached this question's timestamp (with 0.5 second tolerance)
-        const timeDiff = Math.abs(currentSeconds - question.timestamp);
-        if (timeDiff < 0.5) {
-          console.log('🎯 [VideoQuizPlayer] Question timestamp reached:', {
-            questionId: question.id,
-            timestamp: question.timestamp,
-            currentTime: currentSeconds,
-            timeDiff,
-          });
-
-          // Mark as processing immediately to prevent re-triggers
-          isProcessingQuestion.current = true;
-          triggeredQuestions.current.add(question.id);
-
-          // Pause the video and show the question
-          setPlaying(false);
-          setCurrentQuestion(question);
-          setShowOverlay(true);
-
-          // Stop checking other questions
-          break;
-        }
-      }
     },
-    [duration, onProgressUpdate] // Remove showOverlay from dependencies!
+    [duration, onProgressUpdate]
   );
 
   // Handle question answer submission
   const handleAnswerSubmit = useCallback(
     (answer: string | string[]) => {
-      if (!currentQuestion) return;
+      if (!questionOverlay.question) return;
 
       console.log('✅ [VideoQuizPlayer] Question answered:', {
-        questionId: currentQuestion.id,
+        questionId: questionOverlay.question.id,
         answer,
       });
 
       // Call parent handler
-      onQuestionAnswer(currentQuestion.id, answer);
+      onQuestionAnswer(questionOverlay.question.id, answer);
 
       // Update answered count
       setAnsweredCount(prev => prev + 1);
 
-      // Hide overlay and resume playback
-      setShowOverlay(false);
-      setCurrentQuestion(null);
-      isProcessingQuestion.current = false; // Reset processing flag
-      setPlaying(true);
+      // Hide overlay and resume playback (deferred to avoid state conflicts)
+      setTimeout(() => {
+        setQuestionOverlay({ show: false, question: null });
+        setPlaying(true);
+      }, 0);
 
       // Check if all questions are answered using ref
       const allQuestions = questionsRef.current;
@@ -175,10 +185,10 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         // Wait a moment before completing to allow video to continue
         setTimeout(() => {
           onComplete();
-        }, 500);
+        }, 1000);
       }
     },
-    [currentQuestion, onQuestionAnswer, onComplete]
+    [questionOverlay.question, onQuestionAnswer, onComplete]
   );
 
   // Handle seeking - check if user skipped past a question
@@ -198,11 +208,14 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         if (unansweredBefore) {
           // Force user to answer the question first
           playerRef.current?.seekTo(unansweredBefore.timestamp, 'seconds');
-          isProcessingQuestion.current = true;
           triggeredQuestions.current.add(unansweredBefore.id);
-          setPlaying(false);
-          setCurrentQuestion(unansweredBefore);
-          setShowOverlay(true);
+
+          // Use setTimeout to defer state updates
+          setTimeout(() => {
+            setPlaying(false);
+            setQuestionOverlay({ show: true, question: unansweredBefore });
+          }, 0);
+
           toast.info('Please answer this question first');
           return;
         }
@@ -275,8 +288,8 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   }, [onComplete]);
 
   // Calculate question number
-  const questionNumber = currentQuestion
-    ? questionsRef.current.findIndex((q) => q.id === currentQuestion.id) + 1
+  const questionNumber = questionOverlay.question
+    ? questionsRef.current.findIndex((q) => q.id === questionOverlay.question!.id) + 1
     : 0;
 
   return (
@@ -369,9 +382,9 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         )}
 
         {/* Question Overlay */}
-        {showOverlay && currentQuestion && (
+        {questionOverlay.show && questionOverlay.question && (
           <QuestionOverlay
-            question={currentQuestion}
+            question={questionOverlay.question}
             questionNumber={questionNumber}
             totalQuestions={questionsRef.current.length}
             onAnswer={handleAnswerSubmit}
@@ -389,7 +402,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           onPlayPause={() => setPlaying(!playing)}
           onSeek={handleSeek}
           onPlaybackRateChange={settings?.allowPlaybackSpeedChange ? handlePlaybackRateChange : undefined}
-          disabled={showOverlay}
+          disabled={questionOverlay.show}
         />
       )}
 
