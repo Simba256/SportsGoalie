@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminRoute } from '@/components/auth/protected-route';
+import { useAuth } from '@/lib/auth/context';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings } from '@/types';
@@ -30,6 +31,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 function CreateVideoQuizContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const [sports, setSports] = useState<Sport[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
@@ -333,6 +335,14 @@ function CreateVideoQuizContent() {
     try {
       setSaveLoading(true);
 
+      // Ensure we have a valid user ID
+      if (!user || !user.id) {
+        toast.error('Authentication error', {
+          description: 'Please log in again to create a quiz',
+        });
+        return;
+      }
+
       const quizToCreate = {
         title: quizData.title,
         description: quizData.description || '',
@@ -343,10 +353,12 @@ function CreateVideoQuizContent() {
         instructions: quizData.instructions || '',
         difficulty: quizData.difficulty!,
         tags: quizData.tags || [],
+        category: 'Video Quiz', // Default category for video quizzes
         isActive: quizData.isActive || false,
         isPublished: quizData.isPublished || false,
         questions: quizData.questions,
         settings: quizData.settings!,
+        createdBy: user.id,
       };
 
       const result = await videoQuizService.createVideoQuiz(quizToCreate);

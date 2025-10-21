@@ -177,14 +177,22 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCode = (error as any)?.code || 'VIDEO_QUIZ_CREATE_FAILED';
+
       logger.error('Failed to create video quiz', 'VideoQuizService', error as Error, {
         title: quiz.title,
+        errorMessage,
+        errorCode,
+        sportId: quiz.sportId,
+        skillId: quiz.skillId,
       });
+
       return {
         success: false,
         error: {
-          code: 'VIDEO_QUIZ_CREATE_FAILED',
-          message: 'Failed to create video quiz',
+          code: errorCode,
+          message: errorMessage || 'Failed to create video quiz',
           details: error,
         },
         timestamp: new Date(),
