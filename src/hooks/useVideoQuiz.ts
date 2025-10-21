@@ -98,6 +98,29 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     return mappedQuestions;
   });
 
+  // Update questionsWithState when quiz data arrives
+  useEffect(() => {
+    if (quiz && quiz.questions) {
+      console.log('🔄 [useVideoQuiz] Quiz data changed, updating questionsWithState:', {
+        quizQuestions: quiz.questions,
+        questionsCount: quiz.questions?.length,
+        firstQuestion: quiz.questions?.[0],
+      });
+
+      const mappedQuestions = quiz.questions.map((q) => ({
+        ...q,
+        answered: initialProgress?.questionsAnswered.some((a) => a.questionId === q.id) || false,
+      }));
+
+      setQuestionsWithState(mappedQuestions);
+
+      console.log('✅ [useVideoQuiz] Updated questionsWithState:', {
+        mappedQuestionsCount: mappedQuestions.length,
+        firstMappedQuestion: mappedQuestions[0],
+      });
+    }
+  }, [quiz, initialProgress]);
+
   const watchStartTime = useRef<number>(Date.now());
   const lastSaveTime = useRef<number>(Date.now());
 
