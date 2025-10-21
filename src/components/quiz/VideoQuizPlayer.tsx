@@ -190,7 +190,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         }, 1000);
       }
     },
-    [questionState.current, onQuestionAnswer, onComplete]
+    [onQuestionAnswer, onComplete] // Removed questionState.current - it's accessed directly in closure
   );
 
   // Handle seeking
