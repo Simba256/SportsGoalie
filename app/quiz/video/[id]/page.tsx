@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -118,8 +118,14 @@ function VideoQuizPageContent() {
     } : null
   );
 
+  // Memoize the progress update callback to prevent re-renders
+  const handleProgressUpdate = useCallback((currentTime: number, duration: number) => {
+    // You can add progress tracking logic here if needed
+    // For now, just an empty callback that won't change
+  }, []);
+
   // Handle quiz completion
-  const handleQuizComplete = async () => {
+  const handleQuizComplete = useCallback(async () => {
     if (!videoQuizHook) return;
 
     try {
@@ -144,7 +150,7 @@ function VideoQuizPageContent() {
       console.error('Error completing quiz:', error);
       toast.error('Failed to complete quiz');
     }
-  };
+  }, [videoQuizHook, quizId, router]);
 
   // Loading state
   if (loading) {
@@ -231,7 +237,7 @@ function VideoQuizPageContent() {
             settings={quiz.settings}
             initialTime={progress.currentTime}
             onQuestionAnswer={handleQuestionAnswer}
-            onProgressUpdate={() => {}}
+            onProgressUpdate={handleProgressUpdate}
             onComplete={handleQuizComplete}
           />
 
