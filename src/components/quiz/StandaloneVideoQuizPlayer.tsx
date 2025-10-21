@@ -8,6 +8,7 @@ import { QuestionOverlay } from './QuestionOverlay';
 import { VideoControls } from './VideoControls';
 import { Loader2 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 interface StandaloneVideoQuizPlayerProps {
   quiz: VideoQuiz;
@@ -47,6 +48,8 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
   // Dynamic tracking refs
   const currentTimeRef = useRef(0);
   const isProcessingRef = useRef(false);
+  const videoEndedRef = useRef(false);
+  const allQuestionsAnsweredRef = useRef(false);
 
   // UI State - minimal, only what affects rendering
   const [isReady, setIsReady] = useState(false);
@@ -93,6 +96,27 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
 
     console.log('✅ Initialized with', questionsRef.current.length, 'questions');
   }, []); // Empty deps - only run once on mount
+
+  // Check if quiz should complete (both conditions must be met)
+  const checkAndCompleteQuiz = useCallback(() => {
+    if (videoEndedRef.current && allQuestionsAnsweredRef.current) {
+      console.log('🎉 Quiz complete - both video ended and all questions answered!');
+      progressRef.current.isCompleted = true;
+      progressRef.current.status = 'submitted';
+      progressRef.current.completedAt = Timestamp.now();
+
+      setTimeout(() => {
+        onComplete(progressRef.current);
+      }, 1000);
+    } else {
+      console.log('📋 Completion check:', {
+        videoEnded: videoEndedRef.current,
+        allQuestionsAnswered: allQuestionsAnsweredRef.current,
+        answeredCount: answeredQuestionsRef.current.size,
+        totalQuestions: questionsRef.current.length,
+      });
+    }
+  }, [onComplete]);
 
   // Progress handler - called by ReactPlayer
   const handleProgress = useCallback((state: OnProgressProps) => {
@@ -211,18 +235,15 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
     setOverlayQuestion(null);
     setTimeout(() => setPlaying(true), 100);
 
-    // Check if quiz is complete
+    // Check if all questions are answered
     if (answeredQuestionsRef.current.size >= questionsRef.current.length) {
-      console.log('🎉 Quiz complete!');
-      progressRef.current.isCompleted = true;
-      progressRef.current.status = 'submitted';
-      progressRef.current.completedAt = Timestamp.now();
+      console.log('✅ All questions answered');
+      allQuestionsAnsweredRef.current = true;
 
-      setTimeout(() => {
-        onComplete(progressRef.current);
-      }, 1000);
+      // Check if we should complete the quiz (both conditions)
+      checkAndCompleteQuiz();
     }
-  }, [overlayQuestion, quiz.settings.passingScore, onComplete]);
+  }, [overlayQuestion, quiz.settings.passingScore, checkAndCompleteQuiz]);
 
   // Video event handlers
   const handleReady = useCallback(() => {
@@ -240,21 +261,26 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
 
   const handleEnded = useCallback(() => {
     setPlaying(false);
+    console.log('🎬 Video ended');
+    videoEndedRef.current = true;
 
     const unanswered = questionsRef.current.filter(
       q => !answeredQuestionsRef.current.has(q.id)
     );
 
     if (unanswered.length > 0) {
-      console.log(`⚠️ ${unanswered.length} unanswered questions`);
-    }
+      console.log(`⚠️ ${unanswered.length} unanswered questions remaining`);
+      // Don't complete yet - user needs to answer all questions
+      toast.warning(`Please answer ${unanswered.length} remaining question(s) to complete the quiz`);
 
-    // Complete quiz even if some questions unanswered
-    progressRef.current.isCompleted = true;
-    progressRef.current.status = 'submitted';
-    progressRef.current.completedAt = Timestamp.now();
-    onComplete(progressRef.current);
-  }, [onComplete]);
+      // If there are unanswered questions, we might want to show them
+      // For now, we'll just wait for the user to seek back
+    } else {
+      // All questions answered and video ended
+      allQuestionsAnsweredRef.current = true;
+      checkAndCompleteQuiz();
+    }
+  }, [checkAndCompleteQuiz]);
 
   // Handle seeking
   const handleSeek = useCallback((seconds: number) => {
