@@ -164,6 +164,26 @@ export class VideoQuizService extends BaseDatabaseService {
         updatedAt: now,
       };
 
+      // DEBUG: Log the exact data being sent to Firestore
+      logger.debug('Creating video quiz with data', 'VideoQuizService', {
+        videoQuizData: JSON.stringify(videoQuizData, (key, value) => {
+          if (value === undefined) {
+            return `[UNDEFINED_FIELD: ${key}]`;
+          }
+          return value;
+        }, 2),
+        undefinedFields: Object.keys(videoQuizData).filter(key => videoQuizData[key] === undefined),
+      });
+
+      // Check for undefined fields
+      const undefinedFields = Object.keys(videoQuizData).filter(key => videoQuizData[key] === undefined);
+      if (undefinedFields.length > 0) {
+        logger.error('Found undefined fields in video quiz data', 'VideoQuizService', new Error('Undefined fields detected'), {
+          undefinedFields,
+          allFields: Object.keys(videoQuizData),
+        });
+      }
+
       const docId = await this.addDocument(this.VIDEO_QUIZZES_COLLECTION, videoQuizData);
 
       logger.success('Video quiz created successfully', 'VideoQuizService', {

@@ -361,6 +361,15 @@ function CreateVideoQuizContent() {
         createdBy: user.id,
       };
 
+      // DEBUG: Log the quiz data to see what we're sending
+      console.log('🔍 Quiz data being sent to service:', {
+        quizToCreate,
+        undefinedFields: Object.keys(quizToCreate).filter(key => quizToCreate[key as keyof typeof quizToCreate] === undefined),
+        nullFields: Object.keys(quizToCreate).filter(key => quizToCreate[key as keyof typeof quizToCreate] === null),
+        settings: quizData.settings,
+        questions: quizData.questions,
+      });
+
       const result = await videoQuizService.createVideoQuiz(quizToCreate);
 
       if (!result.success) {

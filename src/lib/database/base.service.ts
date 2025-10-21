@@ -765,7 +765,10 @@ export class BaseDatabaseService {
     collectionName: string,
     data: any
   ): Promise<string> {
-    const result = await this.create<T>(collectionName, data);
+    // Remove undefined fields before passing to Firestore
+    const sanitizedData = this.removeUndefinedFields(data);
+
+    const result = await this.create<T>(collectionName, sanitizedData);
     if (!result.success || !result.data) {
       throw new DatabaseError(
         result.error?.message || 'Failed to create document',
@@ -773,6 +776,25 @@ export class BaseDatabaseService {
       );
     }
     return result.data.id;
+  }
+
+  // Helper to remove undefined fields recursively
+  private removeUndefinedFields(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.removeUndefinedFields(item));
+    }
+
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+        cleaned[key] = this.removeUndefinedFields(obj[key]);
+      }
+    }
+    return cleaned;
   }
 
   async count(
