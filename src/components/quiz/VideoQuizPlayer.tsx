@@ -144,11 +144,14 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   // Handle playback rate change
   const handlePlaybackRateChange = useCallback(
     (rate: number) => {
-      if (settings.allowPlaybackSpeedChange) {
-        setPlaybackRate(rate);
+      // Check if settings exist and allow speed change
+      if (!settings || settings.allowPlaybackSpeedChange === false) {
+        toast.info('Playback speed change is disabled for this quiz');
+        return;
       }
+      setPlaybackRate(rate);
     },
-    [settings.allowPlaybackSpeedChange]
+    [settings]
   );
 
   // Handle video ready
@@ -309,7 +312,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           duration={duration}
           onPlayPause={() => setPlaying(!playing)}
           onSeek={handleSeek}
-          onPlaybackRateChange={handlePlaybackRateChange}
+          onPlaybackRateChange={settings?.allowPlaybackSpeedChange ? handlePlaybackRateChange : undefined}
           disabled={showOverlay}
         />
       )}

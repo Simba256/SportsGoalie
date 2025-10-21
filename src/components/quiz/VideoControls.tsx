@@ -96,36 +96,48 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
         <div className="flex-1" />
 
         {/* Playback Speed */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={disabled}
-              className="text-white hover:text-white hover:bg-white/20 text-xs font-medium min-w-[60px]"
-            >
-              {playbackRate}x
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[120px]">
-            {playbackSpeeds.map((speed) => (
-              <DropdownMenuItem
-                key={speed}
-                onClick={() => onPlaybackRateChange(speed)}
-                className={`cursor-pointer ${
-                  playbackRate === speed ? 'bg-primary/10 font-semibold' : ''
-                }`}
+        {onPlaybackRateChange ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={disabled}
+                className="text-white hover:text-white hover:bg-white/20 text-xs font-medium min-w-[60px]"
               >
-                <div className="flex items-center justify-between w-full">
-                  <span>{speed}x</span>
-                  {playbackRate === speed && (
-                    <span className="text-primary">✓</span>
-                  )}
-                </div>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                {playbackRate}x
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[120px]">
+              {playbackSpeeds.map((speed) => (
+                <DropdownMenuItem
+                  key={speed}
+                  onClick={() => onPlaybackRateChange(speed)}
+                  className={`cursor-pointer ${
+                    playbackRate === speed ? 'bg-primary/10 font-semibold' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span>{speed}x</span>
+                    {playbackRate === speed && (
+                      <span className="text-primary">✓</span>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled
+            className="text-gray-500 hover:text-gray-400 text-xs font-medium min-w-[60px]"
+            title="Speed control disabled for this quiz"
+          >
+            {playbackRate}x
+          </Button>
+        )}
 
         {/* Settings (future features) */}
         <Button

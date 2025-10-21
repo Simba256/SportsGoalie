@@ -176,6 +176,6 @@ export interface VideoControlsProps {
   duration: number;
   onPlayPause: () => void;
   onSeek: (time: number) => void;
-  onPlaybackRateChange: (rate: number) => void;
+  onPlaybackRateChange?: (rate: number) => void;
   disabled?: boolean;
 }
