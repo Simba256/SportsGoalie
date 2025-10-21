@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
-import { VideoQuizPlayer } from '@/components/quiz/VideoQuizPlayer';
+import { VideoQuizPlayer } from '@/components/quiz/VideoQuizPlayerV2';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { useVideoQuiz } from '@/hooks/useVideoQuiz';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
