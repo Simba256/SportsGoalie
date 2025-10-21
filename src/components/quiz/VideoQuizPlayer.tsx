@@ -43,18 +43,25 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const handleProgress = useCallback(
     (state: OnProgressProps) => {
       const currentSeconds = state.playedSeconds;
-      setCurrentTime(currentSeconds);
 
-      // Report progress to parent
-      if (onProgressUpdate) {
-        onProgressUpdate(currentSeconds, duration);
-      }
+      // Only update current time state if it's significantly different (avoid excessive re-renders)
+      setCurrentTime((prev) => {
+        if (Math.abs(prev - currentSeconds) > 0.1) {
+          return currentSeconds;
+        }
+        return prev;
+      });
 
       // Only check every 0.5 seconds to avoid performance issues
       if (Math.abs(currentSeconds - lastCheckedTime.current) < 0.5) {
         return;
       }
       lastCheckedTime.current = currentSeconds;
+
+      // Report progress to parent (less frequently)
+      if (onProgressUpdate) {
+        onProgressUpdate(currentSeconds, duration);
+      }
 
       // Find if we've reached a question timestamp
       const nextQuestion = questions.find(
@@ -212,13 +219,16 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           onBuffer={handleBuffer}
           onBufferEnd={handleBufferEnd}
           onEnded={handleEnded}
-          progressInterval={250}
+          progressInterval={1000}
           config={{
             file: {
               attributes: {
-                preload: 'metadata',
+                preload: 'auto',
                 controlsList: 'nodownload',
+                playsInline: true,
               },
+              forceVideo: true,
+              forceHLS: true,
             },
           }}
         />

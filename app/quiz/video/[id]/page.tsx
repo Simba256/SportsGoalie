@@ -201,7 +201,7 @@ function VideoQuizPageContent() {
             settings={quiz.settings}
             initialTime={progress.currentTime}
             onQuestionAnswer={handleQuestionAnswer}
-            onProgressUpdate={updateVideoProgress}
+            onProgressUpdate={() => {}}
             onComplete={handleQuizComplete}
           />
 
