@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel, QuizAttempt } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
-import { quizService } from '@/lib/database/services/quiz.service';
+import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { useSportEnrollment } from '@/src/hooks/useEnrollment';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
@@ -134,12 +134,12 @@ export default function SportDetailPage() {
     const loadSkillProgress = async () => {
       const progressMap: SkillProgress = {};
 
-      // Load quiz attempts for all skills in parallel
+      // Load video quiz attempts for all skills in parallel
       await Promise.all(
         state.skills.map(async (skill) => {
           try {
-            // Get the latest quiz attempt for this skill
-            const attemptsResult = await quizService.getUserQuizAttempts(user.id, {
+            // Get the latest video quiz attempt for this skill
+            const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, {
               skillId: skill.id,
               completed: true,
               limit: 1,

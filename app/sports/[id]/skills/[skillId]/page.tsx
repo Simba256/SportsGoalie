@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
-import { quizService } from '@/lib/database/services/quiz.service';
+import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -113,21 +113,20 @@ export default function SkillDetailPage() {
     const checkForQuizzes = async (skillId: string) => {
       try {
         setState(prev => ({ ...prev, quizzesLoading: true }));
-        console.log('🔍 Checking for quizzes for skillId:', skillId);
-        const quizzesResult = await quizService.getQuizzesBySkill(skillId);
-        console.log('📊 Quiz query result:', quizzesResult);
+        console.log('🔍 Checking for video quizzes for skillId:', skillId);
+        const quizzesResult = await videoQuizService.getVideoQuizzes({ skillId, status: 'published' });
+        console.log('📊 Video quiz query result:', quizzesResult);
 
         const hasQuizzes = quizzesResult.success && quizzesResult.data.items.length > 0;
 
         if (hasQuizzes) {
-          console.log('✅ Found quizzes:', quizzesResult.data.items.map(q => ({
+          console.log('✅ Found video quizzes:', quizzesResult.data.items.map(q => ({
             id: q.id,
             title: q.title,
-            isActive: q.isActive,
-            isPublished: q.isPublished
+            status: q.status
           })));
         } else {
-          console.log('❌ No active quizzes found. Check if quiz is marked as active and published.');
+          console.log('❌ No published video quizzes found for this skill.');
         }
 
         setState(prev => ({
@@ -174,23 +173,23 @@ export default function SkillDetailPage() {
     if (!skillId) return;
 
     try {
-      console.log('Fetching quizzes for skillId:', skillId);
-      const quizzesResult = await quizService.getQuizzesBySkill(skillId);
+      console.log('Fetching video quizzes for skillId:', skillId);
+      const quizzesResult = await videoQuizService.getVideoQuizzes({ skillId, status: 'published' });
 
-      console.log('Quiz query result:', quizzesResult);
+      console.log('Video quiz query result:', quizzesResult);
 
       if (quizzesResult.success && quizzesResult.data.items.length > 0) {
         const quiz = quizzesResult.data.items[0];
-        console.log('Found quiz:', quiz);
-        router.push(`/quiz/${quiz.id}`);
+        console.log('Found video quiz:', quiz);
+        router.push(`/quiz/video/${quiz.id}`);
       } else {
-        alert('Quiz not available yet. Please check back later!');
-        console.log('No quiz found for skill:', skillId);
+        alert('Video quiz not available yet. Please check back later!');
+        console.log('No video quiz found for skill:', skillId);
         console.log('Query result:', quizzesResult);
       }
     } catch (error) {
-      alert('Unable to load quiz. Please try again later.');
-      console.error('Error navigating to quiz:', error);
+      alert('Unable to load video quiz. Please try again later.');
+      console.error('Error navigating to video quiz:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
     }
   };

@@ -1,7 +1,7 @@
 import { BaseDatabaseService } from '../base.service';
-import { quizService } from './quiz.service';
 import { sportsService } from './sports.service';
 import { userService } from './user.service';
+import { videoQuizService } from './video-quiz.service';
 import {
   ApiResponse,
   QuizAttempt,
@@ -267,7 +267,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const performanceData: QuizPerformanceData[] = [];
 
       for (const [quizId, quizAttempts] of quizMap.entries()) {
-        const quiz = await quizService.getQuiz(quizId);
+        const quiz = await videoQuizService.getVideoQuiz(quizId);
         const skill = quiz.data?.skillId ? await sportsService.getSkill(quiz.data.skillId) : null;
         const sport = quiz.data?.sportId ? await sportsService.getSport(quiz.data.sportId) : null;
 
@@ -489,7 +489,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       .slice(0, 5);
 
     for (const quiz of recentQuizzes) {
-      const quizData = await quizService.getQuiz(quiz.quizId);
+      const quizData = await videoQuizService.getVideoQuiz(quiz.quizId);
       activities.push({
         id: quiz.id,
         type: 'quiz_completed',

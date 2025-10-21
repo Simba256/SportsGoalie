@@ -3,7 +3,7 @@ export { BaseDatabaseService } from './base.service';
 
 // Specialized Services
 export { SportsService, sportsService } from './services/sports.service';
-export { QuizService, quizService } from './services/quiz.service';
+export { VideoQuizService, videoQuizService } from './services/video-quiz.service';
 export { UserService, userService } from './services/user.service';
 
 // Utilities
@@ -30,6 +30,9 @@ export type {
 // Database initialization helper
 import { migrationService } from './migrations/migration.service';
 import { seederService } from './seeding/seeder.service';
+import { sportsService } from './services/sports.service';
+import { videoQuizService } from './services/video-quiz.service';
+import { userService } from './services/user.service';
 import { logger, withPerformanceLogging } from '../utils/logger';
 
 /**
@@ -320,20 +323,20 @@ export const DatabaseHelpers = {
   async healthCheck(): Promise<{
     baseService: any;
     sportsService: any;
-    quizService: any;
+    videoQuizService: any;
     userService: any;
   }> {
-    const [baseHealth, sportsHealth, quizHealth, userHealth] = await Promise.all([
+    const [baseHealth, sportsHealth, videoQuizHealth, userHealth] = await Promise.all([
       migrationService.healthCheck(),
       sportsService.healthCheck(),
-      quizService.healthCheck(),
+      videoQuizService.healthCheck(),
       userService.healthCheck(),
     ]);
 
     return {
       baseService: baseHealth,
       sportsService: sportsHealth,
-      quizService: quizHealth,
+      videoQuizService: videoQuizHealth,
       userService: userHealth,
     };
   },
@@ -345,7 +348,7 @@ export const DatabaseHelpers = {
     return {
       migrations: migrationService.getCacheStats(),
       sports: sportsService.getCacheStats(),
-      quiz: quizService.getCacheStats(),
+      videoQuiz: videoQuizService.getCacheStats(),
       user: userService.getCacheStats(),
     };
   },
@@ -356,7 +359,7 @@ export const DatabaseHelpers = {
   clearAllCaches() {
     migrationService.clearCache();
     sportsService.clearCache();
-    quizService.clearCache();
+    videoQuizService.clearCache();
     userService.clearCache();
     logger.info('All caches cleared', 'DatabaseHelpers');
   },

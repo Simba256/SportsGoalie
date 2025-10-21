@@ -9,7 +9,6 @@ import {
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { sportsService } from './sports.service';
-import { quizService } from './quiz.service';
 
 /**
  * Service for managing sports enrollment and progress.
@@ -137,91 +136,15 @@ export class EnrollmentService extends BaseDatabaseService {
       const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
       const totalSkills = skills.length;
 
-      // Calculate progress based on quiz attempts
-      let totalScore = 0;
-      let totalTime = 0;
-      const completedSkillIds: string[] = [];
-      const attemptDates = new Set<string>();
+      // Use stored progress data from the progress record
+      // Progress will be calculated and updated when video quizzes are completed
+      const progressPercentage = progress.progressPercentage || 0;
+      const totalTime = progress.timeSpent || 0;
+      const completedSkillIds = progress.completedSkills || [];
+      const currentStreak = progress.streak?.current || 0;
+      const longestStreak = progress.streak?.longest || 0;
 
-      for (const skill of skills) {
-        // Get user's best quiz attempt for this skill
-        const attemptsResult = await quizService.getUserQuizAttempts(userId, {
-          skillId: skill.id,
-          completed: true,
-          limit: 100, // Get all completed attempts
-        });
-
-        if (attemptsResult.success && attemptsResult.data && attemptsResult.data.items.length > 0) {
-          const attempts = attemptsResult.data.items;
-
-          // Find best attempt (highest percentage)
-          const bestAttempt = attempts.reduce((best, current) =>
-            current.percentage > best.percentage ? current : best
-          );
-
-          totalScore += bestAttempt.percentage;
-
-          // Sum time from all attempts for this skill
-          const skillTime = attempts.reduce((sum, attempt) => sum + (attempt.timeSpent || 0), 0);
-          totalTime += skillTime;
-
-          // Track dates for streak calculation
-          for (const attempt of attempts) {
-            if (attempt.submittedAt) {
-              const date = attempt.submittedAt.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt);
-              attemptDates.add(date.toISOString().split('T')[0]);
-            }
-          }
-
-          // Mark skill as completed if passed
-          if (bestAttempt.passed) {
-            completedSkillIds.push(skill.id);
-          }
-        } else {
-          // No attempts for this skill, counts as 0%
-          totalScore += 0;
-        }
-      }
-
-      // Calculate average percentage (unattempted skills count as 0%)
-      const progressPercentage = totalSkills > 0 ? totalScore / totalSkills : 0;
-
-      // Calculate streak
-      const sortedDates = Array.from(attemptDates).sort().reverse();
-      let currentStreak = 0;
-      let longestStreak = 0;
-      let streakCount = 0;
-      let maxStreakCount = 0;
-      const today = new Date().toISOString().split('T')[0];
-
-      for (let i = 0; i < sortedDates.length; i++) {
-        const date = sortedDates[i];
-        const prevDate = i > 0 ? sortedDates[i - 1] : null;
-
-        if (i === 0) {
-          // Check if most recent activity is today or yesterday
-          const daysDiff = Math.floor((new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
-          if (daysDiff <= 1) {
-            streakCount = 1;
-            currentStreak = 1;
-          }
-        } else if (prevDate) {
-          const daysBetween = Math.floor((new Date(prevDate).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
-          if (daysBetween === 1) {
-            streakCount++;
-            if (i === sortedDates.length - 1 || streakCount === sortedDates.length) {
-              currentStreak = streakCount;
-            }
-          } else {
-            maxStreakCount = Math.max(maxStreakCount, streakCount);
-            streakCount = 1;
-          }
-        }
-        maxStreakCount = Math.max(maxStreakCount, streakCount);
-      }
-      longestStreak = maxStreakCount;
-
-      // Determine status
+      // Determine status based on completed skills
       let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
       if (completedSkillIds.length === totalSkills && totalSkills > 0) {
         status = 'completed';

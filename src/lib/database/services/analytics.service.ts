@@ -1,7 +1,7 @@
 import { BaseDatabaseService } from '../base.service';
 import { userService } from './user.service';
 import { sportsService } from './sports.service';
-import { quizService } from './quiz.service';
+import { videoQuizService } from './video-quiz.service';
 import { ApiResponse } from '@/types';
 import { logger } from '../../utils/logger';
 

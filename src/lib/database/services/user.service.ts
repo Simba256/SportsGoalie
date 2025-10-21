@@ -346,13 +346,13 @@ export class UserService extends BaseDatabaseService {
       return progressResult;
     }
 
-    // Calculate real stats from quiz attempts
+    // Calculate real stats from video quiz attempts
     try {
-      const { quizService } = await import('./quiz.service');
+      const { videoQuizService } = await import('./video-quiz.service');
       const { enrollmentService } = await import('./enrollment.service');
 
-      // Get all user's quiz attempts
-      const attemptsResult = await quizService.getUserQuizAttempts(userId, {
+      // Get all user's video quiz attempts
+      const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
         completed: true,
         limit: 10000
       });

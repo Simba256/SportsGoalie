@@ -27,8 +27,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { Quiz } from '@/types/quiz';
-import { quizService } from '@/lib/database/services/quiz.service';
+import { VideoQuiz } from '@/types/video-quiz';
+import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 
 interface QuizStats {
   totalAttempts: number;
@@ -36,7 +36,7 @@ interface QuizStats {
   passRate: number;
 }
 
-interface QuizWithStats extends Quiz {
+interface QuizWithStats extends VideoQuiz {
   stats?: QuizStats;
 }
 
@@ -46,7 +46,6 @@ function QuizzesPageContent() {
   const [quizzes, setQuizzes] = useState<QuizWithStats[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<QuizWithStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
 
   useEffect(() => {
@@ -55,21 +54,24 @@ function QuizzesPageContent() {
 
   useEffect(() => {
     filterQuizzes();
-  }, [quizzes, searchTerm, selectedCategory, selectedDifficulty]);
+  }, [quizzes, searchTerm, selectedDifficulty]);
 
   const loadQuizzes = async () => {
     try {
       setLoading(true);
 
-      // Get all published quizzes using quiz service
-      const quizzesResult = await quizService.getPublishedQuizzes();
+      // Get all published video quizzes using video quiz service
+      const quizzesResult = await videoQuizService.getVideoQuizzes({
+        status: 'published',
+        limit: 100
+      });
 
       if (quizzesResult.success && quizzesResult.data) {
         const quizzesWithStats = await Promise.all(
           quizzesResult.data.items.map(async (quiz) => {
             try {
-              // Get quiz attempt statistics using quiz service
-              const attemptsResult = await quizService.getQuizAttempts(quiz.id);
+              // Get video quiz attempt statistics
+              const attemptsResult = await videoQuizService.getVideoQuizAttempts(quiz.id);
 
               let stats: QuizStats = {
                 totalAttempts: 0,
@@ -122,14 +124,8 @@ function QuizzesPageContent() {
       filtered = filtered.filter(
         (quiz) =>
           quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          quiz.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          quiz.category.toLowerCase().includes(searchTerm.toLowerCase())
+          quiz.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-
-    // Filter by category
-    if (selectedCategory && selectedCategory !== 'all') {
-      filtered = filtered.filter((quiz) => quiz.category === selectedCategory);
     }
 
     // Filter by difficulty
@@ -140,9 +136,10 @@ function QuizzesPageContent() {
     setFilteredQuizzes(filtered);
   };
 
-  const getUniqueCategories = () => {
-    const categories = quizzes.map((quiz) => quiz.category);
-    return [...new Set(categories)];
+  const getSportNames = () => {
+    // Since VideoQuiz has sportId, we'd need to fetch sport names
+    // For now, just show all quizzes
+    return [];
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -200,20 +197,6 @@ function QuizzesPageContent() {
         </div>
 
         <div className="flex gap-2">
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {getUniqueCategories().map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Difficulty" />
@@ -234,7 +217,7 @@ function QuizzesPageContent() {
           <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No quizzes found</h3>
           <p className="text-gray-500">
-            {searchTerm || selectedCategory !== 'all' || selectedDifficulty !== 'all'
+            {searchTerm || selectedDifficulty !== 'all'
               ? 'Try adjusting your filters or search term.'
               : 'Check back later for new quizzes.'}
           </p>
@@ -248,7 +231,7 @@ function QuizzesPageContent() {
                   <Badge className={getDifficultyColor(quiz.difficulty)}>
                     {quiz.difficulty}
                   </Badge>
-                  <Badge variant="outline">{quiz.category}</Badge>
+                  <Badge variant="outline">Video Quiz</Badge>
                 </div>
                 <CardTitle className="text-xl mb-2">{quiz.title}</CardTitle>
                 {quiz.description && (
@@ -285,9 +268,9 @@ function QuizzesPageContent() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  <Link href={`/quiz/${quiz.id}`} className="flex-1">
+                  <Link href={`/quiz/video/${quiz.id}`} className="flex-1">
                     <Button className="w-full">
-                      Start Quiz
+                      Start Video Quiz
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
