@@ -684,6 +684,65 @@ export class VideoQuizService extends BaseDatabaseService {
   }
 
   /**
+   * Gets user's video quiz attempts with filters.
+   */
+  async getUserVideoQuizAttempts(
+    userId: string,
+    filters?: {
+      skillId?: string;
+      sportId?: string;
+      completed?: boolean;
+      limit?: number;
+    }
+  ): Promise<ApiResponse<QueryResult<VideoQuizProgress>>> {
+    logger.database('query', this.VIDEO_QUIZ_PROGRESS_COLLECTION, undefined, {
+      userId,
+      filters,
+    });
+
+    try {
+      const constraints: any[] = [{ field: 'userId', operator: '==', value: userId }];
+
+      if (filters?.skillId) {
+        constraints.push({ field: 'skillId', operator: '==', value: filters.skillId });
+      }
+
+      if (filters?.sportId) {
+        constraints.push({ field: 'sportId', operator: '==', value: filters.sportId });
+      }
+
+      if (filters?.completed !== undefined) {
+        constraints.push({ field: 'isCompleted', operator: '==', value: filters.completed });
+      }
+
+      const result = await this.query<VideoQuizProgress>(
+        this.VIDEO_QUIZ_PROGRESS_COLLECTION,
+        {
+          where: constraints,
+          orderBy: { field: 'completedAt', direction: 'desc' },
+          limit: filters?.limit || 10,
+        }
+      );
+
+      return result;
+    } catch (error) {
+      logger.error('Failed to fetch user video quiz attempts', 'VideoQuizService', error as Error, {
+        userId,
+        filters,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'USER_VIDEO_QUIZ_ATTEMPTS_FETCH_FAILED',
+          message: 'Failed to fetch user video quiz attempts',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
    * Updates quiz metadata based on completion.
    */
   private async updateQuizMetadata(
