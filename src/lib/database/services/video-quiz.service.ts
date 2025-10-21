@@ -769,7 +769,10 @@ export class VideoQuizService extends BaseDatabaseService {
   ): Promise<void> {
     try {
       const quiz = await this.getDocument<VideoQuiz>(this.VIDEO_QUIZZES_COLLECTION, quizId);
-      if (!quiz) return;
+      if (!quiz) {
+        console.warn('Quiz not found for metadata update:', quizId);
+        return;
+      }
 
       const metadata = quiz.metadata || {
         totalAttempts: 0,
@@ -794,7 +797,9 @@ export class VideoQuizService extends BaseDatabaseService {
         metadata.averageTimeSpent =
           (currentAvgTime + progress.totalTimeSpent / 60) / metadata.totalCompletions;
 
-        metadata.passRate = (metadata.averageScore >= quiz.settings.passingScore ? 1 : 0) * 100;
+        // Use default passing score if settings not available
+        const passingScore = quiz.settings?.passingScore || 70;
+        metadata.passRate = (metadata.averageScore >= passingScore ? 1 : 0) * 100;
       }
 
       await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, {

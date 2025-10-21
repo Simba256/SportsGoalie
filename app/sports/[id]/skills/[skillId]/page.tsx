@@ -114,7 +114,9 @@ export default function SkillDetailPage() {
       try {
         setState(prev => ({ ...prev, quizzesLoading: true }));
         console.log('🔍 Checking for video quizzes for skillId:', skillId);
-        const quizzesResult = await videoQuizService.getVideoQuizzes({ skillId, status: 'published' });
+        const quizzesResult = await videoQuizService.getVideoQuizzesBySkill(skillId, {
+          where: [{ field: 'isPublished', operator: '==', value: true }]
+        });
         console.log('📊 Video quiz query result:', quizzesResult);
 
         const hasQuizzes = quizzesResult.success && quizzesResult.data.items.length > 0;
@@ -174,11 +176,13 @@ export default function SkillDetailPage() {
 
     try {
       console.log('Fetching video quizzes for skillId:', skillId);
-      const quizzesResult = await videoQuizService.getVideoQuizzes({ skillId, status: 'published' });
+      const quizzesResult = await videoQuizService.getVideoQuizzesBySkill(skillId, {
+        where: [{ field: 'isPublished', operator: '==', value: true }]
+      });
 
       console.log('Video quiz query result:', quizzesResult);
 
-      if (quizzesResult.success && quizzesResult.data.items.length > 0) {
+      if (quizzesResult.success && quizzesResult.data?.items.length > 0) {
         const quiz = quizzesResult.data.items[0];
         console.log('Found video quiz:', quiz);
         router.push(`/quiz/video/${quiz.id}`);
