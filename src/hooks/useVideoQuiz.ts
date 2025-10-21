@@ -73,36 +73,44 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     };
   });
 
-  // Initialize questions with state - memoized to prevent recreating on every render
-  const questionsWithState = useMemo<VideoQuizQuestionWithState[]>(() => {
-    if (!quiz || !quiz.questions) {
-      console.log('🚫 [useVideoQuiz] No quiz provided, returning empty questions');
+  // Keep track of answered questions locally
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
+
+  // Initialize base questions structure - only recreate when quiz changes
+  const baseQuestions = useMemo<VideoQuizQuestionWithState[]>(() => {
+    // Early return if no quiz data
+    if (!options || !quiz || !quiz.questions) {
+      console.log('🚫 [useVideoQuiz] No quiz data available yet');
       return [];
     }
 
-    console.log('📝 [useVideoQuiz] Creating questionsWithState:', {
+    console.log('📝 [useVideoQuiz] Creating base questions:', {
       quizQuestions: quiz.questions,
       questionsCount: quiz.questions?.length,
-      firstQuestion: quiz.questions?.[0],
     });
 
-    const mappedQuestions = quiz.questions.map((q) => ({
+    try {
+      return quiz.questions.map((q) => ({
+        ...q,
+        answered: false,
+        userAnswer: undefined,
+        isCorrect: undefined,
+      }));
+    } catch (error) {
+      console.error('❌ [useVideoQuiz] Error creating base questions:', error);
+      return [];
+    }
+  }, [quiz?.id]); // Only depend on quiz ID
+
+  // Merge answered state with base questions
+  const questionsWithState = useMemo<VideoQuizQuestionWithState[]>(() => {
+    if (baseQuestions.length === 0) return [];
+
+    return baseQuestions.map((q) => ({
       ...q,
-      answered: initialProgress?.questionsAnswered.some((a) => a.questionId === q.id) || false,
-      userAnswer: undefined,
-      isCorrect: undefined,
+      answered: answeredQuestions.has(q.id),
     }));
-
-    console.log('✅ [useVideoQuiz] Created questionsWithState:', {
-      mappedQuestionsCount: mappedQuestions.length,
-      firstMappedQuestion: mappedQuestions[0],
-    });
-
-    return mappedQuestions;
-  }, [quiz?.id, initialProgress?.id]); // Only recreate when quiz or progress changes
-
-  // Keep track of answered questions locally
-  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
+  }, [baseQuestions, answeredQuestions]);
 
   const watchStartTime = useRef<number>(Date.now());
   const lastSaveTime = useRef<number>(Date.now());
@@ -304,23 +312,15 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     return null;
   }
 
-  // Merge answered state with questions
-  const questionsWithAnsweredState = useMemo(() => {
-    return questionsWithState.map(q => ({
-      ...q,
-      answered: answeredQuestions.has(q.id) || q.answered,
-    }));
-  }, [questionsWithState, answeredQuestions]);
-
   console.log('🎯 [useVideoQuiz] Returning hook data:', {
     hasProgress: !!progress,
-    questionsCount: questionsWithAnsweredState?.length,
-    firstQuestion: questionsWithAnsweredState?.[0],
+    questionsCount: questionsWithState?.length,
+    firstQuestion: questionsWithState?.[0],
   });
 
   return {
     progress,
-    questionsWithState: questionsWithAnsweredState,
+    questionsWithState,
     handleQuestionAnswer,
     updateVideoProgress,
     updateWatchTime,
