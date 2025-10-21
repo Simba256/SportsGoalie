@@ -103,17 +103,19 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         if (Math.abs(currentSeconds - question.timestamp) < 0.3) {
           console.log('🎯 [VideoQuizPlayer] Question triggered:', question.id);
 
-          // Mark as processing
+          // Mark as processing immediately
           processingQuestion.current = true;
           triggeredQuestions.current.add(question.id);
 
-          // Single state update to prevent multiple renders
-          setPlaying(false);
-          setQuestionState(prev => ({
-            ...prev,
-            current: question,
-            showOverlay: true,
-          }));
+          // Defer ALL state updates to avoid React render conflicts
+          setTimeout(() => {
+            setPlaying(false);
+            setQuestionState(prev => ({
+              ...prev,
+              current: question,
+              showOverlay: true,
+            }));
+          }, 0);
 
           break;
         }
@@ -210,12 +212,16 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           // Trigger the unanswered question
           processingQuestion.current = true;
           triggeredQuestions.current.add(unanswered.id);
-          setPlaying(false);
-          setQuestionState(prev => ({
-            ...prev,
-            current: unanswered,
-            showOverlay: true,
-          }));
+
+          // Defer state updates
+          setTimeout(() => {
+            setPlaying(false);
+            setQuestionState(prev => ({
+              ...prev,
+              current: unanswered,
+              showOverlay: true,
+            }));
+          }, 0);
           return;
         }
       }
