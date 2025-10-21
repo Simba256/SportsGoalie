@@ -35,6 +35,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const [currentQuestion, setCurrentQuestion] = useState<VideoQuizQuestionWithState | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [initialPlayStarted, setInitialPlayStarted] = useState(false);
+  const [answeredCount, setAnsweredCount] = useState(0); // Track answered count in state
 
   const lastCheckedTime = useRef(0);
   const triggeredQuestions = useRef(new Set<string>());
@@ -52,6 +53,9 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     if (questions && questions.length > 0) {
       triggeredQuestions.current.clear();
       isProcessingQuestion.current = false;
+      // Update answered count based on questions prop
+      const answered = questions.filter(q => q.answered).length;
+      setAnsweredCount(answered);
     }
   }, [questions]);
 
@@ -68,8 +72,14 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
       const currentSeconds = state.playedSeconds;
       const currentQuestions = questionsRef.current; // Use ref instead of prop
 
-      // Update current time for UI display
-      setCurrentTime(currentSeconds);
+      // Update current time for UI display (throttled to reduce re-renders)
+      setCurrentTime((prev) => {
+        // Only update if difference is significant (> 0.1 seconds)
+        if (Math.abs(prev - currentSeconds) > 0.1) {
+          return currentSeconds;
+        }
+        return prev;
+      });
 
       // Report progress to parent
       if (onProgressUpdate) {
@@ -82,7 +92,8 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
       }
 
       // If we're already processing a question, don't check for new ones
-      if (isProcessingQuestion.current || showOverlay) {
+      // Use ref instead of state to avoid dependency issues
+      if (isProcessingQuestion.current) {
         return;
       }
 
@@ -93,6 +104,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
           currentSeconds,
           questionsCount: currentQuestions.length,
           triggeredCount: triggeredQuestions.current.size,
+          isProcessing: isProcessingQuestion.current,
         });
       }
 
@@ -127,7 +139,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
         }
       }
     },
-    [duration, onProgressUpdate, showOverlay] // Include showOverlay to prevent checks when overlay is showing
+    [duration, onProgressUpdate] // Remove showOverlay from dependencies!
   );
 
   // Handle question answer submission
@@ -142,6 +154,9 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
 
       // Call parent handler
       onQuestionAnswer(currentQuestion.id, answer);
+
+      // Update answered count
+      setAnsweredCount(prev => prev + 1);
 
       // Hide overlay and resume playback
       setShowOverlay(false);
@@ -381,7 +396,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
       {/* Progress Indicator */}
       {settings.showProgressBar && questions.length > 0 && (
         <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-medium z-20">
-          {questions.filter((q) => q.answered || triggeredQuestions.current.has(q.id)).length} / {questions.length}{' '}
+          {answeredCount} / {questions.length}{' '}
           answered
         </div>
       )}
