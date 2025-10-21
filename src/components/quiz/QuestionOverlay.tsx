@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
 import { QuestionOverlayProps } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,12 +20,6 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | string[]>('');
   const [fillInAnswers, setFillInAnswers] = useState<string[]>([]);
-
-  // Reset state when question changes
-  useEffect(() => {
-    setSelectedAnswer('');
-    setFillInAnswers([]);
-  }, [question.id]);
 
   // Handle answer submission
   const handleSubmit = () => {
@@ -241,22 +234,9 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 p-4"
-      >
-        <motion.div
-          initial={{ scale: 0.95, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.95, y: -20 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="w-full max-w-2xl"
-        >
-          <Card className="shadow-2xl">
+    <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 p-4">
+      <div className="w-full max-w-2xl">
+        <Card className="shadow-2xl">
             <CardHeader className="border-b">
               <div className="flex items-center justify-between mb-2">
                 <Badge variant="secondary" className="text-xs">
@@ -269,14 +249,14 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({
                 )}
               </div>
               <CardTitle className="text-xl leading-tight">
-                {question.title}
+                {question.question}
               </CardTitle>
             </CardHeader>
 
             <CardContent className="pt-6 space-y-6">
-              {/* Question Content */}
-              {question.content && (
-                <p className="text-gray-700 leading-relaxed">{question.content}</p>
+              {/* Question hint/explanation if shown before answering */}
+              {question.hint && (
+                <p className="text-gray-600 text-sm italic">Hint: {question.hint}</p>
               )}
 
               {/* Question Answer Options */}
@@ -304,8 +284,7 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({
               </div>
             </CardContent>
           </Card>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </div>
   );
 };
