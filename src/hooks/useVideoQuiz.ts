@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import {
   VideoQuiz,
@@ -73,13 +73,14 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     };
   });
 
-  const [questionsWithState, setQuestionsWithState] = useState<VideoQuizQuestionWithState[]>(() => {
-    if (!quiz) {
+  // Initialize questions with state - memoized to prevent recreating on every render
+  const questionsWithState = useMemo<VideoQuizQuestionWithState[]>(() => {
+    if (!quiz || !quiz.questions) {
       console.log('🚫 [useVideoQuiz] No quiz provided, returning empty questions');
       return [];
     }
 
-    console.log('📝 [useVideoQuiz] Initializing questionsWithState:', {
+    console.log('📝 [useVideoQuiz] Creating questionsWithState:', {
       quizQuestions: quiz.questions,
       questionsCount: quiz.questions?.length,
       firstQuestion: quiz.questions?.[0],
@@ -88,42 +89,20 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     const mappedQuestions = quiz.questions.map((q) => ({
       ...q,
       answered: initialProgress?.questionsAnswered.some((a) => a.questionId === q.id) || false,
+      userAnswer: undefined,
+      isCorrect: undefined,
     }));
 
-    console.log('✅ [useVideoQuiz] Mapped questions with state:', {
+    console.log('✅ [useVideoQuiz] Created questionsWithState:', {
       mappedQuestionsCount: mappedQuestions.length,
       firstMappedQuestion: mappedQuestions[0],
     });
 
     return mappedQuestions;
-  });
+  }, [quiz?.id, initialProgress?.id]); // Only recreate when quiz or progress changes
 
-  // Update questionsWithState when quiz data arrives (only on mount/quiz change)
-  useEffect(() => {
-    if (quiz && quiz.questions && quiz.questions.length > 0) {
-      console.log('🔄 [useVideoQuiz] Quiz data arrived, checking if update needed');
-
-      setQuestionsWithState((currentState) => {
-        // Only update if the questions are actually different (prevent infinite loop)
-        if (currentState.length === 0) {
-          const mappedQuestions = quiz.questions.map((q) => ({
-            ...q,
-            answered: false, // Start with all questions unanswered
-            userAnswer: undefined,
-            isCorrect: undefined,
-          }));
-
-          console.log('✅ [useVideoQuiz] Initialized questionsWithState:', {
-            mappedQuestionsCount: mappedQuestions.length,
-            firstMappedQuestion: mappedQuestions[0],
-          });
-
-          return mappedQuestions;
-        }
-        return currentState;
-      });
-    }
-  }, [quiz?.id]); // Only depend on quiz ID to avoid infinite loops
+  // Keep track of answered questions locally
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
 
   const watchStartTime = useRef<number>(Date.now());
   const lastSaveTime = useRef<number>(Date.now());
@@ -236,24 +215,8 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
         };
       });
 
-      // Update question state - use callback to ensure we have latest state
-      setQuestionsWithState((prev) => {
-        if (!prev || !Array.isArray(prev)) {
-          console.error('❌ [useVideoQuiz] Invalid questionsWithState:', prev);
-          return prev || [];
-        }
-
-        return prev.map((q) =>
-          q.id === questionId
-            ? {
-                ...q,
-                answered: true,
-                userAnswer: answer,
-                isCorrect,
-              }
-            : q
-        );
-      });
+      // Track answered question locally
+      setAnsweredQuestions((prev) => new Set(prev).add(questionId));
     },
     [quiz, checkAnswer]
   );
@@ -341,15 +304,23 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
     return null;
   }
 
+  // Merge answered state with questions
+  const questionsWithAnsweredState = useMemo(() => {
+    return questionsWithState.map(q => ({
+      ...q,
+      answered: answeredQuestions.has(q.id) || q.answered,
+    }));
+  }, [questionsWithState, answeredQuestions]);
+
   console.log('🎯 [useVideoQuiz] Returning hook data:', {
     hasProgress: !!progress,
-    questionsWithStateCount: questionsWithState?.length,
-    firstQuestionWithState: questionsWithState?.[0],
+    questionsCount: questionsWithAnsweredState?.length,
+    firstQuestion: questionsWithAnsweredState?.[0],
   });
 
   return {
     progress,
-    questionsWithState,
+    questionsWithState: questionsWithAnsweredState,
     handleQuestionAnswer,
     updateVideoProgress,
     updateWatchTime,
