@@ -85,17 +85,19 @@ function VideoQuizPageContent() {
     }
   };
 
-  // Initialize video quiz hook
-  const videoQuizHook = quiz && initialProgress && user ? useVideoQuiz({
-    quiz,
-    initialProgress,
-    userId: user.id,
-    onSave: async (progress) => {
-      // Don't save progress during quiz - only save at completion
-      console.log('Progress update (not saved):', progress);
-    },
-    autoSaveInterval: 0, // Disable auto-save
-  }) : null;
+  // Initialize video quiz hook - must always call hook (React rules)
+  const videoQuizHook = useVideoQuiz(
+    quiz && initialProgress && user ? {
+      quiz,
+      initialProgress,
+      userId: user.id,
+      onSave: async (progress) => {
+        // Don't save progress during quiz - only save at completion
+        console.log('Progress update (not saved):', progress);
+      },
+      autoSaveInterval: 0, // Disable auto-save
+    } : null
+  );
 
   // Handle quiz completion
   const handleQuizComplete = async () => {

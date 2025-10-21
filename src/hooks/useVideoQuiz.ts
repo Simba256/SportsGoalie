@@ -15,14 +15,37 @@ interface UseVideoQuizOptions {
   autoSaveInterval?: number; // milliseconds
 }
 
-export const useVideoQuiz = ({
-  quiz,
-  initialProgress,
-  userId,
-  onSave,
-  autoSaveInterval = 30000, // 30 seconds
-}: UseVideoQuizOptions) => {
+export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
+  const quiz = options?.quiz;
+  const initialProgress = options?.initialProgress;
+  const userId = options?.userId || '';
+  const onSave = options?.onSave;
+  const autoSaveInterval = options?.autoSaveInterval ?? 30000;
+
   const [progress, setProgress] = useState<VideoQuizProgress>(() => {
+    // Return empty/default progress if no options
+    if (!options || !quiz) {
+      return {
+        id: '',
+        userId: '',
+        videoQuizId: '',
+        skillId: '',
+        sportId: '',
+        currentTime: 0,
+        questionsAnswered: [],
+        questionsRemaining: 0,
+        score: 0,
+        maxScore: 0,
+        percentage: 0,
+        passed: false,
+        isCompleted: false,
+        status: 'in-progress',
+        attemptNumber: 1,
+        startedAt: Timestamp.now(),
+        watchTime: 0,
+        totalTimeSpent: 0,
+      };
+    }
     if (initialProgress) {
       return initialProgress;
     }
@@ -50,12 +73,13 @@ export const useVideoQuiz = ({
     };
   });
 
-  const [questionsWithState, setQuestionsWithState] = useState<VideoQuizQuestionWithState[]>(() =>
-    quiz.questions.map((q) => ({
+  const [questionsWithState, setQuestionsWithState] = useState<VideoQuizQuestionWithState[]>(() => {
+    if (!quiz) return [];
+    return quiz.questions.map((q) => ({
       ...q,
       answered: initialProgress?.questionsAnswered.some((a) => a.questionId === q.id) || false,
-    }))
-  );
+    }));
+  });
 
   const watchStartTime = useRef<number>(Date.now());
   const lastSaveTime = useRef<number>(Date.now());
@@ -63,6 +87,9 @@ export const useVideoQuiz = ({
   // Check if answer is correct
   const checkAnswer = useCallback(
     (questionId: string, answer: string | string[]): { isCorrect: boolean; pointsEarned: number } => {
+      if (!quiz) {
+        return { isCorrect: false, pointsEarned: 0 };
+      }
       const question = quiz.questions.find((q) => q.id === questionId);
       if (!question) {
         return { isCorrect: false, pointsEarned: 0 };
@@ -127,12 +154,13 @@ export const useVideoQuiz = ({
         pointsEarned: isCorrect ? question.points : 0,
       };
     },
-    [quiz.questions]
+    [quiz]
   );
 
   // Handle question answer
   const handleQuestionAnswer = useCallback(
     (questionId: string, answer: string | string[]) => {
+      if (!quiz) return;
       const question = quiz.questions.find((q) => q.id === questionId);
       if (!question) return;
 
@@ -160,7 +188,7 @@ export const useVideoQuiz = ({
           questionsRemaining: prev.questionsRemaining - 1,
           score: newScore,
           percentage: newPercentage,
-          passed: newPercentage >= quiz.settings.passingScore,
+          passed: quiz ? newPercentage >= quiz.settings.passingScore : false,
         };
       });
 
@@ -178,7 +206,7 @@ export const useVideoQuiz = ({
         )
       );
     },
-    [quiz.questions, quiz.settings.passingScore, checkAnswer]
+    [quiz, checkAnswer]
   );
 
   // Update video progress
@@ -257,6 +285,11 @@ export const useVideoQuiz = ({
       }
     };
   }, [progress, onSave, updateWatchTime]);
+
+  // Return null if no options (data not ready)
+  if (!options || !quiz) {
+    return null;
+  }
 
   return {
     progress,
