@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle2, Clock, Target, ArrowLeft } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import Link from 'next/link';
 
 function VideoQuizPageContent() {
@@ -39,11 +40,8 @@ function VideoQuizPageContent() {
       setLoading(true);
       setError(null);
 
-      // Load quiz and progress in parallel
-      const [quizResult, progressResult] = await Promise.all([
-        videoQuizService.getVideoQuiz(quizId),
-        videoQuizService.getUserProgress(user!.id, quizId),
-      ]);
+      // Just load the quiz, don't load any progress
+      const quizResult = await videoQuizService.getVideoQuiz(quizId);
 
       if (!quizResult.success || !quizResult.data) {
         setError('Video quiz not found');
@@ -52,21 +50,32 @@ function VideoQuizPageContent() {
         return;
       }
 
-      if (!progressResult.success || !progressResult.data) {
-        setError('Failed to load your progress');
-        toast.error('Failed to load your progress');
-        return;
-      }
+      const quiz = quizResult.data;
 
-      // Check if quiz is already completed
-      if (progressResult.data.isCompleted) {
-        toast.info('You have already completed this quiz');
-        router.push(`/quiz/video/${quizId}/results`);
-        return;
-      }
+      // Create fresh progress for this attempt (not saved to database)
+      const freshProgress: VideoQuizProgress = {
+        id: `progress_${user!.id}_${quizId}`,
+        userId: user!.id,
+        videoQuizId: quizId,
+        skillId: quiz.skillId,
+        sportId: quiz.sportId,
+        currentTime: 0,
+        questionsAnswered: [],
+        questionsRemaining: quiz.questions.length,
+        score: 0,
+        maxScore: quiz.questions.reduce((sum, q) => sum + q.points, 0),
+        percentage: 0,
+        passed: false,
+        isCompleted: false,
+        status: 'in-progress',
+        attemptNumber: 1,
+        startedAt: Timestamp.now(),
+        watchTime: 0,
+        totalTimeSpent: 0,
+      };
 
-      setQuiz(quizResult.data);
-      setInitialProgress(progressResult.data);
+      setQuiz(quiz);
+      setInitialProgress(freshProgress);
     } catch (error) {
       console.error('Error loading quiz:', error);
       setError('Failed to load video quiz');
@@ -82,9 +91,10 @@ function VideoQuizPageContent() {
     initialProgress,
     userId: user.id,
     onSave: async (progress) => {
-      await videoQuizService.saveProgress(progress);
+      // Don't save progress during quiz - only save at completion
+      console.log('Progress update (not saved):', progress);
     },
-    autoSaveInterval: 30000, // Save every 30 seconds
+    autoSaveInterval: 0, // Disable auto-save
   }) : null;
 
   // Handle quiz completion
