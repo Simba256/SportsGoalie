@@ -186,7 +186,7 @@ export class VideoQuizService extends BaseDatabaseService {
 
       const docId = await this.addDocument(this.VIDEO_QUIZZES_COLLECTION, videoQuizData);
 
-      logger.success('Video quiz created successfully', 'VideoQuizService', {
+      logger.info('Video quiz created successfully', 'VideoQuizService', {
         quizId: docId,
         title: quiz.title,
       });
@@ -271,7 +271,7 @@ export class VideoQuizService extends BaseDatabaseService {
         updatedAt: Timestamp.now(),
       });
 
-      logger.success('Video quiz updated successfully', 'VideoQuizService', { quizId });
+      logger.info('Video quiz updated successfully', 'VideoQuizService', { quizId });
 
       return {
         success: true,
@@ -300,7 +300,7 @@ export class VideoQuizService extends BaseDatabaseService {
     try {
       await this.deleteDocument(this.VIDEO_QUIZZES_COLLECTION, quizId);
 
-      logger.success('Video quiz deleted successfully', 'VideoQuizService', { quizId });
+      logger.info('Video quiz deleted successfully', 'VideoQuizService', { quizId });
 
       return {
         success: true,
@@ -497,7 +497,7 @@ export class VideoQuizService extends BaseDatabaseService {
         };
 
         await this.setDocument(this.VIDEO_QUIZ_PROGRESS_COLLECTION, progressId, progress);
-        logger.success('Video quiz progress initialized', 'VideoQuizService', {
+        logger.info('Video quiz progress initialized', 'VideoQuizService', {
           userId,
           quizId,
         });
@@ -586,7 +586,7 @@ export class VideoQuizService extends BaseDatabaseService {
       // Update quiz metadata
       await this.updateQuizMetadata(progress.videoQuizId, progress);
 
-      logger.success('Video quiz completed', 'VideoQuizService', {
+      logger.info('Video quiz completed', 'VideoQuizService', {
         progressId: progress.id,
         score: progress.percentage,
       });
