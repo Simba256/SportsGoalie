@@ -227,8 +227,6 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
                 controlsList: 'nodownload',
                 playsInline: true,
               },
-              forceVideo: true,
-              forceHLS: true,
             },
           }}
         />

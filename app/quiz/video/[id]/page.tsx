@@ -93,7 +93,6 @@ function VideoQuizPageContent() {
       userId: user.id,
       onSave: async (progress) => {
         // Don't save progress during quiz - only save at completion
-        console.log('Progress update (not saved):', progress);
       },
       autoSaveInterval: 0, // Disable auto-save
     } : null
