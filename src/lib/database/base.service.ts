@@ -775,6 +775,47 @@ export class BaseDatabaseService {
     return result.data || null;
   }
 
+  protected async deleteDocument(
+    collectionName: string,
+    id: string
+  ): Promise<void> {
+    const result = await this.delete(collectionName, id);
+    if (!result.success) {
+      throw new DatabaseError(
+        result.error?.message || 'Failed to delete document',
+        result.error?.code || 'DELETE_FAILED'
+      );
+    }
+  }
+
+  protected async updateDocument(
+    collectionName: string,
+    id: string,
+    updates: any
+  ): Promise<void> {
+    const result = await this.update(collectionName, id, updates);
+    if (!result.success) {
+      throw new DatabaseError(
+        result.error?.message || 'Failed to update document',
+        result.error?.code || 'UPDATE_FAILED'
+      );
+    }
+  }
+
+  protected async setDocument<T = any>(
+    collectionName: string,
+    id: string,
+    data: any
+  ): Promise<void> {
+    const result = await this.createWithId(collectionName, id, data);
+    if (!result.success) {
+      throw new DatabaseError(
+        result.error?.message || 'Failed to set document',
+        result.error?.code || 'SET_FAILED'
+      );
+    }
+  }
+
   protected async addDocument<T = any>(
     collectionName: string,
     data: any
