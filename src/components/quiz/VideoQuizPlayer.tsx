@@ -48,6 +48,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   const processingQuestion = useRef(false);
   const playingRef = useRef(playing);
   const currentTimeRef = useRef(0);
+  const lastUiUpdateTime = useRef(0); // For throttling UI updates
   const questionsRef = useRef(questions);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -140,8 +141,9 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     // Update ref for question checker
     currentTimeRef.current = seconds;
 
-    // Update state for UI (throttled)
-    if (Math.abs(currentTime - seconds) > 0.2) {
+    // Update state for UI (throttled using ref)
+    if (Math.abs(lastUiUpdateTime.current - seconds) > 0.2) {
+      lastUiUpdateTime.current = seconds;
       setCurrentTime(seconds);
     }
 
@@ -149,7 +151,7 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
     if (onProgressUpdate) {
       onProgressUpdate(seconds, duration);
     }
-  }, [currentTime, duration, onProgressUpdate]);
+  }, [duration, onProgressUpdate]); // Removed currentTime from dependencies!
 
   // Handle question answer
   const handleAnswerSubmit = useCallback(
