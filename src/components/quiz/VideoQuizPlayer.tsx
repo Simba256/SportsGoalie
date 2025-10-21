@@ -18,6 +18,13 @@ export const VideoQuizPlayer: React.FC<VideoQuizPlayerProps> = ({
   onProgressUpdate,
   onComplete,
 }) => {
+  console.log('🎬 [VideoQuizPlayer] Component initialized:', {
+    videoUrl,
+    questionsReceived: questions,
+    questionsCount: questions?.length,
+    firstQuestion: questions?.[0],
+    settings,
+  });
   const playerRef = useRef<ReactPlayer>(null);
   const [playing, setPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);

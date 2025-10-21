@@ -74,11 +74,28 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
   });
 
   const [questionsWithState, setQuestionsWithState] = useState<VideoQuizQuestionWithState[]>(() => {
-    if (!quiz) return [];
-    return quiz.questions.map((q) => ({
+    if (!quiz) {
+      console.log('🚫 [useVideoQuiz] No quiz provided, returning empty questions');
+      return [];
+    }
+
+    console.log('📝 [useVideoQuiz] Initializing questionsWithState:', {
+      quizQuestions: quiz.questions,
+      questionsCount: quiz.questions?.length,
+      firstQuestion: quiz.questions?.[0],
+    });
+
+    const mappedQuestions = quiz.questions.map((q) => ({
       ...q,
       answered: initialProgress?.questionsAnswered.some((a) => a.questionId === q.id) || false,
     }));
+
+    console.log('✅ [useVideoQuiz] Mapped questions with state:', {
+      mappedQuestionsCount: mappedQuestions.length,
+      firstMappedQuestion: mappedQuestions[0],
+    });
+
+    return mappedQuestions;
   });
 
   const watchStartTime = useRef<number>(Date.now());
@@ -288,8 +305,15 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
 
   // Return null if no options (data not ready)
   if (!options || !quiz) {
+    console.log('⚠️ [useVideoQuiz] Returning null - options:', !!options, 'quiz:', !!quiz);
     return null;
   }
+
+  console.log('🎯 [useVideoQuiz] Returning hook data:', {
+    hasProgress: !!progress,
+    questionsWithStateCount: questionsWithState?.length,
+    firstQuestionWithState: questionsWithState?.[0],
+  });
 
   return {
     progress,

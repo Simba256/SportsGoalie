@@ -177,6 +177,17 @@ function VideoQuizPageContent() {
 
   const { progress, questionsWithState, handleQuestionAnswer, updateVideoProgress } = videoQuizHook;
 
+  // DEBUG: Log what we're passing to the video player
+  console.log('🎮 Rendering video quiz page:', {
+    hasQuiz: !!quiz,
+    hasVideoQuizHook: !!videoQuizHook,
+    questionsWithState,
+    questionsCount: questionsWithState?.length,
+    firstQuestionWithState: questionsWithState?.[0],
+    originalQuizQuestions: quiz.questions,
+    originalQuestionsCount: quiz.questions?.length,
+  });
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
