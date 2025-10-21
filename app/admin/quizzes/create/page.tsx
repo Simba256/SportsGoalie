@@ -372,7 +372,23 @@ function CreateVideoQuizContent() {
 
       const result = await videoQuizService.createVideoQuiz(quizToCreate);
 
+      // DEBUG: Log the actual result to see what we got back
+      console.log('📬 Result from createVideoQuiz:', {
+        result,
+        resultType: typeof result,
+        resultKeys: result ? Object.keys(result) : 'null',
+        hasSuccess: result && 'success' in result,
+        successValue: result?.success,
+        successType: typeof result?.success,
+      });
+
+      if (!result || typeof result !== 'object') {
+        console.error('❌ Invalid result structure:', result);
+        throw new Error('Service returned invalid response structure');
+      }
+
       if (!result.success) {
+        console.error('❌ Quiz creation failed:', result.error);
         throw new Error(result.error?.message || 'Failed to create video quiz');
       }
 
