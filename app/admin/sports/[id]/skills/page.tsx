@@ -44,7 +44,6 @@ interface SkillFormData {
   content: string;
   learningObjectives: string[];
   tags: string[];
-  hasVideo: boolean;
   isActive: boolean;
   order: number;
   prerequisites: string[];
@@ -58,7 +57,6 @@ const defaultFormData: SkillFormData = {
   content: '',
   learningObjectives: [],
   tags: [],
-  hasVideo: false,
   isActive: true,
   order: 0,
   prerequisites: [],
@@ -145,7 +143,6 @@ function AdminSkillsContent() {
       content: skill.content || '',
       learningObjectives: skill.learningObjectives,
       tags: skill.tags,
-      hasVideo: skill.hasVideo,
       isActive: skill.isActive,
       order: skill.order,
       prerequisites: skill.prerequisites,
@@ -218,37 +215,42 @@ function AdminSkillsContent() {
         sportId,
         createdBy: 'admin', // Add required createdBy field
         externalResources: [],
+        hasVideo: false, // Will be set automatically based on media
       };
 
       // Handle media: either use new uploads or preserve existing media
       if (uploadedFiles.length > 0) {
         // New files uploaded - replace existing media
+        const videoFiles = uploadedFiles.filter(file => file.type.startsWith('video/'));
+        const imageFiles = uploadedFiles.filter(file => file.type.startsWith('image/'));
+
         skillData.media = {
           text: formData.content,
-          images: uploadedFiles
-            .filter(file => file.type.startsWith('image/'))
-            .map((file, index) => ({
-              id: `img-${Date.now()}-${index}`,
-              url: mediaUrls[uploadedFiles.indexOf(file)],
-              alt: file.name,
-              caption: file.name,
-              order: index,
-            })),
-          videos: uploadedFiles
-            .filter(file => file.type.startsWith('video/'))
-            .map((file, index) => ({
-              id: `vid-${Date.now()}-${index}`,
-              url: mediaUrls[uploadedFiles.indexOf(file)],
-              youtubeId: '',
-              title: file.name,
-              duration: 0,
-              thumbnail: '',
-              order: index,
-            })),
+          images: imageFiles.map((file, index) => ({
+            id: `img-${Date.now()}-${index}`,
+            url: mediaUrls[uploadedFiles.indexOf(file)],
+            alt: file.name,
+            caption: file.name,
+            order: index,
+          })),
+          videos: videoFiles.map((file, index) => ({
+            id: `vid-${Date.now()}-${index}`,
+            url: mediaUrls[uploadedFiles.indexOf(file)],
+            youtubeId: '',
+            title: file.name,
+            duration: 0,
+            thumbnail: '',
+            order: index,
+          })),
         };
+
+        // Automatically set hasVideo based on uploaded videos
+        skillData.hasVideo = videoFiles.length > 0;
       } else if (state.editingId && editingSkill?.media) {
         // Editing without new uploads - preserve existing media
         skillData.media = editingSkill.media;
+        // Set hasVideo based on existing media
+        skillData.hasVideo = editingSkill.media.videos && editingSkill.media.videos.length > 0;
       }
 
       let result;
@@ -527,27 +529,15 @@ function AdminSkillsContent() {
               />
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.hasVideo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hasVideo: e.target.checked }))}
-                  className="rounded"
-                />
-                <span>Has Video Content</span>
-              </label>
-
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="rounded"
-                />
-                <span>Active</span>
-              </label>
-            </div>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                className="rounded"
+              />
+              <span>Active</span>
+            </label>
 
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-900">
