@@ -29,7 +29,7 @@ describe('MediaUpload', () => {
     onUpload: mockOnUpload,
     acceptedTypes: ['image/*', 'video/*'],
     maxFiles: 5,
-    maxSizePerFile: 10, // 10MB
+    maxSizePerFile: 50, // 50MB
   };
 
   it('renders upload area correctly', () => {
@@ -37,7 +37,7 @@ describe('MediaUpload', () => {
 
     expect(screen.getByText('Upload Media Files')).toBeInTheDocument();
     expect(screen.getByText('Drag and drop files here, or click to select files')).toBeInTheDocument();
-    expect(screen.getByText('Supported: image/*, video/* • Max 10MB per file • Max 5 files')).toBeInTheDocument();
+    expect(screen.getByText('Supported: image/*, video/* • Max 50MB per file • Max 5 files')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /select files/i })).toBeInTheDocument();
   });
 
@@ -84,15 +84,15 @@ describe('MediaUpload', () => {
   it('validates file size correctly', async () => {
     render(<MediaUpload {...defaultProps} />);
 
-    // Create a file larger than 10MB
-    const largeFile = new File(['x'.repeat(11 * 1024 * 1024)], 'large.jpg', { type: 'image/jpeg' });
+    // Create a file larger than 50MB
+    const largeFile = new File(['x'.repeat(51 * 1024 * 1024)], 'large.jpg', { type: 'image/jpeg' });
 
     const fileInput = screen.getByRole('button', { name: /select files/i }).nextElementSibling as HTMLInputElement;
 
     await user.upload(fileInput, largeFile);
 
     await waitFor(() => {
-      expect(screen.getByText(/File size must be less than 10MB/)).toBeInTheDocument();
+      expect(screen.getByText(/File size must be less than 50MB/)).toBeInTheDocument();
     });
 
     expect(mockOnUpload).not.toHaveBeenCalled();
@@ -307,12 +307,12 @@ describe('MediaUpload', () => {
   it('accepts custom accepted types', () => {
     render(<MediaUpload {...defaultProps} acceptedTypes={['image/png', 'image/jpeg']} />);
 
-    expect(screen.getByText('Supported: image/png, image/jpeg • Max 10MB per file • Max 5 files')).toBeInTheDocument();
+    expect(screen.getByText('Supported: image/png, image/jpeg • Max 50MB per file • Max 5 files')).toBeInTheDocument();
   });
 
   it('accepts custom max size and file limits', () => {
-    render(<MediaUpload {...defaultProps} maxSizePerFile={50} maxFiles={10} />);
+    render(<MediaUpload {...defaultProps} maxSizePerFile={100} maxFiles={10} />);
 
-    expect(screen.getByText('Supported: image/*, video/* • Max 50MB per file • Max 10 files')).toBeInTheDocument();
+    expect(screen.getByText('Supported: image/*, video/* • Max 100MB per file • Max 10 files')).toBeInTheDocument();
   });
 });

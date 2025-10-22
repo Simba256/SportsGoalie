@@ -222,7 +222,7 @@ export const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
             Drag and drop files here, or click to select
           </p>
           <p className="text-xs text-gray-500">
-            Images (JPG, PNG, GIF, WebP - max 10MB) • Videos (MP4, MOV, AVI, WebM - max 100MB) • Documents (PDF - max 10MB)
+            Images (JPG, PNG, GIF, WebP - max 50MB) • Videos (MP4, MOV, AVI, WebM - max 1GB) • Documents (PDF - max 25MB)
           </p>
           <p className="text-xs text-gray-500 mt-1">
             {files.length} of {maxFiles} files uploaded

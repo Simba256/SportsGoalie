@@ -41,7 +41,7 @@ export interface UploadProgress {
 class StorageService {
   private readonly defaultOptions: Required<MediaUploadOptions> = {
     folder: 'uploads',
-    maxSizeBytes: 100 * 1024 * 1024, // 100MB
+    maxSizeBytes: 1024 * 1024 * 1024, // 1GB
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'],
     generateThumbnail: false,
     customMetadata: {},
@@ -367,27 +367,27 @@ export const storageService = new StorageService();
 export const STORAGE_CONFIGS = {
   IMAGES: {
     folder: 'images',
-    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    maxSizeBytes: 50 * 1024 * 1024, // 50MB
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'] as string[],
   },
   VIDEOS: {
     folder: 'videos',
-    maxSizeBytes: 100 * 1024 * 1024, // 100MB
+    maxSizeBytes: 1024 * 1024 * 1024, // 1GB
     allowedTypes: ['video/mp4', 'video/webm', 'video/mov'] as string[],
   },
   DOCUMENTS: {
     folder: 'documents',
-    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    maxSizeBytes: 25 * 1024 * 1024, // 25MB
     allowedTypes: ['application/pdf', 'text/plain', 'application/msword'] as string[],
   },
   SPORT_IMAGES: {
     folder: 'sports/images',
-    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    maxSizeBytes: 50 * 1024 * 1024, // 50MB
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'] as string[],
   },
   SKILL_MEDIA: {
     folder: 'skills/media',
-    maxSizeBytes: 100 * 1024 * 1024, // 100MB (supports both images and videos)
+    maxSizeBytes: 1024 * 1024 * 1024, // 1GB (supports both images and videos)
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'] as string[],
   },
 };

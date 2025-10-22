@@ -123,14 +123,19 @@ function CreateVideoQuizContent() {
       // For Google Drive URLs, we can't always validate duration due to CORS
       // but we can set it up for playback
       if (url.includes('drive.google.com')) {
-        toast.info('Google Drive video detected', {
-          description: 'Duration will be detected when the video plays. Make sure the video is publicly accessible.',
+        toast.success('Google Drive video validated', {
+          description: 'Using default duration. You can adjust it manually below if needed.',
         });
 
+        // Set a default duration of 5 minutes (300 seconds) for Google Drive videos
+        // This allows questions to be created. The actual duration will be detected during playback.
+        const defaultDuration = 300;
+
+        setVideoDuration(defaultDuration);
         setQuizData(prev => ({
           ...prev,
           videoUrl: processedUrl,
-          videoDuration: 0, // Will be set when video loads in player
+          videoDuration: defaultDuration, // Default duration for Google Drive videos
         }));
 
         setVideoValidating(false);
@@ -683,6 +688,9 @@ function CreateVideoQuizContent() {
                       <p className="font-medium text-green-900">Video Validated</p>
                       <p className="text-sm text-green-700">
                         Duration: {Math.floor(videoDuration / 60)}m {videoDuration % 60}s
+                        {quizData.videoUrl?.includes('drive.google.com') && (
+                          <span className="text-xs ml-2">(Default - adjust if needed)</span>
+                        )}
                       </p>
                     </div>
                   </div>

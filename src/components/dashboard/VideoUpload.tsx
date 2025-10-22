@@ -289,7 +289,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({ className }) => {
                   <p className="text-sm text-muted-foreground">or click to browse files</p>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Supported formats: MP4, MOV, AVI, WebM • Max size: 100MB
+                  Supported formats: MP4, MOV, AVI, WebM • Max size: 1GB
                 </div>
                 <Button
                   onClick={() => fileInputRef.current?.click()}

@@ -178,7 +178,7 @@ class FirebaseStorageService {
   /**
    * Check if file size is within limits
    */
-  isValidFileSize(file: File, maxSizeMB: number = 100): boolean {
+  isValidFileSize(file: File, maxSizeMB: number = 1024): boolean {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     return file.size <= maxSizeBytes;
   }
@@ -197,7 +197,7 @@ class FirebaseStorageService {
     if (!this.isValidFileSize(file)) {
       return {
         isValid: false,
-        error: 'File size must be less than 100MB'
+        error: 'File size must be less than 1GB'
       };
     }
 
@@ -410,10 +410,10 @@ class FirebaseStorageService {
       };
     }
 
-    if (!this.isValidFileSize(file, 10)) {
+    if (!this.isValidFileSize(file, 50)) {
       return {
         isValid: false,
-        error: 'Image size must be less than 10MB'
+        error: 'Image size must be less than 50MB'
       };
     }
 
@@ -431,10 +431,10 @@ class FirebaseStorageService {
       };
     }
 
-    if (!this.isValidFileSize(file, 10)) {
+    if (!this.isValidFileSize(file, 25)) {
       return {
         isValid: false,
-        error: 'Document size must be less than 10MB'
+        error: 'Document size must be less than 25MB'
       };
     }
 
