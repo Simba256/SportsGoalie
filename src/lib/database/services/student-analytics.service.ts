@@ -86,6 +86,53 @@ export interface SkillPerformanceData {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
+export interface SkillProgressDetail {
+  skillId: string;
+  skillName: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  status: 'not_started' | 'in_progress' | 'completed';
+  progressPercentage: number;
+  latestQuizScore: number | null;
+  quizStatus: 'not_attempted' | 'passed' | 'failed';
+  lastAttemptDate: Date | null;
+  timeSpent: number;
+  completedAt: Date | null;
+}
+
+export interface CourseProgressDetail {
+  sportId: string;
+  sportName: string;
+  description: string;
+  enrolledAt: Date;
+  status: 'not_started' | 'in_progress' | 'completed';
+  progressPercentage: number;
+  totalSkills: number;
+  completedSkills: number;
+  averageQuizScore: number;
+  lastActivityDate: Date | null;
+  skills: SkillProgressDetail[];
+}
+
+export interface QuizAttemptDetail {
+  attemptId: string;
+  quizId: string;
+  quizTitle: string;
+  sportName: string;
+  skillName: string;
+  attemptNumber: number;
+  startedAt: Date;
+  submittedAt: Date;
+  timeSpent: number;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  passed: boolean;
+  questionsAnswered: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+}
+
 /**
  * Service for comprehensive student analytics and reporting.
  * Provides detailed insights into student performance, progress, and engagement.
@@ -437,6 +484,211 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         error: {
           code: 'SKILL_PERFORMANCE_FAILED',
           message: 'Failed to fetch skill performance',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Get detailed course progress with skill scores
+   */
+  async getCourseProgressDetails(userId: string): Promise<ApiResponse<CourseProgressDetail[]>> {
+    logger.info('Fetching course progress details', 'StudentAnalyticsService', { userId });
+
+    try {
+      // Get all sport progress for the user
+      const sportProgressResult = await this.query<SportProgress>('sport_progress', {
+        where: [{ field: 'userId', operator: '==', value: userId }]
+      });
+
+      const sportProgressList = sportProgressResult.data?.items || [];
+      const courseDetails: CourseProgressDetail[] = [];
+
+      for (const sportProgress of sportProgressList) {
+        const sport = await sportsService.getSport(sportProgress.sportId);
+        if (!sport.success || !sport.data) continue;
+
+        // Get all skills for this sport
+        const skillsResult = await sportsService.getSkills({
+          where: [{ field: 'sportId', operator: '==', value: sportProgress.sportId }]
+        });
+        const skills = skillsResult.data?.items || [];
+
+        // Get skill progress for each skill
+        const skillDetails: SkillProgressDetail[] = [];
+
+        for (const skill of skills) {
+          // Get skill progress
+          const skillProgressResult = await this.query<SkillProgress>('skill_progress', {
+            where: [
+              { field: 'userId', operator: '==', value: userId },
+              { field: 'skillId', operator: '==', value: skill.id }
+            ]
+          });
+
+          const skillProgress = skillProgressResult.data?.items[0];
+
+          // Get latest quiz attempt for this skill if it has a video quiz
+          let latestQuizScore: number | null = null;
+          let lastAttemptDate: Date | null = null;
+          let quizStatus: 'not_attempted' | 'passed' | 'failed' = 'not_attempted';
+
+          if (skill.videoQuizId) {
+            const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+              where: [
+                { field: 'userId', operator: '==', value: userId },
+                { field: 'quizId', operator: '==', value: skill.videoQuizId },
+                { field: 'status', operator: '==', value: 'submitted' }
+              ],
+              orderBy: { field: 'submittedAt', direction: 'desc' },
+              limit: 1
+            });
+
+            const latestAttempt = quizAttemptsResult.data?.items[0];
+            if (latestAttempt) {
+              latestQuizScore = latestAttempt.percentage;
+              lastAttemptDate = latestAttempt.submittedAt?.toDate ?
+                latestAttempt.submittedAt.toDate() :
+                new Date(latestAttempt.submittedAt || 0);
+              quizStatus = latestAttempt.passed ? 'passed' : 'failed';
+            }
+          }
+
+          skillDetails.push({
+            skillId: skill.id,
+            skillName: skill.name,
+            difficulty: skill.difficulty || 'beginner',
+            status: skillProgress?.status || 'not_started',
+            progressPercentage: skillProgress?.progressPercentage || 0,
+            latestQuizScore,
+            quizStatus,
+            lastAttemptDate,
+            timeSpent: skillProgress?.timeSpent || 0,
+            completedAt: skillProgress?.completedAt?.toDate ?
+              skillProgress.completedAt.toDate() :
+              skillProgress?.completedAt ? new Date(skillProgress.completedAt) : null
+          });
+        }
+
+        // Calculate overall course progress
+        const totalSkills = skillDetails.length;
+        const completedSkills = skillDetails.filter(s => s.status === 'completed').length;
+        const averageScore = skillDetails
+          .filter(s => s.latestQuizScore !== null)
+          .reduce((sum, s) => sum + (s.latestQuizScore || 0), 0) /
+          (skillDetails.filter(s => s.latestQuizScore !== null).length || 1);
+
+        courseDetails.push({
+          sportId: sportProgress.sportId,
+          sportName: sport.data.name,
+          description: sport.data.description,
+          enrolledAt: sportProgress.enrolledAt?.toDate ?
+            sportProgress.enrolledAt.toDate() :
+            new Date(sportProgress.enrolledAt || 0),
+          status: sportProgress.status,
+          progressPercentage: sportProgress.progressPercentage,
+          totalSkills,
+          completedSkills,
+          averageQuizScore: Math.round(averageScore),
+          lastActivityDate: sportProgress.lastActivityDate?.toDate ?
+            sportProgress.lastActivityDate.toDate() :
+            sportProgress.lastActivityDate ? new Date(sportProgress.lastActivityDate) : null,
+          skills: skillDetails
+        });
+      }
+
+      // Sort by last activity date (most recent first)
+      courseDetails.sort((a, b) => {
+        const dateA = a.lastActivityDate?.getTime() || 0;
+        const dateB = b.lastActivityDate?.getTime() || 0;
+        return dateB - dateA;
+      });
+
+      return {
+        success: true,
+        data: courseDetails,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to fetch course progress details', 'StudentAnalyticsService', error);
+      return {
+        success: false,
+        error: {
+          code: 'COURSE_PROGRESS_FAILED',
+          message: 'Failed to fetch course progress details',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Get quiz attempt history with detailed information
+   */
+  async getQuizAttemptHistory(userId: string, limit: number = 50): Promise<ApiResponse<QuizAttemptDetail[]>> {
+    logger.info('Fetching quiz attempt history', 'StudentAnalyticsService', { userId, limit });
+
+    try {
+      const attemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+        where: [
+          { field: 'userId', operator: '==', value: userId },
+          { field: 'status', operator: '==', value: 'submitted' }
+        ],
+        orderBy: { field: 'submittedAt', direction: 'desc' },
+        limit
+      });
+
+      const attempts = attemptsResult.data?.items || [];
+      const attemptDetails: QuizAttemptDetail[] = [];
+
+      for (const attempt of attempts) {
+        const [quiz, skill, sport] = await Promise.all([
+          videoQuizService.getVideoQuiz(attempt.quizId),
+          attempt.skillId ? sportsService.getSkill(attempt.skillId) : null,
+          attempt.sportId ? sportsService.getSport(attempt.sportId) : null
+        ]);
+
+        const startTime = attempt.startedAt?.toDate ?
+          attempt.startedAt.toDate() :
+          new Date(attempt.startedAt || 0);
+        const endTime = attempt.submittedAt?.toDate ?
+          attempt.submittedAt.toDate() :
+          new Date(attempt.submittedAt || 0);
+
+        attemptDetails.push({
+          attemptId: attempt.id,
+          quizId: attempt.quizId,
+          quizTitle: quiz.data?.title || 'Unknown Quiz',
+          sportName: sport?.data?.name || 'Unknown Sport',
+          skillName: skill?.data?.name || 'Unknown Skill',
+          attemptNumber: attempt.attemptNumber,
+          startedAt: startTime,
+          submittedAt: endTime,
+          timeSpent: attempt.timeSpent,
+          score: attempt.score,
+          maxScore: attempt.maxScore,
+          percentage: attempt.percentage,
+          passed: attempt.passed,
+          questionsAnswered: attempt.questionsAnswered?.length || 0,
+          totalQuestions: quiz.data?.questions?.length || 0,
+          correctAnswers: attempt.questionsAnswered?.filter(q => q.isCorrect).length || 0,
+          incorrectAnswers: attempt.questionsAnswered?.filter(q => !q.isCorrect).length || 0,
+        });
+      }
+
+      return {
+        success: true,
+        data: attemptDetails,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to fetch quiz attempt history', 'StudentAnalyticsService', error);
+      return {
+        success: false,
+        error: {
+          code: 'QUIZ_HISTORY_FAILED',
+          message: 'Failed to fetch quiz attempt history',
         },
         timestamp: new Date(),
       };

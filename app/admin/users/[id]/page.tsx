@@ -47,12 +47,21 @@ import { MessageComposer } from '@/components/messages/MessageComposer';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import { studentAnalyticsService } from '@/lib/database/services/student-analytics.service';
-import type { StudentAnalytics, QuizPerformanceData, ProgressOverTimeData, SkillPerformanceData } from '@/lib/database/services/student-analytics.service';
+import type {
+  StudentAnalytics,
+  QuizPerformanceData,
+  ProgressOverTimeData,
+  SkillPerformanceData,
+  CourseProgressDetail,
+  QuizAttemptDetail
+} from '@/lib/database/services/student-analytics.service';
 import { QuizPerformanceChart } from '@/src/components/admin/analytics/QuizPerformanceChart';
 import { ProgressOverTimeChart } from '@/src/components/admin/analytics/ProgressOverTimeChart';
 import { SkillPerformanceTable } from '@/src/components/admin/analytics/SkillPerformanceTable';
 import { ActivityTimeline } from '@/src/components/admin/analytics/ActivityTimeline';
 import { EngagementMetrics } from '@/src/components/admin/analytics/EngagementMetrics';
+import { CourseProgress } from '@/src/components/admin/analytics/CourseProgress';
+import { QuizAttemptHistory } from '@/src/components/admin/analytics/QuizAttemptHistory';
 
 export default function AdminUserDetailsPage() {
   return (
@@ -83,6 +92,8 @@ function UserDetailsContent() {
   const [quizPerformance, setQuizPerformance] = useState<QuizPerformanceData[]>([]);
   const [progressOverTime, setProgressOverTime] = useState<ProgressOverTimeData[]>([]);
   const [skillPerformance, setSkillPerformance] = useState<SkillPerformanceData[]>([]);
+  const [courseProgress, setCourseProgress] = useState<CourseProgressDetail[]>([]);
+  const [quizAttemptHistory, setQuizAttemptHistory] = useState<QuizAttemptDetail[]>([]);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   const fetchUserData = async () => {
@@ -141,12 +152,16 @@ function UserDetailsContent() {
         analyticsResult,
         quizPerfResult,
         progressResult,
-        skillPerfResult
+        skillPerfResult,
+        courseProgressResult,
+        quizHistoryResult
       ] = await Promise.all([
         studentAnalyticsService.getStudentAnalytics(userId),
         studentAnalyticsService.getQuizPerformance(userId),
         studentAnalyticsService.getProgressOverTime(userId, 30),
-        studentAnalyticsService.getSkillPerformance(userId)
+        studentAnalyticsService.getSkillPerformance(userId),
+        studentAnalyticsService.getCourseProgressDetails(userId),
+        studentAnalyticsService.getQuizAttemptHistory(userId, 100)
       ]);
 
       if (analyticsResult.success && analyticsResult.data) {
@@ -163,6 +178,14 @@ function UserDetailsContent() {
 
       if (skillPerfResult.success && skillPerfResult.data) {
         setSkillPerformance(skillPerfResult.data);
+      }
+
+      if (courseProgressResult.success && courseProgressResult.data) {
+        setCourseProgress(courseProgressResult.data);
+      }
+
+      if (quizHistoryResult.success && quizHistoryResult.data) {
+        setQuizAttemptHistory(quizHistoryResult.data);
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -518,8 +541,20 @@ function UserDetailsContent() {
                   />
                 )}
 
+                {/* Course Progress with Skills */}
+                <CourseProgress
+                  courses={courseProgress}
+                  loading={loadingAnalytics}
+                />
+
                 {/* Progress Over Time Chart */}
                 <ProgressOverTimeChart data={progressOverTime} />
+
+                {/* Quiz Attempt History */}
+                <QuizAttemptHistory
+                  attempts={quizAttemptHistory}
+                  loading={loadingAnalytics}
+                />
 
                 {/* Quiz Performance */}
                 <QuizPerformanceChart data={quizPerformance} />
