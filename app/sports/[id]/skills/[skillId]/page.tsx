@@ -403,17 +403,39 @@ export default function SkillDetailPage() {
                   <CardContent className="space-y-4">
                     {skill.media.videos.map((video) => (
                       <div key={video.id} className="space-y-2">
-                        <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                          <div className="text-center space-y-2">
-                            <Play className="w-12 h-12 text-muted-foreground mx-auto" />
-                            <p className="text-sm text-muted-foreground">
-                              Video Player: {video.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Duration: {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                            </p>
+                        {video.url ? (
+                          <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                            <video
+                              src={video.url}
+                              controls
+                              className="w-full h-full"
+                              preload="metadata"
+                            >
+                              <source src={video.url} type="video/mp4" />
+                              <source src={video.url} type="video/webm" />
+                              Your browser does not support the video tag.
+                            </video>
                           </div>
-                        </div>
+                        ) : video.youtubeId ? (
+                          <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                            <iframe
+                              src={`https://www.youtube.com/embed/${video.youtubeId}`}
+                              title={video.title}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              className="w-full h-full"
+                            />
+                          </div>
+                        ) : (
+                          <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div className="text-center space-y-2">
+                              <Play className="w-12 h-12 text-muted-foreground mx-auto" />
+                              <p className="text-sm text-muted-foreground">
+                                Video unavailable
+                              </p>
+                            </div>
+                          </div>
+                        )}
                         <h4 className="font-medium">{video.title}</h4>
                       </div>
                     ))}
