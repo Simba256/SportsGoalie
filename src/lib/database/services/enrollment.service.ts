@@ -9,6 +9,7 @@ import {
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { sportsService } from './sports.service';
+import { videoQuizService } from './video-quiz.service';
 
 /**
  * Service for managing sports enrollment and progress.
@@ -136,19 +137,50 @@ export class EnrollmentService extends BaseDatabaseService {
       const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
       const totalSkills = skills.length;
 
-      // Use stored progress data from the progress record
-      // Progress will be calculated and updated when video quizzes are completed
-      const progressPercentage = progress.progressPercentage || 0;
+      // Calculate progress based on actual quiz attempts for each skill
+      let totalScore = 0;
+      let completedSkillsCount = 0;
+      const completedSkillIds: string[] = [];
+
+      // Fetch quiz attempts for each skill and calculate average
+      for (const skill of skills) {
+        const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
+          skillId: skill.id,
+          completed: true,
+          limit: 1, // Get only the latest completed attempt
+        });
+
+        if (attemptsResult.success && attemptsResult.data?.items?.length > 0) {
+          const latestAttempt = attemptsResult.data.items[0];
+          if (latestAttempt.score !== undefined && latestAttempt.score !== null) {
+            totalScore += latestAttempt.score;
+            completedSkillsCount++;
+            completedSkillIds.push(skill.id);
+
+            logger.debug(`Skill ${skill.id} has quiz score: ${latestAttempt.score}`, 'EnrollmentService');
+          }
+        }
+      }
+
+      // Calculate average progress percentage based on quiz scores
+      let progressPercentage = 0;
+      if (completedSkillsCount > 0 && totalSkills > 0) {
+        // Average of completed quiz scores, scaled by how many skills have been attempted
+        const averageScore = totalScore / completedSkillsCount;
+        const completionRatio = completedSkillsCount / totalSkills;
+        progressPercentage = averageScore * completionRatio;
+      }
+
+      // Use stored time and streak data
       const totalTime = progress.timeSpent || 0;
-      const completedSkillIds = progress.completedSkills || [];
       const currentStreak = progress.streak?.current || 0;
       const longestStreak = progress.streak?.longest || 0;
 
       // Determine status based on completed skills
       let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
-      if (completedSkillIds.length === totalSkills && totalSkills > 0) {
+      if (completedSkillsCount === totalSkills && totalSkills > 0) {
         status = 'completed';
-      } else if (completedSkillIds.length > 0) {
+      } else if (completedSkillsCount > 0) {
         status = 'in_progress';
       }
 
@@ -166,6 +198,8 @@ export class EnrollmentService extends BaseDatabaseService {
           lastActiveDate: progress.streak?.lastActiveDate || Timestamp.fromDate(new Date()),
         },
       };
+
+      logger.debug(`Course ${sport.id} progress: ${progressPercentage}% (${completedSkillsCount}/${totalSkills} skills)`, 'EnrollmentService');
 
       enrolledSports.push({
         sport,
@@ -200,10 +234,74 @@ export class EnrollmentService extends BaseDatabaseService {
       limit: 1,
     });
 
+    if (!result.success || !result.data?.items[0]) {
+      return {
+        success: result.success,
+        data: null,
+        error: result.error,
+        timestamp: new Date(),
+      };
+    }
+
+    const progress = result.data.items[0];
+
+    // Get all skills for this sport to calculate live progress
+    const skillsResult = await sportsService.getSkillsBySport(sportId);
+    const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
+    const totalSkills = skills.length;
+
+    // Calculate progress based on actual quiz attempts for each skill
+    let totalScore = 0;
+    let completedSkillsCount = 0;
+    const completedSkillIds: string[] = [];
+
+    // Fetch quiz attempts for each skill and calculate average
+    for (const skill of skills) {
+      const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
+        skillId: skill.id,
+        completed: true,
+        limit: 1, // Get only the latest completed attempt
+      });
+
+      if (attemptsResult.success && attemptsResult.data?.items?.length > 0) {
+        const latestAttempt = attemptsResult.data.items[0];
+        if (latestAttempt.score !== undefined && latestAttempt.score !== null) {
+          totalScore += latestAttempt.score;
+          completedSkillsCount++;
+          completedSkillIds.push(skill.id);
+        }
+      }
+    }
+
+    // Calculate average progress percentage based on quiz scores
+    let progressPercentage = 0;
+    if (completedSkillsCount > 0 && totalSkills > 0) {
+      // Average of completed quiz scores, scaled by how many skills have been attempted
+      const averageScore = totalScore / completedSkillsCount;
+      const completionRatio = completedSkillsCount / totalSkills;
+      progressPercentage = averageScore * completionRatio;
+    }
+
+    // Determine status based on completed skills
+    let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
+    if (completedSkillsCount === totalSkills && totalSkills > 0) {
+      status = 'completed';
+    } else if (completedSkillsCount > 0) {
+      status = 'in_progress';
+    }
+
+    // Update progress with calculated values
+    const updatedProgress: SportProgress = {
+      ...progress,
+      progressPercentage: Math.round(progressPercentage * 10) / 10, // Round to 1 decimal
+      completedSkills: completedSkillIds,
+      totalSkills,
+      status,
+    };
+
     return {
-      success: result.success,
-      data: result.data?.items[0] || null,
-      error: result.error,
+      success: true,
+      data: updatedProgress,
       timestamp: new Date(),
     };
   }
