@@ -100,6 +100,53 @@ service firebase.storage {
       allow delete: if isOwner(userId) || isAdmin();
     }
 
+    // Sports images (for admin portal)
+    match /sports/images/{fileName} {
+      allow read: if true; // Public read for sport images
+      allow write: if isAuthenticated() && isValidImageSize() && isValidImageType();
+      allow delete: if isAdmin();
+    }
+
+    // Skills media (images and videos for admin portal)
+    match /skills/media/{fileName} {
+      allow read: if true; // Public read for skill media
+      allow write: if isAuthenticated() &&
+                      ((isValidImageSize() && isValidImageType()) ||
+                       (isValidVideoSize() && isValidVideoType()));
+      allow delete: if isAdmin();
+    }
+
+    // Course content (for admin portal)
+    match /courses/{courseId}/{fileName} {
+      allow read: if true; // Public read for course content
+      allow write: if isAuthenticated() &&
+                      ((isValidImageSize() && isValidImageType()) ||
+                       (isValidVideoSize() && isValidVideoType()) ||
+                       (isValidDocumentSize() && isValidDocumentType()));
+      allow delete: if isAdmin();
+    }
+
+    // General images folder (fallback for other image uploads)
+    match /images/{fileName} {
+      allow read: if true; // Public read
+      allow write: if isAuthenticated() && isValidImageSize() && isValidImageType();
+      allow delete: if isAdmin();
+    }
+
+    // General videos folder (fallback for other video uploads)
+    match /videos/{fileName} {
+      allow read: if true; // Public read
+      allow write: if isAuthenticated() && isValidVideoSize() && isValidVideoType();
+      allow delete: if isAdmin();
+    }
+
+    // General documents folder
+    match /documents/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidDocumentSize() && isValidDocumentType();
+      allow delete: if isAdmin();
+    }
+
     // Default deny all other paths
     match /{allPaths=**} {
       allow read, write: if false;

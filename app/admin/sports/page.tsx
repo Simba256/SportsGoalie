@@ -507,7 +507,28 @@ function AdminSportsContent() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filteredSports.map((sport) => (
-              <Card key={sport.id} className="hover:shadow-md transition-shadow">
+              <Card key={sport.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                {/* Image Section */}
+                {sport.imageUrl && (
+                  <div className="aspect-video relative overflow-hidden">
+                    <img
+                      src={sport.imageUrl}
+                      alt={sport.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {sport.isFeatured && (
+                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
+                        Featured
+                      </div>
+                    )}
+                    {!sport.isActive && (
+                      <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                        Inactive
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-3 flex-1">
@@ -524,16 +545,6 @@ function AdminSportsContent() {
                             >
                               {sport.difficulty}
                             </span>
-                            {sport.isFeatured && (
-                              <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                                Featured
-                              </span>
-                            )}
-                            {!sport.isActive && (
-                              <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs">
-                                Inactive
-                              </span>
-                            )}
                           </div>
                         </div>
                       </div>

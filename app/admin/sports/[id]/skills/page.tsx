@@ -582,7 +582,41 @@ function AdminSkillsContent() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {state.skills.map((skill, index) => (
-              <Card key={skill.id} className="hover:shadow-md transition-shadow">
+              <Card key={skill.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                {/* Display image or video thumbnail if available */}
+                {(skill.media?.images?.[0] || skill.media?.videos?.[0]) && (
+                  <div className="aspect-video relative overflow-hidden bg-muted">
+                    {skill.media?.videos?.[0] ? (
+                      <>
+                        <video
+                          src={skill.media.videos[0].url}
+                          className="w-full h-full object-cover"
+                          muted
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                          <Play className="w-12 h-12 text-white" />
+                        </div>
+                        <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                          <Play className="w-3 h-3" />
+                          Video
+                        </div>
+                      </>
+                    ) : skill.media?.images?.[0] ? (
+                      <img
+                        src={skill.media.images[0].url}
+                        alt={skill.media.images[0].title || skill.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : null}
+
+                    {!skill.isActive && (
+                      <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                        Inactive
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-3 flex-1">
@@ -596,7 +630,7 @@ function AdminSkillsContent() {
                           >
                             {skill.difficulty}
                           </span>
-                          {!skill.isActive && (
+                          {!skill.media?.images?.[0] && !skill.media?.videos?.[0] && !skill.isActive && (
                             <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs">
                               Inactive
                             </span>
@@ -621,10 +655,22 @@ function AdminSkillsContent() {
                         {skill.hasVideo && (
                           <div className="flex items-center gap-1">
                             <Play className="w-4 h-4" />
-                            <span>Video</span>
+                            <span>Has Video</span>
                           </div>
                         )}
                       </div>
+
+                      {/* Show media counts if available */}
+                      {(skill.media?.images?.length > 0 || skill.media?.videos?.length > 0) && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          {skill.media.images?.length > 0 && (
+                            <span>{skill.media.images.length} image{skill.media.images.length > 1 ? 's' : ''}</span>
+                          )}
+                          {skill.media.videos?.length > 0 && (
+                            <span>{skill.media.videos.length} video{skill.media.videos.length > 1 ? 's' : ''}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -633,6 +679,7 @@ function AdminSkillsContent() {
                         size="sm"
                         onClick={() => handleEdit(skill)}
                         className="h-8 w-8 p-0"
+                        title="Edit Skill"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -641,6 +688,7 @@ function AdminSkillsContent() {
                         size="sm"
                         onClick={() => handleDelete(skill.id, skill.name)}
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        title="Delete Skill"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
