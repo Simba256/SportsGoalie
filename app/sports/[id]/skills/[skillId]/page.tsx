@@ -402,7 +402,7 @@ export default function SkillDetailPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {skill.media.videos.map((video) => (
-                      <div key={video.id} className="space-y-2">
+                      <div key={video.id}>
                         {video.url ? (
                           <div className="aspect-video bg-black rounded-lg overflow-hidden">
                             <video
@@ -436,7 +436,6 @@ export default function SkillDetailPage() {
                             </div>
                           </div>
                         )}
-                        <h4 className="font-medium">{video.title}</h4>
                       </div>
                     ))}
                   </CardContent>
