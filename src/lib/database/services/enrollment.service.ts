@@ -152,12 +152,21 @@ export class EnrollmentService extends BaseDatabaseService {
 
         if (attemptsResult.success && attemptsResult.data?.items?.length > 0) {
           const latestAttempt = attemptsResult.data.items[0];
-          if (latestAttempt.score !== undefined && latestAttempt.score !== null) {
-            totalScore += latestAttempt.score;
+          // Use percentage field for accurate progress calculation (0-100 scale)
+          if (latestAttempt.percentage !== undefined && latestAttempt.percentage !== null) {
+            totalScore += latestAttempt.percentage;
             completedSkillsCount++;
             completedSkillIds.push(skill.id);
 
-            logger.debug(`Skill ${skill.id} has quiz score: ${latestAttempt.score}`, 'EnrollmentService');
+            logger.debug(`Skill ${skill.id} has quiz percentage: ${latestAttempt.percentage}%`, 'EnrollmentService');
+          } else if (latestAttempt.score !== undefined && latestAttempt.score !== null && latestAttempt.maxScore) {
+            // Fallback: calculate percentage from score/maxScore if percentage is not available
+            const percentage = (latestAttempt.score / latestAttempt.maxScore) * 100;
+            totalScore += percentage;
+            completedSkillsCount++;
+            completedSkillIds.push(skill.id);
+
+            logger.debug(`Skill ${skill.id} calculated percentage: ${percentage}% (${latestAttempt.score}/${latestAttempt.maxScore})`, 'EnrollmentService');
           }
         }
       }
@@ -265,8 +274,15 @@ export class EnrollmentService extends BaseDatabaseService {
 
       if (attemptsResult.success && attemptsResult.data?.items?.length > 0) {
         const latestAttempt = attemptsResult.data.items[0];
-        if (latestAttempt.score !== undefined && latestAttempt.score !== null) {
-          totalScore += latestAttempt.score;
+        // Use percentage field for accurate progress calculation (0-100 scale)
+        if (latestAttempt.percentage !== undefined && latestAttempt.percentage !== null) {
+          totalScore += latestAttempt.percentage;
+          completedSkillsCount++;
+          completedSkillIds.push(skill.id);
+        } else if (latestAttempt.score !== undefined && latestAttempt.score !== null && latestAttempt.maxScore) {
+          // Fallback: calculate percentage from score/maxScore if percentage is not available
+          const percentage = (latestAttempt.score / latestAttempt.maxScore) * 100;
+          totalScore += percentage;
           completedSkillsCount++;
           completedSkillIds.push(skill.id);
         }
