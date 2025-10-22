@@ -584,28 +584,6 @@ export default function SkillDetailPage() {
           )}
         </div>
       </div>
-
-      {/* Action Section */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold">Ready to start this skill?</h3>
-              <p className="text-sm text-muted-foreground">
-                Track your progress and mark as complete when finished
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline">
-                Mark as Complete
-              </Button>
-              <Button>
-                Start Learning
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

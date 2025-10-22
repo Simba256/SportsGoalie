@@ -323,7 +323,7 @@ function VideoQuizResultsContent() {
 
         <Button
           variant="default"
-          onClick={() => router.push(`/skills/${quiz.sportId}/${quiz.skillId}`)}
+          onClick={() => router.push(`/sports/${quiz.sportId}/skills/${quiz.skillId}`)}
         >
           Continue Learning
           <ChevronRight className="ml-2 h-4 w-4" />
