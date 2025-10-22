@@ -101,50 +101,114 @@ function CreateVideoQuizContent() {
       return;
     }
 
-    // Helper to convert Google Drive URLs to direct video URLs
-    const convertGoogleDriveUrl = (inputUrl: string): string => {
-      // Check if it's a Google Drive URL
+    // Helper to extract Google Drive video ID
+    const extractGoogleDriveId = (inputUrl: string): string | null => {
       const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
       const match = inputUrl.match(driveRegex);
-
-      if (match && match[1]) {
-        // Convert to direct video URL format
-        return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-      }
-
-      return inputUrl;
+      return match ? match[1] : null;
     };
 
     setVideoValidating(true);
     try {
-      // Convert Google Drive URLs if needed
-      const processedUrl = convertGoogleDriveUrl(url);
+      const driveId = extractGoogleDriveId(url);
 
-      // For Google Drive URLs, we can't always validate duration due to CORS
-      // but we can set it up for playback
-      if (url.includes('drive.google.com')) {
-        toast.success('Google Drive video validated', {
-          description: 'Using default duration. You can adjust it manually below if needed.',
+      // Special handling for Google Drive videos
+      if (driveId) {
+        // Try multiple URL formats for Google Drive
+        const urlFormats = [
+          `https://drive.google.com/file/d/${driveId}/preview`, // Embed format
+          `https://drive.google.com/uc?export=view&id=${driveId}`, // View format
+          `https://drive.google.com/uc?export=download&id=${driveId}`, // Download format
+        ];
+
+        let duration = 0;
+        let workingUrl = url;
+
+        // Try each format to get duration
+        for (const testUrl of urlFormats) {
+          let video: HTMLVideoElement | null = null;
+          try {
+            video = document.createElement('video');
+            video.style.display = 'none';
+            document.body.appendChild(video); // Add to DOM for better compatibility
+
+            // Don't set crossOrigin for Google Drive to avoid CORS issues
+            video.preload = 'metadata';
+            video.src = testUrl;
+
+            await new Promise<void>((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Timeout'));
+              }, 5000);
+
+              video!.onloadedmetadata = () => {
+                clearTimeout(timeout);
+                if (video!.duration && !isNaN(video!.duration) && isFinite(video!.duration)) {
+                  duration = Math.floor(video!.duration);
+                  workingUrl = testUrl;
+                  resolve();
+                } else {
+                  reject(new Error('Invalid duration'));
+                }
+              };
+
+              video!.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('Failed to load'));
+              };
+
+              // Force load
+              video!.load();
+            });
+
+            document.body.removeChild(video);
+
+            if (duration > 0) {
+              // Successfully got duration
+              setVideoDuration(duration);
+              setQuizData(prev => ({
+                ...prev,
+                videoUrl: workingUrl,
+                videoDuration: duration,
+              }));
+              toast.success('Google Drive video validated successfully', {
+                description: `Duration: ${Math.floor(duration / 60)}m ${duration % 60}s`,
+              });
+              setVideoValidating(false);
+              return;
+            }
+          } catch (err) {
+            // Try next format
+            if (video && video.parentNode) {
+              document.body.removeChild(video);
+            }
+            continue;
+          }
+        }
+
+        // If we couldn't get duration, use iframe approach as fallback
+        toast.info('Google Drive video detected', {
+          description: 'Setting default duration. You can adjust it manually below.',
         });
 
-        // Set a default duration of 5 minutes (300 seconds) for Google Drive videos
-        // This allows questions to be created. The actual duration will be detected during playback.
-        const defaultDuration = 300;
+        // Use the preview URL for playback (most reliable)
+        const previewUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+        const defaultDuration = 300; // 5 minutes default
 
         setVideoDuration(defaultDuration);
         setQuizData(prev => ({
           ...prev,
-          videoUrl: processedUrl,
-          videoDuration: defaultDuration, // Default duration for Google Drive videos
+          videoUrl: previewUrl,
+          videoDuration: defaultDuration,
         }));
 
         setVideoValidating(false);
         return;
       }
 
-      // Create a video element to validate and get duration
+      // For non-Google Drive videos, use standard validation
       const video = document.createElement('video');
-      video.src = processedUrl;
+      video.src = url;
       video.preload = 'metadata';
       video.crossOrigin = 'anonymous';
 
@@ -159,7 +223,7 @@ function CreateVideoQuizContent() {
             setVideoDuration(Math.floor(video.duration));
             setQuizData(prev => ({
               ...prev,
-              videoUrl: processedUrl,
+              videoUrl: url,
               videoDuration: Math.floor(video.duration),
             }));
             toast.success('Video validated successfully', {
