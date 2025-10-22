@@ -82,6 +82,7 @@ function AdminSkillsContent() {
   const [saving, setSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
 
   // Custom confirmation dialog for delete operations
   const { dialog, showDeleteConfirmation, setLoading } = useDeleteConfirmation();
@@ -149,17 +150,20 @@ function AdminSkillsContent() {
       order: skill.order,
       prerequisites: skill.prerequisites,
     });
+    setEditingSkill(skill); // Store the full skill being edited
     setState(prev => ({ ...prev, editingId: skill.id, showCreateForm: false }));
   };
 
   const handleCreate = () => {
     setFormData(defaultFormData);
+    setEditingSkill(null);
     setState(prev => ({ ...prev, showCreateForm: true, editingId: null }));
   };
 
   const handleCancel = () => {
     setFormData(defaultFormData);
     setUploadedFiles([]);
+    setEditingSkill(null);
     setState(prev => ({ ...prev, editingId: null, showCreateForm: false }));
   };
 
@@ -216,8 +220,9 @@ function AdminSkillsContent() {
         externalResources: [],
       };
 
-      // Only add media field if there are uploaded files
+      // Handle media: either use new uploads or preserve existing media
       if (uploadedFiles.length > 0) {
+        // New files uploaded - replace existing media
         skillData.media = {
           text: formData.content,
           images: uploadedFiles
@@ -233,6 +238,7 @@ function AdminSkillsContent() {
             .filter(file => file.type.startsWith('video/'))
             .map((file, index) => ({
               id: `vid-${Date.now()}-${index}`,
+              url: mediaUrls[uploadedFiles.indexOf(file)],
               youtubeId: '',
               title: file.name,
               duration: 0,
@@ -240,6 +246,9 @@ function AdminSkillsContent() {
               order: index,
             })),
         };
+      } else if (state.editingId && editingSkill?.media) {
+        // Editing without new uploads - preserve existing media
+        skillData.media = editingSkill.media;
       }
 
       let result;
