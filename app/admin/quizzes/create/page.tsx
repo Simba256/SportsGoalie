@@ -193,7 +193,7 @@ function CreateVideoQuizContent() {
 
         // Use the preview URL for playback (most reliable)
         const previewUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-        const defaultDuration = 300; // 5 minutes default
+        const defaultDuration = 600; // 10 minutes default
 
         setVideoDuration(defaultDuration);
         setQuizData(prev => ({
