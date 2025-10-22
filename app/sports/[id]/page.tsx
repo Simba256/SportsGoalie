@@ -346,15 +346,33 @@ export default function SportDetailPage() {
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40 flex items-end">
-              <div className="p-6 text-white space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-4xl">{sport.icon}</span>
-                  <h1 className="text-4xl font-bold">{sport.name}</h1>
-                  {sport.isFeatured && (
-                    <span className="bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-medium">
-                      Featured
-                    </span>
-                  )}
+              <div className="p-6 text-white space-y-2 w-full">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-4xl">{sport.icon}</span>
+                    <h1 className="text-4xl font-bold">{sport.name}</h1>
+                    {sport.isFeatured && (
+                      <span className="bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-medium">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleToggleFavorite}
+                    disabled={favoriteLoading}
+                    className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  >
+                    {favoriteLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : isFavorited ? (
+                      <Heart className="w-4 h-4 fill-current text-red-500" />
+                    ) : (
+                      <Heart className="w-4 h-4" />
+                    )}
+                    <span className="ml-2">{isFavorited ? 'Favorited' : 'Favorite'}</span>
+                  </Button>
                 </div>
                 <p className="text-lg text-white/90 max-w-3xl">{sport.description}</p>
               </div>
@@ -617,77 +635,6 @@ export default function SportDetailPage() {
           </div>
         )}
       </div>
-
-      {/* Action Section */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="pt-6">
-          <div className="text-center space-y-4">
-            {enrolled ? (
-              <>
-                <h3 className="text-xl font-semibold">Continue learning {sport.name}</h3>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  You're enrolled! Progress: {Math.round(progress?.progressPercentage || 0)}% complete
-                  ({progress?.completedSkills.length || 0}/{progress?.totalSkills || 0} skills)
-                </p>
-              </>
-            ) : (
-              <>
-                <h3 className="text-xl font-semibold">Ready to start learning {sport.name}?</h3>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Begin your journey with {sport.skillsCount} comprehensive skills designed to take you from beginner to advanced level.
-                </p>
-              </>
-            )}
-            <div className="flex gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={handleStartLearning}
-                disabled={enrollmentLoading || state.skillsLoading}
-              >
-                {enrollmentLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {enrolled ? 'Loading...' : 'Enrolling...'}
-                  </>
-                ) : enrolled ? (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Continue Learning
-                  </>
-                ) : (
-                  <>
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Start Learning
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleToggleFavorite}
-                disabled={favoriteLoading}
-              >
-                {favoriteLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : isFavorited ? (
-                  <>
-                    <Heart className="w-4 h-4 mr-2 fill-current text-red-500" />
-                    Remove from Favorites
-                  </>
-                ) : (
-                  <>
-                    <Heart className="w-4 h-4 mr-2" />
-                    Save to Favorites
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
