@@ -59,7 +59,7 @@ function DashboardContent() {
 
   const statsCards = [
     {
-      title: 'Completed Quizzes',
+      title: 'Quiz Attempts',
       value: stats?.quizzesCompleted || 0,
       description: stats?.quizzesCompleted ? 'Keep up the great work!' : 'Start your first quiz!',
       trend: stats?.quizzesCompleted ? 'up' : 'neutral' as const,
@@ -67,9 +67,9 @@ function DashboardContent() {
       icon: <Trophy className="h-4 w-4" />,
     },
     {
-      title: 'Skills Completed',
+      title: 'Skills Attempted',
       value: stats?.skillsCompleted || 0,
-      description: stats?.skillsCompleted ? 'Skills mastered' : 'Explore course skills',
+      description: stats?.skillsCompleted ? 'Skills attempted' : 'Explore course skills',
       trend: stats?.skillsCompleted ? 'up' : 'neutral' as const,
       trendValue: '',
       icon: <BookOpen className="h-4 w-4" />,
@@ -104,16 +104,6 @@ function DashboardContent() {
             <p className="text-muted-foreground">
               Continue your sports learning journey and track your progress.
             </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="flex items-center space-x-1">
-              <Award className="h-3 w-3" />
-              <span>Level {stats?.level || 1}</span>
-            </Badge>
-            <Badge variant="outline" className="flex items-center space-x-1">
-              <Trophy className="h-3 w-3" />
-              <span>{stats?.totalPoints || 0} XP</span>
-            </Badge>
           </div>
         </div>
 
@@ -422,7 +412,7 @@ function DashboardContent() {
                 <Progress value={((stats?.sportsCompleted || 0) / 6) * 100} className="h-2" />
 
                 <div className="flex items-center justify-between text-sm">
-                  <span>Skills Completed</span>
+                  <span>Skills Attempted</span>
                   <span className="font-medium">{stats?.skillsCompleted || 0}</span>
                 </div>
                 <Progress value={Math.min(((stats?.skillsCompleted || 0) / 20) * 100, 100)} className="h-2" />
@@ -453,9 +443,9 @@ function DashboardContent() {
                         <Trophy className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Quiz Completed</p>
+                        <p className="text-sm font-medium">Quizzes Attempted</p>
                         <p className="text-xs text-muted-foreground">
-                          You've completed {stats.quizzesCompleted} quiz{stats.quizzesCompleted !== 1 ? 's' : ''}
+                          You've attempted {stats.quizzesCompleted} quiz{stats.quizzesCompleted !== 1 ? 'zes' : ''}
                         </p>
                       </div>
                     </div>
@@ -467,9 +457,9 @@ function DashboardContent() {
                         <BookOpen className="h-4 w-4 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Skills Mastered</p>
+                        <p className="text-sm font-medium">Skills Attempted</p>
                         <p className="text-xs text-muted-foreground">
-                          {stats.skillsCompleted} skill{stats.skillsCompleted !== 1 ? 's' : ''} completed
+                          {stats.skillsCompleted} unique skill{stats.skillsCompleted !== 1 ? 's' : ''} attempted
                         </p>
                       </div>
                     </div>

@@ -46,52 +46,26 @@ export class ProgressService extends BaseDatabaseService {
   private static cache = cacheService;
 
   /**
-   * Get user's overall progress statistics
+   * Get user's overall progress statistics from video quiz data
    */
   static async getUserProgress(userId: string): Promise<ApiResponse<UserProgress | null>> {
     try {
-      const cacheKey = `user_progress_${userId}`;
-      const cached = this.cache.get<UserProgress>(cacheKey);
-      if (cached) {
-        logger.info('Retrieved user progress from cache', 'ProgressService', { userId });
-        return { success: true, data: cached, timestamp: new Date() };
-      }
+      // Use userService which calculates progress from video quiz attempts
+      const { userService } = await import('./user.service');
+      const result = await userService.getUserProgress(userId);
 
-      const docRef = doc(db, this.COLLECTIONS.USER_PROGRESS, userId);
-      const docSnapshot = await getDoc(docRef);
-
-      if (!docSnapshot.exists()) {
-        // Create initial progress record
-        const initialProgress: UserProgress = {
+      if (result.success && result.data) {
+        // Cache the result
+        const cacheKey = `user_progress_${userId}`;
+        this.cache.set(cacheKey, result.data);
+        logger.info('Retrieved user progress from video quiz data', 'ProgressService', {
           userId,
-          overallStats: {
-            totalTimeSpent: 0,
-            skillsCompleted: 0,
-            sportsCompleted: 0,
-            quizzesCompleted: 0,
-            averageQuizScore: 0,
-            currentStreak: 0,
-            longestStreak: 0,
-            totalPoints: 0,
-            level: 1,
-            experiencePoints: 0,
-          },
-          achievements: [],
-          lastUpdated: Timestamp.now(),
-        };
-
-        await setDoc(docRef, initialProgress);
-        this.cache.set(cacheKey, initialProgress);
-
-        logger.info('Created initial user progress', 'ProgressService', { userId });
-        return { success: true, data: initialProgress, timestamp: new Date() };
+          skillsCompleted: result.data.overallStats.skillsCompleted,
+          quizzesCompleted: result.data.overallStats.quizzesCompleted
+        });
       }
 
-      const progress = { id: docSnapshot.id, ...docSnapshot.data() } as UserProgress;
-      this.cache.set(cacheKey, progress);
-
-      logger.info('Retrieved user progress', 'ProgressService', { userId, level: progress.overallStats.level });
-      return { success: true, data: progress, timestamp: new Date() };
+      return result;
     } catch (error) {
       logger.error('Failed to get user progress', 'ProgressService', {
         userId,
