@@ -364,17 +364,17 @@ export class UserService extends BaseDatabaseService {
       const enrolledSports = enrolledSportsResult.success ? enrolledSportsResult.data || [] : [];
 
       // Calculate real stats
-      const quizzesCompleted = attempts.length;
+      const quizzesCompleted = attempts.length; // Total number of video quiz attempts
       const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
       const averageQuizScore = quizzesCompleted > 0
         ? Math.round(attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizzesCompleted)
         : 0;
 
-      // Count completed skills and sports
-      const completedSkillIds = new Set<string>();
+      // Count unique skills attempted (not just passed) for video quizzes
+      const attemptedSkillIds = new Set<string>();
       attempts.forEach(attempt => {
-        if (attempt.passed && attempt.skillId) {
-          completedSkillIds.add(attempt.skillId);
+        if (attempt.skillId) {
+          attemptedSkillIds.add(attempt.skillId);
         }
       });
 
@@ -437,9 +437,9 @@ export class UserService extends BaseDatabaseService {
         overallStats: {
           ...progressResult.data.overallStats,
           totalTimeSpent,
-          skillsCompleted: completedSkillIds.size,
+          skillsCompleted: attemptedSkillIds.size, // Unique skills for which quizzes were attempted
           sportsCompleted: completedSportsCount,
-          quizzesCompleted,
+          quizzesCompleted, // Total video quiz attempts
           averageQuizScore,
           currentStreak,
           longestStreak: Math.max(longestStreak, progressResult.data.overallStats.longestStreak || 0),

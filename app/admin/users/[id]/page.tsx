@@ -365,7 +365,7 @@ function UserDetailsContent() {
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="analytics" onClick={fetchAnalytics}>Analytics</TabsTrigger>
-            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="progress" onClick={fetchAnalytics}>Progress</TabsTrigger>
             <TabsTrigger value="messages" onClick={fetchMessages}>Messages</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -586,27 +586,15 @@ function UserDetailsContent() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-primary">
-                            {userProgress.overallStats.level}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Level</p>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">
-                            {userProgress.overallStats.experiencePoints}
-                          </div>
-                          <p className="text-sm text-muted-foreground">XP</p>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">
                             {userProgress.overallStats.skillsCompleted}
                           </div>
-                          <p className="text-sm text-muted-foreground">Skills</p>
+                          <p className="text-sm text-muted-foreground">Skills Attempted</p>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-primary">
                             {userProgress.overallStats.quizzesCompleted}
                           </div>
-                          <p className="text-sm text-muted-foreground">Quizzes</p>
+                          <p className="text-sm text-muted-foreground">Quiz Attempts</p>
                         </div>
                       </div>
                       <div className="pt-4 border-t">
@@ -641,25 +629,59 @@ function UserDetailsContent() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Achievements</CardTitle>
+                  <CardTitle>Video Quiz Performance</CardTitle>
                   <CardDescription>
-                    Unlocked achievements and badges
+                    Performance metrics from video quizzes
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {userProgress?.achievements && userProgress.achievements.length > 0 ? (
-                    <div className="space-y-2">
-                      {userProgress.achievements.map((achievementId, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <Trophy className="h-4 w-4 text-yellow-500" />
-                          <span className="text-sm">{achievementId}</span>
+                  {analytics ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">
+                            {analytics.performance.totalQuizzesPassed}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Passed</p>
                         </div>
-                      ))}
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-red-600">
+                            {analytics.performance.totalQuizzesFailed}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Failed</p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Pass Rate</span>
+                          <span className="font-medium">
+                            {analytics.performance.passRate}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Best Score</span>
+                          <span className="font-medium">
+                            {analytics.performance.bestQuizScore}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Worst Score</span>
+                          <span className="font-medium">
+                            {analytics.performance.worstQuizScore}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Study Pattern</span>
+                          <span className="font-medium capitalize">
+                            {analytics.engagement.studyPattern}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-4">
                       <Trophy className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No achievements yet</p>
+                      <p className="text-muted-foreground">No quiz data available</p>
                     </div>
                   )}
                 </CardContent>
