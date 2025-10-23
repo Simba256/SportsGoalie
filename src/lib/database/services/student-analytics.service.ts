@@ -221,7 +221,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const currentStreak = this.calculateCurrentStreak(quizzes);
       const longestStreak = this.calculateLongestStreak(quizzes);
       const totalSessions = activeDaysSet.size || 1;
-      const averageSessionDuration = Math.round(totalTimeSpent / totalSessions);
+      // Convert seconds to minutes for average session duration
+      const averageSessionDuration = Math.round((totalTimeSpent / 60) / totalSessions);
 
       // Determine study pattern based on quiz submission times
       const studyPattern = this.determineStudyPattern(quizzes);
@@ -232,7 +233,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const analytics: StudentAnalytics = {
         userId,
         overview: {
-          totalTimeSpent,
+          totalTimeSpent: Math.round(totalTimeSpent / 60), // Convert seconds to minutes
           activeDays: activeDaysSet.size,
           lastActiveDate,
           totalSportsEnrolled: sportIds.size,  // Unique sports from quiz attempts
@@ -310,9 +311,17 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const performanceData: QuizPerformanceData[] = [];
 
       for (const [quizId, quizAttempts] of quizMap.entries()) {
+        // Get quiz data from attempts if video quiz lookup fails
+        const firstAttempt = quizAttempts[0];
+
         const quiz = await videoQuizService.getVideoQuiz(quizId);
-        const skill = quiz.data?.skillId ? await sportsService.getSkill(quiz.data.skillId) : null;
-        const sport = quiz.data?.sportId ? await sportsService.getSport(quiz.data.sportId) : null;
+
+        // Use data from quiz attempts as fallback
+        const skillId = quiz.data?.skillId || firstAttempt.skillId;
+        const sportId = quiz.data?.sportId || firstAttempt.sportId;
+
+        const skill = skillId ? await sportsService.getSkill(skillId) : null;
+        const sport = sportId ? await sportsService.getSport(sportId) : null;
 
         const scores = quizAttempts.map(a => a.percentage);
         const times = quizAttempts.map(a => a.timeSpent);
@@ -322,15 +331,20 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           return currentDate > latestDate ? current : latest;
         });
 
+        // Better fallback for quiz title - use quiz ID as last resort
+        const quizTitle = quiz.data?.title ||
+                         (sport?.data?.name && skill?.data?.name ? `${sport.data.name} - ${skill.data.name} Quiz` :
+                          `Quiz ${quizId.substring(0, 8)}...`);
+
         performanceData.push({
           quizId,
-          quizTitle: quiz.data?.title || 'Unknown Quiz',
+          quizTitle,
           sportName: sport?.data?.name || 'Unknown Sport',
           skillName: skill?.data?.name || 'Unknown Skill',
           attempts: quizAttempts.length,
           bestScore: Math.max(...scores),
           averageScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-          timeSpent: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
+          timeSpent: Math.round(times.reduce((a, b) => a + b, 0) / times.length / 60), // Convert to minutes
           passed: lastAttempt.passed,
           lastAttempt: lastAttempt.submittedAt?.toDate ? lastAttempt.submittedAt.toDate() : new Date(lastAttempt.submittedAt || 0),
         });
@@ -758,16 +772,21 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           attempt.submittedAt.toDate() :
           new Date(attempt.submittedAt || 0);
 
+        // Better fallback for quiz title - use sport/skill names if available
+        const quizTitle = quiz.data?.title ||
+                         (sport?.data?.name && skill?.data?.name ? `${sport.data.name} - ${skill.data.name} Quiz` :
+                          `Quiz ${attempt.quizId.substring(0, 8)}...`);
+
         attemptDetails.push({
           attemptId: attempt.id,
           quizId: attempt.quizId,
-          quizTitle: quiz.data?.title || 'Unknown Quiz',
+          quizTitle,
           sportName: sport?.data?.name || 'Unknown Sport',
           skillName: skill?.data?.name || 'Unknown Skill',
           attemptNumber: attempt.attemptNumber,
           startedAt: startTime,
           submittedAt: endTime,
-          timeSpent: attempt.timeSpent,
+          timeSpent: Math.round(attempt.timeSpent / 60), // Convert to minutes
           score: attempt.score,
           maxScore: attempt.maxScore,
           percentage: attempt.percentage,
