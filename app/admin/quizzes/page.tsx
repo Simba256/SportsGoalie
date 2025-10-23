@@ -34,6 +34,7 @@ import {
   Target,
   Users,
   Loader2,
+  Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -119,6 +120,19 @@ function AdminQuizzesPageContent() {
     } catch (error) {
       console.error('Error updating quiz status:', error);
       toast.error('Failed to update video quiz status');
+    }
+  };
+
+  const handleShareQuiz = async (quizId: string, quizTitle: string) => {
+    try {
+      const quizUrl = `https://sports-goalie.vercel.app/quiz/video/${quizId}`;
+      await navigator.clipboard.writeText(quizUrl);
+      toast.success('Quiz link copied to clipboard!', {
+        description: `Link for "${quizTitle}" is ready to share`,
+      });
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast.error('Failed to copy quiz link');
     }
   };
 
@@ -340,6 +354,12 @@ function AdminQuizzesPageContent() {
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         Preview
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleShareQuiz(quiz.id, quiz.title)}
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => router.push(`/admin/quizzes/${quiz.id}/edit`)}
