@@ -145,40 +145,27 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     logger.info('Fetching student analytics', 'StudentAnalyticsService', { userId });
 
     try {
-      const [
-        sportsProgress,
-        quizAttempts,
-        skillProgress,
-        userProgress
-      ] = await Promise.all([
-        this.query<SportProgress>('sport_progress', {
-          where: [{ field: 'userId', operator: '==', value: userId }]
-        }),
-        // Query quiz attempts - filter by status='submitted' OR isCompleted=true for compatibility
-        this.query<QuizAttempt>('quiz_attempts', {
-          where: [
-            { field: 'userId', operator: '==', value: userId },
-            { field: 'status', operator: '==', value: 'submitted' }
-          ]
-        }),
-        this.query<SkillProgress>('skill_progress', {
-          where: [{ field: 'userId', operator: '==', value: userId }]
-        }),
-        userService.getUserProgress(userId)
-      ]);
+      // Only fetch video quiz attempts and related data
+      const quizAttempts = await this.query<QuizAttempt>('quiz_attempts', {
+        where: [
+          { field: 'userId', operator: '==', value: userId },
+          { field: 'status', operator: '==', value: 'submitted' }
+        ]
+      });
 
-      const sports = sportsProgress.data?.items || [];
       const quizzes = quizAttempts.data?.items || [];
-      const skills = skillProgress.data?.items || [];
-      const progress = userProgress.data;
 
-      // Initialize default user progress if it doesn't exist
-      if (!progress) {
-        logger.warn('User progress not found, using defaults', 'StudentAnalyticsService', { userId });
-      }
+      // Get unique sport and skill IDs from quiz attempts
+      const sportIds = new Set<string>();
+      const skillIds = new Set<string>();
 
-      // Calculate overview metrics
-      const totalTimeSpent = progress?.overallStats.totalTimeSpent || 0;
+      quizzes.forEach(quiz => {
+        if (quiz.sportId) sportIds.add(quiz.sportId);
+        if (quiz.skillId) skillIds.add(quiz.skillId);
+      });
+
+      // Calculate overview metrics from video quiz data only
+      const totalTimeSpent = quizzes.reduce((sum, q) => sum + (q.timeSpent || 0), 0);
       const activeDaysSet = new Set<string>();
 
       // Track active days from quiz attempts
@@ -210,28 +197,37 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         ? Math.round((passedQuizzes / quizzes.length) * 100)
         : 0;
 
-      // Calculate progress metrics
-      const sportsCompleted = sports.filter(s => s.status === 'completed').length;
-      const sportsInProgress = sports.filter(s => s.status === 'in_progress').length;
-      const skillsCompleted = skills.filter(s => s.status === 'completed').length;
-      const skillsInProgress = skills.filter(s => s.status === 'in_progress').length;
-      const totalItems = sports.length + skills.length;
-      const completedItems = sportsCompleted + skillsCompleted;
-      const completionRate = totalItems > 0
-        ? Math.round((completedItems / totalItems) * 100)
+      // Calculate progress metrics based on video quiz data
+      // Count unique skills passed
+      const passedSkillIds = new Set<string>();
+      const attemptedSkillIds = new Set<string>();
+
+      quizzes.forEach(quiz => {
+        if (quiz.skillId) {
+          attemptedSkillIds.add(quiz.skillId);
+          if (quiz.passed) {
+            passedSkillIds.add(quiz.skillId);
+          }
+        }
+      });
+
+      const skillsCompleted = passedSkillIds.size;
+      const skillsInProgress = attemptedSkillIds.size - passedSkillIds.size;
+      const completionRate = attemptedSkillIds.size > 0
+        ? Math.round((passedSkillIds.size / attemptedSkillIds.size) * 100)
         : 0;
 
-      // Calculate engagement metrics
-      const currentStreak = progress?.overallStats.currentStreak || 0;
-      const longestStreak = progress?.overallStats.longestStreak || 0;
+      // Calculate engagement metrics from quiz activity
+      const currentStreak = this.calculateCurrentStreak(quizzes);
+      const longestStreak = this.calculateLongestStreak(quizzes);
       const totalSessions = activeDaysSet.size || 1;
       const averageSessionDuration = Math.round(totalTimeSpent / totalSessions);
 
       // Determine study pattern based on quiz submission times
       const studyPattern = this.determineStudyPattern(quizzes);
 
-      // Build recent activity
-      const recentActivity = await this.buildRecentActivity(userId, quizzes, skills, sports);
+      // Build recent activity from video quiz data
+      const recentActivity = await this.buildRecentActivityFromQuizzes(userId, quizzes);
 
       const analytics: StudentAnalytics = {
         userId,
@@ -239,8 +235,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           totalTimeSpent,
           activeDays: activeDaysSet.size,
           lastActiveDate,
-          totalSportsEnrolled: sports.length,
-          totalSkillsStarted: skills.length,
+          totalSportsEnrolled: sportIds.size,  // Unique sports from quiz attempts
+          totalSkillsStarted: attemptedSkillIds.size,  // Unique skills attempted
           totalQuizzesTaken: quizzes.length,
         },
         performance: {
@@ -252,8 +248,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           passRate,
         },
         progress: {
-          sportsCompleted,
-          sportsInProgress,
+          sportsCompleted: 0, // We don't track sport completion in video quiz system
+          sportsInProgress: sportIds.size, // All sports with attempts are in progress
           skillsCompleted,
           skillsInProgress,
           completionRate,
@@ -362,26 +358,38 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Get progress over time data for charts
+   * Get progress over time data for charts using video quiz data
    */
   async getProgressOverTime(userId: string, days: number = 30): Promise<ApiResponse<ProgressOverTimeData[]>> {
     logger.info('Fetching progress over time', 'StudentAnalyticsService', { userId, days });
 
     try {
-      const [quizAttemptsResult, skillProgressResult] = await Promise.all([
-        this.query<QuizAttempt>('quiz_attempts', {
-          where: [
-            { field: 'userId', operator: '==', value: userId },
-            { field: 'status', operator: '==', value: 'submitted' }
-          ]
-        }),
-        this.query<SkillProgress>('skill_progress', {
-          where: [{ field: 'userId', operator: '==', value: userId }]
-        })
-      ]);
+      const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+        where: [
+          { field: 'userId', operator: '==', value: userId },
+          { field: 'status', operator: '==', value: 'submitted' }
+        ]
+      });
 
       const quizAttempts = quizAttemptsResult.data?.items || [];
-      const skillProgress = skillProgressResult.data?.items || [];
+
+      // Track skills passed over time
+      const skillsPassedByDate = new Map<string, Set<string>>();
+
+      quizAttempts.forEach(attempt => {
+        if (attempt.passed && attempt.skillId && attempt.submittedAt) {
+          const date = attempt.submittedAt?.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt);
+          const dateStr = date.toISOString().split('T')[0];
+
+          if (!skillsPassedByDate.has(dateStr)) {
+            skillsPassedByDate.set(dateStr, new Set());
+          }
+          skillsPassedByDate.get(dateStr)!.add(attempt.skillId);
+        }
+      });
+
+      // Build cumulative skills passed
+      const cumulativeSkills = new Set<string>();
 
       // Build data for each day
       const progressData: ProgressOverTimeData[] = [];
@@ -397,12 +405,12 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           return attemptDate.toISOString().split('T')[0] === dateStr;
         });
 
-        // Skills completed on or before this day
-        const skillsCompletedByDate = skillProgress.filter(s => {
-          if (s.status !== 'completed' || !s.completedAt) return false;
-          const completedDate = s.completedAt.toDate ? s.completedAt.toDate() : new Date(s.completedAt);
-          return completedDate.toISOString().split('T')[0] <= dateStr;
-        }).length;
+        // Add any new passed skills to cumulative
+        if (skillsPassedByDate.has(dateStr)) {
+          skillsPassedByDate.get(dateStr)!.forEach(skillId => {
+            cumulativeSkills.add(skillId);
+          });
+        }
 
         const avgScore = dayQuizzes.length > 0
           ? Math.round(dayQuizzes.reduce((sum, q) => sum + q.percentage, 0) / dayQuizzes.length)
@@ -412,10 +420,10 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         progressData.push({
           date: dateStr,
-          skillsCompleted: skillsCompletedByDate,
+          skillsCompleted: cumulativeSkills.size,
           quizzesTaken: dayQuizzes.length,
           averageScore: avgScore,
-          timeSpent: Math.round(timeSpent / 60), // Convert to hours
+          timeSpent: Math.round(timeSpent / 60), // Convert to minutes
         });
       }
 
@@ -438,33 +446,74 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Get skill performance breakdown
+   * Get skill performance breakdown from video quiz data
    */
   async getSkillPerformance(userId: string): Promise<ApiResponse<SkillPerformanceData[]>> {
     logger.info('Fetching skill performance', 'StudentAnalyticsService', { userId });
 
     try {
-      const skillProgressResult = await this.query<SkillProgress>('skill_progress', {
-        where: [{ field: 'userId', operator: '==', value: userId }]
+      // Get all video quiz attempts
+      const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+        where: [
+          { field: 'userId', operator: '==', value: userId },
+          { field: 'status', operator: '==', value: 'submitted' }
+        ]
       });
 
-      const skillProgress = skillProgressResult.data?.items || [];
+      const attempts = quizAttemptsResult.data?.items || [];
+
+      // Group attempts by skillId
+      const skillPerformanceMap = new Map<string, {
+        attempts: QuizAttempt[],
+        sportId: string,
+      }>();
+
+      attempts.forEach(attempt => {
+        if (!attempt.skillId) return;
+
+        if (!skillPerformanceMap.has(attempt.skillId)) {
+          skillPerformanceMap.set(attempt.skillId, {
+            attempts: [],
+            sportId: attempt.sportId || '',
+          });
+        }
+        skillPerformanceMap.get(attempt.skillId)!.attempts.push(attempt);
+      });
+
       const performanceData: SkillPerformanceData[] = [];
 
-      for (const progress of skillProgress) {
+      // Calculate performance for each skill
+      for (const [skillId, data] of skillPerformanceMap.entries()) {
         const [skill, sport] = await Promise.all([
-          sportsService.getSkill(progress.skillId),
-          sportsService.getSport(progress.sportId)
+          sportsService.getSkill(skillId),
+          data.sportId ? sportsService.getSport(data.sportId) : null
         ]);
 
+        // Get latest attempt for score
+        const latestAttempt = data.attempts.sort((a, b) => {
+          const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
+          const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+          return dateB.getTime() - dateA.getTime();
+        })[0];
+
+        // Calculate total time spent
+        const totalTimeSpent = data.attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+
+        // Determine status based on whether any attempt passed
+        const hasPassed = data.attempts.some(a => a.passed);
+        const status = hasPassed ? 'completed' : 'in_progress';
+
+        // Calculate progress (use best score)
+        const bestScore = Math.max(...data.attempts.map(a => a.percentage || 0));
+
         performanceData.push({
-          skillId: progress.skillId,
+          skillId,
           skillName: skill.data?.name || 'Unknown Skill',
-          sportName: sport.data?.name || 'Unknown Sport',
-          progress: progress.progressPercentage,
-          timeSpent: Math.round(progress.timeSpent / 60), // Convert to hours
-          quizScore: progress.quizScore || null,
-          status: progress.status,
+          sportName: sport?.data?.name || 'Unknown Sport',
+          progress: bestScore,
+          timeSpent: Math.round(totalTimeSpent / 60), // Convert to minutes
+          quizScore: latestAttempt.percentage || null,
+          status,
           difficulty: skill.data?.difficulty || 'beginner',
         });
       }
@@ -491,67 +540,93 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Get detailed course progress with skill scores
+   * Get detailed course progress with skill scores from video quiz data
    */
   async getCourseProgressDetails(userId: string): Promise<ApiResponse<CourseProgressDetail[]>> {
     logger.info('Fetching course progress details', 'StudentAnalyticsService', { userId });
 
     try {
-      // Get all sport progress for the user
-      const sportProgressResult = await this.query<SportProgress>('sport_progress', {
-        where: [{ field: 'userId', operator: '==', value: userId }]
+      // Get all video quiz attempts to determine which sports the user is enrolled in
+      const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+        where: [
+          { field: 'userId', operator: '==', value: userId },
+          { field: 'status', operator: '==', value: 'submitted' }
+        ]
       });
 
-      const sportProgressList = sportProgressResult.data?.items || [];
+      const attempts = quizAttemptsResult.data?.items || [];
+
+      // Group attempts by sportId
+      const sportAttempts = new Map<string, QuizAttempt[]>();
+      attempts.forEach(attempt => {
+        if (!attempt.sportId) return;
+        if (!sportAttempts.has(attempt.sportId)) {
+          sportAttempts.set(attempt.sportId, []);
+        }
+        sportAttempts.get(attempt.sportId)!.push(attempt);
+      });
+
       const courseDetails: CourseProgressDetail[] = [];
 
-      for (const sportProgress of sportProgressList) {
-        const sport = await sportsService.getSport(sportProgress.sportId);
+      for (const [sportId, sportQuizAttempts] of sportAttempts.entries()) {
+        const sport = await sportsService.getSport(sportId);
         if (!sport.success || !sport.data) continue;
 
         // Get all skills for this sport
         const skillsResult = await sportsService.getSkills({
-          where: [{ field: 'sportId', operator: '==', value: sportProgress.sportId }]
+          where: [{ field: 'sportId', operator: '==', value: sportId }]
         });
         const skills = skillsResult.data?.items || [];
 
-        // Get skill progress for each skill
+        // Get skill progress for each skill from quiz attempts
         const skillDetails: SkillProgressDetail[] = [];
 
         for (const skill of skills) {
-          // Get skill progress
-          const skillProgressResult = await this.query<SkillProgress>('skill_progress', {
-            where: [
-              { field: 'userId', operator: '==', value: userId },
-              { field: 'skillId', operator: '==', value: skill.id }
-            ]
-          });
+          // Filter attempts for this skill
+          const skillAttempts = sportQuizAttempts.filter(a => a.skillId === skill.id);
 
-          const skillProgress = skillProgressResult.data?.items[0];
-
-          // Get latest quiz attempt for this skill if it has a video quiz
+          // Get latest quiz attempt and calculate progress from video quiz attempts
           let latestQuizScore: number | null = null;
           let lastAttemptDate: Date | null = null;
           let quizStatus: 'not_attempted' | 'passed' | 'failed' = 'not_attempted';
+          let progressPercentage = 0;
+          let timeSpent = 0;
+          let completedAt: Date | null = null;
+          let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
 
-          if (skill.videoQuizId) {
-            const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
-              where: [
-                { field: 'userId', operator: '==', value: userId },
-                { field: 'quizId', operator: '==', value: skill.videoQuizId },
-                { field: 'status', operator: '==', value: 'submitted' }
-              ],
-              orderBy: { field: 'submittedAt', direction: 'desc' },
-              limit: 1
+          if (skillAttempts.length > 0) {
+            // Sort by date to get latest
+            const sortedAttempts = [...skillAttempts].sort((a, b) => {
+              const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
+              const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+              return dateB.getTime() - dateA.getTime();
             });
 
-            const latestAttempt = quizAttemptsResult.data?.items[0];
-            if (latestAttempt) {
-              latestQuizScore = latestAttempt.percentage;
-              lastAttemptDate = latestAttempt.submittedAt?.toDate ?
-                latestAttempt.submittedAt.toDate() :
-                new Date(latestAttempt.submittedAt || 0);
-              quizStatus = latestAttempt.passed ? 'passed' : 'failed';
+            const latestAttempt = sortedAttempts[0];
+            latestQuizScore = latestAttempt.percentage;
+            lastAttemptDate = latestAttempt.submittedAt?.toDate ?
+              latestAttempt.submittedAt.toDate() :
+              new Date(latestAttempt.submittedAt || 0);
+
+            // Calculate best score as progress
+            progressPercentage = Math.max(...skillAttempts.map(a => a.percentage || 0));
+
+            // Check if any attempt passed
+            const hasPassed = skillAttempts.some(a => a.passed);
+            quizStatus = hasPassed ? 'passed' : 'failed';
+            status = hasPassed ? 'completed' : 'in_progress';
+
+            // Calculate total time spent
+            timeSpent = skillAttempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+
+            // If passed, set completion date
+            if (hasPassed) {
+              const firstPassedAttempt = skillAttempts.find(a => a.passed);
+              if (firstPassedAttempt?.submittedAt) {
+                completedAt = firstPassedAttempt.submittedAt.toDate ?
+                  firstPassedAttempt.submittedAt.toDate() :
+                  new Date(firstPassedAttempt.submittedAt);
+              }
             }
           }
 
@@ -559,41 +634,68 @@ export class StudentAnalyticsService extends BaseDatabaseService {
             skillId: skill.id,
             skillName: skill.name,
             difficulty: skill.difficulty || 'beginner',
-            status: skillProgress?.status || 'not_started',
-            progressPercentage: skillProgress?.progressPercentage || 0,
+            status,
+            progressPercentage,
             latestQuizScore,
             quizStatus,
             lastAttemptDate,
-            timeSpent: skillProgress?.timeSpent || 0,
-            completedAt: skillProgress?.completedAt?.toDate ?
-              skillProgress.completedAt.toDate() :
-              skillProgress?.completedAt ? new Date(skillProgress.completedAt) : null
+            timeSpent,
+            completedAt
           });
         }
 
         // Calculate overall course progress
         const totalSkills = skillDetails.length;
         const completedSkills = skillDetails.filter(s => s.status === 'completed').length;
+        const attemptedSkills = skillDetails.filter(s => s.status !== 'not_started').length;
         const averageScore = skillDetails
           .filter(s => s.latestQuizScore !== null)
           .reduce((sum, s) => sum + (s.latestQuizScore || 0), 0) /
           (skillDetails.filter(s => s.latestQuizScore !== null).length || 1);
 
+        // Get enrollment date (first quiz attempt for this sport)
+        const firstAttempt = sportQuizAttempts.sort((a, b) => {
+          const dateA = a.startedAt?.toDate ? a.startedAt.toDate() : new Date(a.startedAt || 0);
+          const dateB = b.startedAt?.toDate ? b.startedAt.toDate() : new Date(b.startedAt || 0);
+          return dateA.getTime() - dateB.getTime();
+        })[0];
+
+        const enrolledAt = firstAttempt?.startedAt?.toDate ?
+          firstAttempt.startedAt.toDate() :
+          firstAttempt ? new Date(firstAttempt.startedAt || 0) : new Date();
+
+        // Get last activity date (most recent quiz attempt)
+        const lastAttempt = sportQuizAttempts.sort((a, b) => {
+          const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
+          const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+          return dateB.getTime() - dateA.getTime();
+        })[0];
+
+        const lastActivityDate = lastAttempt?.submittedAt?.toDate ?
+          lastAttempt.submittedAt.toDate() :
+          lastAttempt ? new Date(lastAttempt.submittedAt || 0) : null;
+
+        // Calculate progress percentage
+        const progressPercentage = totalSkills > 0
+          ? Math.round((completedSkills / totalSkills) * 100)
+          : 0;
+
+        // Determine status
+        const status: 'not_started' | 'in_progress' | 'completed' =
+          completedSkills === totalSkills && totalSkills > 0 ? 'completed' :
+          attemptedSkills > 0 ? 'in_progress' : 'not_started';
+
         courseDetails.push({
-          sportId: sportProgress.sportId,
+          sportId,
           sportName: sport.data.name,
           description: sport.data.description,
-          enrolledAt: sportProgress.enrolledAt?.toDate ?
-            sportProgress.enrolledAt.toDate() :
-            new Date(sportProgress.enrolledAt || 0),
-          status: sportProgress.status,
-          progressPercentage: sportProgress.progressPercentage,
+          enrolledAt,
+          status,
+          progressPercentage,
           totalSkills,
           completedSkills,
           averageQuizScore: Math.round(averageScore),
-          lastActivityDate: sportProgress.lastActivityDate?.toDate ?
-            sportProgress.lastActivityDate.toDate() :
-            sportProgress.lastActivityDate ? new Date(sportProgress.lastActivityDate) : null,
+          lastActivityDate,
           skills: skillDetails
         });
       }
@@ -697,6 +799,73 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
   // Private helper methods
 
+  private calculateCurrentStreak(quizAttempts: QuizAttempt[]): number {
+    if (quizAttempts.length === 0) return 0;
+
+    const sortedAttempts = [...quizAttempts].sort((a, b) => {
+      const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
+      const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let streak = 0;
+    let currentDate = new Date(today);
+
+    for (const attempt of sortedAttempts) {
+      const attemptDate = attempt.submittedAt?.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt || 0);
+      const attemptDay = new Date(attemptDate);
+      attemptDay.setHours(0, 0, 0, 0);
+
+      const daysDiff = Math.floor((currentDate.getTime() - attemptDay.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysDiff === 0) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else if (daysDiff === 1 && streak === 0) {
+        streak = 1;
+        break;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
+  private calculateLongestStreak(quizAttempts: QuizAttempt[]): number {
+    if (quizAttempts.length === 0) return 0;
+
+    const dates = quizAttempts
+      .map(a => {
+        const date = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
+        const day = new Date(date);
+        day.setHours(0, 0, 0, 0);
+        return day.getTime();
+      })
+      .sort((a, b) => a - b);
+
+    const uniqueDates = [...new Set(dates)];
+
+    let maxStreak = 1;
+    let currentStreak = 1;
+
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const daysDiff = (uniqueDates[i] - uniqueDates[i - 1]) / (1000 * 60 * 60 * 24);
+
+      if (daysDiff === 1) {
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else {
+        currentStreak = 1;
+      }
+    }
+
+    return maxStreak;
+  }
+
   private determineStudyPattern(quizAttempts: QuizAttempt[]): 'morning' | 'afternoon' | 'evening' | 'night' | 'varied' {
     if (quizAttempts.length === 0) return 'varied';
 
@@ -723,11 +892,9 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     return 'varied';
   }
 
-  private async buildRecentActivity(
+  private async buildRecentActivityFromQuizzes(
     userId: string,
-    quizzes: QuizAttempt[],
-    skills: SkillProgress[],
-    sports: SportProgress[]
+    quizzes: QuizAttempt[]
   ): Promise<ActivityRecord[]> {
     const activities: ActivityRecord[] = [];
 
@@ -738,48 +905,32 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
         return dateB.getTime() - dateA.getTime();
       })
-      .slice(0, 5);
+      .slice(0, 10);
 
     for (const quiz of recentQuizzes) {
       const quizData = await videoQuizService.getVideoQuiz(quiz.quizId);
+
+      let title = 'Completed Quiz';
+      if (quizData.data?.title) {
+        title = `Completed ${quizData.data.title}`;
+      }
+
       activities.push({
         id: quiz.id,
         type: 'quiz_completed',
-        title: `Completed ${quizData.data?.title || 'Quiz'}`,
+        title,
         description: `Score: ${quiz.percentage}% ${quiz.passed ? '✓ Passed' : '✗ Failed'}`,
         timestamp: quiz.submittedAt?.toDate ? quiz.submittedAt.toDate() : new Date(quiz.submittedAt || 0),
         metadata: {
           score: quiz.percentage,
           passed: quiz.passed,
+          attemptNumber: quiz.attemptNumber,
+          timeSpent: quiz.timeSpent,
         },
       });
     }
 
-    // Add skill completions
-    const completedSkills = skills
-      .filter(s => s.status === 'completed' && s.completedAt)
-      .sort((a, b) => {
-        const dateA = a.completedAt?.toDate ? a.completedAt.toDate() : new Date(a.completedAt || 0);
-        const dateB = b.completedAt?.toDate ? b.completedAt.toDate() : new Date(b.completedAt || 0);
-        return dateB.getTime() - dateA.getTime();
-      })
-      .slice(0, 3);
-
-    for (const skill of completedSkills) {
-      const skillData = await sportsService.getSkill(skill.skillId);
-      activities.push({
-        id: skill.id,
-        type: 'skill_completed',
-        title: `Completed ${skillData.data?.name || 'Skill'}`,
-        description: `Finished in ${Math.round(skill.timeSpent / 60)} hours`,
-        timestamp: skill.completedAt?.toDate ? skill.completedAt.toDate() : new Date(skill.completedAt || 0),
-      });
-    }
-
-    // Sort all activities by timestamp
-    activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-    return activities.slice(0, 10); // Return top 10 most recent
+    return activities;
   }
 }
 
