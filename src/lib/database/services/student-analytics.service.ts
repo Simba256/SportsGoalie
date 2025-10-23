@@ -146,7 +146,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Only fetch video quiz attempts and related data
-      const quizAttempts = await this.query<QuizAttempt>('quiz_attempts', {
+      // Note: Changed from 'quiz_attempts' to 'video_quiz_progress' to match video quiz system
+      const quizAttempts = await this.query<any>('video_quiz_progress', {
         where: [
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
@@ -165,13 +166,16 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       });
 
       // Calculate overview metrics from video quiz data only
-      const totalTimeSpent = quizzes.reduce((sum, q) => sum + (q.timeSpent || 0), 0);
+      // VideoQuizProgress uses 'totalTimeSpent' field
+      const totalTimeSpent = quizzes.reduce((sum, q) => sum + (q.totalTimeSpent || q.timeSpent || 0), 0);
       const activeDaysSet = new Set<string>();
 
       // Track active days from quiz attempts
       quizzes.forEach(quiz => {
-        if (quiz.submittedAt) {
-          const date = quiz.submittedAt.toDate ? quiz.submittedAt.toDate() : new Date(quiz.submittedAt);
+        // VideoQuizProgress uses 'completedAt' instead of 'submittedAt'
+        const dateField = quiz.completedAt || quiz.submittedAt;
+        if (dateField) {
+          const date = dateField.toDate ? dateField.toDate() : new Date(dateField);
           activeDaysSet.add(date.toISOString().split('T')[0]);
         }
       });
@@ -179,7 +183,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       // Find last active date
       const lastActiveDate = quizzes.length > 0
         ? new Date(Math.max(...quizzes.map(q => {
-            const date = q.submittedAt?.toDate ? q.submittedAt.toDate() : new Date(q.submittedAt || 0);
+            const dateField = q.completedAt || q.submittedAt;
+            const date = dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
             return date.getTime();
           })))
         : null;
@@ -289,7 +294,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     logger.info('Fetching quiz performance', 'StudentAnalyticsService', { userId });
 
     try {
-      const attemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+      // Use video_quiz_progress collection for video quiz data
+      const attemptsResult = await this.query<any>('video_quiz_progress', {
         where: [
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
@@ -298,13 +304,14 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
       const attempts = attemptsResult.data?.items || [];
 
-      // Group attempts by quiz
-      const quizMap = new Map<string, QuizAttempt[]>();
+      // Group attempts by quiz (VideoQuizProgress uses 'videoQuizId')
+      const quizMap = new Map<string, any[]>();
       attempts.forEach(attempt => {
-        if (!quizMap.has(attempt.quizId)) {
-          quizMap.set(attempt.quizId, []);
+        const quizId = attempt.videoQuizId || attempt.quizId;
+        if (!quizMap.has(quizId)) {
+          quizMap.set(quizId, []);
         }
-        quizMap.get(attempt.quizId)!.push(attempt);
+        quizMap.get(quizId)!.push(attempt);
       });
 
       // Build performance data
@@ -324,10 +331,12 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         const sport = sportId ? await sportsService.getSport(sportId) : null;
 
         const scores = quizAttempts.map(a => a.percentage);
-        const times = quizAttempts.map(a => a.timeSpent);
+        const times = quizAttempts.map(a => a.totalTimeSpent || a.timeSpent || 0);
         const lastAttempt = quizAttempts.reduce((latest, current) => {
-          const currentDate = current.submittedAt?.toDate ? current.submittedAt.toDate() : new Date(current.submittedAt || 0);
-          const latestDate = latest.submittedAt?.toDate ? latest.submittedAt.toDate() : new Date(latest.submittedAt || 0);
+          const currentDateField = current.completedAt || current.submittedAt;
+          const latestDateField = latest.completedAt || latest.submittedAt;
+          const currentDate = currentDateField?.toDate ? currentDateField.toDate() : new Date(currentDateField || 0);
+          const latestDate = latestDateField?.toDate ? latestDateField.toDate() : new Date(latestDateField || 0);
           return currentDate > latestDate ? current : latest;
         });
 
@@ -346,7 +355,10 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           averageScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
           timeSpent: Math.round(times.reduce((a, b) => a + b, 0) / times.length / 60), // Convert to minutes
           passed: lastAttempt.passed,
-          lastAttempt: lastAttempt.submittedAt?.toDate ? lastAttempt.submittedAt.toDate() : new Date(lastAttempt.submittedAt || 0),
+          lastAttempt: (() => {
+            const dateField = lastAttempt.completedAt || lastAttempt.submittedAt;
+            return dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
+          })(),
         });
       }
 
@@ -378,7 +390,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     logger.info('Fetching progress over time', 'StudentAnalyticsService', { userId, days });
 
     try {
-      const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+      // Use video_quiz_progress collection
+      const quizAttemptsResult = await this.query<any>('video_quiz_progress', {
         where: [
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
@@ -391,14 +404,17 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const skillsPassedByDate = new Map<string, Set<string>>();
 
       quizAttempts.forEach(attempt => {
-        if (attempt.passed && attempt.skillId && attempt.submittedAt) {
-          const date = attempt.submittedAt?.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt);
-          const dateStr = date.toISOString().split('T')[0];
+        if (attempt.passed && attempt.skillId) {
+          const dateField = attempt.completedAt || attempt.submittedAt;
+          if (dateField) {
+            const date = dateField.toDate ? dateField.toDate() : new Date(dateField);
+            const dateStr = date.toISOString().split('T')[0];
 
-          if (!skillsPassedByDate.has(dateStr)) {
-            skillsPassedByDate.set(dateStr, new Set());
+            if (!skillsPassedByDate.has(dateStr)) {
+              skillsPassedByDate.set(dateStr, new Set());
+            }
+            skillsPassedByDate.get(dateStr)!.add(attempt.skillId);
           }
-          skillsPassedByDate.get(dateStr)!.add(attempt.skillId);
         }
       });
 
@@ -415,7 +431,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         // Quizzes taken on this day
         const dayQuizzes = quizAttempts.filter(q => {
-          const attemptDate = q.submittedAt?.toDate ? q.submittedAt.toDate() : new Date(q.submittedAt || 0);
+          const dateField = q.completedAt || q.submittedAt;
+          const attemptDate = dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
           return attemptDate.toISOString().split('T')[0] === dateStr;
         });
 
@@ -430,7 +447,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           ? Math.round(dayQuizzes.reduce((sum, q) => sum + q.percentage, 0) / dayQuizzes.length)
           : 0;
 
-        const timeSpent = dayQuizzes.reduce((sum, q) => sum + (q.timeSpent || 0), 0);
+        const timeSpent = dayQuizzes.reduce((sum, q) => sum + (q.totalTimeSpent || q.timeSpent || 0), 0);
 
         progressData.push({
           date: dateStr,
@@ -467,7 +484,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Get all video quiz attempts
-      const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+      const quizAttemptsResult = await this.query<any>('video_quiz_progress', {
         where: [
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
@@ -561,7 +578,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Get all video quiz attempts to determine which sports the user is enrolled in
-      const quizAttemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+      const quizAttemptsResult = await this.query<any>('video_quiz_progress', {
         where: [
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
@@ -746,12 +763,12 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     logger.info('Fetching quiz attempt history', 'StudentAnalyticsService', { userId, limit });
 
     try {
-      const attemptsResult = await this.query<QuizAttempt>('quiz_attempts', {
+      const attemptsResult = await this.query<any>('video_quiz_progress', {
         where: [
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
         ],
-        orderBy: { field: 'submittedAt', direction: 'desc' },
+        orderBy: { field: 'completedAt', direction: 'desc' },
         limit
       });
 
@@ -759,8 +776,9 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const attemptDetails: QuizAttemptDetail[] = [];
 
       for (const attempt of attempts) {
+        const quizId = attempt.videoQuizId || attempt.quizId;
         const [quiz, skill, sport] = await Promise.all([
-          videoQuizService.getVideoQuiz(attempt.quizId),
+          videoQuizService.getVideoQuiz(quizId),
           attempt.skillId ? sportsService.getSkill(attempt.skillId) : null,
           attempt.sportId ? sportsService.getSport(attempt.sportId) : null
         ]);
@@ -768,9 +786,11 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         const startTime = attempt.startedAt?.toDate ?
           attempt.startedAt.toDate() :
           new Date(attempt.startedAt || 0);
-        const endTime = attempt.submittedAt?.toDate ?
-          attempt.submittedAt.toDate() :
-          new Date(attempt.submittedAt || 0);
+        const endTime = attempt.completedAt?.toDate ?
+          attempt.completedAt.toDate() :
+          attempt.submittedAt?.toDate ?
+            attempt.submittedAt.toDate() :
+            new Date(attempt.completedAt || attempt.submittedAt || 0);
 
         // Better fallback for quiz title - use sport/skill names if available
         const quizTitle = quiz.data?.title ||
@@ -779,14 +799,14 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         attemptDetails.push({
           attemptId: attempt.id,
-          quizId: attempt.quizId,
+          quizId: quizId,
           quizTitle,
           sportName: sport?.data?.name || 'Unknown Sport',
           skillName: skill?.data?.name || 'Unknown Skill',
-          attemptNumber: attempt.attemptNumber,
+          attemptNumber: attempt.attemptNumber || 1,
           startedAt: startTime,
           submittedAt: endTime,
-          timeSpent: Math.round(attempt.timeSpent / 60), // Convert to minutes
+          timeSpent: Math.round((attempt.totalTimeSpent || attempt.timeSpent || 0) / 60), // Convert to minutes
           score: attempt.score,
           maxScore: attempt.maxScore,
           percentage: attempt.percentage,

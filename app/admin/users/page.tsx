@@ -43,7 +43,6 @@ function UsersManagementContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchUsers = async () => {
     try {
@@ -51,7 +50,6 @@ function UsersManagementContent() {
       const result = await userService.getAllUsers({
         searchTerm: searchTerm.trim() || undefined,
         role: roleFilter === 'all' ? undefined : roleFilter,
-        isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
         limit: 100,
       });
 
@@ -70,7 +68,7 @@ function UsersManagementContent() {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm, roleFilter, statusFilter]);
+  }, [searchTerm, roleFilter]);
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     if (!currentUser?.uid) return;
@@ -89,35 +87,6 @@ function UsersManagementContent() {
     }
   };
 
-  const handleDeactivateUser = async (userId: string) => {
-    try {
-      const result = await userService.deactivateUser(userId);
-      if (result.success) {
-        toast.success('User deactivated successfully');
-        fetchUsers();
-      } else {
-        toast.error('Failed to deactivate user');
-      }
-    } catch (error) {
-      console.error('Error deactivating user:', error);
-      toast.error('Failed to deactivate user');
-    }
-  };
-
-  const handleReactivateUser = async (userId: string) => {
-    try {
-      const result = await userService.reactivateUser(userId);
-      if (result.success) {
-        toast.success('User reactivated successfully');
-        fetchUsers();
-      } else {
-        toast.error('Failed to reactivate user');
-      }
-    } catch (error) {
-      console.error('Error reactivating user:', error);
-      toast.error('Failed to reactivate user');
-    }
-  };
 
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
@@ -130,9 +99,6 @@ function UsersManagementContent() {
     }
   };
 
-  const getStatusBadgeVariant = (isActive: boolean) => {
-    return isActive ? 'default' : 'secondary';
-  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = !searchTerm ||
@@ -142,11 +108,8 @@ function UsersManagementContent() {
       (user.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && user.isActive) ||
-      (statusFilter === 'inactive' && !user.isActive);
 
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesRole;
   });
 
   return (
@@ -167,7 +130,7 @@ function UsersManagementContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -176,19 +139,6 @@ function UsersManagementContent() {
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
               <p className="text-xs text-muted-foreground">Registered users</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {users.filter(u => u.isActive).length}
-              </div>
-              <p className="text-xs text-muted-foreground">Currently active</p>
             </CardContent>
           </Card>
 
@@ -224,7 +174,7 @@ function UsersManagementContent() {
           <CardHeader>
             <CardTitle>Search and Filter Users</CardTitle>
             <CardDescription>
-              Find and filter users by name, email, role, or status
+              Find and filter users by name, email, or role
             </CardDescription>
           </CardHeader>
           <CardContent>
