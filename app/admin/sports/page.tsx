@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
 import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
-import { IconPicker } from '@/components/ui/icon-picker';
 import {
   Plus,
   Edit,
@@ -20,7 +19,6 @@ import {
   Save,
   X,
   Search,
-  Clock,
   Users,
   Star,
 } from 'lucide-react';
@@ -37,11 +35,9 @@ interface AdminSportsState {
 interface SportFormData {
   name: string;
   description: string;
-  icon: string;
   color: string;
   category: string;
   difficulty: DifficultyLevel;
-  estimatedTimeToComplete: number;
   imageUrl: string;
   tags: string[];
   isActive: boolean;
@@ -52,11 +48,9 @@ interface SportFormData {
 const defaultFormData: SportFormData = {
   name: '',
   description: '',
-  icon: '',
   color: '#3B82F6',
   category: '',
   difficulty: 'beginner',
-  estimatedTimeToComplete: 120,
   imageUrl: '',
   tags: [],
   isActive: true,
@@ -117,11 +111,9 @@ function AdminSportsContent() {
     setFormData({
       name: sport.name,
       description: sport.description,
-      icon: sport.icon,
       color: sport.color,
       category: sport.category,
       difficulty: sport.difficulty,
-      estimatedTimeToComplete: sport.estimatedTimeToComplete,
       imageUrl: sport.imageUrl || '',
       tags: sport.tags,
       isActive: sport.isActive,
@@ -146,11 +138,6 @@ function AdminSportsContent() {
     // Validate required fields
     if (!formData.name.trim()) {
       setState(prev => ({ ...prev, error: 'Course name is required' }));
-      return;
-    }
-
-    if (!formData.icon.trim()) {
-      setState(prev => ({ ...prev, error: 'Please select an icon for the course' }));
       return;
     }
 
@@ -180,10 +167,12 @@ function AdminSportsContent() {
         setUploading(false);
       }
 
-      // Update form data with uploaded image URL
+      // Update form data with uploaded image URL and default values for removed fields
       const finalFormData = {
         ...formData,
         imageUrl,
+        icon: '⚡', // Default icon since we're not collecting it anymore
+        estimatedTimeToComplete: 120, // Default to 120 hours
         createdBy: 'admin', // Add required createdBy field
       };
 
@@ -359,14 +348,6 @@ function AdminSportsContent() {
               </div>
 
               <div className="space-y-2">
-                <IconPicker
-                  label="Course Icon"
-                  value={formData.icon}
-                  onChange={(icon) => setFormData(prev => ({ ...prev, icon }))}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
                 <select
                   id="difficulty"
@@ -378,17 +359,6 @@ function AdminSportsContent() {
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
                 </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimatedTime">Estimated Time (hours)</Label>
-                <Input
-                  id="estimatedTime"
-                  type="number"
-                  value={formData.estimatedTimeToComplete}
-                  onChange={(e) => setFormData(prev => ({ ...prev, estimatedTimeToComplete: parseInt(e.target.value) || 0 }))}
-                  placeholder="120"
-                />
               </div>
 
               <div className="space-y-2">
@@ -532,20 +502,17 @@ function AdminSportsContent() {
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-3 flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{sport.icon}</span>
-                        <div>
-                          <h3 className="font-semibold">{sport.name}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span className="bg-muted px-2 py-1 rounded text-xs">
-                              {sport.category}
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${getDifficultyColor(sport.difficulty)}`}
-                            >
-                              {sport.difficulty}
-                            </span>
-                          </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">{sport.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <span className="bg-muted px-2 py-1 rounded text-xs">
+                            {sport.category}
+                          </span>
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${getDifficultyColor(sport.difficulty)}`}
+                          >
+                            {sport.difficulty}
+                          </span>
                         </div>
                       </div>
 
@@ -554,10 +521,6 @@ function AdminSportsContent() {
                       </p>
 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{sport.estimatedTimeToComplete}h</span>
-                        </div>
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
                           <span>{sport.skillsCount} skills</span>

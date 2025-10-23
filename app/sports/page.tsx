@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { LoadingState, LoadingCard } from '@/components/ui/loading';
 import Link from 'next/link';
-import { Search, Filter, Clock, Users, Sparkles } from 'lucide-react';
+import { Search, Filter, Users, Sparkles } from 'lucide-react';
 
 interface SportsPageState {
   sports: Sport[];
@@ -99,12 +99,6 @@ export default function SportsPage() {
     }
   };
 
-  const formatDuration = (hours: number) => {
-    if (hours < 1) {
-      return `${Math.round(hours * 60)}min`;
-    }
-    return `${Math.round(hours)}h`;
-  };
 
   if (state.loading && state.sports.length === 0) {
     return (
@@ -308,7 +302,7 @@ export default function SportsPage() {
                 <CardHeader className="space-y-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                      {sport.icon} {sport.name}
+                      {sport.name}
                     </CardTitle>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(sport.difficulty)}`}
@@ -322,11 +316,7 @@ export default function SportsPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatDuration(sport.estimatedTimeToComplete)}</span>
-                    </div>
+                  <div className="flex items-center justify-center text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
                       <span>{sport.skillsCount} skills</span>

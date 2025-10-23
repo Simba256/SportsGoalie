@@ -13,7 +13,6 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Clock,
   Users,
   BookOpen,
   Play,
@@ -191,14 +190,6 @@ export default function SportDetailPage() {
     }
   };
 
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes}min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
-  };
 
   // Handle enrollment in sport
   const handleStartLearning = async () => {
@@ -349,7 +340,6 @@ export default function SportDetailPage() {
               <div className="p-6 text-white space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-4xl">{sport.icon}</span>
                     <h1 className="text-4xl font-bold">{sport.name}</h1>
                     {sport.isFeatured && (
                       <span className="bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-medium">
@@ -383,7 +373,6 @@ export default function SportDetailPage() {
         {!sport.imageUrl && (
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <span className="text-6xl">{sport.icon}</span>
               <div>
                 <h1 className="text-4xl font-bold">{sport.name}</h1>
                 <p className="text-xl text-muted-foreground mt-2">{sport.description}</p>
@@ -398,7 +387,7 @@ export default function SportDetailPage() {
         )}
 
         {/* Sport Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
@@ -409,18 +398,6 @@ export default function SportDetailPage() {
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">Difficulty Level</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xl font-semibold">
-                  {Math.round(sport.estimatedTimeToComplete)}h
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">Est. Duration</p>
             </CardContent>
           </Card>
 
@@ -550,10 +527,6 @@ export default function SportDetailPage() {
 
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatDuration(skill.estimatedTimeToComplete)}</span>
-                      </div>
                       <div className="flex items-center gap-2">
                         {skill.hasVideo && (
                           <div className="flex items-center gap-1">
