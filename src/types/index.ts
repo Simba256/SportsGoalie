@@ -258,15 +258,16 @@ export interface UserProgress {
 
 export interface OverallStats {
   totalTimeSpent: number; // minutes
-  skillsCompleted: number;
+  skillsCompleted: number;  // Number of unique skills attempted
   sportsCompleted: number;
-  quizzesCompleted: number;
-  averageQuizScore: number;
+  quizzesCompleted: number;  // Total quiz attempts
+  averageQuizScore: number;  // Average percentage from video quizzes
   currentStreak: number;
   longestStreak: number;
-  totalPoints: number;
-  level: number;
-  experiencePoints: number;
+  // Deprecated - keeping for backward compatibility but always return default values
+  totalPoints: number;       // Always returns 0
+  level: number;             // Always returns 1
+  experiencePoints: number;  // Always returns 0
 }
 
 // Content Types

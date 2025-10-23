@@ -61,19 +61,19 @@ function ProgressContent() {
       icon: <Clock className="h-4 w-4" />,
     },
     {
-      title: 'Skills Completed',
+      title: 'Skills Attempted',
       value: stats?.skillsCompleted || 0,
-      description: 'Skills mastered',
+      description: 'Unique skills with quiz attempts',
       trend: 'up' as const,
       trendValue: '+3 this month',
       icon: <TrendingUp className="h-4 w-4" />,
     },
     {
-      title: 'Current Level',
-      value: stats?.level || 1,
-      description: `${stats?.experiencePoints || 0} XP earned`,
-      trend: stats?.level && stats.level > 1 ? 'up' : 'neutral' as const,
-      trendValue: '+150 XP',
+      title: 'Quiz Attempts',
+      value: stats?.quizzesCompleted || 0,
+      description: 'Total video quizzes attempted',
+      trend: stats?.quizzesCompleted ? 'up' : 'neutral' as const,
+      trendValue: '+5 this week',
       icon: <BarChart className="h-4 w-4" />,
     },
     {
@@ -148,25 +148,25 @@ function ProgressContent() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Achievement Progress</CardTitle>
-                    <CardDescription>Your journey towards achievements</CardDescription>
+                    <CardTitle>Quiz Performance</CardTitle>
+                    <CardDescription>Your video quiz performance metrics</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Achievements Unlocked</span>
-                        <span className="font-medium">3/15</span>
+                        <span className="text-sm">Average Quiz Score</span>
+                        <span className="font-medium">{Math.round(stats?.averageQuizScore || 0)}%</span>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full" style={{ width: '20%' }}></div>
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${stats?.averageQuizScore || 0}%` }}></div>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Total Points</span>
-                        <span className="font-medium">{stats?.totalPoints || 0} XP</span>
+                        <span className="text-sm">Quiz Attempts</span>
+                        <span className="font-medium">{stats?.quizzesCompleted || 0}</span>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {((stats?.level || 1) * 1000) - (stats?.experiencePoints || 0)} XP to next level
+                        {stats?.skillsCompleted || 0} unique skills attempted
                       </div>
                     </div>
                   </CardContent>
