@@ -338,9 +338,6 @@ function UserDetailsContent() {
                   <Badge variant={getRoleBadgeVariant(user.role)}>
                     {user.role}
                   </Badge>
-                  <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                    {user.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
                 </div>
                 <p className="text-muted-foreground mb-2">{user.email}</p>
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
@@ -476,25 +473,6 @@ function UserDetailsContent() {
                     )}
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Account Status</Label>
-                    {isEditing ? (
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          checked={editedUser?.isActive}
-                          onCheckedChange={(checked) => setEditedUser(prev => prev ? {...prev, isActive: checked} : null)}
-                        />
-                        <span>{editedUser?.isActive ? 'Active' : 'Inactive'}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                        <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                          {user.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
 
                   <div className="grid gap-2">
                     <Label>Date of Birth</Label>

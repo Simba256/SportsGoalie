@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Users, UserPlus, Filter, MoreHorizontal, Shield, ShieldCheck, Ban, RotateCcw } from 'lucide-react';
+import { Search, Users, UserPlus, MoreHorizontal, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -200,16 +200,6 @@ function UsersManagementContent() {
                   <SelectItem value="student">Students</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'active' | 'inactive')}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -219,7 +209,7 @@ function UsersManagementContent() {
           <CardHeader>
             <CardTitle>Users ({filteredUsers.length})</CardTitle>
             <CardDescription>
-              All registered users with their roles and status
+              All registered users with their roles
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -232,12 +222,12 @@ function UsersManagementContent() {
                 <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">No users found</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchTerm || roleFilter !== 'all' || statusFilter !== 'all'
+                  {searchTerm || roleFilter !== 'all'
                     ? 'Try adjusting your search criteria'
                     : 'No users have been registered yet'
                   }
                 </p>
-                {(!searchTerm && roleFilter === 'all' && statusFilter === 'all') && (
+                {(!searchTerm && roleFilter === 'all') && (
                   <Button>
                     <UserPlus className="mr-2 h-4 w-4" />
                     Add First User
@@ -263,9 +253,6 @@ function UsersManagementContent() {
                           <h4 className="font-medium">{user.displayName}</h4>
                           <Badge variant={getRoleBadgeVariant(user.role)}>
                             {user.role}
-                          </Badge>
-                          <Badge variant={getStatusBadgeVariant(user.isActive)}>
-                            {user.isActive ? 'Active' : 'Inactive'}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -319,25 +306,6 @@ function UsersManagementContent() {
                             >
                               <Users className="mr-2 h-4 w-4" />
                               Make Student
-                            </DropdownMenuItem>
-                          )}
-
-                          <DropdownMenuSeparator />
-
-                          {user.isActive ? (
-                            <DropdownMenuItem
-                              onClick={() => handleDeactivateUser(user.id)}
-                              className="text-destructive"
-                            >
-                              <Ban className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              onClick={() => handleReactivateUser(user.id)}
-                            >
-                              <RotateCcw className="mr-2 h-4 w-4" />
-                              Reactivate
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
