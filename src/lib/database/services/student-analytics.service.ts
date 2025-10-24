@@ -25,9 +25,7 @@ export interface StudentAnalytics {
     averageQuizScore: number;
     bestQuizScore: number;
     worstQuizScore: number;
-    totalQuizzesPassed: number;
-    totalQuizzesFailed: number;
-    passRate: number;
+    totalQuizzesCompleted: number;
   };
   progress: {
     sportsCompleted: number;
@@ -63,7 +61,6 @@ export interface QuizPerformanceData {
   bestScore: number;
   averageScore: number;
   timeSpent: number;
-  passed: boolean;
   lastAttempt: Date;
 }
 
@@ -119,14 +116,12 @@ export interface QuizAttemptDetail {
   quizTitle: string;
   sportName: string;
   skillName: string;
-  attemptNumber: number;
   startedAt: Date;
   submittedAt: Date;
   timeSpent: number;
   score: number;
   maxScore: number;
   percentage: number;
-  passed: boolean;
   questionsAnswered: number;
   totalQuestions: number;
   correctAnswers: number;
@@ -196,11 +191,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         : 0;
       const bestQuizScore = quizScores.length > 0 ? Math.max(...quizScores) : 0;
       const worstQuizScore = quizScores.length > 0 ? Math.min(...quizScores) : 0;
-      const passedQuizzes = quizzes.filter(q => q.passed).length;
-      const failedQuizzes = quizzes.filter(q => !q.passed).length;
-      const passRate = quizzes.length > 0
-        ? Math.round((passedQuizzes / quizzes.length) * 100)
-        : 0;
+      const completedQuizzes = quizzes.filter(q => q.isCompleted).length;
 
       // Calculate progress metrics based on video quiz data
       // Count unique skills passed
@@ -249,9 +240,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           averageQuizScore,
           bestQuizScore,
           worstQuizScore,
-          totalQuizzesPassed: passedQuizzes,
-          totalQuizzesFailed: failedQuizzes,
-          passRate,
+          totalQuizzesCompleted: completedQuizzes,
         },
         progress: {
           sportsCompleted: 0, // We don't track sport completion in video quiz system
@@ -354,7 +343,6 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           bestScore: Math.max(...scores),
           averageScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
           timeSpent: Math.round(times.reduce((a, b) => a + b, 0) / times.length / 60), // Convert to minutes
-          passed: lastAttempt.passed,
           lastAttempt: (() => {
             const dateField = lastAttempt.completedAt || lastAttempt.submittedAt;
             return dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
@@ -803,14 +791,12 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           quizTitle,
           sportName: sport?.data?.name || 'Unknown Sport',
           skillName: skill?.data?.name || 'Unknown Skill',
-          attemptNumber: attempt.attemptNumber || 1,
           startedAt: startTime,
           submittedAt: endTime,
           timeSpent: Math.round((attempt.totalTimeSpent || attempt.timeSpent || 0) / 60), // Convert to minutes
           score: attempt.score,
           maxScore: attempt.maxScore,
           percentage: attempt.percentage,
-          passed: attempt.passed,
           questionsAnswered: attempt.questionsAnswered?.length || 0,
           totalQuestions: quiz.data?.questions?.length || 0,
           correctAnswers: attempt.questionsAnswered?.filter(q => q.isCorrect).length || 0,
@@ -958,12 +944,10 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         id: quiz.id,
         type: 'quiz_completed',
         title,
-        description: `Score: ${quiz.percentage}% ${quiz.passed ? '✓ Passed' : '✗ Failed'}`,
+        description: `Score: ${quiz.percentage}%`,
         timestamp: quiz.submittedAt?.toDate ? quiz.submittedAt.toDate() : new Date(quiz.submittedAt || 0),
         metadata: {
           score: quiz.percentage,
-          passed: quiz.passed,
-          attemptNumber: quiz.attemptNumber,
           timeSpent: quiz.timeSpent,
         },
       });

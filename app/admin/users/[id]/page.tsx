@@ -615,27 +615,13 @@ function UserDetailsContent() {
                 <CardContent>
                   {analytics ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600">
-                            {analytics.performance.totalQuizzesPassed}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Passed</p>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-primary">
+                          {analytics.performance.totalQuizzesCompleted}
                         </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-red-600">
-                            {analytics.performance.totalQuizzesFailed}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Failed</p>
-                        </div>
+                        <p className="text-sm text-muted-foreground">Quizzes Completed</p>
                       </div>
                       <div className="pt-4 border-t space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Pass Rate</span>
-                          <span className="font-medium">
-                            {analytics.performance.passRate}%
-                          </span>
-                        </div>
                         <div className="flex justify-between text-sm">
                           <span>Best Score</span>
                           <span className="font-medium">

@@ -22,8 +22,6 @@ export interface VideoQuizSettings {
   requireSequentialAnswers: boolean; // must answer questions in order
   showProgressBar: boolean;
   autoPlayNext: boolean; // after completing quiz
-  passingScore: number; // percentage (0-100)
-  maxAttempts: number;
   showCorrectAnswers: boolean;
   showExplanations: boolean;
 }
@@ -65,7 +63,6 @@ export interface VideoQuizMetadata {
   averageScore: number;
   averageTimeSpent: number; // in minutes
   averageCompletionTime: number; // time to complete video + questions
-  passRate: number; // percentage of students who passed
   dropOffPoints: DropOffPoint[]; // where students abandon the quiz
 }
 
@@ -88,7 +85,6 @@ export interface VideoQuestionAnswer {
   isCorrect: boolean;
   pointsEarned: number;
   timeToAnswer: number; // seconds taken to answer
-  attempts?: number; // number of attempts (if retries allowed)
   answeredAt: Timestamp;
 }
 
@@ -107,10 +103,8 @@ export interface VideoQuizProgress {
   score: number; // points earned
   maxScore: number; // total points possible
   percentage: number; // score as percentage
-  passed: boolean;
   isCompleted: boolean;
   status: 'in-progress' | 'submitted' | 'timed-out' | 'abandoned';
-  attemptNumber: number;
   startedAt: Timestamp;
   completedAt?: Timestamp;
   lastAccessedAt?: Timestamp;

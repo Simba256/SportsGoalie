@@ -57,8 +57,6 @@ function CreateVideoQuizContent() {
     isPublished: false,
     questions: [],
     settings: {
-      passingScore: 70,
-      maxAttempts: 3,
       showExplanations: true,
       allowPause: true,
       allowSkip: false,
@@ -257,10 +255,9 @@ function CreateVideoQuizContent() {
       }
 
       // Still allow saving with the URL
-      const processedUrl = convertGoogleDriveUrl(url);
       setQuizData(prev => ({
         ...prev,
-        videoUrl: processedUrl,
+        videoUrl: url,
         videoDuration: 0,
       }));
     } finally {
@@ -814,31 +811,6 @@ function CreateVideoQuizContent() {
               <CardTitle>Quiz Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="passingScore">Passing Score (%)</Label>
-                  <Input
-                    id="passingScore"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={quizData.settings?.passingScore}
-                    onChange={(e) => handleSettingsChange('passingScore', parseInt(e.target.value))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="maxAttempts">Max Attempts</Label>
-                  <Input
-                    id="maxAttempts"
-                    type="number"
-                    min="1"
-                    value={quizData.settings?.maxAttempts}
-                    onChange={(e) => handleSettingsChange('maxAttempts', parseInt(e.target.value))}
-                  />
-                </div>
-              </div>
-
               <div className="space-y-4">
                 <h3 className="font-semibold">Player Controls</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

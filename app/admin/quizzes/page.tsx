@@ -260,9 +260,9 @@ function AdminQuizzesPageContent() {
                 <Users className="h-5 w-5 text-gray-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Attempts</p>
+                <p className="text-sm text-gray-600">Total Completions</p>
                 <p className="text-2xl font-bold">
-                  {quizzes.reduce((sum, q) => sum + (q.metadata?.totalAttempts || 0), 0)}
+                  {quizzes.reduce((sum, q) => sum + (q.metadata?.totalCompletions || 0), 0)}
                 </p>
               </div>
             </div>
@@ -405,7 +405,7 @@ function AdminQuizzesPageContent() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-gray-400" />
                     <span className="text-gray-600">
-                      {quiz.metadata?.totalAttempts || 0} attempts
+                      {quiz.metadata?.totalCompletions || 0} completions
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

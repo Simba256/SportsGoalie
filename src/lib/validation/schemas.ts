@@ -228,7 +228,6 @@ export const quizMetadataSchema = z.object({
   totalCompletions: z.number().min(0),
   averageScore: z.number().min(0).max(100),
   averageTimeSpent: z.number().min(0),
-  passRate: z.number().min(0).max(100),
 });
 
 export const quizSchema = z.object({
@@ -318,9 +317,7 @@ export const quizAttemptSchema = z.object({
   score: z.number().min(0),
   maxScore: z.number().min(0),
   percentage: z.number().min(0).max(100),
-  passed: z.boolean(),
   timeSpent: z.number().min(0),
-  attemptNumber: z.number().min(1),
   isCompleted: z.boolean(),
   startedAt: timestampSchema,
   completedAt: timestampSchema.optional(),
@@ -332,7 +329,6 @@ export const createQuizAttemptSchema = quizAttemptSchema.omit({
   answers: true,
   score: true,
   percentage: true,
-  passed: true,
   timeSpent: true,
   isCompleted: true,
   completedAt: true,

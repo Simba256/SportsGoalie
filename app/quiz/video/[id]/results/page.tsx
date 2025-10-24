@@ -130,9 +130,8 @@ function VideoQuizResultsContent() {
     );
   }
 
-  const isPassed = progress.passed;
-  const scoreColor = isPassed ? 'text-green-600' : 'text-red-600';
-  const scoreIcon = isPassed ? <Trophy className="h-6 w-6" /> : <Target className="h-6 w-6" />;
+  const scoreColor = progress.percentage >= 70 ? 'text-green-600' : 'text-amber-600';
+  const scoreIcon = progress.percentage >= 70 ? <Trophy className="h-6 w-6" /> : <Target className="h-6 w-6" />;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -146,14 +145,9 @@ function VideoQuizResultsContent() {
           Back to Dashboard
         </Link>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Quiz Results</h1>
-            <p className="text-gray-600">{quiz.title}</p>
-          </div>
-          <Badge variant={isPassed ? 'success' : 'destructive'} className="text-lg px-4 py-2">
-            {isPassed ? 'PASSED' : 'FAILED'}
-          </Badge>
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Quiz Results</h1>
+          <p className="text-gray-600">{quiz.title}</p>
         </div>
       </div>
 
@@ -190,7 +184,7 @@ function VideoQuizResultsContent() {
       </Card>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -219,19 +213,6 @@ function VideoQuizResultsContent() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Attempt</p>
-                <p className="text-2xl font-semibold">
-                  #{progress.attemptNumber}
-                </p>
-              </div>
-              <Award className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Question Review */}

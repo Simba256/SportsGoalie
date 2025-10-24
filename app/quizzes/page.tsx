@@ -33,7 +33,7 @@ import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 interface QuizStats {
   totalAttempts: number;
   averageScore: number;
-  passRate: number;
+  completionRate: number;
 }
 
 interface QuizWithStats extends VideoQuiz {
@@ -76,18 +76,18 @@ function QuizzesPageContent() {
               let stats: QuizStats = {
                 totalAttempts: 0,
                 averageScore: 0,
-                passRate: 0,
+                completionRate: 0,
               };
 
               if (attemptsResult.success && attemptsResult.data && attemptsResult.data.items.length > 0) {
                 const attempts = attemptsResult.data.items;
                 const totalScore = attempts.reduce((sum, attempt) => sum + attempt.percentage, 0);
-                const passedCount = attempts.filter(attempt => attempt.passed).length;
+                const completedCount = attempts.filter(attempt => attempt.isCompleted).length;
 
                 stats = {
                   totalAttempts: attempts.length,
                   averageScore: totalScore / attempts.length,
-                  passRate: (passedCount / attempts.length) * 100,
+                  completionRate: (completedCount / attempts.length) * 100,
                 };
               }
 

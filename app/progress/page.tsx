@@ -202,8 +202,8 @@ function ProgressContent() {
                         <div className="text-sm text-muted-foreground">Quizzes Taken</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold">85%</div>
-                        <div className="text-sm text-muted-foreground">Pass Rate</div>
+                        <div className="text-2xl font-bold">{stats?.averageQuizScore || 0}%</div>
+                        <div className="text-sm text-muted-foreground">Average Score</div>
                       </div>
                     </div>
                   </div>

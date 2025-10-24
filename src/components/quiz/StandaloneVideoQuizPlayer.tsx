@@ -85,10 +85,8 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
       score: 0,
       maxScore: quiz.questions.reduce((sum, q) => sum + (q.points || 0), 0),
       percentage: 0,
-      passed: false,
       isCompleted: false,
       status: 'in-progress',
-      attemptNumber: 1,
       startedAt: Timestamp.now(),
       watchTime: 0,
       totalTimeSpent: 0,
@@ -226,7 +224,6 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
     progressRef.current.questionsRemaining--;
     progressRef.current.score += pointsEarned;
     progressRef.current.percentage = (progressRef.current.score / progressRef.current.maxScore) * 100;
-    progressRef.current.passed = progressRef.current.percentage >= quiz.settings.passingScore;
 
     // Update answered count for UI
     setAnsweredCount(prev => prev + 1);
@@ -243,7 +240,7 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
       // Check if we should complete the quiz (both conditions)
       checkAndCompleteQuiz();
     }
-  }, [overlayQuestion, quiz.settings.passingScore, checkAndCompleteQuiz]);
+  }, [overlayQuestion, checkAndCompleteQuiz]);
 
   // Video event handlers
   const handleReady = useCallback(() => {

@@ -39,7 +39,6 @@ interface QuizAttemptHistoryProps {
 
 export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProps) {
   const [filterSport, setFilterSport] = React.useState<string>('all');
-  const [filterStatus, setFilterStatus] = React.useState<string>('all');
   const [sortBy, setSortBy] = React.useState<'date' | 'score'>('date');
 
   // Get unique sports for filter
@@ -55,11 +54,6 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
     // Apply filters
     if (filterSport !== 'all') {
       filtered = filtered.filter(a => a.sportName === filterSport);
-    }
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(a =>
-        filterStatus === 'passed' ? a.passed : !a.passed
-      );
     }
 
     // Apply sorting
@@ -135,11 +129,10 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
 
   // Calculate summary statistics
   const totalAttempts = filteredAttempts.length;
-  const passedAttempts = filteredAttempts.filter(a => a.passed).length;
-  const averageScore = Math.round(
+  const completedAttempts = filteredAttempts.filter(a => a.percentage !== undefined).length;
+  const averageScore = totalAttempts > 0 ? Math.round(
     filteredAttempts.reduce((sum, a) => sum + a.percentage, 0) / totalAttempts
-  );
-  const passRate = Math.round((passedAttempts / totalAttempts) * 100);
+  ) : 0;
 
   return (
     <Card>
@@ -163,16 +156,6 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
               </SelectContent>
             </Select>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="passed">Passed</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
 
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'score')}>
               <SelectTrigger className="w-[120px]">
@@ -189,22 +172,18 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
 
       <CardContent>
         {/* Summary Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <div className="text-2xl font-bold">{totalAttempts}</div>
             <p className="text-sm text-muted-foreground">Total Attempts</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{passedAttempts}</div>
-            <p className="text-sm text-muted-foreground">Passed</p>
+            <div className="text-2xl font-bold text-primary">{completedAttempts}</div>
+            <p className="text-sm text-muted-foreground">Completed</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <div className="text-2xl font-bold">{averageScore}%</div>
             <p className="text-sm text-muted-foreground">Average Score</p>
-          </div>
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <div className="text-2xl font-bold">{passRate}%</div>
-            <p className="text-sm text-muted-foreground">Pass Rate</p>
           </div>
         </div>
 
@@ -294,17 +273,9 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
                     </TableCell>
 
                     <TableCell>
-                      {attempt.passed ? (
-                        <Badge variant="success" className="flex items-center gap-1">
-                          <Trophy className="h-3 w-3" />
-                          Passed
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive" className="flex items-center gap-1">
-                          <Target className="h-3 w-3" />
-                          Failed
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        {attempt.percentage}%
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 );

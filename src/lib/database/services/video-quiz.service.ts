@@ -152,7 +152,6 @@ export class VideoQuizService extends BaseDatabaseService {
         averageScore: 0,
         averageTimeSpent: 0,
         averageCompletionTime: 0,
-        passRate: 0,
         dropOffPoints: [],
       };
 
@@ -560,10 +559,8 @@ export class VideoQuizService extends BaseDatabaseService {
           score: 0,
           maxScore: quiz.questions.reduce((sum, q) => sum + q.points, 0),
           percentage: 0,
-          passed: false,
           isCompleted: false,
           status: 'in-progress',
-          attemptNumber: 1,
           startedAt: Timestamp.now(),
           watchTime: 0,
           totalTimeSpent: 0,
@@ -780,7 +777,6 @@ export class VideoQuizService extends BaseDatabaseService {
         averageScore: 0,
         averageTimeSpent: 0,
         averageCompletionTime: 0,
-        passRate: 0,
         dropOffPoints: [],
       };
 
@@ -796,10 +792,6 @@ export class VideoQuizService extends BaseDatabaseService {
         const currentAvgTime = metadata.averageTimeSpent * (metadata.totalCompletions - 1);
         metadata.averageTimeSpent =
           (currentAvgTime + progress.totalTimeSpent / 60) / metadata.totalCompletions;
-
-        // Use default passing score if settings not available
-        const passingScore = quiz.settings?.passingScore || 70;
-        metadata.passRate = (metadata.averageScore >= passingScore ? 1 : 0) * 100;
       }
 
       await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, {

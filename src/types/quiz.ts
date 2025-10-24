@@ -51,13 +51,10 @@ export interface QuestionMedia {
  * Quiz settings
  */
 export interface QuizSettings {
-  timeLimit?: number; // in minutes
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   showExplanations: boolean;
   allowRetry: boolean;
-  maxAttempts: number;
-  passingScore: number; // percentage (0-100)
   showCorrectAnswers: boolean;
   instantFeedback: boolean;
 }
@@ -90,7 +87,6 @@ export interface QuizMetadata {
   totalCompletions: number;
   averageScore: number;
   averageTimeSpent: number; // in minutes
-  passRate: number; // percentage
   difficultyRating?: number; // user-rated difficulty
 }
 
@@ -106,9 +102,7 @@ export interface QuizProgress {
   answers: QuizAnswer[];
   score: number;
   percentage: number;
-  passed: boolean;
   timeSpent: number; // in seconds
-  attemptNumber: number;
   startedAt: Timestamp;
   completedAt?: Timestamp;
   lastAccessedAt?: Timestamp;
@@ -123,7 +117,6 @@ export interface QuizAnswer {
   isCorrect: boolean;
   pointsEarned: number;
   timeSpent?: number; // seconds spent on this question
-  attempts?: number; // if retries are allowed
 }
 
 /**
@@ -134,7 +127,6 @@ export interface QuizResult {
   userId: string;
   score: number;
   percentage: number;
-  passed: boolean;
   correctAnswers: number;
   totalQuestions: number;
   timeSpent: number; // in seconds
