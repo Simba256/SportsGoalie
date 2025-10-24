@@ -244,22 +244,37 @@ function CreateVideoQuizContent() {
       const isCorsError = error instanceof Error &&
         (error.message.includes('CORS') || error.message.includes('Failed to load video'));
 
-      if (isCorsError) {
-        toast.info('Video uploaded successfully', {
-          description: 'Duration will be auto-detected when students view the video.',
+      // Prompt user to enter duration manually
+      const userDuration = window.prompt(
+        'Unable to auto-detect video duration.\n\nPlease enter the video duration in seconds:\n(e.g., for 33 minutes 1 second, enter: 1981)',
+        videoDuration > 0 ? videoDuration.toString() : ''
+      );
+
+      if (userDuration && !isNaN(parseInt(userDuration)) && parseInt(userDuration) > 0) {
+        const duration = parseInt(userDuration);
+        setVideoDuration(duration);
+        setQuizData(prev => ({
+          ...prev,
+          videoUrl: url,
+          videoDuration: duration,
+        }));
+
+        toast.success('Video URL and duration saved', {
+          description: `Duration: ${Math.floor(duration / 60)}m ${duration % 60}s`,
         });
       } else {
-        toast.warning('Could not validate video automatically', {
-          description: 'The video will be saved. Duration will be detected during playback.',
+        // User cancelled or entered invalid duration
+        toast.warning('Video duration required', {
+          description: 'Please enter the duration manually in the field below.',
         });
-      }
 
-      // Still allow saving with the URL
-      setQuizData(prev => ({
-        ...prev,
-        videoUrl: url,
-        videoDuration: 0,
-      }));
+        // Still save the URL but keep existing duration or set to 0
+        setQuizData(prev => ({
+          ...prev,
+          videoUrl: url,
+          videoDuration: prev.videoDuration || videoDuration || 0,
+        }));
+      }
     } finally {
       setVideoValidating(false);
     }
@@ -431,6 +446,9 @@ function CreateVideoQuizContent() {
       // DEBUG: Log the quiz data to see what we're sending
       console.log('🔍 Quiz data being sent to service:', {
         quizToCreate,
+        videoDuration: quizToCreate.videoDuration,
+        videoDurationState: videoDuration,
+        estimatedDuration: quizToCreate.estimatedDuration,
         undefinedFields: Object.keys(quizToCreate).filter(key => quizToCreate[key as keyof typeof quizToCreate] === undefined),
         nullFields: Object.keys(quizToCreate).filter(key => quizToCreate[key as keyof typeof quizToCreate] === null),
         settings: quizData.settings,
@@ -763,17 +781,17 @@ function CreateVideoQuizContent() {
                 <Input
                   id="videoDuration"
                   type="number"
-                  value={videoDuration}
+                  value={videoDuration || ''}
                   onChange={(e) => {
-                    const duration = parseInt(e.target.value);
+                    const duration = parseInt(e.target.value) || 0;
                     setVideoDuration(duration);
                     setQuizData(prev => ({ ...prev, videoDuration: duration }));
                   }}
-                  placeholder="Auto-detected from video"
+                  placeholder="Auto-detected from video or enter manually"
                   min="1"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  This is auto-detected. Only modify if detection fails.
+                  Enter video duration in seconds (e.g., 1981 for 33 minutes 1 second). This is auto-detected for uploaded videos.
                 </p>
               </div>
             </CardContent>
