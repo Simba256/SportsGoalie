@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { VideoQuizQuestion, QuestionType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,34 +18,37 @@ import {
 import {
   Plus,
   Trash2,
-  Edit,
   Clock,
   PlayCircle,
   ChevronDown,
   ChevronUp,
+  Pause,
+  Play,
+  SkipForward,
+  SkipBack,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ReactPlayer from 'react-player';
+import type { OnProgressProps } from 'react-player/base';
 
 interface VideoQuestionBuilderProps {
   questions: VideoQuizQuestion[];
   videoDuration: number;
+  videoUrl: string;
   onChange: (questions: VideoQuizQuestion[]) => void;
-}
-
-interface QuestionOption {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-  allowMultiple?: boolean;
 }
 
 export function VideoQuestionBuilder({
   questions,
   videoDuration,
+  videoUrl,
   onChange,
 }: VideoQuestionBuilderProps) {
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const playerRef = useRef<ReactPlayer>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const [newQuestion, setNewQuestion] = useState<Partial<VideoQuizQuestion>>({
     type: 'multiple_choice',
     timestamp: 0,
@@ -67,6 +70,51 @@ export function VideoQuestionBuilder({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleProgress = (state: OnProgressProps) => {
+    setCurrentTime(Math.floor(state.playedSeconds));
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (seconds: number) => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(seconds, 'seconds');
+      setCurrentTime(seconds);
+    }
+  };
+
+  const handleSkipBackward = () => {
+    const newTime = Math.max(0, currentTime - 5);
+    handleSeek(newTime);
+  };
+
+  const handleSkipForward = () => {
+    const newTime = Math.min(videoDuration, currentTime + 5);
+    handleSeek(newTime);
+  };
+
+  const handleAddQuestionAtCurrentTime = () => {
+    setNewQuestion({
+      ...newQuestion,
+      timestamp: Math.floor(currentTime),
+    });
+    setIsPlaying(false);
+    toast.success(`Question timestamp set to ${formatTimestamp(Math.floor(currentTime))}`);
+
+    // Scroll to the add question form
+    const addQuestionForm = document.getElementById('add-question-form');
+    if (addQuestionForm) {
+      addQuestionForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleJumpToTimestamp = (timestamp: number) => {
+    handleSeek(timestamp);
+    setIsPlaying(false);
   };
 
   const handleAddQuestion = () => {
@@ -150,13 +198,6 @@ export function VideoQuestionBuilder({
     const updatedQuestions = questions.filter((_, i) => i !== index);
     onChange(updatedQuestions);
     toast.success('Question deleted');
-  };
-
-  const handleUpdateQuestion = (index: number, updates: Partial<VideoQuizQuestion>) => {
-    const updatedQuestions = questions.map((q, i) =>
-      i === index ? { ...q, ...updates } : q
-    );
-    onChange(updatedQuestions);
   };
 
   const renderQuestionTypeFields = () => {
@@ -287,6 +328,121 @@ export function VideoQuestionBuilder({
 
   return (
     <div className="space-y-6">
+      {/* Video Player Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Video Preview & Controls</CardTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            Watch the video and pause at any moment to add a question at that timestamp
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Video Player */}
+            <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
+              <ReactPlayer
+                ref={playerRef}
+                url={videoUrl}
+                playing={isPlaying}
+                controls={false}
+                width="100%"
+                height="100%"
+                playbackRate={playbackRate}
+                onProgress={handleProgress}
+                progressInterval={100}
+              />
+            </div>
+
+            {/* Custom Controls */}
+            <div className="space-y-4">
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{formatTimestamp(currentTime)}</span>
+                  <span className="text-gray-500">{formatTimestamp(videoDuration)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={videoDuration}
+                  value={currentTime}
+                  onChange={(e) => handleSeek(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+
+              {/* Control Buttons */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleSkipBackward}
+                    title="Skip backward 5 seconds"
+                  >
+                    <SkipBack className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    variant="default"
+                    size="icon"
+                    onClick={handlePlayPause}
+                    className="h-12 w-12"
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-6 w-6" />
+                    ) : (
+                      <Play className="h-6 w-6" />
+                    )}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleSkipForward}
+                    title="Skip forward 5 seconds"
+                  >
+                    <SkipForward className="h-4 w-4" />
+                  </Button>
+
+                  <div className="ml-4">
+                    <Select
+                      value={String(playbackRate)}
+                      onValueChange={(value) => setPlaybackRate(parseFloat(value))}
+                    >
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.5">0.5x</SelectItem>
+                        <SelectItem value="0.75">0.75x</SelectItem>
+                        <SelectItem value="1">1x</SelectItem>
+                        <SelectItem value="1.25">1.25x</SelectItem>
+                        <SelectItem value="1.5">1.5x</SelectItem>
+                        <SelectItem value="2">2x</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleAddQuestionAtCurrentTime}
+                  variant="default"
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add Question Here
+                  <span className="font-mono text-xs bg-white/20 px-2 py-1 rounded">
+                    {formatTimestamp(currentTime)}
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Question List */}
       <Card>
         <CardHeader>
@@ -313,10 +469,16 @@ export function VideoQuestionBuilder({
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
-                      <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleJumpToTimestamp(question.timestamp)}
+                        className="flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/10"
+                        title="Jump to this timestamp in the video"
+                      >
                         <PlayCircle className="h-4 w-4" />
                         {formatTimestamp(question.timestamp)}
-                      </div>
+                      </Button>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
@@ -393,9 +555,12 @@ export function VideoQuestionBuilder({
       </Card>
 
       {/* Add Question Form */}
-      <Card>
+      <Card id="add-question-form">
         <CardHeader>
           <CardTitle>Add New Question</CardTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            The timestamp is automatically set when you click "Add Question Here" while watching the video
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

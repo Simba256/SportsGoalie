@@ -523,10 +523,11 @@ function EditVideoQuizContent() {
 
         {/* Questions Tab */}
         <TabsContent value="questions" className="space-y-6">
-          {videoDuration > 0 ? (
+          {videoDuration > 0 && quizData.videoUrl ? (
             <VideoQuestionBuilder
               questions={quizData.questions || []}
               videoDuration={videoDuration}
+              videoUrl={quizData.videoUrl}
               onChange={handleQuestionsChange}
             />
           ) : (
