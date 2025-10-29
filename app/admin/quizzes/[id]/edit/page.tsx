@@ -54,12 +54,15 @@ function EditVideoQuizContent() {
     isPublished: false,
     questions: [],
     settings: {
-      showExplanations: true,
-      allowPause: true,
-      allowSkip: false,
-      allowSpeedControl: true,
+      allowPlaybackSpeedChange: true,
+      playbackSpeeds: [0.5, 0.75, 1, 1.25, 1.5, 2],
+      allowRewind: true,
+      allowSkipAhead: false,
+      requireSequentialAnswers: false,
+      showProgressBar: true,
       autoPlayNext: true,
-      showProgress: true,
+      showCorrectAnswers: true,
+      showExplanations: true,
     } as VideoQuizSettings,
   });
 
@@ -555,11 +558,13 @@ function EditVideoQuizContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
                     { key: 'showExplanations', label: 'Show Explanations' },
-                    { key: 'allowPause', label: 'Allow Video Pause' },
-                    { key: 'allowSkip', label: 'Allow Question Skip' },
-                    { key: 'allowSpeedControl', label: 'Allow Speed Control' },
+                    { key: 'showCorrectAnswers', label: 'Show Correct Answers' },
+                    { key: 'allowRewind', label: 'Allow Video Rewind' },
+                    { key: 'allowSkipAhead', label: 'Allow Skip Ahead' },
+                    { key: 'allowPlaybackSpeedChange', label: 'Allow Speed Control' },
+                    { key: 'requireSequentialAnswers', label: 'Require Sequential Answers' },
                     { key: 'autoPlayNext', label: 'Auto-play After Answer' },
-                    { key: 'showProgress', label: 'Show Progress Indicator' },
+                    { key: 'showProgressBar', label: 'Show Progress Bar' },
                   ].map(({ key, label }) => (
                     <div key={key} className="flex items-center space-x-2">
                       <Switch
