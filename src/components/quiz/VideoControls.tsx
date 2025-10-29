@@ -190,25 +190,34 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
               <Volume2 className="h-5 w-5" />
             )}
           </Button>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={muted ? 0 : volume}
-            onChange={handleVolumeChange}
-            disabled={disabled}
-            className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
-            title={`Volume: ${Math.round(volume * 100)}%`}
-          />
+          <div className="relative flex items-center">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={muted ? 0 : volume}
+              onChange={handleVolumeChange}
+              disabled={disabled}
+              className="w-24 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:bg-gray-100 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:hover:bg-gray-100"
+              style={{
+                background: `linear-gradient(to right, white 0%, white ${(muted ? 0 : volume) * 100}%, #4b5563 ${(muted ? 0 : volume) * 100}%, #4b5563 100%)`
+              }}
+              title={`Volume: ${Math.round((muted ? 0 : volume) * 100)}%`}
+            />
+            <span className="ml-2 text-xs text-white font-medium min-w-[2.5rem] text-right">
+              {Math.round((muted ? 0 : volume) * 100)}%
+            </span>
+          </div>
         </div>
 
-        {/* Settings (future features) */}
+        {/* Settings (disabled - future features) */}
         <Button
           variant="ghost"
           size="icon"
           disabled
-          className="text-gray-500 hover:text-gray-400"
+          className="text-gray-500 cursor-not-allowed opacity-50"
+          title="Additional settings (coming soon)"
         >
           <Settings className="h-5 w-5" />
         </Button>
