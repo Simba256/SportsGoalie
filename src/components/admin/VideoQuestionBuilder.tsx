@@ -49,6 +49,8 @@ export function VideoQuestionBuilder({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [detectedDuration, setDetectedDuration] = useState<number>(videoDuration);
+  const [videoReady, setVideoReady] = useState(false);
   const [newQuestion, setNewQuestion] = useState<Partial<VideoQuizQuestion>>({
     type: 'multiple_choice',
     timestamp: 0,
@@ -76,6 +78,21 @@ export function VideoQuestionBuilder({
     setCurrentTime(Math.floor(state.playedSeconds));
   };
 
+  const handleReady = () => {
+    setVideoReady(true);
+    // Get duration from the player when it's ready
+    if (playerRef.current) {
+      const duration = playerRef.current.getDuration();
+      if (duration && !isNaN(duration) && isFinite(duration)) {
+        const roundedDuration = Math.floor(duration);
+        setDetectedDuration(roundedDuration);
+        toast.success('Video loaded successfully', {
+          description: `Duration detected: ${Math.floor(roundedDuration / 60)}m ${roundedDuration % 60}s`,
+        });
+      }
+    }
+  };
+
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
@@ -93,7 +110,8 @@ export function VideoQuestionBuilder({
   };
 
   const handleSkipForward = () => {
-    const newTime = Math.min(videoDuration, currentTime + 5);
+    const maxDuration = detectedDuration || videoDuration;
+    const newTime = Math.min(maxDuration, currentTime + 5);
     handleSeek(newTime);
   };
 
@@ -128,7 +146,9 @@ export function VideoQuestionBuilder({
       return;
     }
 
-    if (newQuestion.timestamp! > videoDuration) {
+    // Use detected duration if available, otherwise fall back to provided duration
+    const maxDuration = detectedDuration || videoDuration;
+    if (newQuestion.timestamp! > maxDuration) {
       toast.error('Timestamp cannot exceed video duration');
       return;
     }
@@ -349,8 +369,17 @@ export function VideoQuestionBuilder({
                 height="100%"
                 playbackRate={playbackRate}
                 onProgress={handleProgress}
+                onReady={handleReady}
                 progressInterval={100}
               />
+              {!videoReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <div className="text-white text-center">
+                    <Clock className="h-12 w-12 mx-auto mb-2 animate-pulse" />
+                    <p>Loading video...</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Custom Controls */}
@@ -359,12 +388,17 @@ export function VideoQuestionBuilder({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">{formatTimestamp(currentTime)}</span>
-                  <span className="text-gray-500">{formatTimestamp(videoDuration)}</span>
+                  <span className="text-gray-500">
+                    {formatTimestamp(detectedDuration || videoDuration)}
+                    {detectedDuration && detectedDuration !== videoDuration && (
+                      <span className="ml-2 text-xs text-green-600">(auto-detected)</span>
+                    )}
+                  </span>
                 </div>
                 <input
                   type="range"
                   min="0"
-                  max={videoDuration}
+                  max={detectedDuration || videoDuration}
                   value={currentTime}
                   onChange={(e) => handleSeek(parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
@@ -449,7 +483,10 @@ export function VideoQuestionBuilder({
           <div className="flex items-center justify-between">
             <CardTitle>Questions ({questions.length})</CardTitle>
             <div className="text-sm text-gray-500">
-              Video: {formatTimestamp(videoDuration)}
+              Video: {formatTimestamp(detectedDuration || videoDuration)}
+              {detectedDuration && detectedDuration !== videoDuration && (
+                <span className="ml-2 text-xs text-green-600">(auto-detected)</span>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -586,13 +623,13 @@ export function VideoQuestionBuilder({
 
             <div>
               <Label htmlFor="timestamp">
-                Timestamp (seconds) - Max: {videoDuration}s
+                Timestamp (seconds) - Max: {detectedDuration || videoDuration}s
               </Label>
               <Input
                 id="timestamp"
                 type="number"
                 min="0"
-                max={videoDuration}
+                max={detectedDuration || videoDuration}
                 value={newQuestion.timestamp}
                 onChange={(e) =>
                   setNewQuestion({

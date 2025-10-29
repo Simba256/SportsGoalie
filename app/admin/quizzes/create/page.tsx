@@ -112,169 +112,40 @@ function CreateVideoQuizContent() {
 
       // Special handling for Google Drive videos
       if (driveId) {
-        // Try multiple URL formats for Google Drive
-        const urlFormats = [
-          `https://drive.google.com/file/d/${driveId}/preview`, // Embed format
-          `https://drive.google.com/uc?export=view&id=${driveId}`, // View format
-          `https://drive.google.com/uc?export=download&id=${driveId}`, // Download format
-        ];
-
-        let duration = 0;
-        let workingUrl = url;
-
-        // Try each format to get duration
-        for (const testUrl of urlFormats) {
-          let video: HTMLVideoElement | null = null;
-          try {
-            video = document.createElement('video');
-            video.style.display = 'none';
-            document.body.appendChild(video); // Add to DOM for better compatibility
-
-            // Don't set crossOrigin for Google Drive to avoid CORS issues
-            video.preload = 'metadata';
-            video.src = testUrl;
-
-            await new Promise<void>((resolve, reject) => {
-              const timeout = setTimeout(() => {
-                reject(new Error('Timeout'));
-              }, 5000);
-
-              video!.onloadedmetadata = () => {
-                clearTimeout(timeout);
-                if (video!.duration && !isNaN(video!.duration) && isFinite(video!.duration)) {
-                  duration = Math.floor(video!.duration);
-                  workingUrl = testUrl;
-                  resolve();
-                } else {
-                  reject(new Error('Invalid duration'));
-                }
-              };
-
-              video!.onerror = () => {
-                clearTimeout(timeout);
-                reject(new Error('Failed to load'));
-              };
-
-              // Force load
-              video!.load();
-            });
-
-            document.body.removeChild(video);
-
-            if (duration > 0) {
-              // Successfully got duration
-              setVideoDuration(duration);
-              setQuizData(prev => ({
-                ...prev,
-                videoUrl: workingUrl,
-                videoDuration: duration,
-              }));
-              toast.success('Google Drive video validated successfully', {
-                description: `Duration: ${Math.floor(duration / 60)}m ${duration % 60}s`,
-              });
-              setVideoValidating(false);
-              return;
-            }
-          } catch (err) {
-            // Try next format
-            if (video && video.parentNode) {
-              document.body.removeChild(video);
-            }
-            continue;
-          }
-        }
-
-        // If we couldn't get duration, use iframe approach as fallback
-        toast.info('Google Drive video detected', {
-          description: 'Setting default duration. You can adjust it manually below.',
-        });
-
         // Use the preview URL for playback (most reliable)
         const previewUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-        const defaultDuration = 600; // 10 minutes default
 
-        setVideoDuration(defaultDuration);
         setQuizData(prev => ({
           ...prev,
           videoUrl: previewUrl,
-          videoDuration: defaultDuration,
+          videoDuration: 1, // Set minimal duration, will be auto-detected when video plays
         }));
+        setVideoDuration(1);
 
+        toast.success('Google Drive video URL saved', {
+          description: 'Duration will be auto-detected when you start creating questions',
+        });
         setVideoValidating(false);
         return;
       }
 
-      // For non-Google Drive videos, use standard validation
-      const video = document.createElement('video');
-      video.src = url;
-      video.preload = 'metadata';
-      video.crossOrigin = 'anonymous';
+      // For all other videos (YouTube, Vimeo, direct URLs, etc.)
+      // Just save the URL - ReactPlayer will handle it and auto-detect duration
+      setQuizData(prev => ({
+        ...prev,
+        videoUrl: url,
+        videoDuration: 1, // Set minimal duration, will be auto-detected when video plays
+      }));
+      setVideoDuration(1);
 
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Video validation timeout'));
-        }, 10000); // 10 second timeout
-
-        video.onloadedmetadata = () => {
-          clearTimeout(timeout);
-          if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-            setVideoDuration(Math.floor(video.duration));
-            setQuizData(prev => ({
-              ...prev,
-              videoUrl: url,
-              videoDuration: Math.floor(video.duration),
-            }));
-            toast.success('Video validated successfully', {
-              description: `Duration: ${Math.floor(video.duration / 60)}m ${Math.floor(video.duration % 60)}s`,
-            });
-            resolve();
-          } else {
-            reject(new Error('Invalid video duration'));
-          }
-        };
-        video.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error('Failed to load video'));
-        };
+      toast.success('Video URL saved', {
+        description: 'Duration will be auto-detected when you start creating questions',
       });
     } catch (error) {
       console.error('Video validation error:', error);
-
-      // Check if it's a CORS error (common with Firebase Storage)
-      const isCorsError = error instanceof Error &&
-        (error.message.includes('CORS') || error.message.includes('Failed to load video'));
-
-      // Prompt user to enter duration manually
-      const userDuration = window.prompt(
-        'Unable to auto-detect video duration.\n\nPlease enter the video duration in seconds:\n(e.g., for 33 minutes 1 second, enter: 1981)',
-        videoDuration > 0 ? videoDuration.toString() : ''
-      );
-
-      if (userDuration && !isNaN(parseInt(userDuration)) && parseInt(userDuration) > 0) {
-        const duration = parseInt(userDuration);
-        setVideoDuration(duration);
-        setQuizData(prev => ({
-          ...prev,
-          videoUrl: url,
-          videoDuration: duration,
-        }));
-
-        toast.success('Video URL and duration saved', {
-          description: `Duration: ${Math.floor(duration / 60)}m ${duration % 60}s`,
-        });
-      } else {
-        // User cancelled or entered invalid duration
-        toast.warning('Video duration required', {
-          description: 'Please enter the duration manually in the field below.',
-        });
-
-        // Still save the URL but keep existing duration or set to 0
-        setQuizData(prev => ({
-          ...prev,
-          videoUrl: url,
-          videoDuration: prev.videoDuration || videoDuration || 0,
-        }));
-      }
+      toast.error('Invalid video URL', {
+        description: 'Please check the URL and try again',
+      });
     } finally {
       setVideoValidating(false);
     }
@@ -664,7 +535,7 @@ function CreateVideoQuizContent() {
               <Alert>
                 <Video className="h-4 w-4" />
                 <AlertDescription>
-                  Provide a video by entering a URL or uploading a file directly.
+                  Provide a video by entering a URL or uploading a file. Duration will be automatically detected when you create questions.
                 </AlertDescription>
               </Alert>
 
@@ -759,41 +630,19 @@ function CreateVideoQuizContent() {
                 </div>
               )}
 
-              {videoDuration > 0 && (
+              {videoDuration > 0 && quizData.videoUrl && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Video className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="font-medium text-green-900">Video Validated</p>
+                      <p className="font-medium text-green-900">Video URL Saved</p>
                       <p className="text-sm text-green-700">
-                        Duration: {Math.floor(videoDuration / 60)}m {videoDuration % 60}s
-                        {quizData.videoUrl?.includes('drive.google.com') && (
-                          <span className="text-xs ml-2">(Default - adjust if needed)</span>
-                        )}
+                        Duration will be automatically detected when you watch the video in the Questions tab
                       </p>
                     </div>
                   </div>
                 </div>
               )}
-
-              <div>
-                <Label htmlFor="videoDuration">Video Duration (seconds)</Label>
-                <Input
-                  id="videoDuration"
-                  type="number"
-                  value={videoDuration || ''}
-                  onChange={(e) => {
-                    const duration = parseInt(e.target.value) || 0;
-                    setVideoDuration(duration);
-                    setQuizData(prev => ({ ...prev, videoDuration: duration }));
-                  }}
-                  placeholder="Auto-detected from video or enter manually"
-                  min="1"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Enter video duration in seconds (e.g., 1981 for 33 minutes 1 second). This is auto-detected for uploaded videos.
-                </p>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -813,7 +662,7 @@ function CreateVideoQuizContent() {
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Video Setup Required</h3>
                 <p className="text-gray-600 mb-4">
-                  Please configure and validate your video first before adding questions
+                  Please add a video URL or upload a video file in the Video Setup tab first
                 </p>
                 <Button variant="outline" onClick={() => document.getElementById('video-tab')?.click()}>
                   Go to Video Setup
