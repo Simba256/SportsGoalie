@@ -26,6 +26,8 @@ import {
   Play,
   SkipForward,
   SkipBack,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactPlayer from 'react-player';
@@ -49,6 +51,8 @@ export function VideoQuestionBuilder({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [volume, setVolume] = useState(1); // 0 to 1
+  const [muted, setMuted] = useState(false);
   const [detectedDuration, setDetectedDuration] = useState<number>(videoDuration);
   const [videoReady, setVideoReady] = useState(false);
   const [newQuestion, setNewQuestion] = useState<Partial<VideoQuizQuestion>>({
@@ -93,8 +97,27 @@ export function VideoQuestionBuilder({
     }
   };
 
+  const handlePlay = () => {
+    setIsPlaying(true);
+  };
+
+  const handlePause = () => {
+    setIsPlaying(false);
+  };
+
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
+  };
+
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    if (newVolume > 0 && muted) {
+      setMuted(false);
+    }
+  };
+
+  const handleToggleMute = () => {
+    setMuted(!muted);
   };
 
   const handleSeek = (seconds: number) => {
@@ -359,7 +382,10 @@ export function VideoQuestionBuilder({
         <CardContent>
           <div className="space-y-4">
             {/* Video Player */}
-            <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
+            <div
+              className="relative bg-black rounded-lg overflow-hidden aspect-video cursor-pointer group"
+              onClick={handlePlayPause}
+            >
               <ReactPlayer
                 ref={playerRef}
                 url={videoUrl}
@@ -368,10 +394,24 @@ export function VideoQuestionBuilder({
                 width="100%"
                 height="100%"
                 playbackRate={playbackRate}
+                volume={volume}
+                muted={muted}
                 onProgress={handleProgress}
                 onReady={handleReady}
+                onPlay={handlePlay}
+                onPause={handlePause}
                 progressInterval={100}
               />
+              {/* Play/Pause Overlay on Hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div className="bg-black/50 rounded-full p-4">
+                  {isPlaying ? (
+                    <Pause className="h-12 w-12 text-white" />
+                  ) : (
+                    <Play className="h-12 w-12 text-white" />
+                  )}
+                </div>
+              </div>
               {!videoReady && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="text-white text-center">
@@ -456,6 +496,35 @@ export function VideoQuestionBuilder({
                         <SelectItem value="2">2x</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Volume Controls */}
+                  <div className="flex items-center gap-2 ml-4 border-l pl-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleToggleMute}
+                      title={muted ? "Unmute" : "Mute"}
+                    >
+                      {muted ? (
+                        <VolumeX className="h-4 w-4" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={muted ? 0 : volume}
+                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                      className="w-20 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                      title={`Volume: ${Math.round(volume * 100)}%`}
+                    />
+                    <span className="text-xs text-gray-600 w-10">
+                      {Math.round((muted ? 0 : volume) * 100)}%
+                    </span>
                   </div>
                 </div>
 

@@ -59,6 +59,9 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
   const [displayTime, setDisplayTime] = useState(0);
   const [overlayQuestion, setOverlayQuestion] = useState<VideoQuizQuestionWithState | null>(null);
   const [answeredCount, setAnsweredCount] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   // Initialize data ONCE on mount
   useEffect(() => {
@@ -306,6 +309,9 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
           controls={false}
           width="100%"
           height="100%"
+          volume={volume}
+          muted={muted}
+          playbackRate={playbackRate}
           progressInterval={500}
           onProgress={handleProgress}
           onReady={handleReady}
@@ -355,11 +361,16 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
       {hasStarted && (
         <VideoControls
           playing={playing}
-          playbackRate={1}
+          playbackRate={playbackRate}
           currentTime={displayTime}
           duration={duration}
+          volume={volume}
+          muted={muted}
           onPlayPause={() => setPlaying(!playing)}
           onSeek={handleSeek}
+          onPlaybackRateChange={(rate) => setPlaybackRate(rate)}
+          onVolumeChange={(vol) => setVolume(vol)}
+          onMuteToggle={() => setMuted(!muted)}
           disabled={!!overlayQuestion}
         />
       )}

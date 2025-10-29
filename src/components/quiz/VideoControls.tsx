@@ -16,14 +16,22 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
   playbackRate,
   currentTime,
   duration,
+  volume: externalVolume,
+  muted: externalMuted,
   onPlayPause,
   onSeek,
   onPlaybackRateChange,
+  onVolumeChange,
+  onMuteToggle,
   disabled = false,
 }) => {
-  const [volume, setVolume] = useState(1);
-  const [muted, setMuted] = useState(false);
+  const [localVolume, setLocalVolume] = useState(1);
+  const [localMuted, setLocalMuted] = useState(false);
   const [seeking, setSeeking] = useState(false);
+
+  // Use external props if provided, otherwise use local state
+  const volume = externalVolume !== undefined ? externalVolume : localVolume;
+  const muted = externalMuted !== undefined ? externalMuted : localMuted;
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -38,6 +46,33 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const seekTime = parseFloat(e.target.value);
     onSeek(seekTime);
+  };
+
+  // Handle volume change
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    if (onVolumeChange) {
+      onVolumeChange(newVolume);
+    } else {
+      setLocalVolume(newVolume);
+    }
+    // Auto-unmute if volume is raised
+    if (newVolume > 0 && muted) {
+      if (onMuteToggle) {
+        onMuteToggle();
+      } else {
+        setLocalMuted(false);
+      }
+    }
+  };
+
+  // Handle mute toggle
+  const handleMuteToggle = () => {
+    if (onMuteToggle) {
+      onMuteToggle();
+    } else {
+      setLocalMuted(!localMuted);
+    }
   };
 
   // Calculate progress percentage
@@ -138,6 +173,35 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
             {playbackRate}x
           </Button>
         )}
+
+        {/* Volume Controls */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleMuteToggle}
+            disabled={disabled}
+            className="text-white hover:text-white hover:bg-white/20"
+            title={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? (
+              <VolumeX className="h-5 w-5" />
+            ) : (
+              <Volume2 className="h-5 w-5" />
+            )}
+          </Button>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={muted ? 0 : volume}
+            onChange={handleVolumeChange}
+            disabled={disabled}
+            className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+            title={`Volume: ${Math.round(volume * 100)}%`}
+          />
+        </div>
 
         {/* Settings (future features) */}
         <Button

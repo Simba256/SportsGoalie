@@ -168,8 +168,12 @@ export interface VideoControlsProps {
   playbackRate: number;
   currentTime: number;
   duration: number;
+  volume?: number;
+  muted?: boolean;
   onPlayPause: () => void;
   onSeek: (time: number) => void;
   onPlaybackRateChange?: (rate: number) => void;
+  onVolumeChange?: (volume: number) => void;
+  onMuteToggle?: () => void;
   disabled?: boolean;
 }
