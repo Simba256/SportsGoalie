@@ -321,10 +321,25 @@ export class BaseDatabaseService {
   ): Promise<ApiResponse<void>> {
     return this.executeWithRetry(async () => {
       const docRef = doc(db, collectionName, id);
+
+      // Remove undefined fields before sending to Firestore
+      const sanitizedData = this.removeUndefinedFields(data);
+
       const updateData = {
-        ...data,
+        ...sanitizedData,
         updatedAt: serverTimestamp(),
       };
+
+      // Debug logging for video quizzes
+      if (collectionName === 'video_quizzes') {
+        console.log('🔧 [BaseDatabaseService] Updating video quiz:', {
+          id,
+          dataKeys: Object.keys(updateData),
+          hasQuestions: !!updateData.questions,
+          questionsCount: updateData.questions?.length,
+          settingsKeys: updateData.settings ? Object.keys(updateData.settings) : [],
+        });
+      }
 
       await updateDoc(docRef, updateData);
 

@@ -247,9 +247,23 @@ function EditVideoQuizContent() {
         settings: quizData.settings!,
       };
 
+      // Debug logging
+      console.log('🔍 [EditQuiz] Attempting update with data:', {
+        quizId,
+        questionsCount: updates.questions?.length,
+        settings: updates.settings,
+        videoDuration: updates.videoDuration,
+      });
+
       const result = await videoQuizService.updateVideoQuiz(quizId, updates);
 
+      console.log('📊 [EditQuiz] Update result:', {
+        success: result.success,
+        error: result.error,
+      });
+
       if (!result.success) {
+        console.error('❌ [EditQuiz] Update failed:', result.error);
         throw new Error(result.error?.message || 'Failed to update video quiz');
       }
 

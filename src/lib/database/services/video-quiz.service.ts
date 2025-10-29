@@ -337,12 +337,30 @@ export class VideoQuizService extends BaseDatabaseService {
   ): Promise<ApiResponse<void>> {
     logger.database('update', this.VIDEO_QUIZZES_COLLECTION, quizId, updates);
 
+    // Debug logging
+    console.log('🔧 [VideoQuizService] updateVideoQuiz called:', {
+      quizId,
+      updatesKeys: Object.keys(updates),
+      questionsCount: updates.questions?.length,
+      settingsKeys: updates.settings ? Object.keys(updates.settings) : [],
+      settings: updates.settings,
+    });
+
     try {
-      await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, {
+      const updateData = {
         ...updates,
         updatedAt: Timestamp.now(),
+      };
+
+      console.log('📦 [VideoQuizService] Calling updateDocument with:', {
+        collection: this.VIDEO_QUIZZES_COLLECTION,
+        quizId,
+        dataKeys: Object.keys(updateData),
       });
 
+      await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, updateData);
+
+      console.log('✅ [VideoQuizService] Update successful');
       logger.info('Video quiz updated successfully', 'VideoQuizService', { quizId });
 
       return {
@@ -350,12 +368,19 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
+      console.error('❌ [VideoQuizService] Update failed with error:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       logger.error('Failed to update video quiz', 'VideoQuizService', error as Error, { quizId });
       return {
         success: false,
         error: {
           code: 'VIDEO_QUIZ_UPDATE_FAILED',
-          message: 'Failed to update video quiz',
+          message: error instanceof Error ? error.message : 'Failed to update video quiz',
           details: error,
         },
         timestamp: new Date(),
