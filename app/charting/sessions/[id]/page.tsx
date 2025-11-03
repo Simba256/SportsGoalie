@@ -173,90 +173,95 @@ export default function SessionDetailPage() {
         {/* Charting Sections - Primary Action Area */}
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Charting Sections</h2>
-          <p className="text-sm text-gray-600 mb-4">Fill out any section at any time - they're completely independent!</p>
-          <div className="flex flex-col gap-3">
-            <Button
+          <p className="text-sm text-gray-600 mb-4">Click any section to fill it out - they're completely independent!</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Pre-Game */}
+            <div
               onClick={() => router.push(`/charting/sessions/${sessionId}/pre-game`)}
-              variant={myEntry?.preGame ? "outline" : "default"}
-              className="w-full justify-between"
+              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                myEntry?.preGame
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-300 hover:border-blue-400'
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4" />
-                Pre-Game Checklist
-              </span>
-              {myEntry?.preGame && <CheckCircle className="w-4 h-4 text-green-500" />}
-            </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className={`w-5 h-5 ${myEntry?.preGame ? 'text-green-600' : 'text-gray-600'}`} />
+                  <div>
+                    <p className="font-semibold text-gray-900">Pre-Game Checklist</p>
+                    <p className="text-xs text-gray-500">Preparation & readiness</p>
+                  </div>
+                </div>
+                {myEntry?.preGame && <CheckCircle className="w-5 h-5 text-green-600" />}
+              </div>
+            </div>
 
-            <Button
-              onClick={() => router.push(`/charting/sessions/${sessionId}/game-overview`)}
-              variant={myEntry?.gameOverview ? "outline" : "default"}
-              className="w-full justify-between"
-              disabled
+            {/* Game Overview */}
+            <div
+              className="relative p-4 border-2 rounded-lg cursor-not-allowed opacity-50 border-gray-200 bg-gray-50"
             >
-              <span className="flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4" />
-                Game Overview
-              </span>
-              {myEntry?.gameOverview && <CheckCircle className="w-4 h-4 text-green-500" />}
-            </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="font-semibold text-gray-600">Game Overview</p>
+                    <p className="text-xs text-gray-400">Coming soon</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <Button
-              onClick={() => router.push(`/charting/sessions/${sessionId}/periods`)}
-              variant={myEntry?.period1 || myEntry?.period2 || myEntry?.period3 ? "outline" : "default"}
-              className="w-full justify-between"
-              disabled
+            {/* Periods */}
+            <div
+              className="relative p-4 border-2 rounded-lg cursor-not-allowed opacity-50 border-gray-200 bg-gray-50"
             >
-              <span className="flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4" />
-                Periods (1, 2, 3)
-              </span>
-              {(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) && (
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              )}
-            </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="font-semibold text-gray-600">Periods (1, 2, 3)</p>
+                    <p className="text-xs text-gray-400">Coming soon</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <Button
-              onClick={() => router.push(`/charting/sessions/${sessionId}/overtime-shootout`)}
-              variant={myEntry?.overtime || myEntry?.shootout ? "outline" : "default"}
-              className="w-full justify-between"
-              disabled
+            {/* Overtime & Shootout */}
+            <div
+              className="relative p-4 border-2 rounded-lg cursor-not-allowed opacity-50 border-gray-200 bg-gray-50"
             >
-              <span className="flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4" />
-                Overtime & Shootout
-              </span>
-              {(myEntry?.overtime || myEntry?.shootout) && (
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              )}
-            </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="font-semibold text-gray-600">Overtime & Shootout</p>
+                    <p className="text-xs text-gray-400">Coming soon</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <Button
+            {/* Post-Game */}
+            <div
               onClick={() => router.push(`/charting/sessions/${sessionId}/post-game`)}
-              variant={myEntry?.postGame ? "outline" : "default"}
-              className="w-full justify-between"
+              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                myEntry?.postGame
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-300 hover:border-blue-400'
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4" />
-                Post-Game Review
-              </span>
-              {myEntry?.postGame && <CheckCircle className="w-4 h-4 text-green-500" />}
-            </Button>
-          </div>
-
-          <div className="mt-4 pt-4 border-t">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2"
-              onClick={() => {
-                if (session.status === 'scheduled') {
-                  chartingService.updateSession(sessionId, { status: 'completed' });
-                  loadSessionData();
-                }
-              }}
-            >
-              <ClipboardCheck className="w-4 h-4" />
-              {session.status === 'completed' ? 'Session Completed' : 'Mark as Completed'}
-            </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className={`w-5 h-5 ${myEntry?.postGame ? 'text-green-600' : 'text-gray-600'}`} />
+                  <div>
+                    <p className="font-semibold text-gray-900">Post-Game Review</p>
+                    <p className="text-xs text-gray-500">Reflection & notes</p>
+                  </div>
+                </div>
+                {myEntry?.postGame && <CheckCircle className="w-5 h-5 text-green-600" />}
+              </div>
+            </div>
           </div>
         </Card>
 
