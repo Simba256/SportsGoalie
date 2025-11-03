@@ -180,7 +180,9 @@ export default function GameOverviewPage() {
 
         {/* Good Goals */}
         <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Good Goals Against</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Good Goals Against{session.opponent ? ` ${session.opponent}` : ''}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="good-p1">Period 1</Label>
@@ -223,7 +225,9 @@ export default function GameOverviewPage() {
 
         {/* Bad Goals */}
         <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Bad Goals Against</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Bad Goals Against{session.opponent ? ` ${session.opponent}` : ''}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="bad-p1">Period 1</Label>
