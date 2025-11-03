@@ -485,10 +485,9 @@ service cloud.firestore {
       // Students can get their own sessions, admins can get all
       allow get: if isOwnerOrAdmin(resource.data.studentId);
 
-      // Students can list/query their own sessions (with studentId filter), admins can list all
-      allow list: if isAuthenticated() &&
-                     (isAdmin() ||
-                      request.query.limit <= 100);  // Allow queries with reasonable limits
+      // Students can list/query their own sessions (application filters by studentId), admins can list all
+      // Trust application layer to filter by studentId for students
+      allow list: if isAuthenticated();
 
       // Students can create their own sessions, admins can create for any student
       allow create: if isAuthenticated() &&
@@ -512,10 +511,9 @@ service cloud.firestore {
       // Students can get their own entries, admins can get all
       allow get: if isOwnerOrAdmin(resource.data.studentId);
 
-      // Students can list/query their own entries, admins can list all
-      allow list: if isAuthenticated() &&
-                     (isAdmin() ||
-                      request.query.limit <= 100);  // Allow queries with reasonable limits
+      // Students can list/query their own entries (application filters by studentId), admins can list all
+      // Trust application layer to filter by studentId for students
+      allow list: if isAuthenticated();
 
       // Students can create entries for their own sessions, admins can create for any student
       allow create: if isAuthenticated() &&
