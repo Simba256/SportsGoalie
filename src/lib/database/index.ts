@@ -5,6 +5,7 @@ export { BaseDatabaseService } from './base.service';
 export { SportsService, sportsService } from './services/sports.service';
 export { VideoQuizService, videoQuizService } from './services/video-quiz.service';
 export { UserService, userService } from './services/user.service';
+export { ChartingService, chartingService } from './services/charting.service';
 
 // Utilities
 export { SeederService, seederService } from './seeding/seeder.service';
