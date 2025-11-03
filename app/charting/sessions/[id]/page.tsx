@@ -8,18 +8,14 @@ import { Session, ChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ArrowLeft,
   Calendar,
   MapPin,
-  Users,
   ClipboardCheck,
   CheckCircle,
-  BarChart3,
   Edit,
-  Trash2,
-  Plus
+  Trash2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -32,7 +28,6 @@ export default function SessionDetailPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (sessionId) {
@@ -174,231 +169,173 @@ export default function SessionDetailPage() {
           </div>
         </div>
 
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview" className="gap-2">
+        {/* Charting Sections - Primary Action Area */}
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Charting Sections</h2>
+          <p className="text-sm text-gray-600 mb-4">Fill out any section at any time - they're completely independent!</p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => router.push(`/charting/sessions/${sessionId}/pre-game`)}
+              variant={myEntry?.preGame ? "outline" : "default"}
+              className="w-full justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4" />
+                Pre-Game Checklist
+              </span>
+              {myEntry?.preGame && <CheckCircle className="w-4 h-4 text-green-500" />}
+            </Button>
+
+            <Button
+              onClick={() => router.push(`/charting/sessions/${sessionId}/game-overview`)}
+              variant={myEntry?.gameOverview ? "outline" : "default"}
+              className="w-full justify-between"
+              disabled
+            >
+              <span className="flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4" />
+                Game Overview
+              </span>
+              {myEntry?.gameOverview && <CheckCircle className="w-4 h-4 text-green-500" />}
+            </Button>
+
+            <Button
+              onClick={() => router.push(`/charting/sessions/${sessionId}/periods`)}
+              variant={myEntry?.period1 || myEntry?.period2 || myEntry?.period3 ? "outline" : "default"}
+              className="w-full justify-between"
+              disabled
+            >
+              <span className="flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4" />
+                Periods (1, 2, 3)
+              </span>
+              {(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) && (
+                <CheckCircle className="w-4 h-4 text-green-500" />
+              )}
+            </Button>
+
+            <Button
+              onClick={() => router.push(`/charting/sessions/${sessionId}/overtime-shootout`)}
+              variant={myEntry?.overtime || myEntry?.shootout ? "outline" : "default"}
+              className="w-full justify-between"
+              disabled
+            >
+              <span className="flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4" />
+                Overtime & Shootout
+              </span>
+              {(myEntry?.overtime || myEntry?.shootout) && (
+                <CheckCircle className="w-4 h-4 text-green-500" />
+              )}
+            </Button>
+
+            <Button
+              onClick={() => router.push(`/charting/sessions/${sessionId}/post-game`)}
+              variant={myEntry?.postGame ? "outline" : "default"}
+              className="w-full justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4" />
+                Post-Game Review
+              </span>
+              {myEntry?.postGame && <CheckCircle className="w-4 h-4 text-green-500" />}
+            </Button>
+          </div>
+
+          <div className="mt-4 pt-4 border-t">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                if (session.status === 'scheduled') {
+                  chartingService.updateSession(sessionId, { status: 'completed' });
+                  loadSessionData();
+                }
+              }}
+            >
               <ClipboardCheck className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="entries" className="gap-2">
-              <Users className="w-4 h-4" />
-              Charting Entries ({entries.length})
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Analytics
-            </TabsTrigger>
-          </TabsList>
+              {session.status === 'completed' ? 'Session Completed' : 'Mark as Completed'}
+            </Button>
+          </div>
+        </Card>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Session Information</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Type</p>
-                  <p className="font-medium capitalize">{session.type}</p>
+        {/* Your Entry Status */}
+        {myEntry && (
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">Your Charting Progress</h3>
+              <Badge variant="outline">Student</Badge>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+              {myEntry.preGame && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Pre-Game</span>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <p className="font-medium capitalize">{session.status}</p>
+              )}
+              {myEntry.gameOverview && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Overview</span>
                 </div>
-                {session.opponent && (
+              )}
+              {(myEntry.period1 || myEntry.period2 || myEntry.period3) && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Periods</span>
+                </div>
+              )}
+              {(myEntry.overtime || myEntry.shootout) && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>OT/SO</span>
+                </div>
+              )}
+              {myEntry.postGame && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Post-Game</span>
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-gray-600">
+              Last updated: {myEntry.lastUpdatedAt && typeof myEntry.lastUpdatedAt.toDate === 'function'
+                ? formatDistanceToNow(myEntry.lastUpdatedAt.toDate(), { addSuffix: true })
+                : 'Recently'}
+            </p>
+          </Card>
+        )}
+
+        {/* Coach/Admin Entries */}
+        {adminEntries.length > 0 && (
+          <Card className="p-6">
+            <h3 className="text-lg font-bold mb-4">Coach/Admin Observations</h3>
+            <div className="space-y-3">
+              {adminEntries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
                   <div>
-                    <p className="text-sm text-gray-600">Opponent</p>
-                    <p className="font-medium">{session.opponent}</p>
+                    <p className="font-medium">Admin Observation</p>
+                    <p className="text-sm text-gray-600">
+                      {entry.submittedAt && typeof entry.submittedAt.toDate === 'function'
+                        ? formatDistanceToNow(entry.submittedAt.toDate(), { addSuffix: true })
+                        : 'Recently'}
+                    </p>
                   </div>
-                )}
-                {session.location && (
-                  <div>
-                    <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-medium">{session.location}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-gray-600">Created</p>
-                  <p className="font-medium">
-                    {formatDistanceToNow(session.createdAt.toDate(), { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Charting Sections */}
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Charting Sections</h2>
-              <p className="text-sm text-gray-600 mb-4">Fill out any section at any time - they're completely independent!</p>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => router.push(`/charting/sessions/${sessionId}/pre-game`)}
-                  variant={myEntry?.preGame ? "outline" : "default"}
-                  className="w-full justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="w-4 h-4" />
-                    Pre-Game Checklist
-                  </span>
-                  {myEntry?.preGame && <CheckCircle className="w-4 h-4 text-green-500" />}
-                </Button>
-
-                <Button
-                  onClick={() => router.push(`/charting/sessions/${sessionId}/game-overview`)}
-                  variant={myEntry?.gameOverview ? "outline" : "default"}
-                  className="w-full justify-between"
-                  disabled
-                >
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="w-4 h-4" />
-                    Game Overview
-                  </span>
-                  {myEntry?.gameOverview && <CheckCircle className="w-4 h-4 text-green-500" />}
-                </Button>
-
-                <Button
-                  onClick={() => router.push(`/charting/sessions/${sessionId}/periods`)}
-                  variant={myEntry?.period1 || myEntry?.period2 || myEntry?.period3 ? "outline" : "default"}
-                  className="w-full justify-between"
-                  disabled
-                >
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="w-4 h-4" />
-                    Periods (1, 2, 3)
-                  </span>
-                  {(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                </Button>
-
-                <Button
-                  onClick={() => router.push(`/charting/sessions/${sessionId}/overtime-shootout`)}
-                  variant={myEntry?.overtime || myEntry?.shootout ? "outline" : "default"}
-                  className="w-full justify-between"
-                  disabled
-                >
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="w-4 h-4" />
-                    Overtime & Shootout
-                  </span>
-                  {(myEntry?.overtime || myEntry?.shootout) && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                </Button>
-
-                <Button
-                  onClick={() => router.push(`/charting/sessions/${sessionId}/post-game`)}
-                  variant={myEntry?.postGame ? "outline" : "default"}
-                  className="w-full justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="w-4 h-4" />
-                    Post-Game Review
-                  </span>
-                  {myEntry?.postGame && <CheckCircle className="w-4 h-4 text-green-500" />}
-                </Button>
-              </div>
-
-              <div className="mt-4 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    if (session.status === 'scheduled') {
-                      chartingService.updateSession(sessionId, { status: 'completed' });
-                      loadSessionData();
-                    }
-                  }}
-                >
-                  <ClipboardCheck className="w-4 h-4" />
-                  {session.status === 'completed' ? 'Session Completed' : 'Mark as Completed'}
-                </Button>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Entries Tab */}
-          <TabsContent value="entries" className="space-y-4">
-            {entries.length === 0 ? (
-              <Card className="p-12">
-                <div className="text-center">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">No charting entries yet</p>
-                  <Button onClick={() => router.push(`/charting/sessions/${sessionId}/chart`)}>
-                    Create First Entry
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/charting/sessions/${sessionId}/chart/${entry.id}`)}
+                  >
+                    View
                   </Button>
                 </div>
-              </Card>
-            ) : (
-              <>
-                {/* My Entry */}
-                {myEntry && (
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold">Your Entry</h3>
-                      <Badge variant="outline">Student</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600">
-                        Last updated: {myEntry.lastUpdatedAt && typeof myEntry.lastUpdatedAt.toDate === 'function'
-                          ? formatDistanceToNow(myEntry.lastUpdatedAt.toDate(), { addSuffix: true })
-                          : 'Recently'}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/charting/sessions/${sessionId}/chart/${myEntry.id}`)}
-                      >
-                        View & Edit
-                      </Button>
-                    </div>
-                  </Card>
-                )}
-
-                {/* Admin Entries */}
-                {adminEntries.length > 0 && (
-                  <Card className="p-6">
-                    <h3 className="text-lg font-bold mb-4">Coach/Admin Entries</h3>
-                    <div className="space-y-3">
-                      {adminEntries.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                        >
-                          <div>
-                            <p className="font-medium">Admin Observation</p>
-                            <p className="text-sm text-gray-600">
-                              {entry.submittedAt && typeof entry.submittedAt.toDate === 'function'
-                                ? formatDistanceToNow(entry.submittedAt.toDate(), { addSuffix: true })
-                                : 'Recently'}
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.push(`/charting/sessions/${sessionId}/chart/${entry.id}`)}
-                          >
-                            View
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-              </>
-            )}
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
-            <Card className="p-12">
-              <div className="text-center">
-                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">Session analytics will be displayed here</p>
-                <p className="text-sm text-gray-500 mt-2">Coming soon...</p>
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
