@@ -313,11 +313,209 @@ export default function ChartingAnalyticsPage() {
     };
   };
 
+  const calculateDecisionMaking = () => {
+    const filtered = getFilteredEntries();
+    const periods = [
+      ...filtered.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const strongCount = periods.filter((p: any) => p?.mindSet?.decisionMakingStrong?.value).length;
+    const improvingCount = periods.filter((p: any) => p?.mindSet?.decisionMakingImproving?.value).length;
+    const needsWorkCount = periods.filter((p: any) => p?.mindSet?.decisionMakingNeedsWork?.value).length;
+
+    const total = strongCount + improvingCount + needsWorkCount;
+    const strongPercentage = total > 0 ? (strongCount / total) * 100 : 0;
+
+    return {
+      strongPercentage: strongPercentage.toFixed(0),
+      strongCount,
+      improvingCount,
+      needsWorkCount,
+      total,
+    };
+  };
+
+  const calculateBodyLanguage = () => {
+    const filtered = getFilteredEntries();
+    const periods = [
+      ...filtered.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const consistentCount = periods.filter((p: any) => p?.mindSet?.bodyLanguageConsistent?.value).length;
+    const inconsistentCount = periods.filter((p: any) => p?.mindSet?.bodyLanguageInconsistent?.value).length;
+
+    const total = consistentCount + inconsistentCount;
+    const percentage = total > 0 ? (consistentCount / total) * 100 : 0;
+
+    return {
+      percentage: percentage.toFixed(0),
+      consistentCount,
+      inconsistentCount,
+    };
+  };
+
+  const calculateReboundControl = () => {
+    const filtered = getFilteredEntries();
+    const periods = [
+      ...filtered.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const goodCount = periods.filter((p: any) => p?.reboundControl?.reboundQualityGood?.value).length;
+    const improvingCount = periods.filter((p: any) => p?.reboundControl?.reboundQualityImproving?.value).length;
+    const poorCount = periods.filter((p: any) => p?.reboundControl?.reboundQualityPoor?.value).length;
+
+    const consistentCount = periods.filter((p: any) => p?.reboundControl?.reboundConsistencyConsistent?.value).length;
+    const inconsistentCount = periods.filter((p: any) => p?.reboundControl?.reboundConsistencyInconsistent?.value).length;
+
+    const qualityTotal = goodCount + improvingCount + poorCount;
+    const consistencyTotal = consistentCount + inconsistentCount;
+
+    const qualityPercentage = qualityTotal > 0 ? (goodCount / qualityTotal) * 100 : 0;
+    const consistencyPercentage = consistencyTotal > 0 ? (consistentCount / consistencyTotal) * 100 : 0;
+
+    return {
+      qualityPercentage: qualityPercentage.toFixed(0),
+      consistencyPercentage: consistencyPercentage.toFixed(0),
+      goodCount,
+      improvingCount,
+      poorCount,
+      consistentCount,
+      inconsistentCount,
+    };
+  };
+
+  const calculateFreezingPuck = () => {
+    const filtered = getFilteredEntries();
+    const periods = [
+      ...filtered.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const goodCount = periods.filter((p: any) => p?.freezingPuck?.freezingQualityGood?.value).length;
+    const improvingCount = periods.filter((p: any) => p?.freezingPuck?.freezingQualityImproving?.value).length;
+    const poorCount = periods.filter((p: any) => p?.freezingPuck?.freezingQualityPoor?.value).length;
+
+    const consistentCount = periods.filter((p: any) => p?.freezingPuck?.freezingConsistencyConsistent?.value).length;
+    const inconsistentCount = periods.filter((p: any) => p?.freezingPuck?.freezingConsistencyInconsistent?.value).length;
+
+    const qualityTotal = goodCount + improvingCount + poorCount;
+    const consistencyTotal = consistentCount + inconsistentCount;
+
+    const qualityPercentage = qualityTotal > 0 ? (goodCount / qualityTotal) * 100 : 0;
+    const consistencyPercentage = consistencyTotal > 0 ? (consistentCount / consistencyTotal) * 100 : 0;
+
+    return {
+      qualityPercentage: qualityPercentage.toFixed(0),
+      consistencyPercentage: consistencyPercentage.toFixed(0),
+      goodCount,
+      improvingCount,
+      poorCount,
+      consistentCount,
+      inconsistentCount,
+    };
+  };
+
+  const calculateTeamPlay = () => {
+    const filtered = getFilteredEntries();
+    const period3s = filtered.map((e) => e.period3).filter(Boolean);
+
+    if (period3s.length === 0) return null;
+
+    const defenseGoodCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpDefense?.good?.value
+    ).length;
+    const defenseImprovingCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpDefense?.improving?.value
+    ).length;
+    const defensePoorCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpDefense?.poor?.value
+    ).length;
+
+    const forwardsGoodCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpForwards?.good?.value
+    ).length;
+    const forwardsImprovingCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpForwards?.improving?.value
+    ).length;
+    const forwardsPoorCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpForwards?.poor?.value
+    ).length;
+
+    const defenseTotal = defenseGoodCount + defenseImprovingCount + defensePoorCount;
+    const forwardsTotal = forwardsGoodCount + forwardsImprovingCount + forwardsPoorCount;
+
+    const defensePercentage = defenseTotal > 0 ? (defenseGoodCount / defenseTotal) * 100 : 0;
+    const forwardsPercentage = forwardsTotal > 0 ? (forwardsGoodCount / forwardsTotal) * 100 : 0;
+
+    return {
+      defensePercentage: defensePercentage.toFixed(0),
+      forwardsPercentage: forwardsPercentage.toFixed(0),
+      defenseGoodCount,
+      defenseImprovingCount,
+      defensePoorCount,
+      forwardsGoodCount,
+      forwardsImprovingCount,
+      forwardsPoorCount,
+    };
+  };
+
+  const calculatePreGameStats = () => {
+    const filtered = getFilteredEntries();
+    const preGameEntries = filtered.filter((e) => e.preGame);
+
+    if (preGameEntries.length === 0) return null;
+
+    const equipmentYes = preGameEntries.filter((e) => e.preGame?.equipment?.value).length;
+    const mentalPrepYes = preGameEntries.filter((e) => e.preGame?.mentalPrep?.value).length;
+    const warmupYes = preGameEntries.filter((e) => e.preGame?.warmup?.value).length;
+    const physicalYes = preGameEntries.filter((e) => e.preGame?.physical?.value).length;
+
+    const total = preGameEntries.length;
+
+    return {
+      equipmentPercentage: ((equipmentYes / total) * 100).toFixed(0),
+      mentalPrepPercentage: ((mentalPrepYes / total) * 100).toFixed(0),
+      warmupPercentage: ((warmupYes / total) * 100).toFixed(0),
+      physicalPercentage: ((physicalYes / total) * 100).toFixed(0),
+      total,
+    };
+  };
+
+  const calculatePostGameStats = () => {
+    const filtered = getFilteredEntries();
+    const postGameEntries = filtered.filter((e) => e.postGame);
+
+    if (postGameEntries.length === 0) return null;
+
+    const reviewCompletedYes = postGameEntries.filter((e) => e.postGame?.reviewCompleted?.value).length;
+    const total = postGameEntries.length;
+
+    return {
+      reviewCompletionRate: ((reviewCompletedYes / total) * 100).toFixed(0),
+      completed: reviewCompletedYes,
+      total,
+    };
+  };
+
   const goalsStats = calculateGoalsStats();
   const challengeStats = calculateChallengeStats();
   const focusStats = calculateFocusConsistency();
   const skatingStats = calculateSkatingPerformance();
   const positionalStats = calculatePositionalPerformance();
+  const decisionMakingStats = calculateDecisionMaking();
+  const bodyLanguageStats = calculateBodyLanguage();
+  const reboundControlStats = calculateReboundControl();
+  const freezingPuckStats = calculateFreezingPuck();
+  const teamPlayStats = calculateTeamPlay();
+  const preGameStats = calculatePreGameStats();
+  const postGameStats = calculatePostGameStats();
 
   const filteredSessions = getFilteredSessions();
   const filteredEntries = getFilteredEntries();
@@ -553,6 +751,225 @@ export default function ChartingAnalyticsPage() {
                   </div>
                   <p className="text-xs text-gray-500">
                     {positionalStats.goodCount} good/strong / {positionalStats.needsWorkCount} needs work periods
+                  </p>
+                </div>
+              </Card>
+            )}
+
+            {/* Decision Making & Body Language */}
+            {(decisionMakingStats || bodyLanguageStats) && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Decision Making & Body Language</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {decisionMakingStats && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
+                      <p className="text-sm font-semibold text-gray-900 mb-3">Decision Making - Strong</p>
+                      <div className="flex items-end gap-2 mb-2">
+                        <p className="text-4xl font-bold text-emerald-700">{decisionMakingStats.strongPercentage}%</p>
+                        <p className="text-sm text-gray-600 mb-1">strong</p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div
+                          className="bg-emerald-600 h-3 rounded-full transition-all"
+                          style={{ width: `${decisionMakingStats.strongPercentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {decisionMakingStats.strongCount} strong / {decisionMakingStats.improvingCount} improving / {decisionMakingStats.needsWorkCount} needs work
+                      </p>
+                    </div>
+                  )}
+                  {bodyLanguageStats && (
+                    <div className="bg-lime-50 border border-lime-200 rounded-lg p-6">
+                      <p className="text-sm font-semibold text-gray-900 mb-3">Body Language</p>
+                      <div className="flex items-end gap-2 mb-2">
+                        <p className="text-4xl font-bold text-lime-700">{bodyLanguageStats.percentage}%</p>
+                        <p className="text-sm text-gray-600 mb-1">consistent</p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div
+                          className="bg-lime-600 h-3 rounded-full transition-all"
+                          style={{ width: `${bodyLanguageStats.percentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {bodyLanguageStats.consistentCount} consistent / {bodyLanguageStats.inconsistentCount} inconsistent
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {/* Rebound Control */}
+            {reboundControlStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Rebound Control</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-violet-50 border border-violet-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-violet-700">{reboundControlStats.qualityPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-violet-600 h-3 rounded-full transition-all"
+                        style={{ width: `${reboundControlStats.qualityPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {reboundControlStats.goodCount} good / {reboundControlStats.improvingCount} improving / {reboundControlStats.poorCount} poor
+                    </p>
+                  </div>
+                  <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-fuchsia-700">{reboundControlStats.consistencyPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-fuchsia-600 h-3 rounded-full transition-all"
+                        style={{ width: `${reboundControlStats.consistencyPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {reboundControlStats.consistentCount} consistent / {reboundControlStats.inconsistentCount} inconsistent
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Freezing Puck */}
+            {freezingPuckStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Freezing Puck</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-pink-700">{freezingPuckStats.qualityPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-pink-600 h-3 rounded-full transition-all"
+                        style={{ width: `${freezingPuckStats.qualityPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {freezingPuckStats.goodCount} good / {freezingPuckStats.improvingCount} improving / {freezingPuckStats.poorCount} poor
+                    </p>
+                  </div>
+                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-rose-700">{freezingPuckStats.consistencyPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-rose-600 h-3 rounded-full transition-all"
+                        style={{ width: `${freezingPuckStats.consistencyPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {freezingPuckStats.consistentCount} consistent / {freezingPuckStats.inconsistentCount} inconsistent
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Team Play (Period 3 only) */}
+            {teamPlayStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Team Play (Period 3)</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-sky-50 border border-sky-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Defense</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-sky-700">{teamPlayStats.defensePercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-sky-600 h-3 rounded-full transition-all"
+                        style={{ width: `${teamPlayStats.defensePercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {teamPlayStats.defenseGoodCount} good / {teamPlayStats.defenseImprovingCount} improving / {teamPlayStats.defensePoorCount} poor
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Forwards</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-slate-700">{teamPlayStats.forwardsPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-slate-600 h-3 rounded-full transition-all"
+                        style={{ width: `${teamPlayStats.forwardsPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {teamPlayStats.forwardsGoodCount} good / {teamPlayStats.forwardsImprovingCount} improving / {teamPlayStats.forwardsPoorCount} poor
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Pre-Game Preparation */}
+            {preGameStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Pre-Game Preparation Adherence</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-600 mb-2">Equipment Check</p>
+                    <p className="text-3xl font-bold text-orange-700">{preGameStats.equipmentPercentage}%</p>
+                  </div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-600 mb-2">Mental Prep</p>
+                    <p className="text-3xl font-bold text-yellow-700">{preGameStats.mentalPrepPercentage}%</p>
+                  </div>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-600 mb-2">Warmup</p>
+                    <p className="text-3xl font-bold text-green-700">{preGameStats.warmupPercentage}%</p>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-600 mb-2">Physical Prep</p>
+                    <p className="text-3xl font-bold text-blue-700">{preGameStats.physicalPercentage}%</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-4 text-center">
+                  Based on {preGameStats.total} sessions with pre-game data
+                </p>
+              </Card>
+            )}
+
+            {/* Post-Game Review */}
+            {postGameStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Post-Game Review Completion</h2>
+                <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Review Completion Rate</p>
+                  <div className="flex items-end gap-2 mb-2">
+                    <p className="text-4xl font-bold text-gray-700">{postGameStats.reviewCompletionRate}%</p>
+                    <p className="text-sm text-gray-600 mb-1">completed</p>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div
+                      className="bg-gray-600 h-3 rounded-full transition-all"
+                      style={{ width: `${postGameStats.reviewCompletionRate}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {postGameStats.completed} completed / {postGameStats.total} total sessions
                   </p>
                 </div>
               </Card>
