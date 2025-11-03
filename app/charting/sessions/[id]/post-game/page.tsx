@@ -85,6 +85,7 @@ export default function PostGamePage() {
       if (existingEntry) {
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
         alert('Post-Game section saved successfully!');
+        router.push(`/charting/sessions/${sessionId}`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
         if (result.success && result.data) {
@@ -94,6 +95,7 @@ export default function PostGamePage() {
           }
         }
         alert('Post-Game section created successfully!');
+        router.push(`/charting/sessions/${sessionId}`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
