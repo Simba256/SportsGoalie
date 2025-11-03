@@ -87,19 +87,19 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
       <div className="flex items-center gap-4 text-sm text-gray-600">
         <span className="font-medium">Activity:</span>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-gray-100 border border-gray-300 rounded"></div>
           <span>None</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-200 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-blue-200 rounded"></div>
           <span>Scheduled</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-400 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-blue-400 rounded"></div>
           <span>Partial</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-600 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-blue-600 rounded"></div>
           <span>Complete</span>
         </div>
       </div>
@@ -108,12 +108,12 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
       <div className="overflow-x-auto pb-4">
         <div className="inline-flex flex-col gap-1 min-w-max">
           {/* Month labels - positioned relative to weeks */}
-          <div className="relative h-5 ml-8 mb-1">
+          <div className="relative h-5 ml-10 mb-1">
             {monthLabels.map((month) => (
               <div
                 key={month.weekIndex}
                 className="absolute text-xs text-gray-500"
-                style={{ left: `${month.weekIndex * 16}px` }}
+                style={{ left: `${month.weekIndex * 18}px` }}
               >
                 {month.label}
               </div>
@@ -125,7 +125,7 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
             {/* Day labels (Sun-Sat) */}
             <div className="flex flex-col gap-1 pr-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-                <div key={day} className="h-3 flex items-center text-xs text-gray-500">
+                <div key={day} className="h-3.5 flex items-center text-xs text-gray-500">
                   {idx % 2 === 1 ? day[0] : ''} {/* Only show Mon, Wed, Fri */}
                 </div>
               ))}
@@ -140,7 +140,7 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
                     const isInRange = date >= yearStart && date <= yearEnd;
 
                     if (!isInRange) {
-                      return <div key={dayIndex} className="w-3 h-3" />; // Empty placeholder
+                      return <div key={dayIndex} className="w-3.5 h-3.5" />; // Empty placeholder
                     }
 
                     const level = getCompletionLevel(date);
@@ -153,7 +153,7 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
                         key={dayIndex}
                         onClick={() => onDayClick(date, daySessions)}
                         className={`
-                          w-3 h-3 rounded-sm transition-all
+                          w-3.5 h-3.5 rounded-sm transition-all
                           ${getBackgroundColor(level)}
                           ${isToday ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
                         `}
