@@ -207,14 +207,8 @@ export default function ChartingPage() {
                 {selectedDaySessions.length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">No sessions on this day</p>
-                    <Button onClick={() => {
-                      closeModal();
-                      router.push('/charting/sessions/new');
-                    }}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Session
-                    </Button>
+                    <p className="text-gray-600">No sessions on this day</p>
+                    <p className="text-sm text-gray-500 mt-2">Use the "New Session" button to create one</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -253,17 +247,6 @@ export default function ChartingPage() {
                     ))}
                   </div>
                 )}
-
-                {/* Quick Actions */}
-                <div className="pt-4 border-t">
-                  <Button variant="outline" className="w-full" onClick={() => {
-                    closeModal();
-                    router.push('/charting/sessions/new');
-                  }}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Session for This Day
-                  </Button>
-                </div>
               </div>
             </Card>
           </div>
