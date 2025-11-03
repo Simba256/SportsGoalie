@@ -478,6 +478,60 @@ service cloud.firestore {
     // REMOVED: Courses collection (since sports ARE the courses)
     // No separate /courses collection needed
 
+    // ==================== CHARTING SYSTEM ====================
+
+    // Sessions collection - Game and Practice tracking
+    match /sessions/{sessionId} {
+      // Students can read their own sessions, admins can read all
+      allow read: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can create their own sessions, admins can create for any student
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['studentId', 'type', 'date', 'status', 'createdBy']) &&
+                       (isOwner(request.resource.data.studentId) || isAdmin()) &&
+                       (request.resource.data.type == 'game' || request.resource.data.type == 'practice') &&
+                       (request.resource.data.status == 'scheduled' ||
+                        request.resource.data.status == 'pre-game' ||
+                        request.resource.data.status == 'in-progress' ||
+                        request.resource.data.status == 'completed');
+
+      // Students can update their own sessions, admins can update any
+      allow update: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can delete their own sessions, admins can delete any
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
+    // Charting Entries collection - Performance tracking data
+    match /charting_entries/{entryId} {
+      // Students can read their own entries, admins can read all
+      allow read: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can create entries for their own sessions, admins can create for any student
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['sessionId', 'studentId', 'submittedBy', 'submitterRole']) &&
+                       (isOwner(request.resource.data.studentId) || isAdmin()) &&
+                       (request.resource.data.submitterRole == 'student' || request.resource.data.submitterRole == 'admin');
+
+      // Students can update their own entries, admins can update any
+      allow update: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can delete their own entries, admins can delete any
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
+    // Charting Analytics collection - Pre-calculated stats for students
+    match /charting_analytics/{studentId} {
+      // Students can read their own analytics, admins can read all
+      allow read: if isOwnerOrAdmin(studentId);
+
+      // System/admins can create and update analytics
+      allow create, update: if isAdmin();
+
+      // Only admins can delete analytics
+      allow delete: if isAdmin();
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections
