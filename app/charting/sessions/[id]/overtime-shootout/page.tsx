@@ -254,9 +254,9 @@ export default function OvertimeShootoutPage() {
 
         {/* Tabs for Overtime and Shootout */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overtime">Overtime</TabsTrigger>
-            <TabsTrigger value="shootout">Shootout</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-14">
+            <TabsTrigger value="overtime" className="text-lg font-semibold">Overtime</TabsTrigger>
+            <TabsTrigger value="shootout" className="text-lg font-semibold">Shootout</TabsTrigger>
           </TabsList>
 
           {/* Overtime Tab */}
