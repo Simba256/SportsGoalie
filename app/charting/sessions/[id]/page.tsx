@@ -321,11 +321,197 @@ export default function SessionDetailPage() {
             <BarChart3 className="w-5 h-5 text-gray-700" />
             <h3 className="text-lg font-bold">Session Analytics</h3>
           </div>
-          <div className="text-center py-8">
-            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Session analytics will be displayed here</p>
-            <p className="text-sm text-gray-500 mt-2">Performance metrics, trends, and insights coming soon...</p>
-          </div>
+
+          {myEntry ? (
+            <div className="space-y-6">
+              {/* Game Overview Stats */}
+              {myEntry.gameOverview && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Game Overview</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 mb-1">Good Goals</p>
+                      <p className="text-3xl font-bold text-green-700">
+                        {(myEntry.gameOverview.goodGoals.period1 || 0) +
+                          (myEntry.gameOverview.goodGoals.period2 || 0) +
+                          (myEntry.gameOverview.goodGoals.period3 || 0)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        P1: {myEntry.gameOverview.goodGoals.period1 || 0} |
+                        P2: {myEntry.gameOverview.goodGoals.period2 || 0} |
+                        P3: {myEntry.gameOverview.goodGoals.period3 || 0}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 mb-1">Bad Goals</p>
+                      <p className="text-3xl font-bold text-red-700">
+                        {(myEntry.gameOverview.badGoals.period1 || 0) +
+                          (myEntry.gameOverview.badGoals.period2 || 0) +
+                          (myEntry.gameOverview.badGoals.period3 || 0)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        P1: {myEntry.gameOverview.badGoals.period1 || 0} |
+                        P2: {myEntry.gameOverview.badGoals.period2 || 0} |
+                        P3: {myEntry.gameOverview.badGoals.period3 || 0}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 mb-1">Avg Challenge</p>
+                      <p className="text-3xl font-bold text-blue-700">
+                        {(
+                          ((myEntry.gameOverview.degreeOfChallenge.period1 || 0) +
+                            (myEntry.gameOverview.degreeOfChallenge.period2 || 0) +
+                            (myEntry.gameOverview.degreeOfChallenge.period3 || 0)) /
+                          3
+                        ).toFixed(1)}
+                        <span className="text-base">/10</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        P1: {myEntry.gameOverview.degreeOfChallenge.period1 || 0} |
+                        P2: {myEntry.gameOverview.degreeOfChallenge.period2 || 0} |
+                        P3: {myEntry.gameOverview.degreeOfChallenge.period3 || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Period Performance Summary */}
+              {(myEntry.period1 || myEntry.period2 || myEntry.period3) && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Period Performance</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {myEntry.period1 && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-gray-900 mb-2">Period 1</p>
+                        <div className="space-y-1 text-xs">
+                          {myEntry.period1.mindSet?.focusConsistent?.value && (
+                            <p className="text-green-600">✓ Focus: Consistent</p>
+                          )}
+                          {myEntry.period1.mindSet?.focusInconsistent?.value && (
+                            <p className="text-yellow-600">⚠ Focus: Inconsistent</p>
+                          )}
+                          {myEntry.period1.skating?.inSync?.value && (
+                            <p className="text-green-600">✓ Skating: In Sync</p>
+                          )}
+                          {myEntry.period1.skating?.notInSync?.value && (
+                            <p className="text-red-600">✗ Skating: Not In Sync</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {myEntry.period2 && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-gray-900 mb-2">Period 2</p>
+                        <div className="space-y-1 text-xs">
+                          {myEntry.period2.mindSet?.focusConsistent?.value && (
+                            <p className="text-green-600">✓ Focus: Consistent</p>
+                          )}
+                          {myEntry.period2.mindSet?.focusInconsistent?.value && (
+                            <p className="text-yellow-600">⚠ Focus: Inconsistent</p>
+                          )}
+                          {myEntry.period2.skating?.inSync?.value && (
+                            <p className="text-green-600">✓ Skating: In Sync</p>
+                          )}
+                          {myEntry.period2.skating?.notInSync?.value && (
+                            <p className="text-red-600">✗ Skating: Not In Sync</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {myEntry.period3 && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-gray-900 mb-2">Period 3</p>
+                        <div className="space-y-1 text-xs">
+                          {myEntry.period3.mindSet?.focusConsistent?.value && (
+                            <p className="text-green-600">✓ Focus: Consistent</p>
+                          )}
+                          {myEntry.period3.mindSet?.focusInconsistent?.value && (
+                            <p className="text-yellow-600">⚠ Focus: Inconsistent</p>
+                          )}
+                          {myEntry.period3.skating?.inSync?.value && (
+                            <p className="text-green-600">✓ Skating: In Sync</p>
+                          )}
+                          {myEntry.period3.skating?.notInSync?.value && (
+                            <p className="text-red-600">✗ Skating: Not In Sync</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Overtime & Shootout Stats */}
+              {(myEntry.overtime || myEntry.shootout) && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Extended Play</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {myEntry.overtime && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-gray-900 mb-2">Overtime</p>
+                        <div className="space-y-1 text-xs">
+                          {myEntry.overtime.mindSetFocus?.good?.value && (
+                            <p className="text-green-600">✓ Focus: Good</p>
+                          )}
+                          {myEntry.overtime.mindSetFocus?.needsWork?.value && (
+                            <p className="text-yellow-600">⚠ Focus: Needs Work</p>
+                          )}
+                          {myEntry.overtime.skatingPerformance?.good?.value && (
+                            <p className="text-green-600">✓ Skating: Good</p>
+                          )}
+                          {myEntry.overtime.positionalGame?.good?.value && (
+                            <p className="text-green-600">✓ Positioning: Good</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {myEntry.shootout && (
+                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-gray-900 mb-2">Shootout</p>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">Result:</span>
+                            <span className={`text-sm font-bold ${myEntry.shootout.result === 'won' ? 'text-green-600' : 'text-red-600'}`}>
+                              {myEntry.shootout.result?.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">Saves:</span>
+                            <span className="text-sm font-semibold">{myEntry.shootout.shotsSaved || 0}/10</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">Save %:</span>
+                            <span className="text-sm font-semibold">
+                              {myEntry.shootout.shotsSaved && (myEntry.shootout.shotsSaved + myEntry.shootout.shotsScored) > 0
+                                ? ((myEntry.shootout.shotsSaved / (myEntry.shootout.shotsSaved + myEntry.shootout.shotsScored)) * 100).toFixed(0)
+                                : 0}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Comments */}
+              {myEntry.additionalComments && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Additional Notes</h4>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{myEntry.additionalComments}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600">No charting data available yet</p>
+              <p className="text-sm text-gray-500 mt-2">Fill out the charting sections above to see analytics here</p>
+            </div>
+          )}
         </Card>
       </div>
     </div>
