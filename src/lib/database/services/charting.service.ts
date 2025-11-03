@@ -268,10 +268,11 @@ export class ChartingService extends BaseDatabaseService {
       // Update session status if it's the first entry
       await this.updateSession(entryData.sessionId, { status: 'in-progress' });
 
+      // TEMPORARY: Disabled until Firestore indexes finish building
       // Trigger analytics recalculation (async, don't wait)
-      this.recalculateStudentAnalytics(entryData.studentId).catch(err =>
-        logger.error('Failed to recalculate analytics', 'ChartingService', err)
-      );
+      // this.recalculateStudentAnalytics(entryData.studentId).catch(err =>
+      //   logger.error('Failed to recalculate analytics', 'ChartingService', err)
+      // );
     }
 
     return result;
@@ -302,13 +303,14 @@ export class ChartingService extends BaseDatabaseService {
     const result = await this.update(this.CHARTING_ENTRIES_COLLECTION, entryId, data);
 
     if (result.success) {
+      // TEMPORARY: Disabled until Firestore indexes finish building
       // Get the entry to find studentId for analytics recalculation
-      const entry = await this.getChartingEntry(entryId);
-      if (entry.success && entry.data) {
-        this.recalculateStudentAnalytics(entry.data.studentId).catch(err =>
-          logger.error('Failed to recalculate analytics', 'ChartingService', err)
-        );
-      }
+      // const entry = await this.getChartingEntry(entryId);
+      // if (entry.success && entry.data) {
+      //   this.recalculateStudentAnalytics(entry.data.studentId).catch(err =>
+      //     logger.error('Failed to recalculate analytics', 'ChartingService', err)
+      //   );
+      // }
     }
 
     return result;
@@ -325,9 +327,10 @@ export class ChartingService extends BaseDatabaseService {
     const result = await this.delete(this.CHARTING_ENTRIES_COLLECTION, entryId);
 
     if (result.success && entry.success && entry.data) {
-      this.recalculateStudentAnalytics(entry.data.studentId).catch(err =>
-        logger.error('Failed to recalculate analytics', 'ChartingService', err)
-      );
+      // TEMPORARY: Disabled until Firestore indexes finish building
+      // this.recalculateStudentAnalytics(entry.data.studentId).catch(err =>
+      //   logger.error('Failed to recalculate analytics', 'ChartingService', err)
+      // );
     }
 
     return result;
