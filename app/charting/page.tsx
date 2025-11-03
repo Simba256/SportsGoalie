@@ -42,9 +42,9 @@ export default function ChartingPage() {
     try {
       setLoading(true);
 
-      // Load all sessions for heatmap (last 90 days worth)
+      // Load all sessions for full year heatmap
       const [sessionsResult, analyticsResult] = await Promise.all([
-        chartingService.getSessionsByStudent(user.id, { limit: 100, orderBy: 'date', orderDirection: 'desc' }),
+        chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getStudentAnalytics(user.id),
       ]);
 
@@ -178,7 +178,6 @@ export default function ChartingPage() {
             <CalendarHeatmap
               sessions={sessions}
               onDayClick={handleDayClick}
-              daysToShow={90}
             />
           </div>
         </Card>

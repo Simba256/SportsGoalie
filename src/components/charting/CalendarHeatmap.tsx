@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { Session } from '@/types';
-import { format, startOfDay, differenceInDays, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfDay, addDays, getDay, startOfYear, endOfYear, differenceInDays } from 'date-fns';
 
 interface CalendarHeatmapProps {
   sessions: Session[];
   onDayClick: (date: Date, sessions: Session[]) => void;
-  daysToShow?: number;
 }
 
-export const CalendarHeatmap = ({ sessions, onDayClick, daysToShow = 90 }: CalendarHeatmapProps) => {
-  const today = startOfDay(new Date());
-  const startDate = addDays(today, -daysToShow);
+export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) => {
+  const today = new Date();
+  const yearStart = startOfYear(today);
+  const yearEnd = endOfYear(today);
+  const totalDays = differenceInDays(yearEnd, yearStart) + 1;
 
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
@@ -48,22 +48,35 @@ export const CalendarHeatmap = ({ sessions, onDayClick, daysToShow = 90 }: Calen
     }
   };
 
-  // Build grid of days
-  const weeks: Date[][] = [];
-  let currentWeek: Date[] = [];
+  // Build grid: weeks as columns, days (Sun-Sat) as rows
+  // Start from the first Sunday on or before Jan 1
+  const firstDate = addDays(yearStart, -getDay(yearStart));
+  const weeksNeeded = Math.ceil((totalDays + getDay(yearStart)) / 7);
 
-  for (let i = 0; i < daysToShow; i++) {
-    const date = addDays(startDate, i);
-    currentWeek.push(date);
+  const grid: Date[][] = Array.from({ length: 7 }, () => []);
 
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
+  for (let week = 0; week < weeksNeeded; week++) {
+    for (let day = 0; day < 7; day++) {
+      const date = addDays(firstDate, week * 7 + day);
+      grid[day].push(date);
     }
   }
 
-  if (currentWeek.length > 0) {
-    weeks.push(currentWeek);
+  // Get month labels
+  const monthLabels: { label: string; weekIndex: number }[] = [];
+  let lastMonth = -1;
+
+  for (let week = 0; week < weeksNeeded; week++) {
+    const date = addDays(firstDate, week * 7);
+    const month = date.getMonth();
+
+    if (month !== lastMonth && date.getFullYear() === today.getFullYear()) {
+      monthLabels.push({
+        label: format(date, 'MMM'),
+        weekIndex: week,
+      });
+      lastMonth = month;
+    }
   }
 
   return (
@@ -89,55 +102,73 @@ export const CalendarHeatmap = ({ sessions, onDayClick, daysToShow = 90 }: Calen
         </div>
       </div>
 
-      {/* Heatmap Grid */}
-      <div className="overflow-x-auto">
-        <div className="inline-flex flex-col gap-1">
-          {/* Day labels */}
-          <div className="flex gap-1 mb-1">
-            <div className="w-8"></div> {/* Spacer for month labels */}
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="w-3 text-xs text-gray-500 text-center">
-                {day[0]}
+      {/* Heatmap Grid - Horizontal Layout */}
+      <div className="overflow-x-auto pb-4">
+        <div className="inline-flex flex-col gap-1 min-w-max">
+          {/* Month labels */}
+          <div className="flex gap-1 mb-1 ml-8">
+            {monthLabels.map((month) => (
+              <div
+                key={month.weekIndex}
+                className="text-xs text-gray-500"
+                style={{ marginLeft: `${month.weekIndex * 16}px` }}
+              >
+                {month.label}
               </div>
             ))}
           </div>
 
-          {/* Weeks grid */}
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex gap-1">
-              {/* Month label (only on first day of month) */}
-              <div className="w-8 text-xs text-gray-500 flex items-center">
-                {week[0] && format(week[0], 'd') === '1' && format(week[0], 'MMM')}
-              </div>
-
-              {/* Days */}
-              {week.map((date, dayIndex) => {
-                const level = getCompletionLevel(date);
-                const dateKey = format(date, 'yyyy-MM-dd');
-                const daySessions = sessionsByDate[dateKey] || [];
-                const isToday = format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-
-                return (
-                  <button
-                    key={dayIndex}
-                    onClick={() => onDayClick(date, daySessions)}
-                    className={`
-                      w-3 h-3 rounded-sm transition-all
-                      ${getBackgroundColor(level)}
-                      ${isToday ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
-                    `}
-                    title={`${format(date, 'MMM d, yyyy')}: ${daySessions.length} session${daySessions.length !== 1 ? 's' : ''}`}
-                  />
-                );
-              })}
+          {/* Grid container with day labels */}
+          <div className="flex gap-1">
+            {/* Day labels (Sun-Sat) */}
+            <div className="flex flex-col gap-1 pr-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                <div key={day} className="h-3 flex items-center text-xs text-gray-500">
+                  {idx % 2 === 1 ? day[0] : ''} {/* Only show Mon, Wed, Fri */}
+                </div>
+              ))}
             </div>
-          ))}
+
+            {/* Weeks (columns) */}
+            <div className="flex gap-1">
+              {grid[0].map((_, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1">
+                  {grid.map((row, dayIndex) => {
+                    const date = row[weekIndex];
+                    const isCurrentYear = date.getFullYear() === today.getFullYear();
+
+                    if (!isCurrentYear) {
+                      return <div key={dayIndex} className="w-3 h-3" />; // Empty placeholder
+                    }
+
+                    const level = getCompletionLevel(date);
+                    const dateKey = format(date, 'yyyy-MM-dd');
+                    const daySessions = sessionsByDate[dateKey] || [];
+                    const isToday = format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+
+                    return (
+                      <button
+                        key={dayIndex}
+                        onClick={() => onDayClick(date, daySessions)}
+                        className={`
+                          w-3 h-3 rounded-sm transition-all
+                          ${getBackgroundColor(level)}
+                          ${isToday ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+                        `}
+                        title={`${format(date, 'MMM d, yyyy')}: ${daySessions.length} session${daySessions.length !== 1 ? 's' : ''}`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Summary */}
       <div className="text-sm text-gray-600">
-        <p>Last {daysToShow} days • {sessions.length} sessions • Click any day for details</p>
+        <p>{format(yearStart, 'MMM d')} - {format(yearEnd, 'MMM d, yyyy')} • {sessions.length} sessions total • Click any day for details</p>
       </div>
     </div>
   );
