@@ -10,10 +10,10 @@ interface CalendarHeatmapProps {
 
 export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) => {
   const today = startOfDay(new Date());
-  // Show last 365 days (rolling window)
+  // Show 1 year back + 3 months forward (365 + 90 = 455 days)
   const yearStart = addDays(today, -365);
-  const yearEnd = today;
-  const totalDays = 365;
+  const yearEnd = addDays(today, 90);
+  const totalDays = 455;
 
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
@@ -170,7 +170,7 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
 
       {/* Summary */}
       <div className="text-sm text-gray-600">
-        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} • {sessions.length} sessions • Last 365 days • Click any day for details</p>
+        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} • {sessions.length} sessions • 1 year past + 3 months future • Click any day for details</p>
       </div>
     </div>
   );
