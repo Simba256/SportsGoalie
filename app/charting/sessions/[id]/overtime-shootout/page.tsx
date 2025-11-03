@@ -11,7 +11,33 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
+import { RadioSelectField } from '@/components/charting/RadioSelectField';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+
+// Helper functions to convert between yes/no fields and radio selection
+const getSelectedOption = (fields: Record<string, { value: boolean; comments: string }>): { value: string; comments: string } => {
+  const selected = Object.entries(fields).find(([_, field]) => field.value);
+  return {
+    value: selected ? selected[0] : '',
+    comments: selected ? selected[1].comments : Object.values(fields)[0]?.comments || '',
+  };
+};
+
+const updateRadioSelection = (
+  fields: Record<string, { value: boolean; comments: string }>,
+  selectedValue: string,
+  comments: string
+): Record<string, { value: boolean; comments: string }> => {
+  const updated: Record<string, { value: boolean; comments: string }> = {};
+  Object.keys(fields).forEach((key) => {
+    updated[key] = {
+      value: key === selectedValue,
+      comments: key === selectedValue ? comments : '',
+    };
+  });
+  return updated;
+};
 
 const createEmptyOvertimeData = (): OvertimeData => ({
   mindSetFocus: {
@@ -70,6 +96,7 @@ export default function OvertimeShootoutPage() {
   const [shootoutData, setShootoutData] = useState<ShootoutData>(createEmptyShootoutData());
   const [hasOvertime, setHasOvertime] = useState(false);
   const [hasShootout, setHasShootout] = useState(false);
+  const [activeTab, setActiveTab] = useState('overtime');
 
   useEffect(() => {
     loadData();
@@ -167,6 +194,19 @@ export default function OvertimeShootoutPage() {
     }));
   };
 
+  const updateOvertimeRadioGroup = (
+    section: string,
+    fieldGroup: Record<string, { value: boolean; comments: string }>,
+    selectedValue: string,
+    comments: string
+  ) => {
+    const updated = updateRadioSelection(fieldGroup, selectedValue, comments);
+    setOvertimeData((prev: any) => ({
+      ...prev,
+      [section]: updated,
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
@@ -212,267 +252,214 @@ export default function OvertimeShootoutPage() {
           </Button>
         </div>
 
-        {/* Selection */}
-        <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Which occurred in this game?</h2>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hasOvertime}
-                onChange={(e) => setHasOvertime(e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">Overtime</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hasShootout}
-                onChange={(e) => setHasShootout(e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">Shootout</span>
-            </label>
-          </div>
-        </Card>
+        {/* Tabs for Overtime and Shootout */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overtime">Overtime</TabsTrigger>
+            <TabsTrigger value="shootout">Shootout</TabsTrigger>
+          </TabsList>
 
-        {/* Overtime Section */}
-        {hasOvertime && (
-          <>
+          {/* Overtime Tab */}
+          <TabsContent value="overtime" className="space-y-6 mt-6">
             <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime - Mind-Set Focus</h2>
-              <div className="space-y-4">
-                <YesNoField
-                  label="Poor"
-                  value={overtimeData.mindSetFocus.poor.value}
-                  comments={overtimeData.mindSetFocus.poor.comments}
-                  onChange={(k, v) => updateOvertimeField('mindSetFocus', 'poor', k, v)}
-                />
-                <YesNoField
-                  label="Needs Work"
-                  value={overtimeData.mindSetFocus.needsWork.value}
-                  comments={overtimeData.mindSetFocus.needsWork.comments}
-                  onChange={(k, v) => updateOvertimeField('mindSetFocus', 'needsWork', k, v)}
-                />
-                <YesNoField
-                  label="Good"
-                  value={overtimeData.mindSetFocus.good.value}
-                  comments={overtimeData.mindSetFocus.good.comments}
-                  onChange={(k, v) => updateOvertimeField('mindSetFocus', 'good', k, v)}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime - Decision Making</h2>
-              <div className="space-y-4">
-                <YesNoField
-                  label="Strong"
-                  value={overtimeData.mindSetDecisionMaking.strong.value}
-                  comments={overtimeData.mindSetDecisionMaking.strong.comments}
-                  onChange={(k, v) => updateOvertimeField('mindSetDecisionMaking', 'strong', k, v)}
-                />
-                <YesNoField
-                  label="Improving"
-                  value={overtimeData.mindSetDecisionMaking.improving.value}
-                  comments={overtimeData.mindSetDecisionMaking.improving.comments}
-                  onChange={(k, v) => updateOvertimeField('mindSetDecisionMaking', 'improving', k, v)}
-                />
-                <YesNoField
-                  label="Needs Work"
-                  value={overtimeData.mindSetDecisionMaking.needsWork.value}
-                  comments={overtimeData.mindSetDecisionMaking.needsWork.comments}
-                  onChange={(k, v) => updateOvertimeField('mindSetDecisionMaking', 'needsWork', k, v)}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime - Skating Performance</h2>
-              <div className="space-y-4">
-                <YesNoField
-                  label="Poor"
-                  value={overtimeData.skatingPerformance.poor.value}
-                  comments={overtimeData.skatingPerformance.poor.comments}
-                  onChange={(k, v) => updateOvertimeField('skatingPerformance', 'poor', k, v)}
-                />
-                <YesNoField
-                  label="Needs Work"
-                  value={overtimeData.skatingPerformance.needsWork.value}
-                  comments={overtimeData.skatingPerformance.needsWork.comments}
-                  onChange={(k, v) => updateOvertimeField('skatingPerformance', 'needsWork', k, v)}
-                />
-                <YesNoField
-                  label="Good"
-                  value={overtimeData.skatingPerformance.good.value}
-                  comments={overtimeData.skatingPerformance.good.comments}
-                  onChange={(k, v) => updateOvertimeField('skatingPerformance', 'good', k, v)}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime - Positional Game</h2>
-              <div className="space-y-4">
-                <YesNoField
-                  label="Poor"
-                  value={overtimeData.positionalGame.poor.value}
-                  comments={overtimeData.positionalGame.poor.comments}
-                  onChange={(k, v) => updateOvertimeField('positionalGame', 'poor', k, v)}
-                />
-                <YesNoField
-                  label="Needs Work"
-                  value={overtimeData.positionalGame.needsWork.value}
-                  comments={overtimeData.positionalGame.needsWork.comments}
-                  onChange={(k, v) => updateOvertimeField('positionalGame', 'needsWork', k, v)}
-                />
-                <YesNoField
-                  label="Good"
-                  value={overtimeData.positionalGame.good.value}
-                  comments={overtimeData.positionalGame.good.comments}
-                  onChange={(k, v) => updateOvertimeField('positionalGame', 'good', k, v)}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime - Rebound Control</h2>
-              <div className="space-y-4">
-                <YesNoField
-                  label="Poor"
-                  value={overtimeData.reboundControl.poor.value}
-                  comments={overtimeData.reboundControl.poor.comments}
-                  onChange={(k, v) => updateOvertimeField('reboundControl', 'poor', k, v)}
-                />
-                <YesNoField
-                  label="Needs Work"
-                  value={overtimeData.reboundControl.needsWork.value}
-                  comments={overtimeData.reboundControl.needsWork.comments}
-                  onChange={(k, v) => updateOvertimeField('reboundControl', 'needsWork', k, v)}
-                />
-                <YesNoField
-                  label="Good"
-                  value={overtimeData.reboundControl.good.value}
-                  comments={overtimeData.reboundControl.good.comments}
-                  onChange={(k, v) => updateOvertimeField('reboundControl', 'good', k, v)}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime - Freezing Puck</h2>
-              <div className="space-y-4">
-                <YesNoField
-                  label="Poor"
-                  value={overtimeData.freezingPuck.poor.value}
-                  comments={overtimeData.freezingPuck.poor.comments}
-                  onChange={(k, v) => updateOvertimeField('freezingPuck', 'poor', k, v)}
-                />
-                <YesNoField
-                  label="Needs Work"
-                  value={overtimeData.freezingPuck.needsWork.value}
-                  comments={overtimeData.freezingPuck.needsWork.comments}
-                  onChange={(k, v) => updateOvertimeField('freezingPuck', 'needsWork', k, v)}
-                />
-                <YesNoField
-                  label="Good"
-                  value={overtimeData.freezingPuck.good.value}
-                  comments={overtimeData.freezingPuck.good.comments}
-                  onChange={(k, v) => updateOvertimeField('freezingPuck', 'good', k, v)}
-                />
-              </div>
-            </Card>
-          </>
-        )}
-
-        {/* Shootout Section */}
-        {hasShootout && (
-          <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Shootout Statistics</h2>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="result">Result</Label>
-                <select
-                  id="result"
-                  value={shootoutData.result}
-                  onChange={(e) => setShootoutData({ ...shootoutData, result: e.target.value as 'won' | 'lost' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
-                >
-                  <option value="won">Won</option>
-                  <option value="lost">Lost</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="shotsSaved">Shots Saved (0-10)</Label>
-                  <Input
-                    id="shotsSaved"
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={shootoutData.shotsSaved}
-                    onChange={(e) => setShootoutData({ ...shootoutData, shotsSaved: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="mt-1"
+              <div className="flex items-center gap-4 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasOvertime}
+                    onChange={(e) => setHasOvertime(e.target.checked)}
+                    className="w-4 h-4"
                   />
-                </div>
-                <div>
-                  <Label htmlFor="shotsScored">Shots Scored Against (0-10)</Label>
-                  <Input
-                    id="shotsScored"
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={shootoutData.shotsScored}
-                    onChange={(e) => setShootoutData({ ...shootoutData, shotsScored: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="mt-1"
-                  />
-                </div>
+                  <span className="text-lg font-semibold text-gray-900">Overtime Occurred</span>
+                </label>
               </div>
+              {hasOvertime && (
+                <p className="text-sm text-gray-600">
+                  Track performance metrics during overtime play
+                </p>
+              )}
+            </Card>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dekesSaved">Dekes Saved (0-10)</Label>
-                  <Input
-                    id="dekesSaved"
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={shootoutData.dekesSaved}
-                    onChange={(e) => setShootoutData({ ...shootoutData, dekesSaved: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dekesScored">Dekes Scored Against (0-10)</Label>
-                  <Input
-                    id="dekesScored"
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={shootoutData.dekesScored}
-                    onChange={(e) => setShootoutData({ ...shootoutData, dekesScored: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
+            {hasOvertime && (
+              <>
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Mind-Set</h2>
+                  <div className="space-y-4">
+                    <RadioSelectField
+                      label="Focus"
+                      options={['poor', 'needsWork', 'good']}
+                      {...getSelectedOption(overtimeData.mindSetFocus)}
+                      onChange={(value: string, comments: string) =>
+                        updateOvertimeRadioGroup('mindSetFocus', overtimeData.mindSetFocus, value, comments)
+                      }
+                    />
+                    <RadioSelectField
+                      label="Decision Making"
+                      options={['strong', 'improving', 'needsWork']}
+                      {...getSelectedOption(overtimeData.mindSetDecisionMaking)}
+                      onChange={(value: string, comments: string) =>
+                        updateOvertimeRadioGroup('mindSetDecisionMaking', overtimeData.mindSetDecisionMaking, value, comments)
+                      }
+                    />
+                  </div>
+                </Card>
 
-              <div>
-                <Label htmlFor="comments">Comments</Label>
-                <textarea
-                  id="comments"
-                  value={shootoutData.comments}
-                  onChange={(e) => setShootoutData({ ...shootoutData, comments: e.target.value })}
-                  placeholder="Any additional notes about the shootout..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm min-h-24 mt-1"
-                  rows={4}
-                />
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Performance</h2>
+                  <div className="space-y-4">
+                    <RadioSelectField
+                      label="Skating Performance"
+                      options={['poor', 'needsWork', 'good']}
+                      {...getSelectedOption(overtimeData.skatingPerformance)}
+                      onChange={(value: string, comments: string) =>
+                        updateOvertimeRadioGroup('skatingPerformance', overtimeData.skatingPerformance, value, comments)
+                      }
+                    />
+                    <RadioSelectField
+                      label="Positional Game"
+                      options={['poor', 'needsWork', 'good']}
+                      {...getSelectedOption(overtimeData.positionalGame)}
+                      onChange={(value: string, comments: string) =>
+                        updateOvertimeRadioGroup('positionalGame', overtimeData.positionalGame, value, comments)
+                      }
+                    />
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Puck Control</h2>
+                  <div className="space-y-4">
+                    <RadioSelectField
+                      label="Rebound Control"
+                      options={['poor', 'needsWork', 'good']}
+                      {...getSelectedOption(overtimeData.reboundControl)}
+                      onChange={(value: string, comments: string) =>
+                        updateOvertimeRadioGroup('reboundControl', overtimeData.reboundControl, value, comments)
+                      }
+                    />
+                    <RadioSelectField
+                      label="Freezing Puck"
+                      options={['poor', 'needsWork', 'good']}
+                      {...getSelectedOption(overtimeData.freezingPuck)}
+                      onChange={(value: string, comments: string) =>
+                        updateOvertimeRadioGroup('freezingPuck', overtimeData.freezingPuck, value, comments)
+                      }
+                    />
+                  </div>
+                </Card>
+              </>
+            )}
+          </TabsContent>
+
+          {/* Shootout Tab */}
+          <TabsContent value="shootout" className="space-y-6 mt-6">
+            <Card className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasShootout}
+                    onChange={(e) => setHasShootout(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-lg font-semibold text-gray-900">Shootout Occurred</span>
+                </label>
               </div>
-            </div>
-          </Card>
-        )}
+              {hasShootout && (
+                <p className="text-sm text-gray-600">
+                  Record shootout statistics and performance
+                </p>
+              )}
+            </Card>
+
+            {hasShootout && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Shootout Statistics</h2>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="result">Result</Label>
+                    <select
+                      id="result"
+                      value={shootoutData.result}
+                      onChange={(e) => setShootoutData({ ...shootoutData, result: e.target.value as 'won' | 'lost' })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                    >
+                      <option value="won">Won</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="shotsSaved">Shots Saved (0-10)</Label>
+                      <Input
+                        id="shotsSaved"
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={shootoutData.shotsSaved}
+                        onChange={(e) => setShootoutData({ ...shootoutData, shotsSaved: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="shotsScored">Shots Scored Against (0-10)</Label>
+                      <Input
+                        id="shotsScored"
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={shootoutData.shotsScored}
+                        onChange={(e) => setShootoutData({ ...shootoutData, shotsScored: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="dekesSaved">Dekes Saved (0-10)</Label>
+                      <Input
+                        id="dekesSaved"
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={shootoutData.dekesSaved}
+                        onChange={(e) => setShootoutData({ ...shootoutData, dekesSaved: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dekesScored">Dekes Scored Against (0-10)</Label>
+                      <Input
+                        id="dekesScored"
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={shootoutData.dekesScored}
+                        onChange={(e) => setShootoutData({ ...shootoutData, dekesScored: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="comments">Comments</Label>
+                    <textarea
+                      id="comments"
+                      value={shootoutData.comments}
+                      onChange={(e) => setShootoutData({ ...shootoutData, comments: e.target.value })}
+                      placeholder="Any additional notes about the shootout..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm min-h-24 mt-1"
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Save Button Footer */}
         <div className="flex justify-end">
