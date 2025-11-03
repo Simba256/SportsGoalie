@@ -72,13 +72,22 @@ export class ChartingService extends BaseDatabaseService {
       studentId: sessionData.studentId
     });
 
-    const data = {
-      ...sessionData,
+    // Remove undefined fields to avoid Firestore errors
+    const cleanedData: any = {
+      studentId: sessionData.studentId,
+      type: sessionData.type,
+      date: sessionData.date,
       status: sessionData.status || 'scheduled',
+      createdBy: sessionData.createdBy,
       tags: sessionData.tags || [],
     };
 
-    const result = await this.create<Session>(this.SESSIONS_COLLECTION, data);
+    // Only add optional fields if they're defined
+    if (sessionData.opponent !== undefined) cleanedData.opponent = sessionData.opponent;
+    if (sessionData.location !== undefined) cleanedData.location = sessionData.location;
+    if (sessionData.result !== undefined) cleanedData.result = sessionData.result;
+
+    const result = await this.create<Session>(this.SESSIONS_COLLECTION, cleanedData);
 
     if (result.success) {
       logger.info('Session created successfully', 'ChartingService', {
@@ -250,11 +259,26 @@ export class ChartingService extends BaseDatabaseService {
       submitterRole: entryData.submitterRole
     });
 
-    const data = {
-      ...entryData,
+    // Build data object with only defined fields
+    const data: any = {
+      sessionId: entryData.sessionId,
+      studentId: entryData.studentId,
+      submittedBy: entryData.submittedBy,
+      submitterRole: entryData.submitterRole,
       submittedAt: Timestamp.now(),
       lastUpdatedAt: Timestamp.now(),
     };
+
+    // Only add optional section fields if they're defined
+    if (entryData.preGame !== undefined) data.preGame = entryData.preGame;
+    if (entryData.gameOverview !== undefined) data.gameOverview = entryData.gameOverview;
+    if (entryData.period1 !== undefined) data.period1 = entryData.period1;
+    if (entryData.period2 !== undefined) data.period2 = entryData.period2;
+    if (entryData.period3 !== undefined) data.period3 = entryData.period3;
+    if (entryData.overtime !== undefined) data.overtime = entryData.overtime;
+    if (entryData.shootout !== undefined) data.shootout = entryData.shootout;
+    if (entryData.postGame !== undefined) data.postGame = entryData.postGame;
+    if (entryData.additionalComments !== undefined) data.additionalComments = entryData.additionalComments;
 
     const result = await this.create<ChartingEntry>(this.CHARTING_ENTRIES_COLLECTION, data);
 
