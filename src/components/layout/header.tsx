@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { ChevronDown, LogOut, Menu, User, X, MessageSquare } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, User, X, MessageSquare, ClipboardCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +90,14 @@ export function Header() {
                     className="text-sm font-medium transition-colors hover:text-blue-600 relative group"
                   >
                     Progress
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-200"></span>
+                  </Link>
+                  <Link
+                    href="/charting"
+                    className="text-sm font-medium transition-colors hover:text-blue-600 relative group flex items-center space-x-1"
+                  >
+                    <ClipboardCheck className="h-4 w-4" />
+                    <span>Charting</span>
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-200"></span>
                   </Link>
                   <Link
@@ -228,6 +236,14 @@ export function Header() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Progress
+                    </Link>
+                    <Link
+                      href="/charting"
+                      className="flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <ClipboardCheck className="h-4 w-4" />
+                      <span>Charting</span>
                     </Link>
                     <Link
                       href="/messages"
