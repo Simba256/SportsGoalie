@@ -8,7 +8,7 @@ import { Session, SessionStats, StreakData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, Clock, X } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, Clock, X, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 
@@ -108,10 +108,16 @@ export default function ChartingPage() {
             <h1 className="text-3xl font-bold text-gray-900">Performance Charting</h1>
             <p className="text-gray-600 mt-1">Track your goaltending progress and consistency</p>
           </div>
-          <Button onClick={() => router.push('/charting/sessions/new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Session
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => router.push('/charting/analytics')}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics & Trends
+            </Button>
+            <Button onClick={() => router.push('/charting/sessions/new')}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Session
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
