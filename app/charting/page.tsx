@@ -16,6 +16,7 @@ export default function ChartingPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [chartingEntries, setChartingEntries] = useState<any[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,9 +44,10 @@ export default function ChartingPage() {
       setLoading(true);
 
       // Load all sessions for full year heatmap
-      const [sessionsResult, analyticsResult] = await Promise.all([
+      const [sessionsResult, analyticsResult, entriesResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getStudentAnalytics(user.id),
+        chartingService.getChartingEntriesByStudent(user.id),
       ]);
 
       if (sessionsResult.success && sessionsResult.data) {
@@ -55,6 +57,10 @@ export default function ChartingPage() {
       if (analyticsResult.success && analyticsResult.data) {
         setStats(analyticsResult.data.sessionStats);
         setStreak(analyticsResult.data.streak);
+      }
+
+      if (entriesResult.success && entriesResult.data) {
+        setChartingEntries(entriesResult.data);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -121,7 +127,7 @@ export default function ChartingPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -131,18 +137,6 @@ export default function ChartingPage() {
                 </p>
               </div>
               <Calendar className="w-8 h-8 text-blue-500" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {stats?.completionRate ? `${Math.round(stats.completionRate)}%` : '0%'}
-                </p>
-              </div>
-              <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
           </Card>
 
@@ -183,6 +177,7 @@ export default function ChartingPage() {
 
             <CalendarHeatmap
               sessions={sessions}
+              chartingEntries={chartingEntries}
               onDayClick={handleDayClick}
             />
           </div>

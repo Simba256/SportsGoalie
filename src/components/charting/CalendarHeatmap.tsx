@@ -5,10 +5,11 @@ import { format, startOfDay, addDays, getDay, startOfYear, endOfYear, difference
 
 interface CalendarHeatmapProps {
   sessions: Session[];
+  chartingEntries: any[];
   onDayClick: (date: Date, sessions: Session[]) => void;
 }
 
-export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) => {
+export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: CalendarHeatmapProps) => {
   const today = startOfDay(new Date());
   // Show 1 year back + 3 months forward (365 + 90 = 455 days)
   const yearStart = addDays(today, -365);
@@ -23,6 +24,9 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
     return acc;
   }, {} as Record<string, Session[]>);
 
+  // Create a set of session IDs that have charting entries
+  const sessionIdsWithEntries = new Set(chartingEntries.map(entry => entry.sessionId));
+
   // Calculate completion level for a date
   const getCompletionLevel = (date: Date): number => {
     const dateKey = format(date, 'yyyy-MM-dd');
@@ -30,12 +34,13 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
 
     if (!daySessions || daySessions.length === 0) return 0;
 
-    const completedCount = daySessions.filter(s => s.status === 'completed').length;
+    // Count how many sessions have charting entries
+    const chartedCount = daySessions.filter(s => sessionIdsWithEntries.has(s.id)).length;
     const totalCount = daySessions.length;
 
-    if (completedCount === 0) return 1; // Scheduled
-    if (completedCount === totalCount) return 3; // All completed
-    return 2; // Partially completed
+    if (chartedCount === 0) return 1; // Scheduled but not charted
+    if (chartedCount === totalCount) return 3; // All charted
+    return 2; // Partially charted
   };
 
   // Get background color based on completion level
