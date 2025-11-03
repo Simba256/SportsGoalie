@@ -339,7 +339,9 @@ export default function SessionDetailPage() {
                     </div>
                     <div className="space-y-2">
                       <p className="text-sm text-gray-600">
-                        Last updated: {formatDistanceToNow(myEntry.lastUpdatedAt.toDate(), { addSuffix: true })}
+                        Last updated: {myEntry.lastUpdatedAt && typeof myEntry.lastUpdatedAt.toDate === 'function'
+                          ? formatDistanceToNow(myEntry.lastUpdatedAt.toDate(), { addSuffix: true })
+                          : 'Recently'}
                       </p>
                       <Button
                         variant="outline"
@@ -365,7 +367,9 @@ export default function SessionDetailPage() {
                           <div>
                             <p className="font-medium">Admin Observation</p>
                             <p className="text-sm text-gray-600">
-                              {formatDistanceToNow(entry.submittedAt.toDate(), { addSuffix: true })}
+                              {entry.submittedAt && typeof entry.submittedAt.toDate === 'function'
+                                ? formatDistanceToNow(entry.submittedAt.toDate(), { addSuffix: true })
+                                : 'Recently'}
                             </p>
                           </div>
                           <Button
