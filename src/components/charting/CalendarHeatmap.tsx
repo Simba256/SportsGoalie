@@ -9,10 +9,11 @@ interface CalendarHeatmapProps {
 }
 
 export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) => {
-  const today = new Date();
-  const yearStart = startOfYear(today);
-  const yearEnd = endOfYear(today);
-  const totalDays = differenceInDays(yearEnd, yearStart) + 1;
+  const today = startOfDay(new Date());
+  // Show last 365 days (rolling window)
+  const yearStart = addDays(today, -365);
+  const yearEnd = today;
+  const totalDays = 365;
 
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
@@ -70,7 +71,8 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
     const date = addDays(firstDate, week * 7);
     const month = date.getMonth();
 
-    if (month !== lastMonth && date.getFullYear() === today.getFullYear()) {
+    // Show label if within our date range and month changed
+    if (month !== lastMonth && date >= yearStart && date <= yearEnd) {
       monthLabels.push({
         label: format(date, 'MMM'),
         weekIndex: week,
@@ -135,9 +137,9 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
                 <div key={weekIndex} className="flex flex-col gap-1">
                   {grid.map((row, dayIndex) => {
                     const date = row[weekIndex];
-                    const isCurrentYear = date.getFullYear() === today.getFullYear();
+                    const isInRange = date >= yearStart && date <= yearEnd;
 
-                    if (!isCurrentYear) {
+                    if (!isInRange) {
                       return <div key={dayIndex} className="w-3 h-3" />; // Empty placeholder
                     }
 
@@ -168,7 +170,7 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
 
       {/* Summary */}
       <div className="text-sm text-gray-600">
-        <p>{format(yearStart, 'MMM d')} - {format(yearEnd, 'MMM d, yyyy')} • {sessions.length} sessions total • Click any day for details</p>
+        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} • {sessions.length} sessions • Last 365 days • Click any day for details</p>
       </div>
     </div>
   );
