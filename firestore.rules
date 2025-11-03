@@ -533,8 +533,8 @@ service cloud.firestore {
       // Students can read their own analytics, admins can read all
       allow read: if isOwnerOrAdmin(studentId);
 
-      // System/admins can create and update analytics
-      allow create, update: if isAdmin();
+      // Students can create and update their own analytics, admins can update any
+      allow create, update: if isOwnerOrAdmin(studentId);
 
       // Only admins can delete analytics
       allow delete: if isAdmin();
