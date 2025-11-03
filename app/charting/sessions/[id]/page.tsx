@@ -118,7 +118,7 @@ export default function SessionDetailPage() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <Button variant="outline" size="icon" onClick={() => router.push('/charting')}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
