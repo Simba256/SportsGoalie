@@ -15,7 +15,8 @@ import {
   ClipboardCheck,
   CheckCircle,
   Edit,
-  Trash2
+  Trash2,
+  BarChart3
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -259,52 +260,6 @@ export default function SessionDetailPage() {
           </div>
         </Card>
 
-        {/* Your Entry Status */}
-        {myEntry && (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">Your Charting Progress</h3>
-              <Badge variant="outline">Student</Badge>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-              {myEntry.preGame && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Pre-Game</span>
-                </div>
-              )}
-              {myEntry.gameOverview && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Overview</span>
-                </div>
-              )}
-              {(myEntry.period1 || myEntry.period2 || myEntry.period3) && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Periods</span>
-                </div>
-              )}
-              {(myEntry.overtime || myEntry.shootout) && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>OT/SO</span>
-                </div>
-              )}
-              {myEntry.postGame && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Post-Game</span>
-                </div>
-              )}
-            </div>
-            <p className="text-sm text-gray-600">
-              Last updated: {myEntry.lastUpdatedAt && typeof myEntry.lastUpdatedAt.toDate === 'function'
-                ? formatDistanceToNow(myEntry.lastUpdatedAt.toDate(), { addSuffix: true })
-                : 'Recently'}
-            </p>
-          </Card>
-        )}
 
         {/* Coach/Admin Entries */}
         {adminEntries.length > 0 && (
@@ -336,6 +291,19 @@ export default function SessionDetailPage() {
             </div>
           </Card>
         )}
+
+        {/* Session Analytics */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-gray-700" />
+            <h3 className="text-lg font-bold">Session Analytics</h3>
+          </div>
+          <div className="text-center py-8">
+            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-600">Session analytics will be displayed here</p>
+            <p className="text-sm text-gray-500 mt-2">Performance metrics, trends, and insights coming soon...</p>
+          </div>
+        </Card>
       </div>
     </div>
   );
