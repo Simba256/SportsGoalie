@@ -9,8 +9,33 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
+import { RadioSelectField } from '@/components/charting/RadioSelectField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+
+// Helper functions to convert between yes/no fields and radio selection
+const getSelectedOption = (fields: Record<string, { value: boolean; comments: string }>): { value: string; comments: string } => {
+  const selected = Object.entries(fields).find(([_, field]) => field.value);
+  return {
+    value: selected ? selected[0] : '',
+    comments: selected ? selected[1].comments : Object.values(fields)[0]?.comments || '',
+  };
+};
+
+const updateRadioSelection = (
+  fields: Record<string, { value: boolean; comments: string }>,
+  selectedValue: string,
+  comments: string
+): Record<string, { value: boolean; comments: string }> => {
+  const updated: Record<string, { value: boolean; comments: string }> = {};
+  Object.keys(fields).forEach((key) => {
+    updated[key] = {
+      value: key === selectedValue,
+      comments: key === selectedValue ? comments : '',
+    };
+  });
+  return updated;
+};
 
 const createEmptyPeriodData = (): PeriodData => ({
   mindSet: {
@@ -184,6 +209,37 @@ export default function PeriodsPage() {
     }));
   };
 
+  const updateRadioGroup = (
+    period: 'period1' | 'period2' | 'period3',
+    section: string,
+    fieldGroup: Record<string, { value: boolean; comments: string }>,
+    selectedValue: string,
+    comments: string
+  ) => {
+    const setPeriodData = period === 'period1' ? setPeriod1Data : period === 'period2' ? setPeriod2Data : setPeriod3Data;
+
+    // Handle nested paths (e.g., "settingUpDefense.poor")
+    if (selectedValue.includes('.')) {
+      const [subsection, field] = selectedValue.split('.');
+      setPeriodData((prev: any) => ({
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [subsection]: updateRadioSelection(fieldGroup, field, comments),
+        },
+      }));
+    } else {
+      const updated = updateRadioSelection(fieldGroup, selectedValue, comments);
+      setPeriodData((prev: any) => ({
+        ...prev,
+        [section]: {
+          ...prev[section],
+          ...updated,
+        },
+      }));
+    }
+  };
+
   const renderPeriodForm = (period: 'period1' | 'period2' | 'period3') => {
     const data = period === 'period1' ? period1Data : period === 'period2' ? period2Data : period3Data;
     const isPeriod3 = period === 'period3';
@@ -194,47 +250,29 @@ export default function PeriodsPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Mind-Set</h3>
           <div className="space-y-4">
-            <YesNoField
-              label="Focus - Consistent"
-              value={data.mindSet.focusConsistent.value}
-              comments={data.mindSet.focusConsistent.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'focusConsistent', k, v)}
+            <RadioSelectField
+              label="Focus"
+              options={['focusConsistent', 'focusInconsistent']}
+              {...getSelectedOption({ focusConsistent: data.mindSet.focusConsistent, focusInconsistent: data.mindSet.focusInconsistent })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'mindSet', { focusConsistent: data.mindSet.focusConsistent, focusInconsistent: data.mindSet.focusInconsistent }, value, comments)
+              }
             />
-            <YesNoField
-              label="Focus - Inconsistent"
-              value={data.mindSet.focusInconsistent.value}
-              comments={data.mindSet.focusInconsistent.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'focusInconsistent', k, v)}
+            <RadioSelectField
+              label="Decision Making"
+              options={['decisionMakingStrong', 'decisionMakingImproving', 'decisionMakingNeedsWork']}
+              {...getSelectedOption({ decisionMakingStrong: data.mindSet.decisionMakingStrong, decisionMakingImproving: data.mindSet.decisionMakingImproving, decisionMakingNeedsWork: data.mindSet.decisionMakingNeedsWork })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'mindSet', { decisionMakingStrong: data.mindSet.decisionMakingStrong, decisionMakingImproving: data.mindSet.decisionMakingImproving, decisionMakingNeedsWork: data.mindSet.decisionMakingNeedsWork }, value, comments)
+              }
             />
-            <YesNoField
-              label="Decision Making - Strong"
-              value={data.mindSet.decisionMakingStrong.value}
-              comments={data.mindSet.decisionMakingStrong.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'decisionMakingStrong', k, v)}
-            />
-            <YesNoField
-              label="Decision Making - Improving"
-              value={data.mindSet.decisionMakingImproving.value}
-              comments={data.mindSet.decisionMakingImproving.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'decisionMakingImproving', k, v)}
-            />
-            <YesNoField
-              label="Decision Making - Needs Work"
-              value={data.mindSet.decisionMakingNeedsWork.value}
-              comments={data.mindSet.decisionMakingNeedsWork.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'decisionMakingNeedsWork', k, v)}
-            />
-            <YesNoField
-              label="Body Language - Consistent"
-              value={data.mindSet.bodyLanguageConsistent.value}
-              comments={data.mindSet.bodyLanguageConsistent.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'bodyLanguageConsistent', k, v)}
-            />
-            <YesNoField
-              label="Body Language - Inconsistent"
-              value={data.mindSet.bodyLanguageInconsistent.value}
-              comments={data.mindSet.bodyLanguageInconsistent.comments}
-              onChange={(k, v) => updateField(period, 'mindSet', 'bodyLanguageInconsistent', k, v)}
+            <RadioSelectField
+              label="Body Language"
+              options={['bodyLanguageConsistent', 'bodyLanguageInconsistent']}
+              {...getSelectedOption({ bodyLanguageConsistent: data.mindSet.bodyLanguageConsistent, bodyLanguageInconsistent: data.mindSet.bodyLanguageInconsistent })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'mindSet', { bodyLanguageConsistent: data.mindSet.bodyLanguageConsistent, bodyLanguageInconsistent: data.mindSet.bodyLanguageInconsistent }, value, comments)
+              }
             />
           </div>
         </Card>
@@ -243,29 +281,13 @@ export default function PeriodsPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Skating Performance</h3>
           <div className="space-y-4">
-            <YesNoField
-              label="In Sync With Puck"
-              value={data.skating.inSyncWithPuck.value}
-              comments={data.skating.inSyncWithPuck.comments}
-              onChange={(k, v) => updateField(period, 'skating', 'inSyncWithPuck', k, v)}
-            />
-            <YesNoField
-              label="Improving"
-              value={data.skating.improving.value}
-              comments={data.skating.improving.comments}
-              onChange={(k, v) => updateField(period, 'skating', 'improving', k, v)}
-            />
-            <YesNoField
-              label="Weak"
-              value={data.skating.weak.value}
-              comments={data.skating.weak.comments}
-              onChange={(k, v) => updateField(period, 'skating', 'weak', k, v)}
-            />
-            <YesNoField
-              label="Not In Sync"
-              value={data.skating.notInSync.value}
-              comments={data.skating.notInSync.comments}
-              onChange={(k, v) => updateField(period, 'skating', 'notInSync', k, v)}
+            <RadioSelectField
+              label="Skating"
+              options={['inSyncWithPuck', 'improving', 'weak', 'notInSync']}
+              {...getSelectedOption({ inSyncWithPuck: data.skating.inSyncWithPuck, improving: data.skating.improving, weak: data.skating.weak, notInSync: data.skating.notInSync })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'skating', { inSyncWithPuck: data.skating.inSyncWithPuck, improving: data.skating.improving, weak: data.skating.weak, notInSync: data.skating.notInSync }, value, comments)
+              }
             />
           </div>
         </Card>
@@ -274,23 +296,13 @@ export default function PeriodsPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Positional - Above Icing Line</h3>
           <div className="space-y-4">
-            <YesNoField
-              label="Poor"
-              value={data.positionalAboveIcing.poor.value}
-              comments={data.positionalAboveIcing.poor.comments}
-              onChange={(k, v) => updateField(period, 'positionalAboveIcing', 'poor', k, v)}
-            />
-            <YesNoField
-              label="Improving"
-              value={data.positionalAboveIcing.improving.value}
-              comments={data.positionalAboveIcing.improving.comments}
-              onChange={(k, v) => updateField(period, 'positionalAboveIcing', 'improving', k, v)}
-            />
-            <YesNoField
-              label="Good"
-              value={data.positionalAboveIcing.good.value}
-              comments={data.positionalAboveIcing.good.comments}
-              onChange={(k, v) => updateField(period, 'positionalAboveIcing', 'good', k, v)}
+            <RadioSelectField
+              label="Performance Level"
+              options={['poor', 'improving', 'good']}
+              {...getSelectedOption({ poor: data.positionalAboveIcing.poor, improving: data.positionalAboveIcing.improving, good: data.positionalAboveIcing.good })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'positionalAboveIcing', { poor: data.positionalAboveIcing.poor, improving: data.positionalAboveIcing.improving, good: data.positionalAboveIcing.good }, value, comments)
+              }
             />
           </div>
         </Card>
@@ -299,29 +311,13 @@ export default function PeriodsPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Positional - Below Icing Line</h3>
           <div className="space-y-4">
-            <YesNoField
-              label="Poor"
-              value={data.positionalBelowIcing.poor.value}
-              comments={data.positionalBelowIcing.poor.comments}
-              onChange={(k, v) => updateField(period, 'positionalBelowIcing', 'poor', k, v)}
-            />
-            <YesNoField
-              label="Improving"
-              value={data.positionalBelowIcing.improving.value}
-              comments={data.positionalBelowIcing.improving.comments}
-              onChange={(k, v) => updateField(period, 'positionalBelowIcing', 'improving', k, v)}
-            />
-            <YesNoField
-              label="Good"
-              value={data.positionalBelowIcing.good.value}
-              comments={data.positionalBelowIcing.good.comments}
-              onChange={(k, v) => updateField(period, 'positionalBelowIcing', 'good', k, v)}
-            />
-            <YesNoField
-              label="Strong"
-              value={data.positionalBelowIcing.strong.value}
-              comments={data.positionalBelowIcing.strong.comments}
-              onChange={(k, v) => updateField(period, 'positionalBelowIcing', 'strong', k, v)}
+            <RadioSelectField
+              label="Performance Level"
+              options={['poor', 'improving', 'good', 'strong']}
+              {...getSelectedOption({ poor: data.positionalBelowIcing.poor, improving: data.positionalBelowIcing.improving, good: data.positionalBelowIcing.good, strong: data.positionalBelowIcing.strong })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'positionalBelowIcing', { poor: data.positionalBelowIcing.poor, improving: data.positionalBelowIcing.improving, good: data.positionalBelowIcing.good, strong: data.positionalBelowIcing.strong }, value, comments)
+              }
             />
           </div>
         </Card>
@@ -330,35 +326,21 @@ export default function PeriodsPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Rebound Control</h3>
           <div className="space-y-4">
-            <YesNoField
-              label="Poor"
-              value={data.reboundControl.poor.value}
-              comments={data.reboundControl.poor.comments}
-              onChange={(k, v) => updateField(period, 'reboundControl', 'poor', k, v)}
+            <RadioSelectField
+              label="Quality"
+              options={['poor', 'improving', 'good']}
+              {...getSelectedOption({ poor: data.reboundControl.poor, improving: data.reboundControl.improving, good: data.reboundControl.good })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'reboundControl', { poor: data.reboundControl.poor, improving: data.reboundControl.improving, good: data.reboundControl.good }, value, comments)
+              }
             />
-            <YesNoField
-              label="Improving"
-              value={data.reboundControl.improving.value}
-              comments={data.reboundControl.improving.comments}
-              onChange={(k, v) => updateField(period, 'reboundControl', 'improving', k, v)}
-            />
-            <YesNoField
-              label="Good"
-              value={data.reboundControl.good.value}
-              comments={data.reboundControl.good.comments}
-              onChange={(k, v) => updateField(period, 'reboundControl', 'good', k, v)}
-            />
-            <YesNoField
-              label="Consistent"
-              value={data.reboundControl.consistent.value}
-              comments={data.reboundControl.consistent.comments}
-              onChange={(k, v) => updateField(period, 'reboundControl', 'consistent', k, v)}
-            />
-            <YesNoField
-              label="Inconsistent"
-              value={data.reboundControl.inconsistent.value}
-              comments={data.reboundControl.inconsistent.comments}
-              onChange={(k, v) => updateField(period, 'reboundControl', 'inconsistent', k, v)}
+            <RadioSelectField
+              label="Consistency"
+              options={['consistent', 'inconsistent']}
+              {...getSelectedOption({ consistent: data.reboundControl.consistent, inconsistent: data.reboundControl.inconsistent })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'reboundControl', { consistent: data.reboundControl.consistent, inconsistent: data.reboundControl.inconsistent }, value, comments)
+              }
             />
           </div>
         </Card>
@@ -367,35 +349,21 @@ export default function PeriodsPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Freezing Puck</h3>
           <div className="space-y-4">
-            <YesNoField
-              label="Poor"
-              value={data.freezingPuck.poor.value}
-              comments={data.freezingPuck.poor.comments}
-              onChange={(k, v) => updateField(period, 'freezingPuck', 'poor', k, v)}
+            <RadioSelectField
+              label="Quality"
+              options={['poor', 'improving', 'good']}
+              {...getSelectedOption({ poor: data.freezingPuck.poor, improving: data.freezingPuck.improving, good: data.freezingPuck.good })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'freezingPuck', { poor: data.freezingPuck.poor, improving: data.freezingPuck.improving, good: data.freezingPuck.good }, value, comments)
+              }
             />
-            <YesNoField
-              label="Improving"
-              value={data.freezingPuck.improving.value}
-              comments={data.freezingPuck.improving.comments}
-              onChange={(k, v) => updateField(period, 'freezingPuck', 'improving', k, v)}
-            />
-            <YesNoField
-              label="Good"
-              value={data.freezingPuck.good.value}
-              comments={data.freezingPuck.good.comments}
-              onChange={(k, v) => updateField(period, 'freezingPuck', 'good', k, v)}
-            />
-            <YesNoField
-              label="Consistent"
-              value={data.freezingPuck.consistent.value}
-              comments={data.freezingPuck.consistent.comments}
-              onChange={(k, v) => updateField(period, 'freezingPuck', 'consistent', k, v)}
-            />
-            <YesNoField
-              label="Inconsistent"
-              value={data.freezingPuck.inconsistent.value}
-              comments={data.freezingPuck.inconsistent.comments}
-              onChange={(k, v) => updateField(period, 'freezingPuck', 'inconsistent', k, v)}
+            <RadioSelectField
+              label="Consistency"
+              options={['consistent', 'inconsistent']}
+              {...getSelectedOption({ consistent: data.freezingPuck.consistent, inconsistent: data.freezingPuck.inconsistent })}
+              onChange={(value: string, comments: string) =>
+                updateRadioGroup(period, 'freezingPuck', { consistent: data.freezingPuck.consistent, inconsistent: data.freezingPuck.inconsistent }, value, comments)
+              }
             />
           </div>
         </Card>
@@ -404,53 +372,23 @@ export default function PeriodsPage() {
         {isPeriod3 && data.teamPlay && (
           <Card className="p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Team Play</h3>
-            <div className="space-y-6">
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-3">Setting Up Defense</h4>
-                <div className="space-y-4">
-                  <YesNoField
-                    label="Poor"
-                    value={data.teamPlay.settingUpDefense.poor.value}
-                    comments={data.teamPlay.settingUpDefense.poor.comments}
-                    onChange={(k, v) => updateField(period, 'teamPlay', 'settingUpDefense', k, v)}
-                  />
-                  <YesNoField
-                    label="Improving"
-                    value={data.teamPlay.settingUpDefense.improving.value}
-                    comments={data.teamPlay.settingUpDefense.improving.comments}
-                    onChange={(k, v) => updateField(period, 'teamPlay', 'settingUpDefense', k, v)}
-                  />
-                  <YesNoField
-                    label="Good"
-                    value={data.teamPlay.settingUpDefense.good.value}
-                    comments={data.teamPlay.settingUpDefense.good.comments}
-                    onChange={(k, v) => updateField(period, 'teamPlay', 'settingUpDefense', k, v)}
-                  />
-                </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-3">Setting Up Forwards</h4>
-                <div className="space-y-4">
-                  <YesNoField
-                    label="Poor"
-                    value={data.teamPlay.settingUpForwards.poor.value}
-                    comments={data.teamPlay.settingUpForwards.poor.comments}
-                    onChange={(k, v) => updateField(period, 'teamPlay', 'settingUpForwards', k, v)}
-                  />
-                  <YesNoField
-                    label="Improving"
-                    value={data.teamPlay.settingUpForwards.improving.value}
-                    comments={data.teamPlay.settingUpForwards.improving.comments}
-                    onChange={(k, v) => updateField(period, 'teamPlay', 'settingUpForwards', k, v)}
-                  />
-                  <YesNoField
-                    label="Good"
-                    value={data.teamPlay.settingUpForwards.good.value}
-                    comments={data.teamPlay.settingUpForwards.good.comments}
-                    onChange={(k, v) => updateField(period, 'teamPlay', 'settingUpForwards', k, v)}
-                  />
-                </div>
-              </div>
+            <div className="space-y-4">
+              <RadioSelectField
+                label="Setting Up Defense"
+                options={['poor', 'improving', 'good']}
+                {...getSelectedOption({ poor: data.teamPlay.settingUpDefense.poor, improving: data.teamPlay.settingUpDefense.improving, good: data.teamPlay.settingUpDefense.good })}
+                onChange={(value: string, comments: string) =>
+                  updateRadioGroup(period, 'teamPlay', { poor: data.teamPlay.settingUpDefense.poor, improving: data.teamPlay.settingUpDefense.improving, good: data.teamPlay.settingUpDefense.good }, `settingUpDefense.${value}`, comments)
+                }
+              />
+              <RadioSelectField
+                label="Setting Up Forwards"
+                options={['poor', 'improving', 'good']}
+                {...getSelectedOption({ poor: data.teamPlay.settingUpForwards.poor, improving: data.teamPlay.settingUpForwards.improving, good: data.teamPlay.settingUpForwards.good })}
+                onChange={(value: string, comments: string) =>
+                  updateRadioGroup(period, 'teamPlay', { poor: data.teamPlay.settingUpForwards.poor, improving: data.teamPlay.settingUpForwards.improving, good: data.teamPlay.settingUpForwards.good }, `settingUpForwards.${value}`, comments)
+                }
+              />
             </div>
           </Card>
         )}
