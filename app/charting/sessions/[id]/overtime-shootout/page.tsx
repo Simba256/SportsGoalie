@@ -229,7 +229,7 @@ export default function OvertimeShootoutPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <Button variant="outline" size="icon" onClick={() => router.push(`/charting/sessions/${sessionId}`)}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
