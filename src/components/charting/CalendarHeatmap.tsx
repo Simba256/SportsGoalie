@@ -105,13 +105,13 @@ export const CalendarHeatmap = ({ sessions, onDayClick }: CalendarHeatmapProps) 
       {/* Heatmap Grid - Horizontal Layout */}
       <div className="overflow-x-auto pb-4">
         <div className="inline-flex flex-col gap-1 min-w-max">
-          {/* Month labels */}
-          <div className="flex gap-1 mb-1 ml-8">
+          {/* Month labels - positioned relative to weeks */}
+          <div className="relative h-5 ml-8 mb-1">
             {monthLabels.map((month) => (
               <div
                 key={month.weekIndex}
-                className="text-xs text-gray-500"
-                style={{ marginLeft: `${month.weekIndex * 16}px` }}
+                className="absolute text-xs text-gray-500"
+                style={{ left: `${month.weekIndex * 16}px` }}
               >
                 {month.label}
               </div>
