@@ -199,46 +199,64 @@ export default function SessionDetailPage() {
 
             {/* Game Overview */}
             <div
-              className="relative p-4 border-2 rounded-lg cursor-not-allowed opacity-50 border-gray-200 bg-gray-50"
+              onClick={() => router.push(`/charting/sessions/${sessionId}/game-overview`)}
+              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                myEntry?.gameOverview
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-300 hover:border-blue-400'
+              }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <ClipboardCheck className="w-5 h-5 text-gray-400" />
+                  <ClipboardCheck className={`w-5 h-5 ${myEntry?.gameOverview ? 'text-green-600' : 'text-gray-600'}`} />
                   <div>
-                    <p className="font-semibold text-gray-600">Game Overview</p>
-                    <p className="text-xs text-gray-400">Coming soon</p>
+                    <p className="font-semibold text-gray-900">Game Overview</p>
+                    <p className="text-xs text-gray-500">Goals & challenge rating</p>
                   </div>
                 </div>
+                {myEntry?.gameOverview && <CheckCircle className="w-5 h-5 text-green-600" />}
               </div>
             </div>
 
             {/* Periods */}
             <div
-              className="relative p-4 border-2 rounded-lg cursor-not-allowed opacity-50 border-gray-200 bg-gray-50"
+              onClick={() => router.push(`/charting/sessions/${sessionId}/periods`)}
+              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                myEntry?.period1 || myEntry?.period2 || myEntry?.period3
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-300 hover:border-blue-400'
+              }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <ClipboardCheck className="w-5 h-5 text-gray-400" />
+                  <ClipboardCheck className={`w-5 h-5 ${(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) ? 'text-green-600' : 'text-gray-600'}`} />
                   <div>
-                    <p className="font-semibold text-gray-600">Periods (1, 2, 3)</p>
-                    <p className="text-xs text-gray-400">Coming soon</p>
+                    <p className="font-semibold text-gray-900">Periods (1, 2, 3)</p>
+                    <p className="text-xs text-gray-500">Performance per period</p>
                   </div>
                 </div>
+                {(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) && <CheckCircle className="w-5 h-5 text-green-600" />}
               </div>
             </div>
 
             {/* Overtime & Shootout */}
             <div
-              className="relative p-4 border-2 rounded-lg cursor-not-allowed opacity-50 border-gray-200 bg-gray-50"
+              onClick={() => router.push(`/charting/sessions/${sessionId}/overtime-shootout`)}
+              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                myEntry?.overtime || myEntry?.shootout
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-300 hover:border-blue-400'
+              }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <ClipboardCheck className="w-5 h-5 text-gray-400" />
+                  <ClipboardCheck className={`w-5 h-5 ${(myEntry?.overtime || myEntry?.shootout) ? 'text-green-600' : 'text-gray-600'}`} />
                   <div>
-                    <p className="font-semibold text-gray-600">Overtime & Shootout</p>
-                    <p className="text-xs text-gray-400">Coming soon</p>
+                    <p className="font-semibold text-gray-900">Overtime & Shootout</p>
+                    <p className="text-xs text-gray-500">Extended play stats</p>
                   </div>
                 </div>
+                {(myEntry?.overtime || myEntry?.shootout) && <CheckCircle className="w-5 h-5 text-green-600" />}
               </div>
             </div>
 
