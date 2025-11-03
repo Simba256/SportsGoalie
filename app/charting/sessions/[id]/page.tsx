@@ -15,6 +15,7 @@ import {
   MapPin,
   Users,
   ClipboardCheck,
+  CheckCircle,
   BarChart3,
   Edit,
   Trash2,
