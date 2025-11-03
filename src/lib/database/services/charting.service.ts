@@ -19,7 +19,7 @@ import {
   ApiResponse,
   PaginatedResponse,
 } from '@/types';
-import { Timestamp, query, where, orderBy, limit as firestoreLimit, getDocs, collection } from 'firebase/firestore';
+import { Timestamp, query, where, orderBy, limit as firestoreLimit, getDocs, collection, doc, setDoc } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { db } from '../../firebase/config';
 
@@ -449,8 +449,9 @@ export class ChartingService extends BaseDatabaseService {
         lastCalculated: Timestamp.now(),
       };
 
-      // Store analytics
-      await this.update(this.ANALYTICS_COLLECTION, studentId, analytics);
+      // Store analytics (create or update using setDoc with merge)
+      const analyticsRef = doc(db, this.ANALYTICS_COLLECTION, studentId);
+      await setDoc(analyticsRef, analytics, { merge: true });
 
       return {
         success: true,
