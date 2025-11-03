@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
+import { toast } from 'sonner';
 
 const createEmptyOvertimeData = (): OvertimeData => ({
   mindSetFocus: {
@@ -104,7 +105,7 @@ export default function OvertimeShootoutPage() {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      alert('Failed to load session data');
+      toast.error('Failed to load session data');
     } finally {
       setLoading(false);
     }
@@ -132,7 +133,7 @@ export default function OvertimeShootoutPage() {
 
       if (existingEntry) {
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
-        alert('Overtime/Shootout data saved successfully!');
+        toast.success('Overtime/Shootout data saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
@@ -142,12 +143,12 @@ export default function OvertimeShootoutPage() {
             setExistingEntry(newEntryResult.data);
           }
         }
-        alert('Overtime/Shootout data created successfully!');
+        toast.success('Overtime/Shootout data created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
-      alert('Failed to save data');
+      toast.error('Failed to save data');
     } finally {
       setSaving(false);
     }

@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const createEmptyGoalsByPeriod = (): GoalsByPeriod => ({
   period1: 0,
@@ -69,7 +70,7 @@ export default function GameOverviewPage() {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      alert('Failed to load session data');
+      toast.error('Failed to load session data');
     } finally {
       setLoading(false);
     }
@@ -91,7 +92,7 @@ export default function GameOverviewPage() {
 
       if (existingEntry) {
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
-        alert('Game Overview saved successfully!');
+        toast.success('Game Overview saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
@@ -101,12 +102,12 @@ export default function GameOverviewPage() {
             setExistingEntry(newEntryResult.data);
           }
         }
-        alert('Game Overview created successfully!');
+        toast.success('Game Overview created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
-      alert('Failed to save data');
+      toast.error('Failed to save data');
     } finally {
       setSaving(false);
     }

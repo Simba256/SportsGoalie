@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
+import { toast } from 'sonner';
 
 export default function PreGamePage() {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ export default function PreGamePage() {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      alert('Failed to load session data');
+      toast.error('Failed to load session data');
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export default function PreGamePage() {
 
       if (existingEntry) {
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
-        alert('Pre-Game section saved successfully!');
+        toast.success('Pre-Game section saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
@@ -103,12 +104,12 @@ export default function PreGamePage() {
             setExistingEntry(newEntryResult.data);
           }
         }
-        alert('Pre-Game section created successfully!');
+        toast.success('Pre-Game section created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
-      alert('Failed to save data');
+      toast.error('Failed to save data');
     } finally {
       setSaving(false);
     }

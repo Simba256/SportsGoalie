@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
 const createEmptyPeriodData = (): PeriodData => ({
   mindSet: {
@@ -117,7 +118,7 @@ export default function PeriodsPage() {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      alert('Failed to load session data');
+      toast.error('Failed to load session data');
     } finally {
       setLoading(false);
     }
@@ -141,7 +142,7 @@ export default function PeriodsPage() {
 
       if (existingEntry) {
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
-        alert('Periods data saved successfully!');
+        toast.success('Periods data saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
@@ -151,12 +152,12 @@ export default function PeriodsPage() {
             setExistingEntry(newEntryResult.data);
           }
         }
-        alert('Periods data created successfully!');
+        toast.success('Periods data created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
-      alert('Failed to save data');
+      toast.error('Failed to save data');
     } finally {
       setSaving(false);
     }
