@@ -57,12 +57,12 @@ export default function SessionDetailPage() {
     }
   }, [sessionId]);
 
-  // Always reload on mount and when dependencies change
+  // Always reload on mount and when dependencies change (including pathname for route changes)
   useEffect(() => {
     if (user) {
       loadSessionData();
     }
-  }, [sessionId, user, refreshKey, loadSessionData]);
+  }, [sessionId, user, refreshKey, loadSessionData, pathname]);
 
   // Reload data when window gains focus (user returns to page/tab)
   useEffect(() => {
