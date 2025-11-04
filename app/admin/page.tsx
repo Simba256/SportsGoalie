@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, Database } from 'lucide-react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { analyticsService, PlatformAnalytics } from '@/lib/database/services/analytics.service';
-import { seedCourses } from '@/lib/database/seeding/seed-courses';
 import { toast } from 'sonner';
 import { TokenDiagnostic } from '@/components/admin/token-diagnostic';
 
@@ -26,7 +25,6 @@ function AdminDashboardContent() {
   const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
   const fetchAnalytics = async (showRefreshToast = false) => {
     try {
@@ -62,19 +60,6 @@ function AdminDashboardContent() {
   const handleRefresh = () => {
     analyticsService.clearCache();
     fetchAnalytics(true);
-  };
-
-  const handleSeedCourses = async () => {
-    setSeeding(true);
-    try {
-      await seedCourses();
-      toast.success('Courses seeded successfully!');
-    } catch (error) {
-      console.error('Error seeding courses:', error);
-      toast.error('Failed to seed courses');
-    } finally {
-      setSeeding(false);
-    }
   };
 
   return (
@@ -307,24 +292,6 @@ function AdminDashboardContent() {
                 </Link>
               </div>
 
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Database className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Seed Course Data</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Initialize the courses collection with sample data
-                  </p>
-                </div>
-                <Button
-                  onClick={handleSeedCourses}
-                  disabled={seeding}
-                  variant="warning"
-                >
-                  {seeding ? 'Seeding...' : 'Seed Courses'}
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
