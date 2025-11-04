@@ -155,7 +155,7 @@ export default function PeriodsPage() {
     try {
       setSaving(true);
 
-      const entryData = {
+      const entryData: any = {
         sessionId: session.id,
         studentId: session.studentId,
         submittedBy: user.id,
@@ -165,7 +165,15 @@ export default function PeriodsPage() {
         period3: period3Data,
       };
 
+      // Preserve existing data from other sections
       if (existingEntry) {
+        if (existingEntry.preGame) entryData.preGame = existingEntry.preGame;
+        if (existingEntry.gameOverview) entryData.gameOverview = existingEntry.gameOverview;
+        if (existingEntry.overtime) entryData.overtime = existingEntry.overtime;
+        if (existingEntry.shootout) entryData.shootout = existingEntry.shootout;
+        if (existingEntry.postGame) entryData.postGame = existingEntry.postGame;
+        if (existingEntry.additionalComments) entryData.additionalComments = existingEntry.additionalComments;
+
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
         toast.success('Periods data saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);

@@ -82,7 +82,7 @@ export default function GameOverviewPage() {
     try {
       setSaving(true);
 
-      const entryData = {
+      const entryData: any = {
         sessionId: session.id,
         studentId: session.studentId,
         submittedBy: user.id,
@@ -90,7 +90,17 @@ export default function GameOverviewPage() {
         gameOverview: formData,
       };
 
+      // Preserve existing data from other sections
       if (existingEntry) {
+        if (existingEntry.preGame) entryData.preGame = existingEntry.preGame;
+        if (existingEntry.period1) entryData.period1 = existingEntry.period1;
+        if (existingEntry.period2) entryData.period2 = existingEntry.period2;
+        if (existingEntry.period3) entryData.period3 = existingEntry.period3;
+        if (existingEntry.overtime) entryData.overtime = existingEntry.overtime;
+        if (existingEntry.shootout) entryData.shootout = existingEntry.shootout;
+        if (existingEntry.postGame) entryData.postGame = existingEntry.postGame;
+        if (existingEntry.additionalComments) entryData.additionalComments = existingEntry.additionalComments;
+
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
         toast.success('Game Overview saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);

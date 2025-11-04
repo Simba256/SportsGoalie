@@ -151,11 +151,19 @@ export default function OvertimeShootoutPage() {
         submitterRole: (user.role || 'student') as 'student' | 'admin',
       };
 
+      // Always include overtime/shootout data if it exists or if checkbox is checked
       if (hasOvertime) {
         entryData.overtime = overtimeData;
+      } else if (existingEntry?.overtime) {
+        // Preserve existing overtime data if checkbox is not checked
+        entryData.overtime = existingEntry.overtime;
       }
+
       if (hasShootout) {
         entryData.shootout = shootoutData;
+      } else if (existingEntry?.shootout) {
+        // Preserve existing shootout data if checkbox is not checked
+        entryData.shootout = existingEntry.shootout;
       }
 
       if (existingEntry) {
