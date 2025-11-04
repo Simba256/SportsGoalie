@@ -24,8 +24,24 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: Calen
     return acc;
   }, {} as Record<string, Session[]>);
 
-  // Create a set of session IDs that have charting entries
-  const sessionIdsWithEntries = new Set(chartingEntries.map(entry => entry.sessionId));
+  // Helper function to check if a charting entry is fully complete
+  const isEntryComplete = (entry: any): boolean => {
+    if (!entry) return false;
+
+    // Required sections for a complete entry
+    const hasPreGame = !!entry.preGame;
+    const hasGameOverview = !!entry.gameOverview;
+    const hasPeriods = !!entry.period1 && !!entry.period2 && !!entry.period3;
+    const hasPostGame = !!entry.postGame;
+
+    return hasPreGame && hasGameOverview && hasPeriods && hasPostGame;
+  };
+
+  // Group charting entries by session ID
+  const entriesBySession = chartingEntries.reduce((acc, entry) => {
+    acc[entry.sessionId] = entry;
+    return acc;
+  }, {} as Record<string, any>);
 
   // Calculate completion level for a date
   const getCompletionLevel = (date: Date): number => {
@@ -34,13 +50,30 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: Calen
 
     if (!daySessions || daySessions.length === 0) return 0;
 
-    // Count how many sessions have charting entries
-    const chartedCount = daySessions.filter(s => sessionIdsWithEntries.has(s.id)).length;
+    let fullyCompleteCount = 0;
+    let partiallyCompleteCount = 0;
+
+    daySessions.forEach(session => {
+      const entry = entriesBySession[session.id];
+      if (entry) {
+        if (isEntryComplete(entry)) {
+          fullyCompleteCount++;
+        } else {
+          partiallyCompleteCount++;
+        }
+      }
+    });
+
     const totalCount = daySessions.length;
 
-    if (chartedCount === 0) return 1; // Scheduled but not charted
-    if (chartedCount === totalCount) return 3; // All charted
-    return 2; // Partially charted
+    // No entries at all
+    if (fullyCompleteCount === 0 && partiallyCompleteCount === 0) return 1; // Scheduled but not charted
+
+    // All sessions fully complete
+    if (fullyCompleteCount === totalCount) return 3; // Complete
+
+    // Some sessions have entries (partial or complete, but not all complete)
+    return 2; // Partial
   };
 
   // Get background color based on completion level
