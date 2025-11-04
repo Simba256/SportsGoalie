@@ -1193,25 +1193,16 @@ function AdminChartingContent() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex gap-2">
-                              {entry && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
-                                >
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Entry
-                                </Button>
-                              )}
+                            {entry && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/charting/sessions/${session.id}`)}
+                                onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
                               >
-                                View Session
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Details
                               </Button>
-                            </div>
+                            )}
                           </div>
                         );
                       })}
