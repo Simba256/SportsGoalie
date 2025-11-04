@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { chartingService } from '@/lib/database';
-import { ChartingEntry, Session } from '@/types';
+import { chartingService, userService } from '@/lib/database';
+import { ChartingEntry, Session, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,7 @@ function AdminChartingContent() {
   const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [allEntries, setAllEntries] = useState<ChartingEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<ChartingEntry[]>([]);
+  const [users, setUsers] = useState<Map<string, User>>(new Map());
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<string>('all');
@@ -71,6 +72,21 @@ function AdminChartingContent() {
       if (entriesResult.success && entriesResult.data) {
         setAllEntries(entriesResult.data);
         setFilteredEntries(entriesResult.data);
+
+        // Load user data for all unique students
+        const uniqueStudentIds = Array.from(new Set(entriesResult.data.map((e) => e.studentId)));
+        const userMap = new Map<string, User>();
+
+        await Promise.all(
+          uniqueStudentIds.map(async (studentId) => {
+            const userResult = await userService.getUser(studentId);
+            if (userResult.success && userResult.data) {
+              userMap.set(studentId, userResult.data);
+            }
+          })
+        );
+
+        setUsers(userMap);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -131,6 +147,15 @@ function AdminChartingContent() {
 
   // Get unique students
   const uniqueStudents = Array.from(new Set(allEntries.map((e) => e.studentId)));
+
+  // Helper to get student display name
+  const getStudentName = (studentId: string): string => {
+    const user = users.get(studentId);
+    if (user) {
+      return user.displayName || user.email || `Student ${studentId.slice(-6)}`;
+    }
+    return `Student ${studentId.slice(-6)}`;
+  };
 
   // Calculate comprehensive stats
   const calculateGoalsStats = () => {
@@ -544,7 +569,7 @@ function AdminChartingContent() {
                   <SelectItem value="all">All Students ({uniqueStudents.length})</SelectItem>
                   {uniqueStudents.map((studentId) => (
                     <SelectItem key={studentId} value={studentId}>
-                      Student {studentId.slice(-6)}
+                      {getStudentName(studentId)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1092,7 +1117,7 @@ function AdminChartingContent() {
                                 : 'Unknown date'}
                             </span>
                             {session?.location && <span>📍 {session.location}</span>}
-                            <span>👤 Student {entry.studentId.slice(-6)}</span>
+                            <span>👤 {getStudentName(entry.studentId)}</span>
                             <span>
                               Submitted{' '}
                               {entry.submittedAt?.toDate
