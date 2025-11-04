@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminRoute } from '@/components/auth/protected-route';
+import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import {
   BarChart3,
   TrendingUp,
@@ -25,7 +26,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { startOfWeek, startOfMonth, subMonths, isAfter } from 'date-fns';
+import { startOfWeek, startOfMonth, subMonths, isAfter, format, startOfDay } from 'date-fns';
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
 
@@ -47,6 +48,11 @@ function AdminChartingContent() {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<string>('all');
+
+  // For All Entries tab
+  const [entriesTabStudent, setEntriesTabStudent] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDateSessions, setSelectedDateSessions] = useState<Session[]>([]);
 
   useEffect(() => {
     loadData();
@@ -155,6 +161,24 @@ function AdminChartingContent() {
       return user.displayName || user.email || `Student ${studentId.slice(-6)}`;
     }
     return `Student ${studentId.slice(-6)}`;
+  };
+
+  // Get sessions and entries for selected student in entries tab
+  const getEntriesTabData = () => {
+    if (!entriesTabStudent) {
+      return { sessions: [], entries: [] };
+    }
+
+    const studentSessions = allSessions.filter((s) => s.studentId === entriesTabStudent);
+    const studentEntries = allEntries.filter((e) => e.studentId === entriesTabStudent);
+
+    return { sessions: studentSessions, entries: studentEntries };
+  };
+
+  // Handle day click on heatmap
+  const handleDayClick = (date: Date, sessions: Session[]) => {
+    setSelectedDate(date);
+    setSelectedDateSessions(sessions);
   };
 
   // Calculate comprehensive stats
@@ -1073,89 +1097,162 @@ function AdminChartingContent() {
           </TabsContent>
 
           {/* All Entries Tab */}
-          <TabsContent value="entries">
+          <TabsContent value="entries" className="space-y-6">
+            {/* Step 1: Select Student */}
             <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                All Charting Entries ({filteredEntries.length})
-              </h2>
-
-              <div className="space-y-3">
-                {filteredEntries.length === 0 ? (
-                  <div className="text-center py-12">
-                    <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600">No charting entries found</p>
-                    <p className="text-sm text-gray-500 mt-2">Try adjusting your filters</p>
-                  </div>
-                ) : (
-                  filteredEntries.map((entry) => {
-                    const session = allSessions.find((s) => s.id === entry.sessionId);
-                    const isComplete = !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
-
-                    return (
-                      <div
-                        key={entry.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">
-                              {session?.type === 'game' ? '🥅' : '🏒'}{' '}
-                              {session?.opponent || 'Practice Session'}
-                            </h3>
-                            <Badge variant={isComplete ? 'default' : 'secondary'}>
-                              {isComplete ? 'Complete' : 'Partial'}
-                            </Badge>
-                            {entry.submitterRole === 'admin' && (
-                              <Badge variant="outline">Admin Entry</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span>
-                              📅{' '}
-                              {session?.date.toDate
-                                ? session.date.toDate().toLocaleDateString()
-                                : 'Unknown date'}
-                            </span>
-                            {session?.location && <span>📍 {session.location}</span>}
-                            <span>👤 {getStudentName(entry.studentId)}</span>
-                            <span>
-                              Submitted{' '}
-                              {entry.submittedAt?.toDate
-                                ? entry.submittedAt.toDate().toLocaleDateString()
-                                : 'Unknown'}
-                            </span>
-                          </div>
-                          {entry.gameOverview && (
-                            <div className="flex items-center gap-4 text-sm mt-2">
-                              <span className="text-green-600">
-                                ✅ Good Goals:{' '}
-                                {(entry.gameOverview.goodGoals.period1 || 0) +
-                                  (entry.gameOverview.goodGoals.period2 || 0) +
-                                  (entry.gameOverview.goodGoals.period3 || 0)}
-                              </span>
-                              <span className="text-red-600">
-                                ❌ Bad Goals:{' '}
-                                {(entry.gameOverview.badGoals.period1 || 0) +
-                                  (entry.gameOverview.badGoals.period2 || 0) +
-                                  (entry.gameOverview.badGoals.period3 || 0)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </Button>
-                      </div>
-                    );
-                  })
-                )}
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Select Student</h2>
+              <div className="max-w-md">
+                <Select value={entriesTabStudent} onValueChange={setEntriesTabStudent}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a student to view their sessions..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueStudents.map((studentId) => (
+                      <SelectItem key={studentId} value={studentId}>
+                        {getStudentName(studentId)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </Card>
+
+            {/* Step 2: Show Calendar and Sessions */}
+            {entriesTabStudent && (
+              <>
+                {/* Calendar Heatmap */}
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    Session Calendar - {getStudentName(entriesTabStudent)}
+                  </h2>
+                  <CalendarHeatmap
+                    sessions={getEntriesTabData().sessions}
+                    chartingEntries={getEntriesTabData().entries}
+                    onDayClick={handleDayClick}
+                  />
+                </Card>
+
+                {/* Sessions for Selected Date */}
+                {selectedDate && selectedDateSessions.length > 0 && (
+                  <Card className="p-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                      Sessions on {format(selectedDate, 'MMMM d, yyyy')}
+                    </h2>
+                    <div className="space-y-3">
+                      {selectedDateSessions.map((session) => {
+                        const entry = allEntries.find((e) => e.sessionId === session.id);
+                        const isComplete = entry && !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
+
+                        return (
+                          <div
+                            key={session.id}
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="font-semibold text-gray-900">
+                                  {session.type === 'game' ? '🥅' : '🏒'}{' '}
+                                  {session.opponent || 'Practice Session'}
+                                </h3>
+                                {entry ? (
+                                  <Badge variant={isComplete ? 'default' : 'secondary'}>
+                                    {isComplete ? 'Complete' : 'Partial'}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline">Not Charted</Badge>
+                                )}
+                                {entry?.submitterRole === 'admin' && (
+                                  <Badge variant="outline">Admin Entry</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                {session.location && <span>📍 {session.location}</span>}
+                                {entry && (
+                                  <span>
+                                    Submitted{' '}
+                                    {entry.submittedAt?.toDate
+                                      ? entry.submittedAt.toDate().toLocaleDateString()
+                                      : 'Unknown'}
+                                  </span>
+                                )}
+                              </div>
+                              {entry?.gameOverview && (
+                                <div className="flex items-center gap-4 text-sm mt-2">
+                                  <span className="text-green-600">
+                                    ✅ Good Goals:{' '}
+                                    {(entry.gameOverview.goodGoals.period1 || 0) +
+                                      (entry.gameOverview.goodGoals.period2 || 0) +
+                                      (entry.gameOverview.goodGoals.period3 || 0)}
+                                  </span>
+                                  <span className="text-red-600">
+                                    ❌ Bad Goals:{' '}
+                                    {(entry.gameOverview.badGoals.period1 || 0) +
+                                      (entry.gameOverview.badGoals.period2 || 0) +
+                                      (entry.gameOverview.badGoals.period3 || 0)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              {entry && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Entry
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.push(`/charting/sessions/${session.id}`)}
+                              >
+                                View Session
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Empty state when date selected but no sessions */}
+                {selectedDate && selectedDateSessions.length === 0 && (
+                  <Card className="p-12 text-center">
+                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Sessions</h3>
+                    <p className="text-gray-600">
+                      No sessions found for {format(selectedDate, 'MMMM d, yyyy')}
+                    </p>
+                  </Card>
+                )}
+
+                {/* Helper text when no date selected */}
+                {!selectedDate && (
+                  <Card className="p-12 text-center">
+                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a Date</h3>
+                    <p className="text-gray-600">
+                      Click on a day in the calendar above to view sessions for that date
+                    </p>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {/* Empty state when no student selected */}
+            {!entriesTabStudent && (
+              <Card className="p-12 text-center">
+                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Started</h3>
+                <p className="text-gray-600 mb-4">
+                  Select a student above to view their charting calendar and sessions
+                </p>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
