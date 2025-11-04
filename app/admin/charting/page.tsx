@@ -147,10 +147,6 @@ function AdminChartingContent() {
 
     const avgGoodGoals = totalGoodGoals / withOverview.length;
     const avgBadGoals = totalBadGoals / withOverview.length;
-    const avgChallenge =
-      withOverview.reduce((sum, e) => {
-        return sum + ((e.gameOverview?.degreeOfChallenge.period1 || 0) + (e.gameOverview?.degreeOfChallenge.period2 || 0) + (e.gameOverview?.degreeOfChallenge.period3 || 0)) / 3;
-      }, 0) / withOverview.length;
 
     // Calculate trend
     const midPoint = Math.floor(withOverview.length / 2);
@@ -169,10 +165,204 @@ function AdminChartingContent() {
     return {
       avgGoodGoals: avgGoodGoals.toFixed(1),
       avgBadGoals: avgBadGoals.toFixed(1),
-      avgChallenge: avgChallenge.toFixed(1),
       totalGames: withOverview.length,
       improvement: improvement.toFixed(0),
       trend: improvement > 5 ? 'up' : improvement < -5 ? 'down' : 'stable',
+    };
+  };
+
+  const calculateChallengeStats = () => {
+    const withOverview = filteredEntries.filter((e) => e.gameOverview);
+    if (withOverview.length === 0) return null;
+
+    const avgChallenge =
+      withOverview.reduce((sum, e) => {
+        return (
+          sum +
+          ((e.gameOverview?.degreeOfChallenge.period1 || 0) +
+            (e.gameOverview?.degreeOfChallenge.period2 || 0) +
+            (e.gameOverview?.degreeOfChallenge.period3 || 0)) /
+            3
+        );
+      }, 0) / withOverview.length;
+
+    // Calculate consistency (standard deviation)
+    const challenges = withOverview.map(
+      (e) =>
+        ((e.gameOverview?.degreeOfChallenge.period1 || 0) +
+          (e.gameOverview?.degreeOfChallenge.period2 || 0) +
+          (e.gameOverview?.degreeOfChallenge.period3 || 0)) /
+        3
+    );
+
+    const variance =
+      challenges.reduce((sum, c) => sum + Math.pow(c - avgChallenge, 2), 0) /
+      challenges.length;
+    const stdDev = Math.sqrt(variance);
+
+    return {
+      avgChallenge: avgChallenge.toFixed(1),
+      consistency: stdDev < 1 ? 'High' : stdDev < 2 ? 'Medium' : 'Low',
+      stdDev: stdDev.toFixed(1),
+    };
+  };
+
+  const calculateFocusConsistency = () => {
+    const periods = [
+      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const consistentCount = periods.filter(
+      (p: any) => p?.mindSet?.focusConsistent?.value
+    ).length;
+    const inconsistentCount = periods.filter(
+      (p: any) => p?.mindSet?.focusInconsistent?.value
+    ).length;
+
+    const total = consistentCount + inconsistentCount;
+    const percentage = total > 0 ? (consistentCount / total) * 100 : 0;
+
+    // Calculate trend
+    const midPoint = Math.floor(periods.length / 2);
+    const firstHalf = periods.slice(0, midPoint);
+    const secondHalf = periods.slice(midPoint);
+
+    const firstHalfConsistent =
+      firstHalf.filter((p: any) => p?.mindSet?.focusConsistent?.value).length /
+      (firstHalf.length || 1);
+    const secondHalfConsistent =
+      secondHalf.filter((p: any) => p?.mindSet?.focusConsistent?.value).length /
+      (secondHalf.length || 1);
+
+    const trend =
+      secondHalfConsistent > firstHalfConsistent + 0.1
+        ? 'up'
+        : secondHalfConsistent < firstHalfConsistent - 0.1
+        ? 'down'
+        : 'stable';
+
+    return {
+      percentage: percentage.toFixed(0),
+      consistentCount,
+      inconsistentCount,
+      trend,
+    };
+  };
+
+  const calculateSkatingPerformance = () => {
+    const periods = [
+      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const inSyncCount = periods.filter((p: any) => p?.skating?.inSync?.value).length;
+    const notInSyncCount = periods.filter(
+      (p: any) => p?.skating?.notInSync?.value
+    ).length;
+
+    const total = inSyncCount + notInSyncCount;
+    const percentage = total > 0 ? (inSyncCount / total) * 100 : 0;
+
+    // Calculate trend
+    const midPoint = Math.floor(periods.length / 2);
+    const firstHalf = periods.slice(0, midPoint);
+    const secondHalf = periods.slice(midPoint);
+
+    const firstHalfInSync =
+      firstHalf.filter((p: any) => p?.skating?.inSync?.value).length /
+      (firstHalf.length || 1);
+    const secondHalfInSync =
+      secondHalf.filter((p: any) => p?.skating?.inSync?.value).length /
+      (secondHalf.length || 1);
+
+    const trend =
+      secondHalfInSync > firstHalfInSync + 0.1
+        ? 'up'
+        : secondHalfInSync < firstHalfInSync - 0.1
+        ? 'down'
+        : 'stable';
+
+    return {
+      percentage: percentage.toFixed(0),
+      inSyncCount,
+      notInSyncCount,
+      trend,
+    };
+  };
+
+  const calculatePositionalPerformance = () => {
+    const periods = [
+      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
+    ];
+
+    if (periods.length === 0) return null;
+
+    const goodCount = periods.filter(
+      (p: any) =>
+        p?.positionalAboveIcing?.good?.value || p?.positionalBelowIcing?.good?.value || p?.positionalBelowIcing?.strong?.value
+    ).length;
+
+    const needsWorkCount = periods.filter(
+      (p: any) =>
+        p?.positionalAboveIcing?.poor?.value ||
+        p?.positionalAboveIcing?.improving?.value ||
+        p?.positionalBelowIcing?.poor?.value ||
+        p?.positionalBelowIcing?.improving?.value
+    ).length;
+
+    const total = goodCount + needsWorkCount;
+    const percentage = total > 0 ? (goodCount / total) * 100 : 0;
+
+    return {
+      percentage: percentage.toFixed(0),
+      goodCount,
+      needsWorkCount,
+    };
+  };
+
+  const calculateTeamPlay = () => {
+    const period3s = filteredEntries.map((e) => e.period3).filter(Boolean);
+
+    if (period3s.length === 0) return null;
+
+    const defenseGoodCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpDefense?.good?.value
+    ).length;
+    const defenseImprovingCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpDefense?.improving?.value
+    ).length;
+    const defensePoorCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpDefense?.poor?.value
+    ).length;
+
+    const forwardsGoodCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpForwards?.good?.value
+    ).length;
+    const forwardsImprovingCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpForwards?.improving?.value
+    ).length;
+    const forwardsPoorCount = period3s.filter(
+      (p: any) => p?.teamPlay?.settingUpForwards?.poor?.value
+    ).length;
+
+    const defenseTotal = defenseGoodCount + defenseImprovingCount + defensePoorCount;
+    const forwardsTotal = forwardsGoodCount + forwardsImprovingCount + forwardsPoorCount;
+
+    const defensePercentage = defenseTotal > 0 ? (defenseGoodCount / defenseTotal) * 100 : 0;
+    const forwardsPercentage = forwardsTotal > 0 ? (forwardsGoodCount / forwardsTotal) * 100 : 0;
+
+    return {
+      defensePercentage: defensePercentage.toFixed(0),
+      forwardsPercentage: forwardsPercentage.toFixed(0),
+      defenseGoodCount,
+      defenseImprovingCount,
+      defensePoorCount,
+      forwardsGoodCount,
+      forwardsImprovingCount,
+      forwardsPoorCount,
     };
   };
 
@@ -290,6 +480,11 @@ function AdminChartingContent() {
   };
 
   const goalsStats = calculateGoalsStats();
+  const challengeStats = calculateChallengeStats();
+  const focusStats = calculateFocusConsistency();
+  const skatingStats = calculateSkatingPerformance();
+  const positionalStats = calculatePositionalPerformance();
+  const teamPlayStats = calculateTeamPlay();
   const decisionMaking = calculateDecisionMaking();
   const bodyLanguage = calculateBodyLanguage();
   const reboundControl = calculateReboundControl();
@@ -302,9 +497,9 @@ function AdminChartingContent() {
   const completionRate = filteredEntries.length > 0 ? (completeEntries / filteredEntries.length) * 100 : 0;
 
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
-    if (trend === 'up') return <TrendingUp className="w-4 h-4 text-green-600" />;
-    if (trend === 'down') return <TrendingDown className="w-4 h-4 text-red-600" />;
-    return <Minus className="w-4 h-4 text-gray-400" />;
+    if (trend === 'up') return <TrendingUp className="w-5 h-5 text-green-600" />;
+    if (trend === 'down') return <TrendingDown className="w-5 h-5 text-red-600" />;
+    return <Minus className="w-5 h-5 text-gray-600" />;
   };
 
   if (loading) {
@@ -446,34 +641,150 @@ function AdminChartingContent() {
               )}
             </div>
 
-            {/* Goals & Challenge */}
+            {/* Goals Performance */}
             {goalsStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Goals & Challenge Analysis</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Goals Performance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Avg Good Goals</p>
-                    <p className="text-4xl font-bold text-green-700">{goalsStats.avgGoodGoals}</p>
-                    <p className="text-xs text-gray-500 mt-2">{goalsStats.totalGames} games analyzed</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">Avg Good Goals/Game</p>
+                    </div>
+                    <p className="text-3xl font-bold text-green-700">
+                      {goalsStats.avgGoodGoals}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Across {goalsStats.totalGames} games
+                    </p>
                   </div>
 
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Avg Bad Goals</p>
-                    <p className="text-4xl font-bold text-red-700">{goalsStats.avgBadGoals}</p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">Avg Bad Goals/Game</p>
                       {getTrendIcon(goalsStats.trend)}
-                      <p className="text-xs text-gray-600">{goalsStats.improvement}% improvement</p>
                     </div>
+                    <p className="text-3xl font-bold text-red-700">{goalsStats.avgBadGoals}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {goalsStats.trend === 'up' && '📈 Improving! '}
+                      {goalsStats.trend === 'down' && '📉 Needs attention '}
+                      {goalsStats.improvement}% vs earlier period
+                    </p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Avg Challenge</p>
-                    <p className="text-4xl font-bold text-blue-700">
-                      {goalsStats.avgChallenge}
-                      <span className="text-lg">/10</span>
+                    <p className="text-sm text-gray-600 mb-2">Good/Bad Ratio</p>
+                    <p className="text-3xl font-bold text-blue-700">
+                      {(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">Difficulty rating</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals)
+                        ? '✓ More good than bad'
+                        : '⚠ Work on reducing bad goals'}
+                    </p>
                   </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Challenge & Consistency */}
+            {challengeStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Challenge Level & Consistency</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-2">Average Challenge Rating</p>
+                    <p className="text-3xl font-bold text-indigo-700">
+                      {challengeStats.avgChallenge}<span className="text-base">/10</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {parseFloat(challengeStats.avgChallenge) < 4 && 'Easier games'}
+                      {parseFloat(challengeStats.avgChallenge) >= 4 && parseFloat(challengeStats.avgChallenge) < 7 && 'Moderate difficulty'}
+                      {parseFloat(challengeStats.avgChallenge) >= 7 && 'High difficulty games'}
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-2">Challenge Consistency</p>
+                    <p className="text-3xl font-bold text-purple-700">
+                      {challengeStats.consistency}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      σ = {challengeStats.stdDev} (standard deviation)
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Mind-Set Performance */}
+            {focusStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Mind-Set Performance</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-semibold text-gray-900">Focus Consistency</p>
+                      {getTrendIcon(focusStats.trend)}
+                    </div>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-teal-700">{focusStats.percentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-teal-600 h-3 rounded-full transition-all"
+                        style={{ width: `${focusStats.percentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {focusStats.consistentCount} consistent / {focusStats.inconsistentCount} inconsistent periods
+                    </p>
+                  </div>
+
+                  {skatingStats && (
+                    <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-gray-900">Skating In Sync</p>
+                        {getTrendIcon(skatingStats.trend)}
+                      </div>
+                      <div className="flex items-end gap-2 mb-2">
+                        <p className="text-4xl font-bold text-cyan-700">{skatingStats.percentage}%</p>
+                        <p className="text-sm text-gray-600 mb-1">in sync</p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div
+                          className="bg-cyan-600 h-3 rounded-full transition-all"
+                          style={{ width: `${skatingStats.percentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {skatingStats.inSyncCount} in sync / {skatingStats.notInSyncCount} not in sync periods
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {/* Positional Performance */}
+            {positionalStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Positional Performance</h2>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Strong Positioning</p>
+                  <div className="flex items-end gap-2 mb-2">
+                    <p className="text-4xl font-bold text-amber-700">{positionalStats.percentage}%</p>
+                    <p className="text-sm text-gray-600 mb-1">good/strong</p>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div
+                      className="bg-amber-600 h-3 rounded-full transition-all"
+                      style={{ width: `${positionalStats.percentage}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {positionalStats.goodCount} good/strong / {positionalStats.needsWorkCount} needs work periods
+                  </p>
                 </div>
               </Card>
             )}
@@ -569,128 +880,170 @@ function AdminChartingContent() {
           <TabsContent value="performance" className="space-y-6">
             {/* Decision Making & Body Language */}
             {(decisionMaking || bodyLanguage) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {decisionMaking && (
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Decision Making</h2>
-                    <p className="text-sm text-gray-600 mb-4">Across {decisionMaking.total} rated periods</p>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-gray-700">Strong</p>
-                          <Badge variant="default">
-                            {decisionMaking.strongPercentage}% ({decisionMaking.strongCount})
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-green-600 h-2 rounded-full" style={{ width: `${decisionMaking.strongPercentage}%` }} />
-                        </div>
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Decision Making & Body Language</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {decisionMaking && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
+                      <p className="text-sm font-semibold text-gray-900 mb-3">Decision Making - Strong</p>
+                      <div className="flex items-end gap-2 mb-2">
+                        <p className="text-4xl font-bold text-emerald-700">{decisionMaking.strongPercentage}%</p>
+                        <p className="text-sm text-gray-600 mb-1">strong</p>
                       </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-gray-700">Improving</p>
-                          <Badge variant="secondary">
-                            {decisionMaking.improvingPercentage}% ({decisionMaking.improvingCount})
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${decisionMaking.improvingPercentage}%` }} />
-                        </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div
+                          className="bg-emerald-600 h-3 rounded-full transition-all"
+                          style={{ width: `${decisionMaking.strongPercentage}%` }}
+                        ></div>
                       </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-gray-700">Needs Work</p>
-                          <Badge variant="secondary">
-                            {decisionMaking.needsWorkPercentage}% ({decisionMaking.needsWorkCount})
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-red-500 h-2 rounded-full" style={{ width: `${decisionMaking.needsWorkPercentage}%` }} />
-                        </div>
-                      </div>
+                      <p className="text-xs text-gray-500">
+                        {decisionMaking.strongCount} strong / {decisionMaking.improvingCount} improving / {decisionMaking.needsWorkCount} needs work
+                      </p>
                     </div>
-                  </Card>
-                )}
-
-                {bodyLanguage && (
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Body Language</h2>
-                    <p className="text-sm text-gray-600 mb-4">Across {bodyLanguage.total} rated periods</p>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-gray-700">Consistent</p>
-                          <Badge variant="default">
-                            {bodyLanguage.consistentPercentage}% ({bodyLanguage.consistentCount})
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-green-600 h-2 rounded-full" style={{ width: `${bodyLanguage.consistentPercentage}%` }} />
-                        </div>
+                  )}
+                  {bodyLanguage && (
+                    <div className="bg-lime-50 border border-lime-200 rounded-lg p-6">
+                      <p className="text-sm font-semibold text-gray-900 mb-3">Body Language</p>
+                      <div className="flex items-end gap-2 mb-2">
+                        <p className="text-4xl font-bold text-lime-700">{bodyLanguage.consistentPercentage}%</p>
+                        <p className="text-sm text-gray-600 mb-1">consistent</p>
                       </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-gray-700">Inconsistent</p>
-                          <Badge variant="secondary">
-                            {bodyLanguage.inconsistentPercentage}% ({bodyLanguage.inconsistentCount})
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-red-500 h-2 rounded-full" style={{ width: `${bodyLanguage.inconsistentPercentage}%` }} />
-                        </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div
+                          className="bg-lime-600 h-3 rounded-full transition-all"
+                          style={{ width: `${bodyLanguage.consistentPercentage}%` }}
+                        ></div>
                       </div>
+                      <p className="text-xs text-gray-500">
+                        {bodyLanguage.consistentCount} consistent / {bodyLanguage.inconsistentCount} inconsistent
+                      </p>
                     </div>
-                  </Card>
-                )}
-              </div>
+                  )}
+                </div>
+              </Card>
             )}
 
-            {/* Rebound Control & Freezing Puck */}
-            {(reboundControl || freezingPuck) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {reboundControl && (
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Rebound Control</h2>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-2">Quality</p>
-                        <p className="text-4xl font-bold text-gray-900">{reboundControl.qualityGood}%</p>
-                        <p className="text-xs text-gray-500 mt-1">Good ratings</p>
-                        <p className="text-xs text-gray-400">({reboundControl.goodCount}/{reboundControl.totalQuality})</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-2">Consistency</p>
-                        <p className="text-4xl font-bold text-gray-900">{reboundControl.consistencyPercentage}%</p>
-                        <p className="text-xs text-gray-500 mt-1">Consistent</p>
-                        <p className="text-xs text-gray-400">({reboundControl.consistentCount}/{reboundControl.totalConsistency})</p>
-                      </div>
+            {/* Rebound Control */}
+            {reboundControl && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Rebound Control</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-violet-50 border border-violet-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-violet-700">{reboundControl.qualityGood}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
                     </div>
-                  </Card>
-                )}
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-violet-600 h-3 rounded-full transition-all"
+                        style={{ width: `${reboundControl.qualityGood}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {reboundControl.goodCount} good / {reboundControl.totalQuality} total
+                    </p>
+                  </div>
+                  <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-fuchsia-700">{reboundControl.consistencyPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-fuchsia-600 h-3 rounded-full transition-all"
+                        style={{ width: `${reboundControl.consistencyPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {reboundControl.consistentCount} consistent / {reboundControl.totalConsistency} total
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
 
-                {freezingPuck && (
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Freezing Puck</h2>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-2">Quality</p>
-                        <p className="text-4xl font-bold text-gray-900">{freezingPuck.qualityGood}%</p>
-                        <p className="text-xs text-gray-500 mt-1">Good ratings</p>
-                        <p className="text-xs text-gray-400">({freezingPuck.goodCount}/{freezingPuck.totalQuality})</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-2">Consistency</p>
-                        <p className="text-4xl font-bold text-gray-900">{freezingPuck.consistencyPercentage}%</p>
-                        <p className="text-xs text-gray-500 mt-1">Consistent</p>
-                        <p className="text-xs text-gray-400">({freezingPuck.consistentCount}/{freezingPuck.totalConsistency})</p>
-                      </div>
+            {/* Freezing Puck */}
+            {freezingPuck && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Freezing Puck</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-pink-700">{freezingPuck.qualityGood}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
                     </div>
-                  </Card>
-                )}
-              </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-pink-600 h-3 rounded-full transition-all"
+                        style={{ width: `${freezingPuck.qualityGood}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {freezingPuck.goodCount} good / {freezingPuck.totalQuality} total
+                    </p>
+                  </div>
+                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-rose-700">{freezingPuck.consistencyPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-rose-600 h-3 rounded-full transition-all"
+                        style={{ width: `${freezingPuck.consistencyPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {freezingPuck.consistentCount} consistent / {freezingPuck.totalConsistency} total
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Team Play (Period 3 only) */}
+            {teamPlayStats && (
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Team Play (Period 3)</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-sky-50 border border-sky-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Defense</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-sky-700">{teamPlayStats.defensePercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-sky-600 h-3 rounded-full transition-all"
+                        style={{ width: `${teamPlayStats.defensePercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {teamPlayStats.defenseGoodCount} good / {teamPlayStats.defenseImprovingCount} improving / {teamPlayStats.defensePoorCount} poor
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Forwards</p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <p className="text-4xl font-bold text-slate-700">{teamPlayStats.forwardsPercentage}%</p>
+                      <p className="text-sm text-gray-600 mb-1">good</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div
+                        className="bg-slate-600 h-3 rounded-full transition-all"
+                        style={{ width: `${teamPlayStats.forwardsPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {teamPlayStats.forwardsGoodCount} good / {teamPlayStats.forwardsImprovingCount} improving / {teamPlayStats.forwardsPoorCount} poor
+                    </p>
+                  </div>
+                </div>
+              </Card>
             )}
           </TabsContent>
 
