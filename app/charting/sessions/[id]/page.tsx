@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session, ChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -24,19 +24,17 @@ export default function SessionDetailPage() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const sessionId = params.id as string;
 
   const [session, setSession] = useState<Session | null>(null);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    if (sessionId) {
-      loadSessionData();
-    }
-  }, [sessionId]);
+  const loadSessionData = useCallback(async () => {
+    if (!sessionId) return;
 
-  const loadSessionData = async () => {
     try {
       setLoading(true);
 
@@ -57,7 +55,24 @@ export default function SessionDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId]);
+
+  // Always reload on mount and when dependencies change
+  useEffect(() => {
+    if (user) {
+      loadSessionData();
+    }
+  }, [sessionId, user, refreshKey, loadSessionData]);
+
+  // Reload data when window gains focus (user returns to page/tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handleDeleteSession = async () => {
     if (!confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
