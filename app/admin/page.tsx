@@ -266,6 +266,21 @@ function AdminDashboardContent() {
                   <Button>View Analytics</Button>
                 </Link>
               </div>
+
+              <div className="flex items-center space-x-4 rounded-lg border p-4">
+                <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <BarChart3 className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Charting Analytics</h3>
+                  <p className="text-sm text-muted-foreground">
+                    View student charting data and performance metrics
+                  </p>
+                </div>
+                <Link href="/admin/charting">
+                  <Button>View Charting</Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
 

@@ -245,6 +245,67 @@ export class ChartingService extends BaseDatabaseService {
     }
   }
 
+  /**
+   * Gets all sessions across all students (Admin only)
+   */
+  async getAllSessions(options?: ChartingQueryOptions): Promise<ApiResponse<Session[]>> {
+    logger.database('query', this.SESSIONS_COLLECTION, undefined, { type: 'admin-all' });
+
+    try {
+      let q = query(collection(db, this.SESSIONS_COLLECTION));
+
+      // Apply filters
+      if (options?.sessionType) {
+        q = query(q, where('type', '==', options.sessionType));
+      }
+
+      if (options?.status) {
+        q = query(q, where('status', '==', options.status));
+      }
+
+      if (options?.dateFrom) {
+        q = query(q, where('date', '>=', Timestamp.fromDate(options.dateFrom)));
+      }
+
+      if (options?.dateTo) {
+        q = query(q, where('date', '<=', Timestamp.fromDate(options.dateTo)));
+      }
+
+      // Apply ordering
+      const orderByField = options?.orderBy || 'date';
+      const orderDirection = options?.orderDirection || 'desc';
+      q = query(q, orderBy(orderByField, orderDirection));
+
+      // Apply limit
+      if (options?.limit) {
+        q = query(q, firestoreLimit(options.limit));
+      }
+
+      const snapshot = await getDocs(q);
+      const sessions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Session));
+
+      return {
+        success: true,
+        data: sessions,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      logger.error('Failed to get all sessions', 'ChartingService', error);
+      return {
+        success: false,
+        error: {
+          code: 'QUERY_FAILED',
+          message: 'Failed to retrieve all sessions',
+          details: error
+        },
+        timestamp: new Date()
+      };
+    }
+  }
+
   // ==================== CHARTING ENTRY OPERATIONS ====================
 
   /**
@@ -433,6 +494,47 @@ export class ChartingService extends BaseDatabaseService {
         error: {
           code: 'QUERY_FAILED',
           message: 'Failed to retrieve charting entries',
+          details: error
+        },
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
+   * Gets all charting entries across all students (Admin only)
+   */
+  async getAllChartingEntries(options?: ChartingQueryOptions): Promise<ApiResponse<ChartingEntry[]>> {
+    logger.database('query', this.CHARTING_ENTRIES_COLLECTION, undefined, { type: 'admin-all' });
+
+    try {
+      let q = query(
+        collection(db, this.CHARTING_ENTRIES_COLLECTION),
+        orderBy('submittedAt', 'desc')
+      );
+
+      if (options?.limit) {
+        q = query(q, firestoreLimit(options.limit));
+      }
+
+      const snapshot = await getDocs(q);
+      const entries = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as ChartingEntry));
+
+      return {
+        success: true,
+        data: entries,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      logger.error('Failed to get all charting entries', 'ChartingService', error);
+      return {
+        success: false,
+        error: {
+          code: 'QUERY_FAILED',
+          message: 'Failed to retrieve all charting entries',
           details: error
         },
         timestamp: new Date()
