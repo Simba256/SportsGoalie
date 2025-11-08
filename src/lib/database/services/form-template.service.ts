@@ -383,15 +383,12 @@ export class FormTemplateService extends BaseDatabaseService {
    * Activates a template for a specific sport
    * Deactivates all other templates for that sport
    */
-  async activateTemplate(
-    templateId: string,
-    sport?: string
-  ): Promise<ApiResponse<void>> {
+  async activateTemplate(templateId: string): Promise<ApiResponse<void>> {
     logger.database('update', this.TEMPLATES_COLLECTION, templateId, {
       action: 'activate',
     });
 
-    // Get template to check sport
+    // Get template to verify it exists
     const templateResult = await this.getTemplate(templateId);
     if (!templateResult.success || !templateResult.data) {
       return {
@@ -400,38 +397,20 @@ export class FormTemplateService extends BaseDatabaseService {
       };
     }
 
-    const targetSport = sport || templateResult.data.sport;
-    if (!targetSport) {
-      return {
-        success: false,
-        message: 'Sport must be specified for activation',
-        error: {
-          code: 'MISSING_SPORT',
-          message: 'Sport must be specified for activation',
-        },
-        timestamp: new Date(),
-      };
-    }
-
-    // Deactivate other templates
-    await this.deactivateOtherTemplates(targetSport, templateId);
+    // Deactivate all other templates
+    await this.deactivateOtherTemplates(templateId);
 
     // Activate this template
     return await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
       isActive: true,
-      sport: targetSport,
     });
   }
 
   /**
-   * Deactivates all templates for a sport except the specified one
+   * Deactivates all active templates except the specified one
    */
-  private async deactivateOtherTemplates(
-    sport: string,
-    exceptTemplateId?: string
-  ): Promise<void> {
+  private async deactivateOtherTemplates(exceptTemplateId?: string): Promise<void> {
     const templates = await this.getTemplates({
-      sport,
       isActive: true,
     });
 

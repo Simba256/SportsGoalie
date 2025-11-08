@@ -81,9 +81,9 @@ export default function FormTemplatesPage() {
     }
   };
 
-  const handleActivateTemplate = async (templateId: string, sport: string) => {
+  const handleActivateTemplate = async (templateId: string) => {
     try {
-      const result = await formTemplateService.activateTemplate(templateId, sport);
+      const result = await formTemplateService.activateTemplate(templateId);
 
       if (result.success) {
         toast.success('Template activated successfully');
@@ -220,10 +220,6 @@ export default function FormTemplatesPage() {
                 {/* Template Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Sport</p>
-                    <p className="font-medium">{template.sport || 'Not specified'}</p>
-                  </div>
-                  <div>
                     <p className="text-muted-foreground">Version</p>
                     <p className="font-medium">v{template.version}</p>
                   </div>
@@ -234,6 +230,10 @@ export default function FormTemplatesPage() {
                   <div>
                     <p className="text-muted-foreground">Usage</p>
                     <p className="font-medium">{template.usageCount || 0} entries</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Status</p>
+                    <p className="font-medium">{template.isActive ? 'Active' : 'Inactive'}</p>
                   </div>
                 </div>
 
@@ -247,11 +247,11 @@ export default function FormTemplatesPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  {!template.isActive && template.sport && (
+                  {!template.isActive && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleActivateTemplate(template.id, template.sport!)}
+                      onClick={() => handleActivateTemplate(template.id)}
                       className="flex-1"
                     >
                       Activate
