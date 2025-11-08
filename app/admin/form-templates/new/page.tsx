@@ -67,7 +67,7 @@ export default function NewTemplatePage() {
     const section = sections[sectionIndex];
     const fieldCount = section.fields?.length || 0;
 
-    const newField: Partial<FormField> = {
+    const newField: Partial<FormField> & { _optionsRaw?: string } = {
       id: `${section.id}_field_${fieldCount + 1}`,
       label: '',
       type: 'text',
@@ -79,6 +79,7 @@ export default function NewTemplatePage() {
         type: 'none',
       },
       order: fieldCount + 1,
+      _optionsRaw: '', // Store raw input for options
     };
 
     const newSections = [...sections];
@@ -138,6 +139,15 @@ export default function NewTemplatePage() {
 
     setSaving(true);
     try {
+      // Clean up sections: remove _optionsRaw helper field
+      const cleanSections = sections.map(section => ({
+        ...section,
+        fields: section.fields?.map(field => {
+          const { _optionsRaw, ...cleanField } = field as any;
+          return cleanField;
+        }) || []
+      }));
+
       const templateData = {
         name,
         description,
@@ -145,7 +155,7 @@ export default function NewTemplatePage() {
         isActive: false,
         isArchived: false,
         allowPartialSubmission: true,
-        sections: sections as FormSection[],
+        sections: cleanSections as FormSection[],
         createdBy: user.id,
       };
 
@@ -344,23 +354,25 @@ export default function NewTemplatePage() {
                             <div className="space-y-1">
                               <Label className="text-xs">Options (comma-separated)</Label>
                               <Input
-                                value={field.options?.join(', ') || ''}
+                                value={(field as any)._optionsRaw ?? field.options?.join(', ') ?? ''}
                                 onChange={(e) => {
-                                  // Store the raw value, split on blur or save
-                                  const rawValue = e.target.value;
-                                  // Create array from the input, but keep empty strings to preserve commas
-                                  const options = rawValue.split(',').map((o) => o.trim());
-                                  updateField(sectionIndex, fieldIndex, { options });
+                                  // Store raw value as-is, no processing while typing
+                                  updateField(sectionIndex, fieldIndex, {
+                                    _optionsRaw: e.target.value
+                                  } as any);
                                 }}
                                 onBlur={(e) => {
-                                  // Clean up on blur - remove empty options
+                                  // Parse into array on blur
                                   const options = e.target.value
                                     .split(',')
                                     .map((o) => o.trim())
                                     .filter((o) => o.length > 0);
-                                  updateField(sectionIndex, fieldIndex, { options });
+                                  updateField(sectionIndex, fieldIndex, {
+                                    options,
+                                    _optionsRaw: e.target.value
+                                  } as any);
                                 }}
-                                placeholder="e.g., poor, improving, good"
+                                placeholder="e.g., poor, improving, team work, excellent"
                                 className="h-9"
                               />
                             </div>
