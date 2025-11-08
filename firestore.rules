@@ -540,6 +540,77 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ==================== DYNAMIC CHARTING SYSTEM ====================
+
+    // Form Templates collection - Dynamic form definitions
+    match /form_templates/{templateId} {
+      // PUBLIC: Anyone can read active, non-archived templates for form rendering
+      allow get: if resource.data.isActive == true && resource.data.isArchived == false;
+
+      // Students and admins can list templates (application filters appropriately)
+      allow list: if isAuthenticated();
+
+      // Only admins can create, update, or delete templates
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['name', 'sections', 'version', 'isActive', 'isArchived', 'createdBy']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.sections is list &&
+                       request.resource.data.sections.size() > 0 &&
+                       request.resource.data.version is number &&
+                       request.resource.data.version > 0 &&
+                       request.resource.data.isActive is bool &&
+                       request.resource.data.isArchived is bool;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Dynamic Charting Entries collection - Student responses to dynamic forms
+    match /dynamic_charting_entries/{entryId} {
+      // Students can get their own entries, admins can get all
+      allow get: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can list/query their own entries (application filters by studentId), admins can list all
+      allow list: if isAuthenticated();
+
+      // Students can create entries for themselves, admins can create for any student
+      allow create: if isAuthenticated() &&
+                       hasRequiredFields(['sessionId', 'studentId', 'formTemplateId', 'formTemplateVersion', 'submittedBy', 'submitterRole', 'responses']) &&
+                       (isOwner(request.resource.data.studentId) || isAdmin()) &&
+                       request.resource.data.formTemplateId is string &&
+                       request.resource.data.formTemplateId.size() > 0 &&
+                       request.resource.data.formTemplateVersion is number &&
+                       request.resource.data.formTemplateVersion > 0 &&
+                       request.resource.data.responses is map &&
+                       (request.resource.data.submitterRole == 'student' || request.resource.data.submitterRole == 'admin');
+
+      // Students can update their own entries, admins can update any
+      allow update: if isOwnerOrAdmin(resource.data.studentId);
+
+      // Students can delete their own entries, admins can delete any
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
+    // Dynamic Charting Analytics collection - Auto-generated analytics from dynamic forms
+    match /dynamic_charting_analytics/{analyticsId} {
+      // Analytics ID format: {studentId}_{templateId}
+      // Extract studentId from the document ID (everything before the last underscore)
+      function getStudentIdFromAnalyticsId() {
+        return analyticsId.split('_')[0];
+      }
+
+      // Students can read their own analytics, admins can read all
+      allow read: if isOwnerOrAdmin(getStudentIdFromAnalyticsId());
+
+      // System/admins can create and update analytics (students read-only)
+      // Allow creation if authenticated user is admin OR if it's for the authenticated user
+      allow create, update: if isAdmin() || isOwner(getStudentIdFromAnalyticsId());
+
+      // Only admins can delete analytics
+      allow delete: if isAdmin();
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections
