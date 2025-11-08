@@ -185,9 +185,29 @@ export default function SessionDetailPage() {
           </div>
         </div>
 
-        {/* Charting Sections - Primary Action Area */}
+        {/* Primary Charting Action */}
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">📊 Performance Charting</h2>
+              <p className="text-sm text-gray-700 mb-4">
+                Chart your performance using our comprehensive dynamic form system. Track metrics, skills, and improvements in one place.
+              </p>
+            </div>
+            <Button
+              size="lg"
+              onClick={() => router.push(`/charting/sessions/${sessionId}/chart`)}
+              className="ml-4"
+            >
+              <ClipboardCheck className="w-5 h-5 mr-2" />
+              Chart Performance
+            </Button>
+          </div>
+        </Card>
+
+        {/* Legacy Charting Sections */}
         <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Charting Sections</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Legacy Charting Sections</h2>
           <p className="text-sm text-gray-600 mb-4">Click any section to fill it out - they're completely independent!</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
