@@ -120,6 +120,12 @@ export default function FormTemplatesPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <Button asChild>
+            <Link href="/admin/form-templates/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Template
+            </Link>
+          </Button>
         </div>
       </div>
 
