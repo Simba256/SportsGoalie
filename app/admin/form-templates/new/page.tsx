@@ -346,6 +346,14 @@ export default function NewTemplatePage() {
                               <Input
                                 value={field.options?.join(', ') || ''}
                                 onChange={(e) => {
+                                  // Store the raw value, split on blur or save
+                                  const rawValue = e.target.value;
+                                  // Create array from the input, but keep empty strings to preserve commas
+                                  const options = rawValue.split(',').map((o) => o.trim());
+                                  updateField(sectionIndex, fieldIndex, { options });
+                                }}
+                                onBlur={(e) => {
+                                  // Clean up on blur - remove empty options
                                   const options = e.target.value
                                     .split(',')
                                     .map((o) => o.trim())
