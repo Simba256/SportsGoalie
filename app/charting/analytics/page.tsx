@@ -18,6 +18,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { startOfWeek, startOfMonth, subDays, subMonths, isAfter } from 'date-fns';
+import { DynamicAnalyticsDisplay } from '@/components/charting/DynamicAnalyticsDisplay';
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
 
@@ -596,6 +597,17 @@ export default function ChartingAnalyticsPage() {
             </div>
           </div>
         </Card>
+
+        {/* Dynamic Analytics */}
+        {user && <DynamicAnalyticsDisplay studentId={user.id} />}
+
+        {/* Legacy Analytics Header */}
+        {filteredEntries.length > 0 && (
+          <div className="pt-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Legacy Analytics</h2>
+            <p className="text-gray-600 mb-4">Historical data from hardcoded forms</p>
+          </div>
+        )}
 
         {filteredEntries.length === 0 ? (
           <Card className="p-12 text-center">

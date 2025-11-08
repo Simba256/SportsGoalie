@@ -128,6 +128,61 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     return await this.getById<DynamicStudentAnalytics>(this.ANALYTICS_COLLECTION, analyticsId);
   }
 
+  /**
+   * Gets the most recent analytics for a student (from any template)
+   */
+  async getLatestStudentAnalytics(
+    studentId: string
+  ): Promise<ApiResponse<DynamicStudentAnalytics>> {
+    logger.database('query', this.ANALYTICS_COLLECTION, undefined, { studentId });
+
+    try {
+      const analyticsRef = collection(db, this.ANALYTICS_COLLECTION);
+      const q = query(
+        analyticsRef,
+        where('studentId', '==', studentId),
+        orderBy('lastCalculatedAt', 'desc'),
+        firestoreLimit(1)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        return {
+          success: false,
+          message: 'No analytics found for student',
+          error: {
+            code: 'NOT_FOUND',
+            message: 'No analytics records exist for this student',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const analytics = {
+        id: snapshot.docs[0].id,
+        ...snapshot.docs[0].data(),
+      } as DynamicStudentAnalytics;
+
+      return {
+        success: true,
+        data: analytics,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Error getting latest student analytics', error, 'DynamicAnalyticsService');
+      return {
+        success: false,
+        message: 'Failed to get analytics',
+        error: {
+          code: 'QUERY_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
   // ==================== ANALYTICS CALCULATION LOGIC ====================
 
   /**
