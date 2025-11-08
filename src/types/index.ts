@@ -725,3 +725,30 @@ export {
   SessionComparison,
   ChartingQueryOptions,
 } from './charting';
+
+// Form Template Types - Export from form-template.ts
+export {
+  FieldType,
+  AnalyticsType,
+  TrendDirection,
+  FieldAnalyticsConfig,
+  FieldValidation,
+  FormField,
+  FormSection,
+  FormTemplate,
+  FieldResponseValue,
+  FieldResponse,
+  SectionResponse,
+  FormResponses,
+  DynamicChartingEntry,
+  FieldAnalyticsResult,
+  CategoryAnalyticsResult,
+  DynamicStudentAnalytics,
+  TemplateBuilderState,
+  TemplateValidationResult,
+  FormTemplateQueryOptions,
+  AnalyticsQueryOptions,
+  ExportConfig,
+  MigrationMapping,
+  TemplateMigrationConfig,
+} from './form-template';
