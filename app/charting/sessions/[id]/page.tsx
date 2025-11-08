@@ -19,6 +19,8 @@ import {
   BarChart3
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ChartingFormWrapper } from './chart/ChartingFormWrapper';
+import LegacyChartingForm from './chart/LegacyChartingForm';
 
 export default function SessionDetailPage() {
   const { user } = useAuth();
@@ -185,138 +187,14 @@ export default function SessionDetailPage() {
           </div>
         </div>
 
-        {/* Primary Charting Action */}
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">📊 Performance Charting</h2>
-              <p className="text-sm text-gray-700 mb-4">
-                Chart your performance using our comprehensive dynamic form system. Track metrics, skills, and improvements in one place.
-              </p>
-            </div>
-            <Button
-              size="lg"
-              onClick={() => router.push(`/charting/sessions/${sessionId}/chart`)}
-              className="ml-4"
-            >
-              <ClipboardCheck className="w-5 h-5 mr-2" />
-              Chart Performance
-            </Button>
-          </div>
-        </Card>
-
-        {/* Legacy Charting Sections */}
-        <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Legacy Charting Sections</h2>
-          <p className="text-sm text-gray-600 mb-4">Click any section to fill it out - they're completely independent!</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Pre-Game */}
-            <div
-              onClick={() => router.push(`/charting/sessions/${sessionId}/pre-game`)}
-              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                myEntry?.preGame
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className={`w-5 h-5 ${myEntry?.preGame ? 'text-green-600' : 'text-gray-600'}`} />
-                  <div>
-                    <p className="font-semibold text-gray-900">Pre-Game Checklist</p>
-                    <p className="text-xs text-gray-500">Preparation & readiness</p>
-                  </div>
-                </div>
-                {myEntry?.preGame && <CheckCircle className="w-5 h-5 text-green-600" />}
-              </div>
-            </div>
-
-            {/* Game Overview */}
-            <div
-              onClick={() => router.push(`/charting/sessions/${sessionId}/game-overview`)}
-              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                myEntry?.gameOverview
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className={`w-5 h-5 ${myEntry?.gameOverview ? 'text-green-600' : 'text-gray-600'}`} />
-                  <div>
-                    <p className="font-semibold text-gray-900">Game Overview</p>
-                    <p className="text-xs text-gray-500">Goals & challenge rating</p>
-                  </div>
-                </div>
-                {myEntry?.gameOverview && <CheckCircle className="w-5 h-5 text-green-600" />}
-              </div>
-            </div>
-
-            {/* Periods */}
-            <div
-              onClick={() => router.push(`/charting/sessions/${sessionId}/periods`)}
-              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                myEntry?.period1 || myEntry?.period2 || myEntry?.period3
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className={`w-5 h-5 ${(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) ? 'text-green-600' : 'text-gray-600'}`} />
-                  <div>
-                    <p className="font-semibold text-gray-900">Periods (1, 2, 3)</p>
-                    <p className="text-xs text-gray-500">Performance per period</p>
-                  </div>
-                </div>
-                {(myEntry?.period1 || myEntry?.period2 || myEntry?.period3) && <CheckCircle className="w-5 h-5 text-green-600" />}
-              </div>
-            </div>
-
-            {/* Overtime & Shootout */}
-            <div
-              onClick={() => router.push(`/charting/sessions/${sessionId}/overtime-shootout`)}
-              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                myEntry?.overtime || myEntry?.shootout
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className={`w-5 h-5 ${(myEntry?.overtime || myEntry?.shootout) ? 'text-green-600' : 'text-gray-600'}`} />
-                  <div>
-                    <p className="font-semibold text-gray-900">Overtime & Shootout</p>
-                    <p className="text-xs text-gray-500">Extended play stats</p>
-                  </div>
-                </div>
-                {(myEntry?.overtime || myEntry?.shootout) && <CheckCircle className="w-5 h-5 text-green-600" />}
-              </div>
-            </div>
-
-            {/* Post-Game */}
-            <div
-              onClick={() => router.push(`/charting/sessions/${sessionId}/post-game`)}
-              className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                myEntry?.postGame
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className={`w-5 h-5 ${myEntry?.postGame ? 'text-green-600' : 'text-gray-600'}`} />
-                  <div>
-                    <p className="font-semibold text-gray-900">Post-Game Review</p>
-                    <p className="text-xs text-gray-500">Reflection & notes</p>
-                  </div>
-                </div>
-                {myEntry?.postGame && <CheckCircle className="w-5 h-5 text-green-600" />}
-              </div>
-            </div>
-          </div>
-        </Card>
+        {/* Performance Charting Form */}
+        <ChartingFormWrapper
+          session={session}
+          userId={user.id}
+          userRole={(user.role || 'student') as 'student' | 'admin'}
+          onSave={loadSessionData}
+          LegacyForm={() => <LegacyChartingForm session={session} user={user} />}
+        />
 
 
         {/* Coach/Admin Entries */}
