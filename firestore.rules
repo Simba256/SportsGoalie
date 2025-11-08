@@ -546,7 +546,8 @@ service cloud.firestore {
     // Form Templates collection - Dynamic form definitions
     match /form_templates/{templateId} {
       // PUBLIC: Anyone can read active, non-archived templates for form rendering
-      allow get: if resource.data.isActive == true && resource.data.isArchived == false;
+      // ADMIN: Admins can read any template for management purposes
+      allow get: if (resource.data.isActive == true && resource.data.isArchived == false) || isAdmin();
 
       // Students and admins can list templates (application filters appropriately)
       allow list: if isAuthenticated();
