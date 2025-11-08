@@ -5,6 +5,10 @@ on:
     branches:
       - 'claude/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -15,6 +19,7 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for all branches
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
 
       - name: Configure Git
         run: |
@@ -22,12 +27,25 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Rebase on master
+        id: rebase
         run: |
-          git fetch origin master
-          git rebase origin/master
+          git fetch origin master:master || git fetch origin master
+          git rebase master
+        continue-on-error: true
 
-      - name: Sync to master
+      - name: Check for rebase conflicts
+        if: steps.rebase.outcome == 'failure'
         run: |
-          git checkout master || git checkout -b master
+          echo "❌ Rebase failed due to conflicts"
+          git rebase --abort
+          exit 1
+
+      - name: Push rebased branch
+        run: |
+          git push origin ${{ github.ref_name }} --force-with-lease
+
+      - name: Merge to master
+        run: |
+          git checkout master
           git merge --ff-only ${{ github.ref_name }}
           git push origin master
