@@ -37,35 +37,57 @@ export function ChartingFormWrapper({
   }, [session.id]);
 
   const loadTemplateAndEntry = async () => {
+    console.log('🔷 [STUDENT] Loading template and entry for session:', session.id);
     try {
       setLoading(true);
 
       // Try to get active template
+      console.log('🔷 [STUDENT] Fetching active template...');
       const templateResult = await formTemplateService.getActiveTemplate();
+      console.log('🔷 [STUDENT] getActiveTemplate result:', {
+        success: templateResult.success,
+        hasData: !!templateResult.data,
+        templateId: templateResult.data?.id,
+        templateName: templateResult.data?.name,
+        isActive: templateResult.data?.isActive,
+        fullResult: templateResult
+      });
 
       if (templateResult.success && templateResult.data) {
+        console.log('🔷 [STUDENT] ✅ Active template found, using dynamic form');
         setTemplate(templateResult.data);
         setUseDynamicForm(true);
 
         // Try to load existing entry
+        console.log('🔷 [STUDENT] Loading existing entries for session...');
         const entriesResult = await dynamicChartingService.getDynamicEntriesBySession(
           session.id
         );
+        console.log('🔷 [STUDENT] Entries result:', {
+          success: entriesResult.success,
+          count: entriesResult.data?.length || 0,
+          entries: entriesResult.data?.map(e => ({ id: e.id, submittedBy: e.submittedBy }))
+        });
 
         if (entriesResult.success && entriesResult.data && entriesResult.data.length > 0) {
           // Find entry submitted by current user
           const entry = entriesResult.data.find((e) => e.submittedBy === userId);
           if (entry) {
+            console.log('🔷 [STUDENT] ✅ Found existing entry for current user:', entry.id);
             setExistingEntry(entry);
             setResponses(entry.responses || {});
+          } else {
+            console.log('🔷 [STUDENT] No entry found for current user (userId:', userId, ')');
           }
         }
       } else {
         // No active template, use legacy form
+        console.log('🔷 [STUDENT] ❌ No active template found, using legacy form');
+        console.log('🔷 [STUDENT] Template result details:', templateResult);
         setUseDynamicForm(false);
       }
     } catch (error) {
-      console.error('Error loading template:', error);
+      console.error('❌ [STUDENT] Error loading template:', error);
       setUseDynamicForm(false);
     } finally {
       setLoading(false);
