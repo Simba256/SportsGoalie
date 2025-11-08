@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/contexts/auth-context';
+import { useAuth } from '@/lib/auth/context';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
 import { initializeDefaultTemplates, checkDefaultTemplatesExist } from '@/lib/templates/init-templates';
 import { FormTemplate } from '@/types';
