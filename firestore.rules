@@ -15,10 +15,11 @@ service cloud.firestore {
       return isAuthenticated() && getUserId() == userId;
     }
 
-    // SECURE: Admin validation using custom claims only
+    // SECURE: Admin validation using custom claims with users collection fallback
     function isAdmin() {
       return request.auth != null &&
-             request.auth.token.role == 'admin';
+             (request.auth.token.role == 'admin' ||
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isStudent() {
