@@ -40,12 +40,8 @@ export function ChartingFormWrapper({
     try {
       setLoading(true);
 
-      // For now, hardcode sport as "Hockey" since current system is hockey-specific
-      // TODO: Get sport from session or user profile
-      const sport = 'Hockey';
-
-      // Try to get active template for this sport
-      const templateResult = await formTemplateService.getActiveTemplate(sport);
+      // Try to get active template
+      const templateResult = await formTemplateService.getActiveTemplate();
 
       if (templateResult.success && templateResult.data) {
         setTemplate(templateResult.data);
@@ -194,8 +190,8 @@ export function ChartingFormWrapper({
           <div>
             <h3 className="font-semibold text-yellow-900">Using Legacy Form</h3>
             <p className="text-sm text-yellow-700 mt-1">
-              No dynamic template found for this sport. Using the original form structure.
-              Ask your admin to initialize templates to use the new dynamic charting system.
+              No active template found. Using the original form structure.
+              Ask your admin to create and activate a template to use the new dynamic charting system.
             </p>
           </div>
         </div>

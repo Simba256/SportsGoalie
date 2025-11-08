@@ -9,7 +9,6 @@ import { Timestamp } from 'firebase/firestore';
 export const createDefaultHockeyGoalieTemplate = (createdBy: string): Omit<FormTemplate, 'id' | 'createdAt' | 'updatedAt'> => ({
   name: 'Hockey Goalie Performance Tracker',
   description: 'Comprehensive performance tracking for hockey goalies including pre-game preparation, in-game performance, and post-game review.',
-  sport: 'Hockey',
   version: 1,
   isActive: true,
   isArchived: false,

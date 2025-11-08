@@ -24,7 +24,6 @@ export default function NewTemplatePage() {
   // Template basic info
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [sport, setSport] = useState('');
 
   // Sections
   const [sections, setSections] = useState<Partial<FormSection>[]>([
@@ -151,7 +150,6 @@ export default function NewTemplatePage() {
       const templateData = {
         name,
         description,
-        sport,
         isActive: false,
         isArchived: false,
         allowPartialSubmission: true,
@@ -227,16 +225,6 @@ export default function NewTemplatePage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe what this form is used for..."
               rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sport">Sport</Label>
-            <Input
-              id="sport"
-              value={sport}
-              onChange={(e) => setSport(e.target.value)}
-              placeholder="e.g., Soccer, Basketball, Hockey"
             />
           </div>
         </CardContent>

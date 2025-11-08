@@ -70,7 +70,6 @@ export async function checkDefaultTemplatesExist(): Promise<{
 }> {
   try {
     const hockeyResult = await formTemplateService.getTemplates({
-      sport: 'Hockey',
       isActive: true,
       isArchived: false,
       limit: 1,
@@ -98,7 +97,7 @@ export async function ensureHockeyGoalieTemplate(adminUserId: string): Promise<{
 }> {
   try {
     // Check if template already exists
-    const existingResult = await formTemplateService.getActiveTemplate('Hockey');
+    const existingResult = await formTemplateService.getActiveTemplate();
 
     if (existingResult.success && existingResult.data) {
       return {

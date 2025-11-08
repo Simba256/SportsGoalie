@@ -339,16 +339,14 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
-   * Gets the active template for a specific sport
+   * Gets the active template
    */
-  async getActiveTemplate(sport: string): Promise<ApiResponse<FormTemplate | null>> {
+  async getActiveTemplate(): Promise<ApiResponse<FormTemplate | null>> {
     logger.database('query', this.TEMPLATES_COLLECTION, undefined, {
-      sport,
       isActive: true,
     });
 
     const result = await this.getTemplates({
-      sport,
       isActive: true,
       isArchived: false,
       limit: 1,
