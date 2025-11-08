@@ -82,17 +82,27 @@ export default function FormTemplatesPage() {
   };
 
   const handleActivateTemplate = async (templateId: string) => {
+    console.log('🟢 [UI] Activate button clicked for template:', templateId);
     try {
+      console.log('🟢 [UI] Calling formTemplateService.activateTemplate...');
       const result = await formTemplateService.activateTemplate(templateId);
+      console.log('🟢 [UI] activateTemplate returned:', result);
 
       if (result.success) {
+        console.log('🟢 [UI] ✅ Activation successful!');
         toast.success('Template activated successfully');
         await loadTemplates();
       } else {
+        console.error('🟢 [UI] ❌ Activation failed:', result.message);
         toast.error(result.message || 'Failed to activate template');
       }
     } catch (error) {
-      console.error('Error activating template:', error);
+      console.error('🟢 [UI] ❌ EXCEPTION in handleActivateTemplate:', error);
+      console.error('🟢 [UI] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown',
+        stack: error instanceof Error ? error.stack : 'No stack',
+        error
+      });
       toast.error('Error activating template');
     }
   };

@@ -384,47 +384,105 @@ export class FormTemplateService extends BaseDatabaseService {
    * Deactivates all other templates for that sport
    */
   async activateTemplate(templateId: string): Promise<ApiResponse<void>> {
+    console.log('🔵 [ACTIVATE] Starting activation for template:', templateId);
     logger.database('update', this.TEMPLATES_COLLECTION, templateId, {
       action: 'activate',
     });
 
-    // Get template to verify it exists
-    const templateResult = await this.getTemplate(templateId);
-    if (!templateResult.success || !templateResult.data) {
+    try {
+      // Get template to verify it exists
+      console.log('🔵 [ACTIVATE] Step 1: Fetching template...');
+      const templateResult = await this.getTemplate(templateId);
+      console.log('🔵 [ACTIVATE] Step 1 result:', templateResult.success ? '✅ Success' : '❌ Failed', templateResult);
+
+      if (!templateResult.success || !templateResult.data) {
+        console.error('❌ [ACTIVATE] Template not found');
+        return {
+          success: false,
+          message: 'Template not found',
+        };
+      }
+
+      // Deactivate all other templates
+      console.log('🔵 [ACTIVATE] Step 2: Deactivating other templates...');
+      try {
+        await this.deactivateOtherTemplates(templateId);
+        console.log('🔵 [ACTIVATE] Step 2: ✅ Other templates deactivated');
+      } catch (error) {
+        console.error('❌ [ACTIVATE] Step 2 FAILED - Error deactivating other templates:', error);
+        throw error;
+      }
+
+      // Activate this template
+      console.log('🔵 [ACTIVATE] Step 3: Activating template', templateId);
+      try {
+        const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
+          isActive: true,
+        });
+        console.log('🔵 [ACTIVATE] Step 3 result:', result.success ? '✅ Success' : '❌ Failed', result);
+        return result;
+      } catch (error) {
+        console.error('❌ [ACTIVATE] Step 3 FAILED - Error activating template:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('❌ [ACTIVATE] CRITICAL ERROR in activateTemplate:', error);
       return {
         success: false,
-        message: 'Template not found',
+        message: error instanceof Error ? error.message : 'Unknown error during activation',
+        error: {
+          code: 'ACTIVATION_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        timestamp: new Date(),
       };
     }
-
-    // Deactivate all other templates
-    await this.deactivateOtherTemplates(templateId);
-
-    // Activate this template
-    return await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
-      isActive: true,
-    });
   }
 
   /**
    * Deactivates all active templates except the specified one
    */
   private async deactivateOtherTemplates(exceptTemplateId?: string): Promise<void> {
-    const templates = await this.getTemplates({
-      isActive: true,
-    });
+    console.log('🟡 [DEACTIVATE] Querying for active templates...');
+    try {
+      const templates = await this.getTemplates({
+        isActive: true,
+      });
+      console.log('🟡 [DEACTIVATE] Query result:', templates.success ? '✅ Success' : '❌ Failed',
+        `Found ${templates.data?.length || 0} active templates`);
 
-    if (!templates.success || !templates.data) return;
+      if (!templates.success || !templates.data) {
+        console.log('🟡 [DEACTIVATE] No templates to deactivate');
+        return;
+      }
 
-    const updatePromises = templates.data
-      .filter((t) => t.id !== exceptTemplateId)
-      .map((t) =>
-        this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
+      const templatesToDeactivate = templates.data.filter((t) => t.id !== exceptTemplateId);
+      console.log('🟡 [DEACTIVATE] Templates to deactivate:', templatesToDeactivate.map(t => `${t.name} (${t.id})`));
+
+      if (templatesToDeactivate.length === 0) {
+        console.log('🟡 [DEACTIVATE] No other active templates found');
+        return;
+      }
+
+      const updatePromises = templatesToDeactivate.map((t, index) => {
+        console.log(`🟡 [DEACTIVATE] Deactivating ${index + 1}/${templatesToDeactivate.length}: ${t.name} (${t.id})`);
+        return this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
           isActive: false,
-        })
-      );
+        }).then(result => {
+          console.log(`🟡 [DEACTIVATE] Result for ${t.name}:`, result.success ? '✅ Success' : '❌ Failed');
+          return result;
+        }).catch(error => {
+          console.error(`❌ [DEACTIVATE] ERROR deactivating ${t.name} (${t.id}):`, error);
+          throw error;
+        });
+      });
 
-    await Promise.all(updatePromises);
+      await Promise.all(updatePromises);
+      console.log('🟡 [DEACTIVATE] ✅ All templates deactivated successfully');
+    } catch (error) {
+      console.error('❌ [DEACTIVATE] CRITICAL ERROR in deactivateOtherTemplates:', error);
+      throw error;
+    }
   }
 
   // ==================== TEMPLATE VALIDATION ====================
