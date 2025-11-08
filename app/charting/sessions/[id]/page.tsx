@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter, useParams, usePathname } from 'next/navigation';
-import { chartingService } from '@/lib/database';
-import { Session, ChartingEntry } from '@/types';
+import { chartingService, formTemplateService } from '@/lib/database';
+import { Session, ChartingEntry, FormTemplate } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,7 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState<Session | null>(null);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
+  const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -38,9 +39,10 @@ export default function SessionDetailPage() {
     try {
       setLoading(true);
 
-      const [sessionResult, entriesResult] = await Promise.all([
+      const [sessionResult, entriesResult, templateResult] = await Promise.all([
         chartingService.getSession(sessionId),
         chartingService.getChartingEntriesBySession(sessionId),
+        formTemplateService.getActiveTemplate(),
       ]);
 
       if (sessionResult.success && sessionResult.data) {
@@ -49,6 +51,12 @@ export default function SessionDetailPage() {
 
       if (entriesResult.success && entriesResult.data) {
         setEntries(entriesResult.data);
+      }
+
+      if (templateResult.success && templateResult.data) {
+        setActiveTemplate(templateResult.data);
+      } else {
+        setActiveTemplate(null);
       }
     } catch (error) {
       console.error('Failed to load session:', error);
@@ -191,21 +199,31 @@ export default function SessionDetailPage() {
           <p className="text-sm text-gray-600 mb-4">Click any section to fill it out - they're completely independent!</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Dynamic Performance Charting */}
-            <div
-              onClick={() => router.push(`/charting/sessions/${sessionId}/chart`)}
-              className="relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md border-blue-400 bg-blue-50"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="font-semibold text-gray-900">Performance Charting</p>
-                    <p className="text-xs text-gray-500">Dynamic form system</p>
+            {/* Dynamic Performance Charting - Only show if there's an active template */}
+            {activeTemplate && (
+              <div
+                onClick={() => router.push(`/charting/sessions/${sessionId}/chart`)}
+                className="relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md border-blue-400 bg-blue-50"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    <BarChart3 className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-gray-900">{activeTemplate.name}</p>
+                        <Badge className="bg-blue-600 text-white text-xs">Active</Badge>
+                      </div>
+                      {activeTemplate.description && (
+                        <p className="text-xs text-gray-600 line-clamp-2">{activeTemplate.description}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {activeTemplate.sections.length} sections • v{activeTemplate.version}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Pre-Game */}
             <div
