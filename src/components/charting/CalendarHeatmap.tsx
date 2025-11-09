@@ -78,10 +78,21 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries, onD
       // Check for dynamic entry first (new system)
       const dynamicEntry = dynamicEntriesBySession[session.id];
       if (dynamicEntry) {
+        console.log('📅 [HEATMAP] Session:', session.id, {
+          isComplete: dynamicEntry.isComplete,
+          completionPercentage: dynamicEntry.completionPercentage,
+          hasResponses: !!dynamicEntry.responses,
+          responseKeys: dynamicEntry.responses ? Object.keys(dynamicEntry.responses) : []
+        });
+
         if (isDynamicEntryComplete(dynamicEntry)) {
+          console.log('📅 [HEATMAP] ✅ Counted as FULLY COMPLETE');
           fullyCompleteCount++;
         } else if (isDynamicEntryPartial(dynamicEntry)) {
+          console.log('📅 [HEATMAP] ⚠️ Counted as PARTIAL');
           partiallyCompleteCount++;
+        } else {
+          console.log('📅 [HEATMAP] ❌ Not counted (entry exists but no completion)');
         }
         return; // Skip legacy check if dynamic entry exists
       }
@@ -100,12 +111,19 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries, onD
     const totalCount = daySessions.length;
 
     // No entries at all
-    if (fullyCompleteCount === 0 && partiallyCompleteCount === 0) return 1; // Scheduled but not charted
+    if (fullyCompleteCount === 0 && partiallyCompleteCount === 0) {
+      console.log('📅 [HEATMAP] Level 1: Scheduled but not charted');
+      return 1; // Scheduled but not charted
+    }
 
     // All sessions fully complete
-    if (fullyCompleteCount === totalCount) return 3; // Complete
+    if (fullyCompleteCount === totalCount) {
+      console.log('📅 [HEATMAP] Level 3: All sessions complete');
+      return 3; // Complete
+    }
 
     // Some sessions have entries (partial or complete, but not all complete)
+    console.log('📅 [HEATMAP] Level 2: Partial completion', { fullyCompleteCount, partiallyCompleteCount, totalCount });
     return 2; // Partial
   };
 
