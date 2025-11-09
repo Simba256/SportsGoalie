@@ -157,6 +157,10 @@ export function ChartingFormWrapper({
 
   // Use dynamic form if template is available
   if (useDynamicForm && template) {
+    const isSingleSection = initialSectionIndex !== undefined;
+    const buttonText = isSingleSection ? 'Submit Section' : 'Save Progress';
+    const savingText = isSingleSection ? 'Submitting...' : 'Saving...';
+
     return (
       <div className="space-y-6">
         {/* Save Button (top) */}
@@ -165,12 +169,12 @@ export function ChartingFormWrapper({
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                {savingText}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Progress
+                {buttonText}
               </>
             )}
           </Button>
@@ -192,12 +196,12 @@ export function ChartingFormWrapper({
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                {savingText}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Progress
+                {buttonText}
               </>
             )}
           </Button>
