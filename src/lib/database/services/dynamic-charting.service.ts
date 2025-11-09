@@ -66,27 +66,12 @@ export class DynamicChartingService extends BaseDatabaseService {
       completionPercentage: completion.percentage,
     };
 
-    console.log('💾 [SAVE] ====== CREATING ENTRY ======');
-    console.log('💾 [SAVE] Collection:', this.DYNAMIC_ENTRIES_COLLECTION);
-    console.log('💾 [SAVE] Entry data to save:', {
-      sessionId: entryData.sessionId,
-      sessionIdType: typeof entryData.sessionId,
-      studentId: entryData.studentId,
-      submittedBy: entryData.submittedBy,
-      templateId: entryData.formTemplateId,
-      allFields: Object.keys(cleanedData),
-    });
-
     const result = await this.create<DynamicChartingEntry>(
       this.DYNAMIC_ENTRIES_COLLECTION,
       cleanedData
     );
 
     if (result.success && result.data) {
-      console.log('💾 [SAVE] ✅ Entry created successfully!');
-      console.log('💾 [SAVE] Entry ID:', result.data.id);
-      console.log('💾 [SAVE] Collection:', this.DYNAMIC_ENTRIES_COLLECTION);
-      console.log('💾 [SAVE] Saved sessionId:', entryData.sessionId);
       // Increment template usage count
       await formTemplateService.incrementUsageCount(entryData.formTemplateId);
 
@@ -177,93 +162,47 @@ export class DynamicChartingService extends BaseDatabaseService {
 
   /**
    * Gets all dynamic entries for a session
+   *
+   * Note: Sorting is done in-memory to avoid composite index requirement.
+   * Using orderBy('submittedAt') with where('sessionId') requires a composite index
+   * which can fail silently. Sorting in JS is more reliable and performant for
+   * typical result set sizes.
    */
   async getDynamicEntriesBySession(
     sessionId: string
   ): Promise<ApiResponse<DynamicChartingEntry[]>> {
     logger.database('query', this.DYNAMIC_ENTRIES_COLLECTION, undefined, { sessionId });
-    console.log('🔍 [QUERY] ====== STARTING QUERY ======');
-    console.log('🔍 [QUERY] Collection:', this.DYNAMIC_ENTRIES_COLLECTION);
-    console.log('🔍 [QUERY] SessionId to search:', sessionId);
-    console.log('🔍 [QUERY] SessionId type:', typeof sessionId);
 
     try {
       const entriesRef = collection(db, this.DYNAMIC_ENTRIES_COLLECTION);
-      console.log('🔍 [QUERY] Collection reference created:', entriesRef.path);
 
-      // First, try query WITHOUT orderBy to test if that's the issue
-      console.log('🔍 [QUERY] Attempting simple query (without orderBy)...');
-      const simpleQuery = query(
+      // Query without orderBy to avoid composite index issues
+      const q = query(
         entriesRef,
         where('sessionId', '==', sessionId)
       );
 
-      const simpleSnapshot = await getDocs(simpleQuery);
-      console.log('🔍 [QUERY] Simple query returned:', simpleSnapshot.docs.length, 'documents');
+      const snapshot = await getDocs(q);
 
-      if (simpleSnapshot.docs.length > 0) {
-        // Simple query worked, now try with orderBy
-        console.log('🔍 [QUERY] Simple query succeeded! Now trying with orderBy...');
-        const q = query(
-          entriesRef,
-          where('sessionId', '==', sessionId),
-          orderBy('submittedAt', 'desc')
-        );
-
-        const snapshot = await getDocs(q);
-        console.log('🔍 [QUERY] Query with orderBy returned:', snapshot.docs.length, 'documents');
-
-        const entries = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          console.log('🔍 [QUERY] Entry found:', {
-            id: doc.id,
-            sessionId: data.sessionId,
-            studentId: data.studentId,
-            submittedBy: data.submittedBy,
-            submittedAt: data.submittedAt,
-          });
-          return {
-            id: doc.id,
-            ...data,
-          };
+      // Map and sort in JavaScript instead of using Firestore orderBy
+      const entries = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => {
+          // Sort by submittedAt descending (newest first)
+          const aTime = a.submittedAt?.toMillis?.() || 0;
+          const bTime = b.submittedAt?.toMillis?.() || 0;
+          return bTime - aTime;
         }) as DynamicChartingEntry[];
 
-        return {
-          success: true,
-          data: entries,
-          timestamp: new Date(),
-        };
-      } else {
-        // Simple query returned nothing - let's get ALL docs to debug
-        console.log('🔍 [QUERY] ⚠️ Simple query returned 0 docs. Fetching ALL documents to debug...');
-        const allDocsSnapshot = await getDocs(entriesRef);
-        console.log('🔍 [QUERY] Total documents in collection:', allDocsSnapshot.docs.length);
-
-        allDocsSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          console.log('🔍 [QUERY] Document in collection:', {
-            id: doc.id,
-            sessionId: data.sessionId,
-            sessionIdType: typeof data.sessionId,
-            matches: data.sessionId === sessionId,
-            studentId: data.studentId,
-            submittedBy: data.submittedBy,
-            allFields: Object.keys(data),
-          });
-        });
-
-        return {
-          success: true,
-          data: [],
-          timestamp: new Date(),
-        };
-      }
+      return {
+        success: true,
+        data: entries,
+        timestamp: new Date(),
+      };
     } catch (error) {
-      console.error('🔍 [QUERY] ❌ ERROR:', error);
-      console.error('🔍 [QUERY] Error type:', error?.constructor?.name);
-      console.error('🔍 [QUERY] Error message:', error instanceof Error ? error.message : String(error));
-      console.error('🔍 [QUERY] Error stack:', error instanceof Error ? error.stack : 'N/A');
-
       logger.error('Error querying dynamic entries by session', error, 'DynamicChartingService');
       return {
         success: false,
@@ -279,6 +218,8 @@ export class DynamicChartingService extends BaseDatabaseService {
 
   /**
    * Gets all dynamic entries for a student
+   *
+   * Note: Sorting is done in-memory to avoid composite index requirement.
    */
   async getDynamicEntriesByStudent(
     studentId: string,
@@ -297,13 +238,19 @@ export class DynamicChartingService extends BaseDatabaseService {
         q = query(q, where('formTemplateId', '==', templateId));
       }
 
-      q = query(q, orderBy('submittedAt', 'desc'));
-
+      // Don't use orderBy to avoid composite index issues - sort in JS instead
       const snapshot = await getDocs(q);
-      const entries = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as DynamicChartingEntry[];
+      const entries = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => {
+          // Sort by submittedAt descending (newest first)
+          const aTime = a.submittedAt?.toMillis?.() || 0;
+          const bTime = b.submittedAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        }) as DynamicChartingEntry[];
 
       return {
         success: true,
@@ -326,6 +273,8 @@ export class DynamicChartingService extends BaseDatabaseService {
 
   /**
    * Gets all dynamic entries (with optional filters)
+   *
+   * Note: Sorting is done in-memory to avoid composite index requirement.
    */
   async getAllDynamicEntries(options: {
     templateId?: string;
@@ -346,17 +295,24 @@ export class DynamicChartingService extends BaseDatabaseService {
         q = query(q, where('studentId', '==', options.studentId));
       }
 
-      q = query(q, orderBy('submittedAt', 'desc'));
-
-      if (options.limit) {
-        q = query(q, firestoreLimit(options.limit));
-      }
-
+      // Don't use orderBy to avoid composite index issues - sort in JS instead
       const snapshot = await getDocs(q);
-      const entries = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as DynamicChartingEntry[];
+      let entries = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => {
+          // Sort by submittedAt descending (newest first)
+          const aTime = a.submittedAt?.toMillis?.() || 0;
+          const bTime = b.submittedAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        }) as DynamicChartingEntry[];
+
+      // Apply limit after sorting
+      if (options.limit) {
+        entries = entries.slice(0, options.limit);
+      }
 
       return {
         success: true,
