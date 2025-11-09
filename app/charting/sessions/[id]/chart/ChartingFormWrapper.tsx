@@ -131,8 +131,10 @@ export function ChartingFormWrapper({
 
           // Navigate back to session page if submitting a single section
           if (isSingleSection) {
-            // Add timestamp to force reload of session page data
-            router.push(`/charting/sessions/${session.id}?t=${Date.now()}`);
+            // Small delay to ensure Firestore write completes before navigating
+            setTimeout(() => {
+              router.push(`/charting/sessions/${session.id}?t=${Date.now()}`);
+            }, 500);
           }
         } else {
           toast.error(result.message || 'Failed to update session');
@@ -148,8 +150,10 @@ export function ChartingFormWrapper({
 
           // Navigate back to session page if submitting a single section
           if (isSingleSection) {
-            // Add timestamp to force reload of session page data
-            router.push(`/charting/sessions/${session.id}?t=${Date.now()}`);
+            // Small delay to ensure Firestore write completes before navigating
+            setTimeout(() => {
+              router.push(`/charting/sessions/${session.id}?t=${Date.now()}`);
+            }, 500);
           }
         } else {
           toast.error(result.message || 'Failed to save session');
