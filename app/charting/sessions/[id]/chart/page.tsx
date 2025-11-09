@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,9 @@ export default function ChartingFormPage() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const sessionId = params.id as string;
+  const sectionIndex = searchParams.get('section') ? parseInt(searchParams.get('section')!) : undefined;
 
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export default function ChartingFormPage() {
           userId={user.id}
           userRole={(user.role || 'student') as 'student' | 'admin'}
           onSave={handleSaveComplete}
+          initialSectionIndex={sectionIndex}
           LegacyForm={() => <LegacyChartingForm session={session} user={user} />}
         />
       </div>

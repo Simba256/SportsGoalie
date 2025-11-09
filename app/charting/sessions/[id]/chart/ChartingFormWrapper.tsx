@@ -15,6 +15,7 @@ interface ChartingFormWrapperProps {
   userId: string;
   userRole: 'student' | 'admin';
   onSave: () => void;
+  initialSectionIndex?: number;
   LegacyForm: React.ComponentType<any>;
 }
 
@@ -23,6 +24,7 @@ export function ChartingFormWrapper({
   userId,
   userRole,
   onSave,
+  initialSectionIndex,
   LegacyForm,
 }: ChartingFormWrapperProps) {
   const [template, setTemplate] = useState<FormTemplate | null>(null);
@@ -181,6 +183,7 @@ export function ChartingFormWrapper({
           onChange={handleResponsesChange}
           showSectionNumbers={true}
           collapsibleSections={true}
+          initialSectionIndex={initialSectionIndex}
         />
 
         {/* Save Button (bottom) */}

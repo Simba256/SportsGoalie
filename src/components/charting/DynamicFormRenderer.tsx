@@ -25,6 +25,7 @@ export interface DynamicFormRendererProps {
   showSectionNumbers?: boolean;
   collapsibleSections?: boolean;
   highlightRequired?: boolean;
+  initialSectionIndex?: number; // Focus on a specific section initially
 }
 
 /**
@@ -41,11 +42,17 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   showSectionNumbers = true,
   collapsibleSections = true,
   highlightRequired = true,
+  initialSectionIndex,
 }) => {
   const [responses, setResponses] = useState<FormResponses>(initialValues);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(template.sections.map((s) => s.id))
-  );
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    // If initialSectionIndex is provided, only expand that section
+    if (initialSectionIndex !== undefined && template.sections[initialSectionIndex]) {
+      return new Set([template.sections[initialSectionIndex].id]);
+    }
+    // Otherwise, expand all sections
+    return new Set(template.sections.map((s) => s.id));
+  });
   const [errors, setErrors] = useState<{ [path: string]: string }>({});
 
   // Update responses when initial values change
@@ -57,6 +64,19 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   useEffect(() => {
     onChange?.(responses);
   }, [responses, onChange]);
+
+  // Scroll to section when initialSectionIndex changes
+  useEffect(() => {
+    if (initialSectionIndex !== undefined && template.sections[initialSectionIndex]) {
+      const sectionId = template.sections[initialSectionIndex].id;
+      setTimeout(() => {
+        const element = document.getElementById(`section-${sectionId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [initialSectionIndex, template.sections]);
 
   const handleFieldChange = (
     sectionId: string,
@@ -163,7 +183,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
     const sectionData = responses[section.id];
 
     return (
-      <Card key={section.id} className="overflow-hidden">
+      <Card key={section.id} id={`section-${section.id}`} className="overflow-hidden">
         <CardHeader
           className={cn(
             'cursor-pointer transition-colors',
