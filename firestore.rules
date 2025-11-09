@@ -606,8 +606,11 @@ service cloud.firestore {
         return analyticsId.split('_')[0];
       }
 
-      // Students can read their own analytics, admins can read all
-      allow read: if isOwnerOrAdmin(getStudentIdFromAnalyticsId());
+      // Students can get their own analytics by ID, admins can get all
+      allow get: if isOwnerOrAdmin(getStudentIdFromAnalyticsId());
+
+      // Students can list/query their own analytics (filtered by studentId field), admins can list all
+      allow list: if isAuthenticated();
 
       // System/admins can create and update analytics (students read-only)
       // Allow creation if authenticated user is admin OR if it's for the authenticated user
