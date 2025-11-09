@@ -66,12 +66,20 @@ export class DynamicChartingService extends BaseDatabaseService {
       completionPercentage: completion.percentage,
     };
 
+    console.log('💾 [SAVE] Creating dynamic entry:', {
+      sessionId: entryData.sessionId,
+      studentId: entryData.studentId,
+      submittedBy: entryData.submittedBy,
+      templateId: entryData.formTemplateId,
+    });
+
     const result = await this.create<DynamicChartingEntry>(
       this.DYNAMIC_ENTRIES_COLLECTION,
       cleanedData
     );
 
     if (result.success && result.data) {
+      console.log('💾 [SAVE] Entry created with ID:', result.data.id);
       // Increment template usage count
       await formTemplateService.incrementUsageCount(entryData.formTemplateId);
 
@@ -167,6 +175,7 @@ export class DynamicChartingService extends BaseDatabaseService {
     sessionId: string
   ): Promise<ApiResponse<DynamicChartingEntry[]>> {
     logger.database('query', this.DYNAMIC_ENTRIES_COLLECTION, undefined, { sessionId });
+    console.log('🔍 [QUERY] Searching for entries with sessionId:', sessionId);
 
     try {
       const entriesRef = collection(db, this.DYNAMIC_ENTRIES_COLLECTION);
@@ -177,10 +186,21 @@ export class DynamicChartingService extends BaseDatabaseService {
       );
 
       const snapshot = await getDocs(q);
-      const entries = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as DynamicChartingEntry[];
+      console.log('🔍 [QUERY] Firestore returned:', snapshot.docs.length, 'documents');
+
+      const entries = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        console.log('🔍 [QUERY] Entry found:', {
+          id: doc.id,
+          sessionId: data.sessionId,
+          studentId: data.studentId,
+          submittedBy: data.submittedBy
+        });
+        return {
+          id: doc.id,
+          ...data,
+        };
+      }) as DynamicChartingEntry[];
 
       return {
         success: true,
