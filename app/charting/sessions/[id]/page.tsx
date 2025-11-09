@@ -199,33 +199,41 @@ export default function SessionDetailPage() {
           <p className="text-sm text-gray-600 mb-4">Click any section to fill it out - they're completely independent!</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Dynamic Performance Charting - Only show if there's an active template */}
-            {activeTemplate && (
-              <div
-                onClick={() => router.push(`/charting/sessions/${sessionId}/chart`)}
-                className="relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md border-blue-400 bg-blue-50"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <BarChart3 className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-gray-900">{activeTemplate.name}</p>
-                        <Badge className="bg-blue-600 text-white text-xs">Active</Badge>
+            {/* Dynamic Template Sections - Show each section as a card */}
+            {activeTemplate ? (
+              <>
+                {activeTemplate.sections.map((section, index) => (
+                  <div
+                    key={section.id}
+                    onClick={() => router.push(`/charting/sessions/${sessionId}/chart?section=${index}`)}
+                    className="relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md border-blue-400 bg-blue-50 hover:bg-blue-100"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <ClipboardCheck className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold text-gray-900">{section.title}</p>
+                            {index === 0 && (
+                              <Badge className="bg-blue-600 text-white text-xs">Active Template</Badge>
+                            )}
+                          </div>
+                          {section.description && (
+                            <p className="text-xs text-gray-600 line-clamp-2">{section.description}</p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {section.fields.length} fields
+                          </p>
+                        </div>
                       </div>
-                      {activeTemplate.description && (
-                        <p className="text-xs text-gray-600 line-clamp-2">{activeTemplate.description}</p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        {activeTemplate.sections.length} sections • v{activeTemplate.version}
-                      </p>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Pre-Game */}
+                ))}
+              </>
+            ) : (
+              <>
+                {/* Legacy Forms - Only show when no active template */}
+                {/* Pre-Game */}
             <div
               onClick={() => router.push(`/charting/sessions/${sessionId}/pre-game`)}
               className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
@@ -329,6 +337,8 @@ export default function SessionDetailPage() {
                 {myEntry?.postGame && <CheckCircle className="w-5 h-5 text-green-600" />}
               </div>
             </div>
+              </>
+            )}
           </div>
         </Card>
 
