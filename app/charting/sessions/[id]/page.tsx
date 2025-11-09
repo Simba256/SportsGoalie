@@ -64,9 +64,20 @@ export default function SessionDetailPage() {
       }
 
       if (dynamicEntriesResult.success && dynamicEntriesResult.data) {
+        console.log('📊 [SESSION] Dynamic entries loaded:', {
+          totalEntries: dynamicEntriesResult.data.length,
+          entries: dynamicEntriesResult.data.map(e => ({
+            id: e.id,
+            submittedBy: e.submittedBy,
+            sessionId: e.sessionId
+          })),
+          currentUserId: user.id,
+        });
         const userEntry = dynamicEntriesResult.data.find((e) => e.submittedBy === user.id);
+        console.log('📊 [SESSION] User entry found:', userEntry ? userEntry.id : 'NONE');
         setDynamicEntry(userEntry || null);
       } else {
+        console.log('📊 [SESSION] No dynamic entries found or error:', dynamicEntriesResult);
         setDynamicEntry(null);
       }
     } catch (error) {
@@ -126,18 +137,31 @@ export default function SessionDetailPage() {
 
   // Check if a section has been completed (has responses)
   const isSectionCompleted = (sectionId: string) => {
-    if (!dynamicEntry || !dynamicEntry.responses) return false;
+    if (!dynamicEntry || !dynamicEntry.responses) {
+      console.log(`📊 [COMPLETION] Section ${sectionId}: No entry or responses`);
+      return false;
+    }
     const sectionData = dynamicEntry.responses[sectionId];
-    if (!sectionData) return false;
+    if (!sectionData) {
+      console.log(`📊 [COMPLETION] Section ${sectionId}: No data for this section`);
+      return false;
+    }
 
     // Check if section has any field responses
+    let isCompleted = false;
     if (Array.isArray(sectionData)) {
       // Repeatable section
-      return sectionData.length > 0 && Object.keys(sectionData[0] || {}).length > 0;
+      isCompleted = sectionData.length > 0 && Object.keys(sectionData[0] || {}).length > 0;
     } else {
       // Regular section
-      return Object.keys(sectionData).length > 0;
+      isCompleted = Object.keys(sectionData).length > 0;
     }
+
+    console.log(`📊 [COMPLETION] Section ${sectionId}: ${isCompleted ? 'COMPLETED' : 'INCOMPLETE'}`, {
+      sectionData,
+      fieldCount: Array.isArray(sectionData) ? sectionData.length : Object.keys(sectionData).length
+    });
+    return isCompleted;
   };
 
   if (loading) {
