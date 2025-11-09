@@ -6,6 +6,7 @@ export { SportsService, sportsService } from './services/sports.service';
 export { VideoQuizService, videoQuizService } from './services/video-quiz.service';
 export { UserService, userService } from './services/user.service';
 export { ChartingService, chartingService } from './services/charting.service';
+export { FormTemplateService, formTemplateService } from './services/form-template.service';
 
 // Utilities
 export { SeederService, seederService } from './seeding/seeder.service';
