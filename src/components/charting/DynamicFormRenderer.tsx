@@ -11,8 +11,9 @@ import {
 import { DynamicField } from './dynamic-fields';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronLeft, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export interface DynamicFormRendererProps {
   template: FormTemplate;
@@ -370,6 +371,22 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
     );
   };
 
+  const router = useRouter();
+  const sortedSections = template.sections.sort((a, b) => a.order - b.order);
+  const totalSections = sortedSections.length;
+
+  const handleNavigateSection = (newIndex: number | 'all') => {
+    if (typeof window === 'undefined') return;
+
+    const url = new URL(window.location.href);
+    if (newIndex === 'all') {
+      url.searchParams.delete('section');
+    } else {
+      url.searchParams.set('section', newIndex.toString());
+    }
+    router.push(url.pathname + url.search);
+  };
+
   return (
     <div className={cn('space-y-6', className)}>
       {/* Form header */}
@@ -380,11 +397,57 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
         )}
       </div>
 
+      {/* Section Navigation */}
+      {initialSectionIndex !== undefined && (
+        <div className="flex items-center justify-between gap-4 p-4 bg-muted rounded-lg">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleNavigateSection(initialSectionIndex - 1)}
+            disabled={initialSectionIndex === 0}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Section {initialSectionIndex + 1} of {totalSections}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleNavigateSection('all')}
+            >
+              <Menu className="h-4 w-4 mr-1" />
+              View All
+            </Button>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleNavigateSection(initialSectionIndex + 1)}
+            disabled={initialSectionIndex === totalSections - 1}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      )}
+
       {/* Sections */}
       <div className="space-y-4">
-        {template.sections
-          .sort((a, b) => a.order - b.order)
-          .map((section, index) => renderSection(section, index))}
+        {sortedSections
+          .filter((section, index) =>
+            // If initialSectionIndex is provided, only show that section
+            initialSectionIndex !== undefined ? index === initialSectionIndex : true
+          )
+          .map((section, index) => {
+            // Use the actual index from the original array for proper numbering
+            const actualIndex = initialSectionIndex !== undefined ? initialSectionIndex : index;
+            return renderSection(section, actualIndex);
+          })}
       </div>
     </div>
   );
