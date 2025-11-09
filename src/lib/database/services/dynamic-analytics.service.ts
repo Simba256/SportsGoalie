@@ -10,7 +10,16 @@ import {
   ApiResponse,
   AnalyticsQueryOptions,
 } from '@/types';
-import { Timestamp } from 'firebase/firestore';
+import {
+  Timestamp,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit as firestoreLimit,
+  getDocs
+} from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import { logger } from '../../utils/logger';
 import { formTemplateService } from './form-template.service';
 import { dynamicChartingService } from './dynamic-charting.service';
