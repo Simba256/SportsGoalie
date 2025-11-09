@@ -564,7 +564,11 @@ service cloud.firestore {
                        request.resource.data.isActive is bool &&
                        request.resource.data.isArchived is bool;
 
-      allow update: if isAdmin();
+      // Allow admins to update any field
+      // Allow authenticated users to update ONLY usageCount (for tracking)
+      allow update: if isAdmin() ||
+                       (isAuthenticated() &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usageCount']));
       allow delete: if isAdmin();
     }
 
