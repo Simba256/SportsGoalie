@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Session, FormTemplate, FormResponses, DynamicChartingEntry } from '@/types';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
@@ -27,6 +28,7 @@ export function ChartingFormWrapper({
   initialSectionIndex,
   LegacyForm,
 }: ChartingFormWrapperProps) {
+  const router = useRouter();
   const [template, setTemplate] = useState<FormTemplate | null>(null);
   const [existingEntry, setExistingEntry] = useState<DynamicChartingEntry | null>(null);
   const [responses, setResponses] = useState<FormResponses>({});
@@ -123,8 +125,14 @@ export function ChartingFormWrapper({
         );
 
         if (result.success) {
-          toast.success('Session updated successfully');
+          const isSingleSection = initialSectionIndex !== undefined;
+          toast.success(isSingleSection ? 'Section submitted successfully' : 'Session updated successfully');
           onSave();
+
+          // Navigate back to session page if submitting a single section
+          if (isSingleSection) {
+            router.push(`/charting/sessions/${session.id}`);
+          }
         } else {
           toast.error(result.message || 'Failed to update session');
         }
@@ -133,8 +141,14 @@ export function ChartingFormWrapper({
 
         if (result.success && result.data) {
           setExistingEntry({ ...entryData, id: result.data.id } as DynamicChartingEntry);
-          toast.success('Session saved successfully');
+          const isSingleSection = initialSectionIndex !== undefined;
+          toast.success(isSingleSection ? 'Section submitted successfully' : 'Session saved successfully');
           onSave();
+
+          // Navigate back to session page if submitting a single section
+          if (isSingleSection) {
+            router.push(`/charting/sessions/${session.id}`);
+          }
         } else {
           toast.error(result.message || 'Failed to save session');
         }
