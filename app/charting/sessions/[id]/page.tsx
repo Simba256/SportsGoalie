@@ -20,6 +20,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { DynamicSessionAnalytics } from '@/components/charting/DynamicSessionAnalytics';
 
 export default function SessionDetailPage() {
   const { user } = useAuth();
@@ -425,6 +426,17 @@ export default function SessionDetailPage() {
                 </div>
               ))}
             </div>
+          </Card>
+        )}
+
+        {/* Session Analytics - Dynamic Forms */}
+        {activeTemplate && dynamicEntry && (
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-gray-700" />
+              <h3 className="text-lg font-bold">Session Analytics</h3>
+            </div>
+            <DynamicSessionAnalytics template={activeTemplate} entry={dynamicEntry} />
           </Card>
         )}
 
