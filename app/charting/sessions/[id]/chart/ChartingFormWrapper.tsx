@@ -108,6 +108,23 @@ export function ChartingFormWrapper({
     try {
       setSaving(true);
 
+      // When saving a single section, merge with existing responses
+      // to avoid overwriting other sections
+      let responsesToSave = responses;
+      if (initialSectionIndex !== undefined && existingEntry?.responses) {
+        console.log('🔷 [SAVE] Merging section responses with existing data');
+        console.log('🔷 [SAVE] Existing responses:', Object.keys(existingEntry.responses));
+        console.log('🔷 [SAVE] New responses:', Object.keys(responses));
+
+        // Merge: keep existing responses and update/add new section responses
+        responsesToSave = {
+          ...existingEntry.responses,
+          ...responses,
+        };
+
+        console.log('🔷 [SAVE] Merged responses:', Object.keys(responsesToSave));
+      }
+
       const entryData = {
         sessionId: session.id,
         studentId: session.studentId,
@@ -115,7 +132,7 @@ export function ChartingFormWrapper({
         submitterRole: userRole,
         formTemplateId: template.id,
         formTemplateVersion: template.version,
-        responses,
+        responses: responsesToSave,
       };
 
       if (existingEntry) {
