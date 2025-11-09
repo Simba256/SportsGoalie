@@ -428,17 +428,18 @@ export default function SessionDetailPage() {
           </Card>
         )}
 
-        {/* Session Analytics */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-gray-700" />
-            <h3 className="text-lg font-bold">Session Analytics</h3>
-          </div>
+        {/* Session Analytics - Only show for legacy charting system */}
+        {!activeTemplate && (
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-gray-700" />
+              <h3 className="text-lg font-bold">Session Analytics</h3>
+            </div>
 
-          {myEntry ? (
-            <div className="space-y-6">
-              {/* Game Overview Stats */}
-              {myEntry.gameOverview && (
+            {myEntry ? (
+              <div className="space-y-6">
+                {/* Game Overview Stats */}
+                {myEntry.gameOverview && (
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-3">Game Overview</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -618,14 +619,15 @@ export default function SessionDetailPage() {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No charting data available yet</p>
-              <p className="text-sm text-gray-500 mt-2">Fill out the charting sections above to see analytics here</p>
-            </div>
-          )}
-        </Card>
+            ) : (
+              <div className="text-center py-8">
+                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600">No charting data available yet</p>
+                <p className="text-sm text-gray-500 mt-2">Fill out the charting sections above to see analytics here</p>
+              </div>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );
