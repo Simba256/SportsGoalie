@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
-import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useRouter, useParams, usePathname, useSearchParams } from 'next/navigation';
 import { chartingService, formTemplateService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
 import { Session, ChartingEntry, FormTemplate, DynamicChartingEntry } from '@/types';
@@ -26,6 +26,7 @@ export default function SessionDetailPage() {
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const sessionId = params.id as string;
 
   const [session, setSession] = useState<Session | null>(null);
@@ -75,12 +76,12 @@ export default function SessionDetailPage() {
     }
   }, [sessionId, user]);
 
-  // Always reload on mount and when dependencies change (including pathname for route changes)
+  // Always reload on mount and when dependencies change (including pathname and search params for route changes)
   useEffect(() => {
     if (user) {
       loadSessionData();
     }
-  }, [sessionId, user, refreshKey, loadSessionData, pathname]);
+  }, [sessionId, user, refreshKey, loadSessionData, pathname, searchParams]);
 
   // Reload data when window gains focus (user returns to page/tab)
   useEffect(() => {

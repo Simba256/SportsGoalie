@@ -131,7 +131,8 @@ export function ChartingFormWrapper({
 
           // Navigate back to session page if submitting a single section
           if (isSingleSection) {
-            router.push(`/charting/sessions/${session.id}`);
+            // Add timestamp to force reload of session page data
+            router.push(`/charting/sessions/${session.id}?t=${Date.now()}`);
           }
         } else {
           toast.error(result.message || 'Failed to update session');
@@ -147,7 +148,8 @@ export function ChartingFormWrapper({
 
           // Navigate back to session page if submitting a single section
           if (isSingleSection) {
-            router.push(`/charting/sessions/${session.id}`);
+            // Add timestamp to force reload of session page data
+            router.push(`/charting/sessions/${session.id}?t=${Date.now()}`);
           }
         } else {
           toast.error(result.message || 'Failed to save session');
