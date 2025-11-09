@@ -1,15 +1,16 @@
 'use client';
 
-import { Session } from '@/types';
+import { Session, DynamicChartingEntry } from '@/types';
 import { format, startOfDay, addDays, getDay, startOfYear, endOfYear, differenceInDays } from 'date-fns';
 
 interface CalendarHeatmapProps {
   sessions: Session[];
   chartingEntries: any[];
+  dynamicEntries: DynamicChartingEntry[];
   onDayClick: (date: Date, sessions: Session[]) => void;
 }
 
-export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: CalendarHeatmapProps) => {
+export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries, onDayClick }: CalendarHeatmapProps) => {
   const today = startOfDay(new Date());
   // Show 1 year back + 3 months forward (365 + 90 = 455 days)
   const yearStart = addDays(today, -365);
@@ -24,11 +25,11 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: Calen
     return acc;
   }, {} as Record<string, Session[]>);
 
-  // Helper function to check if a charting entry is fully complete
-  const isEntryComplete = (entry: any): boolean => {
+  // Helper function to check if a legacy charting entry is fully complete
+  const isLegacyEntryComplete = (entry: any): boolean => {
     if (!entry) return false;
 
-    // Required sections for a complete entry
+    // Required sections for a complete legacy entry
     const hasPreGame = !!entry.preGame;
     const hasGameOverview = !!entry.gameOverview;
     const hasPeriods = !!entry.period1 && !!entry.period2 && !!entry.period3;
@@ -37,11 +38,31 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: Calen
     return hasPreGame && hasGameOverview && hasPeriods && hasPostGame;
   };
 
-  // Group charting entries by session ID
-  const entriesBySession = chartingEntries.reduce((acc, entry) => {
+  // Helper function to check if a dynamic entry is complete
+  const isDynamicEntryComplete = (entry: DynamicChartingEntry): boolean => {
+    if (!entry) return false;
+    // Dynamic entries have an isComplete field
+    return entry.isComplete === true;
+  };
+
+  // Helper function to check if a dynamic entry is partial
+  const isDynamicEntryPartial = (entry: DynamicChartingEntry): boolean => {
+    if (!entry) return false;
+    // Partial if it exists but is not complete
+    return entry.completionPercentage > 0 && !entry.isComplete;
+  };
+
+  // Group legacy charting entries by session ID
+  const legacyEntriesBySession = chartingEntries.reduce((acc, entry) => {
     acc[entry.sessionId] = entry;
     return acc;
   }, {} as Record<string, any>);
+
+  // Group dynamic charting entries by session ID
+  const dynamicEntriesBySession = dynamicEntries.reduce((acc, entry) => {
+    acc[entry.sessionId] = entry;
+    return acc;
+  }, {} as Record<string, DynamicChartingEntry>);
 
   // Calculate completion level for a date
   const getCompletionLevel = (date: Date): number => {
@@ -54,9 +75,21 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, onDayClick }: Calen
     let partiallyCompleteCount = 0;
 
     daySessions.forEach(session => {
-      const entry = entriesBySession[session.id];
-      if (entry) {
-        if (isEntryComplete(entry)) {
+      // Check for dynamic entry first (new system)
+      const dynamicEntry = dynamicEntriesBySession[session.id];
+      if (dynamicEntry) {
+        if (isDynamicEntryComplete(dynamicEntry)) {
+          fullyCompleteCount++;
+        } else if (isDynamicEntryPartial(dynamicEntry)) {
+          partiallyCompleteCount++;
+        }
+        return; // Skip legacy check if dynamic entry exists
+      }
+
+      // Fallback to legacy entry (old system)
+      const legacyEntry = legacyEntriesBySession[session.id];
+      if (legacyEntry) {
+        if (isLegacyEntryComplete(legacyEntry)) {
           fullyCompleteCount++;
         } else {
           partiallyCompleteCount++;

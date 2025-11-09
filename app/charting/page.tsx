@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { chartingService } from '@/lib/database';
-import { Session, SessionStats, StreakData } from '@/types';
+import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
+import { Session, SessionStats, StreakData, DynamicChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ export default function ChartingPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [chartingEntries, setChartingEntries] = useState<any[]>([]);
+  const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,11 +45,12 @@ export default function ChartingPage() {
     try {
       setLoading(true);
 
-      // Load all sessions for full year heatmap
-      const [sessionsResult, analyticsResult, entriesResult] = await Promise.all([
+      // Load all sessions, analytics, and both legacy and dynamic charting entries
+      const [sessionsResult, analyticsResult, entriesResult, dynamicEntriesResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getStudentAnalytics(user.id),
         chartingService.getChartingEntriesByStudent(user.id),
+        dynamicChartingService.getDynamicEntriesByStudent(user.id),
       ]);
 
       if (sessionsResult.success && sessionsResult.data) {
@@ -61,6 +64,10 @@ export default function ChartingPage() {
 
       if (entriesResult.success && entriesResult.data) {
         setChartingEntries(entriesResult.data);
+      }
+
+      if (dynamicEntriesResult.success && dynamicEntriesResult.data) {
+        setDynamicEntries(dynamicEntriesResult.data);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -178,6 +185,7 @@ export default function ChartingPage() {
             <CalendarHeatmap
               sessions={sessions}
               chartingEntries={chartingEntries}
+              dynamicEntries={dynamicEntries}
               onDayClick={handleDayClick}
             />
           </div>
