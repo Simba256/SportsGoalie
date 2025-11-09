@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter, useParams, usePathname } from 'next/navigation';
 import { chartingService, formTemplateService } from '@/lib/database';
-import { Session, ChartingEntry, FormTemplate } from '@/types';
+import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
+import { Session, ChartingEntry, FormTemplate, DynamicChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,19 +31,21 @@ export default function SessionDetailPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
   const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(null);
+  const [dynamicEntry, setDynamicEntry] = useState<DynamicChartingEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadSessionData = useCallback(async () => {
-    if (!sessionId) return;
+    if (!sessionId || !user) return;
 
     try {
       setLoading(true);
 
-      const [sessionResult, entriesResult, templateResult] = await Promise.all([
+      const [sessionResult, entriesResult, templateResult, dynamicEntriesResult] = await Promise.all([
         chartingService.getSession(sessionId),
         chartingService.getChartingEntriesBySession(sessionId),
         formTemplateService.getActiveTemplate(),
+        dynamicChartingService.getDynamicEntriesBySession(sessionId),
       ]);
 
       if (sessionResult.success && sessionResult.data) {
@@ -58,12 +61,19 @@ export default function SessionDetailPage() {
       } else {
         setActiveTemplate(null);
       }
+
+      if (dynamicEntriesResult.success && dynamicEntriesResult.data) {
+        const userEntry = dynamicEntriesResult.data.find((e) => e.submittedBy === user.id);
+        setDynamicEntry(userEntry || null);
+      } else {
+        setDynamicEntry(null);
+      }
     } catch (error) {
       console.error('Failed to load session:', error);
     } finally {
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, user]);
 
   // Always reload on mount and when dependencies change (including pathname for route changes)
   useEffect(() => {
@@ -110,6 +120,22 @@ export default function SessionDetailPage() {
         return 'bg-yellow-500';
       default:
         return 'bg-gray-500';
+    }
+  };
+
+  // Check if a section has been completed (has responses)
+  const isSectionCompleted = (sectionId: string) => {
+    if (!dynamicEntry || !dynamicEntry.responses) return false;
+    const sectionData = dynamicEntry.responses[sectionId];
+    if (!sectionData) return false;
+
+    // Check if section has any field responses
+    if (Array.isArray(sectionData)) {
+      // Repeatable section
+      return sectionData.length > 0 && Object.keys(sectionData[0] || {}).length > 0;
+    } else {
+      // Regular section
+      return Object.keys(sectionData).length > 0;
     }
   };
 
@@ -202,33 +228,36 @@ export default function SessionDetailPage() {
             {/* Dynamic Template Sections - Show each section as a card */}
             {activeTemplate ? (
               <>
-                {activeTemplate.sections.map((section, index) => (
-                  <div
-                    key={section.id}
-                    onClick={() => router.push(`/charting/sessions/${sessionId}/chart?section=${index}`)}
-                    className="relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md border-blue-400 bg-blue-50 hover:bg-blue-100"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <ClipboardCheck className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                {activeTemplate.sections.map((section, index) => {
+                  const isCompleted = isSectionCompleted(section.id);
+                  return (
+                    <div
+                      key={section.id}
+                      onClick={() => router.push(`/charting/sessions/${sessionId}/chart?section=${index}`)}
+                      className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                        isCompleted
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-300 hover:border-blue-400'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <ClipboardCheck className={`w-5 h-5 mt-0.5 ${isCompleted ? 'text-green-600' : 'text-gray-600'}`} />
+                          <div className="flex-1">
                             <p className="font-semibold text-gray-900">{section.title}</p>
-                            {index === 0 && (
-                              <Badge className="bg-blue-600 text-white text-xs">Active Template</Badge>
+                            {section.description && (
+                              <p className="text-xs text-gray-600 line-clamp-2">{section.description}</p>
                             )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              {section.fields.length} fields
+                            </p>
                           </div>
-                          {section.description && (
-                            <p className="text-xs text-gray-600 line-clamp-2">{section.description}</p>
-                          )}
-                          <p className="text-xs text-gray-500 mt-1">
-                            {section.fields.length} fields
-                          </p>
                         </div>
+                        {isCompleted && <CheckCircle className="w-5 h-5 text-green-600" />}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             ) : (
               <>
