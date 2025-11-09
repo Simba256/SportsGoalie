@@ -23,6 +23,20 @@ export default function ChartingPage() {
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Calculate charting completion stats
+  const chartingStats = {
+    totalSessions: sessions.length,
+    chartedSessions: sessions.filter(session => {
+      // Check if session has either a dynamic or legacy entry
+      const hasDynamicEntry = dynamicEntries.some(e => e.sessionId === session.id);
+      const hasLegacyEntry = chartingEntries.some(e => e.sessionId === session.id);
+      return hasDynamicEntry || hasLegacyEntry;
+    }).length,
+    get completionRate() {
+      return this.totalSessions > 0 ? Math.round((this.chartedSessions / this.totalSessions) * 100) : 0;
+    }
+  };
+
   // Selected day modal state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDaySessions, setSelectedDaySessions] = useState<Session[]>([]);
@@ -134,7 +148,7 @@ export default function ChartingPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -144,6 +158,22 @@ export default function ChartingPage() {
                 </p>
               </div>
               <Calendar className="w-8 h-8 text-blue-500" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Charted</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {chartingStats.chartedSessions}
+                  <span className="text-lg text-gray-500 ml-1">/ {chartingStats.totalSessions}</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {chartingStats.completionRate}% complete
+                </p>
+              </div>
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
           </Card>
 
