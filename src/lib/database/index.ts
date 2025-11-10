@@ -7,6 +7,7 @@ export { VideoQuizService, videoQuizService } from './services/video-quiz.servic
 export { UserService, userService } from './services/user.service';
 export { ChartingService, chartingService } from './services/charting.service';
 export { FormTemplateService, formTemplateService } from './services/form-template.service';
+export { DynamicChartingService, dynamicChartingService } from './services/dynamic-charting.service';
 
 // Utilities
 export { SeederService, seederService } from './seeding/seeder.service';
