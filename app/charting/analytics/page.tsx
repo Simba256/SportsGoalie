@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
-import { chartingService } from '@/lib/database';
-import { Session, ChartingEntry } from '@/types';
+import { chartingService, dynamicChartingService } from '@/lib/database';
+import { formTemplateService } from '@/lib/database/services/form-template.service';
+import { dynamicAnalyticsService } from '@/lib/database/services/dynamic-analytics.service';
+import { Session, ChartingEntry, FormTemplate, DynamicChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +18,10 @@ import {
   Calendar,
   Filter,
   BarChart3,
+  RefreshCw,
+  CheckCircle,
+  Hash,
+  Type,
 } from 'lucide-react';
 import { startOfWeek, startOfMonth, subDays, subMonths, isAfter } from 'date-fns';
 import { DynamicAnalyticsDisplay } from '@/components/charting/DynamicAnalyticsDisplay';
@@ -36,6 +42,8 @@ export default function ChartingAnalyticsPage() {
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
+  const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
+  const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
 
@@ -48,9 +56,11 @@ export default function ChartingAnalyticsPage() {
 
     try {
       setLoading(true);
-      const [sessionsResult, allEntriesResult] = await Promise.all([
+      const [sessionsResult, allEntriesResult, dynamicEntriesResult, templateResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getChartingEntriesByStudent(user.id),
+        dynamicChartingService.getDynamicEntriesByStudent(user.id),
+        formTemplateService.getActiveTemplate(),
       ]);
 
       if (sessionsResult.success && sessionsResult.data) {
@@ -59,6 +69,14 @@ export default function ChartingAnalyticsPage() {
 
       if (allEntriesResult.success && allEntriesResult.data) {
         setEntries(allEntriesResult.data);
+      }
+
+      if (dynamicEntriesResult.success && dynamicEntriesResult.data) {
+        setDynamicEntries(dynamicEntriesResult.data);
+      }
+
+      if (templateResult.success && templateResult.data) {
+        setActiveTemplate(templateResult.data);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -598,8 +616,125 @@ export default function ChartingAnalyticsPage() {
           </div>
         </Card>
 
-        {/* Dynamic Analytics */}
-        {user && <DynamicAnalyticsDisplay studentId={user.id} />}
+        {/* Dynamic Form Analytics */}
+        {dynamicEntries.length > 0 && activeTemplate && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Dynamic Form Analytics</h2>
+              <p className="text-gray-600 mb-4">Data from active form template: {activeTemplate.name}</p>
+            </div>
+
+            {/* Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Entries</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{dynamicEntries.length}</p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-blue-500" />
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Complete Entries</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {dynamicEntries.filter(e => e.isComplete).length}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {Math.round((dynamicEntries.filter(e => e.isComplete).length / dynamicEntries.length) * 100)}% completion rate
+                    </p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Avg Completion</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {Math.round(dynamicEntries.reduce((sum, e) => sum + e.completionPercentage, 0) / dynamicEntries.length)}%
+                    </p>
+                  </div>
+                  <Type className="w-8 h-8 text-purple-500" />
+                </div>
+              </Card>
+            </div>
+
+            {/* Field-by-Field Stats */}
+            <Card className="p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Field Statistics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeTemplate.sections.map(section =>
+                  section.fields
+                    .filter(field => ['number', 'checkbox', 'select', 'radio'].includes(field.type))
+                    .map(field => {
+                      // Aggregate field data
+                      const values: any[] = [];
+                      dynamicEntries.forEach(entry => {
+                        const sectionData = entry.responses[section.id];
+                        if (!sectionData) return;
+
+                        if (section.isRepeatable && Array.isArray(sectionData)) {
+                          sectionData.forEach((instance: any) => {
+                            const val = instance[field.id];
+                            if (val !== undefined && val !== null) {
+                              values.push(typeof val === 'object' ? val.value : val);
+                            }
+                          });
+                        } else {
+                          const val = (sectionData as any)[field.id];
+                          if (val !== undefined && val !== null) {
+                            values.push(typeof val === 'object' ? val.value : val);
+                          }
+                        }
+                      });
+
+                      if (values.length === 0) return null;
+
+                      // Calculate stats based on field type
+                      let displayValue = '';
+                      let subtitle = '';
+
+                      if (field.type === 'number') {
+                        const nums = values.map(Number).filter(n => !isNaN(n));
+                        const avg = nums.reduce((sum, n) => sum + n, 0) / nums.length;
+                        displayValue = avg.toFixed(1);
+                        subtitle = `Avg across ${nums.length} entries`;
+                      } else if (field.type === 'checkbox') {
+                        const trueCount = values.filter(v => v === true).length;
+                        const percentage = Math.round((trueCount / values.length) * 100);
+                        displayValue = `${percentage}%`;
+                        subtitle = `${trueCount}/${values.length} checked`;
+                      } else if (field.type === 'select' || field.type === 'radio') {
+                        // Find most common value
+                        const counts: Record<string, number> = {};
+                        values.forEach(v => {
+                          const key = String(v);
+                          counts[key] = (counts[key] || 0) + 1;
+                        });
+                        const mostCommon = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
+                        displayValue = mostCommon[0];
+                        subtitle = `${mostCommon[1]}/${values.length} times`;
+                      }
+
+                      return (
+                        <Card key={`${section.id}-${field.id}`} className="p-4 bg-gray-50">
+                          <p className="text-xs text-gray-500 mb-1">{section.title}</p>
+                          <p className="text-sm font-semibold text-gray-900 mb-2">{field.label}</p>
+                          <p className="text-2xl font-bold text-blue-600">{displayValue}</p>
+                          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+                        </Card>
+                      );
+                    })
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Legacy Analytics Header */}
         {filteredEntries.length > 0 && (
