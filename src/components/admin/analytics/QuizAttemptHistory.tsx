@@ -66,7 +66,7 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
     }
 
     return filtered;
-  }, [attempts, filterSport, filterStatus, sortBy]);
+  }, [attempts, filterSport, sortBy]);
 
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString('en-US', {
