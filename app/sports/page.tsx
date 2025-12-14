@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Sport, SearchFilters, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { LoadingState, LoadingCard } from '@/components/ui/loading';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, Filter, Users, Sparkles } from 'lucide-react';
+
+import { useEnrollment } from '@/src/hooks/useEnrollment';
+import { useAuth } from '@/lib/auth/context';
 
 interface SportsPageState {
   sports: Sport[];
@@ -21,6 +25,15 @@ interface SportsPageState {
 }
 
 export default function SportsPage() {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  const {
+    enrolledSports,
+    loading: enrollmentsLoading,
+    enrollInSport,
+  } = useEnrollment();
+
   const [state, setState] = useState<SportsPageState>({
     sports: [],
     loading: true,
@@ -32,6 +45,26 @@ export default function SportsPage() {
 
   const [showFilters, setShowFilters] = useState(false);
 
+  // local UI state so button feels instant
+  const [enrollingIds, setEnrollingIds] = useState<Record<string, boolean>>({});
+  const [optimisticEnrolled, setOptimisticEnrolled] = useState<Record<string, boolean>>({});
+
+  const enrolledIdSet = useMemo(() => {
+    const ids = new Set<string>();
+    (enrolledSports || []).forEach((item: any) => {
+      // dashboard uses { sport, progress }
+      if (item?.sport?.id) ids.add(item.sport.id);
+      // fallback if shape differs
+      if (item?.sportId) ids.add(item.sportId);
+      if (item?.id) ids.add(item.id);
+    });
+    return ids;
+  }, [enrolledSports]);
+
+  const isEnrolled = (sportId: string) => {
+    return optimisticEnrolled[sportId] === true || enrolledIdSet.has(sportId);
+  };
+
   const loadSports = async (searchQuery?: string, filters?: SearchFilters) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -40,7 +73,7 @@ export default function SportsPage() {
       if (searchQuery && searchQuery.trim()) {
         result = await sportsService.searchSports(searchQuery, filters);
       } else {
-        result = await sportsService.getAllSports({ ...filters, limit: 50 });
+        result = await sportsService.getAllSports({ ...(filters || {}), limit: 50 });
       }
 
       if (result.success && result.data) {
@@ -99,6 +132,43 @@ export default function SportsPage() {
     }
   };
 
+  const handleEnrollClick = async (sportId: string) => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (isEnrolled(sportId)) {
+      router.push(`/sports/${sportId}`);
+      return;
+    }
+
+    try {
+      setEnrollingIds(prev => ({ ...prev, [sportId]: true }));
+      // optimistic UI
+      setOptimisticEnrolled(prev => ({ ...prev, [sportId]: true }));
+
+      const result = await enrollInSport(sportId);
+
+      // If hook returns a result object and enrollment failed, rollback optimistic UI
+      if (result && typeof result === 'object' && 'success' in result && (result as any).success === false) {
+        setOptimisticEnrolled(prev => {
+          const copy = { ...prev };
+          delete copy[sportId];
+          return copy;
+        });
+      }
+    } catch {
+      // rollback optimistic UI on error
+      setOptimisticEnrolled(prev => {
+        const copy = { ...prev };
+        delete copy[sportId];
+        return copy;
+      });
+    } finally {
+      setEnrollingIds(prev => ({ ...prev, [sportId]: false }));
+    }
+  };
 
   if (state.loading && state.sports.length === 0) {
     return (
@@ -112,10 +182,8 @@ export default function SportsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Breadcrumb */}
       <Breadcrumb items={[{ label: 'Courses', current: true }]} />
 
-      {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -134,7 +202,6 @@ export default function SportsPage() {
           </div>
         </div>
 
-        {/* Search and Filter Bar */}
         <div className="flex gap-4 items-center">
           <form onSubmit={handleSearch} className="flex-1 flex gap-2">
             <div className="relative flex-1">
@@ -168,11 +235,9 @@ export default function SportsPage() {
           )}
         </div>
 
-        {/* Filters Panel */}
         {showFilters && (
           <Card className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Difficulty Filter */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Difficulty Level</label>
                 <div className="space-y-2">
@@ -196,7 +261,6 @@ export default function SportsPage() {
                 </div>
               </div>
 
-              {/* Duration Filter */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Duration (hours)</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -225,7 +289,6 @@ export default function SportsPage() {
                 </div>
               </div>
 
-              {/* Additional Filters */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Features</label>
                 <div className="space-y-2">
@@ -245,7 +308,6 @@ export default function SportsPage() {
         )}
       </div>
 
-      {/* Error State */}
       {state.error && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
@@ -265,7 +327,6 @@ export default function SportsPage() {
         </Card>
       )}
 
-      {/* Courses Grid */}
       {state.sports.length === 0 && !state.loading ? (
         <Card className="p-8">
           <div className="text-center space-y-4">
@@ -281,88 +342,114 @@ export default function SportsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {state.sports.map((sport) => (
-            <Link key={sport.id} href={`/sports/${sport.id}`}>
-              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
-                {sport.imageUrl && (
-                  <div className="aspect-video relative overflow-hidden rounded-t-lg">
-                    <img
-                      src={sport.imageUrl}
-                      alt={sport.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {sport.isFeatured && (
-                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
-                        Featured
-                      </div>
-                    )}
-                  </div>
-                )}
+          {state.sports.map((sport) => {
+            const enrolled = isEnrolled(sport.id);
+            const enrolling = !!enrollingIds[sport.id] || enrollmentsLoading;
 
-                <CardHeader className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                      {sport.name}
-                    </CardTitle>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(sport.difficulty)}`}
-                    >
-                      {sport.difficulty}
-                    </span>
-                  </div>
-                  <CardDescription className="line-clamp-2">
-                    {sport.description}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-center text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      <span>{sport.skillsCount} skills</span>
-                    </div>
-                  </div>
-
-                  {sport.metadata.averageRating > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-500">★</span>
-                        <span>{sport.metadata.averageRating.toFixed(1)}</span>
-                        <span className="text-muted-foreground">
-                          ({sport.metadata.totalRatings} reviews)
-                        </span>
-                      </div>
-                      <div className="text-muted-foreground">
-                        {sport.metadata.totalEnrollments} enrolled
-                      </div>
-                    </div>
-                  )}
-
-                  {sport.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {sport.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {sport.tags.length > 3 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{sport.tags.length - 3} more
-                        </span>
+            return (
+              <Link key={sport.id} href={`/sports/${sport.id}`}>
+                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
+                  {sport.imageUrl && (
+                    <div className="aspect-video relative overflow-hidden rounded-t-lg">
+                      <img
+                        src={sport.imageUrl}
+                        alt={sport.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {sport.isFeatured && (
+                        <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
+                          Featured
+                        </div>
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+
+                  <CardHeader className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                        {sport.name}
+                      </CardTitle>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(sport.difficulty)}`}
+                      >
+                        {sport.difficulty}
+                      </span>
+                    </div>
+                    <CardDescription className="line-clamp-2">
+                      {sport.description}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-center text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        <span>{sport.skillsCount} skills</span>
+                      </div>
+                    </div>
+
+                    {sport.metadata.averageRating > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1">
+                          <span className="text-yellow-500">★</span>
+                          <span>{sport.metadata.averageRating.toFixed(1)}</span>
+                          <span className="text-muted-foreground">
+                            ({sport.metadata.totalRatings} reviews)
+                          </span>
+                        </div>
+                        <div className="text-muted-foreground">
+                          {sport.metadata.totalEnrollments} enrolled
+                        </div>
+                      </div>
+                    )}
+
+                    {sport.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {sport.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {sport.tags.length > 3 && (
+                          <span className="text-xs text-muted-foreground">
+                            +{sport.tags.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ENROLL BUTTON (prevents card navigation) */}
+                    <div className="pt-2">
+                      <Button
+                        className="w-full"
+                        variant={enrolled ? 'secondary' : 'default'}
+                        disabled={enrolling}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEnrollClick(sport.id);
+                        }}
+                      >
+                        {!isAuthenticated
+                          ? 'Sign in to enroll'
+                          : enrolled
+                            ? 'Enrolled'
+                            : enrolling
+                              ? 'Enrolling...'
+                              : 'Enroll'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
 
-      {/* Loading State for Pagination */}
       {state.loading && state.sports.length > 0 && (
         <div className="flex justify-center py-8">
           <div className="flex items-center gap-2 text-muted-foreground">
