@@ -15,30 +15,35 @@ export default function Home() {
       <section className="text-center space-y-6 mb-16">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
           Master Skills with{' '}
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Interactive Learning
           </span>
         </h1>
+
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
           Learn, practice, and track your progress with our comprehensive
           digital sports coaching platform. Take quizzes, master skills, and
           achieve your athletic goals.
         </p>
+
         <div className="flex gap-4 justify-center">
           <Button size="lg" asChild>
             <Link href="/sports">Explore Courses</Link>
           </Button>
-          <Button variant="outline" size="lg">
-            Learn More
+
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/sports">Learn More</Link>
           </Button>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-        <Card className="border-blue-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 group">
+        <Card className="border-border/60 hover:border-primary/40 hover:shadow-lg transition-all duration-200 group">
           <CardHeader>
-            <CardTitle className="text-blue-600 group-hover:text-blue-700">📚 Course Library</CardTitle>
+            <CardTitle className="text-primary group-hover:text-primary/90">
+              📚 Course Library
+            </CardTitle>
             <CardDescription>
               Comprehensive collection of courses and skills with detailed
               instructions and video guides.
@@ -52,9 +57,11 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all duration-200 group">
+        <Card className="border-border/60 hover:border-primary/40 hover:shadow-lg transition-all duration-200 group">
           <CardHeader>
-            <CardTitle className="text-purple-600 group-hover:text-purple-700">🧠 Interactive Quizzes</CardTitle>
+            <CardTitle className="text-primary group-hover:text-primary/90">
+              🧠 Interactive Quizzes
+            </CardTitle>
             <CardDescription>
               Test your knowledge with engaging quizzes and receive immediate
               feedback.
@@ -68,9 +75,11 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="border-emerald-200 hover:border-emerald-300 hover:shadow-lg transition-all duration-200 group">
+        <Card className="border-border/60 hover:border-primary/40 hover:shadow-lg transition-all duration-200 group">
           <CardHeader>
-            <CardTitle className="text-emerald-600 group-hover:text-emerald-700">📈 Progress Tracking</CardTitle>
+            <CardTitle className="text-primary group-hover:text-primary/90">
+              📈 Progress Tracking
+            </CardTitle>
             <CardDescription>
               Monitor your learning journey with detailed analytics and
               achievement tracking.
@@ -86,18 +95,24 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="text-center space-y-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-xl p-8 border border-blue-200 dark:border-blue-800">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Ready to Start Your Journey?
-        </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Join thousands of athletes already improving their skills with
-          SmarterGoalie. Start learning today and track your progress every step
-          of the way.
-        </p>
-        <Button size="lg" variant="premium" asChild>
-          <Link href="/auth/register">Sign Up Now</Link>
-        </Button>
+      <section className="relative overflow-hidden rounded-xl p-8 border border-border/60 bg-card">
+        <div className="absolute inset-0 opacity-60 bg-grid-pattern" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-accent/8" />
+
+        <div className="relative text-center space-y-6">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Ready to Start Your Journey?
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Join thousands of athletes already improving their skills with
+            SmarterGoalie. Start learning today and track your progress every
+            step of the way.
+          </p>
+
+          <Button size="lg" variant="premium" asChild>
+            <Link href="/auth/register">Sign Up Now</Link>
+          </Button>
+        </div>
       </section>
     </div>
   );
