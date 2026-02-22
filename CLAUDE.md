@@ -76,10 +76,31 @@ sportscoach-v3/
 ├── next.config.js       # Next.js configuration
 ├── .gitignore          # Git ignore rules
 ├── README.md           # Project overview and setup
+├── PROGRESS.md         # **MANDATORY** Progress tracking log
 └── CLAUDE.md           # This file
 ```
 
 ## 🚀 Development Workflow
+
+### Progress Tracking (MANDATORY)
+
+**CRITICAL**: Every work session MUST update `PROGRESS.md` with:
+- Session date and time spent
+- Work completed and files modified
+- Commit hashes
+- Blockers and next steps
+- Updated time tracking summaries
+
+**At Session Start:**
+1. Read `PROGRESS.md` to understand recent work
+2. Review "Next Steps" from previous session
+3. Check current sprint goals
+
+**At Session End:**
+1. Add session entry to PROGRESS.md
+2. Update milestone progress
+3. Update time tracking summaries
+4. Commit PROGRESS.md with your changes
 
 ### Stage-Based Development
 
@@ -87,6 +108,7 @@ sportscoach-v3/
 2. Every stage ends with:
    - ✅ All tests passing
    - ✅ Code review checklist completed
+   - ✅ **PROGRESS.md updated with session details**
    - ✅ Git commit with descriptive message
    - ✅ GitHub push with stage completion
 3. No stage can begin until the previous stage is fully complete
@@ -102,6 +124,7 @@ Before any stage completion:
 - [ ] All functionality manually tested
 - [ ] Performance acceptable (< 2s load time)
 - [ ] Mobile responsiveness verified
+- [ ] **PROGRESS.md updated with session details and time tracking**
 - [ ] Git commit created with clear message
 
 ### Testing Requirements
@@ -282,11 +305,12 @@ test('user can complete quiz successfully', async ({ page }) => {
 
 ### Mandatory Practices
 
-1. **Test Before Commit**: Every change must be tested
-2. **Document Decisions**: Update docs for significant changes
-3. **Type Everything**: No implicit any types
-4. **Error Handling**: Graceful degradation for all error states
-5. **Performance First**: Consider performance impact of all changes
+1. **Progress Tracking**: Update PROGRESS.md at the end of EVERY session
+2. **Test Before Commit**: Every change must be tested
+3. **Document Decisions**: Update docs for significant changes
+4. **Type Everything**: No implicit any types
+5. **Error Handling**: Graceful degradation for all error states
+6. **Performance First**: Consider performance impact of all changes
 
 ### Code Review Checklist
 
