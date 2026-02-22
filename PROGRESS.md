@@ -9,7 +9,7 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 45% (Phase 1 Complete, Phase 2 In Progress)
+**Overall Progress:** 46% (Phase 1 Complete, Phase 2.0.1 Complete)
 
 ---
 
@@ -27,12 +27,17 @@
 - [x] Progress tracking system setup (2026-02-22)
 - [x] Branding integration (header, footer, logo, colors, favicon) (2026-02-22)
 - [x] Progress tracking restructure with individual session files (2026-02-22)
+- [x] **Phase 2.0.1: Multi-role extension (Coach & Parent roles)** (2026-02-22)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-02-22 - [Phase 2.0.1: Multi-Role Extension](docs/sessions/2026-02/2026-02-22-phase-2-0-1-multi-role-extension.md)
+**Time:** 2h 15min | **Focus:** Feature - Multi-Role Authentication
+Extended user roles to support Coach and Parent. Updated registration flow, admin UI, and all auth-related components.
 
 ### 2026-02-22 - [Progress Tracking Restructure](docs/sessions/2026-02/2026-02-22-progress-tracking-restructure.md)
 **Time:** 30 min | **Focus:** Documentation / Organization
@@ -54,24 +59,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 1.5 hours | 🔄 In Progress |
-| **Total** | **~161.5 hours** | - |
+| Phase 2 | 3.75 hours | 🔄 In Progress |
+| **Total** | **~163.75 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Documentation | 1.25h | 83% |
-| Version Control | 0.25h | 17% |
-| Development | 0h | 0% |
+| Development | 2.25h | 60% |
+| Documentation | 1.25h | 33% |
+| Version Control | 0.25h | 7% |
 | Testing | 0h | 0% |
 | Debugging | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **1.5h** | **100%** |
+| **Total** | **3.75h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 1.5h | Documentation, progress tracking, branding | 3 |
+| 2026-02-17 | 3.75h | Multi-role system, documentation, branding | 4 |
 
 ---
 
@@ -79,11 +84,12 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (0% Complete)
-- [ ] 2.0.1: Extended user roles (Student, Coach, Parent, Admin)
+#### 2.0 - Multi-Role Foundation (20% Complete)
+- [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
 - [ ] 2.0.2: Coach-student relationships
 - [ ] 2.0.3: Parent-child relationships with COPPA compliance
 - [ ] 2.0.4: Role-based route protection
+- [ ] 2.0.5: Student onboarding & initial evaluation
 
 #### 2.1 - 6-Pillar Conversion (0% Complete)
 - [ ] Convert sports/skills to 6 fixed pillars
@@ -118,6 +124,18 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📝 Recent Decisions
 
+### 2026-02-22: Role Selection UI Pattern
+**Decision:** Use Select dropdown instead of radio buttons for role selection
+**Rationale:** Cleaner UI, scales better for future role additions, consistent with modern UI patterns
+**Impact:** Better UX for registration, more maintainable as roles expand
+**Alternatives Considered:** Radio buttons (too much vertical space), segmented control (limited flexibility)
+
+### 2026-02-22: Role-Based Redirect Strategy
+**Decision:** All non-admin roles redirect to `/dashboard` for now (Phase 2.0.1)
+**Rationale:** Role-specific dashboards will be implemented in later phases (Phase 2.2+)
+**Impact:** Simplifies initial implementation, allows incremental feature rollout
+**Alternatives Considered:** Create separate routes immediately (premature without features to populate them)
+
 ### 2026-02-22: Session File Organization
 **Decision:** Store detailed session logs in `docs/sessions/YYYY-MM/` instead of single file
 **Rationale:** Prevents PROGRESS.md from becoming unwieldy; easier to archive and search
@@ -135,6 +153,11 @@ Initial project analysis and progress tracking system implementation.
 ## 🔄 Recent Changes (Last 30 Days)
 
 ### 2026-02-22
+- **Feature:** Extended UserRole type to support Coach and Parent roles
+- **Feature:** Added role selection dropdown to registration flow
+- **Feature:** Updated admin UI to display and manage all four roles
+- **Feature:** Implemented role-based redirect logic
+- **Testing:** Updated Playwright auth tests for new role UI
 - **Branding:** Applied header, footer, logo, colors, and favicon updates
 - **Documentation:** Restructured progress tracking with session files
 - **Documentation:** Added progress tracking system
