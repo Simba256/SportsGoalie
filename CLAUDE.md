@@ -58,6 +58,9 @@ Create a comprehensive digital sports coaching platform that combines:
 ```
 sportscoach-v3/
 ├── docs/                    # Project documentation
+│   ├── sessions/           # **MANDATORY** Individual session logs
+│   │   ├── template.md    # Template for new sessions
+│   │   └── YYYY-MM/       # Sessions organized by month
 │   ├── PLAN.md             # Detailed project plan
 │   ├── TESTING.md          # Testing strategy and procedures
 │   └── DEPLOYMENT.md       # Deployment guide
@@ -76,7 +79,7 @@ sportscoach-v3/
 ├── next.config.js       # Next.js configuration
 ├── .gitignore          # Git ignore rules
 ├── README.md           # Project overview and setup
-├── PROGRESS.md         # **MANDATORY** Progress tracking log
+├── PROGRESS.md         # **MANDATORY** High-level progress dashboard
 └── CLAUDE.md           # This file
 ```
 
@@ -84,23 +87,25 @@ sportscoach-v3/
 
 ### Progress Tracking (MANDATORY)
 
-**CRITICAL**: Every work session MUST update `PROGRESS.md` with:
-- Session date and time spent
-- Work completed and files modified
-- Commit hashes
-- Blockers and next steps
-- Updated time tracking summaries
+**CRITICAL**: Every work session MUST create a session file and update `PROGRESS.md`:
 
 **At Session Start:**
-1. Read `PROGRESS.md` to understand recent work
-2. Review "Next Steps" from previous session
+1. Read `PROGRESS.md` to understand current status
+2. Review "Next Steps" from most recent session in `docs/sessions/`
 3. Check current sprint goals
+4. Note your start time
 
 **At Session End:**
-1. Add session entry to PROGRESS.md
-2. Update milestone progress
-3. Update time tracking summaries
-4. Commit PROGRESS.md with your changes
+1. Create session file in `docs/sessions/YYYY-MM/` using `docs/sessions/template.md`
+   - Use naming convention: `YYYY-MM-DD-short-descriptive-title.md`
+   - Fill in all sections: goals, work completed, files modified, commits, blockers, next steps
+   - Include time spent (rounded to nearest 15 minutes)
+2. Update `PROGRESS.md`:
+   - Add session summary to "Recent Sessions" section
+   - Update time tracking summaries (by phase, by category, weekly)
+   - Update milestone progress percentages
+   - Update sprint goals if tasks completed
+3. Commit BOTH `PROGRESS.md` AND session file together
 
 ### Stage-Based Development
 
@@ -124,7 +129,8 @@ Before any stage completion:
 - [ ] All functionality manually tested
 - [ ] Performance acceptable (< 2s load time)
 - [ ] Mobile responsiveness verified
-- [ ] **PROGRESS.md updated with session details and time tracking**
+- [ ] **Session file created in `docs/sessions/` with detailed work log**
+- [ ] **PROGRESS.md updated with session summary and time tracking**
 - [ ] Git commit created with clear message
 
 ### Testing Requirements
@@ -305,7 +311,7 @@ test('user can complete quiz successfully', async ({ page }) => {
 
 ### Mandatory Practices
 
-1. **Progress Tracking**: Update PROGRESS.md at the end of EVERY session
+1. **Progress Tracking**: Create session file in `docs/sessions/` and update PROGRESS.md at the end of EVERY session
 2. **Test Before Commit**: Every change must be tested
 3. **Document Decisions**: Update docs for significant changes
 4. **Type Everything**: No implicit any types

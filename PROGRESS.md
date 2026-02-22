@@ -1,6 +1,8 @@
 # PROGRESS TRACKING
 
-> **MANDATORY**: This file MUST be updated at the end of every work session. All agents and sessions must log their work here.
+> **MANDATORY**: This file MUST be updated at the end of every work session. Individual session details are stored in `docs/sessions/`.
+
+---
 
 ## 📊 Project Status
 
@@ -23,104 +25,26 @@
 ### Completed This Sprint
 - [x] Comprehensive project analysis (2026-02-22)
 - [x] Progress tracking system setup (2026-02-22)
+- [x] Branding integration (header, footer, logo, colors, favicon) (2026-02-22)
+- [x] Progress tracking restructure with individual session files (2026-02-22)
 
 ---
 
-## 📅 Session Log
+## 📅 Recent Sessions
 
-### Session Format
-```
-### YYYY-MM-DD - Session Title
-**Time Spent:** X hours Y minutes
-**Agent/Developer:** [Name/Agent ID]
-**Focus Area:** [Feature/Bug/Refactor/Documentation]
+> **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
-**Work Completed:**
-- Item 1
-- Item 2
-- Item 3
+### 2026-02-22 - [Progress Tracking Restructure](docs/sessions/2026-02/2026-02-22-progress-tracking-restructure.md)
+**Time:** 30 min | **Focus:** Documentation / Organization
+Restructured progress tracking with individual session files for better scalability.
 
-**Files Modified:**
-- `path/to/file1.ts`
-- `path/to/file2.tsx`
+### 2026-02-22 - [Branding Integration](docs/sessions/2026-02/2026-02-22-branding-integration.md)
+**Time:** 15 min | **Focus:** Version Control / Branding
+Cherry-picked and applied branding changes from feature branches to master.
 
-**Commits:**
-- `abc1234` - commit message
-
-**Blockers/Notes:**
-- Any issues or important notes
-
-**Next Steps:**
-- What should be done next
-```
-
----
-
-## 2026-02-22
-
-### 2026-02-22 - Apply Branding Changes from Feature Branch
-**Time Spent:** 15 minutes
-**Agent/Developer:** Claude Sonnet 4.5
-**Focus Area:** Version Control / Branding Integration
-
-**Work Completed:**
-- Analyzed two branding commits from separate feature branches
-- Verified no conflicts with current master branch
-- Cherry-picked both branding commits to master
-- Pushed branding changes to remote repository
-- Updated progress tracking documentation
-
-**Files Modified (via cherry-picked commits):**
-- `app/dashboard/page.tsx`
-- `app/globals.css`
-- `app/page.tsx`
-- `public/logo.svg` (created)
-- `public/favicon.svg`
-- `public/icon-192.svg`
-- `src/components/layout/footer.tsx`
-- `src/components/layout/header.tsx`
-- `PROGRESS.md` (updated)
-
-**Commits:**
-- `777e8c2` - Branding: header, footer, logo, colors
-- `d56e524` - Branding: favicon and app icons
-
-**Blockers/Notes:**
-- None - commits applied cleanly with no conflicts
-
-**Next Steps:**
-- Review branding changes in browser
-- Begin Phase 2 multi-role system implementation
-- Continue tracking progress for all sessions
-
----
-
-### 2026-02-22 - Initial Progress Tracking Setup
-**Time Spent:** 45 minutes
-**Agent/Developer:** Claude Sonnet 4.5 (Agent a007141)
-**Focus Area:** Documentation & Project Analysis
-
-**Work Completed:**
-- Completed comprehensive project analysis covering all 15 areas
-- Identified current phase status (Phase 2 in progress)
-- Reviewed recent changes and git history
-- Created PROGRESS.md tracking system
-- Updated CLAUDE.md with progress tracking requirements
-
-**Files Modified:**
-- `PROGRESS.md` (created)
-- `CLAUDE.md` (updated)
-
-**Commits:**
-- `a26d91e` - docs: add mandatory progress tracking system
-
-**Blockers/Notes:**
-- None
-
-**Next Steps:**
-- Begin Phase 2 multi-role system implementation
-- Update progress file after each work session
-- Track time spent on each task
+### 2026-02-22 - [Progress Tracking Setup](docs/sessions/2026-02/2026-02-22-progress-tracking-setup.md)
+**Time:** 45 min | **Focus:** Documentation & Analysis
+Initial project analysis and progress tracking system implementation.
 
 ---
 
@@ -130,24 +54,24 @@
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 1.0 hours | 🔄 In Progress |
-| **Total** | **~161.0 hours** | - |
+| Phase 2 | 1.5 hours | 🔄 In Progress |
+| **Total** | **~161.5 hours** | - |
 
 ### By Category (Phase 2)
-| Category | Time Spent |
-|----------|-----------|
-| Documentation | 0.75h |
-| Version Control | 0.25h |
-| Development | 0h |
-| Testing | 0h |
-| Debugging | 0h |
-| Code Review | 0h |
-| **Total** | **1.0h** |
+| Category | Time Spent | Percentage |
+|----------|-----------|------------|
+| Documentation | 1.25h | 83% |
+| Version Control | 0.25h | 17% |
+| Development | 0h | 0% |
+| Testing | 0h | 0% |
+| Debugging | 0h | 0% |
+| Code Review | 0h | 0% |
+| **Total** | **1.5h** | **100%** |
 
 ### Weekly Summary
-| Week Starting | Hours Worked | Main Focus |
-|--------------|--------------|------------|
-| 2026-02-17 | 1.0h | Project analysis, progress setup, branding integration |
+| Week Starting | Hours Worked | Main Focus | Sessions |
+|--------------|--------------|------------|----------|
+| 2026-02-17 | 1.5h | Documentation, progress tracking, branding | 3 |
 
 ---
 
@@ -192,49 +116,44 @@
 
 ---
 
-## 📝 Decision Log
+## 📝 Recent Decisions
+
+### 2026-02-22: Session File Organization
+**Decision:** Store detailed session logs in `docs/sessions/YYYY-MM/` instead of single file
+**Rationale:** Prevents PROGRESS.md from becoming unwieldy; easier to archive and search
+**Impact:** PROGRESS.md now serves as high-level dashboard only
+**Alternatives Considered:** Single file (rejected - would grow too large)
 
 ### 2026-02-22: Progress Tracking System
 **Decision:** Implement mandatory progress tracking in PROGRESS.md
 **Rationale:** Need visibility into time spent and work completed for project management
-**Impact:** All future sessions must update this file
+**Impact:** All future sessions must update this file and create session logs
 **Alternatives Considered:** External project management tools (rejected for simplicity)
 
 ---
 
-## 🔄 Change Log
+## 🔄 Recent Changes (Last 30 Days)
 
-### Recent Changes (Last 30 Days)
+### 2026-02-22
+- **Branding:** Applied header, footer, logo, colors, and favicon updates
+- **Documentation:** Restructured progress tracking with session files
+- **Documentation:** Added progress tracking system
 
-#### 2026-02-22
-- **Type:** Branding
-- **Description:** Applied branding updates (header, footer, logo, colors, favicon)
-- **Impact:** Updated visual identity across application
-- **Files:** app/dashboard/page.tsx, app/globals.css, app/page.tsx, public/logo.svg, public/favicon.svg, public/icon-192.svg, src/components/layout/footer.tsx, src/components/layout/header.tsx
-
-#### 2026-02-22
-- **Type:** Documentation
-- **Description:** Added progress tracking system
-- **Impact:** All sessions now tracked with time and work details
-- **Files:** PROGRESS.md (new), CLAUDE.md (updated)
-
-#### 2026-02-XX (Before tracking)
+### 2026-02-XX (Before tracking)
 - Fixed CVE-2025-66478 by updating Next.js to 16.1.4
 - Fixed analytics display with undefined filterStatus removal
 - Exported dynamicChartingService from database index
 - Added dynamic form analytics display
-- Enabled Firestore list queries on dynamic_charting_analytics
-- Added phase2-stress-tests.spec.ts
 
 ---
 
-## 📋 Instructions for Maintaining This File
+## 📋 Session Workflow
 
 ### For Every Work Session:
 
 1. **At Session Start:**
-   - Review current sprint goals
-   - Check "Next Steps" from previous session
+   - Review current sprint goals above
+   - Check "Next Steps" from most recent session in `docs/sessions/`
    - Note your start time
 
 2. **During Session:**
@@ -243,16 +162,20 @@
    - Keep list of modified files
 
 3. **At Session End (MANDATORY):**
-   - Add new session entry with date and title
-   - Calculate and log time spent
-   - List all work completed
-   - List all files modified
-   - Note commit hashes
-   - Document any blockers
-   - Write clear next steps
-   - Update milestone progress percentages
+   - Create new session file in `docs/sessions/YYYY-MM/` using `template.md`
+   - Add session summary to "Recent Sessions" section above
    - Update time tracking summaries
-   - Commit this file with your changes
+   - Update milestone progress percentages if applicable
+   - Update sprint goals if tasks completed
+   - Commit PROGRESS.md AND session file together
+
+### Session File Naming Convention:
+`docs/sessions/YYYY-MM/YYYY-MM-DD-short-descriptive-title.md`
+
+**Examples:**
+- `docs/sessions/2026-02/2026-02-22-progress-tracking-setup.md`
+- `docs/sessions/2026-02/2026-02-23-multi-role-auth-implementation.md`
+- `docs/sessions/2026-03/2026-03-01-pillar-conversion-phase1.md`
 
 ### Time Tracking Guidelines:
 - Round to nearest 15 minutes
@@ -260,22 +183,42 @@
 - Exclude: breaks, context switching, unrelated work
 - Be honest and accurate
 
-### What to Track:
-- ✅ All code changes (features, fixes, refactors)
-- ✅ Documentation updates
-- ✅ Testing activities
-- ✅ Code reviews
-- ✅ Debugging sessions
-- ✅ Architecture decisions
-- ❌ Reading documentation (unless creating docs)
-- ❌ General research without deliverable
-
 ---
 
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-02-22
-**Last Session:** Apply branding changes from feature branch
-**Total Sessions This Phase:** 2
-**Current Phase Hours:** 1.0h
+**Last Session:** [Progress Tracking Restructure](docs/sessions/2026-02/2026-02-22-progress-tracking-restructure.md)
+**Total Sessions This Phase:** 3
+**Current Phase Hours:** 1.5h
 **Next Session Focus:** Review branding changes, begin multi-role system implementation
+
+---
+
+## 📂 Documentation Structure
+
+```
+PROGRESS.md                           # This file - high-level dashboard
+docs/
+  └── sessions/                       # Individual session logs
+      ├── template.md                 # Template for new sessions
+      └── YYYY-MM/                    # Sessions organized by month
+          ├── YYYY-MM-DD-title.md
+          └── ...
+```
+
+---
+
+## 🔍 Finding Information
+
+- **Current Status:** See "Project Status" and "Current Sprint Goals" above
+- **Time Spent:** See "Time Tracking Summary" above
+- **Recent Work:** See "Recent Sessions" above (last 5-10 sessions)
+- **Detailed Session Info:** Navigate to `docs/sessions/YYYY-MM/YYYY-MM-DD-title.md`
+- **All Sessions:** Browse `docs/sessions/` directory
+- **Decisions Made:** See "Recent Decisions" above or search session files
+- **Technical Debt:** See "Known Issues & Technical Debt" above
+
+---
+
+**Session File Template:** [`docs/sessions/template.md`](docs/sessions/template.md)
