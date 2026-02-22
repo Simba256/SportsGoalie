@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, FileText } from 'lucide-react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, FileText, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -238,6 +238,21 @@ function AdminDashboardContent() {
                   </p>
                 </div>
                 <Link href="/admin/users">
+                  <Button>Manage</Button>
+                </Link>
+              </div>
+
+              <div className="flex items-center space-x-4 rounded-lg border p-4">
+                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <UserPlus className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Coach Invitations</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Invite coaches and manage invitations
+                  </p>
+                </div>
+                <Link href="/admin/coaches">
                   <Button>Manage</Button>
                 </Link>
               </div>

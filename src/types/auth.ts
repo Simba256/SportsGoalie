@@ -38,3 +38,51 @@ export interface AuthError {
   message: string;
   context?: Record<string, unknown>;
 }
+
+// Coach invitation status
+export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
+
+// Coach invitation interface
+export interface CoachInvitation {
+  id: string;
+  email: string;
+  token: string;
+  status: InvitationStatus;
+  invitedBy: string; // Admin user ID
+  invitedByName: string; // Admin display name
+  createdAt: Date;
+  expiresAt: Date;
+  acceptedAt?: Date;
+  revokedAt?: Date;
+  revokedBy?: string;
+  acceptedUserId?: string; // User ID after accepting
+  metadata?: {
+    firstName?: string;
+    lastName?: string;
+    organizationName?: string;
+    customMessage?: string;
+  };
+}
+
+// Data to create a new invitation
+export interface CreateInvitationData {
+  email: string;
+  invitedBy: string;
+  invitedByName: string;
+  expiresInDays?: number; // Default: 7 days
+  metadata?: {
+    firstName?: string;
+    lastName?: string;
+    organizationName?: string;
+    customMessage?: string;
+  };
+}
+
+// Data to accept an invitation
+export interface AcceptInvitationData {
+  token: string;
+  password: string;
+  displayName: string;
+  firstName?: string;
+  lastName?: string;
+}

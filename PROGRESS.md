@@ -9,14 +9,13 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 47% (Phase 1 Complete, Phase 2.0.1b Complete)
+**Overall Progress:** 49% (Phase 1 Complete, Phase 2.0.2 Complete)
 
 ---
 
 ## 🎯 Current Sprint Goals
 
 ### Active Tasks
-- [ ] Build coach invitation system (email-based)
 - [ ] Build coach-student relationship management
 - [ ] Implement parent-child relationships with student ID linking
 - [ ] Role-based route protection
@@ -29,12 +28,17 @@
 - [x] Progress tracking restructure with individual session files (2026-02-22)
 - [x] **Phase 2.0.1: Multi-role extension (Coach & Parent roles)** (2026-02-22)
 - [x] **Phase 2.0.1b: Student ID system & registration security** (2026-02-22)
+- [x] **Phase 2.0.2: Coach invitation system with email infrastructure** (2026-02-22)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-02-22 - [Phase 2.0.2: Coach Invitation System](docs/sessions/2026-02/2026-02-22-phase-2-0-2-coach-invitation-system.md)
+**Time:** 2h 30min | **Focus:** Feature - Coach Invitation & Email System
+Built complete coach invitation system with email-based invitations, admin UI, token validation, acceptance flow, and email service infrastructure (development mode).
 
 ### 2026-02-22 - [Phase 2.0.1b: Student IDs & Security](docs/sessions/2026-02/2026-02-22-phase-2-0-1b-student-ids-security.md)
 **Time:** 1h 30min | **Focus:** Feature - Student ID System & Security
@@ -64,24 +68,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 5.25 hours | 🔄 In Progress |
-| **Total** | **~165.25 hours** | - |
+| Phase 2 | 7.75 hours | 🔄 In Progress |
+| **Total** | **~167.75 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 3.75h | 71% |
-| Documentation | 1.25h | 24% |
-| Version Control | 0.25h | 5% |
+| Development | 6.25h | 81% |
+| Documentation | 1.25h | 16% |
+| Version Control | 0.25h | 3% |
 | Testing | 0h | 0% |
 | Debugging | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **5.25h** | **100%** |
+| **Total** | **7.75h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 5.25h | Multi-role system, student IDs, security, documentation | 5 |
+| 2026-02-17 | 7.75h | Multi-role system, student IDs, security, coach invitations | 6 |
 
 ---
 
@@ -89,10 +93,10 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (30% Complete)
+#### 2.0 - Multi-Role Foundation (45% Complete)
 - [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
 - [x] 2.0.1b: Student ID system & registration security - COMPLETE
-- [ ] 2.0.2: Coach invitation system
+- [x] 2.0.2: Coach invitation system with email infrastructure - COMPLETE
 - [ ] 2.0.3: Coach-student relationships
 - [ ] 2.0.4: Parent-child relationships with student ID linking
 - [ ] 2.0.5: Role-based route protection
@@ -130,6 +134,24 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-02-22: Coach Invitation Token Format
+**Decision:** Use 32-character crypto-random tokens with 7-day default expiry
+**Rationale:** Provides strong security (62^32 combinations), URL-safe, reasonable acceptance window
+**Impact:** Secure invitation system without complexity of JWT, prevents indefinite valid tokens
+**Alternatives Considered:** JWT (too complex), UUID (less readable), shorter tokens (less secure)
+
+### 2026-02-22: Email Service Development Mode
+**Decision:** Log emails to console in development, prepare infrastructure for production services
+**Rationale:** No email service configured yet, but code ready for SendGrid/AWS SES integration
+**Impact:** Can test invitation flow immediately, easy switch to production email later
+**Alternatives Considered:** Mock email service (rejected - console simpler), immediate integration (premature)
+
+### 2026-02-22: Invitation Uniqueness Check
+**Decision:** Prevent duplicate pending invitations for same email address
+**Rationale:** Avoids confusion with multiple active tokens, clearer user experience
+**Impact:** Admins must revoke or wait for expiry before resending to same email
+**Alternatives Considered:** Allow multiple (rejected - confusing), auto-revoke old (complex)
 
 ### 2026-02-22: Student ID Format & Security
 **Decision:** Use SG-XXXX-XXXX format with crypto-random generation, exclude confusing characters
@@ -178,6 +200,14 @@ Initial project analysis and progress tracking system implementation.
 ## 🔄 Recent Changes (Last 30 Days)
 
 ### 2026-02-22
+- **Feature:** Implemented complete coach invitation system with email-based workflow
+- **Feature:** Created coach invitation service with token generation and validation
+- **Feature:** Built admin UI for managing coach invitations (/admin/coaches)
+- **Feature:** Developed coach acceptance flow (/auth/accept-invite)
+- **Feature:** Set up email service infrastructure (HTML/text templates, dev mode logging)
+- **Feature:** Added invitation resend and revoke functionality
+- **Feature:** Implemented invitation status tracking (pending, accepted, expired, revoked)
+- **UI:** Created alert-dialog component for confirmation dialogs
 - **Security:** Restricted public registration to Student and Parent roles only
 - **Feature:** Implemented crypto-random student ID generation (SG-XXXX-XXXX format)
 - **Feature:** Auto-generate student IDs on student registration
@@ -240,10 +270,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-02-22
-**Last Session:** [Progress Tracking Restructure](docs/sessions/2026-02/2026-02-22-progress-tracking-restructure.md)
-**Total Sessions This Phase:** 3
-**Current Phase Hours:** 1.5h
-**Next Session Focus:** Review branding changes, begin multi-role system implementation
+**Last Session:** [Phase 2.0.2: Coach Invitation System](docs/sessions/2026-02/2026-02-22-phase-2-0-2-coach-invitation-system.md)
+**Total Sessions This Phase:** 6
+**Current Phase Hours:** 7.75h
+**Next Session Focus:** Begin Phase 2.0.3 - Coach-Student Relationship Management
 
 ---
 
