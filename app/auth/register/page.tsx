@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
@@ -28,13 +29,17 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors },
     setError,
-  } = useForm({
+    setValue,
+    watch,
+  } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       role: 'student' as const,
       agreeToTerms: false,
     },
   });
+
+  const selectedRole = watch('role');
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -83,8 +88,28 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="register-form">
-            {/* Hidden role field - all registrations are students */}
-            <input type="hidden" {...register('role')} value="student" />
+            {/* Role Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="role">I am a...</Label>
+              <Select
+                value={selectedRole}
+                onValueChange={(value) => setValue('role', value as 'student' | 'admin' | 'coach' | 'parent')}
+              >
+                <SelectTrigger id="role" data-testid="role-select">
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student" data-testid="role-student">Student / Athlete</SelectItem>
+                  <SelectItem value="coach" data-testid="role-coach">Coach</SelectItem>
+                  <SelectItem value="parent" data-testid="role-parent">Parent</SelectItem>
+                  <SelectItem value="admin" data-testid="role-admin">Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.role && (
+                <p className="text-sm text-destructive" data-testid="role-error">{errors.role.message}</p>
+              )}
+            </div>
+
             {/* Display Name */}
             <div className="space-y-2">
               <Label htmlFor="displayName">Full Name</Label>

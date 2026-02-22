@@ -19,6 +19,7 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   displayName: string;
+  role: 'student' | 'admin' | 'coach' | 'parent';
   firstName?: string;
   lastName?: string;
 }

@@ -16,7 +16,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string | null;
-  role: 'student' | 'admin';
+  role: 'student' | 'admin' | 'coach' | 'parent';
   photoURL?: string;
   emailVerified: boolean;
   createdAt?: Date;
@@ -43,7 +43,7 @@ export interface RegisterCredentials {
   password: string;
   confirmPassword: string;
   displayName: string;
-  role: 'student' | 'admin';
+  role: 'student' | 'admin' | 'coach' | 'parent';
   agreeToTerms: boolean;
 }
 

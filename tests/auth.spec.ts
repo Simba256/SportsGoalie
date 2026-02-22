@@ -25,7 +25,12 @@ async function fillLoginForm(page: Page, email: string, password: string) {
   await page.getByTestId('password-input').fill(password);
 }
 
-async function fillRegistrationForm(page: Page, user: typeof testUsers.newUser) {
+async function fillRegistrationForm(page: Page, user: typeof testUsers.newUser, role: 'student' | 'coach' | 'parent' | 'admin' = 'student') {
+  // Select role first
+  await page.getByTestId('role-select').click();
+  await page.getByTestId(`role-${role}`).click();
+
+  // Fill form fields
   await page.getByTestId('display-name-input').fill(user.displayName);
   await page.getByTestId('email-input').fill(user.email);
   await page.getByTestId('password-input').fill(user.password);
@@ -178,14 +183,32 @@ test.describe('Authentication Flows', () => {
       // Check page elements using data-testid
       await expect(page.getByRole('heading', { name: 'Create an Account' })).toBeVisible();
       await expect(page.getByTestId('register-form')).toBeVisible();
+      await expect(page.getByTestId('role-select')).toBeVisible();
       await expect(page.getByTestId('display-name-input')).toBeVisible();
       await expect(page.getByTestId('email-input')).toBeVisible();
       await expect(page.getByTestId('password-input')).toBeVisible();
       await expect(page.getByTestId('confirm-password-input')).toBeVisible();
-      await expect(page.getByTestId('role-student')).toBeVisible();
-      await expect(page.getByTestId('role-admin')).toBeVisible();
       await expect(page.getByTestId('agree-terms-checkbox')).toBeVisible();
       await expect(page.getByTestId('register-submit')).toBeVisible();
+    });
+
+    test('should allow selection of all role types', async ({ page }) => {
+      await page.goto('/auth/register');
+
+      // Click the role select to open dropdown
+      await page.getByTestId('role-select').click();
+
+      // Verify all role options are available
+      await expect(page.getByTestId('role-student')).toBeVisible();
+      await expect(page.getByTestId('role-coach')).toBeVisible();
+      await expect(page.getByTestId('role-parent')).toBeVisible();
+      await expect(page.getByTestId('role-admin')).toBeVisible();
+
+      // Select coach role
+      await page.getByTestId('role-coach').click();
+
+      // Verify coach role is selected (Select will show the selected value)
+      await expect(page.getByTestId('role-select')).toContainText('Coach');
     });
 
     test('should show validation errors for empty form', async ({ page }) => {

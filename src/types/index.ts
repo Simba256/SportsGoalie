@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type UserRole = 'student' | 'admin';
+export type UserRole = 'student' | 'admin' | 'coach' | 'parent';
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed';
 export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'fill_in_blank';

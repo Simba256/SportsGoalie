@@ -5,10 +5,28 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/context';
+import { UserRole } from '@/types';
+
+/**
+ * Get the default redirect path for a user based on their role
+ */
+function getRoleBasedRedirect(role: UserRole): string {
+  switch (role) {
+    case 'admin':
+      return '/admin';
+    case 'coach':
+      return '/dashboard'; // Will have coach-specific features in Phase 2
+    case 'parent':
+      return '/dashboard'; // Will have parent-specific features in Phase 2
+    case 'student':
+    default:
+      return '/dashboard';
+  }
+}
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'student' | 'admin';
+  requiredRole?: UserRole;
   redirectTo?: string;
   fallback?: React.ReactNode;
 }
@@ -31,7 +49,7 @@ export function ProtectedRoute({
 
       if (requiredRole && user?.role !== requiredRole) {
         // Redirect based on user role
-        const roleBasedRedirect = user?.role === 'admin' ? '/admin' : '/dashboard';
+        const roleBasedRedirect = getRoleBasedRedirect(user?.role || 'student');
         router.push(roleBasedRedirect);
         return;
       }
@@ -71,8 +89,8 @@ export function AdminRoute({ children, ...props }: Omit<ProtectedRouteProps, 're
     if (!isAuthenticated) {
       return '/auth/login'; // Not logged in -> login page
     }
-    if (user?.role === 'student') {
-      return '/dashboard'; // Regular user -> user dashboard
+    if (user?.role) {
+      return getRoleBasedRedirect(user.role); // Redirect to role-specific dashboard
     }
     return '/auth/login'; // Fallback to login
   };

@@ -358,6 +358,8 @@ export class AnalyticsService extends BaseDatabaseService {
       newThisMonth: users.filter(u => new Date(u.createdAt) >= startOfMonth).length,
       adminCount: users.filter(u => u.role === 'admin').length,
       studentCount: users.filter(u => u.role === 'student').length,
+      coachCount: users.filter(u => u.role === 'coach').length,
+      parentCount: users.filter(u => u.role === 'parent').length,
     };
 
     return { success: true, data: userStats };

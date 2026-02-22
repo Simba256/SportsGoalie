@@ -92,8 +92,12 @@ function UsersManagementContent() {
     switch (role) {
       case 'admin':
         return 'destructive';
-      case 'student':
+      case 'coach':
         return 'default';
+      case 'parent':
+        return 'secondary';
+      case 'student':
+        return 'outline';
       default:
         return 'secondary';
     }
@@ -130,7 +134,7 @@ function UsersManagementContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -138,20 +142,7 @@ function UsersManagementContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
-              <p className="text-xs text-muted-foreground">Registered users</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Administrators</CardTitle>
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {users.filter(u => u.role === 'admin').length}
-              </div>
-              <p className="text-xs text-muted-foreground">Admin accounts</p>
+              <p className="text-xs text-muted-foreground">All accounts</p>
             </CardContent>
           </Card>
 
@@ -164,7 +155,46 @@ function UsersManagementContent() {
               <div className="text-2xl font-bold">
                 {users.filter(u => u.role === 'student').length}
               </div>
-              <p className="text-xs text-muted-foreground">Student accounts</p>
+              <p className="text-xs text-muted-foreground">Athletes</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Coaches</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users.filter(u => u.role === 'coach').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Coach accounts</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Parents</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users.filter(u => u.role === 'parent').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Parent accounts</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Admins</CardTitle>
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users.filter(u => u.role === 'admin').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Administrators</p>
             </CardContent>
           </Card>
         </div>
@@ -196,8 +226,10 @@ function UsersManagementContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="admin">Administrators</SelectItem>
                   <SelectItem value="student">Students</SelectItem>
+                  <SelectItem value="coach">Coaches</SelectItem>
+                  <SelectItem value="parent">Parents</SelectItem>
+                  <SelectItem value="admin">Administrators</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -291,21 +323,39 @@ function UsersManagementContent() {
 
                           <DropdownMenuSeparator />
 
-                          {user.role !== 'admin' && (
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(user.id, 'admin')}
-                            >
-                              <ShieldCheck className="mr-2 h-4 w-4" />
-                              Make Admin
-                            </DropdownMenuItem>
-                          )}
-
                           {user.role !== 'student' && (
                             <DropdownMenuItem
                               onClick={() => handleRoleChange(user.id, 'student')}
                             >
                               <Users className="mr-2 h-4 w-4" />
                               Make Student
+                            </DropdownMenuItem>
+                          )}
+
+                          {user.role !== 'coach' && (
+                            <DropdownMenuItem
+                              onClick={() => handleRoleChange(user.id, 'coach')}
+                            >
+                              <Users className="mr-2 h-4 w-4" />
+                              Make Coach
+                            </DropdownMenuItem>
+                          )}
+
+                          {user.role !== 'parent' && (
+                            <DropdownMenuItem
+                              onClick={() => handleRoleChange(user.id, 'parent')}
+                            >
+                              <Users className="mr-2 h-4 w-4" />
+                              Make Parent
+                            </DropdownMenuItem>
+                          )}
+
+                          {user.role !== 'admin' && (
+                            <DropdownMenuItem
+                              onClick={() => handleRoleChange(user.id, 'admin')}
+                            >
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              Make Admin
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
