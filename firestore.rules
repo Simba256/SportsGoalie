@@ -50,7 +50,7 @@ service cloud.firestore {
     }
 
     function isValidRole(role) {
-      return role == 'student' || role == 'admin';
+      return role == 'student' || role == 'admin' || role == 'coach' || role == 'parent';
     }
 
     function isValidDifficulty(difficulty) {
@@ -83,7 +83,7 @@ service cloud.firestore {
                        request.resource.data.displayName is string &&
                        request.resource.data.displayName.size() > 0 &&
                        request.resource.data.role is string &&
-                       (request.resource.data.role == 'student' || request.resource.data.role == 'admin') &&
+                       isValidRole(request.resource.data.role) &&
                        request.resource.data.emailVerified is bool;
 
       // Users can update their own profile (except role and email), admins can update any
@@ -617,6 +617,42 @@ service cloud.firestore {
       allow create, update: if isAdmin() || isOwner(getStudentIdFromAnalyticsId());
 
       // Only admins can delete analytics
+      allow delete: if isAdmin();
+    }
+
+    // Coach Invitations collection - Email-based coach invitation system
+    match /coach_invitations/{invitationId} {
+      // Admins can read all invitations for management
+      allow read: if isAdmin();
+
+      // PUBLIC: Anyone can read a specific invitation by querying (needed for token validation)
+      // This allows the /auth/accept-invite page to validate tokens
+      allow list: if true;
+
+      // Only admins can create invitations
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['email', 'token', 'status', 'invitedBy', 'invitedByName', 'createdAt', 'expiresAt']) &&
+                       request.resource.data.email is string &&
+                       isValidEmail(request.resource.data.email) &&
+                       request.resource.data.token is string &&
+                       request.resource.data.token.size() > 0 &&
+                       (request.resource.data.status == 'pending' ||
+                        request.resource.data.status == 'accepted' ||
+                        request.resource.data.status == 'expired' ||
+                        request.resource.data.status == 'revoked') &&
+                       request.resource.data.invitedBy is string &&
+                       request.resource.data.invitedByName is string &&
+                       isValidTimestamp(request.resource.data.createdAt) &&
+                       isValidTimestamp(request.resource.data.expiresAt);
+
+      // Admins can update invitations (for resend, revoke, etc.)
+      // System can update invitation status when accepted
+      allow update: if isAdmin() ||
+                       (isAuthenticated() &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'acceptedAt', 'acceptedUserId']) &&
+                        request.resource.data.status == 'accepted');
+
+      // Only admins can delete invitations
       allow delete: if isAdmin();
     }
 
