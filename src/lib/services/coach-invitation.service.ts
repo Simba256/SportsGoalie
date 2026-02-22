@@ -56,6 +56,19 @@ function calculateExpiryDate(days: number = 7): Date {
 }
 
 /**
+ * Remove undefined values from object (Firestore doesn't allow undefined)
+ */
+function removeUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  const cleaned: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  }
+  return cleaned;
+}
+
+/**
  * Check if invitation is expired
  */
 function isExpired(expiresAt: Date): boolean {
@@ -126,11 +139,27 @@ export class CoachInvitationService implements ICoachInvitationService {
         metadata: data.metadata,
       };
 
-      await setDoc(invitationRef, {
-        ...invitation,
+      // Prepare data for Firestore (remove undefined values)
+      const firestoreData: any = {
+        id: invitation.id,
+        email: invitation.email,
+        token: invitation.token,
+        status: invitation.status,
+        invitedBy: invitation.invitedBy,
+        invitedByName: invitation.invitedByName,
         createdAt: Timestamp.fromDate(now),
         expiresAt: Timestamp.fromDate(expiresAt),
-      });
+      };
+
+      // Only add metadata if it exists and has values
+      if (data.metadata) {
+        const cleanedMetadata = removeUndefined(data.metadata);
+        if (Object.keys(cleanedMetadata).length > 0) {
+          firestoreData.metadata = cleanedMetadata;
+        }
+      }
+
+      await setDoc(invitationRef, firestoreData);
 
       logInfo('Coach invitation created', { invitationId: invitation.id, email: invitation.email });
 
