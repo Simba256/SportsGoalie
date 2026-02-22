@@ -93,21 +93,22 @@ export default function RegisterPage() {
               <Label htmlFor="role">I am a...</Label>
               <Select
                 value={selectedRole}
-                onValueChange={(value) => setValue('role', value as 'student' | 'admin' | 'coach' | 'parent')}
+                onValueChange={(value) => setValue('role', value as 'student' | 'parent')}
               >
                 <SelectTrigger id="role" data-testid="role-select">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="student" data-testid="role-student">Student / Athlete</SelectItem>
-                  <SelectItem value="coach" data-testid="role-coach">Coach</SelectItem>
                   <SelectItem value="parent" data-testid="role-parent">Parent</SelectItem>
-                  <SelectItem value="admin" data-testid="role-admin">Administrator</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (
                 <p className="text-sm text-destructive" data-testid="role-error">{errors.role.message}</p>
               )}
+              <p className="text-xs text-muted-foreground">
+                Coaches are invited by administrators. Parents must have their child&apos;s Student ID to register.
+              </p>
             </div>
 
             {/* Display Name */}

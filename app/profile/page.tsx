@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera, Loader2, Mail, Shield, User } from 'lucide-react';
+import { Camera, Loader2, Mail, Shield, User, Copy, Check } from 'lucide-react';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const { user, updateUserProfile, resendEmailVerification } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [copiedStudentId, setCopiedStudentId] = useState(false);
 
   const {
     register,
@@ -56,6 +57,14 @@ export default function ProfilePage() {
       });
     } finally {
       setIsResendingVerification(false);
+    }
+  };
+
+  const copyStudentIdToClipboard = async () => {
+    if (user?.studentNumber) {
+      await navigator.clipboard.writeText(user.studentNumber);
+      setCopiedStudentId(true);
+      setTimeout(() => setCopiedStudentId(false), 2000);
     }
   };
 
@@ -190,6 +199,37 @@ export default function ProfilePage() {
                   Email address cannot be changed. Contact support if you need to update it.
                 </p>
               </div>
+
+              {/* Student ID (Read-only, only for students) */}
+              {user.role === 'student' && user.studentNumber && (
+                <div className="space-y-2">
+                  <Label htmlFor="studentId">Student ID</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      id="studentId"
+                      value={user.studentNumber}
+                      disabled
+                      className="bg-muted font-mono text-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={copyStudentIdToClipboard}
+                      title="Copy Student ID"
+                    >
+                      {copiedStudentId ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Share this ID with your parents so they can link their account to yours.
+                  </p>
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="flex justify-end">

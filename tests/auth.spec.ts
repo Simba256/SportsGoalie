@@ -192,23 +192,21 @@ test.describe('Authentication Flows', () => {
       await expect(page.getByTestId('register-submit')).toBeVisible();
     });
 
-    test('should allow selection of all role types', async ({ page }) => {
+    test('should allow selection of student and parent roles only', async ({ page }) => {
       await page.goto('/auth/register');
 
       // Click the role select to open dropdown
       await page.getByTestId('role-select').click();
 
-      // Verify all role options are available
+      // Verify only student and parent role options are available (no coach or admin)
       await expect(page.getByTestId('role-student')).toBeVisible();
-      await expect(page.getByTestId('role-coach')).toBeVisible();
       await expect(page.getByTestId('role-parent')).toBeVisible();
-      await expect(page.getByTestId('role-admin')).toBeVisible();
 
-      // Select coach role
-      await page.getByTestId('role-coach').click();
+      // Select parent role
+      await page.getByTestId('role-parent').click();
 
-      // Verify coach role is selected (Select will show the selected value)
-      await expect(page.getByTestId('role-select')).toContainText('Coach');
+      // Verify parent role is selected (Select will show the selected value)
+      await expect(page.getByTestId('role-select')).toContainText('Parent');
     });
 
     test('should show validation errors for empty form', async ({ page }) => {

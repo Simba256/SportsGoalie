@@ -12,7 +12,7 @@ import {
   sendEmailVerification,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { User, RegisterCredentials, LoginCredentials } from '@/types/auth';
 import {
@@ -23,6 +23,7 @@ import {
   FirestorePermissionError,
 } from '@/lib/errors/auth-errors';
 import { logAuthError, logInfo, logDebug } from '@/lib/errors/error-logger';
+import { generateStudentId, isValidStudentId } from '@/lib/utils/student-id-generator';
 
 /**
  * Authentication Service Interface
@@ -73,13 +74,22 @@ export class AuthService implements IAuthService {
       await sendEmailVerification(firebaseUser);
       logInfo('Email verification sent', { userId: firebaseUser.uid });
 
+      // Generate unique student number for students
+      let studentNumber: string | undefined;
+      if (credentials.role === 'student') {
+        studentNumber = await this.generateUniqueStudentNumber();
+        logInfo('Generated student number', { userId: firebaseUser.uid, studentNumber });
+      }
+
       // Create user document in Firestore
       const newUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email!,
         displayName: credentials.displayName,
         role: credentials.role,
+        studentNumber,
         emailVerified: false,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
         lastLoginAt: undefined,
@@ -257,6 +267,35 @@ export class AuthService implements IAuthService {
       const authError = createAuthErrorFromFirebase(error, context);
       logAuthError(authError);
     }
+  }
+
+  /**
+   * Generate a unique student number
+   * Ensures the generated ID doesn't already exist in the database
+   */
+  private async generateUniqueStudentNumber(): Promise<string> {
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const studentNumber = generateStudentId();
+
+      // Check if this student number already exists
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('studentNumber', '==', studentNumber));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        // Unique student number found
+        return studentNumber;
+      }
+
+      attempts++;
+      logDebug('Student number collision, regenerating', { studentNumber, attempt: attempts });
+    }
+
+    // Fallback: This should be extremely rare given the large ID space
+    throw new Error('Failed to generate unique student number after maximum attempts');
   }
 }
 

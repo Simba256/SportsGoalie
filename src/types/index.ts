@@ -15,13 +15,17 @@ export interface User {
   email: string;
   displayName: string;
   role: UserRole;
+  studentNumber?: string; // Random unique ID for students (e.g., "SG-K7M9-P2X4")
   profileImage?: string;
   emailVerified: boolean;
   preferences: UserPreferences;
   profile?: UserProfile;
+  isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastLoginAt?: Timestamp;
+  deactivatedAt?: Timestamp;
+  reactivatedAt?: Timestamp;
 }
 
 export interface UserPreferences {
