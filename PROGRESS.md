@@ -9,16 +9,16 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 46% (Phase 1 Complete, Phase 2.0.1 Complete)
+**Overall Progress:** 47% (Phase 1 Complete, Phase 2.0.1b Complete)
 
 ---
 
 ## 🎯 Current Sprint Goals
 
 ### Active Tasks
-- [ ] Implement multi-role system (Coach, Parent roles)
+- [ ] Build coach invitation system (email-based)
 - [ ] Build coach-student relationship management
-- [ ] Implement parent-child relationships with COPPA compliance
+- [ ] Implement parent-child relationships with student ID linking
 - [ ] Role-based route protection
 - [ ] Convert to 6-pillar ice hockey goalie structure
 
@@ -28,12 +28,17 @@
 - [x] Branding integration (header, footer, logo, colors, favicon) (2026-02-22)
 - [x] Progress tracking restructure with individual session files (2026-02-22)
 - [x] **Phase 2.0.1: Multi-role extension (Coach & Parent roles)** (2026-02-22)
+- [x] **Phase 2.0.1b: Student ID system & registration security** (2026-02-22)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-02-22 - [Phase 2.0.1b: Student IDs & Security](docs/sessions/2026-02/2026-02-22-phase-2-0-1b-student-ids-security.md)
+**Time:** 1h 30min | **Focus:** Feature - Student ID System & Security
+Implemented crypto-random student ID generation (SG-XXXX-XXXX). Restricted public registration to Student/Parent only. Added profile display with copy functionality.
 
 ### 2026-02-22 - [Phase 2.0.1: Multi-Role Extension](docs/sessions/2026-02/2026-02-22-phase-2-0-1-multi-role-extension.md)
 **Time:** 2h 15min | **Focus:** Feature - Multi-Role Authentication
@@ -59,24 +64,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 3.75 hours | 🔄 In Progress |
-| **Total** | **~163.75 hours** | - |
+| Phase 2 | 5.25 hours | 🔄 In Progress |
+| **Total** | **~165.25 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 2.25h | 60% |
-| Documentation | 1.25h | 33% |
-| Version Control | 0.25h | 7% |
+| Development | 3.75h | 71% |
+| Documentation | 1.25h | 24% |
+| Version Control | 0.25h | 5% |
 | Testing | 0h | 0% |
 | Debugging | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **3.75h** | **100%** |
+| **Total** | **5.25h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 3.75h | Multi-role system, documentation, branding | 4 |
+| 2026-02-17 | 5.25h | Multi-role system, student IDs, security, documentation | 5 |
 
 ---
 
@@ -84,12 +89,14 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (20% Complete)
+#### 2.0 - Multi-Role Foundation (30% Complete)
 - [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
-- [ ] 2.0.2: Coach-student relationships
-- [ ] 2.0.3: Parent-child relationships with COPPA compliance
-- [ ] 2.0.4: Role-based route protection
-- [ ] 2.0.5: Student onboarding & initial evaluation
+- [x] 2.0.1b: Student ID system & registration security - COMPLETE
+- [ ] 2.0.2: Coach invitation system
+- [ ] 2.0.3: Coach-student relationships
+- [ ] 2.0.4: Parent-child relationships with student ID linking
+- [ ] 2.0.5: Role-based route protection
+- [ ] 2.0.6: Student onboarding & initial evaluation
 
 #### 2.1 - 6-Pillar Conversion (0% Complete)
 - [ ] Convert sports/skills to 6 fixed pillars
@@ -124,6 +131,24 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📝 Recent Decisions
 
+### 2026-02-22: Student ID Format & Security
+**Decision:** Use SG-XXXX-XXXX format with crypto-random generation, exclude confusing characters
+**Rationale:** Short enough to share verbally, long enough for uniqueness (32^8 = 1.1T combinations), clear for reading
+**Impact:** Parents can easily link to children, no approval workflow needed (possession = legitimacy)
+**Alternatives Considered:** Sequential IDs (security risk), UUIDs (too long), email-based linking (privacy concerns)
+
+### 2026-02-22: Registration Security Restrictions
+**Decision:** Remove Coach and Admin from public registration, only allow Student and Parent
+**Rationale:** Prevent unauthorized admin/coach account creation, coaches added via invitation only
+**Impact:** Significantly improved security, cleaner registration UI, sets up invitation system
+**Alternatives Considered:** CAPTCHA (insufficient), manual approval (too slow), allow all roles (insecure)
+
+### 2026-02-22: Parent-Child Linking Model
+**Decision:** Parents link using student ID, no student approval required
+**Rationale:** Possession of student ID proves relationship (like school systems), simpler UX
+**Impact:** Faster parent onboarding, less friction, supports multiple parents per student
+**Alternatives Considered:** Student approval required (too complex), email verification (still need student ID)
+
 ### 2026-02-22: Role Selection UI Pattern
 **Decision:** Use Select dropdown instead of radio buttons for role selection
 **Rationale:** Cleaner UI, scales better for future role additions, consistent with modern UI patterns
@@ -153,6 +178,10 @@ Initial project analysis and progress tracking system implementation.
 ## 🔄 Recent Changes (Last 30 Days)
 
 ### 2026-02-22
+- **Security:** Restricted public registration to Student and Parent roles only
+- **Feature:** Implemented crypto-random student ID generation (SG-XXXX-XXXX format)
+- **Feature:** Auto-generate student IDs on student registration
+- **Feature:** Added student ID display in profile with copy-to-clipboard
 - **Feature:** Extended UserRole type to support Coach and Parent roles
 - **Feature:** Added role selection dropdown to registration flow
 - **Feature:** Updated admin UI to display and manage all four roles
