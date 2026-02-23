@@ -1,9 +1,9 @@
 # Session: Phase 2.0.2 - Coach Invitation System
 
 **Date:** 2026-02-22
-**Time Spent:** 2 hours 30 minutes
+**Time Spent:** 3 hours 15 minutes
 **Agent/Developer:** Claude Sonnet 4.5
-**Focus Area:** Feature - Coach Invitation & Email System
+**Focus Area:** Feature - Coach Invitation & Email System + Production Deployment
 
 ---
 
@@ -73,6 +73,26 @@
 - TypeScript compilation verified with zero errors
 - Build successful with all new routes included
 
+### Production Deployment & Fixes
+
+1. **Firestore Security Rules**
+   - Added comprehensive rules for `coach_invitations` collection
+   - Updated role validation to include coach and parent
+   - Deployed rules to Firebase production environment
+   - Tested and verified permissions working correctly
+
+2. **Data Validation Fixes**
+   - Fixed undefined values in Firestore documents
+   - Added removeUndefined() helper function
+   - Cleaned metadata before database operations
+   - Tested invitation creation in production environment
+
+3. **Deployment Verification**
+   - Pushed all commits to GitHub
+   - Verified Vercel auto-deployment
+   - Tested invitation creation in production
+   - Confirmed email logging works (development mode)
+
 ---
 
 ## 📝 Files Modified
@@ -92,12 +112,16 @@
 ### Modified
 
 - `app/admin/page.tsx` - Added "Coach Invitations" navigation card
+- `firestore.rules` - Added security rules for coach_invitations collection, updated role validation
+- `src/lib/services/coach-invitation.service.ts` - Fixed undefined values issue with removeUndefined helper
 
 ---
 
 ## 💾 Commits
 
-- Pending: `feat(auth): implement coach invitation system (Phase 2.0.2)`
+- `2c1db3d` - feat(auth): implement coach invitation system (Phase 2.0.2)
+- `bb4ada6` - fix(firestore): add security rules for coach_invitations collection
+- `7df573e` - fix(invitations): remove undefined values before saving to Firestore
 
 ---
 
@@ -115,6 +139,23 @@ None - all tasks completed successfully.
 2. **Incorrect useAuth import**
    - **Issue:** Used wrong path `@/hooks/useAuth` instead of `@/lib/auth/context`
    - **Resolution:** Updated import path in admin coaches page
+
+3. **Firestore permission errors (Production)**
+   - **Issue:** `Missing or insufficient permissions` when accessing coach_invitations collection
+   - **Resolution:** Added Firestore security rules for coach_invitations collection
+   - **Details:**
+     - Added rules allowing admins full CRUD access
+     - Added public list access for token validation
+     - Updated isValidRole to include coach and parent roles
+     - Deployed rules to Firebase production
+
+4. **Undefined values in Firestore**
+   - **Issue:** `Unsupported field value: undefined` when saving optional metadata fields
+   - **Resolution:** Added removeUndefined() helper to clean metadata before saving
+   - **Details:**
+     - Firestore doesn't allow undefined values
+     - Created helper to filter out undefined fields
+     - Only include metadata if it has actual values
 
 ---
 
@@ -191,11 +232,14 @@ crypto.getRandomValues(randomValues);
 - [x] TypeScript compilation passes with zero errors
 - [x] Build successful with all routes included
 - [x] Admin UI renders correctly
-- [ ] Manual browser testing (invitation creation, acceptance flow)
-- [ ] Email display verification (console logs in development)
+- [x] Firestore security rules deployed and tested
+- [x] Manual browser testing (invitation creation works in production)
+- [x] Email display verification (console logs in development)
+- [x] Production deployment tested on Vercel
 - [ ] Token expiry testing
 - [ ] Revoke invitation testing
-- [ ] Documentation updated (this file)
+- [ ] Full acceptance flow end-to-end testing
+- [x] Documentation updated (this file)
 
 ---
 
