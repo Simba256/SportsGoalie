@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, FileText, UserPlus } from 'lucide-react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, FileText, UserPlus, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -294,6 +294,21 @@ function AdminDashboardContent() {
                 </div>
                 <Link href="/admin/charting">
                   <Button>View Charting</Button>
+                </Link>
+              </div>
+
+              <div className="flex items-center space-x-4 rounded-lg border p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Bot className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Project Assistant</h3>
+                  <p className="text-sm text-muted-foreground">
+                    AI chatbot with comprehensive project knowledge
+                  </p>
+                </div>
+                <Link href="/admin/project-assistant">
+                  <Button variant="default">Open Assistant</Button>
                 </Link>
               </div>
             </CardContent>
