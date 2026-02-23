@@ -23,8 +23,12 @@ interface ChatRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 Admin chat API called');
+
     // 1. Authenticate user
     const authHeader = request.headers.get('authorization');
+    console.log('🔑 Auth header present:', !!authHeader);
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Unauthorized - No valid token provided' },
@@ -33,14 +37,19 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split('Bearer ')[1];
+    console.log('🎫 Token extracted, length:', token?.length || 0);
 
     // Verify Firebase token
     let decodedToken;
     try {
       decodedToken = await adminAuth.verifyIdToken(token);
     } catch (error) {
+      console.error('Token verification failed:', error);
       return NextResponse.json(
-        { error: 'Unauthorized - Invalid token' },
+        {
+          error: 'Unauthorized - Invalid token',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
         { status: 401 }
       );
     }
