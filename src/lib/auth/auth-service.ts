@@ -88,7 +88,21 @@ export class AuthService implements IAuthService {
         displayName: credentials.displayName,
         role: credentials.role,
         studentNumber,
+        workflowType: credentials.role === 'student' ? (credentials.workflowType || 'automated') : undefined,
+        assignedCoachId: undefined, // Will be set later when coach is assigned
         emailVerified: false,
+        preferences: {
+          notifications: true,
+          theme: 'light',
+          language: 'en',
+          timezone: 'UTC',
+          emailNotifications: {
+            progress: true,
+            quizResults: true,
+            newContent: true,
+            reminders: true,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),

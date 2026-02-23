@@ -20,6 +20,7 @@ export interface RegisterCredentials {
   password: string;
   displayName: string;
   role: 'student' | 'admin' | 'coach' | 'parent';
+  workflowType?: 'automated' | 'custom'; // For students: learning workflow type
   firstName?: string;
   lastName?: string;
 }

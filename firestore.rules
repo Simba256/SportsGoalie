@@ -656,6 +656,85 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ==================== CUSTOM CURRICULUM SYSTEM (Phase 2.0.6) ====================
+
+    // Helper function to check if user is a coach
+    function isCoach() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'coach' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coach');
+    }
+
+    // Helper function to check if user is coach or admin
+    function isCoachOrAdmin() {
+      return isCoach() || isAdmin();
+    }
+
+    // Custom Curriculum collection - Personalized learning paths for custom workflow students
+    match /custom_curriculum/{curriculumId} {
+      // Students can read their own curriculum, coaches can read their assigned students' curricula, admins can read all
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == getUserId() ||  // Student reads own
+        resource.data.coachId == getUserId() ||    // Coach reads their student's
+        isAdmin()                                  // Admin reads all
+      );
+
+      // Coaches and admins can create curricula
+      allow create: if isCoachOrAdmin() &&
+                       hasRequiredFields(['studentId', 'coachId', 'items', 'createdAt', 'updatedAt', 'lastModifiedBy']) &&
+                       request.resource.data.studentId is string &&
+                       request.resource.data.studentId.size() > 0 &&
+                       request.resource.data.coachId is string &&
+                       request.resource.data.items is list;
+
+      // Coaches can update their students' curricula, admins can update any
+      allow update: if isAuthenticated() && (
+        (isCoach() && resource.data.coachId == getUserId()) ||  // Coach updates their student's
+        isAdmin()                                               // Admin updates any
+      );
+
+      // Only admins can delete curricula
+      allow delete: if isAdmin();
+    }
+
+    // Custom Content Library collection - Coach-created reusable content
+    match /custom_content_library/{contentId} {
+      // Content creators can read their own content, admins can read all, public content readable by all coaches
+      allow read: if isAuthenticated() && (
+        resource.data.createdBy == getUserId() ||                    // Creator reads own
+        (resource.data.isPublic == true && isCoach()) ||            // Coaches read public content
+        isAdmin()                                                    // Admin reads all
+      );
+
+      // Coaches and admins can create custom content
+      allow create: if isCoachOrAdmin() &&
+                       hasRequiredFields(['createdBy', 'title', 'description', 'type', 'content', 'tags', 'isPublic', 'usageCount', 'createdAt', 'updatedAt']) &&
+                       request.resource.data.createdBy == getUserId() &&
+                       request.resource.data.title is string &&
+                       request.resource.data.title.size() > 0 &&
+                       request.resource.data.description is string &&
+                       (request.resource.data.type == 'lesson' || request.resource.data.type == 'quiz') &&
+                       request.resource.data.content is string &&
+                       request.resource.data.tags is list &&
+                       request.resource.data.isPublic is bool &&
+                       request.resource.data.usageCount is number;
+
+      // Coaches can update their own content, admins can update any
+      // Anyone can increment usageCount
+      allow update: if isAuthenticated() && (
+        (isCoach() && resource.data.createdBy == getUserId()) ||   // Coach updates own content
+        isAdmin() ||                                                // Admin updates any
+        (isCoach() &&                                              // Coaches can clone (increment usage)
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usageCount', 'metadata']))
+      );
+
+      // Coaches can delete their own content, admins can delete any
+      allow delete: if isAuthenticated() && (
+        (isCoach() && resource.data.createdBy == getUserId()) ||
+        isAdmin()
+      );
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections

@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
@@ -35,11 +36,13 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       role: 'student' as const,
+      workflowType: 'automated' as const,
       agreeToTerms: false,
     },
   });
 
   const selectedRole = watch('role');
+  const selectedWorkflowType = watch('workflowType');
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -110,6 +113,40 @@ export default function RegisterPage() {
                 Coaches are invited by administrators. Parents must have their child&apos;s Student ID to register.
               </p>
             </div>
+
+            {/* Workflow Type Selection (Students Only) */}
+            {selectedRole === 'student' && (
+              <div className="space-y-2">
+                <Label>Learning Mode</Label>
+                <RadioGroup
+                  value={selectedWorkflowType}
+                  onValueChange={(value) => setValue('workflowType', value as 'automated' | 'custom')}
+                  className="space-y-3"
+                >
+                  <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+                    <RadioGroupItem value="automated" id="automated" className="mt-1" />
+                    <Label htmlFor="automated" className="font-normal cursor-pointer flex-1">
+                      <div className="font-semibold text-base mb-1">Self-Paced (Automated)</div>
+                      <div className="text-sm text-muted-foreground">
+                        Progress automatically as you complete quizzes and evaluations. Perfect for independent learners.
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+                    <RadioGroupItem value="custom" id="custom" className="mt-1" />
+                    <Label htmlFor="custom" className="font-normal cursor-pointer flex-1">
+                      <div className="font-semibold text-base mb-1">Coach-Guided (Custom)</div>
+                      <div className="text-sm text-muted-foreground">
+                        Work with a coach who customizes your learning journey and provides personalized guidance.
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {errors.workflowType && (
+                  <p className="text-sm text-destructive">{errors.workflowType.message}</p>
+                )}
+              </div>
+            )}
 
             {/* Display Name */}
             <div className="space-y-2">

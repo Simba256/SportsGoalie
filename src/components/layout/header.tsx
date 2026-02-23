@@ -131,7 +131,15 @@ export function Header() {
                       Quizzes
                     </PillLink>
 
-                    {user?.role !== 'admin' ? (
+                    {user?.role === 'admin' ? (
+                      <PillLink href="/admin" onClick={closeMenus}>
+                        Admin
+                      </PillLink>
+                    ) : user?.role === 'coach' ? (
+                      <PillLink href="/coach" onClick={closeMenus}>
+                        Coach
+                      </PillLink>
+                    ) : (
                       <>
                         <PillLink href="/dashboard" onClick={closeMenus}>
                           Dashboard
@@ -158,10 +166,6 @@ export function Header() {
                           )}
                         </PillLink>
                       </>
-                    ) : (
-                      <PillLink href="/admin" onClick={closeMenus}>
-                        Admin
-                      </PillLink>
                     )}
                   </>
                 )}

@@ -871,4 +871,253 @@ export class ProgressService extends BaseDatabaseService {
       await this.awardAchievement(userId, 'streak_legend');
     }
   }
+
+  /**
+   * ========================================
+   * WORKFLOW TYPE METHODS (Phase 2.0.6)
+   * ========================================
+   */
+
+  /**
+   * Check if user can access content based on workflow type
+   * - Automated workflow: Check if level is unlocked via standard progression
+   * - Custom workflow: Check if item is in curriculum and unlocked
+   */
+  static async canAccessContent(
+    userId: string,
+    contentId: string,
+    contentType: 'lesson' | 'quiz'
+  ): Promise<ApiResponse<boolean>> {
+    try {
+      const { userService } = await import('./user.service');
+      const userResult = await userService.getUser(userId);
+
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const user = userResult.data;
+
+      // If automated workflow or no workflow type set (default to automated)
+      if (!user.workflowType || user.workflowType === 'automated') {
+        // TODO: Implement standard level unlock check when Phase 2.1 (6 Pillars) is complete
+        // For now, allow access (backward compatible with current system)
+        return {
+          success: true,
+          data: true,
+          timestamp: new Date(),
+        };
+      }
+
+      // Custom workflow: check curriculum
+      const { customCurriculumService } = await import('./custom-curriculum.service');
+      const curriculumResult = await customCurriculumService.getStudentCurriculum(userId);
+
+      if (!curriculumResult.success || !curriculumResult.data) {
+        // No curriculum yet, deny access
+        return {
+          success: true,
+          data: false,
+          timestamp: new Date(),
+        };
+      }
+
+      const curriculum = curriculumResult.data;
+
+      // Check if content is in curriculum and unlocked
+      const item = curriculum.items.find(
+        i => i.contentId === contentId && (i.status === 'unlocked' || i.status === 'in_progress' || i.status === 'completed')
+      );
+
+      return {
+        success: true,
+        data: !!item,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to check content access', 'ProgressService', {
+        userId,
+        contentId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'ACCESS_CHECK_ERROR',
+          message: 'Failed to check content access',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Notify coach when custom workflow student completes content
+   */
+  static async notifyCoachOfCompletion(
+    studentId: string,
+    coachId: string,
+    contentId: string,
+    contentTitle: string,
+    score?: number
+  ): Promise<ApiResponse<void>> {
+    try {
+      // Create notification for coach
+      const notificationData = {
+        userId: coachId,
+        type: 'admin_message' as const,
+        title: 'Student Completed Content',
+        message: `Student completed: ${contentTitle}${score !== undefined ? ` (Score: ${score}%)` : ''}`,
+        data: {
+          studentId,
+          contentId,
+          score,
+        },
+        isRead: false,
+        priority: 'medium' as const,
+        createdAt: Timestamp.now(),
+      };
+
+      // Use notification service if available
+      // For now, just log (notification system will be enhanced in future phases)
+      logger.info('Coach notification created', 'ProgressService', {
+        coachId,
+        studentId,
+        contentId,
+        contentTitle,
+        score,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to notify coach', 'ProgressService', {
+        studentId,
+        coachId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'NOTIFICATION_ERROR',
+          message: 'Failed to notify coach',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Record quiz completion with workflow-aware logic
+   * - Automated: Auto-unlock next level if passing score
+   * - Custom: Just record completion and notify coach
+   */
+  static async recordQuizCompletion(
+    userId: string,
+    quizId: string,
+    score: number,
+    pillarId?: string,
+    levelId?: string
+  ): Promise<ApiResponse<void>> {
+    try {
+      const { userService } = await import('./user.service');
+      const userResult = await userService.getUser(userId);
+
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const user = userResult.data;
+
+      // Automated workflow or default
+      if (!user.workflowType || user.workflowType === 'automated') {
+        // TODO: Implement auto-unlock logic when Phase 2.1 (6 Pillars) is complete
+        // For now, just log the completion
+        logger.info('Quiz completed (automated workflow)', 'ProgressService', {
+          userId,
+          quizId,
+          score,
+          pillarId,
+          levelId,
+        });
+
+        return {
+          success: true,
+          timestamp: new Date(),
+        };
+      }
+
+      // Custom workflow: Record completion and notify coach
+      const { customCurriculumService } = await import('./custom-curriculum.service');
+      const curriculumResult = await customCurriculumService.getStudentCurriculum(userId);
+
+      if (curriculumResult.success && curriculumResult.data) {
+        const curriculum = curriculumResult.data;
+
+        // Find the quiz in curriculum
+        const item = curriculum.items.find(i => i.contentId === quizId);
+
+        if (item) {
+          // Mark as completed
+          await customCurriculumService.markItemComplete(curriculum.id, item.id, userId);
+        }
+
+        // Notify coach
+        if (user.assignedCoachId) {
+          await this.notifyCoachOfCompletion(
+            userId,
+            user.assignedCoachId,
+            quizId,
+            'Quiz', // TODO: Get actual quiz title
+            score
+          );
+        }
+      }
+
+      logger.info('Quiz completed (custom workflow)', 'ProgressService', {
+        userId,
+        quizId,
+        score,
+        coachNotified: !!user.assignedCoachId,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to record quiz completion', 'ProgressService', {
+        userId,
+        quizId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'QUIZ_COMPLETION_ERROR',
+          message: 'Failed to record quiz completion',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
 }

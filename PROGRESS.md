@@ -9,17 +9,18 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 49% (Phase 1 Complete, Phase 2.0.2 Complete)
+**Overall Progress:** 52% (Phase 1 Complete, Phase 2.0.6 MVP Complete)
 
 ---
 
 ## 🎯 Current Sprint Goals
 
 ### Active Tasks
-- [ ] Build coach-student relationship management
-- [ ] Implement parent-child relationships with student ID linking
-- [ ] Role-based route protection
-- [ ] Convert to 6-pillar ice hockey goalie structure
+- [ ] Build coach-student relationship management (Phase 2.0.3)
+- [ ] Implement parent-child relationships with student ID linking (Phase 2.0.4)
+- [ ] Role-based route protection (Phase 2.0.5)
+- [ ] Student onboarding & initial evaluation
+- [ ] Convert to 6-pillar ice hockey goalie structure (Phase 2.1)
 
 ### Completed This Sprint
 - [x] Comprehensive project analysis (2026-02-22)
@@ -29,12 +30,17 @@
 - [x] **Phase 2.0.1: Multi-role extension (Coach & Parent roles)** (2026-02-22)
 - [x] **Phase 2.0.1b: Student ID system & registration security** (2026-02-22)
 - [x] **Phase 2.0.2: Coach invitation system with email infrastructure** (2026-02-22)
+- [x] **Phase 2.0.6: Student workflow types & coach curriculum builder MVP** (2026-02-23)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-02-23 - [Phase 2.0.6: Student Workflow Types & Coach Curriculum Builder MVP](docs/sessions/2026-02/2026-02-23-phase-2-0-6-workflow-types-mvp.md)
+**Time:** 6h 0min | **Focus:** Feature - Student Workflow Types with Custom Curriculum System (MVP)
+Implemented complete student workflow type system (automated vs custom). Built CustomCurriculumService and CustomContentService with full CRUD operations. Created coach UI with dashboard, student list, and curriculum builder. Added workflow selection to registration flow. Implemented comprehensive Firestore security rules. MVP fully functional and tested.
 
 ### 2026-02-22 - [Phase 2.0.2: Coach Invitation System](docs/sessions/2026-02/2026-02-22-phase-2-0-2-coach-invitation-system.md)
 **Time:** 3h 15min | **Focus:** Feature - Coach Invitation & Email System + Production Deployment
@@ -68,24 +74,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 8.5 hours | 🔄 In Progress |
-| **Total** | **~168.5 hours** | - |
+| Phase 2 | 14.5 hours | 🔄 In Progress |
+| **Total** | **~174.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 6.25h | 74% |
-| Documentation | 1.25h | 15% |
-| Debugging | 0.75h | 9% |
+| Development | 12.25h | 84% |
+| Documentation | 1.25h | 9% |
+| Debugging | 0.75h | 5% |
 | Version Control | 0.25h | 2% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **8.5h** | **100%** |
+| **Total** | **14.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 8.5h | Multi-role system, student IDs, security, coach invitations, production deployment | 6 |
+| 2026-02-17 | 14.5h | Multi-role system, student IDs, security, coach invitations, workflow types, coach curriculum builder | 7 |
 
 ---
 
@@ -93,14 +99,15 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (45% Complete)
+#### 2.0 - Multi-Role Foundation (60% Complete)
 - [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
 - [x] 2.0.1b: Student ID system & registration security - COMPLETE
 - [x] 2.0.2: Coach invitation system with email infrastructure - COMPLETE
 - [ ] 2.0.3: Coach-student relationships
 - [ ] 2.0.4: Parent-child relationships with student ID linking
 - [ ] 2.0.5: Role-based route protection
-- [ ] 2.0.6: Student onboarding & initial evaluation
+- [x] 2.0.6: Student workflow types & custom curriculum system (MVP) - COMPLETE
+- [ ] 2.0.7: Student onboarding & initial evaluation
 
 #### 2.1 - 6-Pillar Conversion (0% Complete)
 - [ ] Convert sports/skills to 6 fixed pillars
@@ -134,6 +141,36 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-02-23: Student Workflow Type Architecture
+**Decision:** Implement two distinct workflow types: automated (self-paced) and custom (coach-guided)
+**Rationale:** Supports both independent learners and students who need personalized coaching
+**Impact:** Enables custom curriculum system, differentiated learning paths, premium tier foundation
+**Alternatives Considered:** Per-pillar workflow (too complex), single workflow for all (too limiting)
+
+### 2026-02-23: All-or-Nothing Workflow Assignment
+**Decision:** Students are either fully automated or fully custom (not per-pillar)
+**Rationale:** Simpler mental model, easier to implement and maintain, clearer user experience
+**Impact:** Clear user choice, straightforward implementation, can enhance later if needed
+**Alternatives Considered:** Mixed workflow per pillar (deferred as too complex for MVP)
+
+### 2026-02-23: Curriculum Storage Model
+**Decision:** Store curriculum items inline in curriculum document, not separate collection
+**Rationale:** Simpler queries, atomic updates, good performance for expected data size
+**Impact:** Fast reads, easy management, scales well for expected curriculum sizes
+**Alternatives Considered:** Separate items collection (rejected - adds complexity without benefits for MVP)
+
+### 2026-02-23: Content Library Separation
+**Decision:** Create separate custom_content_library collection for reusable coach content
+**Rationale:** Enables content sharing, reduces duplication, tracks usage across students
+**Impact:** Efficient content reuse, sharing capabilities, usage analytics possible
+**Alternatives Considered:** Inline only (no sharing), per-student (duplication), global pool (no ownership)
+
+### 2026-02-23: MVP Content Selection Approach
+**Decision:** Use placeholder content IDs for MVP, defer full content browser
+**Rationale:** 6-hour MVP target, full browser would add 4-6 hours, core functionality testable without it
+**Impact:** Functional MVP ready for testing, clear enhancement path for future
+**Alternatives Considered:** Build full browser immediately (rejected - not MVP critical), block MVP (rejected)
 
 ### 2026-02-22: Coach Invitation Token Format
 **Decision:** Use 32-character crypto-random tokens with 7-day default expiry
@@ -198,6 +235,24 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-02-23
+- **Feature:** Implemented student workflow type system (automated vs custom)
+- **Feature:** Built CustomCurriculumService with full CRUD operations
+- **Feature:** Built CustomContentService for coach-created content
+- **Feature:** Created coach dashboard with student statistics
+- **Feature:** Built coach students list page with progress tracking
+- **Feature:** Implemented full curriculum builder interface
+- **Feature:** Added workflow type selection to registration flow
+- **UI:** Created coach layout with navigation
+- **UI:** Updated header navigation for coach role
+- **UI:** Built curriculum item management with status badges
+- **Security:** Added Firestore rules for custom_curriculum collection
+- **Security:** Added Firestore rules for custom_content_library collection
+- **Backend:** Added workflow-aware methods to ProgressService
+- **Backend:** Integrated curriculum system with user profiles
+- **Types:** Created comprehensive curriculum type system
+- **Build:** Verified successful build with 3 new coach routes
 
 ### 2026-02-22
 - **Feature:** Implemented complete coach invitation system with email-based workflow
@@ -273,11 +328,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-02-22
-**Last Session:** [Phase 2.0.2: Coach Invitation System](docs/sessions/2026-02/2026-02-22-phase-2-0-2-coach-invitation-system.md)
-**Total Sessions This Phase:** 6
-**Current Phase Hours:** 8.5h
-**Next Session Focus:** Begin Phase 2.0.3 - Coach-Student Relationship Management
+**Last Updated:** 2026-02-23
+**Last Session:** [Phase 2.0.6: Student Workflow Types & Coach Curriculum Builder MVP](docs/sessions/2026-02/2026-02-23-phase-2-0-6-workflow-types-mvp.md)
+**Total Sessions This Phase:** 7
+**Current Phase Hours:** 14.5h
+**Next Session Focus:** End-to-end testing of coach curriculum builder, or student curriculum view implementation
 
 ---
 

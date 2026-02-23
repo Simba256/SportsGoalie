@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'student' | 'admin' | 'coach' | 'parent';
+export type WorkflowType = 'automated' | 'custom';
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed';
 export type QuestionType = 'multiple_choice' | 'true_false' | 'descriptive' | 'fill_in_blank';
@@ -16,6 +17,8 @@ export interface User {
   displayName: string;
   role: UserRole;
   studentNumber?: string; // Random unique ID for students (e.g., "SG-K7M9-P2X4")
+  workflowType?: WorkflowType; // Learning workflow: automated (self-paced) or custom (coach-guided)
+  assignedCoachId?: string; // Required for custom workflow students
   profileImage?: string;
   emailVerified: boolean;
   preferences: UserPreferences;
@@ -514,6 +517,7 @@ export interface RegisterForm {
   password: string;
   confirmPassword: string;
   role: UserRole;
+  workflowType?: WorkflowType; // For students: automated or custom
   agreeToTerms: boolean;
   agreeToPrivacy: boolean;
   preferences?: Partial<UserPreferences>;
@@ -756,3 +760,20 @@ export {
   MigrationMapping,
   TemplateMigrationConfig,
 } from './form-template';
+
+// Custom Curriculum Types - Export from curriculum.ts
+export {
+  CurriculumContentType,
+  CurriculumItemStatus,
+  CustomCurriculum,
+  CustomCurriculumItem,
+  CustomContent,
+  CustomContentLibrary,
+  CustomContentMetadata,
+  CreateCurriculumData,
+  AddCurriculumItemData,
+  CreateCustomContentData,
+  CurriculumQueryOptions,
+  CurriculumProgress,
+  CurriculumNotification,
+} from './curriculum';

@@ -33,6 +33,7 @@ export const registerSchema = z
       .min(2, 'Name must be at least 2 characters')
       .max(50, 'Name cannot exceed 50 characters'),
     role: z.enum(['student', 'admin', 'coach', 'parent']).default('student'),
+    workflowType: z.enum(['automated', 'custom']).optional().default('automated'),
     agreeToTerms: z
       .boolean()
       .refine((val) => val === true, 'You must agree to the terms and conditions'),
