@@ -18,26 +18,11 @@ import {
   PlayCircle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { userService, sportsService } from '@/lib/database';
+import { userService, sportsService, videoQuizService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
-import { User, CustomCurriculum, CustomCurriculumItem, Sport } from '@/types';
+import { User, CustomCurriculum, CustomCurriculumItem } from '@/types';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { ContentBrowser } from '@/components/coach/content-browser';
 
 export default function StudentCurriculumPage() {
   const params = useParams();
@@ -47,16 +32,9 @@ export default function StudentCurriculumPage() {
 
   const [student, setStudent] = useState<User | null>(null);
   const [curriculum, setCurriculum] = useState<CustomCurriculum | null>(null);
-  const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedSport, setSelectedSport] = useState('');
-  const [selectedSkill, setSelectedSkill] = useState('');
-  const [selectedContent, setSelectedContent] = useState<{
-    type: 'lesson' | 'quiz';
-    id: string;
-    title: string;
-  } | null>(null);
+  const [showContentBrowser, setShowContentBrowser] = useState(false);
+  const [contentTitles, setContentTitles] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (studentId && coach?.id) {
@@ -89,12 +67,29 @@ export default function StudentCurriculumPage() {
       const curriculumResult = await customCurriculumService.getStudentCurriculum(studentId);
       if (curriculumResult.success && curriculumResult.data) {
         setCurriculum(curriculumResult.data);
-      }
 
-      // Load sports for content selection
-      const sportsResult = await sportsService.getAllSports();
-      if (sportsResult.success && sportsResult.data) {
-        setSports(sportsResult.data);
+        // Load content titles for all items
+        const titles: Record<string, string> = {};
+        for (const item of curriculumResult.data.items) {
+          if (item.contentId) {
+            try {
+              if (item.type === 'lesson') {
+                const skillResult = await sportsService.getSkill(item.contentId);
+                if (skillResult.success && skillResult.data) {
+                  titles[item.contentId] = skillResult.data.name;
+                }
+              } else if (item.type === 'quiz') {
+                const quizResult = await videoQuizService.getQuiz(item.contentId);
+                if (quizResult.success && quizResult.data) {
+                  titles[item.contentId] = quizResult.data.title;
+                }
+              }
+            } catch (error) {
+              console.error('Failed to load content title:', error);
+            }
+          }
+        }
+        setContentTitles(titles);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -129,16 +124,21 @@ export default function StudentCurriculumPage() {
     }
   };
 
-  const addContentToCurriculum = async () => {
-    if (!curriculum || !coach?.id || !selectedSport || !selectedContent) return;
+  const handleContentSelect = async (content: {
+    id: string;
+    type: 'lesson' | 'quiz';
+    title: string;
+    sportId: string;
+  }) => {
+    if (!curriculum || !coach?.id) return;
 
     try {
       const result = await customCurriculumService.addItem(
         curriculum.id,
         {
-          type: selectedContent.type === 'lesson' ? 'lesson' : 'quiz',
-          contentId: selectedContent.id,
-          pillarId: selectedSport,
+          type: content.type,
+          contentId: content.id,
+          pillarId: content.sportId,
           levelId: 'level-1', // Default level for now
           unlocked: false, // Start locked
         },
@@ -146,11 +146,7 @@ export default function StudentCurriculumPage() {
       );
 
       if (result.success) {
-        toast.success('Content added to curriculum');
-        setShowAddDialog(false);
-        setSelectedSport('');
-        setSelectedSkill('');
-        setSelectedContent(null);
+        toast.success(`${content.title} added to curriculum`);
         await loadData(); // Reload to see changes
       } else {
         toast.error('Failed to add content');
@@ -290,7 +286,7 @@ export default function StudentCurriculumPage() {
               <CardDescription>Manage content and student access</CardDescription>
             </CardHeader>
             <CardContent className="flex gap-2">
-              <Button onClick={() => setShowAddDialog(true)}>
+              <Button onClick={() => setShowContentBrowser(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Content
               </Button>
@@ -330,14 +326,18 @@ export default function StudentCurriculumPage() {
                         <div className="flex-shrink-0">{getItemIcon(item)}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium truncate">
+                              {item.contentId && contentTitles[item.contentId]
+                                ? contentTitles[item.contentId]
+                                : item.customContent?.title || 'Untitled Content'}
+                            </h4>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {item.type === 'lesson' ? 'Lesson' : 'Quiz'}
                             </Badge>
                             {getStatusBadge(item.status)}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate">
-                            Content ID: {item.contentId || 'Custom content'}
-                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {item.status === 'locked' && (
@@ -366,86 +366,12 @@ export default function StudentCurriculumPage() {
         </div>
       )}
 
-      {/* Add Content Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Content to Curriculum</DialogTitle>
-            <DialogDescription>
-              Select content to add to {student.displayName}'s learning path
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Sport/Pillar</Label>
-              <Select value={selectedSport} onValueChange={setSelectedSport}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a sport..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {sports.map((sport) => (
-                    <SelectItem key={sport.id} value={sport.id}>
-                      {sport.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedSport && (
-              <div className="space-y-2">
-                <Label>Content Type</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={selectedContent?.type === 'lesson' ? 'default' : 'outline'}
-                    className="flex-1"
-                    onClick={() =>
-                      setSelectedContent({
-                        type: 'lesson',
-                        id: 'lesson-placeholder',
-                        title: 'Sample Lesson',
-                      })
-                    }
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Lesson
-                  </Button>
-                  <Button
-                    variant={selectedContent?.type === 'quiz' ? 'default' : 'outline'}
-                    className="flex-1"
-                    onClick={() =>
-                      setSelectedContent({
-                        type: 'quiz',
-                        id: 'quiz-placeholder',
-                        title: 'Sample Quiz',
-                      })
-                    }
-                  >
-                    <PlayCircle className="h-4 w-4 mr-2" />
-                    Quiz
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Note: Full content browser will be added in future update
-                </p>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={addContentToCurriculum}
-              disabled={!selectedSport || !selectedContent}
-            >
-              Add to Curriculum
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Content Browser */}
+      <ContentBrowser
+        open={showContentBrowser}
+        onOpenChange={setShowContentBrowser}
+        onSelect={handleContentSelect}
+      />
     </div>
   );
 }
