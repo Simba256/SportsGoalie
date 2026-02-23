@@ -132,9 +132,14 @@ export function Header() {
                     </PillLink>
 
                     {user?.role === 'admin' ? (
-                      <PillLink href="/admin" onClick={closeMenus}>
-                        Admin
-                      </PillLink>
+                      <>
+                        <PillLink href="/admin" onClick={closeMenus}>
+                          Admin
+                        </PillLink>
+                        <PillLink href="/coach" onClick={closeMenus}>
+                          Curriculum
+                        </PillLink>
+                      </>
                     ) : user?.role === 'coach' ? (
                       <PillLink href="/coach" onClick={closeMenus}>
                         Coach
@@ -269,7 +274,20 @@ export function Header() {
                     Quizzes
                   </MobileLink>
 
-                  {user?.role !== 'admin' ? (
+                  {user?.role === 'admin' ? (
+                    <>
+                      <MobileLink href="/admin" onClick={closeMenus}>
+                        Admin
+                      </MobileLink>
+                      <MobileLink href="/coach" onClick={closeMenus}>
+                        Curriculum
+                      </MobileLink>
+                    </>
+                  ) : user?.role === 'coach' ? (
+                    <MobileLink href="/coach" onClick={closeMenus}>
+                      Coach
+                    </MobileLink>
+                  ) : (
                     <>
                       <MobileLink href="/dashboard" onClick={closeMenus}>
                         Dashboard
@@ -294,10 +312,6 @@ export function Header() {
                         )}
                       </MobileLink>
                     </>
-                  ) : (
-                    <MobileLink href="/admin" onClick={closeMenus}>
-                      Admin
-                    </MobileLink>
                   )}
 
                   <div className="my-3 h-px bg-border" />

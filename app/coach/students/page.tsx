@@ -46,10 +46,11 @@ export default function CoachStudentsPage() {
       }
 
       // Filter for students assigned to this coach with custom workflow
+      // Admins can see ALL custom workflow students
       const assignedStudents = allUsersResult.data.filter(
         u => u.role === 'student' &&
             u.workflowType === 'custom' &&
-            u.assignedCoachId === user?.id
+            (user?.role === 'admin' || u.assignedCoachId === user?.id)
       );
 
       // Load curriculum data for each student
@@ -100,9 +101,13 @@ export default function CoachStudentsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Students</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {user?.role === 'admin' ? 'All Custom Workflow Students' : 'My Students'}
+        </h1>
         <p className="text-muted-foreground">
-          Manage curriculum and track progress for your custom workflow students
+          {user?.role === 'admin'
+            ? 'Manage curriculum and track progress for all custom workflow students'
+            : 'Manage curriculum and track progress for your custom workflow students'}
         </p>
       </div>
 

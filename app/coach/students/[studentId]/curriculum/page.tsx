@@ -76,8 +76,8 @@ export default function StudentCurriculumPage() {
         return;
       }
 
-      // Verify student is assigned to this coach
-      if (studentResult.data.assignedCoachId !== coach?.id) {
+      // Verify student is assigned to this coach (admins can access all)
+      if (coach?.role !== 'admin' && studentResult.data.assignedCoachId !== coach?.id) {
         toast.error('Unauthorized: This student is not assigned to you');
         router.push('/coach/students');
         return;

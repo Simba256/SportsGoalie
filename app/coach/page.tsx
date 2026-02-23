@@ -30,10 +30,11 @@ export default function CoachDashboardPage() {
       const allUsersResult = await userService.getAllUsers();
       if (!allUsersResult.success || !allUsersResult.data) return;
 
+      // Admins can see ALL custom workflow students, coaches see assigned only
       const assignedStudents = allUsersResult.data.filter(
         u => u.role === 'student' &&
             u.workflowType === 'custom' &&
-            u.assignedCoachId === user?.id
+            (user?.role === 'admin' || u.assignedCoachId === user?.id)
       );
 
       let studentsWithCurriculum = 0;
@@ -70,9 +71,11 @@ export default function CoachDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Coach Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {user?.role === 'admin' ? 'Curriculum Management' : 'Coach Dashboard'}
+        </h1>
         <p className="text-muted-foreground">
-          Welcome back, {user?.displayName}! Here's an overview of your students.
+          Welcome back, {user?.displayName}! Here's an overview of {user?.role === 'admin' ? 'all custom workflow' : 'your'} students.
         </p>
       </div>
 

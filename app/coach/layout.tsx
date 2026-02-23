@@ -12,7 +12,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'coach')) {
+    if (!loading && (!user || (user.role !== 'coach' && user.role !== 'admin'))) {
       router.push('/dashboard');
     }
   }, [user, loading, router]);
@@ -21,7 +21,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (!user || user.role !== 'coach') {
+  if (!user || (user.role !== 'coach' && user.role !== 'admin')) {
     return null;
   }
 
