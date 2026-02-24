@@ -15,6 +15,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip middleware for routes that handle their own auth
+  if (pathname === '/api/admin/chat') {
+    return NextResponse.next();
+  }
+
   // Protect admin API routes
   if (pathname.startsWith('/api/admin/')) {
     try {
