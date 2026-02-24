@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { auth } from '@/lib/firebase/config';
+import { adminAuth } from '@/lib/firebase/admin';
 import { logger } from '@/lib/utils/logger';
 
 /**
@@ -31,7 +31,7 @@ export interface ValidationResult {
 export async function validateFirebaseToken(idToken: string): Promise<ValidationResult> {
   try {
     // Verify the ID token with Firebase Admin
-    const decodedToken = await auth.verifyIdToken(idToken);
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
 
     if (!decodedToken) {
       return {
