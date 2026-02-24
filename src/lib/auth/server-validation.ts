@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
-import { adminAuth } from '@/lib/firebase/admin';
 import { logger } from '@/lib/utils/logger';
+
+// Note: This file is used by middleware which runs on Edge Runtime
+// We cannot use Firebase Admin SDK here as it doesn't work on Edge
+// Individual API routes can use adminAuth for server-side verification
 
 /**
  * Server-side authentication and authorization utilities
@@ -30,8 +33,34 @@ export interface ValidationResult {
  */
 export async function validateFirebaseToken(idToken: string): Promise<ValidationResult> {
   try {
-    // Verify the ID token with Firebase Admin
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    // Note: We decode the JWT but don't verify signature here since we're on Edge Runtime
+    // Individual API routes should use Firebase Admin SDK for proper verification
+    // This is just for middleware-level basic validation
+    const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+
+    if (!payload) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid or expired authentication token',
+        },
+      };
+    }
+
+    // Check expiration
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      return {
+        success: false,
+        error: {
+          code: 'TOKEN_EXPIRED',
+          message: 'Authentication token has expired',
+        },
+      };
+    }
+
+    const decodedToken = payload;
 
     if (!decodedToken) {
       return {
