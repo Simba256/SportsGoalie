@@ -1,109 +1,212 @@
 # All Application Routes
 
-## Public Routes (Unauthenticated)
+**Production Site:** https://sports-goalie.vercel.app/
+
+This document lists all accessible pages and routes in the SportsGoalie platform. Each route includes the full URL for easy navigation to the live site.
+
+## Public Routes (No Login Required)
 
 ### Landing & Marketing
-- `/` - Landing page with project overview
-- `/sports` - Sports catalog (browseable without login)
-- `/sports/[id]` - Individual sport detail page with skills list
+- **Home Page:** https://sports-goalie.vercel.app/
+  - Landing page with project overview and getting started
 
-### Authentication
-- `/auth/login` - User login
-- `/auth/register` - New user registration (Student/Parent only)
-- `/auth/reset-password` - Password reset flow
-- `/auth/accept-invite` - Coach invitation acceptance
+- **Sports Catalog:** https://sports-goalie.vercel.app/sports
+  - Browse all sports without authentication required
 
-### Content (Public Access)
-- `/quizzes` - Public quiz listing (if configured)
+- **Sport Detail:** https://sports-goalie.vercel.app/sports/[sportId]
+  - Individual sport page with skills list (replace [sportId] with actual sport ID)
 
-## Student Routes
+### Authentication Pages
+- **Login:** https://sports-goalie.vercel.app/auth/login
+  - User login for all roles
+
+- **Register:** https://sports-goalie.vercel.app/auth/register
+  - New user registration (Student/Parent roles only)
+
+- **Reset Password:** https://sports-goalie.vercel.app/auth/reset-password
+  - Password recovery flow
+
+- **Accept Invitation:** https://sports-goalie.vercel.app/auth/accept-invite?token=[token]
+  - Coach invitation acceptance (requires invitation token)
+
+### Public Content
+- **Quiz Listing:** https://sports-goalie.vercel.app/quizzes
+  - Public quiz directory (if configured for public access)
+
+## Student Routes (Requires Student Login)
 
 ### Dashboard & Progress
-- `/dashboard` - Main student dashboard with progress overview
-- `/progress` - Detailed progress tracking with charts
-- `/achievements` - Achievement badges and milestones
-- `/goals` - Goal setting and tracking interface
+- **Main Dashboard:** https://sports-goalie.vercel.app/dashboard
+  - Student dashboard with progress overview and quick actions
 
-### Learning
-- `/sports/[id]/skills/[skillId]` - Skill learning page with video
-- `/quiz/video/[id]` - Video quiz player
-- `/quiz/video/[id]/results` - Quiz results and feedback
+- **Progress Tracking:** https://sports-goalie.vercel.app/progress
+  - Detailed progress tracking with charts and visualizations
 
-### Charting (Ice Hockey Goalie)
-- `/charting` - Session list and charting dashboard
-- `/charting/new` - Start new session (game/practice)
-- `/charting/[sessionId]` - View session details
-- `/charting/[sessionId]/edit` - Edit session data
+- **Achievements:** https://sports-goalie.vercel.app/achievements
+  - Achievement badges, milestones, and accomplishments
+
+- **Goals:** https://sports-goalie.vercel.app/goals
+  - Goal setting and tracking interface
+
+### Learning Content
+- **Skill Learning:** https://sports-goalie.vercel.app/sports/[sportId]/skills/[skillId]
+  - Individual skill learning page with video and content
+
+- **Video Quiz:** https://sports-goalie.vercel.app/quiz/video/[quizId]
+  - Interactive video quiz player
+
+- **Quiz Results:** https://sports-goalie.vercel.app/quiz/video/[quizId]/results
+  - Quiz results with feedback and scoring
+
+### Ice Hockey Goalie Charting
+- **Charting Dashboard:** https://sports-goalie.vercel.app/charting
+  - Session list and charting overview
+
+- **New Session:** https://sports-goalie.vercel.app/charting/new
+  - Start new game or practice session
+
+- **Session Details:** https://sports-goalie.vercel.app/charting/[sessionId]
+  - View detailed session data and analytics
+
+- **Edit Session:** https://sports-goalie.vercel.app/charting/[sessionId]/edit
+  - Edit existing session data
 
 ### Communication
-- `/messages` - Message inbox
-- `/messages/[id]` - Individual message detail
+- **Messages:** https://sports-goalie.vercel.app/messages
+  - Message inbox and notifications
+
+- **Message Detail:** https://sports-goalie.vercel.app/messages/[messageId]
+  - Read individual message
 
 ### Settings
-- `/profile` - User profile management
-- `/settings` - User preferences and settings
+- **Profile:** https://sports-goalie.vercel.app/profile
+  - User profile management (includes Student ID display for students)
 
-## Coach Routes
+- **Settings:** https://sports-goalie.vercel.app/settings
+  - User preferences and account settings
 
-### Dashboard & Students
-- `/coach` - Coach dashboard with statistics
-- `/coach/students` - List of assigned students
-- `/coach/students/[studentId]/curriculum` - Curriculum builder for student
+## Coach Routes (Requires Coach Login)
 
-### Content Management (Future)
-- `/coach/content` - Personal content library
-- `/coach/content/new` - Create custom content
-- `/coach/content/[id]/edit` - Edit custom content
+### Dashboard & Student Management
+- **Coach Dashboard:** https://sports-goalie.vercel.app/coach
+  - Coach overview with student statistics
 
-### Analytics (Future)
-- `/coach/analytics` - Coach analytics dashboard
-- `/coach/students/[studentId]/analytics` - Individual student analytics
+- **Student List:** https://sports-goalie.vercel.app/coach/students
+  - All assigned students with progress indicators
 
-## Parent Routes (Planned Phase 2.0.4)
+- **Curriculum Builder:** https://sports-goalie.vercel.app/coach/students/[studentId]/curriculum
+  - Create and manage custom curriculum for student (replace [studentId] with actual student ID)
+
+### Content Management (Future Enhancement)
+- **Content Library:** https://sports-goalie.vercel.app/coach/content
+  - Personal library of coach-created content
+
+- **Create Content:** https://sports-goalie.vercel.app/coach/content/new
+  - Create custom lessons or quizzes
+
+- **Edit Content:** https://sports-goalie.vercel.app/coach/content/[contentId]/edit
+  - Edit existing custom content
+
+### Analytics (Future Enhancement)
+- **Coach Analytics:** https://sports-goalie.vercel.app/coach/analytics
+  - Overall coaching analytics and insights
+
+- **Student Analytics:** https://sports-goalie.vercel.app/coach/students/[studentId]/analytics
+  - Individual student performance analytics
+
+## Parent Routes (Phase 2.0.4 - Upcoming)
 
 ### Dashboard
-- `/parent` - Parent dashboard
-- `/parent/children` - List of linked children
+- **Parent Dashboard:** https://sports-goalie.vercel.app/parent
+  - Parent overview with all children's progress
 
-### Monitoring
-- `/parent/children/[childId]/progress` - Child's progress
-- `/parent/children/[childId]/sessions` - Child's charting sessions
-- `/parent/children/[childId]/messages` - Child's messages
+- **Children List:** https://sports-goalie.vercel.app/parent/children
+  - All linked children accounts
 
-## Admin Routes
+### Child Monitoring
+- **Child Progress:** https://sports-goalie.vercel.app/parent/children/[childId]/progress
+  - View child's learning progress
+
+- **Child Sessions:** https://sports-goalie.vercel.app/parent/children/[childId]/sessions
+  - View child's charting sessions
+
+- **Child Messages:** https://sports-goalie.vercel.app/parent/children/[childId]/messages
+  - Monitor child's messages (with privacy controls)
+
+## Admin Routes (Requires Admin Login)
 
 ### Main Dashboard
-- `/admin` - Admin dashboard overview
-- `/admin/page` - Alternative admin landing
+- **Admin Dashboard:** https://sports-goalie.vercel.app/admin
+  - System overview and management hub
 
 ### User Management
-- `/admin/users` - User list and management
-- `/admin/users/[id]` - User detail and editing
-- `/admin/coaches` - Coach invitation management
+- **User List:** https://sports-goalie.vercel.app/admin/users
+  - All users with filtering and management tools
+
+- **User Detail:** https://sports-goalie.vercel.app/admin/users/[userId]
+  - Individual user management and editing
+
+- **Coach Invitations:** https://sports-goalie.vercel.app/admin/coaches
+  - Invite and manage coach accounts
 
 ### Content Management
-- `/admin/sports` - Sports management
-- `/admin/sports/[id]/skills` - Skills management for sport
-- `/admin/quizzes` - Quiz management
-- `/admin/quizzes/create` - Create new quiz
-- `/admin/quizzes/[id]/edit` - Edit existing quiz
+- **Sports Management:** https://sports-goalie.vercel.app/admin/sports
+  - Manage sports catalog
+
+- **Skills Management:** https://sports-goalie.vercel.app/admin/sports/[sportId]/skills
+  - Manage skills for specific sport
+
+- **Quiz Management:** https://sports-goalie.vercel.app/admin/quizzes
+  - Manage quiz library
+
+- **Create Quiz:** https://sports-goalie.vercel.app/admin/quizzes/create
+  - Create new quiz
+
+- **Edit Quiz:** https://sports-goalie.vercel.app/admin/quizzes/[quizId]/edit
+  - Edit existing quiz
 
 ### Charting Administration
-- `/admin/form-templates` - Form template management
-- `/admin/form-templates/create` - Create new template
-- `/admin/form-templates/[id]` - Edit template
-- `/admin/charting` - Charting system overview
-- `/admin/charting/analytics` - System-wide charting analytics
+- **Form Templates:** https://sports-goalie.vercel.app/admin/form-templates
+  - Manage charting form templates
+
+- **Create Template:** https://sports-goalie.vercel.app/admin/form-templates/create
+  - Create new form template
+
+- **Edit Template:** https://sports-goalie.vercel.app/admin/form-templates/[templateId]
+  - Edit form template
+
+- **Charting Overview:** https://sports-goalie.vercel.app/admin/charting
+  - System-wide charting statistics
+
+- **Charting Analytics:** https://sports-goalie.vercel.app/admin/charting/analytics
+  - Advanced charting analytics
 
 ### System Management
-- `/admin/messages` - System messages management
-- `/admin/video-reviews` - Video review system
-- `/admin/moderation` - Content moderation queue
-- `/admin/analytics` - System analytics dashboard
-- `/admin/settings` - Application settings
-- `/admin/project-assistant` - **NEW:** AI project assistant chatbot
+- **Messages:** https://sports-goalie.vercel.app/admin/messages
+  - System messages management
 
-## API Routes
+- **Video Reviews:** https://sports-goalie.vercel.app/admin/video-reviews
+  - Video review system
+
+- **Moderation:** https://sports-goalie.vercel.app/admin/moderation
+  - Content moderation queue
+
+- **Analytics:** https://sports-goalie.vercel.app/admin/analytics
+  - System analytics dashboard
+
+- **Settings:** https://sports-goalie.vercel.app/admin/settings
+  - Application settings
+
+- **Project Assistant:** https://sports-goalie.vercel.app/admin/project-assistant
+  - AI chatbot for project information and guidance
+
+### Curriculum Oversight
+- **All Curricula:** https://sports-goalie.vercel.app/coach
+  - Admins can access all coach features including curriculum management
+
+## API Endpoints
+
+**Base URL:** https://sports-goalie.vercel.app/api
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -112,13 +215,13 @@
 - `POST /api/auth/reset-password` - Password reset
 
 ### User Management
-- `GET /api/users` - List users (admin)
+- `GET /api/users` - List users (admin only)
 - `GET /api/users/[id]` - Get user details
 - `PUT /api/users/[id]` - Update user
 - `DELETE /api/users/[id]` - Delete user
 
 ### Content
-- `GET /api/sports` - List sports
+- `GET /api/sports` - List all sports
 - `GET /api/sports/[id]` - Get sport details
 - `GET /api/sports/[id]/skills` - Get skills for sport
 - `POST /api/sports` - Create sport (admin)
@@ -130,119 +233,112 @@
 - `POST /api/quizzes` - Create quiz (admin)
 - `POST /api/quizzes/[id]/submit` - Submit quiz answers
 
-### Progress
+### Progress Tracking
 - `GET /api/progress/user` - Get user progress
 - `POST /api/progress/skill/[id]` - Record skill progress
 - `POST /api/progress/quiz/[id]` - Record quiz completion
 
-### Coach
+### Coach Features
 - `GET /api/coach/students` - Get assigned students
 - `GET /api/coach/curriculum/[studentId]` - Get student curriculum
-- `POST /api/coach/curriculum` - Create curriculum
+- `POST /api/coach/curriculum` - Create new curriculum
 - `PUT /api/coach/curriculum/[id]` - Update curriculum
 
-### Admin
-- `POST /api/admin/chat` - **NEW:** Chat with project assistant AI
+### Admin Features
+- `POST /api/admin/chat` - Chat with project assistant AI
 - `POST /api/admin/invitations` - Send coach invitation
-- `GET /api/admin/invitations` - List invitations
+- `GET /api/admin/invitations` - List all invitations
 - `PUT /api/admin/invitations/[id]` - Update invitation status
 
-### Charting
-- `GET /api/charting/sessions` - List user sessions
-- `POST /api/charting/sessions` - Create session
+### Charting System
+- `GET /api/charting/sessions` - List user's sessions
+- `POST /api/charting/sessions` - Create new session
 - `GET /api/charting/sessions/[id]` - Get session details
-- `PUT /api/charting/sessions/[id]` - Update session
+- `PUT /api/charting/sessions/[id]` - Update session data
+
+## Navigation Guide
+
+### How to Guide Users
+
+When directing users to specific pages, always provide the full URL. For example:
+
+**For Students:**
+- "Go to your dashboard at https://sports-goalie.vercel.app/dashboard"
+- "View your progress at https://sports-goalie.vercel.app/progress"
+- "Check your profile at https://sports-goalie.vercel.app/profile"
+
+**For Coaches:**
+- "Access your coach dashboard at https://sports-goalie.vercel.app/coach"
+- "View your students at https://sports-goalie.vercel.app/coach/students"
+- "To build a curriculum, go to https://sports-goalie.vercel.app/coach/students/[studentId]/curriculum (you'll need the student's ID)"
+
+**For Admins:**
+- "Open the admin dashboard at https://sports-goalie.vercel.app/admin"
+- "Manage users at https://sports-goalie.vercel.app/admin/users"
+- "Invite coaches at https://sports-goalie.vercel.app/admin/coaches"
+- "Ask the project assistant at https://sports-goalie.vercel.app/admin/project-assistant"
+
+### Dynamic URL Parameters
+
+Some routes require dynamic parameters (IDs):
+
+- **[sportId]** - Replace with actual sport ID (e.g., "ice-hockey", "baseball")
+- **[skillId]** - Replace with actual skill ID
+- **[studentId]** - Replace with student's user ID
+- **[sessionId]** - Replace with charting session ID
+- **[userId]** - Replace with user ID
+- **[quizId]** - Replace with quiz ID
+- **[messageId]** - Replace with message ID
+- **[templateId]** - Replace with form template ID
+- **[contentId]** - Replace with custom content ID
+
+**Example:**
+Instead of: `https://sports-goalie.vercel.app/coach/students/[studentId]/curriculum`
+Use: `https://sports-goalie.vercel.app/coach/students/abc123xyz/curriculum`
 
 ## Route Protection
 
-### Public Routes
-- No authentication required
-- Accessible to all visitors
-- SEO-friendly
+### Public Access
+- Home, sports catalog, authentication pages
+- No login required
+- SEO-optimized for search engines
 
-### Protected Routes
-- Require authentication
-- Redirect to login if not authenticated
-- Session validation
+### Authentication Required
+- All other routes require login
+- Users redirected to login page if not authenticated
+- Session validation on each request
 
-### Role-Based Routes
-- Require specific role (student/coach/parent/admin)
-- Redirect to appropriate dashboard if wrong role
-- Permission checking at API level
+### Role-Based Access
+- Routes check user role (student/coach/parent/admin)
+- Wrong role users redirected to their appropriate dashboard
+- API endpoints validate permissions
 
-### Security Middleware
-- Token validation
+### Security Features
+- Token-based authentication
 - Role verification
-- Rate limiting (admin routes)
+- Rate limiting on sensitive routes
 - CSRF protection
-
-## Navigation Structure
-
-### Student Navigation
-- Dashboard
-- Sports Catalog
-- Progress
-- Achievements
-- Goals
-- Messages
-- Charting (if applicable)
-- Profile
-
-### Coach Navigation
-- Dashboard
-- My Students
-- Content Library
-- Analytics
-- Profile
-
-### Parent Navigation
-- Dashboard
-- My Children
-- Messages
-- Profile
-
-### Admin Navigation
-- Dashboard
-- Users
-- Content (Sports/Skills/Quizzes)
-- Coaches
-- Form Templates
-- Analytics
-- Messages
-- Project Assistant
-- Settings
-
-## Route Conventions
-
-### Dynamic Routes
-- `[id]` - Single dynamic parameter (e.g., user ID, sport ID)
-- `[...slug]` - Catch-all route for nested paths
-
-### Query Parameters
-- `?token=xxx` - Invitation tokens
-- `?redirect=/path` - Post-login redirects
-- `?filter=value` - List filtering
-- `?page=1` - Pagination
-
-### URL Structure
-- Lowercase with hyphens: `/my-students`
-- RESTful patterns: `/api/resource` (GET), `/api/resource/[id]` (GET/PUT/DELETE)
-- Nested resources: `/sports/[id]/skills`
+- Secure session management
 
 ## Future Routes (Planned)
 
 ### Phase 2.1 (6-Pillar System)
-- `/pillars` - 6 pillars overview
+- `/pillars` - 6 pillars overview page
 - `/pillars/[pillarId]` - Individual pillar content
-- `/pillars/[pillarId]/level/[level]` - Pillar level content
+- `/pillars/[pillarId]/level/[level]` - Level-specific content
 
 ### Phase 2.2 (Enhanced Analytics)
-- `/coach/analytics/cohort` - Cohort comparison
+- `/coach/analytics/cohort` - Cohort comparison analytics
 - `/admin/analytics/engagement` - User engagement metrics
-- `/admin/analytics/content` - Content performance
+- `/admin/analytics/content` - Content performance dashboard
 
-### Future Features
+### Future Enhancements
 - `/community` - Community forum
 - `/marketplace` - Content marketplace
 - `/teams` - Team management
 - `/tournaments` - Competition tracking
+- `/notifications` - Notification center
+
+---
+
+**Note:** Always use the full URL (https://sports-goalie.vercel.app/...) when directing users to specific pages. This ensures they can navigate directly to the correct location.

@@ -10,7 +10,7 @@ import path from 'path';
 
 export interface DocumentMetadata {
   path: string;
-  category: 'overview' | 'features' | 'pages' | 'progress' | 'technical' | 'decisions';
+  category: 'overview' | 'features' | 'pages' | 'progress' | 'technical' | 'decisions' | 'sessions';
   title: string;
   keywords: string[];
   priority: number; // 1 (highest) to 5 (lowest)
@@ -51,7 +51,8 @@ export class ProjectAssistantService {
       'pages',
       'progress',
       'technical',
-      'decisions'
+      'decisions',
+      'sessions'
     ];
 
     for (const category of categories) {
@@ -231,6 +232,9 @@ export class ProjectAssistantService {
       'technical': 'technical',
       'decisions': 'decisions',
       'overview': 'overview',
+      'sessions': 'sessions',
+      'work': 'sessions',
+      'recent': 'sessions',
     };
 
     const category = categoryMap[topic.toLowerCase()];
@@ -309,7 +313,8 @@ export class ProjectAssistantService {
       pages: ['routes', 'pages', 'navigation', 'admin', 'student', 'coach'],
       progress: ['phase', 'milestone', 'development', 'time', 'completed'],
       technical: ['database', 'service', 'security', 'api', 'architecture'],
-      decisions: ['decision', 'architecture', 'choice', 'rationale']
+      decisions: ['decision', 'architecture', 'choice', 'rationale'],
+      sessions: ['work', 'deliverable', 'completed', 'feature', 'session', 'recent']
     };
 
     if (categoryKeywords[category]) {
@@ -328,8 +333,8 @@ export class ProjectAssistantService {
       return 1;
     }
 
-    // Priority 2 - core features and routes
-    if (category === 'features' || category === 'pages') {
+    // Priority 2 - core features, routes, and recent sessions
+    if (category === 'features' || category === 'pages' || category === 'sessions') {
       return 2;
     }
 
