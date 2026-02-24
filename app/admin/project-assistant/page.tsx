@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { ChatInterface } from '@/components/admin/chat-interface';
+import { SessionStatsPanel } from '@/components/admin/session-stats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Bot, FileText, Zap, Shield, Info } from 'lucide-react';
@@ -36,8 +37,11 @@ export default function ProjectAssistantPage() {
           <ChatInterface />
         </div>
 
-        {/* Sidebar - Capabilities & Tips */}
+        {/* Sidebar - Sessions & Capabilities */}
         <div className="space-y-4">
+          {/* Development Sessions */}
+          <SessionStatsPanel />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">

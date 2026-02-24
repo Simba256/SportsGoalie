@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, HelpCircle, RefreshCw, Video, FileText, UserPlus, Bot } from 'lucide-react';
+import { BarChart3, Settings, Users, BookOpen, Trophy, Target, RefreshCw, Video, FileText, UserPlus, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
