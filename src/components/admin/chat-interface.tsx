@@ -98,7 +98,16 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
           // Redirect to Claude.ai project as backup
           const backupUrl = `https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d?prompt=${encodeURIComponent(userMessage.content)}`;
           window.open(backupUrl, '_blank');
-          throw new Error('The assistant is temporarily unavailable. Opening backup assistant in a new tab...');
+
+          // Add error message to chat
+          const errorMessage: Message = {
+            role: 'assistant',
+            content: `Sorry, the assistant is temporarily unavailable due to high demand.\n\nI've opened our backup assistant in a new tab. If it didn't open automatically, [click here to continue your conversation](${backupUrl}).`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, errorMessage]);
+          setLoading(false);
+          return;
         }
         const error = await response.json();
         throw new Error(error.message || 'Failed to get response');
