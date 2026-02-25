@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, Bot, User, Sparkles, BarChart } from 'lucide-react';
+import { Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -138,11 +138,11 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   };
 
   const suggestedQuestions = [
-    'What features have been implemented so far?',
-    'What is the current project status?',
-    'How does the coach curriculum builder work?',
-    'What routes are available for admin users?',
-    'What technologies are used in this project?',
+    'What can I do as an admin?',
+    'How is the project progressing?',
+    'What pages are available for me?',
+    'How do I manage students and coaches?',
+    'What features are ready to use?',
   ];
 
   const askSuggestedQuestion = (question: string) => {
@@ -159,16 +159,10 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             <div>
               <CardTitle>Project Assistant</CardTitle>
               <CardDescription>
-                Ask questions about features, progress, and technical details
+                Ask about features, progress, or how to use the platform
               </CardDescription>
             </div>
           </div>
-          {stats && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <BarChart className="h-3 w-3" />
-              {stats.documentsLoaded} docs
-            </Badge>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -182,8 +176,8 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg">Welcome to Project Assistant</h3>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  I have access to all project documentation including features, routes,
-                  progress updates, and technical details. Ask me anything!
+                  I can help you understand what the platform can do, check on progress,
+                  and guide you to the right pages. Ask me anything!
                 </p>
               </div>
               <div className="space-y-2 w-full max-w-md">
@@ -230,7 +224,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about features, progress, routes, or technical details..."
+            placeholder="Ask me anything about the platform..."
             disabled={loading}
             className="flex-1"
           />
@@ -247,24 +241,6 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
           </Button>
         </div>
 
-        {/* Stats */}
-        {stats && (
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>Context: {(stats.contextSize / 1024).toFixed(1)}KB</span>
-            {stats.inputTokens && (
-              <>
-                <span>•</span>
-                <span>In: {stats.inputTokens.toLocaleString()} tokens</span>
-              </>
-            )}
-            {stats.outputTokens && (
-              <>
-                <span>•</span>
-                <span>Out: {stats.outputTokens.toLocaleString()} tokens</span>
-              </>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

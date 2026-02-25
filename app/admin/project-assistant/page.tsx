@@ -3,11 +3,11 @@ import { ChatInterface } from '@/components/admin/chat-interface';
 import { SessionStatsPanel } from '@/components/admin/session-stats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Bot, FileText, Zap, Shield, Info } from 'lucide-react';
+import { Bot, MessageCircle, Zap, Shield, Info } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Project Assistant | Admin',
-  description: 'AI-powered project assistant with full project knowledge',
+  description: 'Your AI assistant for the SportsGoalie platform',
 };
 
 export default function ProjectAssistantPage() {
@@ -17,7 +17,7 @@ export default function ProjectAssistantPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Project Assistant</h1>
         <p className="text-muted-foreground">
-          AI-powered chatbot with comprehensive knowledge of the SportsGoalie project
+          Your AI helper for understanding the platform and tracking progress
         </p>
       </div>
 
@@ -25,9 +25,8 @@ export default function ProjectAssistantPage() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          This assistant has access to all project documentation including features, routes,
-          progress updates, technical details, and architectural decisions. Ask specific questions
-          for the best results.
+          Ask me anything about what the platform can do, how to use different features,
+          or check on the project progress. I&apos;m here to help!
         </AlertDescription>
       </Alert>
 
@@ -46,44 +45,44 @@ export default function ProjectAssistantPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Zap className="h-5 w-5" />
-                Capabilities
+                What I Can Help With
               </CardTitle>
-              <CardDescription>What the assistant knows</CardDescription>
+              <CardDescription>Just ask!</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 mt-0.5 text-primary" />
+                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
                 <div>
-                  <p className="font-medium">Project Documentation</p>
+                  <p className="font-medium">Platform Features</p>
                   <p className="text-muted-foreground text-xs">
-                    Features, routes, progress, tech stack
+                    What you can do and where to find things
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 mt-0.5 text-primary" />
+                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
                 <div>
-                  <p className="font-medium">Development History</p>
+                  <p className="font-medium">Project Progress</p>
                   <p className="text-muted-foreground text-xs">
-                    Phase summaries, decisions, sessions
+                    What&apos;s been built and what&apos;s coming next
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 mt-0.5 text-primary" />
+                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
                 <div>
-                  <p className="font-medium">Technical Details</p>
+                  <p className="font-medium">Navigation Help</p>
                   <p className="text-muted-foreground text-xs">
-                    Database schema, services, security
+                    Find the right page for what you need
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 mt-0.5 text-primary" />
+                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
                 <div>
-                  <p className="font-medium">Route Information</p>
+                  <p className="font-medium">How-To Guides</p>
                   <p className="text-muted-foreground text-xs">
-                    All admin, coach, student, public routes
+                    Step-by-step help for common tasks
                   </p>
                 </div>
               </div>
@@ -94,15 +93,14 @@ export default function ProjectAssistantPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Bot className="h-5 w-5" />
-                Tips for Best Results
+                Tips
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>• Ask specific questions about features or routes</p>
-              <p>• Request file paths or code locations</p>
-              <p>• Ask about progress or development status</p>
-              <p>• Inquire about technical decisions made</p>
-              <p>• Request explanations of how features work</p>
+              <p>• Ask &quot;What can I do?&quot; for a quick overview</p>
+              <p>• Ask &quot;Where do I...?&quot; to find pages</p>
+              <p>• Ask &quot;How is progress?&quot; for updates</p>
+              <p>• Be specific for better answers</p>
             </CardContent>
           </Card>
 
@@ -110,31 +108,27 @@ export default function ProjectAssistantPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                Admin Only
+                Private & Secure
               </CardTitle>
-              <CardDescription>Security & Privacy</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                This assistant is only accessible to admin users. All conversations are private
-                and not stored permanently.
-              </p>
-              <p className="text-xs pt-2">
-                Powered by Claude Sonnet 4 with smart context loading for optimal performance.
+                Only admins can access this assistant. Your conversations are private
+                and not stored.
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader>
-              <CardTitle className="text-sm">Example Questions</CardTitle>
+              <CardTitle className="text-sm">Try Asking</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-xs text-muted-foreground">
-              <p className="italic">"What is the current project status?"</p>
-              <p className="italic">"How does coach curriculum builder work?"</p>
-              <p className="italic">"What admin routes are available?"</p>
-              <p className="italic">"Show me the authentication flow"</p>
-              <p className="italic">"What's the database schema?"</p>
+              <p className="italic">&quot;What can I do as an admin?&quot;</p>
+              <p className="italic">&quot;How do I invite a new coach?&quot;</p>
+              <p className="italic">&quot;Where can I see student progress?&quot;</p>
+              <p className="italic">&quot;What features are ready?&quot;</p>
+              <p className="italic">&quot;How is the project going?&quot;</p>
             </CardContent>
           </Card>
         </div>
