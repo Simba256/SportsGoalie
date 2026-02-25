@@ -9,18 +9,26 @@ interface SessionSummary {
   type: string;
 }
 
-// Static session data - no API call needed
+// Static session data - updated Feb 25, 2026
 const SESSION_DATA: SessionSummary[] = [
+  // Feb 25 (1 session)
+  {
+    date: '2026-02-25',
+    title: 'Development Progress Dashboard',
+    type: 'Feature Development',
+  },
+  // Feb 24 (2 sessions)
   {
     date: '2026-02-24',
     title: 'AI Project Assistant',
     type: 'Feature Development',
   },
   {
-    date: '2026-02-23',
+    date: '2026-02-24',
     title: 'Custom Curriculum System MVP',
     type: 'Feature Development',
   },
+  // Feb 23 (2 sessions)
   {
     date: '2026-02-23',
     title: 'Curriculum Content Browser',
@@ -31,6 +39,7 @@ const SESSION_DATA: SessionSummary[] = [
     title: 'Admin Curriculum Management Access',
     type: 'Feature Development',
   },
+  // Feb 22 (5 sessions)
   {
     date: '2026-02-22',
     title: 'Documentation System Setup',
