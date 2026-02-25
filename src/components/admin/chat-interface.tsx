@@ -95,8 +95,10 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
 
       if (!response.ok) {
         if (response.status === 529 || response.status >= 500) {
-          // Redirect to Claude.ai project as backup
-          const backupUrl = 'https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d';
+          // Redirect to Claude.ai project as backup - try ?q= parameter
+          const encodedPrompt = encodeURIComponent(userMessage.content);
+          const backupUrl = `https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d?q=${encodedPrompt}`;
+          const backupUrlSimple = 'https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d';
 
           // Try to open backup in new tab
           try {
@@ -105,16 +107,25 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             console.error('Failed to open backup URL:', e);
           }
 
-          // Add error message to chat with the user's question included
+          // Add error message to chat with the user's question and full URL
           const errorMessage: Message = {
             role: 'assistant',
             content: `Sorry, the assistant is temporarily unavailable due to high demand.
 
-I've tried to open our backup assistant in a new tab. If it didn't open, [click here to open it](${backupUrl}).
+I've tried to open our backup assistant in a new tab.
 
-**Your question was:** "${userMessage.content}"
+**If it didn't open automatically, click one of these links:**
 
-Please copy your question above and paste it in the backup assistant.`,
+👉 [Open Backup Assistant](${backupUrl})
+
+Or copy this URL: \`${backupUrlSimple}\`
+
+---
+
+**Your question was:**
+> ${userMessage.content}
+
+Copy and paste your question if it didn't auto-fill.`,
             timestamp: new Date(),
           };
 
