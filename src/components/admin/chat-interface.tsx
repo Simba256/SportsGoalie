@@ -94,6 +94,9 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
       });
 
       if (!response.ok) {
+        if (response.status === 529) {
+          throw new Error('The assistant is busy right now. Please wait a moment and try again.');
+        }
         const error = await response.json();
         throw new Error(error.message || 'Failed to get response');
       }

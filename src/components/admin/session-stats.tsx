@@ -84,16 +84,35 @@ export function SessionStatsPanel() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Phase Progress */}
-        <div className="rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">{CURRENT_PHASE}</span>
-            <span className="text-sm text-muted-foreground">{PHASE_PROGRESS}%</span>
+        <div className="space-y-3">
+          {/* Current Phase */}
+          <div className="rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">{CURRENT_PHASE} <span className="text-xs text-blue-600 dark:text-blue-400">(Current)</span></span>
+              <span className="text-sm text-muted-foreground">{PHASE_PROGRESS}%</span>
+            </div>
+            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
+                style={{ width: `${PHASE_PROGRESS}%` }}
+              />
+            </div>
           </div>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
-              style={{ width: `${PHASE_PROGRESS}%` }}
-            />
+
+          {/* Future Phases */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Phase 3 - Advanced Analytics</span>
+              <span className="text-muted-foreground">Upcoming</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Phase 4 - Mobile App</span>
+              <span className="text-muted-foreground">Planned</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Phase 5 - AI Coaching</span>
+              <span className="text-muted-foreground">Planned</span>
+            </div>
           </div>
         </div>
 
