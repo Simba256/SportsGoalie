@@ -96,17 +96,31 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
       if (!response.ok) {
         if (response.status === 529 || response.status >= 500) {
           // Redirect to Claude.ai project as backup
-          const backupUrl = `https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d?prompt=${encodeURIComponent(userMessage.content)}`;
-          window.open(backupUrl, '_blank');
+          const backupUrl = 'https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d';
 
-          // Add error message to chat
+          // Try to open backup in new tab
+          try {
+            window.open(backupUrl, '_blank');
+          } catch (e) {
+            console.error('Failed to open backup URL:', e);
+          }
+
+          // Add error message to chat with the user's question included
           const errorMessage: Message = {
             role: 'assistant',
-            content: `Sorry, the assistant is temporarily unavailable due to high demand.\n\nI've opened our backup assistant in a new tab. If it didn't open automatically, [click here to continue your conversation](${backupUrl}).`,
+            content: `Sorry, the assistant is temporarily unavailable due to high demand.
+
+I've tried to open our backup assistant in a new tab. If it didn't open, [click here to open it](${backupUrl}).
+
+**Your question was:** "${userMessage.content}"
+
+Please copy your question above and paste it in the backup assistant.`,
             timestamp: new Date(),
           };
+
           setMessages(prev => [...prev, errorMessage]);
           setLoading(false);
+          inputRef.current?.focus();
           return;
         }
         const error = await response.json();
