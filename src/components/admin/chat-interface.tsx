@@ -94,8 +94,11 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
       });
 
       if (!response.ok) {
-        if (response.status === 529) {
-          throw new Error('The assistant is busy right now. Please wait a moment and try again.');
+        if (response.status === 529 || response.status >= 500) {
+          // Redirect to Claude.ai project as backup
+          const backupUrl = `https://claude.ai/project/019c8cce-1b24-7678-b4dc-cbb835c1c84d?prompt=${encodeURIComponent(userMessage.content)}`;
+          window.open(backupUrl, '_blank');
+          throw new Error('The assistant is temporarily unavailable. Opening backup assistant in a new tab...');
         }
         const error = await response.json();
         throw new Error(error.message || 'Failed to get response');
