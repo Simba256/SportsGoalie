@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Loader2, Bot, User, Sparkles, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -16,6 +16,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  backupUrl?: string;
 }
 
 interface ChatInterfaceProps {
@@ -112,21 +113,14 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             role: 'assistant',
             content: `Sorry, the assistant is temporarily unavailable due to high demand.
 
-I've tried to open our backup assistant in a new tab.
-
-**If it didn't open automatically, click one of these links:**
-
-👉 [Open Backup Assistant](${backupUrl})
-
-Or copy this URL: \`${backupUrlSimple}\`
-
----
+I've tried to open our backup assistant in a new tab. If it didn't open, use the button below.
 
 **Your question was:**
 > ${userMessage.content}
 
 Copy and paste your question if it didn't auto-fill.`,
             timestamp: new Date(),
+            backupUrl: backupUrlSimple,
           };
 
           setMessages(prev => [...prev, errorMessage]);
@@ -289,6 +283,12 @@ Copy and paste your question if it didn't auto-fill.`,
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
 
+  const handleBackupClick = () => {
+    if (message.backupUrl) {
+      window.open(message.backupUrl, '_blank');
+    }
+  };
+
   return (
     <div className={`flex items-start gap-3 ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
@@ -335,6 +335,22 @@ function MessageBubble({ message }: { message: Message }) {
             </div>
           )}
         </div>
+
+        {/* Backup Assistant Button */}
+        {message.backupUrl && (
+          <div className="mt-3">
+            <Button
+              onClick={handleBackupClick}
+              variant="default"
+              size="sm"
+              className="gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open Backup Assistant
+            </Button>
+          </div>
+        )}
+
         <p className="text-xs text-muted-foreground mt-1 px-1">
           {message.timestamp.toLocaleTimeString()}
         </p>
