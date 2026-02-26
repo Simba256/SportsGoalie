@@ -19,8 +19,11 @@ import {
   createAuthErrorFromFirebase,
   createErrorContext,
   EmailVerificationRequiredError,
-  isAuthError
+  isAuthError,
+  AuthError,
 } from '@/lib/errors/auth-errors';
+import { userService } from '@/lib/database/services/user.service';
+import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -209,6 +212,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
+      // Validate coach code for custom workflow students BEFORE creating Firebase user
+      let assignedCoachId: string | undefined;
+      if (credentials.role === 'student' &&
+          credentials.workflowType === 'custom' &&
+          credentials.coachCode) {
+        const normalizedCode = normalizeCoachCode(credentials.coachCode);
+        const coachResult = await userService.getCoachByCode(normalizedCode);
+
+        if (!coachResult.success || !coachResult.data) {
+          throw new AuthError(
+            'INVALID_COACH_CODE',
+            'Invalid coach code. Please check with your coach and try again.',
+            'Invalid coach code. Please check with your coach and try again.',
+            context
+          );
+        }
+
+        assignedCoachId = coachResult.data.id;
+        console.log('✅ Coach code validated, assigning to coach:', coachResult.data.displayName);
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         credentials.email,
@@ -233,6 +257,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date(),
         updatedAt: new Date(),
         lastLoginAt: new Date(),
+        // Add workflow type and assigned coach for students
+        ...(credentials.role === 'student' && {
+          workflowType: credentials.workflowType || 'automated',
+          ...(assignedCoachId && { assignedCoachId }),
+        }),
         preferences: {
           theme: 'system',
           notifications: {

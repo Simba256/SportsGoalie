@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,8 @@ import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
 import { toast } from 'sonner';
+import { userService } from '@/lib/database/services/user.service';
+import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,6 +26,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [coachCodeStatus, setCoachCodeStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [validatedCoachName, setValidatedCoachName] = useState<string | null>(null);
 
   const {
     register,
@@ -43,6 +47,59 @@ export default function RegisterPage() {
 
   const selectedRole = watch('role');
   const selectedWorkflowType = watch('workflowType');
+  const watchedCoachCode = watch('coachCode');
+
+  // Validate coach code when it changes
+  const validateCoachCode = async (code: string) => {
+    if (!code || code.trim().length === 0) {
+      setCoachCodeStatus('idle');
+      setValidatedCoachName(null);
+      return;
+    }
+
+    const normalizedCode = normalizeCoachCode(code);
+
+    // Check format first
+    const formatPattern = /^[A-Z]+-[A-Z0-9]{4}$/;
+    if (!formatPattern.test(normalizedCode)) {
+      setCoachCodeStatus('idle');
+      setValidatedCoachName(null);
+      return;
+    }
+
+    setCoachCodeStatus('checking');
+
+    try {
+      const result = await userService.getCoachByCode(normalizedCode);
+      if (result.success && result.data) {
+        setCoachCodeStatus('valid');
+        setValidatedCoachName(result.data.displayName);
+      } else {
+        setCoachCodeStatus('invalid');
+        setValidatedCoachName(null);
+      }
+    } catch {
+      setCoachCodeStatus('invalid');
+      setValidatedCoachName(null);
+    }
+  };
+
+  // Debounce coach code validation
+  useEffect(() => {
+    if (selectedRole !== 'student' || selectedWorkflowType !== 'custom') {
+      setCoachCodeStatus('idle');
+      setValidatedCoachName(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      if (watchedCoachCode) {
+        validateCoachCode(watchedCoachCode);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedCoachCode, selectedRole, selectedWorkflowType]);
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -145,6 +202,63 @@ export default function RegisterPage() {
                 {errors.workflowType && (
                   <p className="text-sm text-destructive">{errors.workflowType.message}</p>
                 )}
+              </div>
+            )}
+
+            {/* Coach Code Input (Custom Workflow Students Only) */}
+            {selectedRole === 'student' && selectedWorkflowType === 'custom' && (
+              <div className="space-y-2">
+                <Label htmlFor="coachCode">Coach Code</Label>
+                <div className="relative">
+                  <Input
+                    id="coachCode"
+                    placeholder="Enter your coach's code (e.g., SMITH-7K3M)"
+                    {...register('coachCode')}
+                    aria-invalid={!!errors.coachCode || coachCodeStatus === 'invalid'}
+                    data-testid="coach-code-input"
+                    className={`uppercase ${
+                      coachCodeStatus === 'valid'
+                        ? 'border-green-500 focus-visible:ring-green-500'
+                        : coachCodeStatus === 'invalid'
+                        ? 'border-red-500 focus-visible:ring-red-500'
+                        : ''
+                    }`}
+                    onChange={(e) => {
+                      // Convert to uppercase as user types
+                      e.target.value = e.target.value.toUpperCase();
+                      register('coachCode').onChange(e);
+                    }}
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {coachCodeStatus === 'checking' && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {coachCodeStatus === 'valid' && (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    )}
+                    {coachCodeStatus === 'invalid' && (
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                </div>
+                {coachCodeStatus === 'valid' && validatedCoachName && (
+                  <p className="text-sm text-green-600" data-testid="coach-code-valid">
+                    Coach found: {validatedCoachName}
+                  </p>
+                )}
+                {coachCodeStatus === 'invalid' && (
+                  <p className="text-sm text-red-600" data-testid="coach-code-invalid">
+                    Invalid coach code. Check with your coach.
+                  </p>
+                )}
+                {errors.coachCode && (
+                  <p className="text-sm text-destructive" data-testid="coach-code-error">
+                    {errors.coachCode.message}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Get this code from your coach before registering.
+                </p>
               </div>
             )}
 

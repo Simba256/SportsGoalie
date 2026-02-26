@@ -15,6 +15,7 @@ import {
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { TimestampPatterns } from '../../utils/timestamp';
+import { generateCoachCode, normalizeCoachCode } from '../../utils/coach-code-generator';
 
 /**
  * Service for managing users, user progress, achievements, and notifications in the SportsCoach application.
@@ -846,6 +847,430 @@ export class UserService extends BaseDatabaseService {
         }
       }
     );
+  }
+
+  // Coach-Student Linking Methods
+
+  /**
+   * Gets unassigned custom workflow students available for a coach to add.
+   * Returns students with workflowType='custom' and no assignedCoachId.
+   *
+   * @param coachId - The ID of the coach requesting available students
+   * @param options - Optional search and pagination options
+   * @returns Promise resolving to API response with list of available students
+   */
+  async getAvailableStudentsForCoach(
+    coachId: string,
+    options: { searchTerm?: string; limit?: number } = {}
+  ): Promise<ApiResponse<PaginatedResponse<User>>> {
+    logger.info('Getting available students for coach', 'UserService', { coachId, options });
+
+    // Query for custom workflow students without an assigned coach
+    const queryOptions: QueryOptions = {
+      where: [
+        { field: 'role', operator: '==', value: 'student' },
+        { field: 'workflowType', operator: '==', value: 'custom' },
+        { field: 'isActive', operator: '==', value: true },
+      ],
+      orderBy: [{ field: 'displayName', direction: 'asc' }],
+      limit: options.limit || 50,
+    };
+
+    const result = await this.query<User>(this.USERS_COLLECTION, queryOptions);
+
+    if (!result.success || !result.data) {
+      return result;
+    }
+
+    // Filter out students who already have an assigned coach (client-side filter)
+    // Firestore doesn't support querying for null/undefined fields well
+    let filteredItems = result.data.items.filter(user => !user.assignedCoachId);
+
+    // Apply search term filter if provided
+    if (options.searchTerm) {
+      const searchTerm = options.searchTerm.toLowerCase();
+      filteredItems = filteredItems.filter(user =>
+        user.displayName.toLowerCase().includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        (user.studentNumber?.toLowerCase().includes(searchTerm)) ||
+        (user.profile?.firstName?.toLowerCase().includes(searchTerm)) ||
+        (user.profile?.lastName?.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    return {
+      success: true,
+      data: {
+        items: filteredItems,
+        total: filteredItems.length,
+        hasMore: false,
+      },
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * Assigns a student to a coach by setting their assignedCoachId.
+   * Only works for students with workflowType='custom' who aren't already assigned.
+   *
+   * @param studentId - The ID of the student to assign
+   * @param coachId - The ID of the coach to assign the student to
+   * @returns Promise resolving to API response indicating success or error
+   */
+  async assignStudentToCoach(
+    studentId: string,
+    coachId: string
+  ): Promise<ApiResponse<void>> {
+    logger.info('Assigning student to coach', 'UserService', { studentId, coachId });
+
+    // Get the student first to validate
+    const studentResult = await this.getUser(studentId);
+    if (!studentResult.success || !studentResult.data) {
+      return {
+        success: false,
+        error: {
+          code: 'STUDENT_NOT_FOUND',
+          message: 'Student not found',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    const student = studentResult.data;
+
+    // Validate student is a custom workflow student
+    if (student.workflowType !== 'custom') {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_WORKFLOW_TYPE',
+          message: 'Only students with custom workflow can be assigned to a coach',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Check if already assigned to another coach
+    if (student.assignedCoachId && student.assignedCoachId !== coachId) {
+      return {
+        success: false,
+        error: {
+          code: 'ALREADY_ASSIGNED',
+          message: 'Student is already assigned to another coach',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Verify the coach exists and has appropriate role
+    const coachResult = await this.getUser(coachId);
+    if (!coachResult.success || !coachResult.data) {
+      return {
+        success: false,
+        error: {
+          code: 'COACH_NOT_FOUND',
+          message: 'Coach not found',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    if (coachResult.data.role !== 'coach' && coachResult.data.role !== 'admin') {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_COACH_ROLE',
+          message: 'User must be a coach or admin to have students assigned',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Assign the student to the coach
+    const updateResult = await this.update<User>(this.USERS_COLLECTION, studentId, {
+      assignedCoachId: coachId,
+    });
+
+    if (updateResult.success) {
+      logger.info('Student assigned to coach successfully', 'UserService', {
+        studentId,
+        coachId,
+        studentName: student.displayName,
+      });
+    }
+
+    return updateResult;
+  }
+
+  /**
+   * Removes a student from a coach's roster by clearing their assignedCoachId.
+   * Coach can only remove students from their own roster.
+   *
+   * @param studentId - The ID of the student to remove
+   * @param coachId - The ID of the coach removing the student
+   * @returns Promise resolving to API response indicating success or error
+   */
+  async removeStudentFromCoach(
+    studentId: string,
+    coachId: string
+  ): Promise<ApiResponse<void>> {
+    logger.info('Removing student from coach', 'UserService', { studentId, coachId });
+
+    // Get the student first to validate
+    const studentResult = await this.getUser(studentId);
+    if (!studentResult.success || !studentResult.data) {
+      return {
+        success: false,
+        error: {
+          code: 'STUDENT_NOT_FOUND',
+          message: 'Student not found',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    const student = studentResult.data;
+
+    // Verify the coach is checking their own student (or is admin)
+    const coachResult = await this.getUser(coachId);
+    const isAdmin = coachResult.success && coachResult.data?.role === 'admin';
+
+    if (!isAdmin && student.assignedCoachId !== coachId) {
+      return {
+        success: false,
+        error: {
+          code: 'NOT_YOUR_STUDENT',
+          message: 'You can only remove students from your own roster',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Remove the assignment by setting assignedCoachId to null
+    // Note: We use a direct Firestore update to set the field to null
+    const updateResult = await this.update<User>(this.USERS_COLLECTION, studentId, {
+      assignedCoachId: null as unknown as string, // Clear the assignment
+    });
+
+    if (updateResult.success) {
+      logger.info('Student removed from coach successfully', 'UserService', {
+        studentId,
+        coachId,
+        studentName: student.displayName,
+      });
+    }
+
+    return updateResult;
+  }
+
+  /**
+   * Gets all students assigned to a specific coach.
+   *
+   * @param coachId - The ID of the coach
+   * @param options - Optional search options
+   * @returns Promise resolving to API response with list of assigned students
+   */
+  async getCoachStudents(
+    coachId: string,
+    options: { searchTerm?: string } = {}
+  ): Promise<ApiResponse<PaginatedResponse<User>>> {
+    logger.info('Getting coach students', 'UserService', { coachId, options });
+
+    const queryOptions: QueryOptions = {
+      where: [
+        { field: 'role', operator: '==', value: 'student' },
+        { field: 'workflowType', operator: '==', value: 'custom' },
+        { field: 'assignedCoachId', operator: '==', value: coachId },
+        { field: 'isActive', operator: '==', value: true },
+      ],
+      orderBy: [{ field: 'displayName', direction: 'asc' }],
+    };
+
+    const result = await this.query<User>(this.USERS_COLLECTION, queryOptions);
+
+    if (!result.success || !result.data) {
+      return result;
+    }
+
+    // Apply search term filter if provided
+    if (options.searchTerm) {
+      const searchTerm = options.searchTerm.toLowerCase();
+      const filteredItems = result.data.items.filter(user =>
+        user.displayName.toLowerCase().includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        (user.studentNumber?.toLowerCase().includes(searchTerm)) ||
+        (user.profile?.firstName?.toLowerCase().includes(searchTerm)) ||
+        (user.profile?.lastName?.toLowerCase().includes(searchTerm))
+      );
+
+      return {
+        success: true,
+        data: {
+          items: filteredItems,
+          total: filteredItems.length,
+          hasMore: false,
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    return result;
+  }
+
+  // Coach Code Methods
+
+  /**
+   * Generates a unique coach code with collision checking.
+   * Retries up to 10 times if a collision occurs.
+   *
+   * @param lastName - The coach's last name (or full display name)
+   * @returns Promise resolving to a unique coach code
+   */
+  async generateUniqueCoachCode(lastName: string): Promise<string> {
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const coachCode = generateCoachCode(lastName);
+
+      // Check if this coach code already exists
+      const existingResult = await this.query<User>(this.USERS_COLLECTION, {
+        where: [{ field: 'coachCode', operator: '==', value: coachCode }],
+        limit: 1,
+      });
+
+      if (existingResult.success && existingResult.data && existingResult.data.items.length === 0) {
+        // Unique coach code found
+        logger.info('Generated unique coach code', 'UserService', { coachCode, attempts: attempts + 1 });
+        return coachCode;
+      }
+
+      attempts++;
+      logger.debug('Coach code collision, regenerating', 'UserService', { coachCode, attempt: attempts });
+    }
+
+    // Fallback: This should be extremely rare given the large ID space
+    throw new Error('Failed to generate unique coach code after maximum attempts');
+  }
+
+  /**
+   * Look up a coach by their code.
+   * Used during student registration to validate and link to a coach.
+   *
+   * @param coachCode - The coach code to search for (case-insensitive)
+   * @returns Promise resolving to the coach User or null if not found
+   */
+  async getCoachByCode(coachCode: string): Promise<ApiResponse<User | null>> {
+    const normalizedCode = normalizeCoachCode(coachCode);
+
+    if (!normalizedCode) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_COACH_CODE',
+          message: 'Coach code is required',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    logger.info('Looking up coach by code', 'UserService', { coachCode: normalizedCode });
+
+    const result = await this.query<User>(this.USERS_COLLECTION, {
+      where: [
+        { field: 'coachCode', operator: '==', value: normalizedCode },
+        { field: 'role', operator: '==', value: 'coach' },
+      ],
+      limit: 1,
+    });
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error,
+        timestamp: new Date(),
+      };
+    }
+
+    const coach = result.data?.items[0] || null;
+
+    if (coach) {
+      logger.info('Coach found by code', 'UserService', {
+        coachCode: normalizedCode,
+        coachId: coach.id,
+        coachName: coach.displayName,
+      });
+    } else {
+      logger.warn('Coach not found by code', 'UserService', { coachCode: normalizedCode });
+    }
+
+    return {
+      success: true,
+      data: coach,
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * Regenerate a coach's code (security feature).
+   * Useful if a coach wants to revoke access for students who have their old code.
+   *
+   * @param coachId - The coach's user ID
+   * @returns Promise resolving to the new coach code
+   */
+  async regenerateCoachCode(coachId: string): Promise<ApiResponse<{ coachCode: string }>> {
+    logger.info('Regenerating coach code', 'UserService', { coachId });
+
+    // Get the coach to verify they exist and have the coach role
+    const coachResult = await this.getUser(coachId);
+    if (!coachResult.success || !coachResult.data) {
+      return {
+        success: false,
+        error: {
+          code: 'COACH_NOT_FOUND',
+          message: 'Coach not found',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    if (coachResult.data.role !== 'coach') {
+      return {
+        success: false,
+        error: {
+          code: 'NOT_A_COACH',
+          message: 'User is not a coach',
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Generate a new unique coach code
+    const newCoachCode = await this.generateUniqueCoachCode(coachResult.data.displayName);
+
+    // Update the coach's document with the new code
+    const updateResult = await this.update<User>(this.USERS_COLLECTION, coachId, {
+      coachCode: newCoachCode,
+    });
+
+    if (!updateResult.success) {
+      return {
+        success: false,
+        error: updateResult.error,
+        timestamp: new Date(),
+      };
+    }
+
+    logger.info('Coach code regenerated successfully', 'UserService', {
+      coachId,
+      newCoachCode,
+    });
+
+    return {
+      success: true,
+      data: { coachCode: newCoachCode },
+      timestamp: new Date(),
+    };
   }
 
   /**

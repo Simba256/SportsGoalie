@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, BookOpen, GraduationCap, TrendingUp } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, TrendingUp, Key, Copy, Check, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/context';
 import { userService, customCurriculumService } from '@/lib/database';
 
@@ -17,12 +18,71 @@ export default function CoachDashboardPage() {
     averageProgress: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [coachCode, setCoachCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       loadStats();
+      loadCoachCode();
     }
   }, [user?.id]);
+
+  const loadCoachCode = async () => {
+    if (!user?.id) return;
+
+    try {
+      const result = await userService.getUser(user.id);
+      if (result.success && result.data) {
+        setCoachCode(result.data.coachCode || null);
+      }
+    } catch (error) {
+      console.error('Failed to load coach code:', error);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!coachCode) return;
+
+    try {
+      await navigator.clipboard.writeText(coachCode);
+      setCopied(true);
+      toast.success('Coach code copied!', {
+        description: 'Share this code with your students.',
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy', {
+        description: 'Please try selecting and copying manually.',
+      });
+    }
+  };
+
+  const handleRegenerateCode = async () => {
+    if (!user?.id || user.role !== 'coach') return;
+
+    setRegenerating(true);
+    try {
+      const result = await userService.regenerateCoachCode(user.id);
+      if (result.success && result.data) {
+        setCoachCode(result.data.coachCode);
+        toast.success('Coach code regenerated!', {
+          description: 'Your new code is ready to share.',
+        });
+      } else {
+        toast.error('Failed to regenerate code', {
+          description: result.error?.message || 'Please try again.',
+        });
+      }
+    } catch (error) {
+      toast.error('Failed to regenerate code', {
+        description: 'An unexpected error occurred.',
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   const loadStats = async () => {
     try {
@@ -78,6 +138,64 @@ export default function CoachDashboardPage() {
           Welcome back, {user?.displayName}! Here's an overview of {user?.role === 'admin' ? 'all custom workflow' : 'your'} students.
         </p>
       </div>
+
+      {/* Coach Code Card (Coaches Only) */}
+      {user?.role === 'coach' && (
+        <Card className="mb-8 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Your Coach Code</CardTitle>
+            </div>
+            <CardDescription>
+              Share this code with students to connect with them
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                {coachCode ? (
+                  <div className="flex items-center gap-3">
+                    <code className="text-2xl font-mono font-bold tracking-wider bg-background px-4 py-2 rounded-md border">
+                      {coachCode}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleCopyCode}
+                      title="Copy coach code"
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRegenerateCode}
+                      disabled={regenerating}
+                      title="Regenerate code (this will invalidate the old code)"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${regenerating ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    No coach code assigned. Contact an administrator.
+                  </p>
+                )}
+              </div>
+            </div>
+            {coachCode && (
+              <p className="text-xs text-muted-foreground mt-3">
+                Students enter this code when registering with &quot;Coach-Guided&quot; learning mode.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">

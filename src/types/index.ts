@@ -19,6 +19,7 @@ export interface User {
   studentNumber?: string; // Random unique ID for students (e.g., "SG-K7M9-P2X4")
   workflowType?: WorkflowType; // Learning workflow: automated (self-paced) or custom (coach-guided)
   assignedCoachId?: string; // Required for custom workflow students
+  coachCode?: string; // Unique code for coaches (LASTNAME-XXXX format)
   profileImage?: string;
   emailVerified: boolean;
   preferences: UserPreferences;

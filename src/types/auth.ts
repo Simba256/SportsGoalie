@@ -21,6 +21,7 @@ export interface RegisterCredentials {
   displayName: string;
   role: 'student' | 'admin' | 'coach' | 'parent';
   workflowType?: 'automated' | 'custom'; // For students: learning workflow type
+  coachCode?: string; // Required for custom workflow students
   firstName?: string;
   lastName?: string;
 }

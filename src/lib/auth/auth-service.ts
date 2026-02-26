@@ -24,6 +24,7 @@ import {
 } from '@/lib/errors/auth-errors';
 import { logAuthError, logInfo, logDebug } from '@/lib/errors/error-logger';
 import { generateStudentId, isValidStudentId } from '@/lib/utils/student-id-generator';
+import { userService } from '@/lib/database/services/user.service';
 
 /**
  * Authentication Service Interface
@@ -81,6 +82,13 @@ export class AuthService implements IAuthService {
         logInfo('Generated student number', { userId: firebaseUser.uid, studentNumber });
       }
 
+      // Generate unique coach code for coaches
+      let coachCode: string | undefined;
+      if (credentials.role === 'coach') {
+        coachCode = await userService.generateUniqueCoachCode(credentials.displayName);
+        logInfo('Generated coach code', { userId: firebaseUser.uid, coachCode });
+      }
+
       // Create user document in Firestore
       const newUser: User = {
         id: firebaseUser.uid,
@@ -90,6 +98,7 @@ export class AuthService implements IAuthService {
         studentNumber,
         workflowType: credentials.role === 'student' ? (credentials.workflowType || 'automated') : undefined,
         assignedCoachId: undefined, // Will be set later when coach is assigned
+        coachCode, // Set for coaches only
         emailVerified: false,
         preferences: {
           notifications: true,

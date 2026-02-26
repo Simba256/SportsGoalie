@@ -34,6 +34,7 @@ export const registerSchema = z
       .max(50, 'Name cannot exceed 50 characters'),
     role: z.enum(['student', 'admin', 'coach', 'parent']).default('student'),
     workflowType: z.enum(['automated', 'custom']).optional().default('automated'),
+    coachCode: z.string().optional(),
     agreeToTerms: z
       .boolean()
       .refine((val) => val === true, 'You must agree to the terms and conditions'),
@@ -41,7 +42,35 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
-  });
+  })
+  .refine(
+    (data) => {
+      // Coach code is required for custom workflow students
+      if (data.role === 'student' && data.workflowType === 'custom') {
+        return !!data.coachCode && data.coachCode.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Coach code is required for coach-guided learning',
+      path: ['coachCode'],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate coach code format if provided
+      if (data.coachCode && data.coachCode.trim().length > 0) {
+        // Format: LASTNAME-XXXX (uppercase letters, hyphen, 4 alphanumeric)
+        const pattern = /^[A-Z]+-[A-Z0-9]{4}$/;
+        return pattern.test(data.coachCode.toUpperCase());
+      }
+      return true;
+    },
+    {
+      message: 'Invalid coach code format. Expected format: LASTNAME-XXXX (e.g., SMITH-7K3M)',
+      path: ['coachCode'],
+    }
+  );
 
 export const passwordResetSchema = z.object({
   email: z
