@@ -140,6 +140,14 @@ export class AuthService implements IAuthService {
         );
 
         // Debug: Log the data being written and auth state
+        // eslint-disable-next-line no-console
+        console.log('🔍 Auth state before Firestore write:', {
+          currentUserUid: auth.currentUser?.uid,
+          firebaseUserUid: firebaseUser.uid,
+          isAuthenticated: !!auth.currentUser,
+          emailVerified: auth.currentUser?.emailVerified,
+        });
+
         logDebug('Creating user document', {
           uid: firebaseUser.uid,
           dataFields: Object.keys(cleanedUserData),
