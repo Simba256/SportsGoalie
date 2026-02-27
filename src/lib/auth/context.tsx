@@ -132,18 +132,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Create the document without undefined fields
       // Don't include 'id' in the document data - it's already the document ID
       const { id, ...userDataWithoutId } = newUser;
-      const docData = {
-        ...userDataWithoutId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
 
       // Remove any undefined fields before saving to Firestore
-      Object.keys(docData).forEach(key => {
-        if (docData[key as keyof typeof docData] === undefined) {
-          delete docData[key as keyof typeof docData];
-        }
-      });
+      const docData = Object.fromEntries(
+        Object.entries({
+          ...userDataWithoutId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }).filter(([_, value]) => value !== undefined)
+      );
 
       await setDoc(userDocRef, docData);
 
@@ -286,18 +283,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Create the document without undefined fields
       // Don't include 'id' in the document data - it's already the document ID
       const { id, ...userDataWithoutId } = newUser;
-      const docData = {
-        ...userDataWithoutId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
 
       // Remove any undefined fields before saving to Firestore
-      Object.keys(docData).forEach(key => {
-        if (docData[key as keyof typeof docData] === undefined) {
-          delete docData[key as keyof typeof docData];
-        }
-      });
+      const docData = Object.fromEntries(
+        Object.entries({
+          ...userDataWithoutId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }).filter(([_, value]) => value !== undefined)
+      );
 
       console.log('🔍 Creating Firestore document with data:', {
         ...docData,

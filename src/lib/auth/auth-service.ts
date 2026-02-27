@@ -129,7 +129,12 @@ export class AuthService implements IAuthService {
           userData.coachCode = coachCode;
         }
 
-        await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+        // Remove any undefined values (Firestore doesn't accept undefined)
+        const cleanedUserData = Object.fromEntries(
+          Object.entries(userData).filter(([_, value]) => value !== undefined)
+        );
+
+        await setDoc(doc(db, 'users', firebaseUser.uid), cleanedUserData);
 
         // Create newUser object for return value
         const newUser: User = {
