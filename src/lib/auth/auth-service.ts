@@ -55,96 +55,121 @@ export class AuthService implements IAuthService {
 
   /**
    * Register a new user
+   * Uses a two-phase approach with rollback if Firestore operations fail
    */
   public async register(credentials: RegisterCredentials): Promise<User> {
     const context = createErrorContext('register', { email: credentials.email });
+    let firebaseUser: import('firebase/auth').User | null = null;
 
     try {
       logDebug('Starting user registration', { email: credentials.email });
 
-      // Create Firebase user
+      // Phase 1: Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         credentials.email,
         credentials.password
       );
 
-      const firebaseUser = userCredential.user;
+      firebaseUser = userCredential.user;
 
-      // Send email verification
-      await sendEmailVerification(firebaseUser);
-      logInfo('Email verification sent', { userId: firebaseUser.uid });
+      // Phase 2: Create Firestore document and related data
+      // If this fails, we'll clean up the Auth user in the catch block
+      try {
+        // Send email verification
+        await sendEmailVerification(firebaseUser);
+        logInfo('Email verification sent', { userId: firebaseUser.uid });
 
-      // Generate unique student number for students
-      let studentNumber: string | undefined;
-      if (credentials.role === 'student') {
-        studentNumber = await this.generateUniqueStudentNumber();
-        logInfo('Generated student number', { userId: firebaseUser.uid, studentNumber });
-      }
+        // Generate unique student number for students
+        let studentNumber: string | undefined;
+        if (credentials.role === 'student') {
+          studentNumber = await this.generateUniqueStudentNumber();
+          logInfo('Generated student number', { userId: firebaseUser.uid, studentNumber });
+        }
 
-      // Generate unique coach code for coaches
-      let coachCode: string | undefined;
-      if (credentials.role === 'coach') {
-        coachCode = await userService.generateUniqueCoachCode(credentials.displayName);
-        logInfo('Generated coach code', { userId: firebaseUser.uid, coachCode });
-      }
+        // Generate unique coach code for coaches
+        let coachCode: string | undefined;
+        if (credentials.role === 'coach') {
+          coachCode = await userService.generateUniqueCoachCode(credentials.displayName);
+          logInfo('Generated coach code', { userId: firebaseUser.uid, coachCode });
+        }
 
-      // Create user document in Firestore
-      // Build document data, excluding undefined values (Firestore doesn't accept undefined)
-      const userData: Record<string, unknown> = {
-        email: firebaseUser.email!,
-        displayName: credentials.displayName,
-        role: credentials.role,
-        emailVerified: false,
-        preferences: {
-          notifications: true,
-          theme: 'light',
-          language: 'en',
-          timezone: 'UTC',
-          emailNotifications: {
-            progress: true,
-            quizResults: true,
-            newContent: true,
-            reminders: true,
+        // Create user document in Firestore
+        // Build document data, excluding undefined values (Firestore doesn't accept undefined)
+        const userData: Record<string, unknown> = {
+          email: firebaseUser.email!,
+          displayName: credentials.displayName,
+          role: credentials.role,
+          emailVerified: false,
+          preferences: {
+            notifications: true,
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            emailNotifications: {
+              progress: true,
+              quizResults: true,
+              newContent: true,
+              reminders: true,
+            },
           },
-        },
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      // Add optional fields only if they have values
-      if (studentNumber) {
-        userData.studentNumber = studentNumber;
+        // Add optional fields only if they have values
+        if (studentNumber) {
+          userData.studentNumber = studentNumber;
+        }
+        if (credentials.role === 'student') {
+          userData.workflowType = credentials.workflowType || 'automated';
+        }
+        if (coachCode) {
+          userData.coachCode = coachCode;
+        }
+
+        await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+
+        // Create newUser object for return value
+        const newUser: User = {
+          id: firebaseUser.uid,
+          ...userData,
+        } as User;
+
+        logInfo('User profile created successfully', { userId: firebaseUser.uid });
+
+        // Register coach code in the coach_codes collection (for public lookup)
+        if (credentials.role === 'coach' && coachCode) {
+          await userService.registerCoachCode(coachCode, firebaseUser.uid, credentials.displayName);
+          logInfo('Coach code registered', { userId: firebaseUser.uid, coachCode });
+        }
+
+        // Sign out the user immediately - they need to verify email first
+        await firebaseSignOut(auth);
+        logDebug('User signed out after registration for email verification');
+
+        return newUser;
+      } catch (firestoreError) {
+        // Firestore operations failed - rollback by deleting the Auth user
+        logAuthError(createAuthErrorFromFirebase(firestoreError, context));
+        logInfo('Rolling back: deleting Firebase Auth user due to Firestore error', {
+          userId: firebaseUser.uid,
+        });
+
+        try {
+          await firebaseUser.delete();
+          logInfo('Rollback successful: Firebase Auth user deleted', { userId: firebaseUser.uid });
+        } catch (deleteError) {
+          // If we can't delete, log it but still throw the original error
+          logAuthError(createAuthErrorFromFirebase(deleteError, {
+            ...context,
+            operation: 'rollback-delete-user',
+          }));
+        }
+
+        throw firestoreError;
       }
-      if (credentials.role === 'student') {
-        userData.workflowType = credentials.workflowType || 'automated';
-      }
-      if (coachCode) {
-        userData.coachCode = coachCode;
-      }
-
-      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-
-      // Create newUser object for return value
-      const newUser: User = {
-        id: firebaseUser.uid,
-        ...userData,
-      } as User;
-
-      logInfo('User profile created successfully', { userId: firebaseUser.uid });
-
-      // Register coach code in the coach_codes collection (for public lookup)
-      if (credentials.role === 'coach' && coachCode) {
-        await userService.registerCoachCode(coachCode, firebaseUser.uid, credentials.displayName);
-        logInfo('Coach code registered', { userId: firebaseUser.uid, coachCode });
-      }
-
-      // Sign out the user immediately - they need to verify email first
-      await firebaseSignOut(auth);
-      logDebug('User signed out after registration for email verification');
-
-      return newUser;
     } catch (error) {
       const authError = createAuthErrorFromFirebase(error, context);
       logAuthError(authError);
