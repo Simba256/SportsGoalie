@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CoachInvitation } from '@/types/auth';
 import { coachInvitationService } from '@/lib/services/coach-invitation.service';
-import { authService } from '@/lib/auth/auth-service';
+import { useAuth } from '@/lib/auth/context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ function AcceptInviteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const { register } = useAuth();
 
   const [validating, setValidating] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -112,18 +113,16 @@ function AcceptInviteContent() {
     try {
       setSubmitting(true);
 
-      // Register the coach
-      const user = await authService.register({
+      // Register the coach using the auth context (same code path as student registration)
+      const { userId } = await register({
         email: invitation.email,
         password: formData.password,
         displayName: formData.displayName.trim(),
         role: 'coach',
-        firstName: formData.firstName || undefined,
-        lastName: formData.lastName || undefined,
       });
 
       // Mark invitation as accepted
-      await coachInvitationService.acceptInvitation(invitation.id, user.id);
+      await coachInvitationService.acceptInvitation(invitation.id, userId);
 
       toast.success('Coach account created successfully!', {
         description: 'Please verify your email to complete the registration.',

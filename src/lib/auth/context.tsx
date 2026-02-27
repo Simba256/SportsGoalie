@@ -28,7 +28,7 @@ import { isRegistrationInProgress } from '@/lib/auth/auth-service';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (credentials: RegisterCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<{ userId: string }>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: ProfileUpdateData) => Promise<void>;
@@ -309,6 +309,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await firebaseSignOut(auth);
       setUser(null);
       setLoading(false); // Reset loading state after successful registration
+
+      // Return the user ID for flows that need it (e.g., coach invitation acceptance)
+      return { userId: newUser.id };
     } catch (error: unknown) {
       setLoading(false);
 
