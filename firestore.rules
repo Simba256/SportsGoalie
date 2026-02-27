@@ -89,16 +89,12 @@ service cloud.firestore {
       allow read: if isOwnerOrAdmin(userId);
 
       // Users can create their own profile during registration
-      // Allow creation with unverified email during registration
       allow create: if isAuthenticated() &&
                        getUserId() == userId &&
                        request.resource.data.email is string &&
-                       request.resource.data.email.size() > 0 &&
                        request.resource.data.displayName is string &&
-                       request.resource.data.displayName.size() > 0 &&
                        request.resource.data.role is string &&
-                       isValidRole(request.resource.data.role) &&
-                       request.resource.data.emailVerified is bool;
+                       isValidRole(request.resource.data.role);
 
       // Users can update their own profile (except role and email), admins can update any
       allow update: if (isOwner(userId) &&
