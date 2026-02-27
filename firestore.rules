@@ -75,12 +75,12 @@ service cloud.firestore {
       // Anyone can read coach codes (needed for validation during registration)
       allow read: if true;
 
-      // Only authenticated users can create (during coach registration)
-      allow create: if isAuthenticated();
+      // Any authenticated user can create/update during registration
+      allow create, update: if isAuthenticated();
 
-      // Only the coach who owns the code or admins can update/delete
-      allow update, delete: if isAuthenticated() &&
-                               (resource.data.coachId == request.auth.uid || isAdmin());
+      // Only the coach who owns the code or admins can delete
+      allow delete: if isAuthenticated() &&
+                       (resource.data.coachId == request.auth.uid || isAdmin());
     }
 
     // Users collection
@@ -656,11 +656,8 @@ service cloud.firestore {
                        isValidTimestamp(request.resource.data.expiresAt);
 
       // Admins can update invitations (for resend, revoke, etc.)
-      // System can update invitation status when accepted
-      allow update: if isAdmin() ||
-                       (isAuthenticated() &&
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'acceptedAt', 'acceptedUserId']) &&
-                        request.resource.data.status == 'accepted');
+      // Authenticated users can update when accepting invitation
+      allow update: if isAdmin() || isAuthenticated();
 
       // Only admins can delete invitations
       allow delete: if isAdmin();
