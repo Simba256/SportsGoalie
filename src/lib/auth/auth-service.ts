@@ -27,6 +27,14 @@ import { generateStudentId, isValidStudentId } from '@/lib/utils/student-id-gene
 import { userService } from '@/lib/database/services/user.service';
 
 /**
+ * Global flag to prevent auth state listener from signing out during registration.
+ * This is needed because the onAuthStateChanged listener in context.tsx
+ * automatically signs out unverified users, but we need the user to stay
+ * signed in briefly to create their Firestore document.
+ */
+export let isRegistrationInProgress = false;
+
+/**
  * Authentication Service Interface
  */
 export interface IAuthService {
@@ -60,6 +68,9 @@ export class AuthService implements IAuthService {
   public async register(credentials: RegisterCredentials): Promise<User> {
     const context = createErrorContext('register', { email: credentials.email });
     let firebaseUser: import('firebase/auth').User | null = null;
+
+    // Set flag to prevent onAuthStateChanged from signing out unverified user
+    isRegistrationInProgress = true;
 
     try {
       logDebug('Starting user registration', { email: credentials.email });
@@ -226,6 +237,9 @@ export class AuthService implements IAuthService {
       const authError = createAuthErrorFromFirebase(error, context);
       logAuthError(authError);
       throw authError;
+    } finally {
+      // Always reset the flag when registration completes (success or failure)
+      isRegistrationInProgress = false;
     }
   }
 

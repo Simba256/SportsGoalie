@@ -24,6 +24,7 @@ import {
 } from '@/lib/errors/auth-errors';
 import { userService } from '@/lib/database/services/user.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
+import { isRegistrationInProgress } from '@/lib/auth/auth-service';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -412,7 +413,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (firebaseUser) {
         // Check if email is verified before setting user
         // Skip this check if we're currently registering a new user
-        if (!firebaseUser.emailVerified && !isRegisteringRef.current) {
+        // Check both the context's ref AND the auth-service's flag
+        if (!firebaseUser.emailVerified && !isRegisteringRef.current && !isRegistrationInProgress) {
           // Email not verified, sign out immediately
           await firebaseSignOut(auth);
           setUser(null);
