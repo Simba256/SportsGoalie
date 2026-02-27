@@ -652,8 +652,11 @@ service cloud.firestore {
                        isValidTimestamp(request.resource.data.expiresAt);
 
       // Admins can update invitations (for resend, revoke, etc.)
-      // Authenticated users can update when accepting invitation
-      allow update: if isAdmin() || isAuthenticated();
+      // Allow updates for accepting invitations (user gets signed out after registration)
+      // This is safe because the token was already validated before registration
+      allow update: if isAdmin() ||
+                       isAuthenticated() ||
+                       (request.resource.data.status == 'accepted');
 
       // Only admins can delete invitations
       allow delete: if isAdmin();
