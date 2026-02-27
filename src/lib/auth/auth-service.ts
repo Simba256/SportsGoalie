@@ -73,6 +73,11 @@ export class AuthService implements IAuthService {
 
       firebaseUser = userCredential.user;
 
+      // Ensure auth token is ready for Firestore operations
+      // This forces a token refresh which helps with timing issues
+      await firebaseUser.getIdToken(true);
+      logDebug('Auth token refreshed', { userId: firebaseUser.uid });
+
       // Phase 2: Create Firestore document and related data
       // If this fails, we'll clean up the Auth user in the catch block
       try {
@@ -134,7 +139,30 @@ export class AuthService implements IAuthService {
           Object.entries(userData).filter(([_, value]) => value !== undefined)
         );
 
-        await setDoc(doc(db, 'users', firebaseUser.uid), cleanedUserData);
+        // Debug: Log the data being written and auth state
+        logDebug('Creating user document', {
+          uid: firebaseUser.uid,
+          dataFields: Object.keys(cleanedUserData),
+          role: cleanedUserData.role,
+        });
+
+        try {
+          await setDoc(doc(db, 'users', firebaseUser.uid), cleanedUserData);
+          logInfo('User document created successfully', { userId: firebaseUser.uid });
+        } catch (userDocError: unknown) {
+          const errorMessage = userDocError instanceof Error ? userDocError.message : 'Unknown error';
+          logAuthError(createAuthErrorFromFirebase(userDocError, {
+            ...context,
+            operation: 'create-user-document',
+          }));
+          // eslint-disable-next-line no-console
+          console.error('Failed to create user document:', {
+            uid: firebaseUser.uid,
+            errorMessage,
+            dataKeys: Object.keys(cleanedUserData),
+          });
+          throw userDocError;
+        }
 
         // Create newUser object for return value
         const newUser: User = {
@@ -142,13 +170,24 @@ export class AuthService implements IAuthService {
           ...userData,
         } as User;
 
-        logInfo('User profile created successfully', { userId: firebaseUser.uid });
-
         // Register coach code in the coach_codes collection (for public lookup)
         if (credentials.role === 'coach' && coachCode) {
-          await userService.registerCoachCode(coachCode, firebaseUser.uid, credentials.displayName);
-          logInfo('Coach code registered', { userId: firebaseUser.uid, coachCode });
+          try {
+            await userService.registerCoachCode(coachCode, firebaseUser.uid, credentials.displayName);
+            logInfo('Coach code registered', { userId: firebaseUser.uid, coachCode });
+          } catch (coachCodeError: unknown) {
+            const errorMessage = coachCodeError instanceof Error ? coachCodeError.message : 'Unknown error';
+            // eslint-disable-next-line no-console
+            console.error('Failed to register coach code:', {
+              coachCode,
+              uid: firebaseUser.uid,
+              errorMessage,
+            });
+            throw coachCodeError;
+          }
         }
+
+        logInfo('User profile created successfully', { userId: firebaseUser.uid });
 
         // Sign out the user immediately - they need to verify email first
         await firebaseSignOut(auth);
