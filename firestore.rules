@@ -69,6 +69,20 @@ service cloud.firestore {
       return type == 'instruction' || type == 'feedback' || type == 'general' || type == 'video_review';
     }
 
+    // Coach codes collection - maps coachCode to coachId
+    // Publicly readable for coach code validation during student registration
+    match /coach_codes/{codeId} {
+      // Anyone can read coach codes (needed for validation during registration)
+      allow read: if true;
+
+      // Only authenticated users can create (during coach registration)
+      allow create: if isAuthenticated();
+
+      // Only the coach who owns the code or admins can update/delete
+      allow update, delete: if isAuthenticated() &&
+                               (resource.data.coachId == request.auth.uid || isAdmin());
+    }
+
     // Users collection
     match /users/{userId} {
       // Users can read their own profile, admins can read all

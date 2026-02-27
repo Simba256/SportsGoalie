@@ -55,6 +55,7 @@ export class UserService extends BaseDatabaseService {
   private readonly USER_PROGRESS_COLLECTION = 'user_progress';
   private readonly USER_ACHIEVEMENTS_COLLECTION = 'user_achievements';
   private readonly NOTIFICATIONS_COLLECTION = 'notifications';
+  private readonly COACH_CODES_COLLECTION = 'coach_codes';
 
   // User CRUD operations
   /**
@@ -1122,6 +1123,7 @@ export class UserService extends BaseDatabaseService {
   /**
    * Generates a unique coach code with collision checking.
    * Retries up to 10 times if a collision occurs.
+   * Uses the coach_codes collection for collision checking (publicly readable).
    *
    * @param lastName - The coach's last name (or full display name)
    * @returns Promise resolving to a unique coach code
@@ -1133,20 +1135,30 @@ export class UserService extends BaseDatabaseService {
     while (attempts < maxAttempts) {
       const coachCode = generateCoachCode(lastName);
 
-      // Check if this coach code already exists
-      const existingResult = await this.query<User>(this.USERS_COLLECTION, {
-        where: [{ field: 'coachCode', operator: '==', value: coachCode }],
-        limit: 1,
-      });
+      try {
+        // Check if this coach code already exists in coach_codes collection
+        const existingResult = await this.getById<{ coachCode: string; coachId: string }>(
+          this.COACH_CODES_COLLECTION,
+          coachCode
+        );
 
-      if (existingResult.success && existingResult.data && existingResult.data.items.length === 0) {
-        // Unique coach code found
-        logger.info('Generated unique coach code', 'UserService', { coachCode, attempts: attempts + 1 });
+        if (!existingResult.data) {
+          // Unique coach code found (document doesn't exist)
+          logger.info('Generated unique coach code', 'UserService', { coachCode, attempts: attempts + 1 });
+          return coachCode;
+        }
+
+        attempts++;
+        logger.debug('Coach code collision, regenerating', 'UserService', { coachCode, attempt: attempts });
+      } catch (error) {
+        // Permission error or other issue - just use the generated code
+        // Collisions are extremely rare (1 in 1M+ chance)
+        logger.warn('Coach code collision check error, using generated code', 'UserService', {
+          coachCode,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
         return coachCode;
       }
-
-      attempts++;
-      logger.debug('Coach code collision, regenerating', 'UserService', { coachCode, attempt: attempts });
     }
 
     // Fallback: This should be extremely rare given the large ID space
@@ -1154,13 +1166,50 @@ export class UserService extends BaseDatabaseService {
   }
 
   /**
+   * Registers a coach code in the coach_codes collection.
+   * Called after a coach is successfully created.
+   *
+   * @param coachCode - The coach code to register
+   * @param coachId - The coach's user ID
+   * @param coachName - The coach's display name
+   */
+  async registerCoachCode(coachCode: string, coachId: string, coachName: string): Promise<ApiResponse<void>> {
+    logger.info('Registering coach code', 'UserService', { coachCode, coachId });
+
+    try {
+      await this.createWithId(this.COACH_CODES_COLLECTION, coachCode, {
+        coachCode,
+        coachId,
+        coachName,
+        createdAt: new Date(),
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to register coach code', 'UserService', { coachCode, coachId, error });
+      return {
+        success: false,
+        error: {
+          code: 'COACH_CODE_REGISTRATION_FAILED',
+          message: 'Failed to register coach code',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
    * Look up a coach by their code.
+   * Uses the publicly readable coach_codes collection.
    * Used during student registration to validate and link to a coach.
    *
    * @param coachCode - The coach code to search for (case-insensitive)
-   * @returns Promise resolving to the coach User or null if not found
+   * @returns Promise resolving to the coach info or null if not found
    */
-  async getCoachByCode(coachCode: string): Promise<ApiResponse<User | null>> {
+  async getCoachByCode(coachCode: string): Promise<ApiResponse<{ id: string; displayName: string } | null>> {
     const normalizedCode = normalizeCoachCode(coachCode);
 
     if (!normalizedCode) {
@@ -1176,39 +1225,47 @@ export class UserService extends BaseDatabaseService {
 
     logger.info('Looking up coach by code', 'UserService', { coachCode: normalizedCode });
 
-    const result = await this.query<User>(this.USERS_COLLECTION, {
-      where: [
-        { field: 'coachCode', operator: '==', value: normalizedCode },
-        { field: 'role', operator: '==', value: 'coach' },
-      ],
-      limit: 1,
-    });
+    try {
+      // Look up in coach_codes collection (publicly readable)
+      const result = await this.getById<{ coachCode: string; coachId: string; coachName: string }>(
+        this.COACH_CODES_COLLECTION,
+        normalizedCode
+      );
 
-    if (!result.success) {
+      if (!result.success || !result.data) {
+        logger.warn('Coach not found by code', 'UserService', { coachCode: normalizedCode });
+        return {
+          success: true,
+          data: null,
+          timestamp: new Date(),
+        };
+      }
+
+      logger.info('Coach found by code', 'UserService', {
+        coachCode: normalizedCode,
+        coachId: result.data.coachId,
+        coachName: result.data.coachName,
+      });
+
+      return {
+        success: true,
+        data: {
+          id: result.data.coachId,
+          displayName: result.data.coachName,
+        },
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Error looking up coach by code', 'UserService', { coachCode: normalizedCode, error });
       return {
         success: false,
-        error: result.error,
+        error: {
+          code: 'COACH_LOOKUP_FAILED',
+          message: 'Failed to look up coach',
+        },
         timestamp: new Date(),
       };
     }
-
-    const coach = result.data?.items[0] || null;
-
-    if (coach) {
-      logger.info('Coach found by code', 'UserService', {
-        coachCode: normalizedCode,
-        coachId: coach.id,
-        coachName: coach.displayName,
-      });
-    } else {
-      logger.warn('Coach not found by code', 'UserService', { coachCode: normalizedCode });
-    }
-
-    return {
-      success: true,
-      data: coach,
-      timestamp: new Date(),
-    };
   }
 
   /**

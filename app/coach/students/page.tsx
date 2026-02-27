@@ -5,12 +5,23 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, BookOpen, GraduationCap } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, Users, BookOpen, GraduationCap, UserPlus, UserMinus } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { userService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { User } from '@/types';
 import { toast } from 'sonner';
+import { StudentSearchDialog } from '@/components/coach/student-search-dialog';
 
 interface StudentWithCurriculum {
   student: User;
@@ -26,6 +37,10 @@ export default function CoachStudentsPage() {
   const { user } = useAuth();
   const [students, setStudents] = useState<StudentWithCurriculum[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [studentToRemove, setStudentToRemove] = useState<User | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -90,6 +105,34 @@ export default function CoachStudentsPage() {
     }
   };
 
+  const handleRemoveStudent = async () => {
+    if (!studentToRemove || !user?.id) return;
+
+    try {
+      setRemoving(true);
+      const result = await userService.removeStudentFromCoach(studentToRemove.id, user.id);
+
+      if (result.success) {
+        toast.success(`${studentToRemove.displayName} removed from your roster`);
+        loadStudents();
+      } else {
+        toast.error(result.error?.message || 'Failed to remove student');
+      }
+    } catch (error) {
+      console.error('Failed to remove student:', error);
+      toast.error('Failed to remove student from roster');
+    } finally {
+      setRemoving(false);
+      setRemoveDialogOpen(false);
+      setStudentToRemove(null);
+    }
+  };
+
+  const openRemoveDialog = (student: User) => {
+    setStudentToRemove(student);
+    setRemoveDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -100,15 +143,23 @@ export default function CoachStudentsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {user?.role === 'admin' ? 'All Custom Workflow Students' : 'My Students'}
-        </h1>
-        <p className="text-muted-foreground">
-          {user?.role === 'admin'
-            ? 'Manage curriculum and track progress for all custom workflow students'
-            : 'Manage curriculum and track progress for your custom workflow students'}
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">
+            {user?.role === 'admin' ? 'All Custom Workflow Students' : 'My Students'}
+          </h1>
+          <p className="text-muted-foreground">
+            {user?.role === 'admin'
+              ? 'Manage curriculum and track progress for all custom workflow students'
+              : 'Manage curriculum and track progress for your custom workflow students'}
+          </p>
+        </div>
+        {user?.role === 'coach' && (
+          <Button onClick={() => setSearchDialogOpen(true)} className="shrink-0">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Student
+          </Button>
+        )}
       </div>
 
       {students.length === 0 ? (
@@ -133,10 +184,23 @@ export default function CoachStudentsPage() {
                       {student.email}
                     </CardDescription>
                   </div>
-                  <Badge variant="secondary" className="ml-2">
-                    <GraduationCap className="h-3 w-3 mr-1" />
-                    Student
-                  </Badge>
+                  <div className="flex items-center gap-2 ml-2">
+                    <Badge variant="secondary">
+                      <GraduationCap className="h-3 w-3 mr-1" />
+                      Student
+                    </Badge>
+                    {user?.role === 'coach' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => openRemoveDialog(student)}
+                        title="Remove from roster"
+                      >
+                        <UserMinus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {student.studentNumber && (
                   <p className="text-sm text-muted-foreground mt-2">
@@ -180,6 +244,47 @@ export default function CoachStudentsPage() {
           ))}
         </div>
       )}
+
+      {/* Add Student Dialog */}
+      {user?.id && (
+        <StudentSearchDialog
+          open={searchDialogOpen}
+          onOpenChange={setSearchDialogOpen}
+          coachId={user.id}
+          onStudentAdded={loadStudents}
+        />
+      )}
+
+      {/* Remove Student Confirmation Dialog */}
+      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Student from Roster</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove{' '}
+              <span className="font-semibold">{studentToRemove?.displayName}</span>{' '}
+              from your roster? They will no longer appear in your student list, but their curriculum progress will be preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveStudent}
+              disabled={removing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                'Remove Student'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

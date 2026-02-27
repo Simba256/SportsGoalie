@@ -9,17 +9,16 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 60% (Phase 1 Complete, Phase 2.0.6 Content Browser Complete, Session Tracking Added)
+**Overall Progress:** 70% (Phase 1 Complete, Phase 2.0.3 Coach-Student Linking Complete, Dashboard Separation Complete)
 
 ---
 
 ## 🎯 Current Sprint Goals
 
 ### Active Tasks
-- [ ] Build coach-student relationship management (Phase 2.0.3)
 - [ ] Implement parent-child relationships with student ID linking (Phase 2.0.4)
 - [ ] Role-based route protection (Phase 2.0.5)
-- [ ] Student onboarding & initial evaluation
+- [ ] Student onboarding & initial evaluation (Phase 2.0.7)
 - [ ] Convert to 6-pillar ice hockey goalie structure (Phase 2.1)
 
 ### Completed This Sprint
@@ -32,12 +31,18 @@
 - [x] **Phase 2.0.2: Coach invitation system with email infrastructure** (2026-02-22)
 - [x] **Phase 2.0.6: Student workflow types & coach curriculum builder MVP** (2026-02-24)
 - [x] **Session Tracking Dashboard** (2026-02-25)
+- [x] **Phase 2.0.3: Coach-student direct linking** (2026-02-26)
+- [x] **Dashboard separation for custom vs automated students** (2026-02-26)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-02-26 - [Coach-Student Linking & Dashboard Separation](docs/sessions/2026-02/2026-02-26-coach-student-linking-dashboard-separation.md)
+**Time:** 1h 15min | **Focus:** Feature - Coach-Student Direct Linking & Dashboard Differentiation
+Implemented Phase 2.0.3 coach-student direct linking with 4 new UserService methods, StudentSearchDialog component, and add/remove functionality on coach students page. Created CustomCurriculumDashboard component for custom workflow students. Dashboard now shows different experience based on student workflowType.
 
 ### 2026-02-25 - [Session Tracking Dashboard](docs/sessions/2026-02/2026-02-25-session-tracking-dashboard.md)
 **Time:** 1h 45min | **Focus:** Feature - Development Progress Dashboard
@@ -91,24 +96,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 20.75 hours | 🔄 In Progress |
-| **Total** | **~180.75 hours** | - |
+| Phase 2 | 22 hours | 🔄 In Progress |
+| **Total** | **~182 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 17.75h | 86% |
+| Development | 19h | 86% |
 | Documentation | 1.75h | 8% |
 | Debugging | 1.0h | 5% |
 | Version Control | 0.25h | 1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **20.75h** | **100%** |
+| **Total** | **22h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 20.75h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking | 11 |
+| 2026-02-17 | 22h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation | 12 |
 
 ---
 
@@ -116,11 +121,11 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (60% Complete)
+#### 2.0 - Multi-Role Foundation (70% Complete)
 - [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
 - [x] 2.0.1b: Student ID system & registration security - COMPLETE
 - [x] 2.0.2: Coach invitation system with email infrastructure - COMPLETE
-- [ ] 2.0.3: Coach-student relationships
+- [x] 2.0.3: Coach-student relationships & dashboard separation - COMPLETE
 - [ ] 2.0.4: Parent-child relationships with student ID linking
 - [ ] 2.0.5: Role-based route protection
 - [x] 2.0.6: Student workflow types & custom curriculum system (MVP) - COMPLETE
@@ -289,6 +294,19 @@ Initial project analysis and progress tracking system implementation.
 
 ## 🔄 Recent Changes (Last 30 Days)
 
+### 2026-02-26 (Session: Coach-Student Linking & Dashboard Separation)
+- **Feature:** Phase 2.0.3 Coach-student direct linking complete
+- **Feature:** Added 4 new UserService methods for coach-student management
+- **Feature:** Created StudentSearchDialog component for searching unassigned students
+- **Feature:** Coaches can add students to roster via search dialog
+- **Feature:** Coaches can remove students from roster with confirmation
+- **Feature:** Created CustomCurriculumDashboard for custom workflow students
+- **Feature:** Dashboard now differentiates between custom and automated students
+- **UI:** Custom students see coach info, curriculum items, and progress
+- **UI:** Automated students see self-paced browsing experience
+- **Backend:** Validation for workflow type and coach assignment
+- **Build:** Verified successful build with all new components
+
 ### 2026-02-25 (Session: Session Tracking Dashboard)
 - **Feature:** Added development progress dashboard to Project Assistant page
 - **Feature:** Created SessionStatsPanel component with phase progress bar
@@ -431,11 +449,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-02-25
-**Last Session:** [Session Tracking Dashboard](docs/sessions/2026-02/2026-02-25-session-tracking-dashboard.md)
-**Total Sessions This Phase:** 11
-**Current Phase Hours:** 20.75h
-**Next Session Focus:** Continue Phase 2 development - coach-student relationships, parent linking, or 6-pillar conversion
+**Last Updated:** 2026-02-26
+**Last Session:** [Coach-Student Linking & Dashboard Separation](docs/sessions/2026-02/2026-02-26-coach-student-linking-dashboard-separation.md)
+**Total Sessions This Phase:** 12
+**Current Phase Hours:** 22h
+**Next Session Focus:** Phase 2.0.4 parent-child linking, Phase 2.0.5 role-based route protection, or Phase 2.1 6-pillar conversion
 
 ---
 

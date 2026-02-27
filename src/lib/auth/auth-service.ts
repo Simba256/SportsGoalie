@@ -126,6 +126,12 @@ export class AuthService implements IAuthService {
 
       logInfo('User profile created successfully', { userId: firebaseUser.uid });
 
+      // Register coach code in the coach_codes collection (for public lookup)
+      if (credentials.role === 'coach' && coachCode) {
+        await userService.registerCoachCode(coachCode, firebaseUser.uid, credentials.displayName);
+        logInfo('Coach code registered', { userId: firebaseUser.uid, coachCode });
+      }
+
       // Sign out the user immediately - they need to verify email first
       await firebaseSignOut(auth);
       logDebug('User signed out after registration for email verification');

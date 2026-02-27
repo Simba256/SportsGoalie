@@ -32,6 +32,7 @@ import { useProgress } from '@/hooks/useProgress';
 import { useEnrollment } from '@/src/hooks/useEnrollment';
 import { StatsCards } from '@/components/analytics/StatsCards';
 import { VideoUpload } from '@/src/components/dashboard/VideoUpload';
+import { CustomCurriculumDashboard } from '@/src/components/dashboard/CustomCurriculumDashboard';
 
 export default function DashboardPage() {
   return (
@@ -49,6 +50,14 @@ function DashboardContent() {
     loading: enrollmentsLoading,
     error: enrollmentsError,
   } = useEnrollment();
+
+  // Check if user is a custom workflow student
+  const isCustomWorkflow = user?.role === 'student' && user?.workflowType === 'custom';
+
+  // Show custom curriculum dashboard for custom workflow students
+  if (isCustomWorkflow && user) {
+    return <CustomCurriculumDashboard user={user} />;
+  }
 
   if (loading || enrollmentsLoading) {
     return (
