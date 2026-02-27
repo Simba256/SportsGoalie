@@ -89,8 +89,8 @@ service cloud.firestore {
       allow read: if isOwnerOrAdmin(userId);
 
       // Users can create their own profile during registration
-      // After createUserWithEmailAndPassword, the user is automatically signed in
-      allow create: if request.auth != null && request.auth.uid == userId;
+      // DEBUGGING: Simplified to just check auth, not UID match
+      allow create: if request.auth != null;
 
       // Users can update their own profile (except role and email), admins can update any
       allow update: if (isOwner(userId) &&

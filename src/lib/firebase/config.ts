@@ -9,7 +9,7 @@ if (typeof window !== 'undefined') {
   console.log('🔍 Firebase Env Check:', {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? '✅ Set' : '❌ Missing',
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? '✅ Set' : '❌ Missing',
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? '✅ Set' : '❌ Missing',
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '❌ Missing', // Show actual project ID
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ? '✅ Set' : '❌ Missing',
   });
 }
