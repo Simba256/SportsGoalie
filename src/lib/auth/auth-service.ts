@@ -90,15 +90,11 @@ export class AuthService implements IAuthService {
       }
 
       // Create user document in Firestore
-      const newUser: User = {
-        id: firebaseUser.uid,
+      // Build document data, excluding undefined values (Firestore doesn't accept undefined)
+      const userData: Record<string, unknown> = {
         email: firebaseUser.email!,
         displayName: credentials.displayName,
         role: credentials.role,
-        studentNumber,
-        workflowType: credentials.role === 'student' ? (credentials.workflowType || 'automated') : undefined,
-        assignedCoachId: undefined, // Will be set later when coach is assigned
-        coachCode, // Set for coaches only
         emailVerified: false,
         preferences: {
           notifications: true,
@@ -115,14 +111,26 @@ export class AuthService implements IAuthService {
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        lastLoginAt: undefined,
       };
 
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
-        ...newUser,
-        createdAt: newUser.createdAt,
-        updatedAt: newUser.updatedAt,
-      });
+      // Add optional fields only if they have values
+      if (studentNumber) {
+        userData.studentNumber = studentNumber;
+      }
+      if (credentials.role === 'student') {
+        userData.workflowType = credentials.workflowType || 'automated';
+      }
+      if (coachCode) {
+        userData.coachCode = coachCode;
+      }
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+
+      // Create newUser object for return value
+      const newUser: User = {
+        id: firebaseUser.uid,
+        ...userData,
+      } as User;
 
       logInfo('User profile created successfully', { userId: firebaseUser.uid });
 
