@@ -50,7 +50,7 @@ const defaultFormData: SportFormData = {
   description: '',
   color: '#3B82F6',
   category: '',
-  difficulty: 'beginner',
+  difficulty: 'introduction',
   imageUrl: '',
   tags: [],
   isActive: true,
@@ -242,11 +242,11 @@ function AdminSportsContent() {
 
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
-      case 'beginner':
+      case 'introduction':
         return 'text-green-600 bg-green-100';
-      case 'intermediate':
+      case 'development':
         return 'text-yellow-600 bg-yellow-100';
-      case 'advanced':
+      case 'refinement':
         return 'text-red-600 bg-red-100';
       default:
         return 'text-gray-600 bg-gray-100';
@@ -355,9 +355,9 @@ function AdminSportsContent() {
                   onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value as DifficultyLevel }))}
                   className="w-full border rounded px-3 py-2"
                 >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
+                  <option value="introduction">Introduction</option>
+                  <option value="development">Development</option>
+                  <option value="refinement">Refinement</option>
                 </select>
               </div>
 

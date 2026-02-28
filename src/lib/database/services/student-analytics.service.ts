@@ -80,13 +80,13 @@ export interface SkillPerformanceData {
   timeSpent: number;
   quizScore: number | null;
   status: 'not_started' | 'in_progress' | 'completed';
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'introduction' | 'development' | 'refinement';
 }
 
 export interface SkillProgressDetail {
   skillId: string;
   skillName: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'introduction' | 'development' | 'refinement';
   status: 'not_started' | 'in_progress' | 'completed';
   progressPercentage: number;
   latestQuizScore: number | null;
@@ -533,7 +533,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           timeSpent: Math.round(totalTimeSpent / 60), // Convert to minutes
           quizScore: latestAttempt.percentage || null,
           status,
-          difficulty: skill.data?.difficulty || 'beginner',
+          difficulty: skill.data?.difficulty || 'introduction',
         });
       }
 
@@ -652,7 +652,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           skillDetails.push({
             skillId: skill.id,
             skillName: skill.name,
-            difficulty: skill.difficulty || 'beginner',
+            difficulty: skill.difficulty || 'introduction',
             status,
             progressPercentage,
             latestQuizScore,

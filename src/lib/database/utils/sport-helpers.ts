@@ -26,7 +26,7 @@ export const createDefaultSkillMetadata = () => ({
   averageCompletionTime: 0,
   averageRating: 0,
   totalRatings: 0,
-  difficulty: 'beginner' as DifficultyLevel,
+  difficulty: 'introduction' as DifficultyLevel,
 });
 
 /**
@@ -437,11 +437,11 @@ export const formatDuration = (minutes: number): string => {
  */
 export const getDifficultyColor = (difficulty: DifficultyLevel): string => {
   switch (difficulty) {
-    case 'beginner':
+    case 'introduction':
       return '#22C55E'; // green-500
-    case 'intermediate':
+    case 'development':
       return '#F59E0B'; // amber-500
-    case 'advanced':
+    case 'refinement':
       return '#EF4444'; // red-500
     default:
       return '#6B7280'; // gray-500

@@ -179,11 +179,11 @@ export default function SportDetailPage() {
 
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
-      case 'beginner':
+      case 'introduction':
         return 'text-green-600 bg-green-100';
-      case 'intermediate':
+      case 'development':
         return 'text-yellow-600 bg-yellow-100';
-      case 'advanced':
+      case 'refinement':
         return 'text-red-600 bg-red-100';
       default:
         return 'text-gray-600 bg-gray-100';
@@ -273,9 +273,9 @@ export default function SportDetailPage() {
     : state.skills.filter(skill => skill.difficulty === selectedDifficulty);
 
   const skillsByDifficulty = {
-    beginner: state.skills.filter(skill => skill.difficulty === 'beginner'),
-    intermediate: state.skills.filter(skill => skill.difficulty === 'intermediate'),
-    advanced: state.skills.filter(skill => skill.difficulty === 'advanced'),
+    introduction: state.skills.filter(skill => skill.difficulty === 'introduction'),
+    development: state.skills.filter(skill => skill.difficulty === 'development'),
+    refinement: state.skills.filter(skill => skill.difficulty === 'refinement'),
   };
 
   if (state.loading) {
@@ -474,9 +474,9 @@ export default function SportDetailPage() {
               className="text-sm border rounded px-2 py-1"
             >
               <option value="all">All Levels</option>
-              <option value="beginner">Beginner ({skillsByDifficulty.beginner.length})</option>
-              <option value="intermediate">Intermediate ({skillsByDifficulty.intermediate.length})</option>
-              <option value="advanced">Advanced ({skillsByDifficulty.advanced.length})</option>
+              <option value="introduction">Introduction ({skillsByDifficulty.introduction.length})</option>
+              <option value="development">Development ({skillsByDifficulty.development.length})</option>
+              <option value="refinement">Refinement ({skillsByDifficulty.refinement.length})</option>
             </select>
           </div>
         </div>

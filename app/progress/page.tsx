@@ -247,7 +247,7 @@ function ProgressContent() {
                     <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
                       <h4 className="font-medium text-blue-900">🎯 Focus Recommendation</h4>
                       <p className="text-sm text-blue-700 mt-1">
-                        You're showing great progress in intermediate skills. Consider challenging yourself with advanced basketball techniques.
+                        You're showing great progress in development skills. Consider challenging yourself with refinement-level basketball techniques.
                       </p>
                     </div>
 

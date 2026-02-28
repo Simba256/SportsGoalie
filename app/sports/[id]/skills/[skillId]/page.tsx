@@ -151,11 +151,11 @@ export default function SkillDetailPage() {
 
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
-      case 'beginner':
+      case 'introduction':
         return 'text-green-600 bg-green-100';
-      case 'intermediate':
+      case 'development':
         return 'text-yellow-600 bg-yellow-100';
-      case 'advanced':
+      case 'refinement':
         return 'text-red-600 bg-red-100';
       default:
         return 'text-gray-600 bg-gray-100';

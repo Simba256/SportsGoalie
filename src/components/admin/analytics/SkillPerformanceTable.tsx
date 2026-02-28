@@ -13,7 +13,7 @@ interface SkillPerformanceData {
   timeSpent: number;
   quizScore: number | null;
   status: 'not_started' | 'in_progress' | 'completed';
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'introduction' | 'development' | 'refinement';
 }
 
 interface SkillPerformanceTableProps {
@@ -23,11 +23,11 @@ interface SkillPerformanceTableProps {
 export function SkillPerformanceTable({ data }: SkillPerformanceTableProps) {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner':
+      case 'introduction':
         return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'intermediate':
+      case 'development':
         return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'advanced':
+      case 'refinement':
         return 'bg-red-100 text-red-700 border-red-200';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-200';

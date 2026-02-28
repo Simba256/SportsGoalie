@@ -88,11 +88,11 @@ export default function SportsPage() {
 
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
-      case 'beginner':
+      case 'introduction':
         return 'text-emerald-700 bg-emerald-100 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-900 dark:border-emerald-800';
-      case 'intermediate':
+      case 'development':
         return 'text-amber-700 bg-amber-100 border-amber-200 dark:text-amber-300 dark:bg-amber-900 dark:border-amber-800';
-      case 'advanced':
+      case 'refinement':
         return 'text-rose-700 bg-rose-100 border-rose-200 dark:text-rose-300 dark:bg-rose-900 dark:border-rose-800';
       default:
         return 'text-slate-700 bg-slate-100 border-slate-200 dark:text-slate-300 dark:bg-slate-900 dark:border-slate-800';
@@ -176,7 +176,7 @@ export default function SportsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Difficulty Level</label>
                 <div className="space-y-2">
-                  {(['beginner', 'intermediate', 'advanced'] as DifficultyLevel[]).map((level) => (
+                  {(['introduction', 'development', 'refinement'] as DifficultyLevel[]).map((level) => (
                     <label key={level} className="flex items-center space-x-2">
                       <input
                         type="checkbox"

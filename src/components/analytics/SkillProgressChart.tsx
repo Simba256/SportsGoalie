@@ -8,7 +8,7 @@ interface SkillProgressData {
   skillName: string;
   progress: number;
   timeSpent: number;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'introduction' | 'development' | 'refinement';
   completed: boolean;
 }
 
@@ -27,11 +27,11 @@ export function SkillProgressChart({
     if (completed) return 'hsl(142, 76%, 36%)'; // Green for completed
 
     switch (difficulty) {
-      case 'beginner':
+      case 'introduction':
         return 'hsl(210, 40%, 70%)'; // Light blue
-      case 'intermediate':
+      case 'development':
         return 'hsl(45, 93%, 47%)'; // Orange
-      case 'advanced':
+      case 'refinement':
         return 'hsl(0, 84%, 60%)'; // Red
       default:
         return 'hsl(210, 40%, 70%)';
@@ -125,9 +125,9 @@ export function SkillProgressChart({
                       <p className="text-sm font-medium leading-none">{skill.skillName}</p>
                       <div className="flex items-center space-x-2">
                         <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                          skill.difficulty === 'beginner'
+                          skill.difficulty === 'introduction'
                             ? 'bg-blue-50 text-blue-700 ring-blue-700/10'
-                            : skill.difficulty === 'intermediate'
+                            : skill.difficulty === 'development'
                             ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
                             : 'bg-red-50 text-red-700 ring-red-700/10'
                         }`}>

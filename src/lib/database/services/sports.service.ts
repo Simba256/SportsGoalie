@@ -41,7 +41,7 @@ import {
  * const result = await sportsService.createSport({
  *   name: 'Basketball',
  *   description: 'Learn basketball fundamentals',
- *   difficulty: 'beginner',
+ *   difficulty: 'introduction',
  *   category: 'team-sports',
  *   estimatedTimeToComplete: 120,
  *   isActive: true,
@@ -74,7 +74,7 @@ export class SportsService extends BaseDatabaseService {
    * const result = await sportsService.createSport({
    *   name: 'Tennis',
    *   description: 'Learn tennis fundamentals and techniques',
-   *   difficulty: 'intermediate',
+   *   difficulty: 'development',
    *   category: 'racket-sports',
    *   estimatedTimeToComplete: 180,
    *   isActive: true,

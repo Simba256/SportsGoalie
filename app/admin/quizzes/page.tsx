@@ -199,9 +199,9 @@ function AdminQuizzesPageContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Difficulties</SelectItem>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
+                <SelectItem value="introduction">Introduction</SelectItem>
+                <SelectItem value="development">Development</SelectItem>
+                <SelectItem value="refinement">Refinement</SelectItem>
               </SelectContent>
             </Select>
 
@@ -324,9 +324,9 @@ function AdminQuizzesPageContent() {
                     <div className="flex flex-wrap gap-2">
                       <Badge
                         variant={
-                          quiz.difficulty === 'beginner'
+                          quiz.difficulty === 'introduction'
                             ? 'default'
-                            : quiz.difficulty === 'intermediate'
+                            : quiz.difficulty === 'development'
                             ? 'secondary'
                             : 'destructive'
                         }

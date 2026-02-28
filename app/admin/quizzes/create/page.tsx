@@ -51,7 +51,7 @@ function CreateVideoQuizContent() {
     videoUrl: '',
     videoDuration: 0,
     instructions: '',
-    difficulty: 'intermediate' as DifficultyLevel,
+    difficulty: 'development' as DifficultyLevel,
     tags: [],
     isActive: false,
     isPublished: false,
@@ -498,9 +498,9 @@ function CreateVideoQuizContent() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="introduction">Introduction</SelectItem>
+                      <SelectItem value="development">Development</SelectItem>
+                      <SelectItem value="refinement">Refinement</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

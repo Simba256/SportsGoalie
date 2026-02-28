@@ -11,8 +11,8 @@ export const userRoleSchema = z.enum(['student', 'admin'], {
   errorMap: () => ({ message: 'Role must be either student or admin' }),
 });
 
-export const difficultyLevelSchema = z.enum(['beginner', 'intermediate', 'advanced'], {
-  errorMap: () => ({ message: 'Difficulty must be beginner, intermediate, or advanced' }),
+export const difficultyLevelSchema = z.enum(['introduction', 'development', 'refinement'], {
+  errorMap: () => ({ message: 'Difficulty must be introduction, development, or refinement' }),
 });
 
 export const progressStatusSchema = z.enum(['not_started', 'in_progress', 'completed'], {

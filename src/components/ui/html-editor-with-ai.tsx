@@ -28,7 +28,7 @@ export function HTMLEditorWithAI({
   className,
   skillName = '',
   description = '',
-  difficulty = 'beginner',
+  difficulty = 'introduction',
   objectives = []
 }: HTMLEditorWithAIProps) {
   const [isGenerating, setIsGenerating] = useState(false);
