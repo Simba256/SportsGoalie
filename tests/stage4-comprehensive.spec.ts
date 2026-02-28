@@ -142,7 +142,7 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
       await expect(statCards.first()).toBeVisible();
 
       // Look for difficulty, duration, skills count, and enrollment stats
-      await expect(page.locator('text=/difficulty/i, text=/beginner|intermediate|advanced/i')).toBeVisible();
+      await expect(page.locator('text=/difficulty/i, text=/introduction|development|refinement/i')).toBeVisible();
       await expect(page.locator('text=/duration|time/i')).toBeVisible();
       await expect(page.locator('text=/skills/i')).toBeVisible();
     });
@@ -253,7 +253,7 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
         await expect(page.locator('text=/objectives/i')).toBeVisible();
 
         // Check difficulty badge
-        await expect(page.locator('text=/beginner|intermediate|advanced/i')).toBeVisible();
+        await expect(page.locator('text=/introduction|development|refinement/i')).toBeVisible();
       }
     });
 

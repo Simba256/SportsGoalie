@@ -22,7 +22,7 @@ export interface Skill {
   sportId: string;
   name: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'introduction' | 'development' | 'refinement';
   videoUrl?: string;
   imageUrl?: string;
   createdAt: Date;

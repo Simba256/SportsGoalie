@@ -1,10 +1,12 @@
+import type { DifficultyLevel } from '@/types';
+
 export interface Course {
   id: string;
   title: string;
   description: string;
   sportId: string;
   skillId?: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: DifficultyLevel;
   duration: number; // in hours
   category: string;
   imageUrl?: string;

@@ -38,7 +38,7 @@ const mockSport = {
   icon: '🏀',
   color: '#FF6B35',
   category: 'team-sports',
-  difficulty: 'intermediate' as const,
+  difficulty: 'development' as const,
   estimatedTimeToComplete: 120,
   skillsCount: 15,
   imageUrl: 'https://example.com/basketball.jpg',
@@ -65,7 +65,7 @@ const mockSkills = [
     sportId: 'sport-1',
     name: 'Basic Dribbling',
     description: 'Learn fundamental dribbling techniques',
-    difficulty: 'beginner' as const,
+    difficulty: 'introduction' as const,
     estimatedTimeToComplete: 30,
     content: '<p>Basic dribbling content</p>',
     externalResources: [],
@@ -82,7 +82,7 @@ const mockSkills = [
       averageCompletionTime: 25,
       averageRating: 4.3,
       totalRatings: 40,
-      difficulty: 'beginner' as const,
+      difficulty: 'introduction' as const,
     },
     createdAt: new Date() as any,
     updatedAt: new Date() as any,
@@ -93,14 +93,14 @@ const mockSkills = [
     sportId: 'sport-1',
     name: 'Advanced Shooting',
     description: 'Master advanced shooting techniques',
-    difficulty: 'advanced' as const,
+    difficulty: 'refinement' as const,
     estimatedTimeToComplete: 60,
     content: '<p>Advanced shooting content</p>',
     externalResources: [],
     media: undefined,
     prerequisites: ['skill-1'],
     learningObjectives: ['Perfect shooting form', 'Increase accuracy', 'Learn different shot types'],
-    tags: ['shooting', 'advanced'],
+    tags: ['shooting', 'refinement'],
     hasVideo: true,
     hasQuiz: false,
     isActive: true,
@@ -110,7 +110,7 @@ const mockSkills = [
       averageCompletionTime: 55,
       averageRating: 4.7,
       totalRatings: 18,
-      difficulty: 'advanced' as const,
+      difficulty: 'refinement' as const,
     },
     createdAt: new Date() as any,
     updatedAt: new Date() as any,
@@ -165,7 +165,7 @@ describe('SportDetailPage', () => {
     expect(screen.getByText('Featured')).toBeInTheDocument();
 
     // Check sport stats
-    expect(screen.getByText('intermediate')).toBeInTheDocument();
+    expect(screen.getByText('development')).toBeInTheDocument();
     expect(screen.getByText('120h')).toBeInTheDocument();
     expect(screen.getByText('15')).toBeInTheDocument(); // skills count
     expect(screen.getByText('150')).toBeInTheDocument(); // enrollments
@@ -249,7 +249,7 @@ describe('SportDetailPage', () => {
 
     // Test difficulty filter
     const difficultySelect = screen.getByDisplayValue('All Levels');
-    await user.selectOptions(difficultySelect, 'beginner');
+    await user.selectOptions(difficultySelect, 'introduction');
 
     // Should show only beginner skills
     expect(screen.getByText('Basic Dribbling')).toBeInTheDocument();

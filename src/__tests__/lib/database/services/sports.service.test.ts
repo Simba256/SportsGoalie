@@ -193,13 +193,13 @@ describe('SportsService', () => {
       }));
 
       await service.getAllSports({
-        difficulty: ['beginner', 'intermediate'],
+        difficulty: ['introduction', 'development'],
       });
 
       expect(mockQuery).toHaveBeenCalledWith('sports', expect.objectContaining({
         where: expect.arrayContaining([
           { field: 'isActive', operator: '==', value: true },
-          { field: 'difficulty', operator: 'in', value: ['beginner', 'intermediate'] },
+          { field: 'difficulty', operator: 'in', value: ['introduction', 'development'] },
         ]),
       }));
     });
@@ -312,14 +312,14 @@ describe('SportsService', () => {
       }));
 
       await service.searchSports('test', {
-        difficulty: ['beginner'],
+        difficulty: ['introduction'],
         categories: ['Team Sports'],
       });
 
       expect(mockQuery).toHaveBeenCalledWith('sports', expect.objectContaining({
         where: expect.arrayContaining([
           { field: 'isActive', operator: '==', value: true },
-          { field: 'difficulty', operator: 'in', value: ['beginner'] },
+          { field: 'difficulty', operator: 'in', value: ['introduction'] },
           { field: 'category', operator: 'in', value: ['Team Sports'] },
         ]),
       }));
@@ -417,7 +417,7 @@ describe('SportsService', () => {
 
   describe('getSkillsByDifficulty', () => {
     it('should get skills by sport and difficulty', async () => {
-      const skills = [createMockSkill({ difficulty: 'beginner' })];
+      const skills = [createMockSkill({ difficulty: 'introduction' })];
       mockQuery.mockResolvedValue(createMockApiResponse({
         items: skills,
         total: 1,
@@ -427,13 +427,13 @@ describe('SportsService', () => {
         totalPages: 1,
       }));
 
-      const result = await service.getSkillsByDifficulty('sport-id', 'beginner');
+      const result = await service.getSkillsByDifficulty('sport-id', 'introduction');
 
       expect(result.success).toBe(true);
       expect(mockQuery).toHaveBeenCalledWith('skills', {
         where: [
           { field: 'sportId', operator: '==', value: 'sport-id' },
-          { field: 'difficulty', operator: '==', value: 'beginner' },
+          { field: 'difficulty', operator: '==', value: 'introduction' },
           { field: 'isActive', operator: '==', value: true },
         ],
         orderBy: [{ field: 'order', direction: 'asc' }],

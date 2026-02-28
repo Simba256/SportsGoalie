@@ -85,6 +85,20 @@ export class MigrationService extends BaseDatabaseService {
         await this.removeContentAnalyticsFields();
       },
     },
+    {
+      id: '006_rename_difficulty_levels',
+      version: '1.5.0',
+      name: 'Rename Difficulty Levels',
+      description: 'Rename difficulty from beginner/intermediate/advanced to introduction/development/refinement',
+      up: async () => {
+        logger.info('Running migration: Rename Difficulty Levels', 'MigrationService');
+        await this.renameDifficultyLevels();
+      },
+      down: async () => {
+        logger.info('Rolling back migration: Rename Difficulty Levels', 'MigrationService');
+        await this.revertDifficultyLevels();
+      },
+    },
   ];
 
   async getCurrentMigrationState(): Promise<ApiResponse<MigrationState | null>> {
@@ -694,6 +708,286 @@ export class MigrationService extends BaseDatabaseService {
   private async removeContentAnalyticsFields(): Promise<void> {
     logger.info('Removing analytics fields from content documents', 'MigrationService');
     // Rollback logic
+  }
+
+  private readonly DIFFICULTY_MAP: Record<string, string> = {
+    'beginner': 'introduction',
+    'intermediate': 'development',
+    'advanced': 'refinement',
+  };
+
+  private readonly REVERSE_DIFFICULTY_MAP: Record<string, string> = {
+    'introduction': 'beginner',
+    'development': 'intermediate',
+    'refinement': 'advanced',
+  };
+
+  private async renameDifficultyLevels(): Promise<void> {
+    logger.info('Renaming difficulty levels across all collections', 'MigrationService');
+
+    let totalUpdated = 0;
+
+    // Update sports collection
+    const sportsResult = await this.query('sports', { limit: 1000 });
+    if (sportsResult.success && sportsResult.data) {
+      const operations = sportsResult.data.items
+        .filter((sport: any) => this.DIFFICULTY_MAP[sport.difficulty])
+        .map((sport: any) => ({
+          type: 'update' as const,
+          collection: 'sports',
+          id: sport.id,
+          data: {
+            difficulty: this.DIFFICULTY_MAP[sport.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Updated ${operations.length} sport documents`, 'MigrationService');
+      }
+    }
+
+    // Update skills collection
+    const skillsResult = await this.query('skills', { limit: 1000 });
+    if (skillsResult.success && skillsResult.data) {
+      const operations = skillsResult.data.items
+        .filter((skill: any) => this.DIFFICULTY_MAP[skill.difficulty])
+        .map((skill: any) => ({
+          type: 'update' as const,
+          collection: 'skills',
+          id: skill.id,
+          data: {
+            difficulty: this.DIFFICULTY_MAP[skill.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Updated ${operations.length} skill documents`, 'MigrationService');
+      }
+    }
+
+    // Update video_quizzes collection
+    const quizzesResult = await this.query('video_quizzes', { limit: 1000 });
+    if (quizzesResult.success && quizzesResult.data) {
+      const operations = quizzesResult.data.items
+        .filter((quiz: any) => this.DIFFICULTY_MAP[quiz.difficulty])
+        .map((quiz: any) => ({
+          type: 'update' as const,
+          collection: 'video_quizzes',
+          id: quiz.id,
+          data: {
+            difficulty: this.DIFFICULTY_MAP[quiz.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Updated ${operations.length} video_quizzes documents`, 'MigrationService');
+      }
+    }
+
+    // Update courses collection
+    const coursesResult = await this.query('courses', { limit: 1000 });
+    if (coursesResult.success && coursesResult.data) {
+      const operations = coursesResult.data.items
+        .filter((course: any) => this.DIFFICULTY_MAP[course.difficulty])
+        .map((course: any) => ({
+          type: 'update' as const,
+          collection: 'courses',
+          id: course.id,
+          data: {
+            difficulty: this.DIFFICULTY_MAP[course.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Updated ${operations.length} courses documents`, 'MigrationService');
+      }
+    }
+
+    // Update users collection (profile.experienceLevel)
+    const usersResult = await this.query('users', { limit: 1000 });
+    if (usersResult.success && usersResult.data) {
+      const operations = usersResult.data.items
+        .filter((user: any) => user.profile?.experienceLevel && this.DIFFICULTY_MAP[user.profile.experienceLevel])
+        .map((user: any) => ({
+          type: 'update' as const,
+          collection: 'users',
+          id: user.id,
+          data: {
+            'profile.experienceLevel': this.DIFFICULTY_MAP[user.profile.experienceLevel],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Updated ${operations.length} user profile documents`, 'MigrationService');
+      }
+    }
+
+    // Update custom_content_library collection
+    const contentResult = await this.query('custom_content_library', { limit: 1000 });
+    if (contentResult.success && contentResult.data) {
+      const operations = contentResult.data.items
+        .filter((content: any) => this.DIFFICULTY_MAP[content.difficulty])
+        .map((content: any) => ({
+          type: 'update' as const,
+          collection: 'custom_content_library',
+          id: content.id,
+          data: {
+            difficulty: this.DIFFICULTY_MAP[content.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Updated ${operations.length} custom_content_library documents`, 'MigrationService');
+      }
+    }
+
+    logger.info(`Migration complete! Total documents updated: ${totalUpdated}`, 'MigrationService');
+  }
+
+  private async revertDifficultyLevels(): Promise<void> {
+    logger.info('Reverting difficulty levels across all collections', 'MigrationService');
+
+    let totalUpdated = 0;
+
+    // Revert sports collection
+    const sportsResult = await this.query('sports', { limit: 1000 });
+    if (sportsResult.success && sportsResult.data) {
+      const operations = sportsResult.data.items
+        .filter((sport: any) => this.REVERSE_DIFFICULTY_MAP[sport.difficulty])
+        .map((sport: any) => ({
+          type: 'update' as const,
+          collection: 'sports',
+          id: sport.id,
+          data: {
+            difficulty: this.REVERSE_DIFFICULTY_MAP[sport.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Reverted ${operations.length} sport documents`, 'MigrationService');
+      }
+    }
+
+    // Revert skills collection
+    const skillsResult = await this.query('skills', { limit: 1000 });
+    if (skillsResult.success && skillsResult.data) {
+      const operations = skillsResult.data.items
+        .filter((skill: any) => this.REVERSE_DIFFICULTY_MAP[skill.difficulty])
+        .map((skill: any) => ({
+          type: 'update' as const,
+          collection: 'skills',
+          id: skill.id,
+          data: {
+            difficulty: this.REVERSE_DIFFICULTY_MAP[skill.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Reverted ${operations.length} skill documents`, 'MigrationService');
+      }
+    }
+
+    // Revert video_quizzes collection
+    const quizzesResult = await this.query('video_quizzes', { limit: 1000 });
+    if (quizzesResult.success && quizzesResult.data) {
+      const operations = quizzesResult.data.items
+        .filter((quiz: any) => this.REVERSE_DIFFICULTY_MAP[quiz.difficulty])
+        .map((quiz: any) => ({
+          type: 'update' as const,
+          collection: 'video_quizzes',
+          id: quiz.id,
+          data: {
+            difficulty: this.REVERSE_DIFFICULTY_MAP[quiz.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Reverted ${operations.length} video_quizzes documents`, 'MigrationService');
+      }
+    }
+
+    // Revert courses collection
+    const coursesResult = await this.query('courses', { limit: 1000 });
+    if (coursesResult.success && coursesResult.data) {
+      const operations = coursesResult.data.items
+        .filter((course: any) => this.REVERSE_DIFFICULTY_MAP[course.difficulty])
+        .map((course: any) => ({
+          type: 'update' as const,
+          collection: 'courses',
+          id: course.id,
+          data: {
+            difficulty: this.REVERSE_DIFFICULTY_MAP[course.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Reverted ${operations.length} courses documents`, 'MigrationService');
+      }
+    }
+
+    // Revert users collection (profile.experienceLevel)
+    const usersResult = await this.query('users', { limit: 1000 });
+    if (usersResult.success && usersResult.data) {
+      const operations = usersResult.data.items
+        .filter((user: any) => user.profile?.experienceLevel && this.REVERSE_DIFFICULTY_MAP[user.profile.experienceLevel])
+        .map((user: any) => ({
+          type: 'update' as const,
+          collection: 'users',
+          id: user.id,
+          data: {
+            'profile.experienceLevel': this.REVERSE_DIFFICULTY_MAP[user.profile.experienceLevel],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Reverted ${operations.length} user profile documents`, 'MigrationService');
+      }
+    }
+
+    // Revert custom_content_library collection
+    const contentResult = await this.query('custom_content_library', { limit: 1000 });
+    if (contentResult.success && contentResult.data) {
+      const operations = contentResult.data.items
+        .filter((content: any) => this.REVERSE_DIFFICULTY_MAP[content.difficulty])
+        .map((content: any) => ({
+          type: 'update' as const,
+          collection: 'custom_content_library',
+          id: content.id,
+          data: {
+            difficulty: this.REVERSE_DIFFICULTY_MAP[content.difficulty],
+          },
+        }));
+
+      if (operations.length > 0) {
+        await this.batchWrite(operations);
+        totalUpdated += operations.length;
+        logger.info(`Reverted ${operations.length} custom_content_library documents`, 'MigrationService');
+      }
+    }
+
+    logger.info(`Rollback complete! Total documents reverted: ${totalUpdated}`, 'MigrationService');
   }
 }
 

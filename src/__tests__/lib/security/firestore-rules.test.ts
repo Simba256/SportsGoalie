@@ -174,7 +174,7 @@ describe('Firestore Security Rules', () => {
     const sportData = {
       name: 'Basketball',
       description: 'Team sport played with a ball',
-      difficulty: 'beginner',
+      difficulty: 'introduction',
       category: 'Team Sports',
       isActive: true,
       createdAt: new Date(),
@@ -578,7 +578,7 @@ describe('Firestore Security Rules', () => {
       const sportWithInvalidTimestamp = {
         name: 'Test Sport',
         description: 'Test description',
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         category: 'Test Category',
         isActive: true,
         createdAt: 'invalid-timestamp', // Invalid timestamp
@@ -601,7 +601,7 @@ describe('Firestore Security Rules', () => {
         title: 'Test Quiz',
         skillId: 'skill-123',
         sportId: 'sport-123',
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         timeLimit: 600,
         passingScore: 70,
         isActive: true,
@@ -623,7 +623,7 @@ describe('Firestore Security Rules', () => {
       const activeSportData = {
         name: 'Public Sport',
         description: 'Sport visible to students',
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         category: 'Public',
         isActive: true,
       };

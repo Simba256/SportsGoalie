@@ -33,14 +33,14 @@ describe('Validation Schemas', () => {
 
     describe('difficultyLevelSchema', () => {
       it('should validate valid difficulty levels', () => {
-        expect(difficultyLevelSchema.parse('beginner')).toBe('beginner');
-        expect(difficultyLevelSchema.parse('intermediate')).toBe('intermediate');
-        expect(difficultyLevelSchema.parse('advanced')).toBe('advanced');
+        expect(difficultyLevelSchema.parse('introduction')).toBe('introduction');
+        expect(difficultyLevelSchema.parse('development')).toBe('development');
+        expect(difficultyLevelSchema.parse('refinement')).toBe('refinement');
       });
 
       it('should reject invalid difficulty levels', () => {
-        expect(() => difficultyLevelSchema.parse('easy')).toThrow();
-        expect(() => difficultyLevelSchema.parse('hard')).toThrow();
+        expect(() => difficultyLevelSchema.parse('beginner')).toThrow();
+        expect(() => difficultyLevelSchema.parse('advanced')).toThrow();
         expect(() => difficultyLevelSchema.parse('')).toThrow();
       });
     });
@@ -97,7 +97,7 @@ describe('Validation Schemas', () => {
           profile: {
             firstName: 'Test',
             lastName: 'User',
-            experienceLevel: 'beginner',
+            experienceLevel: 'introduction',
             sportsInterests: ['basketball'],
             goals: ['improve fitness'],
           },
@@ -159,7 +159,7 @@ describe('Validation Schemas', () => {
         icon: '🏀',
         color: '#FF8C00',
         category: 'Team Sports',
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         estimatedTimeToComplete: 40,
         skillsCount: 5,
         tags: ['team', 'indoor'],
@@ -218,7 +218,7 @@ describe('Validation Schemas', () => {
           icon: '🎾',
           color: '#FFD700',
           category: 'Individual Sports',
-          difficulty: 'intermediate',
+          difficulty: 'development',
           estimatedTimeToComplete: 30,
           tags: ['individual', 'outdoor'],
           isActive: true,
@@ -240,7 +240,7 @@ describe('Validation Schemas', () => {
         sportId: 'sport-123',
         name: 'Dribbling',
         description: 'Basic ball handling skill',
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         estimatedTimeToComplete: 30,
         externalResources: [
           {
@@ -262,7 +262,7 @@ describe('Validation Schemas', () => {
           averageCompletionTime: 25,
           averageRating: 4.0,
           totalRatings: 10,
-          difficulty: 'beginner',
+          difficulty: 'introduction',
         },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -338,7 +338,7 @@ describe('Validation Schemas', () => {
         sportId: 'sport-123',
         title: 'Dribbling Quiz',
         description: 'Test your dribbling knowledge',
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         timeLimit: 10,
         passingScore: 70,
         maxAttempts: 3,
@@ -390,7 +390,7 @@ describe('Validation Schemas', () => {
         explanation: 'Fingertips provide better control',
         points: 10,
         order: 1,
-        difficulty: 'beginner',
+        difficulty: 'introduction',
         tags: ['technique'],
         createdAt: new Date(),
         updatedAt: new Date(),

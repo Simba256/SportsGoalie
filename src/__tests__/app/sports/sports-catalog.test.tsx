@@ -39,7 +39,7 @@ const mockSportsData = {
         icon: '🏀',
         color: '#FF6B35',
         category: 'team-sports',
-        difficulty: 'intermediate' as const,
+        difficulty: 'development' as const,
         estimatedTimeToComplete: 120,
         skillsCount: 15,
         imageUrl: 'https://example.com/basketball.jpg',
@@ -66,7 +66,7 @@ const mockSportsData = {
         icon: '🎾',
         color: '#4CAF50',
         category: 'individual-sports',
-        difficulty: 'beginner' as const,
+        difficulty: 'introduction' as const,
         estimatedTimeToComplete: 80,
         skillsCount: 10,
         imageUrl: 'https://example.com/tennis.jpg',
@@ -166,8 +166,8 @@ describe('SportsPage', () => {
     render(<SportsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('intermediate')).toBeInTheDocument();
-      expect(screen.getByText('beginner')).toBeInTheDocument();
+      expect(screen.getByText('development')).toBeInTheDocument();
+      expect(screen.getByText('introduction')).toBeInTheDocument();
     });
   });
 
@@ -203,12 +203,12 @@ describe('SportsPage', () => {
     expect(screen.getByText('Features')).toBeInTheDocument();
 
     // Test difficulty filter
-    const beginnerCheckbox = screen.getByRole('checkbox', { name: /beginner/i });
+    const beginnerCheckbox = screen.getByRole('checkbox', { name: /introduction/i });
     await user.click(beginnerCheckbox);
 
     expect(sportsService.getAllSports).toHaveBeenCalledWith({
       limit: 50,
-      difficulty: ['beginner'],
+      difficulty: ['introduction'],
     });
   });
 
@@ -273,7 +273,7 @@ describe('SportsPage', () => {
     const filtersButton = screen.getByRole('button', { name: /filters/i });
     await user.click(filtersButton);
 
-    const beginnerCheckbox = screen.getByRole('checkbox', { name: /beginner/i });
+    const beginnerCheckbox = screen.getByRole('checkbox', { name: /introduction/i });
     await user.click(beginnerCheckbox);
 
     // Now clear all

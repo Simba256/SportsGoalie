@@ -59,7 +59,7 @@ test.describe('Sports Catalog Workflows', () => {
     await expect(page.getByText('Features')).toBeVisible();
 
     // Test difficulty filter
-    const beginnerCheckbox = page.getByRole('checkbox', { name: 'beginner' });
+    const beginnerCheckbox = page.getByRole('checkbox', { name: 'introduction' });
     await beginnerCheckbox.check();
 
     // Wait for filter to apply
@@ -82,7 +82,7 @@ test.describe('Sports Catalog Workflows', () => {
     const filtersButton = page.getByRole('button', { name: 'Filters' });
     await filtersButton.click();
 
-    const beginnerCheckbox = page.getByRole('checkbox', { name: 'beginner' });
+    const beginnerCheckbox = page.getByRole('checkbox', { name: 'introduction' });
     await beginnerCheckbox.check();
 
     // Clear all filters
@@ -169,7 +169,7 @@ test.describe('Sport Detail Workflows', () => {
       const difficultySelect = page.locator('select').first();
 
       if (await difficultySelect.isVisible()) {
-        await difficultySelect.selectOption('beginner');
+        await difficultySelect.selectOption('introduction');
         await page.waitForLoadState('networkidle');
 
         // Should not have errors

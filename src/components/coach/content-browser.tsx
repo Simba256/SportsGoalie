@@ -215,15 +215,15 @@ export function ContentBrowser({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Add Content to Curriculum</DialogTitle>
           <DialogDescription>
             Browse and select lessons or quizzes to add to the student's learning path
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           {/* Sport Selection */}
           <div className="space-y-2">
             <Label>Sport / Pillar</Label>
@@ -288,7 +288,7 @@ export function ContentBrowser({
               </div>
 
               {/* Content List */}
-              <ScrollArea className="h-[300px] border rounded-lg">
+              <ScrollArea className="h-[250px] border rounded-lg">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -386,7 +386,7 @@ export function ContentBrowser({
           </Tabs>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
