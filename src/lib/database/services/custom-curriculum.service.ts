@@ -37,6 +37,45 @@ export class CustomCurriculumService extends BaseDatabaseService {
   private static cache = cacheService;
 
   /**
+   * Convert object to Firestore-compatible format (handle Timestamps)
+   */
+  private static toFirestore(data: any): any {
+    if (data === null || data === undefined) return data;
+    if (data instanceof Timestamp) return data;
+    if (data instanceof Date) return Timestamp.fromDate(data);
+    if (Array.isArray(data)) return data.map(item => this.toFirestore(item));
+    if (typeof data === 'object') {
+      const result: any = {};
+      for (const key in data) {
+        if (data.hasOwnProperty(key) && data[key] !== undefined) {
+          result[key] = this.toFirestore(data[key]);
+        }
+      }
+      return result;
+    }
+    return data;
+  }
+
+  /**
+   * Convert Firestore document to typed object (handle Timestamps)
+   */
+  private static fromFirestore<T>(data: any): T {
+    if (data === null || data === undefined) return data;
+    if (data instanceof Timestamp) return data as any;
+    if (Array.isArray(data)) return data.map(item => this.fromFirestore(item)) as any;
+    if (typeof data === 'object') {
+      const result: any = {};
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          result[key] = this.fromFirestore(data[key]);
+        }
+      }
+      return result as T;
+    }
+    return data;
+  }
+
+  /**
    * Create curriculum for a student
    */
   static async createCurriculum(
