@@ -1,9 +1,9 @@
 # Session: Curriculum Fixes & Difficulty Level Renaming
 
 **Date:** 2026-02-28
-**Time Spent:** 1 hour 45 minutes
+**Time Spent:** 2 hours 30 minutes
 **Agent/Developer:** Claude Code
-**Focus Area:** Bug Fix / Refactor
+**Focus Area:** Bug Fix / Refactor / Migration
 
 ---
 
@@ -13,63 +13,74 @@
 - Fix "Failed to create curriculum" error (toFirestore not a function)
 - Fix "Failed to load content" error when adding content to curriculum
 - Rename difficulty levels from Beginner/Intermediate/Advanced to Introduction/Development/Refinement
+- Create and run data migration for existing Firestore documents
+- Fix content browser dialog overflow issue
 
 ---
 
 ## ✅ Work Completed
 
 ### Main Achievements
-- **Admin Dashboard Link:** Added Custom Curriculum card to admin dashboard under Student Support section
-- **Service Method Fix:** Added static `toFirestore` and `fromFirestore` helper methods to CustomCurriculumService and CustomContentService to fix Firestore serialization errors
-- **Missing API Method:** Added `getQuizzesBySport` method to VideoQuizService that ContentBrowser was calling
-- **Difficulty Level Renaming:** Changed all difficulty levels from Beginner/Intermediate/Advanced to Introduction/Development/Refinement across 22+ files
+- **Admin Dashboard Link:** Added Custom Curriculum card to admin dashboard, updated to link directly to `/coach/students` for all students view
+- **Service Method Fix:** Added static `toFirestore` and `fromFirestore` helper methods to CustomCurriculumService and CustomContentService
+- **Missing API Method:** Added `getQuizzesBySport` method to VideoQuizService
+- **Difficulty Level Renaming:** Changed all difficulty levels across 22+ files including types, validation, UI, and seeding data
+- **Data Migration:** Created and executed migration script - updated 48 documents (22 sports, 12 skills, 14 video_quizzes)
+- **Content Browser Fix:** Fixed dialog overflow issue where selection summary was appearing outside the dialog bounds
 
 ### Additional Work
 - Updated Firestore security rules validation for new difficulty values
 - Updated Zod validation schema for difficulty levels
-- Updated all seeding data and mock data with new difficulty values
+- Updated all test files with new difficulty values
 - Updated analytics components to use new difficulty colors
+- Added migration 006 to migration.service.ts
+- Created standalone migration script with dry-run support
 
 ---
 
 ## 📝 Files Modified
 
+### Created
+- `scripts/migrate-difficulty-levels.ts` - Standalone migration script with dry-run and revert support
+
 ### Modified
-- `app/admin/page.tsx` - Added Custom Curriculum link card with GraduationCap icon
+- `app/admin/page.tsx` - Added Custom Curriculum link, updated to link to `/coach/students`
 - `src/lib/database/services/custom-curriculum.service.ts` - Added static toFirestore/fromFirestore methods
 - `src/lib/database/services/custom-content.service.ts` - Added static toFirestore/fromFirestore methods
 - `src/lib/database/services/video-quiz.service.ts` - Added getQuizzesBySport method
+- `src/lib/database/migrations/migration.service.ts` - Added migration 006 for difficulty levels
+- `src/components/coach/content-browser.tsx` - Fixed dialog overflow with flex layout
 - `src/types/index.ts` - Changed DifficultyLevel type values
+- `types/course.ts` - Updated to use DifficultyLevel type
+- `types/index.ts` - Updated Skill interface difficulty values
 - `firestore.rules` - Updated isValidDifficulty function
 - `src/lib/validation/schemas.ts` - Updated difficultyLevelSchema enum
-- `app/(public)/sports/[slug]/page.tsx` - Updated difficulty display
-- `app/admin/quizzes/create/page.tsx` - Updated difficulty select options
-- `app/admin/quizzes/[id]/edit/page.tsx` - Updated difficulty select options
-- `app/admin/sports/[id]/edit/page.tsx` - Updated difficulty select options
-- `app/admin/sports/[id]/skills/create/page.tsx` - Updated difficulty select options
-- `app/admin/sports/[id]/skills/[skillId]/edit/page.tsx` - Updated difficulty select options
-- `app/admin/sports/create/page.tsx` - Updated difficulty select options
-- `src/components/admin/analytics/SkillPerformanceTable.tsx` - Updated difficulty colors
-- `src/components/analytics/SkillProgressChart.tsx` - Updated difficulty colors
-- `src/lib/database/seeding/sample-courses.ts` - Updated all course difficulty values
-- `src/lib/database/seeding/seed-data.ts` - Updated all sport/skill difficulty values
-- `src/lib/database/utils/sport-helpers.ts` - Updated default difficulty value
-- `src/lib/mock-data.ts` - Updated mock quiz difficulty values
-- `tests/mock-data.ts` - Updated test mock difficulty values
+- `src/__tests__/setup.ts` - Updated mock data difficulty values
+- `src/__tests__/lib/validation/schemas.test.ts` - Updated test assertions
+- `src/__tests__/lib/security/firestore-rules.test.ts` - Updated test data
+- `src/__tests__/lib/database/services/sports.service.test.ts` - Updated test data
+- `src/__tests__/app/sports/sports-catalog.test.tsx` - Updated test assertions
+- `src/__tests__/app/sports/sports-detail.test.tsx` - Updated test assertions
+- `tests/sports-workflows.spec.ts` - Updated Playwright test assertions
+- `tests/stage4-comprehensive.spec.ts` - Updated regex patterns
+- Multiple admin pages - Updated difficulty select options
+- Multiple seeding files - Updated sample data
 
 ---
 
 ## 💾 Commits
 
-- (Pending commit by user)
+- `742f33f` - feat: add difficulty level migration and fix content browser overflow
+- `7f0a8a2` - fix(admin): link custom curriculum to students list directly
 
 ---
 
 ## 🚧 Blockers & Issues
 
 ### Issues Encountered
-- **toFirestore not a function error:** CustomCurriculumService and CustomContentService used static methods but called `this.toFirestore()` which didn't exist. Fixed by adding static helper methods.
-- **Failed to load content error:** ContentBrowser called `videoQuizService.getQuizzesBySport()` which didn't exist. Added the missing method modeled after existing `getVideoQuizzesBySkill`.
+- **toFirestore not a function error:** Fixed by adding static helper methods to services
+- **Failed to load content error:** Fixed by adding missing `getQuizzesBySport` method
+- **Content browser overflow:** Selection summary was appearing outside dialog - fixed with flex layout and overflow handling
 
 ---
 
@@ -78,29 +89,36 @@
 ### Key Decisions
 - **Decision:** Add static helper methods rather than refactoring to instance methods
   - **Rationale:** Minimal change, maintains existing static method pattern in services
-  - **Alternatives:** Could refactor entire service to use instance methods (more invasive)
 
-- **Decision:** Rename difficulty levels to Introduction/Development/Refinement
-  - **Rationale:** Better reflects progression terminology for sports coaching
-  - **Alternatives:** Keep Beginner/Intermediate/Advanced (rejected by user preference)
+- **Decision:** Create standalone migration script in addition to migration service
+  - **Rationale:** Allows direct execution without needing to trigger through app
+
+- **Decision:** Fix content browser with flex layout
+  - **Rationale:** Proper containment of all elements within dialog bounds
 
 ### Implementation Details
 - Static `toFirestore` recursively converts Date objects to Firestore Timestamps
-- Static `fromFirestore` preserves Timestamps but handles nested structures
-- Difficulty level colors updated: Introduction (blue), Development (yellow), Refinement (red)
+- Migration script supports `--dry-run` and `--revert` flags
+- Content browser uses `flex flex-col overflow-hidden` on DialogContent
+- ScrollArea height reduced from 300px to 250px to fit selection summary
 
-### Learnings
-- When using static service methods, helper methods must also be static
-- Firestore Timestamp serialization needs explicit handling in custom services
+### Migration Results
+- **sports:** 22 documents updated
+- **skills:** 12 documents updated
+- **video_quizzes:** 14 documents updated
+- **users:** 0 updated (27 skipped - no profile.experienceLevel set)
+- **Total:** 48 documents migrated successfully
 
 ---
 
 ## 📊 Testing & Validation
 
-- [x] Manual testing completed - curriculum creation now works
+- [x] Manual testing completed - curriculum creation works
 - [x] Content browser loads successfully
-- [x] Build verified (implicit in previous changes)
-- [x] Documentation updated
+- [x] Content browser dialog overflow fixed
+- [x] Migration executed successfully (48 documents)
+- [x] Build verified after all changes
+- [x] All changes pushed to remote
 
 ---
 
@@ -109,16 +127,11 @@
 ### Immediate (Next Session)
 1. Test curriculum creation and content addition end-to-end
 2. Verify difficulty level display in all UI contexts
-3. Consider data migration for existing Firestore documents with old difficulty values
+3. Continue with Phase 2.0.4 parent-child relationships
 
 ### Follow-up Tasks
-- Run database migration script if needed to update existing documents
 - Update any API documentation reflecting new difficulty values
-- Continue with Phase 2.0.4 parent-child relationships
-
-### Important Note
-- **Existing Firestore data** may still have old difficulty values (beginner/intermediate/advanced)
-- A migration may be needed to update historical documents
+- Consider adding coach code system (per existing plan)
 
 ---
 
@@ -130,14 +143,15 @@
 **Sprint Progress:**
 - Bug fixes completed for curriculum system
 - Terminology update completed across codebase
+- Data migration completed successfully
 
 ---
 
 ## 🏷️ Tags
 
-`#bugfix` `#refactor` `#phase-2` `#curriculum` `#difficulty-levels`
+`#bugfix` `#refactor` `#migration` `#phase-2` `#curriculum` `#difficulty-levels`
 
 ---
 
 **Session End Time:** N/A
-**Next Session Focus:** Test curriculum flow, consider data migration for difficulty levels, or continue Phase 2.0.4
+**Next Session Focus:** Continue Phase 2.0.4 parent-child relationships or coach code system

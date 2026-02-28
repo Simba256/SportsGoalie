@@ -41,8 +41,8 @@
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
 ### 2026-02-28 - [Curriculum Fixes & Difficulty Level Renaming](docs/sessions/2026-02/2026-02-28-curriculum-fixes-difficulty-levels.md)
-**Time:** 1h 45min | **Focus:** Bug Fix / Refactor - Curriculum System & Terminology
-Fixed curriculum creation error (toFirestore not a function) by adding static helper methods to CustomCurriculumService and CustomContentService. Fixed content loading error by adding missing getQuizzesBySport method to VideoQuizService. Renamed all difficulty levels from Beginner/Intermediate/Advanced to Introduction/Development/Refinement across 22+ files including types, validation, security rules, seeding data, and UI components.
+**Time:** 2h 30min | **Focus:** Bug Fix / Refactor / Migration
+Fixed curriculum creation and content loading errors. Renamed difficulty levels to Introduction/Development/Refinement across 22+ files. Created and executed data migration (48 documents updated). Fixed content browser dialog overflow. Updated admin dashboard link to go directly to all students view.
 
 ### 2026-02-27 - [Coach Invitation Auth Fixes](docs/sessions/2026-02/2026-02-27-coach-invitation-auth-fixes.md)
 **Time:** 1h 30min | **Focus:** Debugging / Bug Fix - Coach Invitation Authentication
@@ -104,24 +104,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 25.25 hours | 🔄 In Progress |
-| **Total** | **~185.25 hours** | - |
+| Phase 2 | 26 hours | 🔄 In Progress |
+| **Total** | **~186 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 19h | 75% |
+| Development | 19.75h | 76% |
 | Documentation | 1.75h | 7% |
-| Debugging | 4.25h | 17% |
+| Debugging | 4.25h | 16% |
 | Version Control | 0.25h | 1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **25.25h** | **100%** |
+| **Total** | **26h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 25.25h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming | 14 |
+| 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
 
 ---
 
@@ -316,16 +316,19 @@ Initial project analysis and progress tracking system implementation.
 
 ### 2026-02-28 (Session: Curriculum Fixes & Difficulty Level Renaming)
 - **Feature:** Added Custom Curriculum link to admin dashboard under Student Support
+- **Feature:** Admin dashboard now links directly to `/coach/students` for all students view
 - **Fix:** Added static toFirestore/fromFirestore methods to CustomCurriculumService
 - **Fix:** Added static toFirestore/fromFirestore methods to CustomContentService
 - **Fix:** Added missing getQuizzesBySport method to VideoQuizService
+- **Fix:** Fixed content browser dialog overflow (selection summary appearing outside dialog)
 - **Refactor:** Renamed difficulty levels from Beginner/Intermediate/Advanced to Introduction/Development/Refinement
-- **Types:** Updated DifficultyLevel type in src/types/index.ts
+- **Migration:** Created and executed data migration script - 48 documents updated (22 sports, 12 skills, 14 quizzes)
+- **Types:** Updated DifficultyLevel type and Course interface
 - **Validation:** Updated Zod schema for difficulty levels
 - **Security:** Updated Firestore rules isValidDifficulty function
-- **Data:** Updated all seeding data and mock data with new difficulty values
-- **UI:** Updated difficulty color mappings in analytics components
-- **Files Modified:** 22+ files across the codebase
+- **Data:** Updated all seeding data, mock data, and test files with new difficulty values
+- **Scripts:** Added `scripts/migrate-difficulty-levels.ts` with dry-run and revert support
+- **Files Modified:** 30+ files across the codebase
 
 ### 2026-02-27 (Session: Coach Invitation Auth Fixes)
 - **Fix:** Resolved Firestore permission denied error during coach registration
@@ -495,8 +498,8 @@ Initial project analysis and progress tracking system implementation.
 **Last Updated:** 2026-02-28
 **Last Session:** [Curriculum Fixes & Difficulty Level Renaming](docs/sessions/2026-02/2026-02-28-curriculum-fixes-difficulty-levels.md)
 **Total Sessions This Phase:** 14
-**Current Phase Hours:** 25.25h
-**Next Session Focus:** Test curriculum flow end-to-end, consider data migration for existing difficulty values, or continue Phase 2.0.4 parent-child linking
+**Current Phase Hours:** 26h
+**Next Session Focus:** Continue Phase 2.0.4 parent-child relationships or implement coach code system
 
 ---
 
