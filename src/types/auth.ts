@@ -24,6 +24,7 @@ export interface RegisterCredentials {
   coachCode?: string; // Required for custom workflow students
   firstName?: string;
   lastName?: string;
+  skipEmailVerification?: boolean; // For invited coaches - email already verified via invitation link
 }
 
 // Profile update data

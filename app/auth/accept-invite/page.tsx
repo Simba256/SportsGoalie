@@ -114,11 +114,13 @@ function AcceptInviteContent() {
       setSubmitting(true);
 
       // Register the coach using the auth context (same code path as student registration)
+      // Skip email verification - clicking the invitation link IS the verification
       const { userId } = await register({
         email: invitation.email,
         password: formData.password,
         displayName: formData.displayName.trim(),
         role: 'coach',
+        skipEmailVerification: true,
       });
 
       // Mark invitation as accepted

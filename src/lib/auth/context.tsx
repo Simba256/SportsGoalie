@@ -167,13 +167,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.password
       );
 
-      // Check if email is verified BEFORE creating user or setting state
+      // Check if email is verified
+      // For invited coaches, we set emailVerified: true in Firestore (Firebase Auth won't have it)
       if (!userCredential.user.emailVerified) {
-        // Sign out the user immediately since they can't access the app
-        await firebaseSignOut(auth);
-        setLoading(false);
-        setUser(null);
-        throw new EmailVerificationRequiredError(context);
+        // Check Firestore for coaches who were verified via invitation
+        const userDocRef = doc(db, 'users', userCredential.user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const firestoreVerified = userDoc.exists() && userDoc.data()?.emailVerified === true;
+
+        if (!firestoreVerified) {
+          // Not verified in Firebase Auth or Firestore - block login
+          await firebaseSignOut(auth);
+          setLoading(false);
+          setUser(null);
+          throw new EmailVerificationRequiredError(context);
+        }
+        // Firestore says verified (invited coach) - allow login
       }
 
       const user = await createUserFromFirebaseUser(userCredential.user);
@@ -242,8 +251,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: credentials.displayName,
       });
 
-      // Send email verification
-      await sendEmailVerification(userCredential.user);
+      // Send email verification (skip for invited coaches - they verified by clicking invitation link)
+      if (!credentials.skipEmailVerification) {
+        await sendEmailVerification(userCredential.user);
+      }
 
       // Create user document in Firestore
       const newUser: User = {
@@ -251,7 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: credentials.email,
         displayName: credentials.displayName,
         role: credentials.role || 'student',
-        emailVerified: false,
+        emailVerified: credentials.skipEmailVerification || false, // Invited coaches are pre-verified
         createdAt: new Date(),
         updatedAt: new Date(),
         lastLoginAt: new Date(),
@@ -418,11 +429,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Skip this check if we're currently registering a new user
         // Check both the context's ref AND the auth-service's flag
         if (!firebaseUser.emailVerified && !isRegisteringRef.current && !isRegistrationInProgress) {
-          // Email not verified, sign out immediately
-          await firebaseSignOut(auth);
-          setUser(null);
-          setLoading(false);
-          return;
+          // Check Firestore for coaches who were verified via invitation
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          const firestoreVerified = userDoc.exists() && userDoc.data()?.emailVerified === true;
+
+          if (!firestoreVerified) {
+            // Email not verified in Firebase Auth or Firestore, sign out immediately
+            await firebaseSignOut(auth);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          // Firestore says verified (invited coach) - allow
         }
 
         const user = await createUserFromFirebaseUser(firebaseUser);
