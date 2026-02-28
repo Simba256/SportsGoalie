@@ -1120,4 +1120,100 @@ export class ProgressService extends BaseDatabaseService {
       };
     }
   }
+
+  /**
+   * Record lesson/skill completion with workflow-aware logic
+   * - Automated: Just record completion for regular progress tracking
+   * - Custom: Mark curriculum item as complete and notify coach
+   */
+  static async recordLessonCompletion(
+    userId: string,
+    skillId: string,
+    pillarId?: string
+  ): Promise<ApiResponse<void>> {
+    try {
+      const { userService } = await import('./user.service');
+      const userResult = await userService.getUser(userId);
+
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const user = userResult.data;
+
+      // Automated workflow or default
+      if (!user.workflowType || user.workflowType === 'automated') {
+        logger.info('Lesson completed (automated workflow)', 'ProgressService', {
+          userId,
+          skillId,
+          pillarId,
+        });
+
+        return {
+          success: true,
+          timestamp: new Date(),
+        };
+      }
+
+      // Custom workflow: Record completion and notify coach
+      const { customCurriculumService } = await import('./custom-curriculum.service');
+      const curriculumResult = await customCurriculumService.getStudentCurriculum(userId);
+
+      if (curriculumResult.success && curriculumResult.data) {
+        const curriculum = curriculumResult.data;
+
+        // Find the lesson in curriculum
+        const item = curriculum.items.find(i => i.contentId === skillId);
+
+        if (item) {
+          // Mark as completed
+          await customCurriculumService.markItemComplete(curriculum.id, item.id, userId);
+        }
+
+        // Notify coach
+        if (user.assignedCoachId) {
+          await this.notifyCoachOfCompletion(
+            userId,
+            user.assignedCoachId,
+            skillId,
+            'Lesson',
+            100 // Lessons are pass/fail, so 100% for completion
+          );
+        }
+      }
+
+      logger.info('Lesson completed (custom workflow)', 'ProgressService', {
+        userId,
+        skillId,
+        coachNotified: !!user.assignedCoachId,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to record lesson completion', 'ProgressService', {
+        userId,
+        skillId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'LESSON_COMPLETION_ERROR',
+          message: 'Failed to record lesson completion',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
 }

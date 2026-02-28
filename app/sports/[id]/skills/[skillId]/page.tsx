@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
+import { ProgressService } from '@/lib/database/services/progress.service';
+import { useAuth } from '@/lib/auth/context';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -35,6 +38,7 @@ interface SkillDetailState {
 export default function SkillDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const sportId = params.id as string;
   const skillId = params.skillId as string;
 
@@ -49,6 +53,11 @@ export default function SkillDetailPage() {
   });
 
   const [activeTab, setActiveTab] = useState<'content' | 'objectives' | 'resources'>('content');
+  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const [isMarkedComplete, setIsMarkedComplete] = useState(false);
+
+  // Check if user is a custom workflow student
+  const isCustomWorkflow = user?.workflowType === 'custom';
 
   useEffect(() => {
     if (!sportId || !skillId) return;
@@ -195,6 +204,34 @@ export default function SkillDetailPage() {
       alert('Unable to load video quiz. Please try again later.');
       console.error('Error navigating to video quiz:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
+    }
+  };
+
+  // Handle marking lesson as complete (for custom workflow students)
+  const handleMarkComplete = async () => {
+    if (!user || !skillId) return;
+
+    try {
+      setIsMarkingComplete(true);
+      const result = await ProgressService.recordLessonCompletion(
+        user.id,
+        skillId,
+        sportId
+      );
+
+      if (result.success) {
+        setIsMarkedComplete(true);
+        toast.success('Lesson marked as complete!', {
+          description: 'Your progress has been updated.',
+        });
+      } else {
+        toast.error('Failed to mark lesson as complete');
+      }
+    } catch (error) {
+      console.error('Error marking lesson complete:', error);
+      toast.error('Failed to mark lesson as complete');
+    } finally {
+      setIsMarkingComplete(false);
     }
   };
 
@@ -512,6 +549,48 @@ export default function SkillDetailPage() {
                   </CardContent>
                 </Card>
               ) : null}
+
+              {/* Mark Complete Section - For custom workflow students without quizzes */}
+              {isCustomWorkflow && !state.hasQuizzes && !state.quizzesLoading && (
+                <Card className={`${isMarkedComplete ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className={`w-8 h-8 ${isMarkedComplete ? 'text-green-600' : 'text-amber-600'}`} />
+                        <div>
+                          <h4 className={`font-medium ${isMarkedComplete ? 'text-green-900' : 'text-amber-900'}`}>
+                            {isMarkedComplete ? 'Lesson Completed!' : 'Finished this lesson?'}
+                          </h4>
+                          <p className={`text-sm ${isMarkedComplete ? 'text-green-700' : 'text-amber-700'}`}>
+                            {isMarkedComplete
+                              ? 'Your coach has been notified of your progress.'
+                              : 'Mark this lesson as complete when you\'re done reviewing the content.'}
+                          </p>
+                        </div>
+                      </div>
+                      {!isMarkedComplete && (
+                        <Button
+                          onClick={handleMarkComplete}
+                          disabled={isMarkingComplete}
+                          className="bg-amber-600 hover:bg-amber-700"
+                        >
+                          {isMarkingComplete ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Mark Complete
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
 

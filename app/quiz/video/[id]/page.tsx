@@ -7,6 +7,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { StandaloneVideoQuizPlayer } from '@/components/quiz/StandaloneVideoQuizPlayer';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
+import { ProgressService } from '@/lib/database/services/progress.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,6 +80,17 @@ function VideoQuizPageContent() {
       const result = await videoQuizService.completeQuiz(progress);
 
       if (result.success) {
+        // Record progress for curriculum tracking (handles both automated and custom workflows)
+        if (user) {
+          await ProgressService.recordQuizCompletion(
+            user.id,
+            quizId,
+            progress.percentage,
+            quiz?.sportId,
+            undefined // levelId - will be extracted from quiz if needed
+          );
+        }
+
         toast.success('Video quiz completed!', {
           description: `You scored ${progress.percentage.toFixed(1)}%`,
         });
