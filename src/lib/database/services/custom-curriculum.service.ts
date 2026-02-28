@@ -43,12 +43,12 @@ export class CustomCurriculumService extends BaseDatabaseService {
     if (data === null || data === undefined) return data;
     if (data instanceof Timestamp) return data;
     if (data instanceof Date) return Timestamp.fromDate(data);
-    if (Array.isArray(data)) return data.map(item => this.toFirestore(item));
+    if (Array.isArray(data)) return data.map(item => CustomCurriculumService.toFirestore(item));
     if (typeof data === 'object') {
       const result: any = {};
       for (const key in data) {
         if (data.hasOwnProperty(key) && data[key] !== undefined) {
-          result[key] = this.toFirestore(data[key]);
+          result[key] = CustomCurriculumService.toFirestore(data[key]);
         }
       }
       return result;
@@ -62,12 +62,12 @@ export class CustomCurriculumService extends BaseDatabaseService {
   private static fromFirestore<T>(data: any): T {
     if (data === null || data === undefined) return data;
     if (data instanceof Timestamp) return data as any;
-    if (Array.isArray(data)) return data.map(item => this.fromFirestore(item)) as any;
+    if (Array.isArray(data)) return data.map(item => CustomCurriculumService.fromFirestore(item)) as any;
     if (typeof data === 'object') {
       const result: any = {};
       for (const key in data) {
         if (data.hasOwnProperty(key)) {
-          result[key] = this.fromFirestore(data[key]);
+          result[key] = CustomCurriculumService.fromFirestore(data[key]);
         }
       }
       return result as T;
@@ -101,10 +101,10 @@ export class CustomCurriculumService extends BaseDatabaseService {
         lastModifiedBy: createdBy,
       };
 
-      await setDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore(curriculum));
+      await setDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), CustomCurriculumService.toFirestore(curriculum));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${data.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${data.studentId}`);
 
       logger.info('Created custom curriculum', 'CustomCurriculumService', {
         curriculumId,
@@ -141,13 +141,13 @@ export class CustomCurriculumService extends BaseDatabaseService {
   static async getStudentCurriculum(studentId: string): Promise<ApiResponse<CustomCurriculum | null>> {
     try {
       const cacheKey = `curriculum_student_${studentId}`;
-      const cached = this.cache.get<CustomCurriculum>(cacheKey);
+      const cached = CustomCurriculumService.cache.get<CustomCurriculum>(cacheKey);
       if (cached) {
         return { success: true, data: cached, timestamp: new Date() };
       }
 
       const q = query(
-        collection(db, this.COLLECTION),
+        collection(db, CustomCurriculumService.COLLECTION),
         where('studentId', '==', studentId)
       );
 
@@ -157,8 +157,8 @@ export class CustomCurriculumService extends BaseDatabaseService {
         return { success: true, data: null, timestamp: new Date() };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(querySnapshot.docs[0].data());
-      this.cache.set(cacheKey, curriculum);
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(querySnapshot.docs[0].data());
+      CustomCurriculumService.cache.set(cacheKey, curriculum);
 
       return {
         success: true,
@@ -187,14 +187,14 @@ export class CustomCurriculumService extends BaseDatabaseService {
    */
   static async getCurriculum(curriculumId: string): Promise<ApiResponse<CustomCurriculum | null>> {
     try {
-      const docRef = doc(db, this.COLLECTION, curriculumId);
+      const docRef = doc(db, CustomCurriculumService.COLLECTION, curriculumId);
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
         return { success: true, data: null, timestamp: new Date() };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(docSnap.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(docSnap.data());
 
       return {
         success: true,
@@ -224,14 +224,14 @@ export class CustomCurriculumService extends BaseDatabaseService {
   static async getCoachCurricula(coachId: string): Promise<ApiResponse<CustomCurriculum[]>> {
     try {
       const q = query(
-        collection(db, this.COLLECTION),
+        collection(db, CustomCurriculumService.COLLECTION),
         where('coachId', '==', coachId),
         orderBy('updatedAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
       const curricula = querySnapshot.docs.map(doc =>
-        this.fromFirestore<CustomCurriculum>(doc.data())
+        CustomCurriculumService.fromFirestore<CustomCurriculum>(doc.data())
       );
 
       return {
@@ -265,7 +265,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
     modifiedBy: string
   ): Promise<ApiResponse<void>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return {
@@ -278,7 +278,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
       const newItem: CustomCurriculumItem = {
@@ -303,14 +303,14 @@ export class CustomCurriculumService extends BaseDatabaseService {
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = modifiedBy;
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore({
+      await updateDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), CustomCurriculumService.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: modifiedBy,
       }));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Added item to curriculum', 'CustomCurriculumService', {
         curriculumId,
@@ -348,7 +348,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
     modifiedBy: string
   ): Promise<ApiResponse<void>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return {
@@ -361,21 +361,21 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
       curriculum.items = curriculum.items.filter(item => item.id !== itemId);
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = modifiedBy;
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore({
+      await updateDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), CustomCurriculumService.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: modifiedBy,
       }));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Removed item from curriculum', 'CustomCurriculumService', {
         curriculumId,
@@ -413,7 +413,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
     modifiedBy: string
   ): Promise<ApiResponse<void>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return {
@@ -426,7 +426,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
       // Create a map of items by ID
@@ -442,14 +442,14 @@ export class CustomCurriculumService extends BaseDatabaseService {
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = modifiedBy;
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore({
+      await updateDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), CustomCurriculumService.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: modifiedBy,
       }));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Reordered curriculum items', 'CustomCurriculumService', {
         curriculumId,
@@ -486,7 +486,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
     modifiedBy: string
   ): Promise<ApiResponse<void>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return {
@@ -499,7 +499,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
       const item = curriculum.items.find(i => i.id === itemId);
@@ -520,14 +520,14 @@ export class CustomCurriculumService extends BaseDatabaseService {
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = modifiedBy;
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore({
+      await updateDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), CustomCurriculumService.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: modifiedBy,
       }));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Unlocked curriculum item', 'CustomCurriculumService', {
         curriculumId,
@@ -564,7 +564,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
     modifiedBy: string
   ): Promise<ApiResponse<void>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return {
@@ -577,7 +577,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
       curriculum.items = curriculum.items.map(item => ({
@@ -589,14 +589,14 @@ export class CustomCurriculumService extends BaseDatabaseService {
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = modifiedBy;
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore({
+      await updateDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), CustomCurriculumService.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: modifiedBy,
       }));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Unlocked all curriculum items', 'CustomCurriculumService', {
         curriculumId,
@@ -634,7 +634,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
   ): Promise<ApiResponse<void>> {
     try {
       console.log('✅ markItemComplete: Starting', { curriculumId, itemId, userId });
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         console.log('❌ markItemComplete: Curriculum document not found');
@@ -649,7 +649,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
       }
 
       console.log('✅ markItemComplete: Curriculum doc exists, raw data:', curriculumDoc.data());
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
       console.log('✅ markItemComplete: Parsed curriculum items count:', curriculum.items?.length);
@@ -674,18 +674,18 @@ export class CustomCurriculumService extends BaseDatabaseService {
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = userId;
 
-      const updateData = this.toFirestore({
+      const updateData = CustomCurriculumService.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: userId,
       });
       console.log('✅ markItemComplete: Update data to save:', updateData);
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), updateData);
+      await updateDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId), updateData);
       console.log('✅ markItemComplete: Update successful');
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Marked curriculum item as complete', 'CustomCurriculumService', {
         curriculumId,
@@ -719,13 +719,13 @@ export class CustomCurriculumService extends BaseDatabaseService {
    */
   static async getNextItem(curriculumId: string): Promise<ApiResponse<CustomCurriculumItem | null>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return { success: true, data: null, timestamp: new Date() };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
 
       // Find first unlocked item that's not completed
       const nextItem = curriculum.items
@@ -759,13 +759,13 @@ export class CustomCurriculumService extends BaseDatabaseService {
    */
   static async getCurriculumProgress(curriculumId: string): Promise<ApiResponse<CurriculumProgress | null>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return { success: true, data: null, timestamp: new Date() };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const totalItems = curriculum.items.length;
       const completedItems = curriculum.items.filter(i => i.status === 'completed').length;
       const inProgressItems = curriculum.items.filter(i => i.status === 'in_progress').length;
@@ -829,7 +829,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
    */
   static async deleteCurriculum(curriculumId: string): Promise<ApiResponse<void>> {
     try {
-      const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
+      const curriculumDoc = await getDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
         return {
@@ -842,12 +842,12 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
-      const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
+      const curriculum = CustomCurriculumService.fromFirestore<CustomCurriculum>(curriculumDoc.data());
 
-      await deleteDoc(doc(db, this.COLLECTION, curriculumId));
+      await deleteDoc(doc(db, CustomCurriculumService.COLLECTION, curriculumId));
 
       // Clear cache
-      this.cache.delete(`curriculum_student_${curriculum.studentId}`);
+      CustomCurriculumService.cache.delete(`curriculum_student_${curriculum.studentId}`);
 
       logger.info('Deleted curriculum', 'CustomCurriculumService', {
         curriculumId,
