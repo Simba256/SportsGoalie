@@ -182,9 +182,29 @@ export default function CoachDashboardPage() {
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">
-                    No coach code assigned. Contact an administrator.
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-muted-foreground">
+                      No coach code generated yet.
+                    </p>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleRegenerateCode}
+                      disabled={regenerating}
+                    >
+                      {regenerating ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Key className="h-4 w-4 mr-2" />
+                          Generate Code
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>

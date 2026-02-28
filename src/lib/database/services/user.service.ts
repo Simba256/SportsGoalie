@@ -1318,6 +1318,9 @@ export class UserService extends BaseDatabaseService {
       };
     }
 
+    // Register the new code in coach_codes collection for lookup
+    await this.registerCoachCode(newCoachCode, coachId, coachResult.data.displayName);
+
     logger.info('Coach code regenerated successfully', 'UserService', {
       coachId,
       newCoachCode,

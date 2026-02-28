@@ -240,6 +240,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ Coach code validated, assigning to coach:', coachResult.data.displayName);
       }
 
+      // Generate coach code for coaches BEFORE creating Firebase user
+      let coachCode: string | undefined;
+      if (credentials.role === 'coach') {
+        coachCode = await userService.generateUniqueCoachCode(credentials.displayName);
+        console.log('✅ Generated coach code:', coachCode);
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         credentials.email,
@@ -271,6 +278,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           workflowType: credentials.workflowType || 'automated',
           ...(assignedCoachId && { assignedCoachId }),
         }),
+        // Add coach code for coaches
+        ...(credentials.role === 'coach' && coachCode && { coachCode }),
         preferences: {
           theme: 'system',
           notifications: {
@@ -314,6 +323,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(userDocRef, docData);
 
       console.log('✅ Firestore document created successfully');
+
+      // Register coach code in coach_codes collection for lookup
+      if (credentials.role === 'coach' && coachCode) {
+        await userService.registerCoachCode(coachCode, newUser.id, credentials.displayName);
+        console.log('✅ Coach code registered:', coachCode);
+      }
 
       // Important: Log out the user immediately after registration
       // They need to verify their email before logging in
