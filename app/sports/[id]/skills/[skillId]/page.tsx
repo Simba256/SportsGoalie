@@ -6,6 +6,7 @@ import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
+import { customCurriculumService } from '@/lib/database';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -55,9 +56,48 @@ export default function SkillDetailPage() {
   const [activeTab, setActiveTab] = useState<'content' | 'objectives' | 'resources'>('content');
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [isMarkedComplete, setIsMarkedComplete] = useState(false);
+  const [isInCurriculum, setIsInCurriculum] = useState(false);
+  const [curriculumLoading, setCurriculumLoading] = useState(true);
 
   // Check if user is a custom workflow student
   const isCustomWorkflow = user?.workflowType === 'custom';
+
+  // Check if this skill is in the student's curriculum
+  useEffect(() => {
+    const checkCurriculum = async () => {
+      if (!isCustomWorkflow || !user?.id || !skillId) {
+        setCurriculumLoading(false);
+        return;
+      }
+
+      try {
+        setCurriculumLoading(true);
+        const result = await customCurriculumService.getStudentCurriculum(user.id);
+        console.log('📚 Skill page - Curriculum check:', result);
+
+        if (result.success && result.data) {
+          const item = result.data.items.find(i => i.contentId === skillId);
+          console.log('📚 Skill page - Found item for skillId', skillId, ':', item);
+
+          if (item) {
+            setIsInCurriculum(true);
+            setIsMarkedComplete(item.status === 'completed');
+          } else {
+            setIsInCurriculum(false);
+          }
+        } else {
+          setIsInCurriculum(false);
+        }
+      } catch (error) {
+        console.error('Failed to check curriculum:', error);
+        setIsInCurriculum(false);
+      } finally {
+        setCurriculumLoading(false);
+      }
+    };
+
+    checkCurriculum();
+  }, [isCustomWorkflow, user?.id, skillId]);
 
   useEffect(() => {
     if (!sportId || !skillId) return;
@@ -550,8 +590,8 @@ export default function SkillDetailPage() {
                 </Card>
               ) : null}
 
-              {/* Mark Complete Section - For custom workflow students without quizzes */}
-              {isCustomWorkflow && !state.hasQuizzes && !state.quizzesLoading && (
+              {/* Mark Complete Section - For custom workflow students with this skill in their curriculum */}
+              {isCustomWorkflow && !state.hasQuizzes && !state.quizzesLoading && !curriculumLoading && isInCurriculum && (
                 <Card className={`${isMarkedComplete ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
@@ -587,6 +627,18 @@ export default function SkillDetailPage() {
                           )}
                         </Button>
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Loading curriculum check */}
+              {isCustomWorkflow && !state.hasQuizzes && !state.quizzesLoading && curriculumLoading && (
+                <Card className="bg-gray-50 border-gray-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                      <p className="text-sm text-gray-600">Checking your curriculum...</p>
                     </div>
                   </CardContent>
                 </Card>
