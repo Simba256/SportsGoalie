@@ -40,6 +40,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-02-27 - [Coach Invitation Auth Fixes](docs/sessions/2026-02/2026-02-27-coach-invitation-auth-fixes.md)
+**Time:** 1h 30min | **Focus:** Debugging / Bug Fix - Coach Invitation Authentication
+Fixed critical auth issues in coach invitation flow. Resolved race condition between onAuthStateChanged listener and registration. Discovered code path discrepancy between student and coach registration. Implemented skipEmailVerification for invited coaches (clicking link IS verification). Updated Firestore rules and login flow to check Firestore emailVerified field.
+
 ### 2026-02-26 - [Coach-Student Linking & Dashboard Separation](docs/sessions/2026-02/2026-02-26-coach-student-linking-dashboard-separation.md)
 **Time:** 1h 15min | **Focus:** Feature - Coach-Student Direct Linking & Dashboard Differentiation
 Implemented Phase 2.0.3 coach-student direct linking with 4 new UserService methods, StudentSearchDialog component, and add/remove functionality on coach students page. Created CustomCurriculumDashboard component for custom workflow students. Dashboard now shows different experience based on student workflowType.
@@ -96,24 +100,24 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 22 hours | 🔄 In Progress |
-| **Total** | **~182 hours** | - |
+| Phase 2 | 23.5 hours | 🔄 In Progress |
+| **Total** | **~183.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 19h | 86% |
-| Documentation | 1.75h | 8% |
-| Debugging | 1.0h | 5% |
+| Development | 19h | 81% |
+| Documentation | 1.75h | 7% |
+| Debugging | 2.5h | 11% |
 | Version Control | 0.25h | 1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **22h** | **100%** |
+| **Total** | **23.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
-| 2026-02-17 | 22h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation | 12 |
+| 2026-02-17 | 23.5h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes | 13 |
 
 ---
 
@@ -163,6 +167,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-02-27: Skip Email Verification for Invited Coaches
+**Decision:** Invited coaches skip email verification; clicking the invitation link serves as verification
+**Rationale:** Invitation emails are sent to the coach's email - clicking the link proves email ownership
+**Impact:** Smoother coach onboarding, no redundant verification step, coaches can log in immediately
+**Alternatives Considered:** Require email verification anyway (rejected - redundant and poor UX)
+
+### 2026-02-27: Dual Email Verification Check
+**Decision:** Login checks both Firebase Auth `emailVerified` AND Firestore document `emailVerified`
+**Rationale:** Firebase Auth won't have emailVerified set for invited coaches, but we track it in Firestore
+**Impact:** Supports both regular email verification and invitation-based verification
+**Alternatives Considered:** Force Firebase Auth verification for all users (rejected - requires additional email)
 
 ### 2026-02-24: Smart Context Loading for AI Chatbot
 **Decision:** Default to smart context loading (5-10 relevant docs) instead of full context
@@ -293,6 +309,16 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-02-27 (Session: Coach Invitation Auth Fixes)
+- **Fix:** Resolved Firestore permission denied error during coach registration
+- **Fix:** Fixed race condition between onAuthStateChanged and registration code
+- **Fix:** Coach invitation flow now uses context.tsx register instead of auth-service.ts
+- **Feature:** Added skipEmailVerification flag for invited coaches
+- **Feature:** Clicking invitation link now serves as email verification
+- **Feature:** Login checks both Firebase Auth and Firestore emailVerified fields
+- **Security:** Updated Firestore rules for coach_invitations to allow acceptance after sign-out
+- **Backend:** Register function now returns userId for tracking
 
 ### 2026-02-26 (Session: Coach-Student Linking & Dashboard Separation)
 - **Feature:** Phase 2.0.3 Coach-student direct linking complete
@@ -449,11 +475,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-02-26
-**Last Session:** [Coach-Student Linking & Dashboard Separation](docs/sessions/2026-02/2026-02-26-coach-student-linking-dashboard-separation.md)
-**Total Sessions This Phase:** 12
-**Current Phase Hours:** 22h
-**Next Session Focus:** Phase 2.0.4 parent-child linking, Phase 2.0.5 role-based route protection, or Phase 2.1 6-pillar conversion
+**Last Updated:** 2026-02-27
+**Last Session:** [Coach Invitation Auth Fixes](docs/sessions/2026-02/2026-02-27-coach-invitation-auth-fixes.md)
+**Total Sessions This Phase:** 13
+**Current Phase Hours:** 23.5h
+**Next Session Focus:** Test coach invitation flow, commit changes, or continue Phase 2.0.4 parent-child linking
 
 ---
 
