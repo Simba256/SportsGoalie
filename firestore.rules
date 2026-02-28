@@ -698,9 +698,12 @@ service cloud.firestore {
                        request.resource.data.items is list;
 
       // Coaches can update their students' curricula, admins can update any
+      // Students can update their own curriculum (to mark items as complete)
       allow update: if isAuthenticated() && (
         (isCoach() && resource.data.coachId == getUserId()) ||  // Coach updates their student's
-        isAdmin()                                               // Admin updates any
+        isAdmin() ||                                             // Admin updates any
+        (resource.data.studentId == getUserId() &&               // Student updates own curriculum
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt', 'lastModifiedBy']))
       );
 
       // Only admins can delete curricula
