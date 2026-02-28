@@ -1164,17 +1164,30 @@ export class ProgressService extends BaseDatabaseService {
 
       // Custom workflow: Record completion and notify coach
       const { customCurriculumService } = await import('./custom-curriculum.service');
+      console.log('📝 recordLessonCompletion: Getting curriculum for user:', userId);
       const curriculumResult = await customCurriculumService.getStudentCurriculum(userId);
+      console.log('📝 recordLessonCompletion: Curriculum result:', curriculumResult);
 
       if (curriculumResult.success && curriculumResult.data) {
         const curriculum = curriculumResult.data;
+        console.log('📝 recordLessonCompletion: Curriculum items:', curriculum.items);
+        console.log('📝 recordLessonCompletion: Looking for skillId:', skillId);
 
         // Find the lesson in curriculum
         const item = curriculum.items.find(i => i.contentId === skillId);
+        console.log('📝 recordLessonCompletion: Found item:', item);
 
         if (item) {
           // Mark as completed
+          console.log('📝 recordLessonCompletion: Marking item complete:', {
+            curriculumId: curriculum.id,
+            itemId: item.id,
+            userId,
+          });
           await customCurriculumService.markItemComplete(curriculum.id, item.id, userId);
+          console.log('📝 recordLessonCompletion: Item marked complete');
+        } else {
+          console.log('📝 recordLessonCompletion: Item NOT found in curriculum');
         }
 
         // Notify coach

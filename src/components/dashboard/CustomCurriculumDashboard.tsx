@@ -59,8 +59,18 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
       setLoading(true);
 
       // Load curriculum
+      console.log('📚 Loading curriculum for student:', user.id);
       const curriculumResult = await customCurriculumService.getStudentCurriculum(user.id);
+      console.log('📚 Curriculum result:', curriculumResult);
+
       if (curriculumResult.success && curriculumResult.data) {
+        console.log('📚 Curriculum data:', {
+          id: curriculumResult.data.id,
+          studentId: curriculumResult.data.studentId,
+          coachId: curriculumResult.data.coachId,
+          itemsCount: curriculumResult.data.items?.length || 0,
+          items: curriculumResult.data.items,
+        });
         setCurriculum(curriculumResult.data);
 
         // Load content info for all items

@@ -633,9 +633,11 @@ export class CustomCurriculumService extends BaseDatabaseService {
     userId: string
   ): Promise<ApiResponse<void>> {
     try {
+      console.log('✅ markItemComplete: Starting', { curriculumId, itemId, userId });
       const curriculumDoc = await getDoc(doc(db, this.COLLECTION, curriculumId));
 
       if (!curriculumDoc.exists()) {
+        console.log('❌ markItemComplete: Curriculum document not found');
         return {
           success: false,
           error: {
@@ -646,11 +648,15 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
+      console.log('✅ markItemComplete: Curriculum doc exists, raw data:', curriculumDoc.data());
       const curriculum = this.fromFirestore<CustomCurriculum>(curriculumDoc.data());
       const now = Timestamp.now();
 
+      console.log('✅ markItemComplete: Parsed curriculum items count:', curriculum.items?.length);
       const item = curriculum.items.find(i => i.id === itemId);
       if (!item) {
+        console.log('❌ markItemComplete: Item not found in curriculum. Looking for:', itemId);
+        console.log('❌ markItemComplete: Available item IDs:', curriculum.items?.map(i => i.id));
         return {
           success: false,
           error: {
@@ -661,17 +667,22 @@ export class CustomCurriculumService extends BaseDatabaseService {
         };
       }
 
+      console.log('✅ markItemComplete: Found item, updating status');
       item.status = 'completed';
       item.completedAt = now;
 
       curriculum.updatedAt = now;
       curriculum.lastModifiedBy = userId;
 
-      await updateDoc(doc(db, this.COLLECTION, curriculumId), this.toFirestore({
+      const updateData = this.toFirestore({
         items: curriculum.items,
         updatedAt: now,
         lastModifiedBy: userId,
-      }));
+      });
+      console.log('✅ markItemComplete: Update data to save:', updateData);
+
+      await updateDoc(doc(db, this.COLLECTION, curriculumId), updateData);
+      console.log('✅ markItemComplete: Update successful');
 
       // Clear cache
       this.cache.delete(`curriculum_student_${curriculum.studentId}`);
