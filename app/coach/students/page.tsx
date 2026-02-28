@@ -52,21 +52,28 @@ export default function CoachStudentsPage() {
     try {
       setLoading(true);
 
-      // Get all students assigned to this coach
-      const allUsersResult = await userService.getAllUsers();
+      // Get students based on user role
+      // Coaches get only their assigned students, admins get all custom workflow students
+      let studentsResult;
+      if (user?.role === 'admin') {
+        // Admins can see ALL custom workflow students
+        studentsResult = await userService.getAllUsers({ role: 'student' });
+        if (studentsResult.success && studentsResult.data) {
+          studentsResult.data.items = studentsResult.data.items.filter(
+            u => u.workflowType === 'custom'
+          );
+        }
+      } else {
+        // Coaches get only students assigned to them
+        studentsResult = await userService.getCoachStudents(user?.id || '');
+      }
 
-      if (!allUsersResult.success || !allUsersResult.data) {
+      if (!studentsResult.success || !studentsResult.data) {
         toast.error('Failed to load students');
         return;
       }
 
-      // Filter for students assigned to this coach with custom workflow
-      // Admins can see ALL custom workflow students
-      const assignedStudents = allUsersResult.data.filter(
-        u => u.role === 'student' &&
-            u.workflowType === 'custom' &&
-            (user?.role === 'admin' || u.assignedCoachId === user?.id)
-      );
+      const assignedStudents = studentsResult.data.items;
 
       // Load curriculum data for each student
       const studentsWithCurriculum: StudentWithCurriculum[] = await Promise.all(

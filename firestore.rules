@@ -32,6 +32,18 @@ service cloud.firestore {
       return isOwner(userId) || isAdmin();
     }
 
+    // Check if user is a coach
+    function isCoach() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'coach' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coach');
+    }
+
+    // Check if user is coach or admin
+    function isCoachOrAdmin() {
+      return isCoach() || isAdmin();
+    }
+
     function isEmailVerified() {
       return request.auth.token.email_verified == true;
     }
@@ -86,7 +98,9 @@ service cloud.firestore {
     // Users collection
     match /users/{userId} {
       // Users can read their own profile, admins can read all
-      allow read: if isOwnerOrAdmin(userId);
+      // Coaches can read profiles of students assigned to them
+      allow read: if isOwnerOrAdmin(userId) ||
+                     (isCoach() && resource.data.assignedCoachId == request.auth.uid);
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
@@ -663,18 +677,6 @@ service cloud.firestore {
     }
 
     // ==================== CUSTOM CURRICULUM SYSTEM (Phase 2.0.6) ====================
-
-    // Helper function to check if user is a coach
-    function isCoach() {
-      return isAuthenticated() &&
-        (request.auth.token.role == 'coach' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coach');
-    }
-
-    // Helper function to check if user is coach or admin
-    function isCoachOrAdmin() {
-      return isCoach() || isAdmin();
-    }
 
     // Custom Curriculum collection - Personalized learning paths for custom workflow students
     match /custom_curriculum/{curriculumId} {
