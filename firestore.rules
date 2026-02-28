@@ -98,9 +98,9 @@ service cloud.firestore {
     // Users collection
     match /users/{userId} {
       // Users can read their own profile, admins can read all
-      // Coaches can read profiles of students assigned to them
+      // Coaches can read all student profiles (needed to browse and add students to roster)
       allow read: if isOwnerOrAdmin(userId) ||
-                     (isCoach() && resource.data.assignedCoachId == request.auth.uid);
+                     (isCoach() && resource.data.role == 'student');
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
