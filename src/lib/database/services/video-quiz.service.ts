@@ -494,6 +494,50 @@ export class VideoQuizService extends BaseDatabaseService {
   }
 
   /**
+   * Gets video quizzes by sport.
+   */
+  async getQuizzesBySport(
+    sportId: string,
+    options?: QueryOptions
+  ): Promise<ApiResponse<PaginatedResponse<VideoQuiz>>> {
+    logger.database('query', this.VIDEO_QUIZZES_COLLECTION, undefined, { sportId });
+
+    try {
+      const result = await this.query<VideoQuiz>(
+        this.VIDEO_QUIZZES_COLLECTION,
+        {
+          ...options,
+          where: [
+            ...(options?.where || []),
+            { field: 'sportId', operator: '==' as const, value: sportId },
+            { field: 'isActive', operator: '==' as const, value: true },
+          ],
+        }
+      );
+
+      if (!result.success) {
+        logger.error('Query failed', 'VideoQuizService', result.error);
+        return result;
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Failed to fetch video quizzes by sport', 'VideoQuizService', error as Error, {
+        sportId,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'VIDEO_QUIZZES_FETCH_FAILED',
+          message: 'Failed to fetch video quizzes by sport',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
    * Gets video quizzes by skill.
    */
   async getVideoQuizzesBySkill(
