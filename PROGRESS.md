@@ -40,6 +40,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-02-28 - [Custom Curriculum Progress Tracking](docs/sessions/2026-02/2026-02-28-custom-curriculum-progress-tracking.md)
+**Time:** 1h 45min | **Focus:** Feature / Bug Fix
+Implemented progress tracking for custom workflow students. Added recordLessonCompletion method and Mark Complete button for lessons. Fixed static method context issues in CustomCurriculumService. Fixed Firestore security rules to allow students to update their own curriculum items.
+
 ### 2026-02-28 - [Curriculum Fixes & Difficulty Level Renaming](docs/sessions/2026-02/2026-02-28-curriculum-fixes-difficulty-levels.md)
 **Time:** 2h 30min | **Focus:** Bug Fix / Refactor / Migration
 Fixed curriculum creation and content loading errors. Renamed difficulty levels to Introduction/Development/Refinement across 22+ files. Created and executed data migration (48 documents updated). Fixed content browser dialog overflow. Updated admin dashboard link to go directly to all students view.
