@@ -91,7 +91,10 @@ export default function LoginPage() {
       // Redirect based on user role
       if (user.role === 'admin') {
         router.push('/admin');
+      } else if (user.role === 'coach') {
+        router.push('/coach');
       } else {
+        // Students and parents go to dashboard
         router.push('/dashboard');
       }
     }
