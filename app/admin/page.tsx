@@ -267,7 +267,7 @@ function AdminDashboardContent() {
                     Manage custom workflow students and their curricula
                   </p>
                 </div>
-                <Link href="/coach">
+                <Link href="/coach/students">
                   <Button>Manage</Button>
                 </Link>
               </div>
