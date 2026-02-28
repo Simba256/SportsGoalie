@@ -90,6 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updatedAt: userData.updatedAt?.toDate() || new Date(),
           lastLoginAt: new Date(),
           preferences: userData.preferences,
+          // Include student/coach specific fields from Firestore
+          ...(userData.workflowType && { workflowType: userData.workflowType }),
+          ...(userData.assignedCoachId && { assignedCoachId: userData.assignedCoachId }),
+          ...(userData.studentNumber && { studentNumber: userData.studentNumber }),
+          ...(userData.coachCode && { coachCode: userData.coachCode }),
         };
 
         // Only add photoURL if it exists
