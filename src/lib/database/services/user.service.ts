@@ -867,11 +867,11 @@ export class UserService extends BaseDatabaseService {
     logger.info('Getting available students for coach', 'UserService', { coachId, options });
 
     // Query for custom workflow students without an assigned coach
+    // Note: Don't filter by isActive since many documents don't have this field
     const queryOptions: QueryOptions = {
       where: [
         { field: 'role', operator: '==', value: 'student' },
         { field: 'workflowType', operator: '==', value: 'custom' },
-        { field: 'isActive', operator: '==', value: true },
       ],
       orderBy: [{ field: 'displayName', direction: 'asc' }],
       limit: options.limit || 50,
@@ -1077,12 +1077,12 @@ export class UserService extends BaseDatabaseService {
   ): Promise<ApiResponse<PaginatedResponse<User>>> {
     logger.info('Getting coach students', 'UserService', { coachId, options });
 
+    // Note: Don't filter by isActive since many documents don't have this field
     const queryOptions: QueryOptions = {
       where: [
         { field: 'role', operator: '==', value: 'student' },
         { field: 'workflowType', operator: '==', value: 'custom' },
         { field: 'assignedCoachId', operator: '==', value: coachId },
-        { field: 'isActive', operator: '==', value: true },
       ],
       orderBy: [{ field: 'displayName', direction: 'asc' }],
     };
