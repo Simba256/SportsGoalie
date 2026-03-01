@@ -29,16 +29,18 @@ import {
   Loader2,
   ChevronRight,
   Clock,
-  BarChart3,
   Check,
+  FolderOpen,
+  User,
 } from 'lucide-react';
-import { sportsService, videoQuizService } from '@/lib/database';
-import { Sport, Skill, VideoQuiz } from '@/types';
+import { sportsService, videoQuizService, customContentService } from '@/lib/database';
+import { useAuth } from '@/lib/auth/context';
+import { Sport, Skill, VideoQuiz, CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 
 interface ContentItem {
   id: string;
-  type: 'lesson' | 'quiz';
+  type: 'lesson' | 'quiz' | 'custom_lesson' | 'custom_quiz';
   title: string;
   description: string;
   sportId: string;
@@ -48,6 +50,7 @@ interface ContentItem {
   hasVideo?: boolean;
   icon?: string;
   color?: string;
+  isCustom?: boolean;
 }
 
 interface ContentBrowserProps {
@@ -55,6 +58,7 @@ interface ContentBrowserProps {
   onOpenChange: (open: boolean) => void;
   onSelect: (content: ContentItem) => void;
   selectedSportId?: string;
+  coachId?: string;
 }
 
 export function ContentBrowser({
@@ -62,14 +66,20 @@ export function ContentBrowser({
   onOpenChange,
   onSelect,
   selectedSportId,
+  coachId,
 }: ContentBrowserProps) {
+  const { user } = useAuth();
+  const effectiveCoachId = coachId || user?.id;
+
   const [sports, setSports] = useState<Sport[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [quizzes, setQuizzes] = useState<VideoQuiz[]>([]);
+  const [customContent, setCustomContent] = useState<CustomContentLibrary[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState(selectedSportId || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [contentSource, setContentSource] = useState<'library' | 'custom'>('library');
   const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
 
@@ -77,15 +87,18 @@ export function ContentBrowser({
   useEffect(() => {
     if (open) {
       loadSports();
+      if (effectiveCoachId) {
+        loadCustomContent();
+      }
     }
-  }, [open]);
+  }, [open, effectiveCoachId]);
 
   // Load content when sport or type changes
   useEffect(() => {
-    if (selectedSport) {
+    if (selectedSport && contentSource === 'library') {
       loadContent();
     }
-  }, [selectedSport, contentType]);
+  }, [selectedSport, contentType, contentSource]);
 
   const loadSports = async () => {
     try {
@@ -145,7 +158,52 @@ export function ContentBrowser({
     }
   };
 
+  const loadCustomContent = async () => {
+    if (!effectiveCoachId) return;
+
+    try {
+      const result = await customContentService.getCoachContent(effectiveCoachId);
+      if (result.success && result.data) {
+        setCustomContent(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to load custom content:', error);
+    }
+  };
+
   const getFilteredContent = (): ContentItem[] => {
+    if (contentSource === 'custom') {
+      // Filter custom content
+      let items = customContent
+        .filter(item => contentType === 'lesson' ? item.type === 'lesson' : item.type === 'quiz')
+        .map(item => ({
+          id: item.id,
+          type: (item.type === 'lesson' ? 'custom_lesson' : 'custom_quiz') as ContentItem['type'],
+          title: item.title,
+          description: item.description,
+          sportId: item.pillarId || 'custom',
+          sportName: 'My Content',
+          difficulty: 'custom',
+          estimatedTime: item.estimatedTimeMinutes || 15,
+          hasVideo: !!item.videoUrl,
+          color: item.type === 'lesson' ? '#3B82F6' : '#22C55E',
+          isCustom: true,
+        }));
+
+      // Apply search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        items = items.filter(
+          item =>
+            item.title.toLowerCase().includes(query) ||
+            item.description.toLowerCase().includes(query)
+        );
+      }
+
+      return items;
+    }
+
+    // Library content
     const sport = sports.find(s => s.id === selectedSport);
     if (!sport) return [];
 
@@ -170,11 +228,11 @@ export function ContentBrowser({
         id: quiz.id,
         type: 'quiz' as const,
         title: quiz.title,
-        description: quiz.description,
+        description: quiz.description || '',
         sportId: sport.id,
         sportName: sport.name,
         difficulty: quiz.difficulty,
-        estimatedTime: quiz.settings.timeLimit || 30,
+        estimatedTime: quiz.estimatedDuration || 30,
         icon: sport.icon,
         color: sport.color,
       }));
@@ -212,6 +270,8 @@ export function ContentBrowser({
   };
 
   const filteredContent = getFilteredContent();
+  const customLessonCount = customContent.filter(c => c.type === 'lesson').length;
+  const customQuizCount = customContent.filter(c => c.type === 'quiz').length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -224,39 +284,76 @@ export function ContentBrowser({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4">
-          {/* Sport Selection */}
-          <div className="space-y-2">
-            <Label>Sport / Pillar</Label>
-            <Select value={selectedSport} onValueChange={setSelectedSport}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a sport..." />
-              </SelectTrigger>
-              <SelectContent>
-                {sports.map(sport => (
-                  <SelectItem key={sport.id} value={sport.id}>
-                    <div className="flex items-center gap-2">
-                      <span>{sport.icon}</span>
-                      <span>{sport.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {sport.skillsCount} skills
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Content Source Tabs */}
+          <Tabs value={contentSource} onValueChange={(v) => {
+            setContentSource(v as 'library' | 'custom');
+            setSelectedItem(null);
+          }}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="library" className="gap-2">
+                <FolderOpen className="h-4 w-4" />
+                Content Library
+              </TabsTrigger>
+              <TabsTrigger value="custom" className="gap-2">
+                <User className="h-4 w-4" />
+                My Content
+                {customContent.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {customContent.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Sport Selection (only for library) */}
+          {contentSource === 'library' && (
+            <div className="space-y-2">
+              <Label>Sport / Pillar</Label>
+              <Select value={selectedSport} onValueChange={setSelectedSport}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a sport..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {sports.map(sport => (
+                    <SelectItem key={sport.id} value={sport.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{sport.icon}</span>
+                        <span>{sport.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {sport.skillsCount} skills
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Content Type Tabs */}
-          <Tabs value={contentType} onValueChange={(v) => setContentType(v as 'lesson' | 'quiz')}>
+          <Tabs value={contentType} onValueChange={(v) => {
+            setContentType(v as 'lesson' | 'quiz');
+            setSelectedItem(null);
+          }}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="lesson">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Lessons
+                {contentSource === 'custom' && customLessonCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    {customLessonCount}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="quiz">
                 <PlayCircle className="h-4 w-4 mr-2" />
                 Quizzes
+                {contentSource === 'custom' && customQuizCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    {customQuizCount}
+                  </Badge>
+                )}
               </TabsTrigger>
             </TabsList>
 
@@ -274,17 +371,19 @@ export function ContentBrowser({
                     />
                   </div>
                 </div>
-                <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="introduction">Introduction</SelectItem>
-                    <SelectItem value="development">Development</SelectItem>
-                    <SelectItem value="refinement">Refinement</SelectItem>
-                  </SelectContent>
-                </Select>
+                {contentSource === 'library' && (
+                  <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Levels</SelectItem>
+                      <SelectItem value="introduction">Introduction</SelectItem>
+                      <SelectItem value="development">Development</SelectItem>
+                      <SelectItem value="refinement">Refinement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               {/* Content List */}
@@ -295,12 +394,28 @@ export function ContentBrowser({
                   </div>
                 ) : filteredContent.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-sm">
-                      {searchQuery
-                        ? 'No content found matching your search'
-                        : `No ${contentType === 'lesson' ? 'lessons' : 'quizzes'} available for this sport`}
-                    </p>
+                    {contentSource === 'custom' ? (
+                      <>
+                        <User className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-sm">
+                          {searchQuery
+                            ? 'No content found matching your search'
+                            : `You haven't created any custom ${contentType === 'lesson' ? 'lessons' : 'quizzes'} yet`}
+                        </p>
+                        <p className="text-xs mt-1">
+                          Create content from the Content Library page
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-sm">
+                          {searchQuery
+                            ? 'No content found matching your search'
+                            : `No ${contentType === 'lesson' ? 'lessons' : 'quizzes'} available for this sport`}
+                        </p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="p-2 space-y-2">
@@ -319,7 +434,7 @@ export function ContentBrowser({
                             className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg"
                             style={{ backgroundColor: `${item.color}20` }}
                           >
-                            {item.type === 'lesson' ? (
+                            {item.type === 'lesson' || item.type === 'custom_lesson' ? (
                               <BookOpen className="h-5 w-5" style={{ color: item.color }} />
                             ) : (
                               <PlayCircle className="h-5 w-5" style={{ color: item.color }} />
@@ -328,6 +443,11 @@ export function ContentBrowser({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-medium truncate">{item.title}</h4>
+                              {item.isCustom && (
+                                <Badge variant="outline" className="text-xs">
+                                  Custom
+                                </Badge>
+                              )}
                               {selectedItem?.id === item.id && (
                                 <Check className="h-4 w-4 text-primary flex-shrink-0" />
                               )}
@@ -336,9 +456,11 @@ export function ContentBrowser({
                               {item.description}
                             </p>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <Badge variant="outline" className="text-xs">
-                                {item.difficulty}
-                              </Badge>
+                              {!item.isCustom && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.difficulty}
+                                </Badge>
+                              )}
                               <div className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
                                 <span>{item.estimatedTime} min</span>
@@ -366,16 +488,23 @@ export function ContentBrowser({
                       className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-xl"
                       style={{ backgroundColor: `${selectedItem.color}20` }}
                     >
-                      {selectedItem.type === 'lesson' ? (
+                      {selectedItem.type === 'lesson' || selectedItem.type === 'custom_lesson' ? (
                         <BookOpen className="h-6 w-6" style={{ color: selectedItem.color }} />
                       ) : (
                         <PlayCircle className="h-6 w-6" style={{ color: selectedItem.color }} />
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold mb-1">{selectedItem.title}</h4>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold">{selectedItem.title}</h4>
+                        {selectedItem.isCustom && (
+                          <Badge variant="outline" className="text-xs">
+                            Custom
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {selectedItem.sportName} • {selectedItem.difficulty} • {selectedItem.estimatedTime} min
+                        {selectedItem.sportName} • {selectedItem.isCustom ? 'Custom Content' : selectedItem.difficulty} • {selectedItem.estimatedTime} min
                       </p>
                       <p className="text-sm">{selectedItem.description}</p>
                     </div>

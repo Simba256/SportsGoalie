@@ -16,13 +16,17 @@ import {
   Trash2,
   BookOpen,
   PlayCircle,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { userService, sportsService, videoQuizService } from '@/lib/database';
+import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
-import { User, CustomCurriculum, CustomCurriculumItem } from '@/types';
+import { User, CustomCurriculum, CustomCurriculumItem, CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 import { ContentBrowser } from '@/components/coach/content-browser';
+import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
+import { LessonCreator } from '@/components/coach/lesson-creator';
+import { QuizCreator } from '@/components/coach/quiz-creator';
 
 export default function StudentCurriculumPage() {
   const params = useParams();
@@ -35,6 +39,11 @@ export default function StudentCurriculumPage() {
   const [loading, setLoading] = useState(true);
   const [showContentBrowser, setShowContentBrowser] = useState(false);
   const [contentTitles, setContentTitles] = useState<Record<string, string>>({});
+
+  // Quick create states
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showLessonCreator, setShowLessonCreator] = useState(false);
+  const [showQuizCreator, setShowQuizCreator] = useState(false);
 
   useEffect(() => {
     if (studentId && coach?.id) {
@@ -83,6 +92,12 @@ export default function StudentCurriculumPage() {
                 if (quizResult.success && quizResult.data) {
                   titles[item.contentId] = quizResult.data.title;
                 }
+              } else if (item.type === 'custom_lesson' || item.type === 'custom_quiz') {
+                // Load custom content title
+                const contentResult = await customContentService.getContent(item.contentId);
+                if (contentResult.success && contentResult.data) {
+                  titles[item.contentId] = contentResult.data.title;
+                }
               }
             } catch (error) {
               console.error('Failed to load content title:', error);
@@ -126,19 +141,28 @@ export default function StudentCurriculumPage() {
 
   const handleContentSelect = async (content: {
     id: string;
-    type: 'lesson' | 'quiz';
+    type: 'lesson' | 'quiz' | 'custom_lesson' | 'custom_quiz';
     title: string;
     sportId: string;
+    isCustom?: boolean;
   }) => {
     if (!curriculum || !coach?.id) return;
 
     try {
+      // Determine the correct type
+      let itemType = content.type;
+      if (content.isCustom && content.type === 'lesson') {
+        itemType = 'custom_lesson';
+      } else if (content.isCustom && content.type === 'quiz') {
+        itemType = 'custom_quiz';
+      }
+
       const result = await customCurriculumService.addItem(
         curriculum.id,
         {
-          type: content.type,
+          type: itemType,
           contentId: content.id,
-          pillarId: content.sportId,
+          pillarId: content.sportId || 'custom',
           levelId: 'level-1', // Default level for now
           unlocked: false, // Start locked
         },
@@ -146,6 +170,10 @@ export default function StudentCurriculumPage() {
       );
 
       if (result.success) {
+        // Mark content as used
+        if (content.isCustom) {
+          await customContentService.markContentUsed(content.id);
+        }
         toast.success(`${content.title} added to curriculum`);
         await loadData(); // Reload to see changes
       } else {
@@ -155,6 +183,25 @@ export default function StudentCurriculumPage() {
       console.error('Failed to add content:', error);
       toast.error('Failed to add content');
     }
+  };
+
+  const handleTypeSelect = (type: ContentType) => {
+    if (type === 'lesson') {
+      setShowLessonCreator(true);
+    } else {
+      setShowQuizCreator(true);
+    }
+  };
+
+  const handleContentCreated = async (content: CustomContentLibrary) => {
+    // Automatically add the created content to the curriculum
+    await handleContentSelect({
+      id: content.id,
+      type: content.type === 'lesson' ? 'custom_lesson' : 'custom_quiz',
+      title: content.title,
+      sportId: content.pillarId || 'custom',
+      isCustom: true,
+    });
   };
 
   const toggleItemLock = async (itemId: string, currentlyLocked: boolean) => {
@@ -232,6 +279,24 @@ export default function StudentCurriculumPage() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  const getItemTypeBadge = (type: string) => {
+    const isCustom = type.startsWith('custom_');
+    const baseType = type.replace('custom_', '');
+
+    return (
+      <div className="flex items-center gap-1">
+        <Badge variant="outline" className="text-xs">
+          {baseType === 'lesson' ? 'Lesson' : 'Quiz'}
+        </Badge>
+        {isCustom && (
+          <Badge variant="secondary" className="text-xs">
+            Custom
+          </Badge>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -285,10 +350,14 @@ export default function StudentCurriculumPage() {
               <CardTitle>Curriculum Actions</CardTitle>
               <CardDescription>Manage content and student access</CardDescription>
             </CardHeader>
-            <CardContent className="flex gap-2">
+            <CardContent className="flex flex-wrap gap-2">
               <Button onClick={() => setShowContentBrowser(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Content
+              </Button>
+              <Button variant="secondary" onClick={() => setShowTypeSelector(true)}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Create Custom Content
               </Button>
               <Button variant="outline" onClick={unlockAllItems} disabled={curriculum.items.length === 0}>
                 <Unlock className="h-4 w-4 mr-2" />
@@ -309,7 +378,17 @@ export default function StudentCurriculumPage() {
               {curriculum.items.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Circle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No content added yet. Click "Add Content" to get started.</p>
+                  <p className="mb-4">No content added yet.</p>
+                  <div className="flex justify-center gap-2">
+                    <Button variant="outline" onClick={() => setShowContentBrowser(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Existing Content
+                    </Button>
+                    <Button variant="secondary" onClick={() => setShowTypeSelector(true)}>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Create Custom Content
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -333,9 +412,7 @@ export default function StudentCurriculumPage() {
                             </h4>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {item.type === 'lesson' ? 'Lesson' : 'Quiz'}
-                            </Badge>
+                            {getItemTypeBadge(item.type)}
                             {getStatusBadge(item.status)}
                           </div>
                         </div>
@@ -371,7 +448,34 @@ export default function StudentCurriculumPage() {
         open={showContentBrowser}
         onOpenChange={setShowContentBrowser}
         onSelect={handleContentSelect}
+        coachId={coach?.id}
       />
+
+      {/* Content Type Selector */}
+      <ContentTypeSelector
+        open={showTypeSelector}
+        onOpenChange={setShowTypeSelector}
+        onSelect={handleTypeSelect}
+      />
+
+      {/* Lesson Creator */}
+      {coach?.id && (
+        <>
+          <LessonCreator
+            open={showLessonCreator}
+            onOpenChange={setShowLessonCreator}
+            coachId={coach.id}
+            onSave={handleContentCreated}
+          />
+
+          <QuizCreator
+            open={showQuizCreator}
+            onOpenChange={setShowQuizCreator}
+            coachId={coach.id}
+            onSave={handleContentCreated}
+          />
+        </>
+      )}
     </div>
   );
 }

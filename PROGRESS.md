@@ -9,7 +9,7 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 70% (Phase 1 Complete, Phase 2.0.3 Coach-Student Linking Complete, Dashboard Separation Complete)
+**Overall Progress:** 80% (Phase 1 Complete, Phase 2.0.6b Coach Custom Content Creation Complete)
 
 ---
 
@@ -33,12 +33,17 @@
 - [x] **Session Tracking Dashboard** (2026-02-25)
 - [x] **Phase 2.0.3: Coach-student direct linking** (2026-02-26)
 - [x] **Dashboard separation for custom vs automated students** (2026-02-26)
+- [x] **Coach Custom Content Creation System** (video lessons + video quizzes with full feature parity) (2026-03-01)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-01 - [Coach Custom Content Creation System](docs/sessions/2026-03/2026-03-01-coach-custom-content-creation.md)
+**Time:** 3h 30min | **Focus:** Feature - Coach Content Creation
+Implemented complete coach custom content creation system with full feature parity to admin quiz creation. Created video upload component, lesson creator, quiz creator (3-step wizard with VideoQuestionBuilder), content type selector, and coach content library page. Added "My Content" tab to content browser and "Create Custom Content" button to curriculum editor. Updated Firestore rules for coach video quiz permissions. Build verified successful.
 
 ### 2026-02-28 - [Custom Curriculum Progress Tracking](docs/sessions/2026-02/2026-02-28-custom-curriculum-progress-tracking.md)
 **Time:** 1h 45min | **Focus:** Feature / Bug Fix
@@ -108,24 +113,25 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 26 hours | 🔄 In Progress |
-| **Total** | **~186 hours** | - |
+| Phase 2 | 29.5 hours | 🔄 In Progress |
+| **Total** | **~189.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 19.75h | 76% |
-| Documentation | 1.75h | 7% |
-| Debugging | 4.25h | 16% |
+| Development | 23.25h | 79% |
+| Documentation | 1.75h | 6% |
+| Debugging | 4.25h | 14% |
 | Version Control | 0.25h | 1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **26h** | **100%** |
+| **Total** | **29.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
+| 2026-03-01 | 3.5h | Coach custom content creation system (video lessons, video quizzes, content library) | 1 |
 
 ---
 
@@ -133,7 +139,7 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (70% Complete)
+#### 2.0 - Multi-Role Foundation (80% Complete)
 - [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
 - [x] 2.0.1b: Student ID system & registration security - COMPLETE
 - [x] 2.0.2: Coach invitation system with email infrastructure - COMPLETE
@@ -141,6 +147,7 @@ Initial project analysis and progress tracking system implementation.
 - [ ] 2.0.4: Parent-child relationships with student ID linking
 - [ ] 2.0.5: Role-based route protection
 - [x] 2.0.6: Student workflow types & custom curriculum system (MVP) - COMPLETE
+- [x] 2.0.6b: Coach custom content creation (video lessons + quizzes) - COMPLETE
 - [ ] 2.0.7: Student onboarding & initial evaluation
 
 #### 2.1 - 6-Pillar Conversion (0% Complete)
@@ -175,6 +182,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-01: Store Coach Video Quizzes in Existing Collection
+**Decision:** Store coach-created video quizzes in the existing `video_quizzes` collection with `source: 'coach'` marker
+**Rationale:** Reuses all existing quiz player infrastructure, progress tracking, and UI components without duplication
+**Impact:** Single quiz player works for both admin and coach quizzes, consistent user experience
+**Alternatives Considered:** Separate `coach_video_quizzes` collection (rejected - would require duplicating player logic)
+
+### 2026-03-01: useState over react-hook-form
+**Decision:** Use basic useState for form management instead of react-hook-form
+**Rationale:** Project doesn't have react-hook-form installed; useState provides equivalent functionality for current needs
+**Impact:** Simpler dependency management, no new packages required
+**Alternatives Considered:** Installing react-hook-form (rejected - unnecessary dependency for current scope)
 
 ### 2026-02-27: Skip Email Verification for Invited Coaches
 **Decision:** Invited coaches skip email verification; clicking the invitation link serves as verification
@@ -317,6 +336,19 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-01 (Session: Coach Custom Content Creation System)
+- **Feature:** Created video-uploader.tsx with drag-drop, Firebase Storage integration, progress tracking
+- **Feature:** Created lesson-creator.tsx with full form fields (title, description, video, content, objectives, tags)
+- **Feature:** Created quiz-creator.tsx with 3-step wizard (Info → Video → Questions) using VideoQuestionBuilder
+- **Feature:** Created content-type-selector.tsx modal for lesson vs quiz selection
+- **Feature:** Built coach content library page at /coach/content with stats, search, filtering
+- **Feature:** Created 4 editor pages for lesson/quiz creation and editing
+- **Feature:** Added "My Content" tab to content-browser.tsx for coach's library
+- **Feature:** Added "Create Custom Content" button to curriculum editor
+- **Security:** Added Firestore rules for coach video quiz creation/update/delete (source='coach')
+- **Fix:** Removed react-hook-form dependency, used useState for form management
+- **Build:** Verified successful build with all new routes
 
 ### 2026-02-28 (Session: Curriculum Fixes & Difficulty Level Renaming)
 - **Feature:** Added Custom Curriculum link to admin dashboard under Student Support
@@ -499,11 +531,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-02-28
-**Last Session:** [Curriculum Fixes & Difficulty Level Renaming](docs/sessions/2026-02/2026-02-28-curriculum-fixes-difficulty-levels.md)
-**Total Sessions This Phase:** 14
-**Current Phase Hours:** 26h
-**Next Session Focus:** Continue Phase 2.0.4 parent-child relationships or implement coach code system
+**Last Updated:** 2026-03-01
+**Last Session:** [Coach Custom Content Creation System](docs/sessions/2026-03/2026-03-01-coach-custom-content-creation.md)
+**Total Sessions This Phase:** 15
+**Current Phase Hours:** 29.5h
+**Next Session Focus:** Test coach content creation flow end-to-end, or continue Phase 2.0.4 parent-child relationships
 
 ---
 
