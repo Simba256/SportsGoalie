@@ -27,7 +27,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatsCards } from '@/components/analytics/StatsCards';
-import { userService, sportsService, videoQuizService } from '@/lib/database';
+import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { User, CustomCurriculum, CustomCurriculumItem } from '@/types';
 import { toast } from 'sonner';
@@ -103,6 +103,17 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                     sportName: sportResult.data?.name,
                     sportIcon: sportResult.data?.icon,
                     sportColor: sportResult.data?.color,
+                  };
+                }
+              } else if (item.type === 'custom_lesson' || item.type === 'custom_quiz') {
+                // Load custom content from content library
+                const contentResult = await customContentService.getContent(item.contentId);
+                if (contentResult.success && contentResult.data) {
+                  info[item.contentId] = {
+                    title: contentResult.data.title,
+                    description: contentResult.data.description,
+                    sportName: 'Custom Content',
+                    sportColor: '#8b5cf6', // Purple for custom content
                   };
                 }
               }
@@ -198,13 +209,18 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   };
 
   const getContentLink = (item: CustomCurriculumItem) => {
+    // All unlocked/in_progress/completed items should be accessible
     if (item.status === 'locked') return null;
 
     if (item.type === 'lesson' && item.contentId) {
-      // Get sportId from content info or item
-      const info = contentInfo[item.contentId];
       return `/sports/${item.pillarId}/skills/${item.contentId}`;
     } else if (item.type === 'quiz' && item.contentId) {
+      return `/quiz/video/${item.contentId}`;
+    } else if (item.type === 'custom_lesson' && item.contentId) {
+      // Custom lessons - link to custom content viewer
+      return `/learn/lesson/${item.contentId}`;
+    } else if (item.type === 'custom_quiz' && item.contentId) {
+      // Custom quizzes - link to video quiz player (same as regular quizzes)
       return `/quiz/video/${item.contentId}`;
     }
     return null;
@@ -380,7 +396,14 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {curriculum.items
-                    .sort((a, b) => a.order - b.order)
+                    .sort((a, b) => {
+                      // Priority: completed > in_progress > unlocked > locked
+                      const statusOrder = { completed: 0, in_progress: 1, unlocked: 2, locked: 3 };
+                      const statusDiff = (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
+                      if (statusDiff !== 0) return statusDiff;
+                      // Within same status, sort by order
+                      return a.order - b.order;
+                    })
                     .map((item, index) => {
                       const info = contentInfo[item.contentId || item.id];
                       const link = getContentLink(item);

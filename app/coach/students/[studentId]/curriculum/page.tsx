@@ -393,7 +393,14 @@ export default function StudentCurriculumPage() {
               ) : (
                 <div className="space-y-3">
                   {curriculum.items
-                    .sort((a, b) => a.order - b.order)
+                    .sort((a, b) => {
+                      // Priority: completed > in_progress > unlocked > locked
+                      const statusOrder = { completed: 0, in_progress: 1, unlocked: 2, locked: 3 };
+                      const statusDiff = (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
+                      if (statusDiff !== 0) return statusDiff;
+                      // Within same status, sort by order
+                      return a.order - b.order;
+                    })
                     .map((item, index) => (
                       <div
                         key={item.id}
