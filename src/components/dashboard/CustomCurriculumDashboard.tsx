@@ -350,7 +350,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                           backgroundColor: `${contentInfo[nextItem.contentId || nextItem.id]?.sportColor || '#6366f1'}20`,
                         }}
                       >
-                        {nextItem.type === 'lesson' ? (
+                        {nextItem.type === 'lesson' || nextItem.type === 'custom_lesson' ? (
                           <BookOpen
                             className="h-6 w-6"
                             style={{ color: contentInfo[nextItem.contentId || nextItem.id]?.sportColor || '#6366f1' }}
@@ -372,7 +372,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                         {getContentLink(nextItem) && (
                           <Link href={getContentLink(nextItem)!}>
                             <Button>
-                              {nextItem.type === 'lesson' ? 'Start Lesson' : 'Take Quiz'}
+                              {nextItem.type === 'lesson' || nextItem.type === 'custom_lesson' ? 'Start Lesson' : 'Take Quiz'}
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                           </Link>
@@ -450,7 +450,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                             {link && item.status !== 'locked' && (
                               <Link href={link} className="inline-block mt-2">
                                 <Button size="sm" variant={item.status === 'completed' ? 'outline' : 'default'}>
-                                  {item.status === 'completed' ? 'Review' : item.type === 'lesson' ? 'Start' : 'Take Quiz'}
+                                  {item.status === 'completed' ? 'Review' : (item.type === 'lesson' || item.type === 'custom_lesson') ? 'Start' : 'Take Quiz'}
                                 </Button>
                               </Link>
                             )}
@@ -461,7 +461,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                               backgroundColor: `${info?.sportColor || '#6366f1'}15`,
                             }}
                           >
-                            {item.type === 'lesson' ? (
+                            {item.type === 'lesson' || item.type === 'custom_lesson' ? (
                               <BookOpen
                                 className="h-5 w-5"
                                 style={{ color: info?.sportColor || '#6366f1' }}
