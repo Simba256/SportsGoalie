@@ -201,10 +201,17 @@ export class CustomContentService extends BaseDatabaseService {
 
       const content = this.fromFirestore<CustomContentLibrary>(docSnap.data());
 
-      // Increment view count
-      await updateDoc(docRef, {
-        'metadata.views': increment(1),
-      });
+      // Try to increment view count (non-blocking - don't fail if user lacks write permission)
+      try {
+        await updateDoc(docRef, {
+          'metadata.views': increment(1),
+        });
+      } catch (viewError) {
+        // Silently ignore - students can't update, but they should still be able to read
+        logger.debug('Could not increment view count (expected for students)', 'CustomContentService', {
+          contentId,
+        });
+      }
 
       return {
         success: true,
