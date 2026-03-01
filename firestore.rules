@@ -737,9 +737,9 @@ service cloud.firestore {
 
     // Custom Content Library collection - Coach-created reusable content
     match /custom_content_library/{contentId} {
-      // Any authenticated user can read custom content (students need to access assigned content)
-      // This is similar to how skills and quizzes are publicly readable
-      allow read: if isAuthenticated();
+      // PUBLIC: Anyone can read custom content (students need to access assigned content)
+      // This is the same as how sports/skills/quizzes are publicly readable
+      allow read: if true;
 
       // Coaches and admins can create custom content
       allow create: if isCoachOrAdmin() &&
