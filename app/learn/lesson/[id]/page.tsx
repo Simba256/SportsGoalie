@@ -39,15 +39,25 @@ export default function CustomLessonPage() {
   const loadLesson = async () => {
     try {
       setLoading(true);
+      console.log('📖 Loading lesson:', lessonId);
       const result = await customContentService.getContent(lessonId);
+      console.log('📖 Lesson result:', result);
+
       if (result.success && result.data) {
         setLesson(result.data);
+      } else if (result.success && !result.data) {
+        // Content doesn't exist in database
+        console.error('📖 Lesson not found in database:', lessonId);
+        toast.error('Lesson not found - it may not have been saved correctly');
+        router.back();
       } else {
-        toast.error('Lesson not found');
+        // Permission or other error
+        console.error('📖 Error loading lesson:', result.error);
+        toast.error(result.error?.message || 'Failed to load lesson');
         router.back();
       }
     } catch (error) {
-      console.error('Failed to load lesson:', error);
+      console.error('📖 Exception loading lesson:', error);
       toast.error('Failed to load lesson');
     } finally {
       setLoading(false);
