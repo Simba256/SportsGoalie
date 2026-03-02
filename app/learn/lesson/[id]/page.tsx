@@ -112,7 +112,7 @@ export default function CustomLessonPage() {
       }
 
       // Mark as completed
-      const result = await customCurriculumService.recordLessonCompletion(
+      const result = await customCurriculumService.markItemComplete(
         curriculumResult.data.id,
         curriculumItem.id,
         user.id
