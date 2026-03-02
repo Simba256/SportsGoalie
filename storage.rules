@@ -58,6 +58,34 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // Coach content uploads (videos, images, documents for custom lessons/quizzes)
+    match /coach-content/{coachId}/videos/{fileName} {
+      // Public read for coach content videos
+      allow read: if true;
+      // Coaches can upload to their own folder
+      allow write: if isOwner(coachId) && isValidVideoSize() && isValidVideoType();
+      // Coach can delete their own, admin can delete any
+      allow delete: if isOwner(coachId) || isAdmin();
+    }
+
+    match /coach-content/{coachId}/images/{fileName} {
+      // Public read for coach content images
+      allow read: if true;
+      // Coaches can upload to their own folder
+      allow write: if isOwner(coachId) && isValidImageSize() && isValidImageType();
+      // Coach can delete their own, admin can delete any
+      allow delete: if isOwner(coachId) || isAdmin();
+    }
+
+    match /coach-content/{coachId}/documents/{fileName} {
+      // Authenticated users can read coach documents
+      allow read: if isAuthenticated();
+      // Coaches can upload to their own folder
+      allow write: if isOwner(coachId) && isValidDocumentSize() && isValidDocumentType();
+      // Coach can delete their own, admin can delete any
+      allow delete: if isOwner(coachId) || isAdmin();
+    }
+
     // Video uploads for students and admins
     match /videos/{userId}/{fileName} {
       // Users can upload their own videos
