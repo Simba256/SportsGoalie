@@ -85,13 +85,36 @@ export function VideoUploader({
     const tempUrl = URL.createObjectURL(file);
     const tempVideo = document.createElement('video');
     tempVideo.preload = 'metadata';
-    tempVideo.onloadedmetadata = () => {
+
+    let durationSet = false;
+    const trySetDuration = () => {
       const duration = tempVideo.duration;
-      if (Number.isFinite(duration) && duration > 0) {
+      if (!durationSet && Number.isFinite(duration) && duration > 0) {
+        durationSet = true;
         setVideoDuration(Math.floor(duration));
+        URL.revokeObjectURL(tempUrl);
       }
-      URL.revokeObjectURL(tempUrl);
     };
+
+    // Different formats report duration at different events
+    tempVideo.onloadedmetadata = trySetDuration;
+    tempVideo.ondurationchange = trySetDuration;
+    tempVideo.onloadeddata = trySetDuration;
+
+    // Clean up on error
+    tempVideo.onerror = () => {
+      if (!durationSet) {
+        URL.revokeObjectURL(tempUrl);
+      }
+    };
+
+    // Fallback: clean up after timeout if duration never becomes available
+    setTimeout(() => {
+      if (!durationSet) {
+        URL.revokeObjectURL(tempUrl);
+      }
+    }, 5000);
+
     tempVideo.src = tempUrl;
   }, []);
 
