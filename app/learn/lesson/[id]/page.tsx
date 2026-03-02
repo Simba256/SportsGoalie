@@ -19,6 +19,30 @@ import { customContentService, customCurriculumService } from '@/lib/database';
 import { CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 
+// Helper functions for YouTube URLs
+function isYouTubeUrl(url: string): boolean {
+  return url.includes('youtube.com') || url.includes('youtu.be');
+}
+
+function getYouTubeEmbedUrl(url: string): string {
+  // Handle various YouTube URL formats
+  let videoId = '';
+
+  if (url.includes('youtu.be/')) {
+    // Short format: https://youtu.be/VIDEO_ID
+    videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+  } else if (url.includes('youtube.com/watch')) {
+    // Standard format: https://www.youtube.com/watch?v=VIDEO_ID
+    const urlParams = new URLSearchParams(url.split('?')[1]);
+    videoId = urlParams.get('v') || '';
+  } else if (url.includes('youtube.com/embed/')) {
+    // Already embed format
+    return url;
+  }
+
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+}
+
 export default function CustomLessonPage() {
   const params = useParams();
   const router = useRouter();
@@ -153,14 +177,23 @@ export default function CustomLessonPage() {
         <Card className="mb-6">
           <CardContent className="p-0">
             <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
-              <video
-                src={lesson.videoUrl}
-                controls
-                className="w-full h-full"
-                poster="/video-placeholder.png"
-              >
-                Your browser does not support the video tag.
-              </video>
+              {isYouTubeUrl(lesson.videoUrl) ? (
+                <iframe
+                  src={getYouTubeEmbedUrl(lesson.videoUrl)}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={lesson.title}
+                />
+              ) : (
+                <video
+                  src={lesson.videoUrl}
+                  controls
+                  className="w-full h-full"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
             </div>
           </CardContent>
         </Card>
