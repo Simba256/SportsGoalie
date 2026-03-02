@@ -41,6 +41,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-02 - [Custom Content Student Access Fixes](docs/sessions/2026-03/2026-03-02-custom-content-student-access-fixes.md)
+**Time:** 2h 15min | **Focus:** Bug Fix - Student Access
+Fixed critical issues preventing students from accessing custom lessons. Updated curriculum sorting (unlocked before locked). Fixed Firestore rules for public read. Discovered and fixed view count increment blocking students (was requiring write permission). Created custom lesson viewer page with YouTube embed support. Students can now access coach-created lessons.
+
 ### 2026-03-01 - [Coach Custom Content Creation System](docs/sessions/2026-03/2026-03-01-coach-custom-content-creation.md)
 **Time:** 3h 30min | **Focus:** Feature - Coach Content Creation
 Implemented complete coach custom content creation system with full feature parity to admin quiz creation. Created video upload component, lesson creator, quiz creator (3-step wizard with VideoQuestionBuilder), content type selector, and coach content library page. Added "My Content" tab to content browser and "Create Custom Content" button to curriculum editor. Updated Firestore rules for coach video quiz permissions. Build verified successful.
@@ -113,25 +117,25 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 29.5 hours | 🔄 In Progress |
-| **Total** | **~189.5 hours** | - |
+| Phase 2 | 31.75 hours | 🔄 In Progress |
+| **Total** | **~191.75 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 23.25h | 79% |
+| Development | 23.25h | 73% |
 | Documentation | 1.75h | 6% |
-| Debugging | 4.25h | 14% |
+| Debugging | 6.5h | 20% |
 | Version Control | 0.25h | 1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **29.5h** | **100%** |
+| **Total** | **31.75h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 3.5h | Coach custom content creation system (video lessons, video quizzes, content library) | 1 |
+| 2026-03-01 | 5.75h | Coach custom content creation, student access fixes, Firestore rules, YouTube support | 2 |
 
 ---
 
@@ -182,6 +186,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-02: Non-Blocking View Count Increment
+**Decision:** Wrap view count increment in try-catch so read operations succeed even if analytics update fails
+**Rationale:** Students don't have write permission to custom_content_library, but should still be able to read content
+**Impact:** Core read functionality works for all users; view tracking may be incomplete for student views
+**Alternatives Considered:** Add student write permission for metadata only (rejected - security risk)
+
+### 2026-03-02: Public Read for Custom Content Library
+**Decision:** Make custom_content_library publicly readable (allow read: if true)
+**Rationale:** Same approach as sports, skills, and quizzes - educational content should be accessible to all
+**Impact:** Any authenticated or unauthenticated user can read custom content
+**Alternatives Considered:** Complex per-student permissions based on curriculum assignment (rejected - over-engineering)
 
 ### 2026-03-01: Store Coach Video Quizzes in Existing Collection
 **Decision:** Store coach-created video quizzes in the existing `video_quizzes` collection with `source: 'coach'` marker
@@ -336,6 +352,16 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-02 (Session: Custom Content Student Access Fixes)
+- **Fix:** Updated curriculum sorting to prioritize by status (completed > in_progress > unlocked > locked)
+- **Fix:** Added support for custom_lesson and custom_quiz types in student dashboard
+- **Fix:** Fixed button text and icons for custom content types
+- **Feature:** Created custom lesson viewer page at /learn/lesson/[id]
+- **Fix:** Updated Firestore rules - custom_content_library now has public read access
+- **Fix:** Made view count increment non-blocking (was causing permission errors for students)
+- **Feature:** Added YouTube URL detection and iframe embed support
+- **Security:** Deployed Firestore rules updates
 
 ### 2026-03-01 (Session: Coach Custom Content Creation System)
 - **Feature:** Created video-uploader.tsx with drag-drop, Firebase Storage integration, progress tracking
@@ -531,11 +557,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-01
-**Last Session:** [Coach Custom Content Creation System](docs/sessions/2026-03/2026-03-01-coach-custom-content-creation.md)
-**Total Sessions This Phase:** 15
-**Current Phase Hours:** 29.5h
-**Next Session Focus:** Test coach content creation flow end-to-end, or continue Phase 2.0.4 parent-child relationships
+**Last Updated:** 2026-03-02
+**Last Session:** [Custom Content Student Access Fixes](docs/sessions/2026-03/2026-03-02-custom-content-student-access-fixes.md)
+**Total Sessions This Phase:** 16
+**Current Phase Hours:** 31.75h
+**Next Session Focus:** Test Mark Complete for custom lessons, or continue Phase 2.0.4 parent-child relationships
 
 ---
 
