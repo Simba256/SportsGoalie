@@ -86,7 +86,10 @@ export function VideoUploader({
     const tempVideo = document.createElement('video');
     tempVideo.preload = 'metadata';
     tempVideo.onloadedmetadata = () => {
-      setVideoDuration(Math.floor(tempVideo.duration));
+      const duration = tempVideo.duration;
+      if (Number.isFinite(duration) && duration > 0) {
+        setVideoDuration(Math.floor(duration));
+      }
       URL.revokeObjectURL(tempUrl);
     };
     tempVideo.src = tempUrl;
@@ -180,9 +183,15 @@ export function VideoUploader({
     const tempVideo = document.createElement('video');
     tempVideo.preload = 'metadata';
     tempVideo.onloadedmetadata = () => {
-      const duration = Math.floor(tempVideo.duration);
-      setVideoDuration(duration);
-      onVideoUploaded(videoUrl, duration);
+      const rawDuration = tempVideo.duration;
+      if (Number.isFinite(rawDuration) && rawDuration > 0) {
+        const duration = Math.floor(rawDuration);
+        setVideoDuration(duration);
+        onVideoUploaded(videoUrl, duration);
+      } else {
+        // Duration not available (e.g., streaming video)
+        onVideoUploaded(videoUrl, undefined);
+      }
       setUploadState('success');
       toast.success('Video URL added successfully');
     };
@@ -223,7 +232,7 @@ export function VideoUploader({
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CheckCircle2 className="h-4 w-4" />
               <span>Video ready</span>
-              {videoDuration && (
+              {videoDuration !== undefined && Number.isFinite(videoDuration) && (
                 <span className="text-muted-foreground">
                   ({Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')})
                 </span>
@@ -292,7 +301,7 @@ export function VideoUploader({
               <p className="font-medium">{selectedFile.name}</p>
               <p className="text-sm text-muted-foreground">
                 {formatFileSize(selectedFile.size)}
-                {videoDuration && ` • ${Math.floor(videoDuration / 60)}:${(videoDuration % 60).toString().padStart(2, '0')}`}
+                {videoDuration !== undefined && Number.isFinite(videoDuration) && ` • ${Math.floor(videoDuration / 60)}:${(videoDuration % 60).toString().padStart(2, '0')}`}
               </p>
             </div>
             <Button onClick={(e) => {
