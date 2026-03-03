@@ -290,11 +290,11 @@ function UsersManagementContent() {
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                         <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
                           <span>
-                            Joined: {new Date(user.createdAt).toLocaleDateString()}
+                            Joined: {(user.createdAt instanceof Date ? user.createdAt : user.createdAt?.toDate?.() ?? new Date()).toLocaleDateString()}
                           </span>
                           {user.lastLoginAt && (
                             <span>
-                              Last seen: {new Date(user.lastLoginAt).toLocaleDateString()}
+                              Last seen: {(user.lastLoginAt instanceof Date ? user.lastLoginAt : user.lastLoginAt?.toDate?.() ?? new Date()).toLocaleDateString()}
                             </span>
                           )}
                         </div>

@@ -23,7 +23,6 @@ import {
   Clock,
   BookOpen,
   Play,
-  CheckCircle,
   Target,
 } from 'lucide-react';
 
@@ -660,13 +659,13 @@ function AdminSkillsContent() {
                       </div>
 
                       {/* Show media counts if available */}
-                      {(skill.media?.images?.length > 0 || skill.media?.videos?.length > 0) && (
+                      {((skill.media?.images?.length ?? 0) > 0 || (skill.media?.videos?.length ?? 0) > 0) && (
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {skill.media.images?.length > 0 && (
-                            <span>{skill.media.images.length} image{skill.media.images.length > 1 ? 's' : ''}</span>
+                          {(skill.media?.images?.length ?? 0) > 0 && (
+                            <span>{skill.media?.images?.length} image{(skill.media?.images?.length ?? 0) > 1 ? 's' : ''}</span>
                           )}
-                          {skill.media.videos?.length > 0 && (
-                            <span>{skill.media.videos.length} video{skill.media.videos.length > 1 ? 's' : ''}</span>
+                          {(skill.media?.videos?.length ?? 0) > 0 && (
+                            <span>{skill.media?.videos?.length} video{(skill.media?.videos?.length ?? 0) > 1 ? 's' : ''}</span>
                           )}
                         </div>
                       )}

@@ -5,7 +5,6 @@ import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { chartingService, dynamicChartingService } from '@/lib/database';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
-import { dynamicAnalyticsService } from '@/lib/database/services/dynamic-analytics.service';
 import { Session, ChartingEntry, FormTemplate, DynamicChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,23 +17,12 @@ import {
   Calendar,
   Filter,
   BarChart3,
-  RefreshCw,
   CheckCircle,
-  Hash,
   Type,
 } from 'lucide-react';
-import { startOfWeek, startOfMonth, subDays, subMonths, isAfter } from 'date-fns';
-import { DynamicAnalyticsDisplay } from '@/components/charting/DynamicAnalyticsDisplay';
+import { startOfWeek, startOfMonth, subMonths, isAfter } from 'date-fns';
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
-
-interface StatTrend {
-  name: string;
-  current: number;
-  previous: number;
-  trend: 'up' | 'down' | 'stable';
-  consistency: number; // 0-100
-}
 
 export default function ChartingAnalyticsPage() {
   const { user } = useAuth();
@@ -699,17 +687,17 @@ export default function ChartingAnalyticsPage() {
                       let displayValue = '';
                       let subtitle = '';
 
-                      if (field.type === 'number') {
+                      if (field.type === 'numeric' || field.type === 'scale') {
                         const nums = values.map(Number).filter(n => !isNaN(n));
                         const avg = nums.reduce((sum, n) => sum + n, 0) / nums.length;
                         displayValue = avg.toFixed(1);
                         subtitle = `Avg across ${nums.length} entries`;
-                      } else if (field.type === 'checkbox') {
-                        const trueCount = values.filter(v => v === true).length;
+                      } else if (field.type === 'checkbox' || field.type === 'yesno') {
+                        const trueCount = values.filter(v => v === true || v === 'yes').length;
                         const percentage = Math.round((trueCount / values.length) * 100);
                         displayValue = `${percentage}%`;
                         subtitle = `${trueCount}/${values.length} checked`;
-                      } else if (field.type === 'select' || field.type === 'radio') {
+                      } else if (field.type === 'radio') {
                         // Find most common value
                         const counts: Record<string, number> = {};
                         values.forEach(v => {

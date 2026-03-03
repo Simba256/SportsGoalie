@@ -1,21 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
   User,
   Mail,
   Calendar,
   Shield,
-  Activity,
   Bell,
-  Settings,
   Trophy,
   Target,
   Clock,
   MapPin,
-  Phone,
   Edit,
   Save,
   X,
@@ -29,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -73,7 +69,6 @@ export default function AdminUserDetailsPage() {
 
 function UserDetailsContent() {
   const params = useParams();
-  const router = useRouter();
   const { user: currentUser } = useAuth();
   const userId = params.id as string;
 
@@ -343,12 +338,12 @@ function UserDetailsContent() {
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Calendar className="mr-1 h-4 w-4" />
-                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                    Joined {(user.createdAt instanceof Date ? user.createdAt : user.createdAt?.toDate?.() ?? new Date()).toLocaleDateString()}
                   </div>
                   {user.lastLoginAt && (
                     <div className="flex items-center">
                       <Clock className="mr-1 h-4 w-4" />
-                      Last seen {new Date(user.lastLoginAt).toLocaleDateString()}
+                      Last seen {(user.lastLoginAt instanceof Date ? user.lastLoginAt : user.lastLoginAt?.toDate?.() ?? new Date()).toLocaleDateString()}
                     </div>
                   )}
                 </div>
@@ -701,7 +696,7 @@ function UserDetailsContent() {
                               </div>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
-                              Sent {new Date(message.createdAt).toLocaleString()}
+                              Sent {(message.createdAt?.toDate?.() ?? new Date()).toLocaleString()}
                             </p>
                           </div>
                         </div>
@@ -764,7 +759,7 @@ function UserDetailsContent() {
                               {notification.message}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {new Date(notification.createdAt).toLocaleString()}
+                              {(notification.createdAt?.toDate?.() ?? new Date()).toLocaleString()}
                             </p>
                           </div>
                         </div>

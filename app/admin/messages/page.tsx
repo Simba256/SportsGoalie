@@ -7,7 +7,6 @@ import {
   Mail,
   User,
   Calendar,
-  Filter,
   Search,
   Eye,
   FileText,
@@ -375,9 +374,9 @@ function MessagesContent() {
                           {/* Date */}
                           <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            <span>Sent {new Date(message.createdAt).toLocaleString()}</span>
+                            <span>Sent {(message.createdAt?.toDate?.() ?? new Date()).toLocaleString()}</span>
                             {message.readAt && (
-                              <span>• Read {new Date(message.readAt).toLocaleString()}</span>
+                              <span>• Read {(message.readAt?.toDate?.() ?? new Date()).toLocaleString()}</span>
                             )}
                           </div>
                         </div>

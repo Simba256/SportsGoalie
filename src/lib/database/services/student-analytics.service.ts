@@ -62,6 +62,7 @@ export interface QuizPerformanceData {
   averageScore: number;
   timeSpent: number;
   lastAttempt: Date;
+  passed: boolean; // Whether the quiz was passed (best score >= passing threshold)
 }
 
 export interface ProgressOverTimeData {

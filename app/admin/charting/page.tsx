@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { startOfWeek, startOfMonth, subMonths, isAfter, format, startOfDay } from 'date-fns';
+import { startOfWeek, startOfMonth, subMonths, isAfter, format } from 'date-fns';
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
 
@@ -130,7 +130,7 @@ function AdminChartingContent() {
       }
 
       filtered = filtered.filter((entry) => {
-        const entryDate = entry.submittedAt?.toDate ? entry.submittedAt.toDate() : new Date(entry.submittedAt);
+        const entryDate = entry.submittedAt?.toDate?.() ?? new Date();
         return isAfter(entryDate, startDate);
       });
     }

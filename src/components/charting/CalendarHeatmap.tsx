@@ -6,11 +6,11 @@ import { format, startOfDay, addDays, getDay, startOfYear, endOfYear, difference
 interface CalendarHeatmapProps {
   sessions: Session[];
   chartingEntries: any[];
-  dynamicEntries: DynamicChartingEntry[];
+  dynamicEntries?: DynamicChartingEntry[];
   onDayClick: (date: Date, sessions: Session[]) => void;
 }
 
-export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries, onDayClick }: CalendarHeatmapProps) => {
+export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = [], onDayClick }: CalendarHeatmapProps) => {
   const today = startOfDay(new Date());
   // Show 1 year back + 3 months forward (365 + 90 = 455 days)
   const yearStart = addDays(today, -365);

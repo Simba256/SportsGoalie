@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { CoachInvitation } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

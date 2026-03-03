@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Settings,
   Save,
@@ -12,7 +12,6 @@ import {
   Database,
   Server,
   Key,
-  Palette,
   Clock,
   Users,
 } from 'lucide-react';

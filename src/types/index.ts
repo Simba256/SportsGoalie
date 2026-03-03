@@ -46,17 +46,17 @@ export interface UserPreferences {
 }
 
 export interface UserProfile {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   bio?: string;
   dateOfBirth?: Date;
   location?: {
     country: string;
     city: string;
   };
-  sportsInterests: string[];
-  experienceLevel: DifficultyLevel;
-  goals: string[];
+  sportsInterests?: string[];
+  experienceLevel?: DifficultyLevel;
+  goals?: string[];
 }
 
 // Sport Types

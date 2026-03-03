@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
-import { FormTemplate, FormSection, FormField, FieldType, AnalyticsType } from '@/types';
+import { FormSection, FormField, FieldType } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

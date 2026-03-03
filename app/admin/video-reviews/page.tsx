@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Play, MessageSquare, Send, Eye, Clock, CheckCircle, AlertCircle, Filter, Search, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,6 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { videoReviewService, StudentVideo } from '@/lib/database/services/video-review.service';
 import { sportsService } from '@/lib/database/services/sports.service';
-import { userService } from '@/lib/database/services/user.service';
 import { VideoFeedbackComposer } from '@/components/messages/VideoFeedbackComposer';
 import { Sport } from '@/types';
 

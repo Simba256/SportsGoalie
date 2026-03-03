@@ -302,7 +302,7 @@ function CreateVideoQuizContent() {
         title: quizData.title,
         description: quizData.description || '',
         videoUrl: quizData.videoUrl,
-        videoDuration: quizData.videoDuration,
+        videoDuration: quizData.videoDuration ?? 0,
         sportId: quizData.sportId,
         skillId: quizData.skillId,
         instructions: quizData.instructions || '',
