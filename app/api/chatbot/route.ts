@@ -124,12 +124,17 @@ async function getUserContext(userId: string): Promise<string> {
     const sportsMap = new Map(sports.map(sport => [sport.id, sport]));
 
     // Build context string
+    const createdDate = user.createdAt && typeof user.createdAt === 'object' && 'toDate' in user.createdAt
+      ? user.createdAt.toDate().toLocaleDateString() : 'Unknown';
+    const lastLoginDate = user.lastLoginAt && typeof user.lastLoginAt === 'object' && 'toDate' in user.lastLoginAt
+      ? user.lastLoginAt.toDate().toLocaleDateString() : 'Unknown';
+
     let context = `**User Profile:**
 - Name: ${user.displayName || 'Not specified'}
 - Email: ${user.email}
 - Role: ${user.role}
-- Account created: ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-- Last login: ${user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Unknown'}
+- Account created: ${createdDate}
+- Last login: ${lastLoginDate}
 
 `;
 
@@ -180,12 +185,21 @@ async function getUserContext(userId: string): Promise<string> {
     // Add recent quiz performance
     if (quizAttempts.length > 0) {
       const recentAttempts = quizAttempts
-        .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+        .filter(a => a.completedAt)
+        .sort((a, b) => {
+          const aTime = a.completedAt && typeof a.completedAt === 'object' && 'toDate' in a.completedAt
+            ? a.completedAt.toDate().getTime() : 0;
+          const bTime = b.completedAt && typeof b.completedAt === 'object' && 'toDate' in b.completedAt
+            ? b.completedAt.toDate().getTime() : 0;
+          return bTime - aTime;
+        })
         .slice(0, 5);
 
       context += `**Recent Quiz Performance:**\n`;
       recentAttempts.forEach(attempt => {
-        context += `- Score: ${Math.round(attempt.score)}% (${attempt.passed ? 'Passed' : 'Failed'}) on ${new Date(attempt.submittedAt).toLocaleDateString()}\n`;
+        const completedDate = attempt.completedAt && typeof attempt.completedAt === 'object' && 'toDate' in attempt.completedAt
+          ? attempt.completedAt.toDate().toLocaleDateString() : 'Unknown date';
+        context += `- Score: ${Math.round(attempt.percentage)}% (${attempt.isCompleted ? 'Completed' : 'In Progress'}) on ${completedDate}\n`;
       });
       context += '\n';
     }
@@ -206,7 +220,7 @@ async function getUserContext(userId: string): Promise<string> {
 
     // Add recommendations based on user state
     context += `**AI Assistant Notes:**\n`;
-    if (enrollments.length === 0) {
+    if (sportProgress.length === 0) {
       context += '- This user is new and should be encouraged to explore sports and enroll in their first sport\n';
     }
     if (quizAttempts.length === 0) {

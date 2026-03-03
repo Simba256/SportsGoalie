@@ -11,7 +11,9 @@ import {
   PaginatedResponse,
   QueryOptions,
   UserRole,
+  SportProgress,
 } from '@/types';
+import { VideoQuizProgress } from '@/types/video-quiz';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { TimestampPatterns } from '../../utils/timestamp';
@@ -1342,9 +1344,9 @@ export class UserService extends BaseDatabaseService {
    */
   async getUserWithProgress(userId: string): Promise<ApiResponse<{
     user: User;
-    sportProgress: Record<string, unknown>[];
-    userProgress: Record<string, unknown>[];
-    quizAttempts: Record<string, unknown>[];
+    sportProgress: SportProgress[];
+    userProgress: UserProgress[];
+    quizAttempts: VideoQuizProgress[];
   }>> {
     logger.database('read', 'user_with_progress', userId);
 
