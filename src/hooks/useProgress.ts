@@ -23,7 +23,7 @@ export function useProgress() {
         const result = await ProgressService.getUserProgress(user.id);
 
         if (result.success) {
-          setUserProgress(result.data);
+          setUserProgress(result.data ?? null);
           setError(null);
         } else {
           setError(result.error?.message || 'Failed to fetch progress');
@@ -47,7 +47,7 @@ export function useProgress() {
         // Refresh user progress
         const progressResult = await ProgressService.getUserProgress(user.id);
         if (progressResult.success) {
-          setUserProgress(progressResult.data);
+          setUserProgress(progressResult.data ?? null);
         }
       }
     } catch (error) {
@@ -79,7 +79,7 @@ export function useProgress() {
       // Refresh user progress
       const progressResult = await ProgressService.getUserProgress(user.id);
       if (progressResult.success) {
-        setUserProgress(progressResult.data);
+        setUserProgress(progressResult.data ?? null);
       }
     } catch (error) {
       console.error('Failed to record quiz completion:', error);
@@ -96,7 +96,7 @@ export function useProgress() {
       if (user?.id) {
         const result = await ProgressService.getUserProgress(user.id);
         if (result.success) {
-          setUserProgress(result.data);
+          setUserProgress(result.data ?? null);
         }
       }
     }

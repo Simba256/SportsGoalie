@@ -55,7 +55,8 @@ if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
 
     try {
       // Connect to Firestore emulator
-      if (!db._delegate._databaseId.isDefaultDatabase) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(db as any)._delegate?._databaseId?.isDefaultDatabase) {
         connectFirestoreEmulator(db, 'localhost', 8080);
         console.log('✅ Connected to Firestore emulator on localhost:8080');
       }
@@ -133,7 +134,8 @@ export const checkFirebaseConnection = async (): Promise<{
     // Test Firestore connection
     let firestoreConnected = false;
     try {
-      await db._delegate._databaseId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any)._delegate?._databaseId;
       firestoreConnected = true;
     } catch (error) {
       console.warn('Firestore connection test failed:', error);

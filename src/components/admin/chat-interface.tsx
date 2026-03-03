@@ -311,14 +311,15 @@ function MessageBubble({ message }: { message: Message }) {
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown
                 components={{
-                  code({ node, inline, className, children, ...props }) {
+                  code({ className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
+                    // If there's a language class, it's a code block (not inline)
+                    const isCodeBlock = Boolean(match);
+                    return isCodeBlock ? (
                       <SyntaxHighlighter
                         style={oneDark}
-                        language={match[1]}
+                        language={match![1]}
                         PreTag="div"
-                        {...props}
                       >
                         {String(children).replace(/\n$/, '')}
                       </SyntaxHighlighter>

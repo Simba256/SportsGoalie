@@ -110,9 +110,11 @@ export interface VideoQuizProgress {
   status: 'in-progress' | 'submitted' | 'timed-out' | 'abandoned';
   startedAt: Timestamp;
   completedAt?: Timestamp;
+  submittedAt?: Timestamp; // When quiz was submitted
   lastAccessedAt?: Timestamp;
   watchTime: number; // actual time spent watching (excludes pause time)
   totalTimeSpent: number; // total time including pauses
+  timeSpent?: number; // alias for backwards compatibility
   feedback?: string;
 }
 

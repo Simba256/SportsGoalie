@@ -603,7 +603,7 @@ export function validateWithSchema<T>(schema: z.ZodSchema<T>, data: unknown): {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = (error.issues || error.errors || []).map((err: any) => ({
+      const errors = error.issues.map((err) => ({
         field: err.path?.join('.') || '',
         message: err.message || 'Validation error',
         code: err.code || 'invalid',

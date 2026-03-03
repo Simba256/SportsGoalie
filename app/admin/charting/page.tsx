@@ -545,7 +545,7 @@ function AdminChartingContent() {
   const completeEntries = filteredEntries.filter((e) => e.preGame && e.gameOverview && e.period1 && e.period2 && e.period3 && e.postGame).length;
   const completionRate = filteredEntries.length > 0 ? (completeEntries / filteredEntries.length) * 100 : 0;
 
-  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
+  const getTrendIcon = (trend: string) => {
     if (trend === 'up') return <TrendingUp className="w-5 h-5 text-green-600" />;
     if (trend === 'down') return <TrendingDown className="w-5 h-5 text-red-600" />;
     return <Minus className="w-5 h-5 text-gray-600" />;

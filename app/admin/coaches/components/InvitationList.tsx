@@ -42,11 +42,11 @@ export function InvitationList({
   onRevoke,
 }: InvitationListProps) {
   const getStatusBadge = (status: CoachInvitation['status']) => {
-    const variants = {
-      pending: { variant: 'default' as const, icon: Clock, label: 'Pending' },
-      accepted: { variant: 'default' as const, icon: CheckCircle, label: 'Accepted', className: 'bg-green-500 hover:bg-green-600' },
-      expired: { variant: 'secondary' as const, icon: XCircle, label: 'Expired' },
-      revoked: { variant: 'destructive' as const, icon: Ban, label: 'Revoked' },
+    const variants: Record<CoachInvitation['status'], { variant: 'default' | 'secondary' | 'destructive'; icon: typeof Clock; label: string; className?: string }> = {
+      pending: { variant: 'default', icon: Clock, label: 'Pending' },
+      accepted: { variant: 'default', icon: CheckCircle, label: 'Accepted', className: 'bg-green-500 hover:bg-green-600' },
+      expired: { variant: 'secondary', icon: XCircle, label: 'Expired' },
+      revoked: { variant: 'destructive', icon: Ban, label: 'Revoked' },
     };
 
     const config = variants[status];

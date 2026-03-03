@@ -185,17 +185,17 @@ export class DynamicChartingService extends BaseDatabaseService {
       const snapshot = await getDocs(q);
 
       // Map and sort in JavaScript instead of using Firestore orderBy
-      const entries = snapshot.docs
+      const entries = (snapshot.docs
         .map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }))
+        })) as DynamicChartingEntry[])
         .sort((a, b) => {
           // Sort by submittedAt descending (newest first)
           const aTime = a.submittedAt?.toMillis?.() || 0;
           const bTime = b.submittedAt?.toMillis?.() || 0;
           return bTime - aTime;
-        }) as DynamicChartingEntry[];
+        });
 
       return {
         success: true,
@@ -240,17 +240,17 @@ export class DynamicChartingService extends BaseDatabaseService {
 
       // Don't use orderBy to avoid composite index issues - sort in JS instead
       const snapshot = await getDocs(q);
-      const entries = snapshot.docs
+      const entries = (snapshot.docs
         .map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }))
+        })) as DynamicChartingEntry[])
         .sort((a, b) => {
           // Sort by submittedAt descending (newest first)
           const aTime = a.submittedAt?.toMillis?.() || 0;
           const bTime = b.submittedAt?.toMillis?.() || 0;
           return bTime - aTime;
-        }) as DynamicChartingEntry[];
+        });
 
       return {
         success: true,
@@ -297,17 +297,17 @@ export class DynamicChartingService extends BaseDatabaseService {
 
       // Don't use orderBy to avoid composite index issues - sort in JS instead
       const snapshot = await getDocs(q);
-      let entries = snapshot.docs
+      let entries = (snapshot.docs
         .map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }))
+        })) as DynamicChartingEntry[])
         .sort((a, b) => {
           // Sort by submittedAt descending (newest first)
           const aTime = a.submittedAt?.toMillis?.() || 0;
           const bTime = b.submittedAt?.toMillis?.() || 0;
           return bTime - aTime;
-        }) as DynamicChartingEntry[];
+        });
 
       // Apply limit after sorting
       if (options.limit) {

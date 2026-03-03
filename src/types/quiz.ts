@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 /**
  * Re-export common types from main index
  */
-export { QuestionType, DifficultyLevel } from './index';
+export type { QuestionType, DifficultyLevel } from './index';
 
 /**
  * Base question interface for all quiz types
@@ -71,6 +71,8 @@ export interface Quiz {
   title: string;
   description?: string;
   category: string;
+  sportId?: string; // Associated sport
+  skillId?: string; // Associated skill
   difficulty: DifficultyLevel;
   tags: string[];
   questions: Question[];

@@ -175,8 +175,8 @@ export class UserService extends BaseDatabaseService {
     userId: string,
     updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'email'>>
   ): Promise<ApiResponse<void>> {
-    // Don't allow email updates through this method
-    const { email, ...safeUpdates } = updates as Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'email'>>;
+    // Don't allow email updates through this method - defensive check even though type excludes email
+    const { email: _email, ...safeUpdates } = updates as Partial<User>;
     return this.update<User>(this.USERS_COLLECTION, userId, safeUpdates);
   }
 

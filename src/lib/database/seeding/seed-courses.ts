@@ -17,7 +17,7 @@ export async function seedCourses(): Promise<void> {
     console.log(`📚 Seeding ${sampleCourses.length} courses...`);
 
     const seedPromises = sampleCourses.map(async (courseData) => {
-      const course = {
+      const course: Omit<Course, 'id'> = {
         ...courseData,
         createdAt: new Date(),
         updatedAt: new Date(),

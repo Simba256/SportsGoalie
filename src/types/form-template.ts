@@ -251,6 +251,7 @@ export interface CategoryAnalyticsResult {
 
   // Overall metrics
   overallScore: number;         // 0-100 weighted average
+  averageValue?: number;        // Average numeric value across fields
   trend: TrendDirection;
 
   // Individual field results

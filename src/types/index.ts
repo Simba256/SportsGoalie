@@ -156,10 +156,10 @@ export interface SkillMetadata {
 }
 
 // Quiz Types - Import comprehensive Quiz interface from quiz.ts to avoid duplication
-export { Quiz, QuizSettings, Question, QuizMetadata, QuizAttempt, QuestionAnswer, QuizAnswer } from './quiz';
+export type { Quiz, QuizSettings, Question, QuizMetadata, QuizAttempt, QuestionAnswer, QuizAnswer } from './quiz';
 
 // Video Quiz Types - Import video quiz types
-export {
+export type {
   VideoQuiz,
   VideoQuizQuestion,
   VideoQuizSettings,
@@ -387,6 +387,7 @@ export interface AchievementMetadata {
 }
 
 export interface UserAchievement {
+  id: string;
   userId: string;
   achievementId: string;
   progress: number; // for progressive achievements
@@ -655,9 +656,12 @@ export interface Migration {
 }
 
 export interface MigrationState {
+  id: string;
   currentVersion: string;
   executedMigrations: string[];
   lastMigrationAt: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 // Backup Types
@@ -693,10 +697,10 @@ export interface ServiceHealth {
 }
 
 // Message Types - Export from message.ts
-export { Message, MessageAttachment, MessageType, AttachmentType, CreateMessageInput, MessageQueryOptions, MessageStats } from './message';
+export type { Message, MessageAttachment, MessageType, AttachmentType, CreateMessageInput, MessageQueryOptions, MessageStats } from './message';
 
 // Charting System Types - Export from charting.ts
-export {
+export type {
   Session,
   ChartingEntry,
   SessionType,
@@ -742,7 +746,7 @@ export {
 } from './charting';
 
 // Form Template Types - Export from form-template.ts
-export {
+export type {
   FieldType,
   AnalyticsType,
   TrendDirection,
@@ -769,7 +773,7 @@ export {
 } from './form-template';
 
 // Custom Curriculum Types - Export from curriculum.ts
-export {
+export type {
   CurriculumContentType,
   CurriculumItemStatus,
   CustomCurriculum,

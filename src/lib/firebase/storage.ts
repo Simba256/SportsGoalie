@@ -4,6 +4,7 @@ import {
   getDownloadURL,
   deleteObject,
   listAll,
+  getMetadata,
   UploadTask,
   StorageReference
 } from 'firebase/storage';
@@ -145,7 +146,7 @@ class FirebaseStorageService {
   async getVideoMetadata(downloadURL: string) {
     try {
       const storageRef = ref(storage, downloadURL);
-      const metadata = await storageRef.getMetadata();
+      const metadata = await getMetadata(storageRef);
       return metadata;
     } catch (error) {
       console.error('Get metadata error:', error);

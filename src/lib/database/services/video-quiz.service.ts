@@ -8,6 +8,7 @@ import {
   QueryOptions,
   WhereClause,
   DifficultyLevel,
+  Skill,
 } from '@/types';
 import { logger } from '../../utils/logger';
 import { Timestamp } from 'firebase/firestore';
@@ -114,7 +115,7 @@ export class VideoQuizService extends BaseDatabaseService {
       }
 
       // Verify skill exists and belongs to the sport
-      const skill = await this.getDocument('skills', quiz.skillId);
+      const skill = await this.getDocument<Skill>('skills', quiz.skillId);
       if (!skill) {
         logger.warn('Video quiz creation failed: skill not found', 'VideoQuizService', {
           skillId: quiz.skillId,

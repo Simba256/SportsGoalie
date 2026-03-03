@@ -126,6 +126,7 @@ export interface QuizAttemptDetail {
   totalQuestions: number;
   correctAnswers: number;
   incorrectAnswers: number;
+  attemptNumber?: number; // Which attempt this is (1st, 2nd, etc.)
 }
 
 /**
