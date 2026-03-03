@@ -71,6 +71,7 @@ export function VideoUploader({
   };
 
   const handleFileSelect = useCallback((file: File) => {
+    console.log('🎬 handleFileSelect called:', { fileName: file.name, fileSize: file.size, fileType: file.type });
     setErrorMessage(null);
 
     if (!validateFile(file)) {
@@ -89,9 +90,12 @@ export function VideoUploader({
     let durationSet = false;
     const trySetDuration = () => {
       const duration = tempVideo.duration;
+      console.log('🎬 trySetDuration called:', { duration, isFinite: Number.isFinite(duration), durationSet });
       if (!durationSet && Number.isFinite(duration) && duration > 0) {
         durationSet = true;
-        setVideoDuration(Math.floor(duration));
+        const flooredDuration = Math.floor(duration);
+        console.log('🎬 Setting duration:', flooredDuration);
+        setVideoDuration(flooredDuration);
         URL.revokeObjectURL(tempUrl);
       }
     };
@@ -102,7 +106,8 @@ export function VideoUploader({
     tempVideo.onloadeddata = trySetDuration;
 
     // Clean up on error
-    tempVideo.onerror = () => {
+    tempVideo.onerror = (e) => {
+      console.log('🎬 Video error during duration detection:', e);
       if (!durationSet) {
         URL.revokeObjectURL(tempUrl);
       }
@@ -111,6 +116,7 @@ export function VideoUploader({
     // Fallback: clean up after timeout if duration never becomes available
     setTimeout(() => {
       if (!durationSet) {
+        console.log('🎬 Duration detection timeout - duration never became available');
         URL.revokeObjectURL(tempUrl);
       }
     }, 5000);
