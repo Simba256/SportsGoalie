@@ -91,7 +91,7 @@ export default function CoachDashboardPage() {
       if (!allUsersResult.success || !allUsersResult.data) return;
 
       // Admins can see ALL custom workflow students, coaches see assigned only
-      const assignedStudents = allUsersResult.data.filter(
+      const assignedStudents = allUsersResult.data.items.filter(
         u => u.role === 'student' &&
             u.workflowType === 'custom' &&
             (user?.role === 'admin' || u.assignedCoachId === user?.id)

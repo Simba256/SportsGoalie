@@ -58,7 +58,7 @@ function VideoReviewsContent() {
       console.log('🚀 [Admin Video Reviews] Starting to load videos');
       console.log('🔐 [Admin Video Reviews] Current user:', {
         email: user?.email,
-        uid: user?.uid,
+        uid: user?.id,
         role: user?.role
       });
 

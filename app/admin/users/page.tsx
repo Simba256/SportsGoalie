@@ -71,10 +71,10 @@ function UsersManagementContent() {
   }, [searchTerm, roleFilter]);
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    if (!currentUser?.uid) return;
+    if (!currentUser?.id) return;
 
     try {
-      const result = await userService.changeUserRole(userId, newRole, currentUser.uid);
+      const result = await userService.changeUserRole(userId, newRole, currentUser.id);
       if (result.success) {
         toast.success(`User role updated to ${newRole}`);
         fetchUsers();
@@ -275,7 +275,7 @@ function UsersManagementContent() {
                   >
                     <div className="flex items-center space-x-4">
                       <Avatar>
-                        <AvatarImage src={user.profile?.avatarUrl} />
+                        <AvatarImage src={user.profile?.profileImage} />
                         <AvatarFallback>
                           {user.displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </AvatarFallback>

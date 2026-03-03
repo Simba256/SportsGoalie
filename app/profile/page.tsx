@@ -29,7 +29,7 @@ export default function ProfilePage() {
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: {
       displayName: user?.displayName || '',
-      photoURL: user?.photoURL || '',
+      photoURL: user?.profileImage || '',
     },
   });
 
@@ -135,9 +135,9 @@ export default function ProfilePage() {
               {/* Profile Picture */}
               <div className="flex items-center space-x-4">
                 <div className="relative">
-                  {user.photoURL ? (
+                  {user.profileImage ? (
                     <Image
-                      src={user.photoURL}
+                      src={user.profileImage}
                       alt="Profile"
                       width={80}
                       height={80}
@@ -163,10 +163,10 @@ export default function ProfilePage() {
                     id="photoURL"
                     placeholder="https://example.com/photo.jpg"
                     {...register('photoURL')}
-                    aria-invalid={!!errors.photoURL}
+                    aria-invalid={!!errors.profileImage}
                   />
-                  {errors.photoURL && (
-                    <p className="text-sm text-destructive">{errors.photoURL.message}</p>
+                  {errors.profileImage && (
+                    <p className="text-sm text-destructive">{errors.profileImage.message}</p>
                   )}
                 </div>
               </div>

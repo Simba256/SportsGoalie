@@ -327,7 +327,7 @@ function UserDetailsContent() {
           <CardContent className="pt-6">
             <div className="flex items-center space-x-6">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={user.profile?.avatarUrl} />
+                <AvatarImage src={user.profile?.profileImage} />
                 <AvatarFallback className="text-lg">
                   {user.displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
