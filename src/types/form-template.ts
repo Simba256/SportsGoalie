@@ -194,6 +194,11 @@ export interface FieldAnalyticsResult {
   analyticsType: AnalyticsType;
   category?: string;
 
+  // Generic value for display
+  value?: number;
+  enabled?: boolean;
+  trend?: TrendDirection;
+
   // Common metrics
   dataPoints: number;           // Number of entries with this field
 
@@ -261,6 +266,7 @@ export interface DynamicStudentAnalytics {
   studentId: string;
   formTemplateId: string;
   formTemplateName: string;
+  totalEntries?: number; // Total number of entries for this student
 
   // Session stats (general)
   sessionStats: {

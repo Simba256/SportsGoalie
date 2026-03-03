@@ -569,7 +569,7 @@ function VideoReviewsContent() {
               setShowVideoFeedbackComposer(false);
               setSelectedVideoForMessage(null);
             }}
-            studentId={selectedVideoForMessage.userId}
+            studentId={selectedVideoForMessage.studentId}
             studentName={selectedVideoForMessage.studentName}
             adminUserId={user.id}
             videoUrl={selectedVideoForMessage.videoUrl}

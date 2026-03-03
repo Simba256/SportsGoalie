@@ -42,6 +42,12 @@ export interface PreGameData {
   mindSet: MindSetPreGame;
   preGameRoutine: PreGameRoutine;
   warmUp: WarmUp;
+  // Dynamic form fields
+  equipment?: { value?: boolean | string };
+  mentalPrep?: { value?: boolean | string };
+  physical?: { value?: boolean | string };
+  warmup?: { value?: boolean | string };
+  [key: string]: unknown; // Allow additional dynamic fields
 }
 
 // Game Overview Types
@@ -74,6 +80,7 @@ export interface MindSetPeriod {
 
 export interface SkatingPerformance {
   inSyncWithPuck: YesNoResponse;
+  inSync?: { value?: boolean }; // Alternative field name
   improving: YesNoResponse;
   weak: YesNoResponse;
   notInSync: YesNoResponse;
@@ -248,6 +255,8 @@ export interface SessionStats {
   completionRate: number; // percentage
   averageSessionsPerWeek: number;
   averageSessionsPerMonth: number;
+  thisMonthSessions?: number;
+  thisWeekSessions?: number;
 }
 
 export interface StreakData {
