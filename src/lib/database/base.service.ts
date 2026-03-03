@@ -891,7 +891,7 @@ export class BaseDatabaseService {
     maxRetries: number = 3
   ): Promise<T> {
     return this.circuitBreaker.execute(async () => {
-      let lastError: Error;
+      let lastError: Error = new Error('Unknown error');
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {

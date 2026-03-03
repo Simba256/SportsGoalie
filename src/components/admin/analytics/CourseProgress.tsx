@@ -15,7 +15,7 @@ import {
   GraduationCap,
   BookOpen
 } from 'lucide-react';
-import type { CourseProgressDetail, SkillProgressDetail } from '@/lib/database/services/student-analytics.service';
+import type { CourseProgressDetail } from '@/lib/database/services/student-analytics.service';
 
 interface CourseProgressProps {
   courses: CourseProgressDetail[];

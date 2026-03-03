@@ -727,7 +727,7 @@ export class ChartingService extends BaseDatabaseService {
     };
   }
 
-  private calculateCategoryPerformances(entries: ChartingEntry[]): CategoryPerformance[] {
+  private calculateCategoryPerformances(_entries: ChartingEntry[]): CategoryPerformance[] {
     // Placeholder - implement detailed category analysis
     return [];
   }
@@ -762,7 +762,7 @@ export class ChartingService extends BaseDatabaseService {
     };
   }
 
-  private calculatePeriodPerformance(entries: ChartingEntry[]): PeriodPerformanceAnalytics {
+  private calculatePeriodPerformance(_entries: ChartingEntry[]): PeriodPerformanceAnalytics {
     // Placeholder - implement detailed period analysis
     return {
       bestPeriod: 2,

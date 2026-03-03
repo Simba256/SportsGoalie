@@ -59,7 +59,7 @@ export function DynamicSessionAnalytics({ template, entry }: DynamicSessionAnaly
     const { field, sectionTitle, value } = stat;
 
     // Number fields: show the value with appropriate formatting
-    if (field.type === 'number') {
+    if (field.type === 'numeric') {
       const numValue = typeof value === 'number' ? value : parseFloat(value?.value || value || '0');
       return (
         <Card key={index} className="p-4">
@@ -95,8 +95,8 @@ export function DynamicSessionAnalytics({ template, entry }: DynamicSessionAnaly
       );
     }
 
-    // Select/Radio fields: show the selected value
-    if (field.type === 'select' || field.type === 'radio') {
+    // Radio fields: show the selected value
+    if (field.type === 'radio') {
       const selectedValue = value?.value || value;
       return (
         <Card key={index} className="p-4 bg-purple-50 border-purple-200">

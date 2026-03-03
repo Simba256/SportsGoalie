@@ -168,9 +168,9 @@ export default function SkillDetailPage() {
         });
         console.log('📊 Video quiz query result:', quizzesResult);
 
-        const hasQuizzes = quizzesResult.success && quizzesResult.data.items.length > 0;
+        const hasQuizzes = quizzesResult.success && (quizzesResult.data?.items?.length ?? 0) > 0;
 
-        if (hasQuizzes) {
+        if (hasQuizzes && quizzesResult.data?.items) {
           console.log('✅ Found video quizzes:', quizzesResult.data.items.map(q => ({
             id: q.id,
             title: q.title,
@@ -231,7 +231,7 @@ export default function SkillDetailPage() {
 
       console.log('Video quiz query result:', quizzesResult);
 
-      if (quizzesResult.success && quizzesResult.data?.items.length > 0) {
+      if (quizzesResult.success && quizzesResult.data?.items && quizzesResult.data.items.length > 0) {
         const quiz = quizzesResult.data.items[0];
         console.log('Found video quiz:', quiz);
         router.push(`/quiz/video/${quiz.id}`);

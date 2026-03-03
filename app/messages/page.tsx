@@ -53,7 +53,9 @@ export default function MessagesPage() {
           if (a.isRead && !b.isRead) return 1;
 
           // Then by date
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          const dateA = a.createdAt && typeof a.createdAt === 'object' && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
+          const dateB = b.createdAt && typeof b.createdAt === 'object' && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
         });
 
         setMessages(sorted);
@@ -325,7 +327,7 @@ export default function MessagesPage() {
                         {/* Date */}
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          <span>{new Date(message.createdAt).toLocaleString()}</span>
+                          <span>{(message.createdAt && typeof message.createdAt === 'object' && 'toDate' in message.createdAt ? message.createdAt.toDate() : new Date(message.createdAt)).toLocaleString()}</span>
                         </div>
                       </div>
 

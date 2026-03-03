@@ -21,7 +21,7 @@ export function ProgressChart({
   data,
   title = "Learning Progress",
   description = "Track your learning journey over time",
-  timeframe = 'month'
+  timeframe: _timeframe = 'month'
 }: ProgressChartProps) {
   return (
     <Card>

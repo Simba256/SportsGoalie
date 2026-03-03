@@ -1,4 +1,5 @@
 import { User } from './index';
+export type { User };
 
 // Authentication state interface
 export interface AuthState {

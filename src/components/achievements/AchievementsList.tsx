@@ -129,7 +129,7 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
               >
                 All Rarities
               </Button>
-              {Object.entries(rarityColors).map(([rarity, colorClass]) => (
+              {Object.entries(rarityColors).map(([rarity, _colorClass]) => (
                 <Button
                   key={rarity}
                   variant={filterRarity === rarity ? 'default' : 'outline'}

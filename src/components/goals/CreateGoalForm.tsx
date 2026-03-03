@@ -87,7 +87,6 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<GoalFormData>({
     resolver: zodResolver(goalSchema),
@@ -95,8 +94,6 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
       priority: 'medium',
     },
   });
-
-  const _watchedType = watch('type');
 
   const handleTypeChange = (type: string) => {
     setSelectedType(type);

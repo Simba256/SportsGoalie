@@ -12,15 +12,15 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { User, AuthState, LoginCredentials, RegisterCredentials, ProfileUpdateData } from '../../types/auth';
 import {
   createAuthErrorFromFirebase,
   createErrorContext,
   EmailVerificationRequiredError,
+  InvalidCoachCodeError,
   isAuthError,
-  AuthError,
 } from '@/lib/errors/auth-errors';
 import { userService } from '@/lib/database/services/user.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
@@ -97,9 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(userData.coachCode && { coachCode: userData.coachCode }),
         };
 
-        // Only add photoURL if it exists
+        // Store profile image if available
         if (firebaseUser.photoURL) {
-          user.photoURL = firebaseUser.photoURL;
+          user.profileImage = firebaseUser.photoURL;
         }
 
         return user;
@@ -109,30 +109,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newUser: User = {
         id: firebaseUser.uid,
         email: firebaseUser.email!,
-        displayName: firebaseUser.displayName,
+        displayName: firebaseUser.displayName || '',
         role: 'student',
         emailVerified: firebaseUser.emailVerified,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLoginAt: new Date(),
+        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        lastLoginAt: Timestamp.now(),
         preferences: {
-          theme: 'system',
-          notifications: {
-            email: true,
-            push: true,
-            quiz: true,
+          theme: 'light',
+          notifications: true,
+          language: 'en',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          emailNotifications: {
             progress: true,
-          },
-          privacy: {
-            profileVisible: true,
-            progressVisible: true,
+            quizResults: true,
+            newContent: true,
+            reminders: true,
           },
         },
       };
 
-      // Only add photoURL if it has a value
+      // Store profile image if available
       if (firebaseUser.photoURL) {
-        newUser.photoURL = firebaseUser.photoURL;
+        newUser.profileImage = firebaseUser.photoURL;
       }
 
       // Create the document without undefined fields
@@ -143,9 +143,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const docData = Object.fromEntries(
         Object.entries({
           ...userDataWithoutId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }).filter(([_, value]) => value !== undefined)
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        }).filter(([_key, value]) => value !== undefined)
       );
 
       await setDoc(userDocRef, docData);
@@ -233,12 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const coachResult = await userService.getCoachByCode(normalizedCode);
 
         if (!coachResult.success || !coachResult.data) {
-          throw new AuthError(
-            'INVALID_COACH_CODE',
-            'Invalid coach code. Please check with your coach and try again.',
-            'Invalid coach code. Please check with your coach and try again.',
-            context
-          );
+          throw new InvalidCoachCodeError(context);
         }
 
         assignedCoachId = coachResult.data.id;
@@ -275,9 +270,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: credentials.displayName,
         role: credentials.role || 'student',
         emailVerified: credentials.skipEmailVerification || false, // Invited coaches are pre-verified
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLoginAt: new Date(),
+        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        lastLoginAt: Timestamp.now(),
         // Add workflow type and assigned coach for students
         ...(credentials.role === 'student' && {
           workflowType: credentials.workflowType || 'automated',
@@ -286,23 +282,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Add coach code for coaches
         ...(credentials.role === 'coach' && coachCode && { coachCode }),
         preferences: {
-          theme: 'system',
-          notifications: {
-            email: true,
-            push: true,
-            quiz: true,
+          theme: 'light',
+          notifications: true,
+          language: 'en',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          emailNotifications: {
             progress: true,
-          },
-          privacy: {
-            profileVisible: true,
-            progressVisible: true,
+            quizResults: true,
+            newContent: true,
+            reminders: true,
           },
         },
       };
 
-      // Only add photoURL if it has a value
+      // Store profile image if available
       if (userCredential.user.photoURL) {
-        newUser.photoURL = userCredential.user.photoURL;
+        newUser.profileImage = userCredential.user.photoURL;
       }
 
       const userDocRef = doc(db, 'users', newUser.id);
@@ -314,9 +309,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const docData = Object.fromEntries(
         Object.entries({
           ...userDataWithoutId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }).filter(([_, value]) => value !== undefined)
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        }).filter(([_key, value]) => value !== undefined)
       );
 
       console.log('🔍 Creating Firestore document with data:', {
@@ -400,13 +395,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDocRef = doc(db, 'users', state.user.id);
       await updateDoc(userDocRef, {
         ...data,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       });
 
       // Update local state - only update allowed fields
       const updatedUser: User = {
         ...state.user,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       };
 
       if (data.displayName !== undefined) {

@@ -219,7 +219,7 @@ export const useVideoQuiz = (options: UseVideoQuizOptions | null) => {
           questionsRemaining: prev.questionsRemaining - 1,
           score: newScore,
           percentage: newPercentage,
-          passed: quiz ? newPercentage >= quiz.settings.passingScore : false,
+          passed: quiz ? newPercentage >= (quiz.settings.passingScore ?? 70) : false,
         };
       });
 

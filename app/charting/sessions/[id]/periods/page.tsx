@@ -196,27 +196,6 @@ export default function PeriodsPage() {
     }
   };
 
-  const _updateField = (
-    period: 'period1' | 'period2' | 'period3',
-    section: string,
-    field: string,
-    key: 'value' | 'comments',
-    value: any
-  ) => {
-    const setPeriodData = period === 'period1' ? setPeriod1Data : period === 'period2' ? setPeriod2Data : setPeriod3Data;
-
-    setPeriodData((prev: any) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: {
-          ...prev[section][field],
-          [key]: value,
-        },
-      },
-    }));
-  };
-
   const updateRadioGroup = (
     period: 'period1' | 'period2' | 'period3',
     section: string,
@@ -384,17 +363,17 @@ export default function PeriodsPage() {
               <RadioSelectField
                 label="Setting Up Defense"
                 options={['poor', 'improving', 'good']}
-                {...getSelectedOption({ poor: data.teamPlay.settingUpDefense.poor, improving: data.teamPlay.settingUpDefense.improving, good: data.teamPlay.settingUpDefense.good })}
+                {...getSelectedOption({ poor: data.teamPlay?.settingUpDefense?.poor ?? { value: false, comments: '' }, improving: data.teamPlay?.settingUpDefense?.improving ?? { value: false, comments: '' }, good: data.teamPlay?.settingUpDefense?.good ?? { value: false, comments: '' } })}
                 onChange={(value: string, comments: string) =>
-                  updateRadioGroup(period, 'teamPlay', { poor: data.teamPlay.settingUpDefense.poor, improving: data.teamPlay.settingUpDefense.improving, good: data.teamPlay.settingUpDefense.good }, `settingUpDefense.${value}`, comments)
+                  updateRadioGroup(period, 'teamPlay', { poor: data.teamPlay?.settingUpDefense?.poor ?? { value: false, comments: '' }, improving: data.teamPlay?.settingUpDefense?.improving ?? { value: false, comments: '' }, good: data.teamPlay?.settingUpDefense?.good ?? { value: false, comments: '' } }, `settingUpDefense.${value}`, comments)
                 }
               />
               <RadioSelectField
                 label="Setting Up Forwards"
                 options={['poor', 'improving', 'good']}
-                {...getSelectedOption({ poor: data.teamPlay.settingUpForwards.poor, improving: data.teamPlay.settingUpForwards.improving, good: data.teamPlay.settingUpForwards.good })}
+                {...getSelectedOption({ poor: data.teamPlay?.settingUpForwards?.poor ?? { value: false, comments: '' }, improving: data.teamPlay?.settingUpForwards?.improving ?? { value: false, comments: '' }, good: data.teamPlay?.settingUpForwards?.good ?? { value: false, comments: '' } })}
                 onChange={(value: string, comments: string) =>
-                  updateRadioGroup(period, 'teamPlay', { poor: data.teamPlay.settingUpForwards.poor, improving: data.teamPlay.settingUpForwards.improving, good: data.teamPlay.settingUpForwards.good }, `settingUpForwards.${value}`, comments)
+                  updateRadioGroup(period, 'teamPlay', { poor: data.teamPlay?.settingUpForwards?.poor ?? { value: false, comments: '' }, improving: data.teamPlay?.settingUpForwards?.improving ?? { value: false, comments: '' }, good: data.teamPlay?.settingUpForwards?.good ?? { value: false, comments: '' } }, `settingUpForwards.${value}`, comments)
                 }
               />
             </div>

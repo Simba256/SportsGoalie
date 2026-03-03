@@ -1,9 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
-/**
- * Re-export common types from main index
- */
-export type { QuestionType, DifficultyLevel } from './index';
+// Import types for use within this file
+import type { QuestionType, DifficultyLevel } from './index';
 
 /**
  * Base question interface for all quiz types

@@ -64,10 +64,10 @@ export default function SportDetailPage() {
 
   // Use enrollment hook for the sport
   const {
-    enrolled,
-    progress,
+    enrolled: _enrolled,
+    progress: _progress,
     loading: _enrollmentLoading,
-    enroll,
+    enroll: _enroll,
     unenroll: _unenroll,
   } = useSportEnrollment(sportId);
 
@@ -189,57 +189,6 @@ export default function SportDetailPage() {
     }
   };
 
-
-  // Handle enrollment in sport
-  const _handleStartLearning = async () => {
-    console.log('_handleStartLearning called, user state:', user);
-    console.log('Auth loading state:', { user: !!user, id: user?.id });
-
-    if (!user) {
-      toast.error("Please log in to start learning this sport.");
-      router.push('/auth/login');
-      return;
-    }
-
-    if (enrolled) {
-      // If already enrolled, navigate to first skill or continue where left off
-      if (state.skills.length > 0) {
-        // Find next skill to learn or first skill if none started
-        const nextSkill = state.skills.find(skill =>
-          !progress?.completedSkills.includes(skill.id)
-        ) || state.skills[0];
-
-        router.push(`/sports/${sportId}/skills/${nextSkill.id}`);
-      } else {
-        toast.error("This sport doesn't have any skills yet.");
-      }
-      return;
-    }
-
-    // Enroll in the sport
-    try {
-      console.log('Starting enrollment process...');
-      const success = await enroll();
-      console.log('Enrollment success:', success);
-
-      if (success) {
-        toast.success(`Successfully enrolled in ${state.sport?.name}! Start learning now!`);
-
-        // Navigate to first skill if available
-        if (state.skills.length > 0) {
-          router.push(`/sports/${sportId}/skills/${state.skills[0].id}`);
-        } else {
-          // If no skills, navigate to dashboard to see progress
-          router.push('/dashboard');
-        }
-      } else {
-        toast.error("Enrollment failed. Please check the console for details and try again.");
-      }
-    } catch (error) {
-      console.error('Enrollment error in component:', error);
-      toast.error("An unexpected error occurred. Please check the console and try again.");
-    }
-  };
 
   // Handle favorites (placeholder for now)
   const handleToggleFavorite = async () => {

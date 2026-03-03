@@ -27,7 +27,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 }) => {
   const [localVolume, setLocalVolume] = useState(1);
   const [localMuted, setLocalMuted] = useState(false);
-  const [seeking, setSeeking] = useState(false);
+  const [_seeking, setSeeking] = useState(false);
 
   // Use external props if provided, otherwise use local state
   const volume = externalVolume !== undefined ? externalVolume : localVolume;

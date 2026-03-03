@@ -37,7 +37,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   template,
   initialValues = {},
   onChange,
-  onSectionComplete,
+  onSectionComplete: _onSectionComplete,
   disabled = false,
   className = '',
   showSectionNumbers = true,
@@ -181,8 +181,6 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   const renderSection = (section: FormSection, index: number) => {
     const isExpanded = isSectionExpanded(section.id);
     const completionPercentage = getSectionCompletionPercentage(section);
-    const sectionData = responses[section.id];
-
     return (
       <Card key={section.id} id={`section-${section.id}`} className="overflow-hidden">
         <CardHeader
@@ -439,7 +437,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
       {/* Sections */}
       <div className="space-y-4">
         {sortedSections
-          .filter((section, index) =>
+          .filter((_section, index) =>
             // If initialSectionIndex is provided, only show that section
             initialSectionIndex !== undefined ? index === initialSectionIndex : true
           )

@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { useAuth } from '@/lib/auth/context';
 import { VideoQuiz } from '@/types/video-quiz';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 
@@ -38,6 +39,7 @@ interface QuizWithStats extends VideoQuiz {
 }
 
 function QuizzesPageContent() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState<QuizWithStats[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<QuizWithStats[]>([]);
@@ -58,7 +60,7 @@ function QuizzesPageContent() {
 
       // Get all published video quizzes using video quiz service
       const quizzesResult = await videoQuizService.getVideoQuizzes({
-        status: 'published',
+        where: [{ field: 'status', operator: '==', value: 'published' }],
         limit: 100
       });
 
@@ -67,7 +69,7 @@ function QuizzesPageContent() {
           quizzesResult.data.items.map(async (quiz) => {
             try {
               // Get video quiz attempt statistics
-              const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, { videoQuizId: quiz.id });
+              const attemptsResult = user ? await videoQuizService.getUserVideoQuizAttempts(user.id, { videoQuizId: quiz.id }) : null;
 
               let stats: QuizStats = {
                 totalAttempts: 0,
@@ -75,7 +77,7 @@ function QuizzesPageContent() {
                 completionRate: 0,
               };
 
-              if (attemptsResult.success && attemptsResult.data && attemptsResult.data.items.length > 0) {
+              if (attemptsResult?.success && attemptsResult.data && attemptsResult.data.items.length > 0) {
                 const attempts = attemptsResult.data.items;
                 const totalScore = attempts.reduce((sum, attempt) => sum + attempt.percentage, 0);
                 const completedCount = attempts.filter(attempt => attempt.isCompleted).length;

@@ -28,6 +28,9 @@ export enum AuthErrorCode {
   // Profile Errors
   PROFILE_UPDATE_FAILED = 'profile_update_failed',
   USER_NOT_AUTHENTICATED = 'user_not_authenticated',
+
+  // Coach Errors
+  INVALID_COACH_CODE = 'invalid_coach_code',
 }
 
 export enum ErrorSeverity {
@@ -249,6 +252,20 @@ export class UserDisabledError extends AuthError {
       ErrorSeverity.HIGH,
       false,
       true
+    );
+  }
+}
+
+export class InvalidCoachCodeError extends AuthError {
+  constructor(context: ErrorContext) {
+    super(
+      AuthErrorCode.INVALID_COACH_CODE,
+      'Invalid coach code provided',
+      'Invalid coach code. Please check with your coach and try again.',
+      context,
+      ErrorSeverity.LOW,
+      false,
+      false
     );
   }
 }

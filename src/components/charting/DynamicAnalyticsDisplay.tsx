@@ -79,7 +79,7 @@ export function DynamicAnalyticsDisplay({ studentId, templateId }: DynamicAnalyt
       case 'distribution':
         if (field.distribution) {
           const topOptions = Object.entries(field.distribution)
-            .sort(([, a], [, b]) => b - a)
+            .sort(([, a], [, b]) => b.count - a.count)
             .slice(0, 2)
             .map(([option]) => option);
           return topOptions.join(', ');
@@ -135,10 +135,10 @@ export function DynamicAnalyticsDisplay({ studentId, templateId }: DynamicAnalyt
                     <div className="space-y-2">
                       <p className="text-2xl font-bold">{formatValue(field)}</p>
 
-                      {field.trend && field.trendPercentage !== undefined && (
+                      {field.trend && field.percentage !== undefined && (
                         <p className={`text-sm ${getTrendColor(field.trend)}`}>
-                          {field.trendPercentage > 0 ? '+' : ''}
-                          {field.trendPercentage.toFixed(1)}% from previous period
+                          {field.percentage > 0 ? '+' : ''}
+                          {field.percentage.toFixed(1)}% from previous period
                         </p>
                       )}
 
@@ -151,12 +151,12 @@ export function DynamicAnalyticsDisplay({ studentId, templateId }: DynamicAnalyt
                     {field.distribution && Object.keys(field.distribution).length > 0 && (
                       <div className="mt-3 pt-3 border-t space-y-1">
                         {Object.entries(field.distribution)
-                          .sort(([, a], [, b]) => b - a)
+                          .sort(([, a], [, b]) => b.count - a.count)
                           .slice(0, 3)
-                          .map(([option, count]) => (
+                          .map(([option, data]) => (
                             <div key={option} className="flex justify-between text-xs">
                               <span className="text-muted-foreground">{option}</span>
-                              <span className="font-medium">{count}</span>
+                              <span className="font-medium">{data.count} ({data.percentage.toFixed(1)}%)</span>
                             </div>
                           ))}
                       </div>

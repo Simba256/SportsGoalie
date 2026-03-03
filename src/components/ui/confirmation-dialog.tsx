@@ -68,7 +68,7 @@ export function ConfirmationDialog({
   icon,
 }: ConfirmationDialogProps) {
   const config = variantConfig[variant]
-  const IconComponent = icon || config.icon
+  const IconComponent = config.icon
 
   const handleConfirm = () => {
     onConfirm?.()
@@ -91,7 +91,7 @@ export function ConfirmationDialog({
       <DialogContent className="sm:max-w-md" showCloseButton={!loading}>
         <DialogHeader className="text-center sm:text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <IconComponent className={cn("h-6 w-6", config.iconClass)} />
+            {icon || <IconComponent className={cn("h-6 w-6", config.iconClass)} />}
           </div>
           <DialogTitle className={cn("text-lg font-semibold", config.titleClass)}>
             {title}
@@ -127,13 +127,21 @@ export function ConfirmationDialog({
 
 // Convenience hook for easier usage
 export function useConfirmationDialog() {
-  const [state, setState] = React.useState({
+  const [state, setState] = React.useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmText: string;
+    cancelText: string;
+    variant: "default" | "destructive" | "warning" | "success";
+    loading: boolean;
+  }>({
     open: false,
     title: "Are you sure?",
     description: "This action cannot be undone.",
     confirmText: "Continue",
     cancelText: "Cancel",
-    variant: "default" as const,
+    variant: "default",
     loading: false,
   })
 

@@ -272,7 +272,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       categoryData.trend = this.getMajorityTrend(trends);
 
       // Identify top and struggling fields
-      const fieldScores = categoryData.fieldResults.map((fr, idx) => ({
+      const fieldScores = categoryData.fieldResults.map((fr, _idx) => ({
         fieldLabel: fr.fieldLabel,
         score: this.getFieldScore(fr) || 0,
       }));
@@ -673,7 +673,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       completedSessions,
       partialSessions,
       completionRate,
-      averageCompletionPercentage,
+      averageCompletionPercentage: avgCompletionPercentage,
       firstSessionDate,
       lastSessionDate,
       averageSessionsPerWeek,

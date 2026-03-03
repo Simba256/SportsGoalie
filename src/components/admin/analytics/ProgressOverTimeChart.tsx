@@ -110,7 +110,7 @@ export function ProgressOverTimeChart({ data }: ProgressOverTimeChartProps) {
                       if (active && payload && payload.length) {
                         return (
                           <div className="rounded-lg border bg-background p-3 shadow-lg">
-                            <p className="font-semibold mb-2">{formatDate(label)}</p>
+                            <p className="font-semibold mb-2">{formatDate(String(label))}</p>
                             <div className="space-y-1 text-sm">
                               {payload.map((entry, index) => (
                                 <div key={index} className="flex items-center justify-between space-x-4">

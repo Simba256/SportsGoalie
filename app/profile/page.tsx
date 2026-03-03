@@ -272,7 +272,7 @@ export default function ProfilePage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Member Since</p>
                 <p className="font-medium">
-                  {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
+                  {user.createdAt ? (user.createdAt && typeof user.createdAt === 'object' && 'toDate' in user.createdAt ? user.createdAt.toDate() : new Date(user.createdAt)).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -293,7 +293,7 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium text-muted-foreground">Last Login</p>
                 <p className="font-medium">
                   {user.lastLoginAt
-                    ? new Date(user.lastLoginAt).toLocaleDateString('en-US', {
+                    ? (user.lastLoginAt && typeof user.lastLoginAt === 'object' && 'toDate' in user.lastLoginAt ? user.lastLoginAt.toDate() : new Date(user.lastLoginAt)).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',

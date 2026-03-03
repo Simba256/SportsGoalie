@@ -49,7 +49,7 @@ export function LessonCreator({
   editContent,
 }: LessonCreatorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [videoDuration, setVideoDuration] = useState<number | undefined>();
+  const [_videoDuration, setVideoDuration] = useState<number | undefined>();
   const [attachments, setAttachments] = useState<File[]>([]);
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
 

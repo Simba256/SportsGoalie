@@ -189,19 +189,6 @@ export default function OvertimeShootoutPage() {
     }
   };
 
-  const _updateOvertimeField = (section: string, field: string, key: 'value' | 'comments', value: any) => {
-    setOvertimeData((prev: any) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: {
-          ...prev[section][field],
-          [key]: value,
-        },
-      },
-    }));
-  };
-
   const updateOvertimeRadioGroup = (
     section: string,
     fieldGroup: Record<string, { value: boolean; comments: string }>,

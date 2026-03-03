@@ -355,7 +355,7 @@ function PillLink({
   href,
   children,
   onClick,
-  icon,
+  icon: _icon,
 }: {
   href: string;
   children: React.ReactNode;

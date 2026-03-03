@@ -169,11 +169,11 @@ export default function MessageDetailPage() {
               <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
-                  <span>Received {new Date(message.createdAt).toLocaleString()}</span>
+                  <span>Received {(message.createdAt && typeof message.createdAt === 'object' && 'toDate' in message.createdAt ? message.createdAt.toDate() : new Date(message.createdAt)).toLocaleString()}</span>
                 </div>
                 {message.readAt && (
                   <span className="text-muted-foreground">
-                    • Read {new Date(message.readAt).toLocaleString()}
+                    • Read {(message.readAt && typeof message.readAt === 'object' && 'toDate' in message.readAt ? message.readAt.toDate() : new Date(message.readAt)).toLocaleString()}
                   </span>
                 )}
               </div>
