@@ -5,8 +5,6 @@ import {
   BookOpen,
   Target,
   Trophy,
-  TrendingUp,
-  Calendar,
   Award,
   Flame,
   Play,
@@ -44,7 +42,7 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const { user } = useAuth();
-  const { userProgress, loading, error } = useProgress();
+  const { userProgress, loading } = useProgress();
   const {
     enrolledSports,
     loading: enrollmentsLoading,
@@ -70,7 +68,6 @@ function DashboardContent() {
   }
 
   const stats = userProgress?.overallStats;
-  const progressData = userProgress?.progressHistory || [];
 
   const statsCards = [
     {

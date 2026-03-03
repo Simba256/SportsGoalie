@@ -5,8 +5,6 @@ import { chartingService } from '@/lib/database';
 import { Session, ChartingEntry, YesNoResponse } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, CheckCircle } from 'lucide-react';
 

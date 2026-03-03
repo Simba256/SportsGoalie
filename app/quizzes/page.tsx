@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   Clock,
   Users,
-  Trophy,
   Star,
-  Filter,
   Search,
   BookOpen,
   Target,
@@ -41,7 +38,6 @@ interface QuizWithStats extends VideoQuiz {
 }
 
 function QuizzesPageContent() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState<QuizWithStats[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<QuizWithStats[]>([]);
@@ -134,12 +130,6 @@ function QuizzesPageContent() {
     }
 
     setFilteredQuizzes(filtered);
-  };
-
-  const getSportNames = () => {
-    // Since VideoQuiz has sportId, we'd need to fetch sport names
-    // For now, just show all quizzes
-    return [];
   };
 
   const getDifficultyColor = (difficulty: string) => {

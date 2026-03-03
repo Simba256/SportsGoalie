@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +47,6 @@ import { LessonCreator } from '@/components/coach/lesson-creator';
 import { QuizCreator } from '@/components/coach/quiz-creator';
 
 export default function CoachContentPage() {
-  const router = useRouter();
   const { user } = useAuth();
   const [content, setContent] = useState<CustomContentLibrary[]>([]);
   const [loading, setLoading] = useState(true);

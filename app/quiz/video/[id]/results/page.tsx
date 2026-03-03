@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -10,7 +10,6 @@ import { VideoQuiz, VideoQuizProgress } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import {
   Loader2,
   ArrowLeft,
@@ -22,7 +21,6 @@ import {
   RotateCcw,
   ChevronRight,
   Target,
-  Award
 } from 'lucide-react';
 import Link from 'next/link';
 
