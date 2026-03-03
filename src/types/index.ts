@@ -131,6 +131,7 @@ export interface SkillMedia {
 export interface MediaItem {
   id: string;
   url: string;
+  title?: string;
   alt: string;
   caption?: string;
   order: number;
@@ -263,6 +264,10 @@ export interface UserProgress {
   overallStats: OverallStats;
   achievements: string[]; // achievement IDs
   lastUpdated: Timestamp;
+  progressHistory?: Array<{
+    date: string;
+    value: number;
+  }>;
 }
 
 export interface OverallStats {

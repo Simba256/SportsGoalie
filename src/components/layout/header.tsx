@@ -189,9 +189,9 @@ export function Header() {
                   className={`${pillContainer} h-12 px-4 rounded-full hover:bg-background/80`}
                 >
                   <div className="flex items-center gap-2">
-                    {user?.photoURL ? (
+                    {user?.profileImage ? (
                       <Image
-                        src={user.photoURL}
+                        src={user.profileImage}
                         alt="Profile"
                         width={26}
                         height={26}

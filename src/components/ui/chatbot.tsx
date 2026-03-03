@@ -64,7 +64,7 @@ export function Chatbot() {
         },
         body: JSON.stringify({
           message: userMessage.content,
-          userId: user?.uid || null,
+          userId: user?.id || null,
         }),
       });
 

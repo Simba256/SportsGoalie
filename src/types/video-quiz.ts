@@ -24,6 +24,7 @@ export interface VideoQuizSettings {
   autoPlayNext: boolean; // after completing quiz
   showCorrectAnswers: boolean;
   showExplanations: boolean;
+  passingScore?: number; // Minimum percentage to pass (0-100)
 }
 
 /**

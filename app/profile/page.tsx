@@ -163,10 +163,10 @@ export default function ProfilePage() {
                     id="photoURL"
                     placeholder="https://example.com/photo.jpg"
                     {...register('photoURL')}
-                    aria-invalid={!!errors.profileImage}
+                    aria-invalid={!!errors.photoURL}
                   />
-                  {errors.profileImage && (
-                    <p className="text-sm text-destructive">{errors.profileImage.message}</p>
+                  {errors.photoURL && (
+                    <p className="text-sm text-destructive">{errors.photoURL.message}</p>
                   )}
                 </div>
               </div>

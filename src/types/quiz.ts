@@ -24,6 +24,10 @@ export interface Question {
   correctAnswers?: string[]; // For fill-in-blank with multiple correct answers
   caseSensitive?: boolean; // For fill-in-blank
   partialCredit?: boolean;
+
+  // Descriptive/essay question fields
+  minWords?: number;
+  maxWords?: number;
 }
 
 /**

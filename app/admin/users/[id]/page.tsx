@@ -491,7 +491,7 @@ function UserDetailsContent() {
                     <Label>Country</Label>
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{user.profile?.country || 'Not provided'}</span>
+                      <span>{user.profile?.location?.country || 'Not provided'}</span>
                     </div>
                   </div>
                 </CardContent>

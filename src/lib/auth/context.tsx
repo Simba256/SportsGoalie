@@ -412,14 +412,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.displayName !== undefined) {
         updatedUser.displayName = data.displayName;
       }
-      if (data.photoURL !== undefined) {
-        updatedUser.photoURL = data.photoURL;
-      }
-      if (data.preferences && state.user.preferences) {
-        updatedUser.preferences = {
-          ...state.user.preferences,
-          ...data.preferences,
-        };
+      if (data.profileImage !== undefined) {
+        updatedUser.profileImage = data.profileImage;
       }
 
       setUser(updatedUser);
