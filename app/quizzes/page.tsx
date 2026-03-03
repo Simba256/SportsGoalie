@@ -71,7 +71,7 @@ function QuizzesPageContent() {
           quizzesResult.data.items.map(async (quiz) => {
             try {
               // Get video quiz attempt statistics
-              const attemptsResult = await videoQuizService.getVideoQuizAttempts(quiz.id);
+              const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, { videoQuizId: quiz.id });
 
               let stats: QuizStats = {
                 totalAttempts: 0,

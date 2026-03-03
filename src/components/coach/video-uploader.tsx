@@ -90,7 +90,7 @@ export function VideoUploader({
     let durationSet = false;
     const trySetDuration = () => {
       const duration = tempVideo.duration;
-      console.log('🎬 trySetDuration called:', { duration, isFinite: Number.isFinite(duration), durationSet });
+      console.log('🎬 trySetDuration - duration:', duration, 'isFinite:', Number.isFinite(duration), 'readyState:', tempVideo.readyState);
       if (!durationSet && Number.isFinite(duration) && duration > 0) {
         durationSet = true;
         const flooredDuration = Math.floor(duration);
@@ -101,9 +101,22 @@ export function VideoUploader({
     };
 
     // Different formats report duration at different events
-    tempVideo.onloadedmetadata = trySetDuration;
+    tempVideo.onloadedmetadata = () => {
+      trySetDuration();
+      // WebM files often report Infinity duration - seek to end to force calculation
+      if (!Number.isFinite(tempVideo.duration)) {
+        console.log('🎬 Duration is Infinity, seeking to end to calculate...');
+        tempVideo.currentTime = Number.MAX_SAFE_INTEGER;
+      }
+    };
     tempVideo.ondurationchange = trySetDuration;
     tempVideo.onloadeddata = trySetDuration;
+
+    // When seeking completes, the duration should be available
+    tempVideo.onseeked = () => {
+      console.log('🎬 Seeked - duration now:', tempVideo.duration);
+      trySetDuration();
+    };
 
     // Clean up on error
     tempVideo.onerror = (e) => {

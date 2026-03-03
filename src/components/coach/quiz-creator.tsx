@@ -183,7 +183,7 @@ export function QuizCreator({
       };
 
       // Create quiz in video_quizzes collection
-      const quizResult = await videoQuizService.createQuiz(quizData);
+      const quizResult = await videoQuizService.createVideoQuiz(quizData);
 
       if (!quizResult.success) {
         throw new Error(quizResult.error?.message || 'Failed to create quiz');

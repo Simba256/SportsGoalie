@@ -592,9 +592,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         if (!sport.success || !sport.data) continue;
 
         // Get all skills for this sport
-        const skillsResult = await sportsService.getSkills({
-          where: [{ field: 'sportId', operator: '==', value: sportId }]
-        });
+        const skillsResult = await sportsService.getSkillsBySport(sportId);
         const skills = skillsResult.data?.items || [];
 
         // Get skill progress for each skill from quiz attempts

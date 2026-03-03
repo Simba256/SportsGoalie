@@ -88,7 +88,7 @@ export default function StudentCurriculumPage() {
                   titles[item.contentId] = skillResult.data.name;
                 }
               } else if (item.type === 'quiz') {
-                const quizResult = await videoQuizService.getQuiz(item.contentId);
+                const quizResult = await videoQuizService.getVideoQuiz(item.contentId);
                 if (quizResult.success && quizResult.data) {
                   titles[item.contentId] = quizResult.data.title;
                 }

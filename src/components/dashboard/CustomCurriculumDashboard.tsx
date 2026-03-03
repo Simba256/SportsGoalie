@@ -93,7 +93,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                   };
                 }
               } else if (item.type === 'quiz') {
-                const quizResult = await videoQuizService.getQuiz(item.contentId);
+                const quizResult = await videoQuizService.getVideoQuiz(item.contentId);
                 if (quizResult.success && quizResult.data) {
                   const quiz = quizResult.data;
                   const sportResult = await sportsService.getSport(quiz.sportId);

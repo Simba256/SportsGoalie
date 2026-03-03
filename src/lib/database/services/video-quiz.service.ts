@@ -756,6 +756,7 @@ export class VideoQuizService extends BaseDatabaseService {
   async getUserVideoQuizAttempts(
     userId: string,
     filters?: {
+      videoQuizId?: string;
       skillId?: string;
       sportId?: string;
       completed?: boolean;
@@ -771,6 +772,10 @@ export class VideoQuizService extends BaseDatabaseService {
       const whereConditions: WhereClause[] = [
         { field: 'userId', operator: '==', value: userId }
       ];
+
+      if (filters?.videoQuizId) {
+        whereConditions.push({ field: 'videoQuizId', operator: '==', value: filters.videoQuizId });
+      }
 
       if (filters?.skillId) {
         whereConditions.push({ field: 'skillId', operator: '==', value: filters.skillId });
