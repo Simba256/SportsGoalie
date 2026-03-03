@@ -47,6 +47,8 @@ export interface VideoQuiz {
   tags: string[];
   isActive: boolean;
   isPublished: boolean;
+  status?: 'draft' | 'published' | 'archived'; // Quiz publication status
+  allowRetakes?: boolean; // Whether users can retake the quiz
   category: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;

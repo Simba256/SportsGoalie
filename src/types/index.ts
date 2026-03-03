@@ -138,10 +138,11 @@ export interface MediaItem {
 
 export interface VideoItem {
   id: string;
-  youtubeId: string;
+  youtubeId?: string;
+  url?: string; // Direct video URL (alternative to youtubeId)
   title: string;
   duration: number; // seconds
-  thumbnail: string;
+  thumbnail?: string;
   order: number;
 }
 

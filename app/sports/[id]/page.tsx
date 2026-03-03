@@ -35,7 +35,7 @@ interface SportDetailState {
 interface SkillProgress {
   [skillId: string]: {
     percentage: number;
-    passed: boolean;
+    isCompleted: boolean;
   } | null;
 }
 
@@ -157,7 +157,7 @@ export default function SportDetailPage() {
               const latestAttempt = attemptsResult.data.items[0];
               progressMap[skill.id] = {
                 percentage: latestAttempt.percentage,
-                passed: latestAttempt.passed,
+                isCompleted: latestAttempt.isCompleted,
               };
               console.log(`✅ Found progress for skill ${skill.id}:`, progressMap[skill.id]);
             } else {
@@ -570,13 +570,13 @@ export default function SportDetailPage() {
                           <span className="text-xs font-medium text-muted-foreground">Latest Score</span>
                           <div className="flex items-center space-x-1">
                             <span className={`text-lg font-bold ${
-                              skillProgress[skill.id]!.passed
+                              skillProgress[skill.id]!.isCompleted
                                 ? 'text-green-600'
                                 : 'text-amber-600'
                             }`}>
                               {Math.round(skillProgress[skill.id]!.percentage)}%
                             </span>
-                            {skillProgress[skill.id]!.passed && (
+                            {skillProgress[skill.id]!.isCompleted && (
                               <CheckCircle className="w-4 h-4 text-green-600" />
                             )}
                           </div>
@@ -584,7 +584,7 @@ export default function SportDetailPage() {
                         <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                           <div
                             className={`h-full transition-all duration-500 ease-out ${
-                              skillProgress[skill.id]!.passed
+                              skillProgress[skill.id]!.isCompleted
                                 ? 'bg-green-500'
                                 : 'bg-amber-500'
                             }`}

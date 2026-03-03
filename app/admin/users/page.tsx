@@ -275,7 +275,7 @@ function UsersManagementContent() {
                   >
                     <div className="flex items-center space-x-4">
                       <Avatar>
-                        <AvatarImage src={user.profile?.profileImage} />
+                        <AvatarImage src={user.profileImage} />
                         <AvatarFallback>
                           {user.displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
