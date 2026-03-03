@@ -91,6 +91,7 @@ export function QuizCreator({
   const isEditing = !!editContent;
 
   const handleVideoUploaded = (url: string, duration?: number) => {
+    console.log('🎬 QuizCreator handleVideoUploaded called:', { url, duration });
     setVideoUrl(url);
     if (duration) {
       setVideoDuration(duration);
@@ -110,6 +111,7 @@ export function QuizCreator({
 
   const canProceedToQuestions = () => {
     // Only require videoUrl - duration detection may fail for some videos (YouTube, streaming)
+    console.log('🎬 canProceedToQuestions check:', { videoUrl, result: !!videoUrl });
     return !!videoUrl;
   };
 

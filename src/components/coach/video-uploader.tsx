@@ -143,6 +143,7 @@ export function VideoUploader({
       );
 
       if (result.success && result.url) {
+        console.log('🎬 VideoUploader upload success, calling onVideoUploaded:', { url: result.url, videoDuration });
         setVideoUrl(result.url);
         setUploadState('success');
         onVideoUploaded(result.url, videoDuration);
