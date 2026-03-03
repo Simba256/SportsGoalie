@@ -109,7 +109,8 @@ export function QuizCreator({
   };
 
   const canProceedToQuestions = () => {
-    return videoUrl && videoDuration > 0;
+    // Only require videoUrl - duration detection may fail for some videos (YouTube, streaming)
+    return !!videoUrl;
   };
 
   const validate = (): boolean => {
