@@ -83,7 +83,7 @@ class StorageService {
         },
       };
 
-      logger.info('Starting file upload', {
+      logger.info('Starting file upload', 'StorageService', {
         filename,
         size: file.size,
         type: file.type,
@@ -98,7 +98,7 @@ class StorageService {
         const snapshot = await uploadBytes(storageRef, file, metadata);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        logger.info('File upload completed', {
+        logger.info('File upload completed', 'StorageService', {
           filename,
           url: downloadURL,
           size: file.size,
@@ -114,7 +114,7 @@ class StorageService {
         };
       }
     } catch (error) {
-      logger.error('File upload failed', { error, filename: file.name });
+      logger.error('File upload failed', 'StorageService', { error: error instanceof Error ? error.message : String(error), filename: file.name });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Upload failed',
@@ -143,7 +143,7 @@ class StorageService {
 
       // Stop uploading if one fails (optional - could continue)
       if (!result.success) {
-        logger.warn('File upload failed, continuing with remaining files', {
+        logger.warn('File upload failed, continuing with remaining files', 'StorageService', {
           filename: file.name,
           error: result.error,
         });
@@ -161,11 +161,11 @@ class StorageService {
       const storageRef = ref(storage, path);
       await deleteObject(storageRef);
 
-      logger.info('File deleted successfully', { path });
+      logger.info('File deleted successfully', 'StorageService', { path });
 
       return { success: true };
     } catch (error) {
-      logger.error('File deletion failed', { error, path });
+      logger.error('File deletion failed', 'StorageService', { error: error instanceof Error ? error.message : String(error), path });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Deletion failed',
@@ -190,7 +190,7 @@ class StorageService {
         metadata,
       };
     } catch (error) {
-      logger.error('Failed to get file metadata', { error, path });
+      logger.error('Failed to get file metadata', 'StorageService', { error: error instanceof Error ? error.message : String(error), path });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get metadata',
@@ -211,11 +211,11 @@ class StorageService {
         customMetadata: metadata,
       });
 
-      logger.info('File metadata updated', { path, metadata });
+      logger.info('File metadata updated', 'StorageService', { path, metadata });
 
       return { success: true };
     } catch (error) {
-      logger.error('Failed to update file metadata', { error, path });
+      logger.error('Failed to update file metadata', 'StorageService', { error: error instanceof Error ? error.message : String(error), path });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update metadata',
@@ -240,7 +240,7 @@ class StorageService {
         url,
       };
     } catch (error) {
-      logger.error('Failed to get download URL', { error, path });
+      logger.error('Failed to get download URL', 'StorageService', { error: error instanceof Error ? error.message : String(error), path });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get URL',
@@ -315,7 +315,7 @@ class StorageService {
           onProgress(progress);
         },
         (error) => {
-          logger.error('Upload progress error', { error, filename: file.name });
+          logger.error('Upload progress error', 'StorageService', { error: error.message, filename: file.name });
           resolve({
             success: false,
             error: error.message,
@@ -326,7 +326,7 @@ class StorageService {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             const filename = this.generateFilename(file);
 
-            logger.info('Resumable upload completed', {
+            logger.info('Resumable upload completed', 'StorageService', {
               filename,
               url: downloadURL,
               size: file.size,

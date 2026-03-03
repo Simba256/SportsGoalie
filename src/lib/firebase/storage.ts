@@ -5,7 +5,6 @@ import {
   deleteObject,
   listAll,
   getMetadata,
-  UploadTask,
   StorageReference
 } from 'firebase/storage';
 import { storage } from './config';

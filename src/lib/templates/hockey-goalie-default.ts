@@ -1,5 +1,4 @@
 import { FormTemplate } from '@/types';
-import { Timestamp } from 'firebase/firestore';
 
 /**
  * Default Hockey Goalie Performance Tracking Template

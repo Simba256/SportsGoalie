@@ -134,7 +134,7 @@ export function SkillPerformanceTable({ data }: SkillPerformanceTableProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {data.map((skill, index) => (
+                    {data.map((skill) => (
                       <tr key={skill.skillId} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center space-x-2">

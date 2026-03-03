@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Send, Loader2, Video } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { MultiFileUpload, UploadedFile } from './MultiFileUpload';
 import { messageService } from '@/lib/database/services/message.service';
-import { CreateMessageInput } from '@/types/message';
+import { CreateMessageInput, MessageAttachment } from '@/types/message';
 import { toast } from 'sonner';
+import { Timestamp } from 'firebase/firestore';
 
 interface VideoFeedbackComposerProps {
   isOpen: boolean;
@@ -83,14 +84,16 @@ export const VideoFeedbackComposer: React.FC<VideoFeedbackComposerProps> = ({
 
     try {
       // Prepare attachments
-      const attachments = files
+      const attachments: MessageAttachment[] = files
         .filter(f => f.url) // Only include successfully uploaded files
         .map(f => ({
+          id: crypto.randomUUID(),
           type: f.type,
           url: f.url!,
           fileName: f.file.name,
           fileSize: f.file.size,
           mimeType: f.file.type,
+          uploadedAt: Timestamp.now(),
         }));
 
       // Create message input
@@ -112,7 +115,7 @@ export const VideoFeedbackComposer: React.FC<VideoFeedbackComposerProps> = ({
         handleClose();
         onMessageSent?.();
       } else {
-        toast.error(result.error || 'Failed to send feedback');
+        toast.error(result.error?.message || 'Failed to send feedback');
       }
     } catch (error) {
       console.error('Error sending feedback:', error);

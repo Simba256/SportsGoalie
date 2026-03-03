@@ -8,7 +8,7 @@ import { Session, ChartingEntry, PeriodData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
-import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
+import { createEmptyYesNo } from '@/components/charting/YesNoField';
 import { RadioSelectField } from '@/components/charting/RadioSelectField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -196,7 +196,7 @@ export default function PeriodsPage() {
     }
   };
 
-  const updateField = (
+  const _updateField = (
     period: 'period1' | 'period2' | 'period3',
     section: string,
     field: string,

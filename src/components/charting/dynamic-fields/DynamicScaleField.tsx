@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { FormField, FieldResponse } from '@/types';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';

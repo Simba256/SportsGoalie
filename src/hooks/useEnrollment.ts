@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Sport, SportProgress, ApiResponse } from '@/types';
+import { Sport, SportProgress } from '@/types';
 import { enrollmentService } from '@/src/lib/database/services/enrollment.service';
 import { useAuth } from '@/lib/auth/context';
 import { logger } from '@/src/lib/utils/logger';

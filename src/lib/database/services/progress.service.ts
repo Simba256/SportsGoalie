@@ -12,6 +12,7 @@ import {
   runTransaction,
   increment,
   Timestamp,
+  FieldValue,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import {
@@ -22,13 +23,19 @@ import {
   UserAchievement,
   Achievement,
   ApiResponse,
-  ProgressStatus,
   StreakInfo,
   VideoProgress,
 } from '@/types';
 import { logger } from '@/lib/utils/logger';
 import { withRetry } from '@/lib/database/utils/error-recovery';
 import { cacheService } from '@/lib/utils/cache.service';
+
+/**
+ * Type for updating OverallStats where numeric fields can accept FieldValue (for increment())
+ */
+type OverallStatsUpdate = {
+  [K in keyof OverallStats]?: OverallStats[K] | FieldValue;
+};
 
 /**
  * Service for managing user progress tracking, analytics, and achievements
@@ -425,15 +432,19 @@ export class ProgressService extends BaseDatabaseService {
     try {
       return await withRetry(async () => {
         await runTransaction(db, async (transaction) => {
+          // Get current skill progress to calculate new timeSpent
+          const currentSkillProgress = await this.getSkillProgress(userId, skillId);
+          const currentTimeSpent = currentSkillProgress.data?.timeSpent || 0;
+
           // Update skill progress
           await this.updateSkillProgress(userId, skillId, sportId, {
             quizScore: score,
-            timeSpent: increment(timeSpent),
+            timeSpent: currentTimeSpent + timeSpent,
             status: passed ? 'completed' : 'in_progress',
           });
 
           // Update overall stats
-          const statsUpdate: Partial<OverallStats> = {
+          const statsUpdate: OverallStatsUpdate = {
             quizzesCompleted: increment(1),
             totalTimeSpent: increment(timeSpent),
             totalPoints: increment(passed ? score : Math.floor(score / 2)),
@@ -548,7 +559,7 @@ export class ProgressService extends BaseDatabaseService {
 
       return { success: true, data: achievements, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get available achievements', { error });
+      logger.error('Failed to get available achievements', 'ProgressService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: {
@@ -762,7 +773,7 @@ export class ProgressService extends BaseDatabaseService {
    */
   private static async updateOverallStats(
     userId: string,
-    updates: Partial<OverallStats>
+    updates: OverallStatsUpdate
   ): Promise<void> {
     const docRef = doc(db, this.COLLECTIONS.USER_PROGRESS, userId);
 

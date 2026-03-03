@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
-import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
+import { createEmptyYesNo } from '@/components/charting/YesNoField';
 import { RadioSelectField } from '@/components/charting/RadioSelectField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -189,7 +189,7 @@ export default function OvertimeShootoutPage() {
     }
   };
 
-  const updateOvertimeField = (section: string, field: string, key: 'value' | 'comments', value: any) => {
+  const _updateOvertimeField = (section: string, field: string, key: 'value' | 'comments', value: any) => {
     setOvertimeData((prev: any) => ({
       ...prev,
       [section]: {

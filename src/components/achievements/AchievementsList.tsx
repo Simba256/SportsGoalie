@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Filter, Trophy, Star, Clock, Target, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AchievementCard } from './AchievementCard';
 import { Achievement, UserAchievement } from '@/types';

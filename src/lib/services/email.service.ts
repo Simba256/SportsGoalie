@@ -134,7 +134,7 @@ export class EmailService implements IEmailService {
         logInfo('Email sent successfully', { to: data.to, subject: data.subject });
       }
     } catch (error) {
-      logError('Failed to send email', error);
+      logError('Failed to send email', error instanceof Error ? error : undefined, { error: String(error) });
       throw new Error('Failed to send email');
     }
   }

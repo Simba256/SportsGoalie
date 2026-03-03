@@ -2,8 +2,6 @@ import { BaseDatabaseService } from '../base.service';
 import {
   Session,
   ChartingEntry,
-  SessionType,
-  SessionStatus,
   SessionStats,
   StreakData,
   GoalsAnalytics,
@@ -12,12 +10,10 @@ import {
   PeriodPerformanceAnalytics,
   ShootoutAnalytics,
   StudentChartingAnalytics,
-  PerformanceInsight,
   StudentSummary,
   CohortAnalytics,
   ChartingQueryOptions,
   ApiResponse,
-  PaginatedResponse,
 } from '@/types';
 import { Timestamp, query, where, orderBy, limit as firestoreLimit, getDocs, collection, doc, setDoc } from 'firebase/firestore';
 import { logger } from '../../utils/logger';

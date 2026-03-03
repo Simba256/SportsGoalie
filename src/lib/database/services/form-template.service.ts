@@ -1,14 +1,12 @@
 import { BaseDatabaseService } from '../base.service';
 import {
   FormTemplate,
-  FormSection,
   FormField,
   FormTemplateQueryOptions,
   TemplateValidationResult,
   FieldType,
   AnalyticsType,
   ApiResponse,
-  PaginatedResponse,
 } from '@/types';
 import {
   Timestamp,
@@ -19,7 +17,6 @@ import {
   getDocs,
   collection,
   doc,
-  setDoc,
   updateDoc,
   increment,
 } from 'firebase/firestore';
@@ -106,7 +103,7 @@ export class FormTemplateService extends BaseDatabaseService {
   /**
    * Gets a form template by ID
    */
-  async getTemplate(templateId: string): Promise<ApiResponse<FormTemplate>> {
+  async getTemplate(templateId: string): Promise<ApiResponse<FormTemplate | null>> {
     logger.database('read', this.TEMPLATES_COLLECTION, templateId);
 
     return await this.getById<FormTemplate>(this.TEMPLATES_COLLECTION, templateId);
@@ -325,7 +322,7 @@ export class FormTemplateService extends BaseDatabaseService {
         data: templates,
       };
     } catch (error) {
-      logger.error('Error querying templates', error, 'FormTemplateService');
+      logger.error('Error querying templates', 'FormTemplateService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         message: 'Failed to query templates',
@@ -712,7 +709,7 @@ export class FormTemplateService extends BaseDatabaseService {
         usageCount: increment(1),
       });
     } catch (error) {
-      logger.error('Error incrementing template usage count', error, 'FormTemplateService', {
+      logger.error('Error incrementing template usage count', 'FormTemplateService', { error: error instanceof Error ? error.message : String(error),
         templateId,
       });
     }

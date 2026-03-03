@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import ReactPlayer from 'react-player';
 import { OnProgressProps } from 'react-player/base';
 import { VideoQuizPlayerProps, VideoQuizQuestionWithState } from '@/types';

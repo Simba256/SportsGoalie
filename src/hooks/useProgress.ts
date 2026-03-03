@@ -121,7 +121,7 @@ export function useSportProgress(sportId: string) {
         const result = await ProgressService.getSportProgress(user.id, sportId);
 
         if (result.success) {
-          setSportProgress(result.data);
+          setSportProgress(result.data ?? null);
           setError(null);
         } else {
           setError(result.error?.message || 'Failed to fetch sport progress');
@@ -142,7 +142,7 @@ export function useSportProgress(sportId: string) {
     try {
       const result = await ProgressService.updateSportProgress(user.id, sportId, updates);
       if (result.success) {
-        setSportProgress(result.data);
+        setSportProgress(result.data ?? null);
       }
     } catch (error) {
       console.error('Failed to update sport progress:', error);
@@ -175,7 +175,7 @@ export function useSkillProgress(skillId: string, sportId: string) {
         const result = await ProgressService.getSkillProgress(user.id, skillId);
 
         if (result.success) {
-          setSkillProgress(result.data);
+          setSkillProgress(result.data ?? null);
           setError(null);
         } else {
           setError(result.error?.message || 'Failed to fetch skill progress');
@@ -196,7 +196,7 @@ export function useSkillProgress(skillId: string, sportId: string) {
     try {
       const result = await ProgressService.updateSkillProgress(user.id, skillId, sportId, updates);
       if (result.success) {
-        setSkillProgress(result.data);
+        setSkillProgress(result.data ?? null);
       }
     } catch (error) {
       console.error('Failed to update skill progress:', error);

@@ -18,11 +18,9 @@ import { db, storage } from '@/lib/firebase/config';
 import {
   CustomContentLibrary,
   CreateCustomContentData,
-  CustomContentMetadata,
   ApiResponse,
 } from '@/types';
 import { logger } from '@/lib/utils/logger';
-import { withRetry } from '@/lib/database/utils/error-recovery';
 import { cacheService } from '@/lib/utils/cache.service';
 
 /**

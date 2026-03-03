@@ -165,7 +165,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return invitation;
     } catch (error) {
-      logError('Failed to create coach invitation', error);
+      logError('Failed to create coach invitation', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -183,7 +183,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return this.convertToInvitation(invitationDoc.data());
     } catch (error) {
-      logError('Failed to get invitation', error);
+      logError('Failed to get invitation', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -206,7 +206,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return this.convertToInvitation(snapshot.docs[0].data());
     } catch (error) {
-      logError('Failed to get invitation by token', error);
+      logError('Failed to get invitation by token', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -225,7 +225,7 @@ export class CoachInvitationService implements ICoachInvitationService {
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => this.convertToInvitation(doc.data()));
     } catch (error) {
-      logError('Failed to get invitations by email', error);
+      logError('Failed to get invitations by email', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -243,7 +243,7 @@ export class CoachInvitationService implements ICoachInvitationService {
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => this.convertToInvitation(doc.data()));
     } catch (error) {
-      logError('Failed to get all invitations', error);
+      logError('Failed to get all invitations', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -276,7 +276,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return validInvitations;
     } catch (error) {
-      logError('Failed to get pending invitations', error);
+      logError('Failed to get pending invitations', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -310,7 +310,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return { valid: true, invitation };
     } catch (error) {
-      logError('Failed to validate invitation', error);
+      logError('Failed to validate invitation', error instanceof Error ? error : undefined, { error: String(error) });
       return { valid: false, error: 'Failed to validate invitation' };
     }
   }
@@ -330,7 +330,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       logInfo('Invitation accepted', { invitationId, userId });
     } catch (error) {
-      logError('Failed to accept invitation', error);
+      logError('Failed to accept invitation', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -350,7 +350,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       logInfo('Invitation revoked', { invitationId, revokedBy });
     } catch (error) {
-      logError('Failed to revoke invitation', error);
+      logError('Failed to revoke invitation', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -380,7 +380,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return invitation;
     } catch (error) {
-      logError('Failed to resend invitation', error);
+      logError('Failed to resend invitation', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -401,7 +401,7 @@ export class CoachInvitationService implements ICoachInvitationService {
 
       return null;
     } catch (error) {
-      logError('Failed to check existing invitation', error);
+      logError('Failed to check existing invitation', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }
@@ -413,7 +413,7 @@ export class CoachInvitationService implements ICoachInvitationService {
     try {
       await updateDoc(doc(db, this.collectionName, invitationId), { status });
     } catch (error) {
-      logError('Failed to update invitation status', error);
+      logError('Failed to update invitation status', error instanceof Error ? error : undefined, { error: String(error) });
       throw error;
     }
   }

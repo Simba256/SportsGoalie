@@ -7,7 +7,6 @@ import {
   PaginatedResponse,
   QueryOptions,
   WhereClause,
-  DifficultyLevel,
   Skill,
 } from '@/types';
 import { logger } from '../../utils/logger';

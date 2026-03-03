@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Send, Loader2 } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +23,9 @@ import {
 } from '@/components/ui/select';
 import { MultiFileUpload, UploadedFile } from './MultiFileUpload';
 import { messageService } from '@/lib/database/services/message.service';
-import { MessageType, CreateMessageInput } from '@/types/message';
+import { MessageType, CreateMessageInput, MessageAttachment } from '@/types/message';
 import { toast } from 'sonner';
+import { Timestamp } from 'firebase/firestore';
 
 interface MessageComposerProps {
   isOpen: boolean;
@@ -88,14 +89,16 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
 
     try {
       // Prepare attachments
-      const attachments = files
+      const attachments: MessageAttachment[] = files
         .filter(f => f.url) // Only include successfully uploaded files
         .map(f => ({
+          id: crypto.randomUUID(),
           type: f.type,
           url: f.url!,
           fileName: f.file.name,
           fileSize: f.file.size,
           mimeType: f.file.type,
+          uploadedAt: Timestamp.now(),
         }));
 
       // Create message input
@@ -115,7 +118,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         handleClose();
         onMessageSent?.();
       } else {
-        toast.error(result.error || 'Failed to send message');
+        toast.error(result.error?.message || 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);

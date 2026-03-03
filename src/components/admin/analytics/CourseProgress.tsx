@@ -40,7 +40,7 @@ export function CourseProgress({ courses, loading }: CourseProgressProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="success">Completed</Badge>;
+        return <Badge variant="default" className="bg-green-100 text-green-800">Completed</Badge>;
       case 'in_progress':
         return <Badge variant="default">In Progress</Badge>;
       default:

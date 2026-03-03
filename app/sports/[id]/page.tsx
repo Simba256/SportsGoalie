@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Sport, Skill, DifficultyLevel, QuizAttempt } from '@/types';
+import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { useSportEnrollment } from '@/src/hooks/useEnrollment';
@@ -20,7 +20,6 @@ import {
   Star,
   Trophy,
   Heart,
-  HeartOff,
   Loader2,
 } from 'lucide-react';
 
@@ -67,9 +66,9 @@ export default function SportDetailPage() {
   const {
     enrolled,
     progress,
-    loading: enrollmentLoading,
+    loading: _enrollmentLoading,
     enroll,
-    unenroll,
+    unenroll: _unenroll,
   } = useSportEnrollment(sportId);
 
   useEffect(() => {
@@ -98,7 +97,7 @@ export default function SportDetailPage() {
         if (!skillsResult.success) {
           setState(prev => ({
             ...prev,
-            sport: sportResult.data,
+            sport: sportResult.data ?? null,
             error: skillsResult.error?.message || 'Failed to load skills',
             loading: false,
             skillsLoading: false,
@@ -108,7 +107,7 @@ export default function SportDetailPage() {
 
         setState(prev => ({
           ...prev,
-          sport: sportResult.data,
+          sport: sportResult.data ?? null,
           skills: skillsResult.data?.items || [],
           loading: false,
           skillsLoading: false,
@@ -153,7 +152,7 @@ export default function SportDetailPage() {
               error: attemptsResult.error,
             });
 
-            if (attemptsResult.success && attemptsResult.data?.items.length > 0) {
+            if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
               const latestAttempt = attemptsResult.data.items[0];
               progressMap[skill.id] = {
                 percentage: latestAttempt.percentage,
@@ -192,8 +191,8 @@ export default function SportDetailPage() {
 
 
   // Handle enrollment in sport
-  const handleStartLearning = async () => {
-    console.log('handleStartLearning called, user state:', user);
+  const _handleStartLearning = async () => {
+    console.log('_handleStartLearning called, user state:', user);
     console.log('Auth loading state:', { user: !!user, id: user?.id });
 
     if (!user) {

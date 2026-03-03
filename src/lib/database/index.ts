@@ -38,7 +38,7 @@ import { seederService } from './seeding/seeder.service';
 import { sportsService } from './services/sports.service';
 import { videoQuizService } from './services/video-quiz.service';
 import { userService } from './services/user.service';
-import { logger, withPerformanceLogging } from '../utils/logger';
+import { logger } from '../utils/logger';
 
 /**
  * Configuration options for database initialization

@@ -9,20 +9,14 @@ import {
   QueryOptions,
   SearchFilters,
   DifficultyLevel,
+  WhereClause,
 } from '@/types';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import {
   createDefaultSportMetadata,
-  createDefaultSkillMetadata,
   validateSportData,
   validateSkillData,
-  buildSportsQueryFilters,
-  buildSkillsQueryFilters,
-  calculateSportProgress,
-  calculateSkillProgress,
-  updateSportMetadataOnCompletion,
-  updateSkillMetadataOnCompletion,
 } from '../utils/sport-helpers';
 
 /**
@@ -223,14 +217,14 @@ export class SportsService extends BaseDatabaseService {
     };
 
     // Restore active filter now that permissions are fixed
-    const whereClause = [
-      { field: 'isActive', operator: '==' as const, value: true },
+    const whereClause: WhereClause[] = [
+      { field: 'isActive', operator: '==', value: true },
     ];
 
     if (options.difficulty && options.difficulty.length > 0) {
       whereClause.push({
         field: 'difficulty',
-        operator: 'in' as const,
+        operator: 'in',
         value: options.difficulty,
       });
     }
@@ -238,18 +232,18 @@ export class SportsService extends BaseDatabaseService {
     if (options.categories && options.categories.length > 0) {
       whereClause.push({
         field: 'category',
-        operator: 'in' as const,
+        operator: 'in',
         value: options.categories,
       });
     }
 
     queryOptions.where = whereClause;
 
-    logger.info('Querying Firebase for sports', { queryOptions });
+    logger.info('Querying Firebase for sports', 'SportsService', { queryOptions });
 
     try {
       const result = await this.query<Sport>(this.SPORTS_COLLECTION, queryOptions);
-      logger.info('Sports query result', { success: result.success, itemCount: result.data?.items?.length || 0 });
+      logger.info('Sports query result', 'SportsService', { success: result.success, itemCount: result.data?.items?.length || 0 });
 
       // Apply client-side sorting to avoid index requirements
       if (result.success && result.data) {
@@ -267,10 +261,10 @@ export class SportsService extends BaseDatabaseService {
 
       return result;
     } catch (error) {
-      logger.error('Error in getAllSports', error);
+      logger.error('Error in getAllSports', 'SportsService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
-        error: { message: `Failed to fetch sports: ${error instanceof Error ? error.message : 'Unknown error'}` },
+        error: { code: 'FETCH_SPORTS_ERROR', message: `Failed to fetch sports: ${error instanceof Error ? error.message : 'Unknown error'}` },
         timestamp: new Date(),
       };
     }
@@ -296,14 +290,14 @@ export class SportsService extends BaseDatabaseService {
         limit: filters.duration?.max || 50,
       };
 
-      const whereClause = [
-        { field: 'isActive', operator: '==' as const, value: true },
+      const whereClause: WhereClause[] = [
+        { field: 'isActive', operator: '==', value: true },
       ];
 
       if (filters.difficulty && filters.difficulty.length > 0) {
         whereClause.push({
           field: 'difficulty',
-          operator: 'in' as const,
+          operator: 'in',
           value: filters.difficulty,
         });
       }
@@ -311,7 +305,7 @@ export class SportsService extends BaseDatabaseService {
       if (filters.categories && filters.categories.length > 0) {
         whereClause.push({
           field: 'category',
-          operator: 'in' as const,
+          operator: 'in',
           value: filters.categories,
         });
       }
@@ -339,7 +333,7 @@ export class SportsService extends BaseDatabaseService {
 
       return result;
     } catch (error) {
-      logger.error('Error in searchSports', { error });
+      logger.error('Error in searchSports', 'SportsService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: {

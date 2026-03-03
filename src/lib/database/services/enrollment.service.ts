@@ -3,7 +3,6 @@ import {
   Sport,
   SportProgress,
   ApiResponse,
-  PaginatedResponse,
   QueryOptions,
 } from '@/types';
 import { Timestamp } from 'firebase/firestore';
@@ -17,7 +16,6 @@ import { videoQuizService } from './video-quiz.service';
  */
 export class EnrollmentService extends BaseDatabaseService {
   private readonly SPORT_PROGRESS_COLLECTION = 'sport_progress';
-  private readonly SPORTS_COLLECTION = 'sports';
 
   /**
    * Enroll a user in a sport by creating SportProgress record
@@ -118,7 +116,7 @@ export class EnrollmentService extends BaseDatabaseService {
     if (!progressResult.success || !progressResult.data) {
       return {
         success: false,
-        error: progressResult.error || { message: 'Failed to fetch enrolled sports' },
+        error: progressResult.error || { code: 'ENROLLMENT_ERROR', message: 'Failed to fetch enrolled sports' },
         timestamp: new Date(),
       };
     }
@@ -420,7 +418,7 @@ export class EnrollmentService extends BaseDatabaseService {
     if (!result.success || !result.data) {
       return {
         success: false,
-        error: result.error || { message: 'Failed to fetch enrollment stats' },
+        error: result.error || { code: 'ENROLLMENT_STATS_ERROR', message: 'Failed to fetch enrollment stats' },
         timestamp: new Date(),
       };
     }

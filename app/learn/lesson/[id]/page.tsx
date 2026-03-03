@@ -12,7 +12,6 @@ import {
   Clock,
   Target,
   CheckCircle2,
-  PlayCircle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { customContentService, customCurriculumService } from '@/lib/database';

@@ -13,9 +13,6 @@ import {
   limit,
   startAfter,
   onSnapshot,
-  DocumentSnapshot,
-  QuerySnapshot,
-  Timestamp,
   serverTimestamp,
   writeBatch,
   increment,
@@ -32,10 +29,8 @@ import {
   PaginatedResponse,
   QueryOptions,
   RealtimeListener,
-  RealtimeUpdate,
   CacheEntry,
   CacheOptions,
-  ErrorDetails,
 } from '@/types';
 
 // Enhanced error handling
@@ -317,7 +312,7 @@ export class BaseDatabaseService {
     collectionName: string,
     id: string,
     data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>,
-    options: { merge?: boolean; validateSchema?: boolean } = {}
+    _options: { merge?: boolean; validateSchema?: boolean } = {}
   ): Promise<ApiResponse<void>> {
     return this.executeWithRetry(async () => {
       const docRef = doc(db, collectionName, id);
@@ -817,7 +812,7 @@ export class BaseDatabaseService {
     }
   }
 
-  protected async setDocument<T = any>(
+  protected async setDocument(
     collectionName: string,
     id: string,
     data: any

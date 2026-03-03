@@ -64,7 +64,7 @@ export default function EditQuizPage() {
     }
   };
 
-  const handleSave = (updatedContent: CustomContentLibrary) => {
+  const handleSave = (_updatedContent: CustomContentLibrary) => {
     toast.success('Quiz updated successfully');
     router.push('/coach/content');
   };

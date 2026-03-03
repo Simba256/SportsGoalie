@@ -23,7 +23,7 @@ import {
   FirestorePermissionError,
 } from '@/lib/errors/auth-errors';
 import { logAuthError, logInfo, logDebug } from '@/lib/errors/error-logger';
-import { generateStudentId, isValidStudentId } from '@/lib/utils/student-id-generator';
+import { generateStudentId } from '@/lib/utils/student-id-generator';
 import { userService } from '@/lib/database/services/user.service';
 
 /**

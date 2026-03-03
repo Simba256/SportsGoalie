@@ -11,7 +11,6 @@ import {
   where,
   orderBy,
   Timestamp,
-  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import {
@@ -19,13 +18,10 @@ import {
   CustomCurriculumItem,
   CreateCurriculumData,
   AddCurriculumItemData,
-  CurriculumQueryOptions,
   CurriculumProgress,
-  CurriculumItemStatus,
   ApiResponse,
 } from '@/types';
 import { logger } from '@/lib/utils/logger';
-import { withRetry } from '@/lib/database/utils/error-recovery';
 import { cacheService } from '@/lib/utils/cache.service';
 
 /**

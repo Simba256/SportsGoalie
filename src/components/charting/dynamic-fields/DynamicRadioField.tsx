@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { FormField, FieldResponse } from '@/types';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';

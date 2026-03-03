@@ -1,7 +1,6 @@
 import { BaseDatabaseService } from '../base.service';
 import {
   Message,
-  MessageAttachment,
   MessageType,
   CreateMessageInput,
   MessageQueryOptions,

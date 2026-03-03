@@ -124,7 +124,7 @@ export default function SkillDetailPage() {
         if (!skillResult.success || !skillResult.data) {
           setState(prev => ({
             ...prev,
-            sport: sportResult.data,
+            sport: sportResult.data ?? null,
             error: 'Skill not found',
             loading: false,
           }));
@@ -142,8 +142,8 @@ export default function SkillDetailPage() {
 
         setState(prev => ({
           ...prev,
-          sport: sportResult.data,
-          skill: skillResult.data,
+          sport: sportResult.data ?? null,
+          skill: skillResult.data ?? null,
           prerequisites,
           loading: false,
         }));

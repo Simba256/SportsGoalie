@@ -1,9 +1,9 @@
 'use client';
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, TrendingUp, TrendingDown, Award } from 'lucide-react';
+import { Trophy, TrendingUp, Award } from 'lucide-react';
 
 interface QuizPerformanceData {
   quizTitle: string;

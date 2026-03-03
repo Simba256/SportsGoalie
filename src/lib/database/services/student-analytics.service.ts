@@ -1,13 +1,9 @@
 import { BaseDatabaseService } from '../base.service';
 import { sportsService } from './sports.service';
-import { userService } from './user.service';
 import { videoQuizService } from './video-quiz.service';
 import {
   ApiResponse,
   QuizAttempt,
-  SportProgress,
-  SkillProgress,
-  QueryOptions
 } from '@/types';
 import { logger } from '../../utils/logger';
 

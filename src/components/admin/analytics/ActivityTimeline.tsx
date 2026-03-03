@@ -112,7 +112,7 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
             {/* Timeline line */}
             <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-border" />
 
-            {activities.map((activity, index) => (
+            {activities.map((activity) => (
               <div key={activity.id} className="relative flex items-start space-x-4 pb-4">
                 {/* Icon */}
                 <div className={`relative z-10 flex items-center justify-center w-14 h-14 rounded-full border-2 ${getActivityColor(activity.type)}`}>

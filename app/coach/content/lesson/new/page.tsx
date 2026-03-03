@@ -18,7 +18,7 @@ export default function NewLessonPage() {
     }
   }, [user, authLoading, router]);
 
-  const handleSave = (content: CustomContentLibrary) => {
+  const handleSave = (_content: CustomContentLibrary) => {
     router.push('/coach/content');
   };
 

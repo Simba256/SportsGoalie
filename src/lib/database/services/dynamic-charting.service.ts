@@ -6,11 +6,8 @@ import {
   ApiResponse,
 } from '@/types';
 import {
-  Timestamp,
   query,
   where,
-  orderBy,
-  limit as firestoreLimit,
   getDocs,
   collection,
 } from 'firebase/firestore';
@@ -92,7 +89,7 @@ export class DynamicChartingService extends BaseDatabaseService {
   /**
    * Gets a dynamic charting entry by ID
    */
-  async getDynamicEntry(entryId: string): Promise<ApiResponse<DynamicChartingEntry>> {
+  async getDynamicEntry(entryId: string): Promise<ApiResponse<DynamicChartingEntry | null>> {
     logger.database('read', this.DYNAMIC_ENTRIES_COLLECTION, entryId);
 
     return await this.getById<DynamicChartingEntry>(this.DYNAMIC_ENTRIES_COLLECTION, entryId);
@@ -203,7 +200,7 @@ export class DynamicChartingService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error querying dynamic entries by session', error, 'DynamicChartingService');
+      logger.error('Error querying dynamic entries by session', 'DynamicChartingService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         message: 'Failed to query entries',
@@ -258,7 +255,7 @@ export class DynamicChartingService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error querying dynamic entries by student', error, 'DynamicChartingService');
+      logger.error('Error querying dynamic entries by student', 'DynamicChartingService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         message: 'Failed to query entries',
@@ -320,7 +317,7 @@ export class DynamicChartingService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error querying all dynamic entries', error, 'DynamicChartingService');
+      logger.error('Error querying all dynamic entries', 'DynamicChartingService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         message: 'Failed to query entries',

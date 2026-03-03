@@ -29,7 +29,7 @@ export function TokenDiagnostic() {
         authTime: new Date(tokenResult.authTime).toLocaleString(),
       });
     } catch (error) {
-      setTokenClaims({ error: error.message });
+      setTokenClaims({ error: error instanceof Error ? error.message : String(error) });
     }
     setLoading(false);
   };

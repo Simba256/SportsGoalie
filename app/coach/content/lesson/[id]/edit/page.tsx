@@ -64,7 +64,7 @@ export default function EditLessonPage() {
     }
   };
 
-  const handleSave = (updatedContent: CustomContentLibrary) => {
+  const handleSave = (_updatedContent: CustomContentLibrary) => {
     toast.success('Lesson updated successfully');
     router.push('/coach/content');
   };

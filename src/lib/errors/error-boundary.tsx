@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { Component, ReactNode, ErrorInfo } from 'react';
+import { Component, ReactNode, ErrorInfo } from 'react';
 import { AuthError, isAuthError } from './auth-errors';
 import { logError, logAuthError } from './error-logger';
 

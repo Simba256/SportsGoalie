@@ -17,7 +17,7 @@ export default function CoachDashboardPage() {
     totalCurriculumItems: 0,
     averageProgress: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [coachCode, setCoachCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);

@@ -1,7 +1,6 @@
 import { BaseDatabaseService } from '../base.service';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
-import { ApiResponse } from '@/types';
 import { firebaseService } from '../../firebase/service';
 import { messageService } from './message.service';
 
@@ -101,7 +100,7 @@ class VideoReviewService extends BaseDatabaseService {
         { field: 'status', operator: 'in', value: ['pending', 'reviewed', 'feedback_sent'] }
       ]);
 
-      logger.database('query-result', this.collection, undefined, { count: videos.length, statuses: videos.map(v => ({ id: v.id, status: v.status })) });
+      logger.database('query', this.collection, undefined, { count: videos.length, statuses: videos.map(v => ({ id: v.id, status: v.status })) });
 
       // Sort by upload date (newest first)
       const sortedVideos = videos.sort((a, b) => {
@@ -110,7 +109,7 @@ class VideoReviewService extends BaseDatabaseService {
         return dateB.getTime() - dateA.getTime();
       });
 
-      logger.database('query-success', this.collection, undefined, { resultCount: sortedVideos.length });
+      logger.database('query', this.collection, undefined, { resultCount: sortedVideos.length });
       return {
         success: true,
         data: sortedVideos

@@ -32,7 +32,7 @@ export async function initializeDefaultTemplates(adminUserId: string): Promise<{
     } else {
       const errorMsg = hockeyResult.message || 'Unknown error creating Hockey Goalie template';
       errors.push(errorMsg);
-      logger.error('Failed to create Hockey Goalie template', errorMsg, 'TemplateInit');
+      logger.error('Failed to create Hockey Goalie template', 'TemplateInit', { error: errorMsg });
     }
 
     // Future: Add more default templates here for other sports
@@ -53,7 +53,7 @@ export async function initializeDefaultTemplates(adminUserId: string): Promise<{
       templateIds: results,
     };
   } catch (error) {
-    logger.error('Error initializing templates', error, 'TemplateInit');
+    logger.error('Error initializing templates', 'TemplateInit', { error: error instanceof Error ? error.message : String(error) });
     return {
       success: false,
       message: 'Failed to initialize templates',
@@ -79,7 +79,7 @@ export async function checkDefaultTemplatesExist(): Promise<{
       hockeyGoalie: hockeyResult.success && hockeyResult.data ? hockeyResult.data.length > 0 : false,
     };
   } catch (error) {
-    logger.error('Error checking template existence', error, 'TemplateInit');
+    logger.error('Error checking template existence', 'TemplateInit', { error: error instanceof Error ? error.message : String(error) });
     return {
       hockeyGoalie: false,
     };
@@ -124,7 +124,7 @@ export async function ensureHockeyGoalieTemplate(adminUserId: string): Promise<{
       message: createResult.message || 'Failed to create template',
     };
   } catch (error) {
-    logger.error('Error ensuring Hockey Goalie template', error, 'TemplateInit');
+    logger.error('Error ensuring Hockey Goalie template', 'TemplateInit', { error: error instanceof Error ? error.message : String(error) });
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error',

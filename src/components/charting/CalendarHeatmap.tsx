@@ -1,7 +1,7 @@
 'use client';
 
 import { Session, DynamicChartingEntry } from '@/types';
-import { format, startOfDay, addDays, getDay, startOfYear, endOfYear, differenceInDays } from 'date-fns';
+import { format, startOfDay, addDays, getDay } from 'date-fns';
 
 interface CalendarHeatmapProps {
   sessions: Session[];

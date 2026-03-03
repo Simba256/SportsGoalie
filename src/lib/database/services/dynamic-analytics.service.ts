@@ -113,7 +113,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error calculating student analytics', error, 'DynamicAnalyticsService');
+      logger.error('Error calculating student analytics', 'DynamicAnalyticsService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         message: 'Failed to calculate analytics',
@@ -132,7 +132,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   async getStudentAnalytics(
     studentId: string,
     templateId: string
-  ): Promise<ApiResponse<DynamicStudentAnalytics>> {
+  ): Promise<ApiResponse<DynamicStudentAnalytics | null>> {
     const analyticsId = `${studentId}_${templateId}`;
     return await this.getById<DynamicStudentAnalytics>(this.ANALYTICS_COLLECTION, analyticsId);
   }
@@ -179,7 +179,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error getting latest student analytics', error, 'DynamicAnalyticsService');
+      logger.error('Error getting latest student analytics', 'DynamicAnalyticsService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         message: 'Failed to get analytics',
