@@ -22,6 +22,9 @@ export function CoachBreadcrumb({ className }: Props) {
         if (result.success && result.data) {
           setStudentName(result.data.displayName);
         }
+      }).catch(() => {
+        // Silently fail - breadcrumb will show generic label
+        setStudentName(null);
       });
     } else {
       setStudentName(null);

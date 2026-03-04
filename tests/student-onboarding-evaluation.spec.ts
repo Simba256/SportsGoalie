@@ -10,9 +10,6 @@ import { test, expect } from '@playwright/test';
  * 4. Screenshot capture for visual verification
  */
 
-// Override baseURL to use port 3000 instead of 3001
-test.use({ baseURL: 'http://localhost:3000' });
-
 test.describe('Student Onboarding Evaluation System', () => {
 
   test('Navigate to onboarding page without authentication', async ({ page }) => {

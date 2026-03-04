@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { chartingService } from '@/lib/database';
-import { Session, ChartingEntry, YesNoResponse } from '@/types';
+import { Session, ChartingEntry, YesNoResponse, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,8 +42,12 @@ const YesNoField = ({
 
 interface LegacyChartingFormProps {
   session: Session;
-  user: any;
+  user: User;
 }
+
+// Legacy form data type - uses Record for dynamic field access patterns
+// This allows the updateField function to work with string-based path navigation
+type LegacyFormData = Record<string, unknown>;
 
 export default function LegacyChartingForm({ session, user }: LegacyChartingFormProps) {
   const [existingEntry, setExistingEntry] = useState<ChartingEntry | null>(null);
@@ -53,7 +57,7 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
   // Initialize form with empty data structure
   const createEmptyYesNo = (): YesNoResponse => ({ value: false, comments: '' });
 
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<LegacyFormData>({
     preGame: {
       gameReadiness: {
         wellRested: createEmptyYesNo(),
@@ -165,6 +169,7 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
     if (session.id && user) {
       loadExistingEntry();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.id, user]);
 
   const loadExistingEntry = async () => {
@@ -175,7 +180,7 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
         const myEntry = entriesResult.data.find((e) => e.submittedBy === user.id);
         if (myEntry) {
           setExistingEntry(myEntry);
-          setFormData((prev: any) => ({
+          setFormData((prev) => ({
             ...prev,
             ...myEntry,
           }));
@@ -206,7 +211,7 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
       } else {
         const result = await chartingService.createChartingEntry(entryData);
         if (result.success && result.data) {
-          setExistingEntry({ ...entryData, id: result.data.id } as any);
+          setExistingEntry({ ...entryData, id: result.data.id } as ChartingEntry);
           alert('✅ Charting entry created successfully!');
         }
       }
@@ -218,21 +223,49 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
     }
   };
 
-  const updateField = (section: string, subsection: string, field: string, key: string, value: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [subsection]: {
-          ...prev[section][subsection],
-          [field]: {
-            ...prev[section][subsection][field],
-            [key]: value,
+  // Helper to safely access nested form data
+  const getFormSection = <T,>(path: string): T => {
+    const keys = path.split('.');
+    let current: unknown = formData;
+    for (const key of keys) {
+      current = (current as Record<string, unknown>)?.[key];
+    }
+    return current as T;
+  };
+
+  const updateField = (section: string, subsection: string, field: string, key: string, value: boolean | string) => {
+    setFormData((prev) => {
+      const sectionData = prev[section] as Record<string, Record<string, Record<string, unknown>>>;
+      return {
+        ...prev,
+        [section]: {
+          ...sectionData,
+          [subsection]: {
+            ...sectionData[subsection],
+            [field]: {
+              ...(sectionData[subsection]?.[field] as Record<string, unknown>),
+              [key]: value,
+            },
           },
         },
-      },
-    }));
+      };
+    });
   };
+
+  // Type-safe getters for form sections
+  const preGame = getFormSection<{
+    gameReadiness: { wellRested: YesNoResponse; fueledForGame: YesNoResponse };
+    mindSet: { mindCleared: YesNoResponse; mentalImagery: YesNoResponse };
+    preGameRoutine: { ballExercises: YesNoResponse; stretching: YesNoResponse; other: YesNoResponse };
+    warmUp: { lookedEngaged: YesNoResponse; lackedFocus: YesNoResponse; teamWarmUpNeedsAdjustment: YesNoResponse };
+  }>('preGame');
+
+  const postGame = getFormSection<{
+    reviewCompleted: YesNoResponse;
+    reviewNotCompleted: YesNoResponse;
+  }>('postGame');
+
+  const additionalComments = (formData.additionalComments as string) || '';
 
   return (
     <div className="space-y-6">
@@ -260,14 +293,14 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
             <div className="space-y-3">
               <YesNoField
                 label="Well Rested"
-                value={formData.preGame.gameReadiness.wellRested.value}
-                comments={formData.preGame.gameReadiness.wellRested.comments}
+                value={preGame.gameReadiness.wellRested.value}
+                comments={preGame.gameReadiness.wellRested.comments}
                 onChange={(k, v) => updateField('preGame', 'gameReadiness', 'wellRested', k, v)}
               />
               <YesNoField
                 label="Fueled for Game (Proper Nutrition)"
-                value={formData.preGame.gameReadiness.fueledForGame.value}
-                comments={formData.preGame.gameReadiness.fueledForGame.comments}
+                value={preGame.gameReadiness.fueledForGame.value}
+                comments={preGame.gameReadiness.fueledForGame.comments}
                 onChange={(k, v) => updateField('preGame', 'gameReadiness', 'fueledForGame', k, v)}
               />
             </div>
@@ -278,14 +311,14 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
             <div className="space-y-3">
               <YesNoField
                 label="Mind Cleared"
-                value={formData.preGame.mindSet.mindCleared.value}
-                comments={formData.preGame.mindSet.mindCleared.comments}
+                value={preGame.mindSet.mindCleared.value}
+                comments={preGame.mindSet.mindCleared.comments}
                 onChange={(k, v) => updateField('preGame', 'mindSet', 'mindCleared', k, v)}
               />
               <YesNoField
                 label="Mental Imagery Completed"
-                value={formData.preGame.mindSet.mentalImagery.value}
-                comments={formData.preGame.mindSet.mentalImagery.comments}
+                value={preGame.mindSet.mentalImagery.value}
+                comments={preGame.mindSet.mentalImagery.comments}
                 onChange={(k, v) => updateField('preGame', 'mindSet', 'mentalImagery', k, v)}
               />
             </div>
@@ -296,20 +329,20 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
             <div className="space-y-3">
               <YesNoField
                 label="Ball Exercises Completed"
-                value={formData.preGame.preGameRoutine.ballExercises.value}
-                comments={formData.preGame.preGameRoutine.ballExercises.comments}
+                value={preGame.preGameRoutine.ballExercises.value}
+                comments={preGame.preGameRoutine.ballExercises.comments}
                 onChange={(k, v) => updateField('preGame', 'preGameRoutine', 'ballExercises', k, v)}
               />
               <YesNoField
                 label="Stretching Completed"
-                value={formData.preGame.preGameRoutine.stretching.value}
-                comments={formData.preGame.preGameRoutine.stretching.comments}
+                value={preGame.preGameRoutine.stretching.value}
+                comments={preGame.preGameRoutine.stretching.comments}
                 onChange={(k, v) => updateField('preGame', 'preGameRoutine', 'stretching', k, v)}
               />
               <YesNoField
                 label="Other Preparation"
-                value={formData.preGame.preGameRoutine.other.value}
-                comments={formData.preGame.preGameRoutine.other.comments}
+                value={preGame.preGameRoutine.other.value}
+                comments={preGame.preGameRoutine.other.comments}
                 onChange={(k, v) => updateField('preGame', 'preGameRoutine', 'other', k, v)}
               />
             </div>
@@ -320,20 +353,20 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
             <div className="space-y-3">
               <YesNoField
                 label="Looked Engaged During Warm-Up"
-                value={formData.preGame.warmUp.lookedEngaged.value}
-                comments={formData.preGame.warmUp.lookedEngaged.comments}
+                value={preGame.warmUp.lookedEngaged.value}
+                comments={preGame.warmUp.lookedEngaged.comments}
                 onChange={(k, v) => updateField('preGame', 'warmUp', 'lookedEngaged', k, v)}
               />
               <YesNoField
                 label="Lacked Focus During Warm-Up"
-                value={formData.preGame.warmUp.lackedFocus.value}
-                comments={formData.preGame.warmUp.lackedFocus.comments}
+                value={preGame.warmUp.lackedFocus.value}
+                comments={preGame.warmUp.lackedFocus.comments}
                 onChange={(k, v) => updateField('preGame', 'warmUp', 'lackedFocus', k, v)}
               />
               <YesNoField
                 label="Team Warm-Up Needs Adjustment"
-                value={formData.preGame.warmUp.teamWarmUpNeedsAdjustment.value}
-                comments={formData.preGame.warmUp.teamWarmUpNeedsAdjustment.comments}
+                value={preGame.warmUp.teamWarmUpNeedsAdjustment.value}
+                comments={preGame.warmUp.teamWarmUpNeedsAdjustment.comments}
                 onChange={(k, v) => updateField('preGame', 'warmUp', 'teamWarmUpNeedsAdjustment', k, v)}
               />
             </div>
@@ -385,14 +418,14 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
             <div className="space-y-3">
               <YesNoField
                 label="Game Review Completed"
-                value={formData.postGame.reviewCompleted.value}
-                comments={formData.postGame.reviewCompleted.comments}
+                value={postGame.reviewCompleted.value}
+                comments={postGame.reviewCompleted.comments}
                 onChange={(k, v) => updateField('postGame', 'reviewCompleted', 'reviewCompleted', k, v)}
               />
               <YesNoField
                 label="Game Review NOT Completed"
-                value={formData.postGame.reviewNotCompleted.value}
-                comments={formData.postGame.reviewNotCompleted.comments}
+                value={postGame.reviewNotCompleted.value}
+                comments={postGame.reviewNotCompleted.comments}
                 onChange={(k, v) => updateField('postGame', 'reviewNotCompleted', 'reviewNotCompleted', k, v)}
               />
             </div>
@@ -401,8 +434,8 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
           <Card className="p-6">
             <h2 className="text-xl font-bold mb-4">Additional Comments</h2>
             <textarea
-              value={formData.additionalComments}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, additionalComments: e.target.value }))}
+              value={additionalComments}
+              onChange={(e) => setFormData((prev) => ({ ...prev, additionalComments: e.target.value }))}
               placeholder="Any additional observations or notes about the session..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
               rows={5}
