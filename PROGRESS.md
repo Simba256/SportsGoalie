@@ -42,6 +42,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-04 - [Onboarding Redirect Fix & Workflow Filter](docs/sessions/2026-03/2026-03-04-onboarding-redirect-fix-workflow-filter.md)
+**Time:** 45min | **Focus:** Bug Fix / Feature
+Fixed redirect loop between /onboarding and /dashboard after completing onboarding. Added onboarding fields to auth context user object. Added refreshUser() method to auth context for post-update refresh. Added workflow filter tabs to coach students page (All/Custom/Automated) with workflow type badges. Updated cleanup script and deleted test user account.
+
 ### 2026-03-04 - [Codebase Verification & Bug Fixes](docs/sessions/2026-03/2026-03-04-codebase-verification-bug-fixes.md)
 **Time:** 30min | **Focus:** Code Quality / Bug Fix
 Comprehensive codebase audit before Phase 2.1. Fixed missing .catch() handler in coach-breadcrumb.tsx promise chain. Replaced `any` types with proper TypeScript types in LegacyChartingForm.tsx. Fixed Playwright port configuration from 3001 to 3000. Removed redundant port override in test file. TypeScript and build verification passed. All fixes committed and pushed.
@@ -146,27 +150,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 40.25 hours | 🔄 In Progress |
-| **Total** | **~200.25 hours** | - |
+| Phase 2 | 41 hours | 🔄 In Progress |
+| **Total** | **~201 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 26.75h | 66% |
+| Development | 27h | 66% |
 | Documentation | 1.75h | 4% |
-| Debugging | 9h | 22% |
+| Debugging | 9.5h | 23% |
 | Security | 1.5h | 4% |
 | Refactor | 1h | 2% |
-| Testing | 0.25h | 1% |
+| Testing | 0.25h | <1% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **40.25h** | **100%** |
+| **Total** | **41h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 14.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes | 9 |
+| 2026-03-01 | 15h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter | 10 |
 
 ---
 
@@ -425,6 +429,16 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-04 (Session: Onboarding Redirect Fix & Workflow Filter)
+- **Fix:** Added onboarding fields (onboardingCompleted, onboardingCompletedAt, initialAssessmentLevel) to auth context user object
+- **Fix:** Added refreshUser() method to auth context for re-fetching user data from Firestore
+- **Fix:** Updated onboarding hook to refresh user context before redirecting to dashboard
+- **Fix:** Fixed redirect loop between /onboarding and /dashboard after completing onboarding
+- **Feature:** Added workflow filter tabs to coach students page (All/Custom/Automated)
+- **Feature:** Added workflow type badges (Custom=purple, Automated=blue) to student cards
+- **Feature:** Conditional UI: curriculum management only for custom students, evaluation view for all
+- **Maintenance:** Updated cleanup-user.ts script to include onboarding_evaluations collection
 
 ### 2026-03-04 (Session: Codebase Verification & Bug Fixes)
 - **Fix:** Added .catch() error handler to coach-breadcrumb.tsx promise chain
@@ -723,9 +737,9 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-04
-**Last Session:** Codebase Verification & Bug Fixes
-**Total Sessions This Phase:** 23
-**Current Phase Hours:** 40.25h
+**Last Session:** Onboarding Redirect Fix & Workflow Filter
+**Total Sessions This Phase:** 24
+**Current Phase Hours:** 41h
 **Next Session Focus:** Phase 2.1 - 6-pillar conversion, or full end-to-end testing with real accounts
 
 ---
