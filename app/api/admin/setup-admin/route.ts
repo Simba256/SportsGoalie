@@ -17,9 +17,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // SECURITY: Add a secret key check for admin setup
-    // In production, you might want to use environment variables
-    const ADMIN_SETUP_SECRET = process.env.ADMIN_SETUP_SECRET || 'your-secret-key-here';
+    // SECURITY: Require secret key from environment variable
+    const ADMIN_SETUP_SECRET = process.env.ADMIN_SETUP_SECRET;
+    if (!ADMIN_SETUP_SECRET) {
+      console.error('ADMIN_SETUP_SECRET environment variable is not configured');
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     if (secretKey !== ADMIN_SETUP_SECRET) {
       return NextResponse.json(

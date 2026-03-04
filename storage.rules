@@ -18,6 +18,11 @@ service firebase.storage {
              request.auth.token.role == 'admin';
     }
 
+    function isCoach() {
+      return isAuthenticated() &&
+             request.auth.token.role == 'coach';
+    }
+
     function isValidImageSize() {
       return request.resource.size < 50 * 1024 * 1024; // 50MB
     }
@@ -48,12 +53,12 @@ service firebase.storage {
              request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*');
     }
 
-    // Video quiz uploads (admin only, public read)
+    // Video quiz uploads (admin/coach only, public read)
     match /video-quizzes/{fileName} {
       // Anyone can read quiz videos
       allow read: if true;
-      // Any authenticated user can upload (admin check at application level)
-      allow write: if isAuthenticated() && isValidLargeVideoSize() && isValidVideoType();
+      // Only admins and coaches can upload video quizzes
+      allow write: if (isAdmin() || isCoach()) && isValidLargeVideoSize() && isValidVideoType();
       // Only admins can delete
       allow delete: if isAdmin();
     }

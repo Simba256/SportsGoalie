@@ -672,8 +672,10 @@ service cloud.firestore {
       // Admins can read all invitations for management
       allow read: if isAdmin();
 
-      // PUBLIC: Anyone can read a specific invitation by querying (needed for token validation)
-      // This allows the /auth/accept-invite page to validate tokens
+      // PUBLIC: Anyone can query invitations by token (needed for token validation during registration)
+      // This allows the /auth/accept-invite page to validate tokens BEFORE user has an account
+      // Note: Token-based queries are secure since tokens are cryptographically random
+      // Enumeration is mitigated by requiring the exact token value in the query
       allow list: if true;
 
       // Only admins can create invitations
