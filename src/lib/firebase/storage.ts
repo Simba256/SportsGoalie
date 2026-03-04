@@ -52,7 +52,7 @@ class FirebaseStorageService {
       // Create upload task
       const uploadTask = uploadBytesResumable(storageRef, file);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         uploadTask.on(
           'state_changed',
           (snapshot) => {
@@ -234,7 +234,7 @@ class FirebaseStorageService {
       // Create upload task
       const uploadTask = uploadBytesResumable(storageRef, file);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         uploadTask.on(
           'state_changed',
           (snapshot) => {
@@ -318,7 +318,7 @@ class FirebaseStorageService {
       // Create upload task
       const uploadTask = uploadBytesResumable(storageRef, file);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         uploadTask.on(
           'state_changed',
           (snapshot) => {

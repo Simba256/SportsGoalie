@@ -106,7 +106,8 @@ class Logger {
    */
   auth(event: string, userId?: string, data?: unknown): void {
     const message = `Auth event: ${event}`;
-    const logData = this.redactSensitiveData({ userId, ...data });
+    const baseData = typeof data === 'object' && data !== null ? data : {};
+    const logData = this.redactSensitiveData({ userId, ...baseData });
     this.info(message, 'auth', logData);
   }
 
@@ -119,7 +120,8 @@ class Logger {
    */
   performance(operation: string, duration: number, context?: string, data?: unknown): void {
     const message = `Performance: ${operation} took ${duration}ms`;
-    this.info(message, context || 'performance', { duration, ...data });
+    const baseData = typeof data === 'object' && data !== null ? data : {};
+    this.info(message, context || 'performance', { duration, ...baseData });
   }
 
   /**
@@ -130,7 +132,8 @@ class Logger {
    */
   userAction(action: string, userId?: string, data?: unknown): void {
     const message = `User action: ${action}`;
-    const logData = this.redactSensitiveData({ userId, ...data });
+    const baseData = typeof data === 'object' && data !== null ? data : {};
+    const logData = this.redactSensitiveData({ userId, ...baseData });
     this.info(message, 'user-action', logData);
   }
 
@@ -181,7 +184,7 @@ class Logger {
   private createSafeLogData(data: any): any {
     const seen = new WeakSet();
 
-    const replacer = (key: string, value: any) => {
+    const replacer = (_key: string, value: any) => {
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
           return '[Circular Reference]';

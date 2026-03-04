@@ -672,25 +672,25 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         // Get enrollment date (first quiz attempt for this sport)
         const firstAttempt = sportQuizAttempts.sort((a, b) => {
-          const dateA = a.startedAt?.toDate ? a.startedAt.toDate() : new Date(a.startedAt || 0);
-          const dateB = b.startedAt?.toDate ? b.startedAt.toDate() : new Date(b.startedAt || 0);
+          const dateA = a.startedAt && typeof a.startedAt === 'object' && 'toDate' in a.startedAt ? a.startedAt.toDate() : new Date(0);
+          const dateB = b.startedAt && typeof b.startedAt === 'object' && 'toDate' in b.startedAt ? b.startedAt.toDate() : new Date(0);
           return dateA.getTime() - dateB.getTime();
         })[0];
 
-        const enrolledAt = firstAttempt?.startedAt?.toDate ?
-          firstAttempt.startedAt.toDate() :
-          firstAttempt ? new Date(firstAttempt.startedAt || 0) : new Date();
+        const enrolledAt = firstAttempt?.startedAt && typeof firstAttempt.startedAt === 'object' && 'toDate' in firstAttempt.startedAt
+          ? firstAttempt.startedAt.toDate()
+          : new Date();
 
         // Get last activity date (most recent quiz attempt)
         const lastAttempt = sportQuizAttempts.sort((a, b) => {
-          const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
-          const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+          const dateA = a.submittedAt && typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt ? a.submittedAt.toDate() : new Date(0);
+          const dateB = b.submittedAt && typeof b.submittedAt === 'object' && 'toDate' in b.submittedAt ? b.submittedAt.toDate() : new Date(0);
           return dateB.getTime() - dateA.getTime();
         })[0];
 
-        const lastActivityDate = lastAttempt?.submittedAt?.toDate ?
-          lastAttempt.submittedAt.toDate() :
-          lastAttempt ? new Date(lastAttempt.submittedAt || 0) : null;
+        const lastActivityDate = lastAttempt?.submittedAt && typeof lastAttempt.submittedAt === 'object' && 'toDate' in lastAttempt.submittedAt
+          ? lastAttempt.submittedAt.toDate()
+          : null;
 
         // Calculate progress percentage
         const progressPercentage = totalSkills > 0
@@ -825,9 +825,14 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   private calculateCurrentStreak(quizAttempts: QuizAttempt[]): number {
     if (quizAttempts.length === 0) return 0;
 
+    const toDate = (ts: unknown): Date => {
+      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
+      return new Date(0);
+    };
+
     const sortedAttempts = [...quizAttempts].sort((a, b) => {
-      const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
-      const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+      const dateA = toDate(a.submittedAt);
+      const dateB = toDate(b.submittedAt);
       return dateB.getTime() - dateA.getTime();
     });
 
@@ -838,7 +843,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     let currentDate = new Date(today);
 
     for (const attempt of sortedAttempts) {
-      const attemptDate = attempt.submittedAt?.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt || 0);
+      const attemptDate = toDate(attempt.submittedAt);
       const attemptDay = new Date(attemptDate);
       attemptDay.setHours(0, 0, 0, 0);
 
@@ -861,9 +866,14 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   private calculateLongestStreak(quizAttempts: QuizAttempt[]): number {
     if (quizAttempts.length === 0) return 0;
 
+    const toDate = (ts: unknown): Date => {
+      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
+      return new Date(0);
+    };
+
     const dates = quizAttempts
       .map(a => {
-        const date = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
+        const date = toDate(a.submittedAt);
         const day = new Date(date);
         day.setHours(0, 0, 0, 0);
         return day.getTime();
@@ -892,10 +902,15 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   private determineStudyPattern(quizAttempts: QuizAttempt[]): 'morning' | 'afternoon' | 'evening' | 'night' | 'varied' {
     if (quizAttempts.length === 0) return 'varied';
 
+    const toDate = (ts: unknown): Date => {
+      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
+      return new Date(0);
+    };
+
     const hourCounts = { morning: 0, afternoon: 0, evening: 0, night: 0 };
 
     quizAttempts.forEach(attempt => {
-      const date = attempt.submittedAt?.toDate ? attempt.submittedAt.toDate() : new Date(attempt.submittedAt || 0);
+      const date = toDate(attempt.submittedAt);
       const hour = date.getHours();
 
       if (hour >= 6 && hour < 12) hourCounts.morning++;
@@ -921,17 +936,22 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   ): Promise<ActivityRecord[]> {
     const activities: ActivityRecord[] = [];
 
+    const toDate = (ts: unknown): Date => {
+      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
+      return new Date(0);
+    };
+
     // Add quiz completions
     const recentQuizzes = quizzes
       .sort((a, b) => {
-        const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
-        const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+        const dateA = toDate(a.submittedAt);
+        const dateB = toDate(b.submittedAt);
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 10);
 
     for (const quiz of recentQuizzes) {
-      const quizData = await videoQuizService.getVideoQuiz(quiz.quizId);
+      const quizData = await videoQuizService.getVideoQuiz(quiz.videoQuizId);
 
       let title = 'Completed Quiz';
       if (quizData.data?.title) {
@@ -943,7 +963,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         type: 'quiz_completed',
         title,
         description: `Score: ${quiz.percentage}%`,
-        timestamp: quiz.submittedAt?.toDate ? quiz.submittedAt.toDate() : new Date(quiz.submittedAt || 0),
+        timestamp: toDate(quiz.submittedAt),
         metadata: {
           score: quiz.percentage,
           timeSpent: quiz.timeSpent,

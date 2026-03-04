@@ -45,13 +45,10 @@ export class EmailService implements IEmailService {
   private readonly isDevelopment: boolean;
   private readonly appName: string;
   private readonly supportEmail: string;
-  private readonly baseUrl: string;
-
   private constructor() {
     this.isDevelopment = process.env.NODE_ENV !== 'production';
     this.appName = process.env.NEXT_PUBLIC_APP_NAME || 'SportsGoalie';
     this.supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sportsgoalie.com';
-    this.baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   }
 
   public static getInstance(): EmailService {

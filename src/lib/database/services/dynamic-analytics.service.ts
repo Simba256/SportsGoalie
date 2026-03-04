@@ -40,7 +40,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   async recalculateStudentAnalytics(
     studentId: string,
     templateId: string,
-    options: AnalyticsQueryOptions = {}
+    options: Omit<AnalyticsQueryOptions, 'studentId'> = {}
   ): Promise<ApiResponse<DynamicStudentAnalytics>> {
     logger.info('Recalculating student analytics', 'DynamicAnalyticsService', {
       studentId,
@@ -168,10 +168,8 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         };
       }
 
-      const analytics = {
-        id: snapshot.docs[0].id,
-        ...snapshot.docs[0].data(),
-      } as DynamicStudentAnalytics;
+      const docData = snapshot.docs[0].data();
+      const analytics = docData as unknown as DynamicStudentAnalytics;
 
       return {
         success: true,

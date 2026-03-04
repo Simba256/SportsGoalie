@@ -1,4 +1,4 @@
-import type { Sport, Skill, SportProgress, SkillProgress, DifficultyLevel, SearchFilters, QueryOptions, WhereClause } from '@/types';
+import type { Sport, Skill, DifficultyLevel, SearchFilters, WhereClause } from '@/types';
 
 /**
  * Helper utilities for sports and skills operations

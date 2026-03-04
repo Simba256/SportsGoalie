@@ -317,7 +317,7 @@ export class MessageService extends BaseDatabaseService {
 
     const result = await this.update<Message>(this.MESSAGES_COLLECTION, messageId, {
       isRead: true,
-      readAt: TimestampPatterns.forDatabase(),
+      readAt: Timestamp.now(),
     });
 
     if (result.success) {

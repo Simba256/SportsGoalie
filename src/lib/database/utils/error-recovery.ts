@@ -330,9 +330,11 @@ export function createErrorResponse<T>(
     error: {
       code: errorCode,
       message: errorMessage,
-      context,
-      recoveryActions,
-      timestamp: new Date().toISOString(),
+      details: {
+        context,
+        recoveryActions,
+        errorTimestamp: new Date().toISOString(),
+      },
     },
     timestamp: new Date(),
   };
@@ -423,10 +425,7 @@ export function createGracefulDegradation<T>(
   return {
     success: true,
     data: fallbackData,
-    warning: {
-      code: 'GRACEFUL_DEGRADATION',
-      message: reason,
-    },
+    message: `Graceful degradation: ${reason}`,
     timestamp: new Date(),
   };
 }

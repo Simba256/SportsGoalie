@@ -26,8 +26,6 @@ export class ProjectAssistantService {
   private static instance: ProjectAssistantService;
   private docsPath: string;
   private cache: Map<string, DocumentContent> = new Map();
-  private cacheExpiry: number = 5 * 60 * 1000; // 5 minutes
-  private lastCacheUpdate: number = 0;
 
   private constructor() {
     this.docsPath = path.join(process.cwd(), 'docs', 'client');
@@ -252,7 +250,6 @@ export class ProjectAssistantService {
    */
   clearCache(): void {
     this.cache.clear();
-    this.lastCacheUpdate = 0;
   }
 
   /**

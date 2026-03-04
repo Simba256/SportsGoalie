@@ -171,7 +171,7 @@ export class FormTemplateService extends BaseDatabaseService {
 
     // If activating this template, deactivate others
     if (updates.isActive && currentTemplate.sport) {
-      await this.deactivateOtherTemplates(currentTemplate.sport, templateId);
+      await this.deactivateOtherTemplates(templateId);
     }
 
     const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, updates);
@@ -180,9 +180,18 @@ export class FormTemplateService extends BaseDatabaseService {
       logger.info('Form template updated successfully', 'FormTemplateService', {
         templateId,
       });
+      return {
+        success: true,
+        data: { id: templateId },
+        timestamp: new Date(),
+      };
     }
 
-    return result;
+    return {
+      success: false,
+      error: result.error,
+      timestamp: new Date(),
+    };
   }
 
   /**

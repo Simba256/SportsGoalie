@@ -25,7 +25,7 @@ const firebaseConfig = {
 };
 
 // Validate required environment variables by checking the actual config values
-const missingVars = [];
+const missingVars: string[] = [];
 if (!firebaseConfig.apiKey) missingVars.push('NEXT_PUBLIC_FIREBASE_API_KEY');
 if (!firebaseConfig.authDomain) missingVars.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
 if (!firebaseConfig.projectId) missingVars.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');

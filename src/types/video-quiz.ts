@@ -1,5 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
-import { Question, QuestionType, DifficultyLevel } from './quiz';
+import { Question } from './quiz';
+import { QuestionType, DifficultyLevel } from './index';
 
 /**
  * Video-based quiz question with timestamp

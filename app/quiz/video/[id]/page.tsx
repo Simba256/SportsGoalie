@@ -81,13 +81,15 @@ function VideoQuizPageContent() {
 
       if (result.success) {
         // Record progress for curriculum tracking (handles both automated and custom workflows)
-        if (user) {
+        if (user && quiz) {
           await ProgressService.recordQuizCompletion(
             user.id,
             quizId,
+            quiz.skillId || '',
+            quiz.sportId || '',
             progress.percentage,
-            quiz?.sportId,
-            undefined // levelId - will be extracted from quiz if needed
+            progress.timeSpent || 0,
+            progress.percentage >= (quiz.settings?.passingScore || 70)
           );
         }
 

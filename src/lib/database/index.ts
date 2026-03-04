@@ -65,8 +65,8 @@ export interface DatabaseInitResult {
   /** Migration operation results */
   migrations?: {
     migrationsRun: number;
-    currentVersion: string;
-    latestVersion: string;
+    newVersion: string;
+    executedMigrations: string[];
   };
   /** Seeding operation results */
   seeding?: {

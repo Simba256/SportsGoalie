@@ -8,47 +8,47 @@ const urlSchema = z.string().url('Invalid URL format').optional();
 
 // Enum schemas
 export const userRoleSchema = z.enum(['student', 'admin'], {
-  errorMap: () => ({ message: 'Role must be either student or admin' }),
+  message: 'Role must be either student or admin',
 });
 
 export const difficultyLevelSchema = z.enum(['introduction', 'development', 'refinement'], {
-  errorMap: () => ({ message: 'Difficulty must be introduction, development, or refinement' }),
+  message: 'Difficulty must be introduction, development, or refinement',
 });
 
 export const progressStatusSchema = z.enum(['not_started', 'in_progress', 'completed'], {
-  errorMap: () => ({ message: 'Status must be not_started, in_progress, or completed' }),
+  message: 'Status must be not_started, in_progress, or completed',
 });
 
 export const questionTypeSchema = z.enum(['multiple_choice', 'true_false', 'descriptive', 'fill_in_blank'], {
-  errorMap: () => ({ message: 'Question type must be multiple_choice, true_false, descriptive, or fill_in_blank' }),
+  message: 'Question type must be multiple_choice, true_false, descriptive, or fill_in_blank',
 });
 
 export const mediaTypeSchema = z.enum(['image', 'video', 'youtube'], {
-  errorMap: () => ({ message: 'Media type must be image, video, or youtube' }),
+  message: 'Media type must be image, video, or youtube',
 });
 
 export const contentTypeSchema = z.enum(['video', 'article', 'tutorial'], {
-  errorMap: () => ({ message: 'Content type must be video, article, or tutorial' }),
+  message: 'Content type must be video, article, or tutorial',
 });
 
 export const notificationTypeSchema = z.enum(['progress', 'quiz_result', 'new_content', 'reminder', 'achievement'], {
-  errorMap: () => ({ message: 'Notification type must be progress, quiz_result, new_content, reminder, or achievement' }),
+  message: 'Notification type must be progress, quiz_result, new_content, reminder, or achievement',
 });
 
 export const achievementTypeSchema = z.enum(['progress', 'quiz', 'streak', 'time', 'special'], {
-  errorMap: () => ({ message: 'Achievement type must be progress, quiz, streak, time, or special' }),
+  message: 'Achievement type must be progress, quiz, streak, time, or special',
 });
 
 export const themeSchema = z.enum(['light', 'dark'], {
-  errorMap: () => ({ message: 'Theme must be light or dark' }),
+  message: 'Theme must be light or dark',
 });
 
 export const prioritySchema = z.enum(['low', 'medium', 'high'], {
-  errorMap: () => ({ message: 'Priority must be low, medium, or high' }),
+  message: 'Priority must be low, medium, or high',
 });
 
 export const raritySchema = z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary'], {
-  errorMap: () => ({ message: 'Rarity must be common, uncommon, rare, epic, or legendary' }),
+  message: 'Rarity must be common, uncommon, rare, epic, or legendary',
 });
 
 // User schemas
