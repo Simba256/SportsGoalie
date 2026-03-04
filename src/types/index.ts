@@ -168,7 +168,6 @@ export type {
   VideoQuestionAnswer,
   VideoQuizQuestionWithState,
   VideoPlayerState,
-  VideoQuizPlayerProps,
   QuestionOverlayProps,
   VideoControlsProps,
   DropOffPoint

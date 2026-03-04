@@ -142,19 +142,6 @@ export interface VideoPlayerState {
 }
 
 /**
- * Props for video quiz components
- */
-export interface VideoQuizPlayerProps {
-  videoUrl: string;
-  questions: VideoQuizQuestionWithState[];
-  settings: VideoQuizSettings;
-  initialTime?: number;
-  onQuestionAnswer: (questionId: string, answer: string | string[]) => void;
-  onProgressUpdate?: (currentTime: number, duration: number) => void;
-  onComplete?: () => void;
-}
-
-/**
  * Props for question overlay
  */
 export interface QuestionOverlayProps {
