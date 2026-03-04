@@ -148,6 +148,7 @@ export default function OnboardingPage() {
           <div className="flex-1 flex items-center justify-center p-6">
             {currentQuestion.type === 'rating' && (
               <RatingQuestion
+                key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={(value, points) => answerQuestion(value, points)}
               />
@@ -155,6 +156,7 @@ export default function OnboardingPage() {
 
             {currentQuestion.type === 'multiple_choice' && (
               <MultipleChoiceQuestion
+                key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={(optionId, points) => answerQuestion(optionId, points)}
               />
@@ -162,6 +164,7 @@ export default function OnboardingPage() {
 
             {currentQuestion.type === 'true_false' && (
               <TrueFalseQuestion
+                key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={(optionId, points) => answerQuestion(optionId, points)}
               />
@@ -169,6 +172,7 @@ export default function OnboardingPage() {
 
             {currentQuestion.type === 'video_scenario' && (
               <VideoScenarioQuestion
+                key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={(optionId, points) => answerQuestion(optionId, points)}
               />
