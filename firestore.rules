@@ -705,6 +705,44 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ==================== ONBOARDING EVALUATION SYSTEM (Phase 2.0.7) ====================
+
+    // Onboarding Evaluations collection - Initial student assessment across 6 pillars
+    // Document ID format: eval_{userId}
+    match /onboarding_evaluations/{evaluationId} {
+      // Helper to extract userId from evaluation ID (removes 'eval_' prefix)
+      function getEvalUserId() {
+        return evaluationId.split('eval_')[1];
+      }
+
+      // Students can read their own evaluation
+      // Coaches can read evaluations of any student (needed for review workflow)
+      // Admins can read all
+      allow read: if isAuthenticated() && (
+        getEvalUserId() == getUserId() ||  // Student reads own
+        isCoachOrAdmin()                   // Coaches/admins can read for review
+      );
+
+      // Students can create their own evaluation during onboarding
+      allow create: if isAuthenticated() &&
+                       getEvalUserId() == getUserId() &&
+                       hasRequiredFields(['userId', 'startedAt', 'status', 'currentPillarIndex', 'currentQuestionIndex', 'responses']) &&
+                       request.resource.data.userId == getUserId() &&
+                       request.resource.data.status == 'in_progress' &&
+                       request.resource.data.responses is list;
+
+      // Students can update their own evaluation (save responses, complete)
+      // Coaches/admins can update coachReview field only
+      allow update: if isAuthenticated() && (
+        (getEvalUserId() == getUserId()) ||  // Student updates own (responses, completion)
+        (isCoachOrAdmin() &&                 // Coach/admin can only add review
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coachReview', 'status', 'updatedAt']))
+      );
+
+      // Only admins can delete evaluations
+      allow delete: if isAdmin();
+    }
+
     // ==================== CUSTOM CURRICULUM SYSTEM (Phase 2.0.6) ====================
 
     // Custom Curriculum collection - Personalized learning paths for custom workflow students
