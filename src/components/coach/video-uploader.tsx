@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
-import { Upload, Video, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { Upload, Video, X, Loader2, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import ReactPlayer from 'react-player';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { storageService, UploadProgress, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+type VideoSourceType = 'youtube' | 'vimeo' | 'direct';
+
+function getVideoSourceType(url: string): VideoSourceType {
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('vimeo.com')) return 'vimeo';
+  return 'direct';
+}
 
 interface VideoUploaderProps {
   coachId: string;
@@ -45,6 +54,13 @@ export function VideoUploader({
 
   const MAX_SIZE_BYTES = STORAGE_CONFIGS.VIDEOS.maxSizeBytes;
   const ALLOWED_TYPES = STORAGE_CONFIGS.VIDEOS.allowedTypes;
+
+  // Determine video source type for URL tab
+  const videoSourceType = useMemo(() => {
+    return videoUrl ? getVideoSourceType(videoUrl) : 'direct';
+  }, [videoUrl]);
+
+  const isExternalPlatform = videoSourceType !== 'direct';
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -387,16 +403,44 @@ export function VideoUploader({
             {uploadState === 'success' && videoUrl ? (
               <div className="space-y-4">
                 <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                  <video
-                    src={videoUrl}
-                    controls
-                    className="w-full h-full object-contain"
-                  />
+                  {isExternalPlatform ? (
+                    <ReactPlayer
+                      url={videoUrl}
+                      controls
+                      width="100%"
+                      height="100%"
+                      onDuration={(duration) => {
+                        if (duration && Number.isFinite(duration) && duration > 0) {
+                          const flooredDuration = Math.floor(duration);
+                          setVideoDuration(flooredDuration);
+                          // Update parent with duration if not already set
+                          if (videoDuration === undefined) {
+                            onVideoUploaded(videoUrl, flooredDuration);
+                          }
+                        }
+                      }}
+                      config={{
+                        youtube: { playerVars: { modestbranding: 1 } },
+                        vimeo: { playerOptions: { byline: false, portrait: false } },
+                      }}
+                    />
+                  ) : (
+                    <video
+                      src={videoUrl}
+                      controls
+                      className="w-full h-full object-contain"
+                    />
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-green-600">
                     <CheckCircle2 className="h-4 w-4" />
                     <span>Video URL added</span>
+                    {videoDuration !== undefined && Number.isFinite(videoDuration) && (
+                      <span className="text-muted-foreground">
+                        ({Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')})
+                      </span>
+                    )}
                   </div>
                   <Button variant="outline" size="sm" onClick={handleRemove}>
                     <X className="h-4 w-4 mr-1" />
@@ -418,6 +462,14 @@ export function VideoUploader({
                     Paste a YouTube, Vimeo, or direct video URL
                   </p>
                 </div>
+                {isExternalPlatform && (
+                  <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
+                    <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      {videoSourceType === 'youtube' ? 'YouTube' : 'Vimeo'} videos will play correctly in quizzes. Duration may not be detected automatically.
+                    </p>
+                  </div>
+                )}
                 {errorMessage && (
                   <p className="text-sm text-destructive">{errorMessage}</p>
                 )}
