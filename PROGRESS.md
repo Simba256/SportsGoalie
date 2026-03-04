@@ -41,6 +41,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-04 - [Video Quiz Full-Page Conversion & UI/UX Improvements](docs/sessions/2026-03/2026-03-04-video-quiz-full-page-conversion.md)
+**Time:** 2h 0min | **Focus:** Feature / UI/UX / Bug Fix
+Converted video quiz creator from cramped dialog to full-page layout with tab-based navigation. Improved True/False question type with visual toggle buttons instead of dropdown. Redesigned Fill in the Blank with split input approach (before/after fields) eliminating manual blank placement. Fixed multiple Firestore issues: skipped sport validation for coach content, updated rules for isCoachOrAdmin(), removed orderBy to avoid composite index requirement.
+
 ### 2026-03-02 - [Custom Content Student Access Fixes](docs/sessions/2026-03/2026-03-02-custom-content-student-access-fixes.md)
 **Time:** 2h 15min | **Focus:** Bug Fix - Student Access
 Fixed critical issues preventing students from accessing custom lessons. Updated curriculum sorting (unlocked before locked). Fixed Firestore rules for public read. Discovered and fixed view count increment blocking students (was requiring write permission). Created custom lesson viewer page with YouTube embed support. Students can now access coach-created lessons.
@@ -117,25 +121,25 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 31.75 hours | 🔄 In Progress |
-| **Total** | **~191.75 hours** | - |
+| Phase 2 | 33.75 hours | 🔄 In Progress |
+| **Total** | **~193.75 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 23.25h | 73% |
-| Documentation | 1.75h | 6% |
-| Debugging | 6.5h | 20% |
+| Development | 24.25h | 72% |
+| Documentation | 1.75h | 5% |
+| Debugging | 7.5h | 22% |
 | Version Control | 0.25h | 1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **31.75h** | **100%** |
+| **Total** | **33.75h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 5.75h | Coach custom content creation, student access fixes, Firestore rules, YouTube support | 2 |
+| 2026-03-01 | 7.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements | 3 |
 
 ---
 
@@ -186,6 +190,30 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-04: Full-Page Quiz Creator with Tabs
+**Decision:** Convert video quiz creator from dialog to full-page with tab-based navigation
+**Rationale:** Dialog approach was cramped, caused horizontal scrolling, poor UX for complex multi-step form
+**Impact:** Better space utilization, eliminates scroll issues, tabs allow non-linear navigation
+**Alternatives Considered:** Keep dialog with fixes (rejected - fundamental space limitation), step wizard (rejected - still cramped)
+
+### 2026-03-04: Visual Toggle Buttons for True/False
+**Decision:** Replace dropdown with large visual toggle buttons showing True (green) and False (red)
+**Rationale:** Dropdown was blank initially and confusing; toggle buttons show both options with clear visual cues
+**Impact:** Much more intuitive selection, immediate visual feedback, clearer UX
+**Alternatives Considered:** Radio buttons (acceptable but less visual), keep dropdown (rejected - poor UX)
+
+### 2026-03-04: Split Input for Fill in the Blank
+**Decision:** Use two input fields (text before blank, text after blank) instead of single textarea with manual `___`
+**Rationale:** Users shouldn't need to know/remember to add `___`; split approach eliminates confusion
+**Impact:** Intuitive question creation, live preview shows student view, no manual blank marker needed
+**Alternatives Considered:** Auto-detect `___` (rejected - not intuitive), placeholder syntax (rejected - too technical)
+
+### 2026-03-04: Client-Side Sorting for Coach Content
+**Decision:** Remove `orderBy` from Firestore queries and sort results client-side
+**Rationale:** Firestore requires composite indexes for where + orderBy combinations; client-side avoids this
+**Impact:** No index maintenance required, works immediately, acceptable for coach content data sizes
+**Alternatives Considered:** Create composite index (more ops overhead), no sorting (poor UX)
 
 ### 2026-03-02: Non-Blocking View Count Increment
 **Decision:** Wrap view count increment in try-catch so read operations succeed even if analytics update fails
@@ -352,6 +380,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-04 (Session: Video Quiz Full-Page Conversion & UI/UX Improvements)
+- **Feature:** Created full-page quiz creator at `/coach/content/quiz/create` with tab-based layout
+- **Feature:** Converted from dialog approach to full-page for better space utilization
+- **UI/UX:** Replaced True/False dropdown with visual toggle buttons (green True, red False)
+- **UI/UX:** Redesigned Fill in Blank with split input approach (before/after blank fields)
+- **UI/UX:** Added live preview for Fill in Blank showing student view
+- **Fix:** Updated entry points (content page, curriculum page) to navigate to full-page creator
+- **Fix:** Skipped sport/skill validation for coach content (`source: 'coach'`)
+- **Fix:** Changed Firestore rules from `isCoach()` to `isCoachOrAdmin()` for quiz creation
+- **Fix:** Removed `orderBy` from coach content queries to avoid composite index requirement
+- **Security:** Deployed updated Firestore rules to Firebase
 
 ### 2026-03-02 (Session: Custom Content Student Access Fixes)
 - **Fix:** Updated curriculum sorting to prioritize by status (completed > in_progress > unlocked > locked)
@@ -557,11 +597,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-02
-**Last Session:** [Custom Content Student Access Fixes](docs/sessions/2026-03/2026-03-02-custom-content-student-access-fixes.md)
-**Total Sessions This Phase:** 16
-**Current Phase Hours:** 31.75h
-**Next Session Focus:** Test Mark Complete for custom lessons, or continue Phase 2.0.4 parent-child relationships
+**Last Updated:** 2026-03-04
+**Last Session:** [Video Quiz Full-Page Conversion & UI/UX Improvements](docs/sessions/2026-03/2026-03-04-video-quiz-full-page-conversion.md)
+**Total Sessions This Phase:** 17
+**Current Phase Hours:** 33.75h
+**Next Session Focus:** Test full quiz creation flow, or continue Phase 2.0.4 parent-child relationships
 
 ---
 
