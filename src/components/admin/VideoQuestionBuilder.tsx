@@ -668,9 +668,9 @@ export function VideoQuestionBuilder({
             The timestamp is automatically set when you click "Add Question Here" while watching the video
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-2">
               <Label htmlFor="questionType">Question Type</Label>
               <Select
                 value={newQuestion.type}
@@ -678,7 +678,7 @@ export function VideoQuestionBuilder({
                   setNewQuestion({ ...newQuestion, type: value as QuestionType })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -690,7 +690,7 @@ export function VideoQuestionBuilder({
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="timestamp">
                 Timestamp (seconds) - Max: {detectedDuration || videoDuration}s
               </Label>
@@ -706,13 +706,14 @@ export function VideoQuestionBuilder({
                     timestamp: parseInt(e.target.value),
                   })
                 }
+                className="w-full"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500">
                 {formatTimestamp(newQuestion.timestamp || 0)}
               </p>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="points">Points</Label>
               <Input
                 id="points"
@@ -725,6 +726,7 @@ export function VideoQuestionBuilder({
                     points: parseInt(e.target.value),
                   })
                 }
+                className="w-full"
               />
             </div>
           </div>
