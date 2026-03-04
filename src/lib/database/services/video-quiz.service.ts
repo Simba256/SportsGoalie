@@ -56,33 +56,38 @@ export class VideoQuizService extends BaseDatabaseService {
       sportId: quiz.sportId,
     });
 
-    // Validate required fields
-    if (!quiz.sportId || quiz.sportId.trim() === '') {
-      logger.warn('Video quiz creation failed: sportId is required', 'VideoQuizService', {
-        quizTitle: quiz.title,
-      });
-      return {
-        success: false,
-        error: {
-          code: 'SPORT_ID_REQUIRED',
-          message: 'Every video quiz must be associated with a valid sport',
-        },
-        timestamp: new Date(),
-      };
-    }
+    // For coach-created quizzes, sport/skill validation is optional
+    const isCoachContent = (quiz as any).source === 'coach';
 
-    if (!quiz.skillId || quiz.skillId.trim() === '') {
-      logger.warn('Video quiz creation failed: skillId is required', 'VideoQuizService', {
-        quizTitle: quiz.title,
-      });
-      return {
-        success: false,
-        error: {
-          code: 'SKILL_ID_REQUIRED',
-          message: 'Every video quiz must be associated with a valid skill',
-        },
-        timestamp: new Date(),
-      };
+    // Validate required fields (skip for coach content)
+    if (!isCoachContent) {
+      if (!quiz.sportId || quiz.sportId.trim() === '') {
+        logger.warn('Video quiz creation failed: sportId is required', 'VideoQuizService', {
+          quizTitle: quiz.title,
+        });
+        return {
+          success: false,
+          error: {
+            code: 'SPORT_ID_REQUIRED',
+            message: 'Every video quiz must be associated with a valid sport',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      if (!quiz.skillId || quiz.skillId.trim() === '') {
+        logger.warn('Video quiz creation failed: skillId is required', 'VideoQuizService', {
+          quizTitle: quiz.title,
+        });
+        return {
+          success: false,
+          error: {
+            code: 'SKILL_ID_REQUIRED',
+            message: 'Every video quiz must be associated with a valid skill',
+          },
+          timestamp: new Date(),
+        };
+      }
     }
 
     if (!quiz.videoUrl || quiz.videoUrl.trim() === '') {
@@ -97,52 +102,55 @@ export class VideoQuizService extends BaseDatabaseService {
     }
 
     try {
-      // Verify sport exists
-      const sportExists = await this.documentExists('sports', quiz.sportId);
-      if (!sportExists) {
-        logger.warn('Video quiz creation failed: sport not found', 'VideoQuizService', {
-          sportId: quiz.sportId,
-        });
-        return {
-          success: false,
-          error: {
-            code: 'SPORT_NOT_FOUND',
-            message: `Sport with ID '${quiz.sportId}' does not exist`,
-          },
-          timestamp: new Date(),
-        };
-      }
+      // Verify sport and skill exist (skip for coach-created content)
+      if (!isCoachContent) {
+        // Verify sport exists
+        const sportExists = await this.documentExists('sports', quiz.sportId);
+        if (!sportExists) {
+          logger.warn('Video quiz creation failed: sport not found', 'VideoQuizService', {
+            sportId: quiz.sportId,
+          });
+          return {
+            success: false,
+            error: {
+              code: 'SPORT_NOT_FOUND',
+              message: `Sport with ID '${quiz.sportId}' does not exist`,
+            },
+            timestamp: new Date(),
+          };
+        }
 
-      // Verify skill exists and belongs to the sport
-      const skill = await this.getDocument<Skill>('skills', quiz.skillId);
-      if (!skill) {
-        logger.warn('Video quiz creation failed: skill not found', 'VideoQuizService', {
-          skillId: quiz.skillId,
-        });
-        return {
-          success: false,
-          error: {
-            code: 'SKILL_NOT_FOUND',
-            message: `Skill with ID '${quiz.skillId}' does not exist`,
-          },
-          timestamp: new Date(),
-        };
-      }
+        // Verify skill exists and belongs to the sport
+        const skill = await this.getDocument<Skill>('skills', quiz.skillId);
+        if (!skill) {
+          logger.warn('Video quiz creation failed: skill not found', 'VideoQuizService', {
+            skillId: quiz.skillId,
+          });
+          return {
+            success: false,
+            error: {
+              code: 'SKILL_NOT_FOUND',
+              message: `Skill with ID '${quiz.skillId}' does not exist`,
+            },
+            timestamp: new Date(),
+          };
+        }
 
-      if (skill.sportId !== quiz.sportId) {
-        logger.warn('Video quiz creation failed: skill does not belong to sport', 'VideoQuizService', {
-          skillId: quiz.skillId,
-          skillSportId: skill.sportId,
-          quizSportId: quiz.sportId,
-        });
-        return {
-          success: false,
-          error: {
-            code: 'SKILL_SPORT_MISMATCH',
-            message: `Skill '${quiz.skillId}' does not belong to sport '${quiz.sportId}'`,
-          },
-          timestamp: new Date(),
-        };
+        if (skill.sportId !== quiz.sportId) {
+          logger.warn('Video quiz creation failed: skill does not belong to sport', 'VideoQuizService', {
+            skillId: quiz.skillId,
+            skillSportId: skill.sportId,
+            quizSportId: quiz.sportId,
+          });
+          return {
+            success: false,
+            error: {
+              code: 'SKILL_SPORT_MISMATCH',
+              message: `Skill '${quiz.skillId}' does not belong to sport '${quiz.sportId}'`,
+            },
+            timestamp: new Date(),
+          };
+        }
       }
 
       // Initialize metadata
@@ -219,16 +227,29 @@ export class VideoQuizService extends BaseDatabaseService {
         data: { id: docId },
         timestamp: new Date(),
       };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorCode = (error as any)?.code || 'VIDEO_QUIZ_CREATE_FAILED';
+    } catch (error: any) {
+      // Extract all available error information
+      const errorMessage = error?.message || error?.code || String(error);
+      const errorCode = error?.code || 'VIDEO_QUIZ_CREATE_FAILED';
+      const errorName = error?.name || 'Unknown';
+
+      // Log to console for debugging
+      console.error('❌ [VideoQuizService] Firestore error creating quiz:', {
+        message: errorMessage,
+        code: errorCode,
+        name: errorName,
+        fullError: error,
+      });
 
       logger.error('Failed to create video quiz', 'VideoQuizService', {
-        error: errorMessage,
+        errorMessage,
         errorCode,
+        errorName,
         title: quiz.title,
         sportId: quiz.sportId,
         skillId: quiz.skillId,
+        source: (quiz as any).source,
+        createdBy: quiz.createdBy,
       });
 
       return {
@@ -236,7 +257,6 @@ export class VideoQuizService extends BaseDatabaseService {
         error: {
           code: errorCode,
           message: errorMessage || 'Failed to create video quiz',
-          details: error,
         },
         timestamp: new Date(),
       };

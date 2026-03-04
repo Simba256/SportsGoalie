@@ -26,7 +26,6 @@ import { toast } from 'sonner';
 import { ContentBrowser } from '@/components/coach/content-browser';
 import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
 import { LessonCreator } from '@/components/coach/lesson-creator';
-import { QuizCreator } from '@/components/coach/quiz-creator';
 
 export default function StudentCurriculumPage() {
   const params = useParams();
@@ -43,7 +42,6 @@ export default function StudentCurriculumPage() {
   // Quick create states
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showLessonCreator, setShowLessonCreator] = useState(false);
-  const [showQuizCreator, setShowQuizCreator] = useState(false);
 
   useEffect(() => {
     if (studentId && coach?.id) {
@@ -189,7 +187,8 @@ export default function StudentCurriculumPage() {
     if (type === 'lesson') {
       setShowLessonCreator(true);
     } else {
-      setShowQuizCreator(true);
+      // Navigate to full-page quiz creator
+      router.push('/coach/content/quiz/create');
     }
   };
 
@@ -467,21 +466,12 @@ export default function StudentCurriculumPage() {
 
       {/* Lesson Creator */}
       {coach?.id && (
-        <>
-          <LessonCreator
-            open={showLessonCreator}
-            onOpenChange={setShowLessonCreator}
-            coachId={coach.id}
-            onSave={handleContentCreated}
-          />
-
-          <QuizCreator
-            open={showQuizCreator}
-            onOpenChange={setShowQuizCreator}
-            coachId={coach.id}
-            onSave={handleContentCreated}
-          />
-        </>
+        <LessonCreator
+          open={showLessonCreator}
+          onOpenChange={setShowLessonCreator}
+          coachId={coach.id}
+          onSave={handleContentCreated}
+        />
       )}
     </div>
   );

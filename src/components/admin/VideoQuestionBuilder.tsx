@@ -62,6 +62,10 @@ export function VideoQuestionBuilder({
     required: true,
   });
 
+  // Fill in the blank split inputs
+  const [blankBefore, setBlankBefore] = useState('');
+  const [blankAfter, setBlankAfter] = useState('');
+
   const toggleQuestionExpanded = (index: number) => {
     const newExpanded = new Set(expandedQuestions);
     if (newExpanded.has(index)) {
@@ -233,6 +237,8 @@ export function VideoQuestionBuilder({
       points: 10,
       required: true,
     });
+    setBlankBefore('');
+    setBlankAfter('');
 
     toast.success('Question added successfully');
   };
@@ -307,50 +313,184 @@ export function VideoQuestionBuilder({
 
       case 'true_false':
         return (
-          <div>
-            <Label>Correct Answer</Label>
-            <Select
-              value={String(newQuestion.correctAnswer)}
-              onValueChange={(value) =>
-                setNewQuestion({ ...newQuestion, correctAnswer: value === 'true' })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select correct answer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">True</SelectItem>
-                <SelectItem value="false">False</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-3">
+            <Label>What is the correct answer? *</Label>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setNewQuestion({ ...newQuestion, correctAnswer: true })}
+                className={`flex-1 py-4 px-6 rounded-lg border-2 font-semibold text-lg transition-all ${
+                  newQuestion.correctAnswer === true
+                    ? 'border-green-500 bg-green-50 text-green-700 ring-2 ring-green-200'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-green-300 hover:bg-green-50/50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    newQuestion.correctAnswer === true
+                      ? 'border-green-500 bg-green-500'
+                      : 'border-gray-300'
+                  }`}>
+                    {newQuestion.correctAnswer === true && (
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </span>
+                  True
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewQuestion({ ...newQuestion, correctAnswer: false })}
+                className={`flex-1 py-4 px-6 rounded-lg border-2 font-semibold text-lg transition-all ${
+                  newQuestion.correctAnswer === false
+                    ? 'border-red-500 bg-red-50 text-red-700 ring-2 ring-red-200'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:bg-red-50/50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    newQuestion.correctAnswer === false
+                      ? 'border-red-500 bg-red-500'
+                      : 'border-gray-300'
+                  }`}>
+                    {newQuestion.correctAnswer === false && (
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </span>
+                  False
+                </div>
+              </button>
+            </div>
+            {newQuestion.correctAnswer === undefined && (
+              <p className="text-sm text-amber-600">
+                Please select whether the correct answer is True or False
+              </p>
+            )}
           </div>
         );
 
       case 'fill_in_blank':
         return (
           <div className="space-y-4">
-            <div>
-              <Label>Correct Answers (one per line)</Label>
-              <Textarea
-                value={(newQuestion.correctAnswers || []).join('\n')}
-                onChange={(e) =>
-                  setNewQuestion({
-                    ...newQuestion,
-                    correctAnswers: e.target.value.split('\n').filter((a) => a.trim()),
-                  })
-                }
-                placeholder="Enter correct answers"
-                rows={3}
-              />
+            {/* Question Builder */}
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
+              <Label className="text-sm font-medium">Build Your Question</Label>
+              <p className="text-xs text-gray-500">
+                Enter the text before and after the blank. The blank will be automatically placed between them.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  value={blankBefore}
+                  onChange={(e) => {
+                    setBlankBefore(e.target.value);
+                    setNewQuestion({
+                      ...newQuestion,
+                      question: `${e.target.value} ___ ${blankAfter}`.trim(),
+                    });
+                  }}
+                  placeholder="The goalkeeper position is also called the"
+                  className="flex-1 min-w-[200px]"
+                />
+                <div className="flex items-center gap-1 px-4 py-2 bg-primary/10 border-2 border-dashed border-primary rounded-lg">
+                  <span className="w-16 h-6 bg-white border border-gray-300 rounded" />
+                  <span className="text-xs text-primary font-medium">BLANK</span>
+                </div>
+                <Input
+                  value={blankAfter}
+                  onChange={(e) => {
+                    setBlankAfter(e.target.value);
+                    setNewQuestion({
+                      ...newQuestion,
+                      question: `${blankBefore} ___ ${e.target.value}`.trim(),
+                    });
+                  }}
+                  placeholder="in soccer. (optional)"
+                  className="flex-1 min-w-[200px]"
+                />
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
+
+            {/* Preview */}
+            {(blankBefore || blankAfter) && (
+              <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview (how students will see it):</Label>
+                <p className="text-gray-800 text-lg">
+                  {blankBefore}
+                  {blankBefore && ' '}
+                  <span className="inline-block min-w-[120px] mx-1 px-4 py-1 bg-gray-100 border-2 border-gray-300 rounded text-gray-400 font-medium text-center">
+                    {(newQuestion.correctAnswers && newQuestion.correctAnswers[0]) || 'answer here'}
+                  </span>
+                  {blankAfter && ' '}
+                  {blankAfter}
+                </p>
+              </div>
+            )}
+
+            {/* Correct Answers */}
+            <div>
+              <Label className="mb-1 block">Acceptable Answers *</Label>
+              <p className="text-xs text-gray-500 mb-2">
+                What answers should be accepted? Add multiple variations if needed.
+              </p>
+              <div className="space-y-2">
+                {(newQuestion.correctAnswers || ['']).map((answer, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={answer}
+                      onChange={(e) => {
+                        const newAnswers = [...(newQuestion.correctAnswers || [''])];
+                        newAnswers[index] = e.target.value;
+                        setNewQuestion({ ...newQuestion, correctAnswers: newAnswers });
+                      }}
+                      placeholder={index === 0 ? 'Primary answer (e.g., goalie)' : 'Alternative answer'}
+                      className="flex-1"
+                    />
+                    {index > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newAnswers = (newQuestion.correctAnswers || []).filter((_, i) => i !== index);
+                          setNewQuestion({ ...newQuestion, correctAnswers: newAnswers });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newAnswers = [...(newQuestion.correctAnswers || ['']), ''];
+                    setNewQuestion({ ...newQuestion, correctAnswers: newAnswers });
+                  }}
+                  className="w-full"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Alternative Answer
+                </Button>
+              </div>
+            </div>
+
+            {/* Case Sensitive Toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <Label className="text-sm">Case Sensitive</Label>
+                <p className="text-xs text-gray-500">
+                  {newQuestion.caseSensitive
+                    ? '"Goalie" and "goalie" will be treated as different answers'
+                    : '"Goalie" and "goalie" will both be accepted'}
+                </p>
+              </div>
               <Switch
                 checked={newQuestion.caseSensitive}
                 onCheckedChange={(checked) =>
                   setNewQuestion({ ...newQuestion, caseSensitive: checked })
                 }
               />
-              <Label>Case Sensitive</Label>
             </div>
           </div>
         );
@@ -674,9 +814,19 @@ export function VideoQuestionBuilder({
               <Label htmlFor="questionType">Question Type</Label>
               <Select
                 value={newQuestion.type}
-                onValueChange={(value) =>
-                  setNewQuestion({ ...newQuestion, type: value as QuestionType })
-                }
+                onValueChange={(value) => {
+                  // Clear type-specific fields when changing type
+                  setBlankBefore('');
+                  setBlankAfter('');
+                  setNewQuestion({
+                    ...newQuestion,
+                    type: value as QuestionType,
+                    question: '',
+                    options: undefined,
+                    correctAnswer: undefined,
+                    correctAnswers: undefined,
+                  });
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -731,18 +881,25 @@ export function VideoQuestionBuilder({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="questionText">Question Text *</Label>
-            <Textarea
-              id="questionText"
-              value={newQuestion.question || ''}
-              onChange={(e) =>
-                setNewQuestion({ ...newQuestion, question: e.target.value })
-              }
-              placeholder="Enter your question"
-              rows={2}
-            />
-          </div>
+          {/* Question Text - hidden for fill_in_blank since we use separate inputs */}
+          {newQuestion.type !== 'fill_in_blank' && (
+            <div>
+              <Label htmlFor="questionText">Question Text *</Label>
+              <Textarea
+                id="questionText"
+                value={newQuestion.question || ''}
+                onChange={(e) =>
+                  setNewQuestion({ ...newQuestion, question: e.target.value })
+                }
+                placeholder={
+                  newQuestion.type === 'true_false'
+                    ? 'Example: A goalkeeper can use their hands inside the penalty area.'
+                    : 'Enter your question'
+                }
+                rows={2}
+              />
+            </div>
+          )}
 
           {renderQuestionTypeFields()}
 

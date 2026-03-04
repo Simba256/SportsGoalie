@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { customContentService } from '@/lib/database';
 import { videoQuizService } from '@/lib/database';
 import { toast } from 'sonner';
-import { VideoQuizQuestion, VideoQuizSettings, CustomContentLibrary } from '@/types';
+import { VideoQuizQuestion, VideoQuizSettings } from '@/types';
 
 const defaultSettings: VideoQuizSettings = {
   allowPlaybackSpeedChange: true,
@@ -51,24 +51,21 @@ const defaultSettings: VideoQuizSettings = {
   showExplanations: true,
 };
 
-export default function EditVideoQuizPage() {
+export default function CreateVideoQuizPage() {
   const router = useRouter();
-  const params = useParams();
   const { user, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   const [videoDuration, setVideoDuration] = useState(0);
   const [questions, setQuestions] = useState<VideoQuizQuestion[]>([]);
   const [settings, setSettings] = useState<VideoQuizSettings>(defaultSettings);
-  const [content, setContent] = useState<CustomContentLibrary | null>(null);
-  const [videoQuizId, setVideoQuizId] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState<'introduction' | 'development' | 'refinement'>('introduction');
   const [videoUrl, setVideoUrl] = useState('');
+  const [saveToLibrary, setSaveToLibrary] = useState(true);
   const [isPublic, setIsPublic] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
@@ -76,77 +73,11 @@ export default function EditVideoQuizPage() {
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const contentId = params.id as string;
-
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login');
     }
   }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (contentId && user?.id) {
-      loadContent();
-    }
-  }, [contentId, user?.id]);
-
-  const loadContent = async () => {
-    try {
-      setLoading(true);
-      const result = await customContentService.getContent(contentId);
-
-      if (result.success && result.data) {
-        // Verify ownership
-        if (result.data.createdBy !== user?.id) {
-          toast.error('You do not have permission to edit this content');
-          router.push('/coach/content');
-          return;
-        }
-
-        if (result.data.type !== 'quiz') {
-          toast.error('This content is not a quiz');
-          router.push('/coach/content');
-          return;
-        }
-
-        setContent(result.data);
-        setTitle(result.data.title || '');
-        setDescription(result.data.description || '');
-        setVideoUrl(result.data.videoUrl || '');
-        setTags(result.data.tags || []);
-        setIsPublic(result.data.isPublic || false);
-
-        // Try to load the video quiz data
-        if (result.data.content) {
-          try {
-            const contentData = JSON.parse(result.data.content);
-            if (contentData.videoQuizId) {
-              setVideoQuizId(contentData.videoQuizId);
-              // Load the full video quiz data
-              const quizResult = await videoQuizService.getVideoQuiz(contentData.videoQuizId);
-              if (quizResult.success && quizResult.data) {
-                setQuestions(quizResult.data.questions || []);
-                setSettings(quizResult.data.settings || defaultSettings);
-                setVideoDuration(quizResult.data.videoDuration || 0);
-                setDifficulty(quizResult.data.difficulty || 'introduction');
-              }
-            }
-          } catch (e) {
-            console.error('Failed to parse content data:', e);
-          }
-        }
-      } else {
-        toast.error('Content not found');
-        router.push('/coach/content');
-      }
-    } catch (error) {
-      console.error('Failed to load content:', error);
-      toast.error('Failed to load content');
-      router.push('/coach/content');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleVideoUploaded = (url: string, duration?: number) => {
     setVideoUrl(url);
@@ -181,8 +112,8 @@ export default function EditVideoQuizPage() {
   };
 
   const onSubmit = async () => {
-    if (!user?.id || !content) {
-      toast.error('Unable to save changes');
+    if (!user?.id) {
+      toast.error('You must be logged in to create a quiz');
       return;
     }
 
@@ -211,49 +142,75 @@ export default function EditVideoQuizPage() {
       const totalPoints = questions.reduce((sum, q) => sum + (q.points || 10), 0);
       const estimatedDuration = Math.ceil(videoDuration / 60) + Math.ceil(questions.length * 0.5);
 
-      // Update the video quiz if it exists
-      if (videoQuizId) {
-        const quizData = {
-          title: title.trim(),
-          description: description.trim(),
-          videoUrl,
-          videoDuration,
-          questions,
-          settings,
-          difficulty,
-          estimatedDuration,
-          tags,
-        };
+      // Create the quiz in video_quizzes collection (shared with admin quizzes)
+      const quizData = {
+        title: title.trim(),
+        description: description.trim(),
+        videoUrl,
+        videoDuration,
+        questions,
+        settings,
+        difficulty,
+        estimatedDuration,
+        tags,
+        isActive: true,
+        isPublished: true,
+        category: 'coach-content',
+        sportId: 'coach-custom',
+        skillId: 'coach-custom',
+        createdBy: user.id,
+        source: 'coach',
+        metadata: {
+          totalAttempts: 0,
+          totalCompletions: 0,
+          averageScore: 0,
+          averageTimeSpent: 0,
+          averageCompletionTime: 0,
+          dropOffPoints: [],
+        },
+      };
 
-        const quizResult = await videoQuizService.updateVideoQuiz(videoQuizId, quizData);
+      // Debug: Log user info and quiz data
+      console.log('🔍 Creating quiz with:', {
+        userId: user.id,
+        userRole: user.role,
+        userEmail: user.email,
+        quizTitle: quizData.title,
+        source: quizData.source,
+        videoDuration: quizData.videoDuration,
+        questionsCount: quizData.questions.length,
+      });
 
-        if (!quizResult.success) {
-          throw new Error(quizResult.error?.message || 'Failed to update quiz');
-        }
+      // Create quiz in video_quizzes collection
+      const quizResult = await videoQuizService.createVideoQuiz(quizData);
+
+      if (!quizResult.success) {
+        throw new Error(quizResult.error?.message || 'Failed to create quiz');
       }
 
-      // Update the custom content library entry
+      // Also save reference in custom content library for coach's library view
       const contentData = {
         title: title.trim(),
         description: description.trim(),
+        type: 'quiz' as const,
+        content: JSON.stringify({
+          videoQuizId: quizResult.data?.id,
+          totalPoints,
+          questionCount: questions.length,
+        }),
         videoUrl,
         tags,
         isPublic,
         estimatedTimeMinutes: estimatedDuration,
-        content: JSON.stringify({
-          videoQuizId,
-          totalPoints,
-          questionCount: questions.length,
-        }),
       };
 
-      const contentResult = await customContentService.updateContent(contentId, contentData, user.id);
+      const contentResult = await customContentService.createContent(user.id, contentData);
 
-      if (contentResult.success) {
-        toast.success('Quiz updated successfully');
+      if (contentResult.success && contentResult.data) {
+        toast.success('Quiz created successfully');
         router.push('/coach/content');
       } else {
-        throw new Error(contentResult.error?.message || 'Failed to update quiz');
+        throw new Error(contentResult.error?.message || 'Failed to save quiz to library');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save quiz';
@@ -263,16 +220,12 @@ export default function EditVideoQuizPage() {
     }
   };
 
-  if (authLoading || loading || !user) {
+  if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (!content) {
-    return null;
   }
 
   return (
@@ -290,10 +243,10 @@ export default function EditVideoQuizPage() {
             <div className="flex-1">
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <PlayCircle className="h-6 w-6" />
-                Edit Video Quiz
+                Create Video Quiz
               </h1>
               <p className="text-sm text-muted-foreground">
-                Update your interactive video quiz
+                Create an interactive video quiz with questions at specific timestamps
               </p>
             </div>
           </div>
@@ -421,6 +374,19 @@ export default function EditVideoQuizPage() {
                 <CardTitle>Library Options</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Save to Library</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Save this quiz to your content library for reuse
+                    </p>
+                  </div>
+                  <Switch
+                    checked={saveToLibrary}
+                    onCheckedChange={setSaveToLibrary}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Make Public</Label>
@@ -625,7 +591,7 @@ export default function EditVideoQuizPage() {
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               {questions.length > 0 && (
-                <span>{questions.length} question{questions.length !== 1 ? 's' : ''}</span>
+                <span>{questions.length} question{questions.length !== 1 ? 's' : ''} added</span>
               )}
             </div>
             <div className="flex gap-3">
@@ -643,12 +609,12 @@ export default function EditVideoQuizPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    Creating...
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    Create Quiz
                   </>
                 )}
               </Button>

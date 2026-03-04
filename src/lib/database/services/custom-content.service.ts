@@ -9,7 +9,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   increment,
   Timestamp,
 } from 'firebase/firestore';
@@ -244,16 +243,21 @@ export class CustomContentService extends BaseDatabaseService {
         return { success: true, data: cached, timestamp: new Date() };
       }
 
+      // Simple query without orderBy to avoid needing composite index
       const q = query(
         collection(db, this.COLLECTION),
-        where('createdBy', '==', coachId),
-        orderBy('updatedAt', 'desc')
+        where('createdBy', '==', coachId)
       );
 
       const querySnapshot = await getDocs(q);
-      const content = querySnapshot.docs.map(doc =>
-        this.fromFirestore<CustomContentLibrary>(doc.data())
-      );
+      const content = querySnapshot.docs
+        .map(doc => this.fromFirestore<CustomContentLibrary>(doc.data()))
+        // Sort client-side by updatedAt descending
+        .sort((a, b) => {
+          const aTime = a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0;
+          const bTime = b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0;
+          return bTime - aTime;
+        });
 
       this.cache.set(cacheKey, content);
 
@@ -262,17 +266,28 @@ export class CustomContentService extends BaseDatabaseService {
         data: content,
         timestamp: new Date(),
       };
-    } catch (error) {
+    } catch (error: any) {
+      // Extract error details - Firebase errors have special properties
+      const errorMessage = error?.message || error?.code || String(error);
+      const errorCode = error?.code || 'CONTENT_FETCH_ERROR';
+
       logger.error('Failed to get coach content', 'CustomContentService', {
         coachId,
-        error: error instanceof Error ? error.message : String(error),
+        errorMessage,
+        errorCode,
+        errorName: error?.name,
       });
+
+      // Check if it's a missing index error
+      if (errorMessage?.includes('index') || errorCode === 'failed-precondition') {
+        console.error('Firestore index required. Create index at:', error?.message);
+      }
+
       return {
         success: false,
         error: {
-          code: 'CONTENT_FETCH_ERROR',
-          message: 'Failed to fetch coach content',
-          details: error,
+          code: errorCode,
+          message: errorMessage || 'Failed to fetch coach content',
         },
         timestamp: new Date(),
       };
@@ -290,16 +305,17 @@ export class CustomContentService extends BaseDatabaseService {
         return { success: true, data: cached, timestamp: new Date() };
       }
 
+      // Simple query without orderBy to avoid needing composite index
       const q = query(
         collection(db, this.COLLECTION),
-        where('isPublic', '==', true),
-        orderBy('usageCount', 'desc')
+        where('isPublic', '==', true)
       );
 
       const querySnapshot = await getDocs(q);
-      const content = querySnapshot.docs.map(doc =>
-        this.fromFirestore<CustomContentLibrary>(doc.data())
-      );
+      const content = querySnapshot.docs
+        .map(doc => this.fromFirestore<CustomContentLibrary>(doc.data()))
+        // Sort client-side by usageCount descending
+        .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
 
       this.cache.set(cacheKey, content, 300000); // Cache for 5 minutes
 
@@ -332,26 +348,30 @@ export class CustomContentService extends BaseDatabaseService {
     levelId?: string
   ): Promise<ApiResponse<CustomContentLibrary[]>> {
     try {
+      // Simple queries without orderBy to avoid needing composite indexes
       let q;
       if (levelId) {
         q = query(
           collection(db, this.COLLECTION),
           where('pillarId', '==', pillarId),
-          where('levelId', '==', levelId),
-          orderBy('updatedAt', 'desc')
+          where('levelId', '==', levelId)
         );
       } else {
         q = query(
           collection(db, this.COLLECTION),
-          where('pillarId', '==', pillarId),
-          orderBy('updatedAt', 'desc')
+          where('pillarId', '==', pillarId)
         );
       }
 
       const querySnapshot = await getDocs(q);
-      const content = querySnapshot.docs.map(doc =>
-        this.fromFirestore<CustomContentLibrary>(doc.data())
-      );
+      const content = querySnapshot.docs
+        .map(doc => this.fromFirestore<CustomContentLibrary>(doc.data()))
+        // Sort client-side by updatedAt descending
+        .sort((a, b) => {
+          const aTime = a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0;
+          const bTime = b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0;
+          return bTime - aTime;
+        });
 
       return {
         success: true,

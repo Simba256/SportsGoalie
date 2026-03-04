@@ -469,9 +469,9 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/sports/$(request.resource.data.sportId)) &&
                        exists(/databases/$(database)/documents/skills/$(request.resource.data.skillId));
 
-      // Coaches can create video quizzes with source='coach'
+      // Coaches AND Admins can create video quizzes with source='coach'
       // Coach quizzes use 'coach-custom' for sportId/skillId (no existence check needed)
-      allow create: if isCoach() &&
+      allow create: if isCoachOrAdmin() &&
                        hasRequiredFields(['title', 'questions', 'settings', 'difficulty', 'isActive', 'createdBy', 'sportId', 'skillId', 'videoUrl', 'videoDuration', 'source']) &&
                        request.resource.data.source == 'coach' &&
                        request.resource.data.createdBy == getUserId() &&

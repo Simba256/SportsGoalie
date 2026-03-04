@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,9 +45,9 @@ import { CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
 import { LessonCreator } from '@/components/coach/lesson-creator';
-import { QuizCreator } from '@/components/coach/quiz-creator';
 
 export default function CoachContentPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [content, setContent] = useState<CustomContentLibrary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +55,6 @@ export default function CoachContentPage() {
   const [contentFilter, setContentFilter] = useState<'all' | 'lesson' | 'quiz'>('all');
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showLessonCreator, setShowLessonCreator] = useState(false);
-  const [showQuizCreator, setShowQuizCreator] = useState(false);
   const [editingContent, setEditingContent] = useState<CustomContentLibrary | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<CustomContentLibrary | null>(null);
 
@@ -88,7 +88,8 @@ export default function CoachContentPage() {
     if (type === 'lesson') {
       setShowLessonCreator(true);
     } else {
-      setShowQuizCreator(true);
+      // Navigate to full-page quiz creator
+      router.push('/coach/content/quiz/create');
     }
   };
 
@@ -104,11 +105,12 @@ export default function CoachContentPage() {
   };
 
   const handleEdit = (item: CustomContentLibrary) => {
-    setEditingContent(item);
     if (item.type === 'lesson') {
+      setEditingContent(item);
       setShowLessonCreator(true);
     } else {
-      setShowQuizCreator(true);
+      // Navigate to full-page quiz editor
+      router.push(`/coach/content/quiz/${item.id}/edit`);
     }
   };
 
@@ -402,29 +404,16 @@ export default function CoachContentPage() {
       />
 
       {user?.id && (
-        <>
-          <LessonCreator
-            open={showLessonCreator}
-            onOpenChange={(open) => {
-              setShowLessonCreator(open);
-              if (!open) setEditingContent(null);
-            }}
-            coachId={user.id}
-            onSave={handleContentSaved}
-            editContent={editingContent?.type === 'lesson' ? editingContent : undefined}
-          />
-
-          <QuizCreator
-            open={showQuizCreator}
-            onOpenChange={(open) => {
-              setShowQuizCreator(open);
-              if (!open) setEditingContent(null);
-            }}
-            coachId={user.id}
-            onSave={handleContentSaved}
-            editContent={editingContent?.type === 'quiz' ? editingContent : undefined}
-          />
-        </>
+        <LessonCreator
+          open={showLessonCreator}
+          onOpenChange={(open) => {
+            setShowLessonCreator(open);
+            if (!open) setEditingContent(null);
+          }}
+          coachId={user.id}
+          onSave={handleContentSaved}
+          editContent={editingContent?.type === 'lesson' ? editingContent : undefined}
+        />
       )}
 
       {/* Delete Confirmation */}
