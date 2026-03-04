@@ -24,7 +24,7 @@ import { getQuestionCountByPillar } from '@/data/onboarding-questions';
  */
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -58,6 +58,7 @@ export default function OnboardingPage() {
     userId: user?.id || null,
     studentName: user?.displayName || 'Student',
     enabled: !authLoading && !!user && !user.onboardingCompleted,
+    onRefreshUser: refreshUser,
   });
 
   // Loading state

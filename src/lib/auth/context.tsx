@@ -33,6 +33,7 @@ interface AuthContextType extends AuthState {
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: ProfileUpdateData) => Promise<void>;
   resendEmailVerification: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -434,6 +435,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Refresh user data from Firestore (useful after external updates like onboarding completion)
+  const refreshUser = async () => {
+    if (!auth.currentUser) {
+      return;
+    }
+
+    try {
+      const user = await createUserFromFirebaseUser(auth.currentUser);
+      if (user) {
+        setUser(user);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error refreshing user:', error);
+    }
+  };
+
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -476,6 +494,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     updateUserProfile,
     resendEmailVerification,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

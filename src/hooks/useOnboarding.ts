@@ -24,6 +24,7 @@ interface UseOnboardingOptions {
   userId: string | null;
   studentName?: string;
   enabled?: boolean;
+  onRefreshUser?: () => Promise<void>;
 }
 
 interface UseOnboardingReturn {
@@ -59,6 +60,7 @@ export function useOnboarding({
   userId,
   studentName: _studentName,
   enabled = true,
+  onRefreshUser,
 }: UseOnboardingOptions): UseOnboardingReturn {
   const router = useRouter();
 
@@ -167,6 +169,10 @@ export function useOnboarding({
           // Evaluation already complete - redirect to dashboard
           // Students should not see their results; coaches/admins can view via review page
           setPhase('complete');
+          // Refresh user context before redirecting so dashboard sees onboardingCompleted: true
+          if (onRefreshUser) {
+            await onRefreshUser();
+          }
           router.push('/dashboard');
         }
       } else {
@@ -271,6 +277,10 @@ export function useOnboarding({
         // Skip results screen for students - go directly to dashboard
         // Coaches/admins can view results via the coach evaluation review page
         setPhase('complete');
+        // Refresh user context before redirecting so dashboard sees onboardingCompleted: true
+        if (onRefreshUser) {
+          await onRefreshUser();
+        }
         router.push('/dashboard');
       } else {
         setError('Failed to complete evaluation');
