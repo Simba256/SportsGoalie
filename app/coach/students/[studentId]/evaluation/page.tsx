@@ -506,16 +506,16 @@ export default function CoachEvaluationPage() {
                   Adjust Overall Level
                 </label>
                 <Select
-                  value={adjustedLevel || ''}
+                  value={adjustedLevel || 'none'}
                   onValueChange={(value) =>
-                    setAdjustedLevel(value as AssessmentLevel | '')
+                    setAdjustedLevel(value === 'none' ? '' : value as AssessmentLevel)
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Keep assessed level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Keep assessed level</SelectItem>
+                    <SelectItem value="none">Keep assessed level</SelectItem>
                     {levelOptions.map((level) => (
                       <SelectItem key={level} value={level}>
                         {getLevelDisplayText(level)}
