@@ -164,7 +164,10 @@ export function useOnboarding({
             }
           }
         } else if (result.data.status === 'completed' || result.data.status === 'reviewed') {
-          setPhase('results');
+          // Evaluation already complete - redirect to dashboard
+          // Students should not see their results; coaches/admins can view via review page
+          setPhase('complete');
+          router.push('/dashboard');
         }
       } else {
         // Create new evaluation
@@ -265,7 +268,10 @@ export function useOnboarding({
 
       if (result.success && result.data) {
         setEvaluation(result.data);
-        setPhase('results');
+        // Skip results screen for students - go directly to dashboard
+        // Coaches/admins can view results via the coach evaluation review page
+        setPhase('complete');
+        router.push('/dashboard');
       } else {
         setError('Failed to complete evaluation');
       }
