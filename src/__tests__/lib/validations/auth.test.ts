@@ -106,6 +106,7 @@ describe('Authentication Validation Schemas', () => {
         confirmPassword: 'Password123',
         displayName: 'John Doe',
         role: 'student',
+        workflowType: 'automated',
         agreeToTerms: true,
       };
 
@@ -528,6 +529,7 @@ describe('Authentication Validation Schemas', () => {
         confirmPassword: 'Password123',
         displayName: 'Test User',
         role: 'student',
+        workflowType: 'automated',
         agreeToTerms: true,
       };
 

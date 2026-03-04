@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { useRouter } from 'next/navigation';
 import RegisterPage from '@/app/auth/register/page';
 import { renderWithProviders } from '../../utils/test-utils';
 
@@ -338,7 +337,6 @@ describe('RegisterPage Integration', () => {
   it('should have proper accessibility attributes', () => {
     renderWithProviders(<RegisterPage />);
 
-    const displayNameInput = screen.getByTestId('display-name-input');
     const emailInput = screen.getByTestId('email-input');
     const passwordInput = screen.getByTestId('password-input');
     const confirmPasswordInput = screen.getByTestId('confirm-password-input');

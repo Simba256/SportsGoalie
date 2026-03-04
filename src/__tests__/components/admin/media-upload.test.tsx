@@ -1,12 +1,12 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import { MediaUpload } from '../../../../components/admin/media-upload';
+import { vi } from 'vitest';
+import { MediaUpload } from '@/components/admin/media-upload';
 
 // Mock URL.createObjectURL and URL.revokeObjectURL
-const mockCreateObjectURL = jest.fn();
-const mockRevokeObjectURL = jest.fn();
+const mockCreateObjectURL = vi.fn();
+const mockRevokeObjectURL = vi.fn();
 
 Object.defineProperty(global, 'URL', {
   value: {
@@ -18,10 +18,10 @@ Object.defineProperty(global, 'URL', {
 
 describe('MediaUpload', () => {
   const user = userEvent.setup();
-  const mockOnUpload = jest.fn();
+  const mockOnUpload = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockCreateObjectURL.mockReturnValue('blob:mock-url');
   });
 
@@ -43,8 +43,6 @@ describe('MediaUpload', () => {
 
   it('handles file selection through button click', async () => {
     render(<MediaUpload {...defaultProps} />);
-
-    const selectButton = screen.getByRole('button', { name: /select files/i });
 
     // Create a mock file
     const file = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });

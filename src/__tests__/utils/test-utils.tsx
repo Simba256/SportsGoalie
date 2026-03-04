@@ -2,7 +2,6 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import type { User } from 'firebase/auth';
 
 // Define our app user type
 interface AppUser {

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import type { User } from 'firebase/auth';
 import { AuthService, createAuthService } from '@/lib/auth/auth-service';
 import { mockFirebaseAuth, mockFirebaseFirestore, createMockFirebaseUser } from '../../utils/test-utils';
 import {
@@ -190,7 +191,7 @@ describe('AuthService', () => {
   describe('User Logout', () => {
     it('should successfully logout user', async () => {
       mockFirebaseAuth.signOut.mockResolvedValue(undefined);
-      mockFirebaseAuth.currentUser = createMockFirebaseUser();
+      (mockFirebaseAuth as { currentUser: unknown }).currentUser = createMockFirebaseUser();
 
       await authService.logout();
 
@@ -199,7 +200,7 @@ describe('AuthService', () => {
 
     it('should handle logout when no user is signed in', async () => {
       mockFirebaseAuth.signOut.mockResolvedValue(undefined);
-      mockFirebaseAuth.currentUser = null;
+      (mockFirebaseAuth as { currentUser: unknown }).currentUser = null;
 
       await authService.logout();
 
@@ -215,7 +216,7 @@ describe('AuthService', () => {
 
   describe('Get Current User', () => {
     it('should return null when no user is authenticated', async () => {
-      mockFirebaseAuth.currentUser = null;
+      (mockFirebaseAuth as { currentUser: unknown }).currentUser = null;
 
       const result = await authService.getCurrentUser();
 
@@ -224,7 +225,7 @@ describe('AuthService', () => {
 
     it('should return user when authenticated', async () => {
       const mockFirebaseUser = createMockFirebaseUser({ emailVerified: true });
-      mockFirebaseAuth.currentUser = mockFirebaseUser;
+      (mockFirebaseAuth as { currentUser: unknown }).currentUser = mockFirebaseUser;
 
       mockFirebaseFirestore.getDoc.mockResolvedValue({
         exists: () => true,
@@ -250,7 +251,7 @@ describe('AuthService', () => {
     it('should return null for unverified users', async () => {
       const mockFirebaseUser = createMockFirebaseUser({ emailVerified: false });
 
-      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser);
+      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser as unknown as User);
 
       expect(result).toBeNull();
       expect(mockFirebaseFirestore.getDoc).not.toHaveBeenCalled();
@@ -270,7 +271,7 @@ describe('AuthService', () => {
         }),
       });
 
-      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser);
+      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser as unknown as User);
 
       expect(result).toMatchObject({
         id: mockFirebaseUser.uid,
@@ -292,7 +293,7 @@ describe('AuthService', () => {
         data: () => null,
       });
 
-      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser);
+      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser as unknown as User);
 
       expect(result).toBeNull();
     });
@@ -302,7 +303,7 @@ describe('AuthService', () => {
 
       mockFirebaseFirestore.getDoc.mockRejectedValue(new Error('Firestore access denied'));
 
-      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser);
+      const result = await authService.createUserFromFirebaseUser(mockFirebaseUser as unknown as User);
 
       expect(result).toBeNull();
     });

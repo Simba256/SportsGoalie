@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BaseDatabaseService, DatabaseError } from '@/lib/database/base.service';
-import { createMockFirestoreDoc, createMockFirestoreQuerySnapshot, createMockApiResponse } from '../../setup';
+import { createMockFirestoreDoc, createMockFirestoreQuerySnapshot } from '../../setup';
 import * as firestore from 'firebase/firestore';
 
 // Mock firestore functions
@@ -9,9 +9,10 @@ const mockGetDoc = vi.mocked(firestore.getDoc);
 const mockGetDocs = vi.mocked(firestore.getDocs);
 const mockUpdateDoc = vi.mocked(firestore.updateDoc);
 const mockDeleteDoc = vi.mocked(firestore.deleteDoc);
-const mockCollection = vi.mocked(firestore.collection);
-const mockDoc = vi.mocked(firestore.doc);
-const mockQuery = vi.mocked(firestore.query);
+// These are used by the service internally
+vi.mocked(firestore.collection);
+vi.mocked(firestore.doc);
+vi.mocked(firestore.query);
 const mockWhere = vi.mocked(firestore.where);
 const mockOrderBy = vi.mocked(firestore.orderBy);
 const mockLimit = vi.mocked(firestore.limit);
@@ -85,7 +86,7 @@ describe('BaseDatabaseService', () => {
       const result = await service.getById('test-collection', 'test-id');
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ id: 'test-id', ...testData });
+      expect(result.data).toEqual({ ...testData, id: 'test-id' });
     });
 
     it('should return null for non-existent document', async () => {

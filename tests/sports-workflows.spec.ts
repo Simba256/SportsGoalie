@@ -277,7 +277,7 @@ test.describe('Admin Workflows', () => {
     await page.waitForTimeout(1000);
 
     // Check for any console errors
-    const errors = [];
+    const errors: string[] = [];
     page.on('console', msg => {
       if (msg.type() === 'error') {
         errors.push(msg.text());

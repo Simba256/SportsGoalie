@@ -44,7 +44,7 @@ const mockFirestore = {
 vi.mock('firebase/firestore', () => ({
   getFirestore: vi.fn(() => mockFirestore),
   connectFirestoreEmulator: vi.fn(),
-  collection: vi.fn((db, name) => ({ _path: name })),
+  collection: vi.fn((_db, name) => ({ _path: name })),
   doc: vi.fn((collection, id) => ({
     id,
     _collection: collection,

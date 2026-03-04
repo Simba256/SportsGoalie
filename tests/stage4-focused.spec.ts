@@ -18,7 +18,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       await expect(page.locator('h1')).toContainText('Sports Catalog', { timeout: 10000 });
       console.log('✅ Sports Catalog header loaded successfully');
     } catch (error) {
-      console.log('❌ Sports Catalog header not found:', error.message);
+      console.log('❌ Sports Catalog header not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 2: Search functionality is present
@@ -26,7 +26,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       await expect(page.locator('input[placeholder*="Search"]')).toBeVisible({ timeout: 5000 });
       console.log('✅ Search input is visible');
     } catch (error) {
-      console.log('❌ Search input not found:', error.message);
+      console.log('❌ Search input not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 3: Sports cards are displayed
@@ -36,7 +36,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       const cardCount = await sportsCards.count();
       console.log(`✅ Found ${cardCount} sports cards`);
     } catch (error) {
-      console.log('❌ Sports cards not found:', error.message);
+      console.log('❌ Sports cards not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 4: Filters button exists
@@ -44,11 +44,10 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       await expect(page.locator('button:has-text("Filters")')).toBeVisible({ timeout: 5000 });
       console.log('✅ Filters button is visible');
     } catch (error) {
-      console.log('❌ Filters button not found:', error.message);
+      console.log('❌ Filters button not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Log page content for analysis
-    const pageContent = await page.content();
     console.log('📄 Page title:', await page.title());
     console.log('🔗 Current URL:', page.url());
   });
@@ -102,7 +101,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
         console.log('❌ No sport links found on catalog page');
       }
     } catch (error) {
-      console.log('❌ Error navigating to sport detail:', error.message);
+      console.log('❌ Error navigating to sport detail:', error instanceof Error ? error.message : String(error));
     }
   });
 
@@ -137,7 +136,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
         }
 
       } catch (error) {
-        console.log('❌ Admin interface elements not found:', error.message);
+        console.log('❌ Admin interface elements not found:', error instanceof Error ? error.message : String(error));
       }
     }
   });
@@ -179,8 +178,8 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
   test('Network Analysis - API Calls', async ({ page }) => {
     console.log('🔍 Analyzing Network Requests...');
 
-    const requests = [];
-    const responses = [];
+    const requests: Array<{ url: string; method: string; resourceType: string }> = [];
+    const responses: Array<{ url: string; status: number; statusText: string }> = [];
 
     page.on('request', request => {
       requests.push({

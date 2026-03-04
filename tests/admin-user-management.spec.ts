@@ -13,8 +13,6 @@ import { test, expect, Page } from '@playwright/test';
  * - Performance testing
  */
 
-const BASE_URL = 'http://localhost:3001';
-
 async function navigateToUserManagement(page: Page) {
   await page.goto('/admin/users');
   await page.waitForLoadState('networkidle');
@@ -113,9 +111,8 @@ test.describe('User Search and Filtering', () => {
     await page.click('text=Administrators');
     await page.waitForTimeout(1000);
 
-    // Check that filter was applied
-    const userCount = await page.locator('[data-testid="user-item"]').count();
-    // Results will vary based on data
+    // Check that filter was applied - count varies based on data
+    await page.locator('[data-testid="user-item"]').count();
   });
 
   test('should filter users by status', async ({ page }) => {
@@ -129,9 +126,8 @@ test.describe('User Search and Filtering', () => {
     await page.click('text=Active');
     await page.waitForTimeout(1000);
 
-    // Check that filter was applied
-    const userCount = await page.locator('[data-testid="user-item"]').count();
-    // Results will vary based on data
+    // Check that filter was applied - count varies based on data
+    await page.locator('[data-testid="user-item"]').count();
   });
 
   test('should clear search when input is cleared', async ({ page }) => {

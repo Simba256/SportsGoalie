@@ -475,9 +475,6 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     test('should show appropriate loading states', async () => {
       await page.goto(`${BASE_URL}/sports`);
 
-      // Should show loading indicator initially
-      const loadingStates = page.locator('.animate-spin, text=/loading/i, [class*="spinner"]');
-
       // Wait for content to load
       await page.waitForLoadState('networkidle');
 

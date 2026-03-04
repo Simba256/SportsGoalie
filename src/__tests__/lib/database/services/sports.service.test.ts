@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SportsService } from '@/lib/database/services/sports.service';
 import { createMockSport, createMockSkill, createMockApiResponse } from '../../../setup';
-import type { Sport, Skill } from '@/types';
 
 // Mock the base service
 vi.mock('@/lib/database/base.service', () => ({
@@ -30,7 +29,6 @@ describe('SportsService', () => {
   let mockUpdate: any;
   let mockDelete: any;
   let mockQuery: any;
-  let mockCount: any;
   let mockIncrementField: any;
   let mockBatchWrite: any;
 
@@ -43,7 +41,6 @@ describe('SportsService', () => {
     mockUpdate = vi.mocked(service.update);
     mockDelete = vi.mocked(service.delete);
     mockQuery = vi.mocked(service.query);
-    mockCount = vi.mocked(service.count);
     mockIncrementField = vi.mocked(service.incrementField);
     mockBatchWrite = vi.mocked(service.batchWrite);
 

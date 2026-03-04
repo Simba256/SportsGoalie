@@ -525,7 +525,6 @@ test.describe('Authentication Flows', () => {
 
       // Check inputs have proper aria-invalid attributes
       const emailInput = page.getByTestId('email-input');
-      const passwordInput = page.getByTestId('password-input');
 
       await emailInput.fill('invalid');
       await page.getByTestId('login-submit').click();

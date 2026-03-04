@@ -15,7 +15,6 @@ import { test, expect, Page } from '@playwright/test';
 // Test data and configuration
 const TEST_EMAIL = 'admin@sportscoach.test';
 const TEST_PASSWORD = 'AdminTest123!';
-const BASE_URL = 'http://localhost:3001';
 
 // Helper functions
 async function loginAsAdmin(page: Page) {

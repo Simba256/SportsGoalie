@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/lib/auth/context';
 import { mockFirebaseAuth, mockFirebaseFirestore, createMockFirebaseUser } from '../../utils/test-utils';
 import { EmailVerificationRequiredError, InvalidCredentialsError } from '@/lib/errors/auth-errors';
@@ -153,10 +153,8 @@ describe('AuthContext', () => {
         await result.current.register({
           email: 'newuser@example.com',
           password: 'password123',
-          confirmPassword: 'password123',
           displayName: 'New User',
           role: 'student',
-          agreeToTerms: true,
         });
       });
 
@@ -182,10 +180,8 @@ describe('AuthContext', () => {
           await result.current.register({
             email: 'existing@example.com',
             password: 'password123',
-            confirmPassword: 'password123',
             displayName: 'Test User',
             role: 'student',
-            agreeToTerms: true,
           });
         })
       ).rejects.toThrow();
@@ -204,10 +200,8 @@ describe('AuthContext', () => {
           await result.current.register({
             email: 'test@example.com',
             password: '123',
-            confirmPassword: '123',
             displayName: 'Test User',
             role: 'student',
-            agreeToTerms: true,
           });
         })
       ).rejects.toThrow();
@@ -294,7 +288,7 @@ describe('AuthContext', () => {
       await act(async () => {
         await result.current.updateUserProfile({
           displayName: 'Updated Name',
-          photoURL: 'https://example.com/photo.jpg',
+          profileImage: 'https://example.com/photo.jpg',
         });
       });
 

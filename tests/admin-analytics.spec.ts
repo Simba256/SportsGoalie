@@ -14,8 +14,6 @@ import { test, expect, Page } from '@playwright/test';
  * - Error handling
  */
 
-const BASE_URL = 'http://localhost:3001';
-
 async function navigateToAnalytics(page: Page) {
   await page.goto('/admin/analytics');
   await page.waitForLoadState('networkidle');
@@ -411,7 +409,7 @@ test.describe('Error Handling - Analytics', () => {
     await expect(page.locator('h1')).toContainText('Platform Analytics');
 
     // Should show some form of error state or loading state
-    await expect(page.locator('text=Loading analytics...'), { timeout: 5000 }).toBeVisible();
+    await expect(page.locator('text=Loading analytics...')).toBeVisible({ timeout: 5000 });
   });
 
   test('should handle chart rendering failures', async ({ page }) => {

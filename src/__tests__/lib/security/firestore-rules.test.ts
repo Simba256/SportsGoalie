@@ -1,9 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   initializeTestEnvironment,
   RulesTestEnvironment,
-  initializeTestApp,
-  ContextOptions
 } from '@firebase/rules-unit-testing';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc } from 'firebase/firestore';
 import { readFileSync } from 'fs';
@@ -33,19 +31,12 @@ describe('Firestore Security Rules', () => {
     await testEnv.cleanup();
   });
 
-  // Helper functions to create authenticated contexts
-  function getAuthenticatedContext(uid: string, role: string = 'student', emailVerified: boolean = true): ContextOptions {
+  // Helper function to create token options for authenticated contexts
+  function getTokenOptions(role: string = 'student', emailVerified: boolean = true) {
     return {
-      uid,
-      token: {
-        role,
-        email_verified: emailVerified,
-      },
+      role,
+      email_verified: emailVerified,
     };
-  }
-
-  function getUnauthenticatedContext(): ContextOptions {
-    return {};
   }
 
   describe('Users Collection Rules', () => {
@@ -60,7 +51,7 @@ describe('Firestore Security Rules', () => {
     };
 
     it('should allow users to read their own profile', async () => {
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const db = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', userId), userData);
@@ -74,7 +65,7 @@ describe('Firestore Security Rules', () => {
 
     it('should prevent users from reading other users profiles', async () => {
       const otherUserId = 'other-user-456';
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const db = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', otherUserId), userData);
@@ -87,7 +78,7 @@ describe('Firestore Security Rules', () => {
 
     it('should allow admins to read any user profile', async () => {
       const adminId = 'admin-user-789';
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(adminId, 'admin')).firestore();
+      const db = testEnv.authenticatedContext(adminId, getTokenOptions('admin')).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', userId), userData);
@@ -100,7 +91,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow users to create their own profile with verified email', async () => {
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId, 'student', true)).firestore();
+      const db = testEnv.authenticatedContext(userId, getTokenOptions('student', true)).firestore();
 
       const userDoc = doc(db, 'users', userId);
 
@@ -108,7 +99,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should prevent profile creation with unverified email', async () => {
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId, 'student', false)).firestore();
+      const db = testEnv.authenticatedContext(userId, getTokenOptions('student', false)).firestore();
 
       const userDoc = doc(db, 'users', userId);
 
@@ -116,7 +107,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should prevent users from changing their role', async () => {
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const db = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', userId), userData);
@@ -128,7 +119,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should prevent users from changing their email', async () => {
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const db = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', userId), userData);
@@ -140,7 +131,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow users to update their profile (excluding role and email)', async () => {
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const db = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', userId), userData);
@@ -155,8 +146,8 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should only allow admins to delete users', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'users', userId), userData);
@@ -182,7 +173,7 @@ describe('Firestore Security Rules', () => {
 
     it('should allow anyone to read active sports', async () => {
       const unauthenticatedDb = testEnv.unauthenticatedContext().firestore();
-      const authenticatedDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
+      const authenticatedDb = testEnv.authenticatedContext('user-123').firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'sports', 'sport-123'), sportData);
@@ -200,7 +191,7 @@ describe('Firestore Security Rules', () => {
 
     it('should prevent reading inactive sports for non-admins', async () => {
       const inactiveSportData = { ...sportData, isActive: false };
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
+      const userDb = testEnv.authenticatedContext('user-123').firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'sports', 'inactive-sport'), inactiveSportData);
@@ -213,7 +204,7 @@ describe('Firestore Security Rules', () => {
 
     it('should allow admins to read inactive sports', async () => {
       const inactiveSportData = { ...sportData, isActive: false };
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'sports', 'inactive-sport'), inactiveSportData);
@@ -226,8 +217,8 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should only allow admins to create sports', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
+      const userDb = testEnv.authenticatedContext('user-123').firestore();
 
       const adminSportDoc = doc(adminDb, 'sports', 'admin-sport');
       const userSportDoc = doc(userDb, 'sports', 'user-sport');
@@ -237,7 +228,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should validate required fields when creating sports', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       const invalidSportData = {
         name: 'Test Sport',
@@ -250,7 +241,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should validate difficulty values', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       const invalidDifficultySport = {
         ...sportData,
@@ -263,8 +254,8 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should only allow admins to update and delete sports', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
+      const userDb = testEnv.authenticatedContext('user-123').firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'sports', 'sport-123'), sportData);
@@ -293,7 +284,7 @@ describe('Firestore Security Rules', () => {
     };
 
     it('should allow users to read their own attempts', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'quiz_attempts', 'attempt-123'), attemptData);
@@ -307,7 +298,7 @@ describe('Firestore Security Rules', () => {
 
     it('should prevent users from reading other users attempts', async () => {
       const otherUserAttempt = { ...attemptData, userId: 'other-user-456' };
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'quiz_attempts', 'other-attempt'), otherUserAttempt);
@@ -319,7 +310,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow admins to read any attempts', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'quiz_attempts', 'attempt-123'), attemptData);
@@ -332,7 +323,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow users to create their own attempts', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       const attemptDoc = doc(userDb, 'quiz_attempts', 'new-attempt');
 
@@ -340,7 +331,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should prevent users from creating attempts for other users', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
       const otherUserAttempt = { ...attemptData, userId: 'other-user-456' };
 
       const attemptDoc = doc(userDb, 'quiz_attempts', 'other-attempt');
@@ -349,7 +340,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should validate required fields when creating attempts', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       const invalidAttempt = {
         userId,
@@ -363,7 +354,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow users to update their own attempts', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'quiz_attempts', 'attempt-123'), attemptData);
@@ -379,8 +370,8 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should only allow admins to delete attempts', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'quiz_attempts', 'attempt-123'), attemptData);
@@ -406,7 +397,7 @@ describe('Firestore Security Rules', () => {
     };
 
     it('should allow authenticated users to create analytics events', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       const eventsCollection = collection(userDb, 'analytics_events');
 
@@ -417,7 +408,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow creating anonymous analytics events', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       const eventsCollection = collection(userDb, 'analytics_events');
 
@@ -425,7 +416,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should prevent users from creating events for other users', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       const eventsCollection = collection(userDb, 'analytics_events');
 
@@ -436,27 +427,19 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should only allow admins to read analytics events', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext(userId)).firestore();
+      const userDb = testEnv.authenticatedContext(userId).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await addDoc(collection(context.firestore(), 'analytics_events'), eventData);
       });
 
-      const eventsCollection = collection(userDb, 'analytics_events');
-      const adminEventsCollection = collection(adminDb, 'analytics_events');
-
       // User should not be able to read events
       const eventDoc = doc(userDb, 'analytics_events', 'event-123');
       await expect(getDoc(eventDoc)).rejects.toThrow();
-
-      // Admin should be able to read events
-      const adminEventDoc = doc(adminDb, 'analytics_events', 'event-123');
-      // Note: This might still fail due to document not existing, but rules allow it
     });
 
     it('should prevent updates and deletes on analytics events', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'analytics_events', 'event-123'), eventData);
@@ -479,7 +462,7 @@ describe('Firestore Security Rules', () => {
 
     it('should allow anyone to read app settings', async () => {
       const unauthenticatedDb = testEnv.unauthenticatedContext().firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
+      const userDb = testEnv.authenticatedContext('user-123').firestore();
 
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'app_settings', 'setting-123'), settingData);
@@ -496,8 +479,8 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should only allow admins to create, update, and delete settings', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
+      const userDb = testEnv.authenticatedContext('user-123').firestore();
 
       const adminSettingDoc = doc(adminDb, 'app_settings', 'admin-setting');
       const userSettingDoc = doc(userDb, 'app_settings', 'user-setting');
@@ -523,8 +506,8 @@ describe('Firestore Security Rules', () => {
 
   describe('Catch-all Rules', () => {
     it('should deny access to undefined collections', async () => {
-      const userDb = testEnv.authenticatedContext(getAuthenticatedContext('user-123')).firestore();
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const userDb = testEnv.authenticatedContext('user-123').firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       const undefinedDoc1 = doc(userDb, 'undefined_collection', 'doc-123');
       const undefinedDoc2 = doc(adminDb, 'undefined_collection', 'doc-456');
@@ -540,7 +523,7 @@ describe('Firestore Security Rules', () => {
   describe('Email Validation', () => {
     it('should validate email format in user creation', async () => {
       const userId = 'user-with-invalid-email';
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId, 'student', true)).firestore();
+      const db = testEnv.authenticatedContext(userId, getTokenOptions('student', true)).firestore();
 
       const invalidEmailData = {
         email: 'invalid-email-format',
@@ -556,7 +539,7 @@ describe('Firestore Security Rules', () => {
 
     it('should accept valid email formats', async () => {
       const userId = 'user-with-valid-email';
-      const db = testEnv.authenticatedContext(getAuthenticatedContext(userId, 'student', true)).firestore();
+      const db = testEnv.authenticatedContext(userId, getTokenOptions('student', true)).firestore();
 
       const validEmailData = {
         email: 'valid.email+test@example.com',
@@ -573,29 +556,16 @@ describe('Firestore Security Rules', () => {
 
   describe('Timestamp Validation', () => {
     it('should validate timestamp fields in documents', async () => {
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
-
-      const sportWithInvalidTimestamp = {
-        name: 'Test Sport',
-        description: 'Test description',
-        difficulty: 'introduction',
-        category: 'Test Category',
-        isActive: true,
-        createdAt: 'invalid-timestamp', // Invalid timestamp
-      };
-
-      const sportDoc = doc(adminDb, 'sports', 'sport-with-invalid-timestamp');
-
       // Note: Firestore rules might not catch this at the schema level
       // but timestamp validation would be handled by application layer
-      // This test documents the expected behavior
+      // This test documents the expected behavior for invalid timestamps
     });
   });
 
   describe('Role-based Access Control', () => {
     it('should enforce role hierarchy for admin operations', async () => {
-      const studentDb = testEnv.authenticatedContext(getAuthenticatedContext('student-123', 'student')).firestore();
-      const adminDb = testEnv.authenticatedContext(getAuthenticatedContext('admin-123', 'admin')).firestore();
+      const studentDb = testEnv.authenticatedContext('student-123', getTokenOptions('student')).firestore();
+      const adminDb = testEnv.authenticatedContext('admin-123', getTokenOptions('admin')).firestore();
 
       const quizData = {
         title: 'Test Quiz',
@@ -618,7 +588,7 @@ describe('Firestore Security Rules', () => {
     });
 
     it('should allow cross-role data access where appropriate', async () => {
-      const studentDb = testEnv.authenticatedContext(getAuthenticatedContext('student-123', 'student')).firestore();
+      const studentDb = testEnv.authenticatedContext('student-123', getTokenOptions('student')).firestore();
 
       const activeSportData = {
         name: 'Public Sport',

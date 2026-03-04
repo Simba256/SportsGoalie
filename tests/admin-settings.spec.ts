@@ -13,8 +13,6 @@ import { test, expect, Page } from '@playwright/test';
  * - Error handling
  */
 
-const BASE_URL = 'http://localhost:3001';
-
 async function navigateToSettings(page: Page) {
   await page.goto('/admin/settings');
   await page.waitForLoadState('networkidle');

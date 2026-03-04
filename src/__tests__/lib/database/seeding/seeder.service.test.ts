@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SeederService } from '@/lib/database/seeding/seeder.service';
 import { createMockApiResponse, createMockSport, createMockSkill } from '../../../setup';
-import { sampleSports, sampleSkills, sampleAchievements } from '@/lib/database/seeding/seed-data';
+import { sampleSports, sampleAchievements } from '@/lib/database/seeding/seed-data';
 
 // Mock the base service
 vi.mock('@/lib/database/base.service', () => ({
@@ -293,7 +293,7 @@ describe('SeederService', () => {
         'app_settings',
       ];
 
-      collections.forEach((collection, index) => {
+      collections.forEach((collection) => {
         mockQuery.mockResolvedValueOnce(createMockApiResponse({
           items: [
             { id: `${collection}-item-1` },

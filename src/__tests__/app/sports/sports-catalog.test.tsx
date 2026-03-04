@@ -1,32 +1,33 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 import SportsPage from '../../../../app/sports/page';
 import { sportsService } from '../../../lib/database/services/sports.service';
 
 // Mock the sports service
-jest.mock('../../../lib/database/services/sports.service', () => ({
+vi.mock('../../../lib/database/services/sports.service', () => ({
   sportsService: {
-    getAllSports: jest.fn(),
-    searchSports: jest.fn(),
+    getAllSports: vi.fn(),
+    searchSports: vi.fn(),
   },
 }));
 
 // Mock Next.js router
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
+    push: vi.fn(),
+    back: vi.fn(),
   }),
 }));
 
 // Mock Link component
-jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+vi.mock('next/link', () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
-  );
-});
+  ),
+}));
 
 const mockSportsData = {
   success: true,
@@ -113,9 +114,9 @@ describe('SportsPage', () => {
   const user = userEvent.setup();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (sportsService.getAllSports as jest.Mock).mockResolvedValue(mockSportsData);
-    (sportsService.searchSports as jest.Mock).mockResolvedValue(mockSportsData);
+    vi.clearAllMocks();
+    (sportsService.getAllSports as ReturnType<typeof vi.fn>).mockResolvedValue(mockSportsData);
+    (sportsService.searchSports as ReturnType<typeof vi.fn>).mockResolvedValue(mockSportsData);
   });
 
   it('renders sports catalog with header and description', async () => {
@@ -285,7 +286,7 @@ describe('SportsPage', () => {
   });
 
   it('displays empty state when no sports found', async () => {
-    (sportsService.getAllSports as jest.Mock).mockResolvedValue(mockEmptySportsData);
+    (sportsService.getAllSports as ReturnType<typeof vi.fn>).mockResolvedValue(mockEmptySportsData);
 
     render(<SportsPage />);
 
@@ -305,7 +306,7 @@ describe('SportsPage', () => {
       timestamp: new Date(),
     };
 
-    (sportsService.getAllSports as jest.Mock).mockResolvedValue(errorResponse);
+    (sportsService.getAllSports as ReturnType<typeof vi.fn>).mockResolvedValue(errorResponse);
 
     render(<SportsPage />);
 
@@ -317,7 +318,7 @@ describe('SportsPage', () => {
   });
 
   it('handles network exceptions', async () => {
-    (sportsService.getAllSports as jest.Mock).mockRejectedValue(new Error('Network error'));
+    (sportsService.getAllSports as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
     render(<SportsPage />);
 
@@ -384,7 +385,7 @@ describe('SportsPage', () => {
       timestamp: new Date(),
     };
 
-    (sportsService.getAllSports as jest.Mock)
+    (sportsService.getAllSports as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(errorResponse)
       .mockResolvedValueOnce(mockSportsData);
 
