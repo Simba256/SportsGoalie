@@ -58,6 +58,29 @@ const pillarIcons: Record<PillarSlug, LucideIcon> = {
   training: Dumbbell,
 };
 
+// Helper to safely convert Firestore Timestamp to Date
+// Timestamps may come as objects with seconds/nanoseconds after serialization
+function toDate(timestamp: unknown): Date | null {
+  if (!timestamp) return null;
+
+  // If it has toDate method (real Firestore Timestamp)
+  if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof (timestamp as { toDate: unknown }).toDate === 'function') {
+    return (timestamp as { toDate: () => Date }).toDate();
+  }
+
+  // If it's a serialized timestamp with seconds
+  if (typeof timestamp === 'object' && 'seconds' in timestamp) {
+    return new Date((timestamp as { seconds: number }).seconds * 1000);
+  }
+
+  // If it's already a Date
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+
+  return null;
+}
+
 const levelOptions: AssessmentLevel[] = ['beginner', 'intermediate', 'advanced'];
 
 export default function CoachEvaluationPage() {
@@ -265,7 +288,7 @@ export default function CoachEvaluationPage() {
               <CardDescription>
                 Completed{' '}
                 {evaluation.completedAt
-                  ? new Date(evaluation.completedAt.toDate()).toLocaleDateString()
+                  ? toDate(evaluation.completedAt)?.toLocaleDateString() ?? 'Unknown'
                   : 'Unknown'}
                 {evaluation.duration &&
                   ` • ${Math.round(evaluation.duration / 60)} minutes`}
@@ -532,9 +555,7 @@ export default function CoachEvaluationPage() {
                   </p>
                   <p>
                     on{' '}
-                    {new Date(
-                      evaluation.coachReview.reviewedAt.toDate()
-                    ).toLocaleDateString()}
+                    {toDate(evaluation.coachReview.reviewedAt)?.toLocaleDateString() ?? 'Unknown'}
                   </p>
                 </div>
               )}
