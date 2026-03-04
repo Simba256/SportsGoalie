@@ -9,7 +9,7 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 95% (Phase 1 Complete, Phase 2.0.7 Student Onboarding Nearly Complete)
+**Overall Progress:** 100% (Phase 1 Complete, Phase 2.0 Multi-Role Foundation Complete)
 
 ---
 
@@ -18,7 +18,7 @@
 ### Active Tasks
 - [ ] Implement parent-child relationships with student ID linking (Phase 2.0.4)
 - [ ] Role-based route protection (Phase 2.0.5)
-- [x] Student onboarding & initial evaluation (Phase 2.0.7) - 95% COMPLETE
+- [x] Student onboarding & initial evaluation (Phase 2.0.7) - COMPLETE
 - [ ] Convert to 6-pillar ice hockey goalie structure (Phase 2.1)
 
 ### Completed This Sprint
@@ -41,6 +41,10 @@
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-04 - [Onboarding Rules & Coach UX Improvements](docs/sessions/2026-03/2026-03-04-onboarding-rules-and-coach-ux.md)
+**Time:** 1h 0min | **Focus:** Security / Testing / Refactor
+Deployed Firestore security rules for onboarding_evaluations collection. Created Playwright test suite verifying authentication, welcome screen, and dark theme. Enhanced VideoUploader with Google Drive support and flexible props for reuse. Added CoachBreadcrumb component and Content Library nav link. Refactored admin quiz pages to use shared VideoUploader (-700 lines). Fixed video MIME types. Deleted deprecated quiz-creator dialog. All changes pushed to remote.
 
 ### 2026-03-04 - [Student Onboarding Evaluation System](docs/sessions/2026-03/2026-03-04-student-onboarding-evaluation-system.md)
 **Time:** 2h 30min | **Focus:** Feature - Phase 2.0.7 Student Onboarding
@@ -138,27 +142,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 38.75 hours | 🔄 In Progress |
-| **Total** | **~198.75 hours** | - |
+| Phase 2 | 39.75 hours | 🔄 In Progress |
+| **Total** | **~199.75 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 26.75h | 69% |
-| Documentation | 1.75h | 5% |
-| Debugging | 8.5h | 22% |
-| Security | 1.25h | 3% |
-| Refactor | 0.5h | 1% |
+| Development | 26.75h | 67% |
+| Documentation | 1.75h | 4% |
+| Debugging | 8.5h | 21% |
+| Security | 1.5h | 4% |
+| Refactor | 1h | 3% |
+| Testing | 0.25h | 1% |
 | Version Control | 0.25h | <1% |
-| Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **38.75h** | **100%** |
+| **Total** | **39.75h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 12.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system | 7 |
+| 2026-03-01 | 13.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements | 8 |
 
 ---
 
@@ -166,16 +170,16 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (95% Complete)
+#### 2.0 - Multi-Role Foundation (100% Complete)
 - [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
 - [x] 2.0.1b: Student ID system & registration security - COMPLETE
 - [x] 2.0.2: Coach invitation system with email infrastructure - COMPLETE
 - [x] 2.0.3: Coach-student relationships & dashboard separation - COMPLETE
-- [ ] 2.0.4: Parent-child relationships with student ID linking
-- [ ] 2.0.5: Role-based route protection
+- [ ] 2.0.4: Parent-child relationships with student ID linking (deferred)
+- [ ] 2.0.5: Role-based route protection (deferred)
 - [x] 2.0.6: Student workflow types & custom curriculum system (MVP) - COMPLETE
 - [x] 2.0.6b: Coach custom content creation (video lessons + quizzes) - COMPLETE
-- [x] 2.0.7: Student onboarding & initial evaluation - COMPLETE (pending Firestore rules)
+- [x] 2.0.7: Student onboarding & initial evaluation - COMPLETE (rules deployed, tested)
 
 #### 2.1 - 6-Pillar Conversion (0% Complete)
 - [ ] Convert sports/skills to 6 fixed pillars
@@ -417,6 +421,22 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-04 (Session: Onboarding Rules & Coach UX Improvements)
+- **Security:** Deployed Firestore rules for onboarding_evaluations collection
+- **Security:** Students can create/update own evaluation, coaches can only update coachReview
+- **Testing:** Created Playwright test suite for onboarding flow (4 tests)
+- **Testing:** Verified authentication, welcome screen, dark theme, responsive design
+- **Feature:** Added Google Drive URL support to VideoUploader component
+- **Refactor:** Made VideoUploader reusable with flexible props (userId, uploadFolder)
+- **Refactor:** Admin quiz pages now use shared VideoUploader (-700 lines)
+- **UI:** Created CoachBreadcrumb component for contextual navigation
+- **UI:** Added Content Library link to coach navigation bar
+- **UI:** Added active state highlighting to coach nav buttons
+- **UI:** Added returnTo parameter for quiz creation from curriculum page
+- **Fix:** Corrected video MIME types in storage rules (AVI, WMV)
+- **Fix:** Fixed storage service MIME type for MOV files
+- **Cleanup:** Deleted deprecated quiz-creator.tsx dialog component
 
 ### 2026-03-04 (Session: Student Onboarding Evaluation System)
 - **Feature:** Created complete student onboarding evaluation system (Phase 2.0.7)
@@ -691,10 +711,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-04
-**Last Session:** Student Onboarding Evaluation System
-**Total Sessions This Phase:** 21
-**Current Phase Hours:** 38.75h
-**Next Session Focus:** Deploy Firestore rules for onboarding_evaluations, test end-to-end flow, or continue Phase 2.0.4 parent-child relationships
+**Last Session:** Onboarding Rules & Coach UX Improvements
+**Total Sessions This Phase:** 22
+**Current Phase Hours:** 39.75h
+**Next Session Focus:** Full end-to-end testing with real accounts, or begin Phase 2.1 pillar conversion
 
 ---
 
