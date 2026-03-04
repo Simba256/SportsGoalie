@@ -41,6 +41,14 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-04 - [Security Audit & Critical Fixes](docs/sessions/2026-03/2026-03-04-security-audit-and-fixes.md)
+**Time:** 1h 15min | **Focus:** Security / Code Quality / Dependencies
+Addressed critical security vulnerabilities: sanitized exposed Firebase credentials in .env.example (API keys, private key), removed hardcoded admin setup secret fallback, removed dangerous typescript.ignoreBuildErrors, moved testing libraries to devDependencies, updated Next.js 16.1.4→16.1.6 (3 CVE fixes), hardened storage.rules for video-quizzes uploads. All verifications pass (npm audit: 0 vulns, type-check: clean, build: success).
+
+### 2026-03-04 - [Video Handling System Verification & MIME Type Fixes](docs/sessions/2026-03/2026-03-04-video-handling-system-verification.md)
+**Time:** 30min | **Focus:** Verification / Bug Fix
+Verified video handling system implementation from analysis plan - found all major features (ReactPlayer for YouTube/Vimeo, URL detection, info messages) already implemented. Fixed legacy storage rules with correct MIME types (removed invalid `video/mov`, added `video/x-msvideo` for AVI, `video/x-ms-wmv` for WMV). TypeScript compilation verified clean.
+
 ### 2026-03-04 - [Video Quiz Full-Page Conversion & UI/UX Improvements](docs/sessions/2026-03/2026-03-04-video-quiz-full-page-conversion.md)
 **Time:** 2h 0min | **Focus:** Feature / UI/UX / Bug Fix
 Converted video quiz creator from cramped dialog to full-page layout with tab-based navigation. Improved True/False question type with visual toggle buttons instead of dropdown. Redesigned Fill in the Blank with split input approach (before/after fields) eliminating manual blank placement. Fixed multiple Firestore issues: skipped sport validation for coach content, updated rules for isCoachOrAdmin(), removed orderBy to avoid composite index requirement.
@@ -121,25 +129,26 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 33.75 hours | 🔄 In Progress |
-| **Total** | **~193.75 hours** | - |
+| Phase 2 | 35.5 hours | 🔄 In Progress |
+| **Total** | **~195.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 24.25h | 72% |
+| Development | 24.25h | 68% |
 | Documentation | 1.75h | 5% |
-| Debugging | 7.5h | 22% |
-| Version Control | 0.25h | 1% |
+| Debugging | 8h | 23% |
+| Security | 1.25h | 4% |
+| Version Control | 0.25h | <1% |
 | Testing | 0h | 0% |
 | Code Review | 0h | 0% |
-| **Total** | **33.75h** | **100%** |
+| **Total** | **35.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 7.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements | 3 |
+| 2026-03-01 | 9.5h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes | 5 |
 
 ---
 
@@ -381,6 +390,26 @@ Initial project analysis and progress tracking system implementation.
 
 ## 🔄 Recent Changes (Last 30 Days)
 
+### 2026-03-04 (Session: Security Audit & Critical Fixes)
+- **Security:** Sanitized .env.example - removed all exposed Firebase credentials and private key
+- **Security:** Removed hardcoded admin setup secret fallback ('your-secret-key-here')
+- **Security:** Updated Next.js 16.1.4 → 16.1.6 fixing 3 high-severity CVEs (DoS vulnerabilities)
+- **Security:** Hardened storage.rules - video-quizzes write now requires admin or coach role
+- **Security:** Added isCoach() helper function to storage.rules
+- **Config:** Removed dangerous typescript.ignoreBuildErrors from next.config.ts
+- **Dependencies:** Moved 5 testing libraries from dependencies to devDependencies
+- **Dependencies:** Updated eslint-config-next to match Next.js version
+- **Fix:** Fixed unused React import in test-utils.tsx
+- **Verification:** npm audit: 0 vulnerabilities, type-check: passes, build: succeeds
+
+### 2026-03-04 (Session: Video Handling System Verification & MIME Type Fixes)
+- **Verification:** Confirmed video handling features already implemented (ReactPlayer, URL detection, info messages)
+- **Fix:** Corrected MIME types in legacy storage rules (`rules/storage`)
+- **Fix:** Removed invalid `video/mov`, `video/avi`, `video/wmv` MIME types
+- **Fix:** Added correct `video/x-msvideo` for AVI files
+- **Fix:** Added correct `video/x-ms-wmv` for WMV files
+- **Verification:** TypeScript compilation clean (no errors)
+
 ### 2026-03-04 (Session: Video Quiz Full-Page Conversion & UI/UX Improvements)
 - **Feature:** Created full-page quiz creator at `/coach/content/quiz/create` with tab-based layout
 - **Feature:** Converted from dialog approach to full-page for better space utilization
@@ -598,10 +627,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-04
-**Last Session:** [Video Quiz Full-Page Conversion & UI/UX Improvements](docs/sessions/2026-03/2026-03-04-video-quiz-full-page-conversion.md)
-**Total Sessions This Phase:** 17
-**Current Phase Hours:** 33.75h
-**Next Session Focus:** Test full quiz creation flow, or continue Phase 2.0.4 parent-child relationships
+**Last Session:** [Security Audit & Critical Fixes](docs/sessions/2026-03/2026-03-04-security-audit-and-fixes.md)
+**Total Sessions This Phase:** 19
+**Current Phase Hours:** 35.5h
+**Next Session Focus:** Rotate Firebase credentials, deploy security rules to Firebase, or continue Phase 2.0.4 parent-child relationships
 
 ---
 
