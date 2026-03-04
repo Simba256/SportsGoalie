@@ -25,6 +25,11 @@ export interface User {
   preferences: UserPreferences;
   profile?: UserProfile;
   isActive: boolean;
+  // Onboarding evaluation fields
+  onboardingCompleted?: boolean;
+  onboardingCompletedAt?: Timestamp;
+  initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
+  // Timestamps
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastLoginAt?: Timestamp;
@@ -787,3 +792,30 @@ export type {
   CurriculumProgress,
   CurriculumNotification,
 } from './curriculum';
+
+// Onboarding Evaluation Types - Export from onboarding.ts
+export type {
+  AssessmentLevel,
+  PillarSlug,
+  OnboardingQuestionType,
+  PillarInfo,
+  OnboardingQuestionOption,
+  OnboardingQuestion,
+  AssessmentResponse,
+  PillarAssessmentResult,
+  CoachReview,
+  OnboardingEvaluation,
+  CreateEvaluationInput,
+  SaveResponseInput,
+  CompleteEvaluationInput,
+  CoachReviewInput,
+  EvaluationSummary,
+} from './onboarding';
+
+export {
+  PILLARS,
+  getPillarInfo,
+  calculateLevel,
+  getLevelDisplayText,
+  getLevelColor,
+} from './onboarding';

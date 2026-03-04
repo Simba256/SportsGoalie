@@ -10,6 +10,7 @@ export { FormTemplateService, formTemplateService } from './services/form-templa
 export { DynamicChartingService, dynamicChartingService } from './services/dynamic-charting.service';
 export { CustomCurriculumService, customCurriculumService } from './services/custom-curriculum.service';
 export { CustomContentService, customContentService } from './services/custom-content.service';
+export { OnboardingService, onboardingService } from './services/onboarding.service';
 
 // Utilities
 export { SeederService, seederService } from './seeding/seeder.service';

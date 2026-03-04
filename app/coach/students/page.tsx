@@ -15,11 +15,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Users, BookOpen, GraduationCap, UserPlus, UserMinus } from 'lucide-react';
+import { Loader2, Users, BookOpen, GraduationCap, UserPlus, UserMinus, ClipboardCheck, Clock } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { userService } from '@/lib/database';
+import { userService, onboardingService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
-import { User } from '@/types';
+import { User, OnboardingEvaluation, getLevelDisplayText, getLevelColor } from '@/types';
 import { toast } from 'sonner';
 import { StudentSearchDialog } from '@/components/coach/student-search-dialog';
 
@@ -31,6 +31,7 @@ interface StudentWithCurriculum {
     completedItems: number;
     progressPercentage: number;
   };
+  evaluation?: OnboardingEvaluation | null;
 }
 
 export default function CoachStudentsPage() {
@@ -66,31 +67,34 @@ export default function CoachStudentsPage() {
         u => u.workflowType === 'custom'
       );
 
-      // Load curriculum data for each student
+      // Load curriculum and evaluation data for each student
       const studentsWithCurriculum: StudentWithCurriculum[] = await Promise.all(
         assignedStudents.map(async (student) => {
-          const curriculumResult = await customCurriculumService.getStudentCurriculum(student.id);
+          const [curriculumResult, evaluationResult] = await Promise.all([
+            customCurriculumService.getStudentCurriculum(student.id),
+            onboardingService.getEvaluation(student.id),
+          ]);
+
+          const result: StudentWithCurriculum = {
+            student,
+            hasCurriculum: false,
+            evaluation: evaluationResult.success ? evaluationResult.data : null,
+          };
 
           if (curriculumResult.success && curriculumResult.data) {
             const curriculum = curriculumResult.data;
             const totalItems = curriculum.items.length;
             const completedItems = curriculum.items.filter(i => i.status === 'completed').length;
 
-            return {
-              student,
-              hasCurriculum: true,
-              curriculumProgress: {
-                totalItems,
-                completedItems,
-                progressPercentage: totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0,
-              },
+            result.hasCurriculum = true;
+            result.curriculumProgress = {
+              totalItems,
+              completedItems,
+              progressPercentage: totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0,
             };
           }
 
-          return {
-            student,
-            hasCurriculum: false,
-          };
+          return result;
         })
       );
 
@@ -172,7 +176,7 @@ export default function CoachStudentsPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {students.map(({ student, hasCurriculum, curriculumProgress }) => (
+          {students.map(({ student, hasCurriculum, curriculumProgress, evaluation }) => (
             <Card key={student.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -205,6 +209,24 @@ export default function CoachStudentsPage() {
                     ID: {student.studentNumber}
                   </p>
                 )}
+
+                {/* Evaluation Status Badge */}
+                <div className="mt-3">
+                  {evaluation?.status === 'completed' || evaluation?.status === 'reviewed' ? (
+                    <Badge
+                      variant="outline"
+                      className={evaluation.coachReview ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
+                    >
+                      <ClipboardCheck className="h-3 w-3 mr-1" />
+                      {evaluation.coachReview ? 'Evaluation Reviewed' : 'Evaluation Pending Review'}
+                    </Badge>
+                  ) : !student.onboardingCompleted ? (
+                    <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Awaiting Onboarding
+                    </Badge>
+                  ) : null}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {hasCurriculum && curriculumProgress ? (
@@ -229,7 +251,25 @@ export default function CoachStudentsPage() {
                   </div>
                 )}
 
+                {/* Evaluation Summary */}
+                {evaluation?.overallLevel && (
+                  <div className="flex items-center justify-between text-sm py-2 border-t">
+                    <span className="text-muted-foreground">Initial Level</span>
+                    <Badge variant="outline" className={getLevelColor(evaluation.overallLevel)}>
+                      {getLevelDisplayText(evaluation.overallLevel)}
+                    </Badge>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
+                  {evaluation && (evaluation.status === 'completed' || evaluation.status === 'reviewed') && (
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/coach/students/${student.id}/evaluation`}>
+                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        View Evaluation
+                      </Link>
+                    </Button>
+                  )}
                   <Button asChild className="flex-1" variant={hasCurriculum ? "default" : "outline"}>
                     <Link href={`/coach/students/${student.id}/curriculum`}>
                       <BookOpen className="h-4 w-4 mr-2" />

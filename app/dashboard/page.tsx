@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart,
   BookOpen,
@@ -41,6 +43,7 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
+  const router = useRouter();
   const { user } = useAuth();
   const { userProgress, loading } = useProgress();
   const {
@@ -49,8 +52,26 @@ function DashboardContent() {
     error: enrollmentsError,
   } = useEnrollment();
 
+  // Redirect students who haven't completed onboarding
+  useEffect(() => {
+    if (user?.role === 'student' && !user?.onboardingCompleted) {
+      router.push('/onboarding');
+    }
+  }, [user, router]);
+
   // Check if user is a custom workflow student
   const isCustomWorkflow = user?.role === 'student' && user?.workflowType === 'custom';
+
+  // Don't render dashboard if student needs onboarding
+  if (user?.role === 'student' && !user?.onboardingCompleted) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   // Show custom curriculum dashboard for custom workflow students
   if (isCustomWorkflow && user) {
