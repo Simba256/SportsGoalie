@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Loader2,
-  ArrowLeft,
   Plus,
   Lock,
   Unlock,
@@ -187,8 +186,9 @@ export default function StudentCurriculumPage() {
     if (type === 'lesson') {
       setShowLessonCreator(true);
     } else {
-      // Navigate to full-page quiz creator
-      router.push('/coach/content/quiz/create');
+      // Navigate to full-page quiz creator with returnTo for context preservation
+      const returnTo = `/coach/students/${studentId}/curriculum`;
+      router.push(`/coach/content/quiz/create?returnTo=${encodeURIComponent(returnTo)}`);
     }
   };
 
@@ -312,10 +312,6 @@ export default function StudentCurriculumPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => router.push('/coach/students')} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Students
-        </Button>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">{student.displayName}'s Curriculum</h1>

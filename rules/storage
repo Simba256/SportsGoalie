@@ -16,10 +16,9 @@ service firebase.storage {
              request.resource.contentType in [
                'video/mp4',
                'video/mpeg',
-               'video/quicktime',
-               'video/avi',
-               'video/mov',
-               'video/wmv',
+               'video/quicktime',  // MOV files report this MIME type
+               'video/x-msvideo',  // AVI files
+               'video/x-ms-wmv',   // WMV files
                'video/webm'
              ];
     }

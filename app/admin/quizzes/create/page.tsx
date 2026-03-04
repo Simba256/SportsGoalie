@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
@@ -21,13 +21,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Save, Loader2, Video, AlertCircle, Upload, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Video, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { storage } from '@/lib/firebase/config';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { VideoUploader } from '@/components/coach/video-uploader';
 
 function CreateVideoQuizContent() {
   const router = useRouter();
@@ -36,12 +35,7 @@ function CreateVideoQuizContent() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [videoUrl, setVideoUrl] = useState('');
   const [videoDuration, setVideoDuration] = useState<number>(0);
-  const [videoValidating, setVideoValidating] = useState(false);
-  const [uploadMode, setUploadMode] = useState<'url' | 'upload'>('url');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploading, setUploading] = useState(false);
 
   const [quizData, setQuizData] = useState<Partial<VideoQuiz>>({
     title: '',
@@ -96,132 +90,18 @@ function CreateVideoQuizContent() {
     }
   };
 
-  const validateVideoUrl = async (url: string) => {
-    if (!url) {
-      setVideoDuration(0);
-      return;
-    }
-
-    // Helper to extract Google Drive video ID
-    const extractGoogleDriveId = (inputUrl: string): string | null => {
-      const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
-      const match = inputUrl.match(driveRegex);
-      return match ? match[1] : null;
-    };
-
-    setVideoValidating(true);
-    try {
-      const driveId = extractGoogleDriveId(url);
-
-      // Special handling for Google Drive videos
-      if (driveId) {
-        // Use the preview URL for playback (most reliable)
-        const previewUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-
-        setQuizData(prev => ({
-          ...prev,
-          videoUrl: previewUrl,
-          videoDuration: 1, // Set minimal duration, will be auto-detected when video plays
-        }));
-        setVideoDuration(1);
-
-        toast.success('Google Drive video URL saved', {
-          description: 'Duration will be auto-detected when you start creating questions',
-        });
-        setVideoValidating(false);
-        return;
-      }
-
-      // For all other videos (YouTube, Vimeo, direct URLs, etc.)
-      // Just save the URL - ReactPlayer will handle it and auto-detect duration
-      setQuizData(prev => ({
-        ...prev,
-        videoUrl: url,
-        videoDuration: 1, // Set minimal duration, will be auto-detected when video plays
-      }));
+  // Handle video uploaded from VideoUploader component
+  const handleVideoUploaded = (url: string, duration?: number) => {
+    setQuizData(prev => ({
+      ...prev,
+      videoUrl: url,
+      videoDuration: duration || 1, // Set minimal duration if not detected
+    }));
+    if (duration) {
+      setVideoDuration(duration);
+    } else {
+      // Set minimal duration so questions tab unlocks
       setVideoDuration(1);
-
-      toast.success('Video URL saved', {
-        description: 'Duration will be auto-detected when you start creating questions',
-      });
-    } catch (error) {
-      console.error('Video validation error:', error);
-      toast.error('Invalid video URL', {
-        description: 'Please check the URL and try again',
-      });
-    } finally {
-      setVideoValidating(false);
-    }
-  };
-
-  const handleVideoFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('video/')) {
-      toast.error('Please select a valid video file');
-      return;
-    }
-
-    // Validate file size (max 500MB)
-    const maxSize = 500 * 1024 * 1024; // 500MB
-    if (file.size > maxSize) {
-      toast.error('Video file is too large', {
-        description: 'Maximum file size is 500MB',
-      });
-      return;
-    }
-
-    setUploading(true);
-    setUploadProgress(0);
-
-    try {
-      // Create a unique file name
-      const timestamp = Date.now();
-      const fileName = `video-quizzes/${timestamp}-${file.name}`;
-      const storageRef = ref(storage, fileName);
-
-      // Start upload
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          // Track upload progress
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(Math.round(progress));
-        },
-        (error) => {
-          console.error('Upload error:', error);
-          toast.error('Failed to upload video', {
-            description: error.message,
-          });
-          setUploading(false);
-        },
-        async () => {
-          // Upload complete, get download URL
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-
-            toast.success('Video uploaded successfully');
-
-            // Validate the uploaded video
-            await validateVideoUrl(downloadURL);
-
-            setUploading(false);
-            setUploadProgress(0);
-          } catch (error) {
-            console.error('Error getting download URL:', error);
-            toast.error('Failed to get video URL');
-            setUploading(false);
-          }
-        }
-      );
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Failed to upload video');
-      setUploading(false);
     }
   };
 
@@ -542,108 +422,33 @@ function CreateVideoQuizContent() {
                 </AlertDescription>
               </Alert>
 
-              {/* Video Input Mode Selector */}
-              <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
-                <Button
-                  variant={uploadMode === 'url' ? 'default' : 'ghost'}
-                  className="flex-1"
-                  onClick={() => setUploadMode('url')}
-                  type="button"
-                >
-                  <LinkIcon className="mr-2 h-4 w-4" />
-                  Video URL
-                </Button>
-                <Button
-                  variant={uploadMode === 'upload' ? 'default' : 'ghost'}
-                  className="flex-1"
-                  onClick={() => setUploadMode('upload')}
-                  type="button"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload File
-                </Button>
-              </div>
+              <VideoUploader
+                userId={user?.id}
+                uploadFolder="video-quizzes"
+                onVideoUploaded={handleVideoUploaded}
+                initialVideoUrl={quizData.videoUrl}
+              />
 
-              {/* URL Input Mode */}
-              {uploadMode === 'url' && (
-                <div>
-                  <Label htmlFor="videoUrl">Video URL *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="videoUrl"
-                      value={videoUrl}
-                      onChange={(e) => setVideoUrl(e.target.value)}
-                      placeholder="https://example.com/video.mp4 or Google Drive link"
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={() => validateVideoUrl(videoUrl)}
-                      disabled={!videoUrl || videoValidating}
-                      variant="outline"
-                      type="button"
-                    >
-                      {videoValidating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Validating...
-                        </>
-                      ) : (
-                        'Validate'
-                      )}
-                    </Button>
-                  </div>
+              {/* Manual duration override */}
+              {quizData.videoUrl && (
+                <div className="pt-4 border-t">
+                  <Label htmlFor="videoDuration">Video Duration (seconds)</Label>
+                  <Input
+                    id="videoDuration"
+                    type="number"
+                    value={videoDuration || ''}
+                    onChange={(e) => {
+                      const duration = Number(e.target.value);
+                      setVideoDuration(duration);
+                      handleInputChange('videoDuration', duration);
+                    }}
+                    placeholder="Auto-detected or enter manually"
+                    min="1"
+                    className="max-w-xs"
+                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Supports direct video URLs, YouTube, Vimeo, and Google Drive links
+                    Duration is auto-detected for most videos. Override here if needed.
                   </p>
-                </div>
-              )}
-
-              {/* File Upload Mode */}
-              {uploadMode === 'upload' && (
-                <div>
-                  <Label htmlFor="videoFile">Upload Video File *</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="videoFile"
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoFileUpload}
-                      disabled={uploading}
-                      className="cursor-pointer"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Maximum file size: 500MB. Supported formats: MP4, WebM, MOV
-                    </p>
-                  </div>
-
-                  {uploading && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Uploading...</span>
-                        <span className="text-sm text-gray-600">{uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {videoDuration > 0 && quizData.videoUrl && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Video className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-green-900">Video URL Saved</p>
-                      <p className="text-sm text-green-700">
-                        Duration will be automatically detected when you watch the video in the Questions tab
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
             </CardContent>

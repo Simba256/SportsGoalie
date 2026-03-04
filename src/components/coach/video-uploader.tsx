@@ -13,16 +13,38 @@ import { storageService, UploadProgress, STORAGE_CONFIGS } from '@/lib/firebase/
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type VideoSourceType = 'youtube' | 'vimeo' | 'direct';
+type VideoSourceType = 'youtube' | 'vimeo' | 'google-drive' | 'direct';
 
 function getVideoSourceType(url: string): VideoSourceType {
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
   if (url.includes('vimeo.com')) return 'vimeo';
+  if (url.includes('drive.google.com')) return 'google-drive';
   return 'direct';
 }
 
+/**
+ * Extract Google Drive file ID from various URL formats
+ */
+function extractGoogleDriveId(url: string): string | null {
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,  // /file/d/ID/...
+    /id=([a-zA-Z0-9_-]+)/,          // ?id=ID or &id=ID
+    /\/d\/([a-zA-Z0-9_-]+)/,        // /d/ID/...
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 interface VideoUploaderProps {
-  coachId: string;
+  /** Coach ID for upload path (use this or userId) */
+  coachId?: string;
+  /** Alternative to coachId for non-coach contexts */
+  userId?: string;
+  /** Custom upload folder path (overrides default) */
+  uploadFolder?: string;
   onVideoUploaded: (url: string, duration?: number) => void;
   initialVideoUrl?: string;
   className?: string;
@@ -32,10 +54,15 @@ type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
 export function VideoUploader({
   coachId,
+  userId,
+  uploadFolder,
   onVideoUploaded,
   initialVideoUrl,
   className,
 }: VideoUploaderProps) {
+  // Determine upload path - use custom folder, or fall back to coach/user path
+  const effectiveUserId = coachId || userId || 'anonymous';
+  const effectiveUploadFolder = uploadFolder || `coach-content/${effectiveUserId}/videos`;
   const [uploadState, setUploadState] = useState<UploadState>(
     initialVideoUrl ? 'success' : 'idle'
   );
@@ -164,11 +191,11 @@ export function VideoUploader({
       const result = await storageService.uploadFile(
         selectedFile,
         {
-          folder: `coach-content/${coachId}/videos`,
+          folder: effectiveUploadFolder,
           maxSizeBytes: MAX_SIZE_BYTES,
           allowedTypes: ALLOWED_TYPES,
           customMetadata: {
-            coachId,
+            uploadedBy: effectiveUserId,
             contentType: 'video',
           },
         },
@@ -238,7 +265,26 @@ export function VideoUploader({
       return;
     }
 
-    // Get video duration from URL
+    // Handle Google Drive URLs - convert to embeddable format
+    if (videoSourceType === 'google-drive') {
+      const driveId = extractGoogleDriveId(videoUrl);
+      if (driveId) {
+        const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+        setVideoUrl(embedUrl);
+        // Google Drive videos can't have duration detected automatically
+        onVideoUploaded(embedUrl, undefined);
+        setUploadState('success');
+        toast.success('Google Drive video URL added', {
+          description: 'Duration will be detected when video plays',
+        });
+        return;
+      } else {
+        setErrorMessage('Could not extract Google Drive file ID from URL');
+        return;
+      }
+    }
+
+    // Get video duration from URL for direct URLs
     const tempVideo = document.createElement('video');
     tempVideo.preload = 'metadata';
     tempVideo.onloadedmetadata = () => {
@@ -255,7 +301,7 @@ export function VideoUploader({
       toast.success('Video URL added successfully');
     };
     tempVideo.onerror = () => {
-      // For external URLs (YouTube, etc.), we can't get duration
+      // For external URLs (YouTube, Vimeo, etc.), we can't get duration via video element
       onVideoUploaded(videoUrl, undefined);
       setUploadState('success');
       toast.success('Video URL added successfully');
@@ -454,19 +500,19 @@ export function VideoUploader({
                   <Label htmlFor="videoUrl">Video URL</Label>
                   <Input
                     id="videoUrl"
-                    placeholder="https://youtube.com/watch?v=... or direct video URL"
+                    placeholder="YouTube, Vimeo, Google Drive, or direct video URL"
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Paste a YouTube, Vimeo, or direct video URL
+                    Paste a YouTube, Vimeo, Google Drive, or direct video URL
                   </p>
                 </div>
                 {isExternalPlatform && (
                   <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
                     <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-muted-foreground">
-                      {videoSourceType === 'youtube' ? 'YouTube' : 'Vimeo'} videos will play correctly in quizzes. Duration may not be detected automatically.
+                      {videoSourceType === 'youtube' ? 'YouTube' : videoSourceType === 'vimeo' ? 'Vimeo' : 'Google Drive'} videos will play correctly in quizzes. Duration may not be detected automatically.
                     </p>
                   </div>
                 )}

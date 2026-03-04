@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { VideoUploader } from '@/components/coach/video-uploader';
 
 function EditVideoQuizContent() {
   const params = useParams();
@@ -36,9 +37,7 @@ function EditVideoQuizContent() {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [originalQuiz, setOriginalQuiz] = useState<VideoQuiz | null>(null);
-  const [videoUrl, setVideoUrl] = useState('');
   const [videoDuration, setVideoDuration] = useState<number>(0);
-  const [videoValidating, setVideoValidating] = useState(false);
 
   const [quizData, setQuizData] = useState<Partial<VideoQuiz>>({
     title: '',
@@ -84,7 +83,6 @@ function EditVideoQuizContent() {
       if (quizResult.success && quizResult.data) {
         const quiz = quizResult.data;
         setOriginalQuiz(quiz);
-        setVideoUrl(quiz.videoUrl);
         setVideoDuration(quiz.videoDuration);
         setQuizData({
           title: quiz.title,
@@ -123,46 +121,15 @@ function EditVideoQuizContent() {
     }
   };
 
-  const validateVideoUrl = async (url: string) => {
-    if (!url) {
-      setVideoDuration(0);
-      return;
-    }
-
-    setVideoValidating(true);
-    try {
-      // Create a video element to validate and get duration
-      const video = document.createElement('video');
-      video.src = url;
-      video.preload = 'metadata';
-
-      await new Promise<void>((resolve, reject) => {
-        video.onloadedmetadata = () => {
-          if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-            setVideoDuration(Math.floor(video.duration));
-            setQuizData(prev => ({
-              ...prev,
-              videoUrl: url,
-              videoDuration: Math.floor(video.duration),
-            }));
-            toast.success('Video validated successfully', {
-              description: `Duration: ${Math.floor(video.duration / 60)}m ${Math.floor(video.duration % 60)}s`,
-            });
-            resolve();
-          } else {
-            reject(new Error('Invalid video duration'));
-          }
-        };
-        video.onerror = () => reject(new Error('Failed to load video'));
-      });
-    } catch (error) {
-      console.error('Video validation error:', error);
-      toast.error('Failed to validate video', {
-        description: 'Please check the video URL and try again',
-      });
-      setVideoDuration(0);
-    } finally {
-      setVideoValidating(false);
+  // Handle video uploaded from VideoUploader component
+  const handleVideoUploaded = (url: string, duration?: number) => {
+    setQuizData(prev => ({
+      ...prev,
+      videoUrl: url,
+      videoDuration: duration || prev.videoDuration || 1,
+    }));
+    if (duration) {
+      setVideoDuration(duration);
     }
   };
 
@@ -472,51 +439,14 @@ function EditVideoQuizContent() {
                 </AlertDescription>
               </Alert>
 
-              <div>
-                <Label htmlFor="videoUrl">Video URL *</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="videoUrl"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://example.com/video.mp4"
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() => validateVideoUrl(videoUrl)}
-                    disabled={!videoUrl || videoValidating}
-                    variant="outline"
-                  >
-                    {videoValidating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Validating...
-                      </>
-                    ) : (
-                      'Validate'
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Current: {quizData.videoUrl}
-                </p>
-              </div>
+              <VideoUploader
+                uploadFolder="video-quizzes"
+                onVideoUploaded={handleVideoUploaded}
+                initialVideoUrl={quizData.videoUrl}
+              />
 
-              {videoDuration > 0 && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Video className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-green-900">Video Validated</p>
-                      <p className="text-sm text-green-700">
-                        Duration: {Math.floor(videoDuration / 60)}m {videoDuration % 60}s
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div>
+              {/* Manual duration override */}
+              <div className="pt-4 border-t">
                 <Label htmlFor="videoDuration">Video Duration (seconds)</Label>
                 <Input
                   id="videoDuration"
@@ -529,9 +459,10 @@ function EditVideoQuizContent() {
                   }}
                   placeholder="Auto-detected from video"
                   min="1"
+                  className="max-w-xs"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Current: {quizData.videoDuration}s
+                  Duration is auto-detected for most videos. Override here if needed.
                 </p>
               </div>
             </CardContent>

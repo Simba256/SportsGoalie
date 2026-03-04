@@ -373,7 +373,7 @@ export const STORAGE_CONFIGS = {
   VIDEOS: {
     folder: 'videos',
     maxSizeBytes: 1024 * 1024 * 1024, // 1GB
-    allowedTypes: ['video/mp4', 'video/webm', 'video/mov'] as string[],
+    allowedTypes: ['video/mp4', 'video/webm', 'video/quicktime'] as string[],
   },
   DOCUMENTS: {
     folder: 'documents',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,11 @@ const defaultSettings: VideoQuizSettings = {
 
 export default function CreateVideoQuizPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+
+  // Get returnTo URL from search params (for returning to curriculum page after creation)
+  const returnTo = searchParams.get('returnTo') || '/coach/content';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   const [videoDuration, setVideoDuration] = useState(0);
@@ -208,7 +212,7 @@ export default function CreateVideoQuizPage() {
 
       if (contentResult.success && contentResult.data) {
         toast.success('Quiz created successfully');
-        router.push('/coach/content');
+        router.push(returnTo);
       } else {
         throw new Error(contentResult.error?.message || 'Failed to save quiz to library');
       }
@@ -234,10 +238,10 @@ export default function CreateVideoQuizPage() {
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/coach/content">
+            <Link href={returnTo}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Content Library
+                {returnTo.includes('/curriculum') ? 'Back to Curriculum' : 'Back to Content Library'}
               </Button>
             </Link>
             <div className="flex-1">
@@ -597,7 +601,7 @@ export default function CreateVideoQuizPage() {
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => router.push('/coach/content')}
+                onClick={() => router.push(returnTo)}
                 disabled={isSubmitting}
               >
                 Cancel
