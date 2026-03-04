@@ -12,11 +12,11 @@ import {
   QueryOptions,
   UserRole,
   SportProgress,
+  WhereClause,
 } from '@/types';
 import { VideoQuizProgress } from '@/types/video-quiz';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
-import { TimestampPatterns } from '../../utils/timestamp';
 import { generateCoachCode, normalizeCoachCode } from '../../utils/coach-code-generator';
 
 /**
@@ -222,7 +222,7 @@ export class UserService extends BaseDatabaseService {
 
   async updateLastLogin(userId: string): Promise<ApiResponse<void>> {
     return this.update<User>(this.USERS_COLLECTION, userId, {
-      lastLoginAt: TimestampPatterns.forDatabase(),
+      lastLoginAt: Timestamp.now(),
     });
   }
 
@@ -335,7 +335,7 @@ export class UserService extends BaseDatabaseService {
         experiencePoints: 0,
       },
       achievements: [],
-      lastUpdated: TimestampPatterns.forDatabase(),
+      lastUpdated: Timestamp.now(),
     };
 
     // Use userId as document ID to match security rules expectation: /user_progress/{userId}
@@ -390,7 +390,9 @@ export class UserService extends BaseDatabaseService {
       const attemptDates = attempts
         .map(a => {
           if (a.submittedAt) {
-            const date = a.submittedAt.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt);
+            const date = typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt
+              ? a.submittedAt.toDate()
+              : new Date(a.submittedAt as unknown as string | number);
             return date.toISOString().split('T')[0];
           }
           return null;
@@ -699,7 +701,7 @@ export class UserService extends BaseDatabaseService {
       type?: string;
     } & QueryOptions = {}
   ): Promise<ApiResponse<PaginatedResponse<Notification>>> {
-    const whereClause = [
+    const whereClause: WhereClause[] = [
       { field: 'userId', operator: '==' as const, value: userId },
     ];
 
@@ -906,6 +908,9 @@ export class UserService extends BaseDatabaseService {
       data: {
         items: filteredItems,
         total: filteredItems.length,
+        page: 1,
+        limit: filteredItems.length,
+        totalPages: 1,
         hasMore: false,
       },
       timestamp: new Date(),
@@ -1111,6 +1116,9 @@ export class UserService extends BaseDatabaseService {
         data: {
           items: filteredItems,
           total: filteredItems.length,
+          page: 1,
+          limit: filteredItems.length,
+          totalPages: 1,
           hasMore: false,
         },
         timestamp: new Date(),
@@ -1366,13 +1374,13 @@ export class UserService extends BaseDatabaseService {
 
       // Get all related progress data in parallel
       const [sportProgressResult, userProgressResult, quizAttemptsResult] = await Promise.all([
-        this.query('sport_progress', {
+        this.query<SportProgress>('sport_progress', {
           where: [{ field: 'userId', operator: '==', value: userId }],
         }),
-        this.query('user_progress', {
+        this.query<UserProgress>('user_progress', {
           where: [{ field: 'userId', operator: '==', value: userId }],
         }),
-        this.query('quiz_attempts', {
+        this.query<VideoQuizProgress>('quiz_attempts', {
           where: [{ field: 'userId', operator: '==', value: userId }],
         }),
       ]);

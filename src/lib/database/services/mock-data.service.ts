@@ -4,6 +4,7 @@
  */
 
 import { Sport, Skill, ApiResponse, PaginatedResponse } from '@/types';
+import { Timestamp } from 'firebase/firestore';
 
 // Sample sports data
 const mockSports: Sport[] = [
@@ -30,8 +31,8 @@ const mockSports: Sport[] = [
       totalRatings: 178,
       averageCompletionTime: 98,
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
   {
@@ -57,8 +58,8 @@ const mockSports: Sport[] = [
       totalRatings: 167,
       averageCompletionTime: 75,
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
   {
@@ -84,8 +85,8 @@ const mockSports: Sport[] = [
       totalRatings: 145,
       averageCompletionTime: 92,
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
   {
@@ -111,8 +112,8 @@ const mockSports: Sport[] = [
       totalRatings: 267,
       averageCompletionTime: 142,
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
 ];
@@ -148,14 +149,16 @@ const mockSkills: Skill[] = [
     `,
     externalResources: [
       {
+        id: 'nba-dribbling-1',
         title: 'NBA Dribbling Fundamentals',
         url: 'https://www.youtube.com/watch?v=dribbling-basics',
         type: 'video'
       }
     ],
     media: {
-      videoUrl: 'https://example.com/basketball-dribbling.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400'
+      text: 'Basketball dribbling fundamentals video content',
+      images: [],
+      videos: [{ id: 'vid-1', url: 'https://example.com/basketball-dribbling.mp4', title: 'Dribbling Basics', duration: 300, order: 1 }]
     },
     prerequisites: [],
     learningObjectives: [
@@ -176,8 +179,8 @@ const mockSkills: Skill[] = [
       totalRatings: 134,
       difficulty: 'introduction',
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
   {
@@ -209,8 +212,9 @@ const mockSkills: Skill[] = [
     `,
     externalResources: [],
     media: {
-      videoUrl: 'https://example.com/basketball-shooting.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=400'
+      text: 'Basketball shooting technique video content',
+      images: [],
+      videos: [{ id: 'vid-2', url: 'https://example.com/basketball-shooting.mp4', title: 'Shooting Basics', duration: 300, order: 1 }]
     },
     prerequisites: ['basketball-dribbling'],
     learningObjectives: [
@@ -231,8 +235,8 @@ const mockSkills: Skill[] = [
       totalRatings: 76,
       difficulty: 'development',
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
   {
@@ -256,8 +260,9 @@ const mockSkills: Skill[] = [
     `,
     externalResources: [],
     media: {
-      videoUrl: 'https://example.com/tennis-forehand.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=400'
+      text: 'Tennis forehand technique video content',
+      images: [],
+      videos: [{ id: 'vid-3', url: 'https://example.com/tennis-forehand.mp4', title: 'Forehand Basics', duration: 300, order: 1 }]
     },
     prerequisites: [],
     learningObjectives: [
@@ -278,8 +283,8 @@ const mockSkills: Skill[] = [
       totalRatings: 109,
       difficulty: 'introduction',
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
   {
@@ -303,8 +308,9 @@ const mockSkills: Skill[] = [
     `,
     externalResources: [],
     media: {
-      videoUrl: 'https://example.com/tennis-backhand.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400'
+      text: 'Tennis backhand technique video content',
+      images: [],
+      videos: [{ id: 'vid-4', url: 'https://example.com/tennis-backhand.mp4', title: 'Backhand Basics', duration: 300, order: 1 }]
     },
     prerequisites: ['tennis-forehand'],
     learningObjectives: [
@@ -325,8 +331,8 @@ const mockSkills: Skill[] = [
       totalRatings: 58,
       difficulty: 'development',
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     createdBy: 'system',
   },
 ];

@@ -728,7 +728,7 @@ export class SportsService extends BaseDatabaseService {
 
   // Batch operations
   async reorderSkills(
-    sportId: string,
+    _sportId: string,
     skillOrders: Array<{ skillId: string; order: number }>
   ): Promise<ApiResponse<void>> {
     const operations = skillOrders.map(({ skillId, order }) => ({
@@ -781,7 +781,6 @@ export class SportsService extends BaseDatabaseService {
       };
     }
 
-    const sport = sportResult.data!;
     const skills = skillsResult.data!.items;
     const progresses = progressResult.data!.items;
 

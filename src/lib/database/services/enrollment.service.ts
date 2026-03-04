@@ -148,7 +148,7 @@ export class EnrollmentService extends BaseDatabaseService {
           limit: 1, // Get only the latest completed attempt
         });
 
-        if (attemptsResult.success && attemptsResult.data?.items?.length > 0) {
+        if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
           const latestAttempt = attemptsResult.data.items[0];
           // Use percentage field for accurate progress calculation (0-100 scale)
           if (latestAttempt.percentage !== undefined && latestAttempt.percentage !== null) {
@@ -270,7 +270,7 @@ export class EnrollmentService extends BaseDatabaseService {
         limit: 1, // Get only the latest completed attempt
       });
 
-      if (attemptsResult.success && attemptsResult.data?.items?.length > 0) {
+      if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
         const latestAttempt = attemptsResult.data.items[0];
         // Use percentage field for accurate progress calculation (0-100 scale)
         if (latestAttempt.percentage !== undefined && latestAttempt.percentage !== null) {

@@ -362,12 +362,25 @@ export class AuthService implements IAuthService {
       return {
         id: firebaseUser.uid,
         email: firebaseUser.email!,
-        displayName: userData.displayName,
-        role: userData.role,
+        displayName: userData.displayName || '',
+        role: userData.role || 'student',
         emailVerified: firebaseUser.emailVerified,
-        createdAt: userData.createdAt?.toDate(),
-        updatedAt: userData.updatedAt?.toDate(),
-        lastLoginAt: userData.lastLoginAt?.toDate(),
+        isActive: userData.isActive ?? true,
+        createdAt: userData.createdAt,
+        updatedAt: userData.updatedAt,
+        lastLoginAt: userData.lastLoginAt,
+        preferences: userData.preferences || {
+          theme: 'light',
+          notifications: true,
+          language: 'en',
+          timezone: 'UTC',
+          emailNotifications: {
+            progress: true,
+            quizResults: true,
+            newContent: true,
+            reminders: true,
+          },
+        },
       };
     } catch (error) {
       const authError = createAuthErrorFromFirebase(error, context);

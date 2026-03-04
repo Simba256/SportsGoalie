@@ -90,7 +90,7 @@ export class CustomCurriculumService extends BaseDatabaseService {
           ...item,
           id: `item_${Date.now()}_${index}`,
           assignedAt: now,
-          status: item.unlocked ? 'unlocked' : 'locked',
+          status: item.unlockedAt ? 'unlocked' : 'locked',
         })) || [],
         createdAt: now,
         updatedAt: now,

@@ -78,6 +78,14 @@ export class SeederService extends BaseDatabaseService {
         const sportData = {
           ...sport,
           createdBy: options.adminUserId,
+          skillsCount: 0,
+          metadata: {
+            totalEnrollments: 0,
+            totalCompletions: 0,
+            averageRating: 0,
+            totalRatings: 0,
+            averageCompletionTime: 0,
+          },
         };
 
         const result = await this.create<Sport>(this.SPORTS_COLLECTION, sportData);
@@ -100,6 +108,13 @@ export class SeederService extends BaseDatabaseService {
             ...skill,
             sportId: basketballSportId,
             createdBy: options.adminUserId,
+            metadata: {
+              totalCompletions: 0,
+              averageCompletionTime: 0,
+              averageRating: 0,
+              totalRatings: 0,
+              difficulty: skill.difficulty,
+            },
           };
 
           const result = await this.create<Skill>(this.SKILLS_COLLECTION, skillData);
@@ -172,15 +187,16 @@ export class SeederService extends BaseDatabaseService {
       // 5. Seed Achievements
       logger.info('🏆 Seeding achievements...');
       for (const achievement of sampleAchievements) {
-        let achievementData = { ...achievement };
-
-        // Set basketball sport ID for basketball-specific achievements
-        if (achievement.criteria.sportId === '' && basketballSportId) {
-          achievementData.criteria = {
-            ...achievement.criteria,
-            sportId: basketballSportId,
-          };
-        }
+        const achievementData = {
+          ...achievement,
+          metadata: {
+            totalUnlocked: 0,
+            unlockRate: 0,
+          },
+          criteria: achievement.criteria.sportId === '' && basketballSportId
+            ? { ...achievement.criteria, sportId: basketballSportId }
+            : achievement.criteria,
+        };
 
         const result = await this.create<Achievement>(this.ACHIEVEMENTS_COLLECTION, achievementData);
         if (result.success) {
@@ -254,6 +270,14 @@ export class SeederService extends BaseDatabaseService {
         const sportData = {
           ...sport,
           createdBy: adminUserId,
+          skillsCount: 0,
+          metadata: {
+            totalEnrollments: 0,
+            totalCompletions: 0,
+            averageRating: 0,
+            totalRatings: 0,
+            averageCompletionTime: 0,
+          },
         };
 
         const result = await this.create<Sport>(this.SPORTS_COLLECTION, sportData);
@@ -290,7 +314,14 @@ export class SeederService extends BaseDatabaseService {
       let created = 0;
 
       for (const achievement of sampleAchievements) {
-        const result = await this.create<Achievement>(this.ACHIEVEMENTS_COLLECTION, achievement);
+        const achievementData = {
+          ...achievement,
+          metadata: {
+            totalUnlocked: 0,
+            unlockRate: 0,
+          },
+        };
+        const result = await this.create<Achievement>(this.ACHIEVEMENTS_COLLECTION, achievementData);
         if (result.success) {
           created++;
           logger.info(`  ✅ Created achievement: ${achievement.name}`);
@@ -513,10 +544,10 @@ export class SeederService extends BaseDatabaseService {
         const sportIds = new Set(sportsResult.data!.items.map(s => s.id));
 
         for (const quiz of quizzesResult.data!.items) {
-          if (!skillIds.has(quiz.skillId)) {
+          if (quiz.skillId && !skillIds.has(quiz.skillId)) {
             issues.push(`Quiz "${quiz.title}" references non-existent skill ID: ${quiz.skillId}`);
           }
-          if (!sportIds.has(quiz.sportId)) {
+          if (quiz.sportId && !sportIds.has(quiz.sportId)) {
             issues.push(`Quiz "${quiz.title}" references non-existent sport ID: ${quiz.sportId}`);
           }
         }

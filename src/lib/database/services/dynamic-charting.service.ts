@@ -10,6 +10,7 @@ import {
   where,
   getDocs,
   collection,
+  Timestamp,
 } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { db } from '../../firebase/config';
@@ -57,10 +58,13 @@ export class DynamicChartingService extends BaseDatabaseService {
     // Calculate completion
     const completion = this.calculateCompletion(template, entryData.responses);
 
+    const now = Timestamp.now();
     const cleanedData = {
       ...entryData,
       isComplete: completion.isComplete,
       completionPercentage: completion.percentage,
+      submittedAt: now,
+      lastUpdatedAt: now,
     };
 
     const result = await this.create<DynamicChartingEntry>(
@@ -141,9 +145,19 @@ export class DynamicChartingService extends BaseDatabaseService {
       });
 
       // TODO: Trigger analytics recalculation
+      return {
+        success: true,
+        data: { id: entryId },
+        timestamp: new Date(),
+      };
     }
 
-    return result;
+    return {
+      success: false,
+      message: result.error?.message || 'Update failed',
+      error: result.error,
+      timestamp: new Date(),
+    };
   }
 
   /**

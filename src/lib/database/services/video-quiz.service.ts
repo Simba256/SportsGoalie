@@ -180,13 +180,14 @@ export class VideoQuizService extends BaseDatabaseService {
           }
           return value;
         }, 2),
-        undefinedFields: Object.keys(videoQuizData).filter(key => videoQuizData[key] === undefined),
+        undefinedFields: Object.keys(videoQuizData).filter(key => (videoQuizData as Record<string, unknown>)[key] === undefined),
       });
 
       // Check for undefined fields
-      const undefinedFields = Object.keys(videoQuizData).filter(key => videoQuizData[key] === undefined);
+      const undefinedFields = Object.keys(videoQuizData).filter(key => (videoQuizData as Record<string, unknown>)[key] === undefined);
       if (undefinedFields.length > 0) {
-        logger.error('Found undefined fields in video quiz data', 'VideoQuizService', new Error('Undefined fields detected'), {
+        logger.error('Found undefined fields in video quiz data', 'VideoQuizService', {
+          error: 'Undefined fields detected',
           undefinedFields,
           allFields: Object.keys(videoQuizData),
         });
@@ -222,10 +223,10 @@ export class VideoQuizService extends BaseDatabaseService {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorCode = (error as any)?.code || 'VIDEO_QUIZ_CREATE_FAILED';
 
-      logger.error('Failed to create video quiz', 'VideoQuizService', error as Error, {
-        title: quiz.title,
-        errorMessage,
+      logger.error('Failed to create video quiz', 'VideoQuizService', {
+        error: errorMessage,
         errorCode,
+        title: quiz.title,
         sportId: quiz.sportId,
         skillId: quiz.skillId,
       });
@@ -315,7 +316,7 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Failed to fetch video quiz', 'VideoQuizService', error as Error, { quizId });
+      logger.error('Failed to fetch video quiz', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), quizId });
       return {
         success: false,
         error: {
@@ -375,7 +376,7 @@ export class VideoQuizService extends BaseDatabaseService {
         stack: error instanceof Error ? error.stack : undefined,
       });
 
-      logger.error('Failed to update video quiz', 'VideoQuizService', error as Error, { quizId });
+      logger.error('Failed to update video quiz', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), quizId });
       return {
         success: false,
         error: {
@@ -404,7 +405,7 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Failed to delete video quiz', 'VideoQuizService', error as Error, { quizId });
+      logger.error('Failed to delete video quiz', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), quizId });
       return {
         success: false,
         error: {
@@ -522,9 +523,7 @@ export class VideoQuizService extends BaseDatabaseService {
 
       return result;
     } catch (error) {
-      logger.error('Failed to fetch video quizzes by sport', 'VideoQuizService', error as Error, {
-        sportId,
-      });
+      logger.error('Failed to fetch video quizzes by sport', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), sportId });
       return {
         success: false,
         error: {
@@ -566,9 +565,7 @@ export class VideoQuizService extends BaseDatabaseService {
 
       return result;
     } catch (error) {
-      logger.error('Failed to fetch video quizzes by skill', 'VideoQuizService', error as Error, {
-        skillId,
-      });
+      logger.error('Failed to fetch video quizzes by skill', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), skillId });
       return {
         success: false,
         error: {
@@ -648,10 +645,7 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Failed to get user progress', 'VideoQuizService', error as Error, {
-        userId,
-        quizId,
-      });
+      logger.error('Failed to get user progress', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), userId, quizId });
       return {
         success: false,
         error: {
@@ -684,9 +678,7 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Failed to save progress', 'VideoQuizService', error as Error, {
-        progressId: progress.id,
-      });
+      logger.error('Failed to save progress', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), progressId: progress.id });
       return {
         success: false,
         error: {
@@ -735,9 +727,7 @@ export class VideoQuizService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Failed to complete quiz', 'VideoQuizService', error as Error, {
-        progressId: progress.id,
-      });
+      logger.error('Failed to complete quiz', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), progressId: progress.id });
       return {
         success: false,
         error: {
@@ -815,10 +805,7 @@ export class VideoQuizService extends BaseDatabaseService {
 
       return result;
     } catch (error) {
-      logger.error('Failed to fetch user video quiz attempts', 'VideoQuizService', error as Error, {
-        userId,
-        filters,
-      });
+      logger.error('Failed to fetch user video quiz attempts', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), userId, filters });
       return {
         success: false,
         error: {
@@ -873,9 +860,7 @@ export class VideoQuizService extends BaseDatabaseService {
         updatedAt: Timestamp.now(),
       });
     } catch (error) {
-      logger.error('Failed to update quiz metadata', 'VideoQuizService', error as Error, {
-        quizId,
-      });
+      logger.error('Failed to update quiz metadata', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), quizId });
       // Don't throw - metadata update failure shouldn't block quiz completion
     }
   }

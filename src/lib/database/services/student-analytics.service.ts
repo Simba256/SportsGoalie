@@ -1,11 +1,12 @@
 import { BaseDatabaseService } from '../base.service';
 import { sportsService } from './sports.service';
 import { videoQuizService } from './video-quiz.service';
-import {
-  ApiResponse,
-  QuizAttempt,
-} from '@/types';
+import { ApiResponse } from '@/types';
+import { VideoQuizProgress } from '@/types/video-quiz';
 import { logger } from '../../utils/logger';
+
+// Type alias for backwards compatibility
+type QuizAttempt = VideoQuizProgress;
 
 export interface StudentAnalytics {
   userId: string;
@@ -345,6 +346,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
             const dateField = lastAttempt.completedAt || lastAttempt.submittedAt;
             return dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
           })(),
+          passed: quizAttempts.some(a => (a.percentage || 0) >= 70),
         });
       }
 
@@ -508,16 +510,17 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         // Get latest attempt for score
         const latestAttempt = data.attempts.sort((a, b) => {
-          const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
-          const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+          const dateA = a.submittedAt && typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt ? a.submittedAt.toDate() : new Date(0);
+          const dateB = b.submittedAt && typeof b.submittedAt === 'object' && 'toDate' in b.submittedAt ? b.submittedAt.toDate() : new Date(0);
           return dateB.getTime() - dateA.getTime();
         })[0];
 
         // Calculate total time spent
         const totalTimeSpent = data.attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
 
-        // Determine status based on whether any attempt passed
-        const hasPassed = data.attempts.some(a => a.passed);
+        // Determine status based on whether any attempt passed (70% or higher)
+        const passingThreshold = 70;
+        const hasPassed = data.attempts.some(a => (a.percentage || 0) >= passingThreshold);
         const status = hasPassed ? 'completed' : 'in_progress';
 
         // Calculate progress (use best score)
@@ -612,22 +615,23 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           if (skillAttempts.length > 0) {
             // Sort by date to get latest
             const sortedAttempts = [...skillAttempts].sort((a, b) => {
-              const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt || 0);
-              const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt || 0);
+              const dateA = a.submittedAt && typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt ? a.submittedAt.toDate() : new Date(0);
+              const dateB = b.submittedAt && typeof b.submittedAt === 'object' && 'toDate' in b.submittedAt ? b.submittedAt.toDate() : new Date(0);
               return dateB.getTime() - dateA.getTime();
             });
 
             const latestAttempt = sortedAttempts[0];
             latestQuizScore = latestAttempt.percentage;
-            lastAttemptDate = latestAttempt.submittedAt?.toDate ?
-              latestAttempt.submittedAt.toDate() :
-              new Date(latestAttempt.submittedAt || 0);
+            lastAttemptDate = latestAttempt.submittedAt && typeof latestAttempt.submittedAt === 'object' && 'toDate' in latestAttempt.submittedAt
+              ? latestAttempt.submittedAt.toDate()
+              : new Date(0);
 
             // Calculate best score as progress
             progressPercentage = Math.max(...skillAttempts.map(a => a.percentage || 0));
 
-            // Check if any attempt passed
-            const hasPassed = skillAttempts.some(a => a.passed);
+            // Check if any attempt passed (70% or higher)
+            const passingThreshold = 70;
+            const hasPassed = skillAttempts.some(a => (a.percentage || 0) >= passingThreshold);
             quizStatus = hasPassed ? 'passed' : 'failed';
             status = hasPassed ? 'completed' : 'in_progress';
 
@@ -636,11 +640,9 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
             // If passed, set completion date
             if (hasPassed) {
-              const firstPassedAttempt = skillAttempts.find(a => a.passed);
-              if (firstPassedAttempt?.submittedAt) {
-                completedAt = firstPassedAttempt.submittedAt.toDate ?
-                  firstPassedAttempt.submittedAt.toDate() :
-                  new Date(firstPassedAttempt.submittedAt);
+              const firstPassedAttempt = skillAttempts.find(a => (a.percentage || 0) >= passingThreshold);
+              if (firstPassedAttempt?.submittedAt && typeof firstPassedAttempt.submittedAt === 'object' && 'toDate' in firstPassedAttempt.submittedAt) {
+                completedAt = firstPassedAttempt.submittedAt.toDate();
               }
             }
           }
@@ -752,7 +754,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           { field: 'userId', operator: '==', value: userId },
           { field: 'status', operator: '==', value: 'submitted' }
         ],
-        orderBy: { field: 'completedAt', direction: 'desc' },
+        orderBy: [{ field: 'completedAt', direction: 'desc' }],
         limit
       });
 
@@ -795,8 +797,8 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           percentage: attempt.percentage,
           questionsAnswered: attempt.questionsAnswered?.length || 0,
           totalQuestions: quiz.data?.questions?.length || 0,
-          correctAnswers: attempt.questionsAnswered?.filter(q => q.isCorrect).length || 0,
-          incorrectAnswers: attempt.questionsAnswered?.filter(q => !q.isCorrect).length || 0,
+          correctAnswers: attempt.questionsAnswered?.filter((q: { isCorrect?: boolean }) => q.isCorrect).length || 0,
+          incorrectAnswers: attempt.questionsAnswered?.filter((q: { isCorrect?: boolean }) => !q.isCorrect).length || 0,
         });
       }
 
@@ -914,7 +916,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   }
 
   private async buildRecentActivityFromQuizzes(
-    userId: string,
+    _userId: string,
     quizzes: QuizAttempt[]
   ): Promise<ActivityRecord[]> {
     const activities: ActivityRecord[] = [];

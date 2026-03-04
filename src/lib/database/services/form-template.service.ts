@@ -198,6 +198,7 @@ export class FormTemplateService extends BaseDatabaseService {
       return {
         success: false,
         message: 'Template not found',
+        timestamp: new Date(),
       };
     }
 
@@ -255,6 +256,7 @@ export class FormTemplateService extends BaseDatabaseService {
       return {
         success: false,
         message: 'Template not found',
+        timestamp: new Date(),
       };
     }
 
@@ -320,6 +322,7 @@ export class FormTemplateService extends BaseDatabaseService {
       return {
         success: true,
         data: templates,
+        timestamp: new Date(),
       };
     } catch (error) {
       logger.error('Error querying templates', 'FormTemplateService', { error: error instanceof Error ? error.message : String(error) });
@@ -350,12 +353,18 @@ export class FormTemplateService extends BaseDatabaseService {
     });
 
     if (!result.success) {
-      return result as ApiResponse<FormTemplate | null>;
+      return {
+        success: false,
+        message: result.message || 'Failed to get templates',
+        error: result.error,
+        timestamp: new Date(),
+      };
     }
 
     return {
       success: true,
       data: result.data && result.data.length > 0 ? result.data[0] : null,
+      timestamp: new Date(),
     };
   }
 
@@ -397,6 +406,7 @@ export class FormTemplateService extends BaseDatabaseService {
         return {
           success: false,
           message: 'Template not found',
+          timestamp: new Date(),
         };
       }
 
@@ -478,8 +488,9 @@ export class FormTemplateService extends BaseDatabaseService {
 
       console.log('🟡 [DEACTIVATE-ALL] Templates to deactivate:', templates.data.map(t => `${t.name} (${t.id})`));
 
-      const updatePromises = templates.data.map((t, index) => {
-        console.log(`🟡 [DEACTIVATE-ALL] Deactivating ${index + 1}/${templates.data.length}: ${t.name} (${t.id})`);
+      const templateData = templates.data;
+      const updatePromises = templateData.map((t, index) => {
+        console.log(`🟡 [DEACTIVATE-ALL] Deactivating ${index + 1}/${templateData.length}: ${t.name} (${t.id})`);
         return this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
           isActive: false,
         }).then(result => {
@@ -730,6 +741,7 @@ export class FormTemplateService extends BaseDatabaseService {
       return {
         success: false,
         message: 'Template not found',
+        timestamp: new Date(),
       };
     }
 
@@ -742,6 +754,7 @@ export class FormTemplateService extends BaseDatabaseService {
         activeUsers: 0, // Would need to query entries
         lastUsed: undefined, // Would need to query entries
       },
+      timestamp: new Date(),
     };
   }
 }

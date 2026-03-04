@@ -36,12 +36,16 @@ export default function RegisterPage() {
     setError,
     setValue,
     watch,
-  } = useForm<RegisterFormData>({
+  } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       role: 'student' as const,
       workflowType: 'automated' as const,
       agreeToTerms: false,
+      email: '',
+      password: '',
+      confirmPassword: '',
+      displayName: '',
     },
   });
 
@@ -101,10 +105,10 @@ export default function RegisterPage() {
     return () => clearTimeout(timeoutId);
   }, [watchedCoachCode, selectedRole, selectedWorkflowType]);
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
     try {
       setIsLoading(true);
-      await registerUser(data);
+      await registerUser(data as RegisterFormData);
 
       // Show success notification
       toast.success('Account created successfully!', {

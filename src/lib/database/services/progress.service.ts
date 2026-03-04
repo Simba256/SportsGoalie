@@ -193,7 +193,7 @@ export class ProgressService extends BaseDatabaseService {
   ): Promise<ApiResponse<SportProgress>> {
     try {
       return await withRetry(async () => {
-        return await runTransaction(db, async (transaction) => {
+        const progress = await runTransaction(db, async (transaction) => {
           // Get or create sport progress
           const q = query(
             collection(db, this.COLLECTIONS.SPORT_PROGRESS),
@@ -255,6 +255,11 @@ export class ProgressService extends BaseDatabaseService {
 
           return currentProgress;
         });
+        return {
+          success: true,
+          data: progress,
+          timestamp: new Date(),
+        };
       });
     } catch (error) {
       logger.error('Failed to update sport progress', 'ProgressService', {
@@ -285,7 +290,7 @@ export class ProgressService extends BaseDatabaseService {
   ): Promise<ApiResponse<SkillProgress>> {
     try {
       return await withRetry(async () => {
-        return await runTransaction(db, async (transaction) => {
+        const progress = await runTransaction(db, async (transaction) => {
           // Get or create skill progress
           const q = query(
             collection(db, this.COLLECTIONS.SKILL_PROGRESS),
@@ -348,6 +353,11 @@ export class ProgressService extends BaseDatabaseService {
 
           return currentProgress;
         });
+        return {
+          success: true,
+          data: progress,
+          timestamp: new Date(),
+        };
       });
     } catch (error) {
       logger.error('Failed to update skill progress', 'ProgressService', {
@@ -431,7 +441,7 @@ export class ProgressService extends BaseDatabaseService {
   ): Promise<ApiResponse<void>> {
     try {
       return await withRetry(async () => {
-        await runTransaction(db, async (transaction) => {
+        await runTransaction(db, async (_transaction) => {
           // Get current skill progress to calculate new timeSpent
           const currentSkillProgress = await this.getSkillProgress(userId, skillId);
           const currentTimeSpent = currentSkillProgress.data?.timeSpent || 0;
@@ -608,8 +618,12 @@ export class ProgressService extends BaseDatabaseService {
 
       const achievement = achievementDoc.data() as Achievement;
 
-      // Create user achievement
+      // Create document reference first to get the ID
+      const docRef = doc(collection(db, this.COLLECTIONS.USER_ACHIEVEMENTS));
+
+      // Create user achievement with id
       const userAchievement: UserAchievement = {
+        id: docRef.id,
         userId,
         achievementId,
         progress: 100,
@@ -618,7 +632,6 @@ export class ProgressService extends BaseDatabaseService {
         isNotified: false,
       };
 
-      const docRef = doc(collection(db, this.COLLECTIONS.USER_ACHIEVEMENTS));
       await setDoc(docRef, userAchievement);
 
       // Update user's overall stats
@@ -897,7 +910,7 @@ export class ProgressService extends BaseDatabaseService {
   static async canAccessContent(
     userId: string,
     contentId: string,
-    contentType: 'lesson' | 'quiz'
+    _contentType: 'lesson' | 'quiz'
   ): Promise<ApiResponse<boolean>> {
     try {
       const { userService } = await import('./user.service');
@@ -981,22 +994,6 @@ export class ProgressService extends BaseDatabaseService {
     score?: number
   ): Promise<ApiResponse<void>> {
     try {
-      // Create notification for coach
-      const notificationData = {
-        userId: coachId,
-        type: 'admin_message' as const,
-        title: 'Student Completed Content',
-        message: `Student completed: ${contentTitle}${score !== undefined ? ` (Score: ${score}%)` : ''}`,
-        data: {
-          studentId,
-          contentId,
-          score,
-        },
-        isRead: false,
-        priority: 'medium' as const,
-        createdAt: Timestamp.now(),
-      };
-
       // Use notification service if available
       // For now, just log (notification system will be enhanced in future phases)
       logger.info('Coach notification created', 'ProgressService', {
@@ -1034,12 +1031,12 @@ export class ProgressService extends BaseDatabaseService {
    * - Automated: Auto-unlock next level if passing score
    * - Custom: Just record completion and notify coach
    */
-  static async recordQuizCompletion(
+  static async recordWorkflowQuizCompletion(
     userId: string,
     quizId: string,
     score: number,
     pillarId?: string,
-    levelId?: string
+    _levelId?: string
   ): Promise<ApiResponse<void>> {
     try {
       const { userService } = await import('./user.service');
@@ -1067,7 +1064,6 @@ export class ProgressService extends BaseDatabaseService {
           quizId,
           score,
           pillarId,
-          levelId,
         });
 
         return {

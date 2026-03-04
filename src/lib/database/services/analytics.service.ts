@@ -354,7 +354,7 @@ export class AnalyticsService extends BaseDatabaseService {
       total: users.length,
       active: users.filter(u => u.isActive).length,
       inactive: users.filter(u => !u.isActive).length,
-      newThisMonth: users.filter(u => new Date(u.createdAt) >= startOfMonth).length,
+      newThisMonth: users.filter(u => u.createdAt && (typeof u.createdAt === 'object' && 'toDate' in u.createdAt ? u.createdAt.toDate() : new Date(u.createdAt as unknown as string | number)) >= startOfMonth).length,
       adminCount: users.filter(u => u.role === 'admin').length,
       studentCount: users.filter(u => u.role === 'student').length,
       coachCount: users.filter(u => u.role === 'coach').length,
