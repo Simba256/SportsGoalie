@@ -95,6 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(userData.assignedCoachId && { assignedCoachId: userData.assignedCoachId }),
           ...(userData.studentNumber && { studentNumber: userData.studentNumber }),
           ...(userData.coachCode && { coachCode: userData.coachCode }),
+          // Include onboarding fields
+          ...(userData.onboardingCompleted !== undefined && { onboardingCompleted: userData.onboardingCompleted }),
+          ...(userData.onboardingCompletedAt && { onboardingCompletedAt: userData.onboardingCompletedAt }),
+          ...(userData.initialAssessmentLevel && { initialAssessmentLevel: userData.initialAssessmentLevel }),
         };
 
         // Store profile image if available
