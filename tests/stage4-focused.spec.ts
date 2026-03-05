@@ -4,21 +4,21 @@ const BASE_URL = 'http://localhost:3004';
 
 test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
 
-  test('Sports Catalog - Core Functionality Test', async ({ page }) => {
-    console.log('🔍 Testing Sports Catalog Page...');
+  test('Pillars Catalog - Core Functionality Test', async ({ page }) => {
+    console.log('🔍 Testing Pillars Catalog Page...');
 
-    await page.goto(`${BASE_URL}/sports`);
+    await page.goto(`${BASE_URL}/pillars`);
     await page.waitForLoadState('networkidle', { timeout: 15000 });
 
     // Take screenshot for analysis
-    await page.screenshot({ path: 'test-results/sports-catalog.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/pillars-catalog.png', fullPage: true });
 
     // Test 1: Page loads and displays header
     try {
-      await expect(page.locator('h1')).toContainText('Sports Catalog', { timeout: 10000 });
-      console.log('✅ Sports Catalog header loaded successfully');
+      await expect(page.locator('h1')).toContainText('Pillars Catalog', { timeout: 10000 });
+      console.log('✅ Pillars Catalog header loaded successfully');
     } catch (error) {
-      console.log('❌ Sports Catalog header not found:', error instanceof Error ? error.message : String(error));
+      console.log('❌ Pillars Catalog header not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 2: Search functionality is present
@@ -29,14 +29,14 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       console.log('❌ Search input not found:', error instanceof Error ? error.message : String(error));
     }
 
-    // Test 3: Sports cards are displayed
+    // Test 3: Pillar cards are displayed
     try {
-      const sportsCards = page.locator('a[href*="/sports/"], .card');
-      await expect(sportsCards.first()).toBeVisible({ timeout: 10000 });
-      const cardCount = await sportsCards.count();
-      console.log(`✅ Found ${cardCount} sports cards`);
+      const pillarCards = page.locator('a[href*="/pillars/"], .card');
+      await expect(pillarCards.first()).toBeVisible({ timeout: 10000 });
+      const cardCount = await pillarCards.count();
+      console.log(`✅ Found ${cardCount} pillar cards`);
     } catch (error) {
-      console.log('❌ Sports cards not found:', error instanceof Error ? error.message : String(error));
+      console.log('❌ Pillar cards not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 4: Filters button exists
@@ -52,30 +52,30 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
     console.log('🔗 Current URL:', page.url());
   });
 
-  test('Sport Detail Page - Navigation Test', async ({ page }) => {
-    console.log('🔍 Testing Sport Detail Page Navigation...');
+  test('Pillar Detail Page - Navigation Test', async ({ page }) => {
+    console.log('🔍 Testing Pillar Detail Page Navigation...');
 
-    await page.goto(`${BASE_URL}/sports`);
+    await page.goto(`${BASE_URL}/pillars`);
     await page.waitForLoadState('networkidle', { timeout: 15000 });
 
-    // Find and click first sport link
+    // Find and click first pillar link
     try {
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      if (await firstSportLink.isVisible()) {
-        const href = await firstSportLink.getAttribute('href');
-        console.log('🔗 Clicking sport link:', href);
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      if (await firstPillarLink.isVisible()) {
+        const href = await firstPillarLink.getAttribute('href');
+        console.log('🔗 Clicking pillar link:', href);
 
-        await firstSportLink.click();
+        await firstPillarLink.click();
         await page.waitForLoadState('networkidle', { timeout: 10000 });
 
         // Take screenshot
-        await page.screenshot({ path: 'test-results/sport-detail.png', fullPage: true });
+        await page.screenshot({ path: 'test-results/pillar-detail.png', fullPage: true });
 
         console.log('🔗 Navigated to:', page.url());
 
         // Check if we're on a detail page
-        if (page.url().includes('/sports/') && page.url() !== `${BASE_URL}/sports`) {
-          console.log('✅ Successfully navigated to sport detail page');
+        if (page.url().includes('/pillars/') && page.url() !== `${BASE_URL}/pillars`) {
+          console.log('✅ Successfully navigated to pillar detail page');
 
           // Look for back button
           try {
@@ -85,34 +85,34 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
             console.log('❌ Back button not found');
           }
 
-          // Look for sport title
+          // Look for pillar title
           try {
             await expect(page.locator('h1')).toBeVisible({ timeout: 5000 });
             const title = await page.locator('h1').textContent();
-            console.log('✅ Sport title found:', title);
+            console.log('✅ Pillar title found:', title);
           } catch {
-            console.log('❌ Sport title not found');
+            console.log('❌ Pillar title not found');
           }
 
         } else {
-          console.log('❌ Did not navigate to sport detail page');
+          console.log('❌ Did not navigate to pillar detail page');
         }
       } else {
-        console.log('❌ No sport links found on catalog page');
+        console.log('❌ No pillar links found on catalog page');
       }
     } catch (error) {
-      console.log('❌ Error navigating to sport detail:', error instanceof Error ? error.message : String(error));
+      console.log('❌ Error navigating to pillar detail:', error instanceof Error ? error.message : String(error));
     }
   });
 
-  test('Admin Sports Management - Access Test', async ({ page }) => {
-    console.log('🔍 Testing Admin Sports Management Access...');
+  test('Admin Pillars Management - Access Test', async ({ page }) => {
+    console.log('🔍 Testing Admin Pillars Management Access...');
 
-    await page.goto(`${BASE_URL}/admin/sports`);
+    await page.goto(`${BASE_URL}/admin/pillars`);
     await page.waitForLoadState('networkidle', { timeout: 15000 });
 
     // Take screenshot
-    await page.screenshot({ path: 'test-results/admin-sports.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/admin-pillars.png', fullPage: true });
 
     console.log('🔗 Admin page URL:', page.url());
 
@@ -128,12 +128,8 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
         const title = await page.locator('h1').textContent();
         console.log('✅ Admin page title:', title);
 
-        // Look for add sport button
-        if (await page.locator('button:has-text("Add Sport"), button[class*="plus"]').isVisible()) {
-          console.log('✅ Add Sport button found');
-        } else {
-          console.log('❌ Add Sport button not found');
-        }
+        // Pillars are predefined, so no Add button expected
+        console.log('ℹ️ Pillars are predefined - no Add Pillar button expected');
 
       } catch (error) {
         console.log('❌ Admin interface elements not found:', error instanceof Error ? error.message : String(error));
@@ -144,8 +140,8 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
   test('Error Handling - Non-existent Pages', async ({ page }) => {
     console.log('🔍 Testing Error Handling...');
 
-    // Test non-existent sport
-    await page.goto(`${BASE_URL}/sports/non-existent-sport-123`);
+    // Test non-existent pillar
+    await page.goto(`${BASE_URL}/pillars/non-existent-pillar-123`);
     await page.waitForLoadState('networkidle', { timeout: 10000 });
 
     await page.screenshot({ path: 'test-results/error-handling.png', fullPage: true });
@@ -197,7 +193,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       });
     });
 
-    await page.goto(`${BASE_URL}/sports`);
+    await page.goto(`${BASE_URL}/pillars`);
     await page.waitForLoadState('networkidle', { timeout: 15000 });
 
     console.log('📡 Network Summary:');
@@ -230,7 +226,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
 
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto(`${BASE_URL}/sports`);
+    await page.goto(`${BASE_URL}/pillars`);
     await page.waitForLoadState('networkidle', { timeout: 15000 });
 
     await page.screenshot({ path: 'test-results/mobile-view.png', fullPage: true });

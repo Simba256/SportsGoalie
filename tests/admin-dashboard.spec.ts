@@ -142,10 +142,10 @@ test.describe('Admin Navigation', () => {
     await expect(page).toHaveURL('/admin/settings');
   });
 
-  test('should navigate to sports management page', async ({ page }) => {
+  test('should navigate to pillars management page', async ({ page }) => {
     await page.waitForLoadState('networkidle');
     await page.click('a[href="/admin/pillars"]');
-    await expect(page).toHaveURL('/admin/sports');
+    await expect(page).toHaveURL('/admin/pillars');
   });
 
   test('should navigate to quiz management page', async ({ page }) => {

@@ -3,7 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 const BASE_URL = 'http://localhost:3004';
 
 // Test configuration
-test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testing', () => {
+test.describe('Stage 4: Pillars & Skills Content Management - Comprehensive Testing', () => {
   let page: Page;
 
   test.beforeEach(async ({ browser }) => {
@@ -17,61 +17,61 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     page.on('pageerror', error => console.log(`Page error: ${error.message}`));
   });
 
-  test.describe('1. Sports Catalog Page (/sports)', () => {
-    test('should load sports catalog with correct layout and navigation', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+  test.describe('1. Pillars Catalog Page (/pillars)', () => {
+    test('should load pillars catalog with correct layout and navigation', async () => {
+      await page.goto(`${BASE_URL}/pillars`);
 
       // Wait for page to load
       await page.waitForLoadState('networkidle');
 
       // Check page title and header
-      await expect(page.locator('h1')).toContainText('Sports Catalog');
+      await expect(page.locator('h1')).toContainText('Pillars Catalog');
       await expect(page.locator('p')).toContainText('Discover and master new sports skills');
 
-      // Check if sports count is displayed
-      await expect(page.locator('text=/\\d+ sport/i')).toBeVisible();
+      // Check if pillars count is displayed
+      await expect(page.locator('text=/\\d+ pillar/i')).toBeVisible();
 
       // Verify search functionality is present
-      await expect(page.locator('input[placeholder*="Search sports"]')).toBeVisible();
+      await expect(page.locator('input[placeholder*="Search pillars"]')).toBeVisible();
       await expect(page.locator('button:has-text("Search")')).toBeVisible();
       await expect(page.locator('button:has-text("Filters")')).toBeVisible();
     });
 
-    test('should display sports in grid layout', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+    test('should display pillars in grid layout', async () => {
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      // Wait for sports grid to load
-      await page.waitForSelector('[data-testid="sports-grid"], .grid', { timeout: 10000 });
+      // Wait for pillars grid to load
+      await page.waitForSelector('[data-testid="pillars-grid"], .grid', { timeout: 10000 });
 
-      // Check if sports cards are displayed
-      const sportsCards = page.locator('a[href*="/sports/"] > div, .card');
-      await expect(sportsCards.first()).toBeVisible();
+      // Check if pillar cards are displayed
+      const pillarCards = page.locator('a[href*="/pillars/"] > div, .card');
+      await expect(pillarCards.first()).toBeVisible();
 
       // Verify card content structure
-      const firstCard = sportsCards.first();
+      const firstCard = pillarCards.first();
       await expect(firstCard.locator('h3, .font-semibold').first()).toBeVisible();
       await expect(firstCard.locator('p, .text-muted-foreground').first()).toBeVisible();
     });
 
     test('should handle search functionality', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
       // Test search input
-      const searchInput = page.locator('input[placeholder*="Search sports"]');
-      await searchInput.fill('basketball');
+      const searchInput = page.locator('input[placeholder*="Search pillars"]');
+      await searchInput.fill('mindset');
       await page.locator('button:has-text("Search")').click();
 
       // Wait for search results
       await page.waitForTimeout(1000);
 
       // Should maintain search query in input
-      await expect(searchInput).toHaveValue('basketball');
+      await expect(searchInput).toHaveValue('mindset');
     });
 
     test('should show and hide filters panel', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
       // Open filters
@@ -89,12 +89,12 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     test('should be responsive on mobile', async () => {
       // Test mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
       // Check if content adapts to mobile
       await expect(page.locator('h1')).toBeVisible();
-      await expect(page.locator('input[placeholder*="Search sports"]')).toBeVisible();
+      await expect(page.locator('input[placeholder*="Search pillars"]')).toBeVisible();
 
       // Grid should stack on mobile
       const grid = page.locator('.grid, [class*="grid"]').first();
@@ -105,36 +105,36 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
   });
 
-  test.describe('2. Sports Detail Pages (/sports/[id])', () => {
-    test('should load sport detail page with comprehensive information', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+  test.describe('2. Pillar Detail Pages (/pillars/[id])', () => {
+    test('should load pillar detail page with comprehensive information', async () => {
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      // Click on first sport card
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await expect(firstSportLink).toBeVisible();
-      await firstSportLink.click();
+      // Click on first pillar card
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await expect(firstPillarLink).toBeVisible();
+      await firstPillarLink.click();
 
       // Wait for detail page to load
       await page.waitForLoadState('networkidle');
 
-      // Check if we're on a sport detail page
-      expect(page.url()).toMatch(/\/sports\/[^\/]+$/);
+      // Check if we're on a pillar detail page
+      expect(page.url()).toMatch(/\/pillars\/[^\/]+$/);
 
       // Check back button
       await expect(page.locator('button:has-text("Back")')).toBeVisible();
 
-      // Check sport name and description
+      // Check pillar name and description
       await expect(page.locator('h1')).toBeVisible();
       await expect(page.locator('p').first()).toBeVisible();
     });
 
-    test('should display sport statistics and metadata', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+    test('should display pillar statistics and metadata', async () => {
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       // Check for stat cards
@@ -148,11 +148,11 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
 
     test('should show skills section with filtering', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       // Check skills section
@@ -166,11 +166,11 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
 
     test('should navigate to skill detail pages', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       // Look for skill links
@@ -180,18 +180,18 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
         await page.waitForLoadState('networkidle');
 
         // Should be on skill detail page
-        expect(page.url()).toMatch(/\/sports\/[^\/]+\/skills\/[^\/]+$/);
+        expect(page.url()).toMatch(/\/pillars\/[^\/]+\/skills\/[^\/]+$/);
       }
     });
 
     test('should be responsive on different screen sizes', async () => {
       // Test tablet view
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       // Content should be visible and properly laid out
@@ -206,14 +206,14 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
   });
 
-  test.describe('3. Skill Detail Pages (/sports/[id]/skills/[skillId])', () => {
+  test.describe('3. Skill Detail Pages (/pillars/[id]/skills/[skillId])', () => {
     test('should load skill detail page with tabbed content', async () => {
-      // Navigate to a skill page through the sports catalog
-      await page.goto(`${BASE_URL}/sports`);
+      // Navigate to a skill page through the pillars catalog
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       const skillLink = page.locator('a[href*="/skills/"]').first();
@@ -236,11 +236,11 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
 
     test('should display skill statistics and prerequisites', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       const skillLink = page.locator('a[href*="/skills/"]').first();
@@ -258,11 +258,11 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
 
     test('should switch between content tabs', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       const skillLink = page.locator('a[href*="/skills/"]').first();
@@ -287,11 +287,11 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
 
     test('should handle media content display', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      await firstSportLink.click();
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      await firstPillarLink.click();
       await page.waitForLoadState('networkidle');
 
       const skillLink = page.locator('a[href*="/skills/"]').first();
@@ -313,9 +313,9 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
   });
 
-  test.describe('4. Admin Content Management (/admin/sports)', () => {
+  test.describe('4. Admin Content Management (/admin/pillars)', () => {
     test('should require authentication for admin access', async () => {
-      await page.goto(`${BASE_URL}/admin/sports`);
+      await page.goto(`${BASE_URL}/admin/pillars`);
       await page.waitForLoadState('networkidle');
 
       // Should either redirect to login or show admin content
@@ -324,62 +324,59 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
         await expect(page.locator('input[type="email"], input[type="text"]')).toBeVisible();
       } else {
         // If admin page loads, check for admin interface
-        await expect(page.locator('h1:has-text("Sports Management"), h1:has-text("Admin")')).toBeVisible();
+        await expect(page.locator('h1:has-text("Pillars Management"), h1:has-text("Admin")')).toBeVisible();
       }
     });
 
-    test('should display sports management interface when authenticated', async () => {
+    test('should display pillars management interface when authenticated', async () => {
       // Try to access admin page directly
-      await page.goto(`${BASE_URL}/admin/sports`);
+      await page.goto(`${BASE_URL}/admin/pillars`);
       await page.waitForLoadState('networkidle');
 
       // Check if we can access admin features (might require auth bypass for testing)
       if (!page.url().includes('/auth/')) {
-        // Check for admin interface elements
-        await expect(page.locator('button:has-text("Add Sport"), button[class*="plus"]')).toBeVisible();
+        // Check for admin interface elements (no Add button for pillars - they're predefined)
         await expect(page.locator('input[placeholder*="Search"]')).toBeVisible();
 
-        // Check for sports list or table
-        const sportsContainer = page.locator('.grid, table, .list');
-        if (await sportsContainer.isVisible()) {
-          await expect(sportsContainer).toBeVisible();
+        // Check for pillars list or table
+        const pillarsContainer = page.locator('.grid, table, .list');
+        if (await pillarsContainer.isVisible()) {
+          await expect(pillarsContainer).toBeVisible();
         }
       }
     });
 
-    test('should handle create sport functionality', async () => {
-      await page.goto(`${BASE_URL}/admin/sports`);
+    test('should handle edit pillar functionality', async () => {
+      await page.goto(`${BASE_URL}/admin/pillars`);
       await page.waitForLoadState('networkidle');
 
       if (!page.url().includes('/auth/')) {
-        // Try to open create form
-        const addButton = page.locator('button:has-text("Add Sport"), button:has-text("Create")');
-        if (await addButton.isVisible()) {
-          await addButton.click();
+        // Try to open edit form for first pillar
+        const editButton = page.locator('button[title="Edit Pillar"]').first();
+        if (await editButton.isVisible()) {
+          await editButton.click();
 
           // Check for form fields
-          await expect(page.locator('input[id="name"], input[placeholder*="name"]')).toBeVisible();
           await expect(page.locator('textarea, input[id="description"]')).toBeVisible();
-          await expect(page.locator('select[id="difficulty"], select')).toBeVisible();
         }
       }
     });
 
     test('should validate form inputs', async () => {
-      await page.goto(`${BASE_URL}/admin/sports`);
+      await page.goto(`${BASE_URL}/admin/pillars`);
       await page.waitForLoadState('networkidle');
 
       if (!page.url().includes('/auth/')) {
-        const addButton = page.locator('button:has-text("Add Sport"), button:has-text("Create")');
-        if (await addButton.isVisible()) {
-          await addButton.click();
+        const editButton = page.locator('button[title="Edit Pillar"]').first();
+        if (await editButton.isVisible()) {
+          await editButton.click();
 
-          // Try to submit empty form
+          // Try to submit form
           const saveButton = page.locator('button:has-text("Save"), button[type="submit"]');
           if (await saveButton.isVisible()) {
             await saveButton.click();
 
-            // Should show validation errors or prevent submission
+            // Should save or show validation errors
             await page.waitForTimeout(500);
           }
         }
@@ -390,18 +387,25 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
   test.describe('5. Media Upload Component Testing', () => {
     test('should handle file upload interface', async () => {
       // Test media upload component if accessible
-      await page.goto(`${BASE_URL}/admin/sports`);
+      await page.goto(`${BASE_URL}/admin/pillars`);
       await page.waitForLoadState('networkidle');
 
       if (!page.url().includes('/auth/')) {
-        const addButton = page.locator('button:has-text("Add Sport")');
-        if (await addButton.isVisible()) {
-          await addButton.click();
+        // Navigate to skills management to test media upload
+        const skillsButton = page.locator('button[title="Manage Skills"]').first();
+        if (await skillsButton.isVisible()) {
+          await skillsButton.click();
+          await page.waitForLoadState('networkidle');
 
-          // Look for file upload areas
-          const fileUpload = page.locator('input[type="file"], [class*="upload"]');
-          if (await fileUpload.isVisible()) {
-            await expect(fileUpload).toBeVisible();
+          // Look for file upload areas in skill creation/edit
+          const addSkillButton = page.locator('button:has-text("Add Skill")');
+          if (await addSkillButton.isVisible()) {
+            await addSkillButton.click();
+
+            const fileUpload = page.locator('input[type="file"], [class*="upload"]');
+            if (await fileUpload.isVisible()) {
+              await expect(fileUpload).toBeVisible();
+            }
           }
         }
       }
@@ -409,8 +413,8 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
   });
 
   test.describe('6. Error Handling and Edge Cases', () => {
-    test('should handle non-existent sport pages gracefully', async () => {
-      await page.goto(`${BASE_URL}/sports/non-existent-sport-id`);
+    test('should handle non-existent pillar pages gracefully', async () => {
+      await page.goto(`${BASE_URL}/pillars/non-existent-pillar-id`);
       await page.waitForLoadState('networkidle');
 
       // Should show error message or 404 page
@@ -434,7 +438,7 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     });
 
     test('should handle non-existent skill pages gracefully', async () => {
-      await page.goto(`${BASE_URL}/sports/valid-sport/skills/non-existent-skill`);
+      await page.goto(`${BASE_URL}/pillars/valid-pillar/skills/non-existent-skill`);
       await page.waitForLoadState('networkidle');
 
       // Should show error message
@@ -460,7 +464,7 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
       // Test with network disabled briefly
       await page.route('**/*', route => route.abort());
 
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
 
       // Should show loading state or error
       const loadingOrError = page.locator('text=/loading/i, text=/error/i, .animate-spin');
@@ -473,7 +477,7 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
 
   test.describe('7. Performance and Loading States', () => {
     test('should show appropriate loading states', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
 
       // Wait for content to load
       await page.waitForLoadState('networkidle');
@@ -485,7 +489,7 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
     test('should load pages within acceptable time limits', async () => {
       const startTime = Date.now();
 
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
       const loadTime = Date.now() - startTime;
@@ -500,14 +504,14 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
 
   test.describe('8. Navigation and User Flow', () => {
     test('should support complete user journey through catalog', async () => {
-      // Start at sports catalog
-      await page.goto(`${BASE_URL}/sports`);
+      // Start at pillars catalog
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
-      // Navigate to sport detail
-      const firstSportLink = page.locator('a[href*="/sports/"]').first();
-      if (await firstSportLink.isVisible()) {
-        await firstSportLink.click();
+      // Navigate to pillar detail
+      const firstPillarLink = page.locator('a[href*="/pillars/"]').first();
+      if (await firstPillarLink.isVisible()) {
+        await firstPillarLink.click();
         await page.waitForLoadState('networkidle');
 
         // Navigate to skill detail
@@ -522,19 +526,19 @@ test.describe('Stage 4: Sports & Skills Content Management - Comprehensive Testi
             await backButton.click();
             await page.waitForLoadState('networkidle');
 
-            // Should be back on sport detail page
-            expect(page.url()).toMatch(/\/sports\/[^\/]+$/);
+            // Should be back on pillar detail page
+            expect(page.url()).toMatch(/\/pillars\/[^\/]+$/);
           }
         }
       }
     });
 
     test('should maintain search state during navigation', async () => {
-      await page.goto(`${BASE_URL}/sports`);
+      await page.goto(`${BASE_URL}/pillars`);
       await page.waitForLoadState('networkidle');
 
       // Perform search
-      const searchInput = page.locator('input[placeholder*="Search sports"]');
+      const searchInput = page.locator('input[placeholder*="Search pillars"]');
       await searchInput.fill('test search');
       await page.locator('button:has-text("Search")').click();
       await page.waitForTimeout(1000);

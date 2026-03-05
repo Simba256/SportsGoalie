@@ -87,10 +87,10 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
       expect(metrics.total).toBeLessThan(PERFORMANCE_THRESHOLDS.pageLoad);
     });
 
-    test('sports catalog should load within performance threshold', async ({ page }) => {
-      const { loadTime, metrics } = await measurePageLoad(page, '/sports');
+    test('pillars catalog should load within performance threshold', async ({ page }) => {
+      const { loadTime, metrics } = await measurePageLoad(page, '/pillars');
 
-      console.log('Sports Catalog Performance:', {
+      console.log('Pillars Catalog Performance:', {
         loadTime: `${loadTime}ms`,
         total: `${metrics.total.toFixed(2)}ms`
       });
@@ -138,7 +138,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
       // Simulate 5 concurrent users loading different pages
       const loadPromises = pages.map((page, index) => {
-        const urls = ['/', '/sports', '/about', '/auth/login', '/auth/register'];
+        const urls = ['/', '/pillars', '/about', '/auth/login', '/auth/register'];
         return measurePageLoad(page, urls[index]);
       });
 
@@ -202,8 +202,8 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
   test.describe('Database Query Performance', () => {
 
-    test('should load sports catalog data efficiently', async ({ page }) => {
-      await page.goto('/sports');
+    test('should load pillars catalog data efficiently', async ({ page }) => {
+      await page.goto('/pillars');
 
       // Intercept API calls to measure response time
       const apiResponses: number[] = [];
@@ -221,7 +221,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
       if (apiResponses.length > 0) {
         const avgResponseTime = apiResponses.reduce((sum, t) => sum + t, 0) / apiResponses.length;
-        console.log('Sports Catalog API Performance:', {
+        console.log('Pillars Catalog API Performance:', {
           apiCalls: apiResponses.length,
           avgResponseTime: `${avgResponseTime.toFixed(2)}ms`,
           maxResponseTime: `${Math.max(...apiResponses).toFixed(2)}ms`
@@ -229,21 +229,21 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
       }
     });
 
-    test('should handle rapid navigation between sports', async ({ page }) => {
-      await page.goto('/sports');
+    test('should handle rapid navigation between pillars', async ({ page }) => {
+      await page.goto('/pillars');
       await page.waitForLoadState('networkidle');
 
-      // Check if sports are available
-      const sportCards = page.locator('[data-testid="sport-card"]');
-      const sportCount = await sportCards.count();
+      // Check if pillars are available
+      const pillarCards = page.locator('[data-testid="pillar-card"]');
+      const pillarCount = await pillarCards.count();
 
-      if (sportCount > 0) {
+      if (pillarCount > 0) {
         const navigationTimes: number[] = [];
 
-        // Navigate to first 3 sports rapidly
-        for (let i = 0; i < Math.min(3, sportCount); i++) {
+        // Navigate to first 3 pillars rapidly
+        for (let i = 0; i < Math.min(3, pillarCount); i++) {
           const startTime = Date.now();
-          await sportCards.nth(i).click();
+          await pillarCards.nth(i).click();
           await page.waitForLoadState('networkidle');
           const navTime = Date.now() - startTime;
           navigationTimes.push(navTime);
@@ -271,15 +271,15 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
     test('should handle rapid quiz submissions', async ({ page }) => {
       await login(page, TEST_CREDENTIALS.student.email, TEST_CREDENTIALS.student.password);
 
-      // Navigate to a sport with quizzes
-      await page.goto('/sports');
+      // Navigate to a pillar with quizzes
+      await page.goto('/pillars');
       await page.waitForLoadState('networkidle');
 
-      const sportCards = page.locator('[data-testid="sport-card"]');
-      const sportCount = await sportCards.count();
+      const pillarCards = page.locator('[data-testid="pillar-card"]');
+      const pillarCount = await pillarCards.count();
 
-      if (sportCount > 0) {
-        await sportCards.first().click();
+      if (pillarCount > 0) {
+        await pillarCards.first().click();
         await page.waitForLoadState('networkidle');
 
         // Look for quiz start button
@@ -336,14 +336,14 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
     });
 
     test('should handle search with various query lengths', async ({ page }) => {
-      await page.goto('/sports');
+      await page.goto('/pillars');
       await page.waitForLoadState('networkidle');
 
-      const searchInput = page.getByPlaceholder('Search sports');
+      const searchInput = page.getByPlaceholder('Search pillars');
       const searchButton = page.getByRole('button', { name: 'Search' });
 
       if (await searchInput.count() > 0) {
-        const queries = ['a', 'bas', 'basketball', 'ball sports training'];
+        const queries = ['a', 'min', 'mindset', 'skating development'];
         const searchTimes: number[] = [];
 
         for (const query of queries) {
@@ -373,7 +373,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
   test.describe('Memory & Resource Management', () => {
 
     test('should not leak memory during extended navigation', async ({ page }) => {
-      const pages = ['/', '/sports', '/about', '/auth/login', '/dashboard'];
+      const pages = ['/', '/pillars', '/about', '/auth/login', '/dashboard'];
 
       // Navigate through pages multiple times
       for (let i = 0; i < 10; i++) {
@@ -456,7 +456,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
   test.describe('Error Recovery & Resilience', () => {
 
     test('should handle network interruption gracefully', async ({ page }) => {
-      await page.goto('/sports');
+      await page.goto('/pillars');
       await page.waitForLoadState('networkidle');
 
       // Simulate offline
@@ -479,7 +479,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
     });
 
     test('should recover from failed API calls', async ({ page }) => {
-      await page.goto('/sports');
+      await page.goto('/pillars');
 
       // Block API calls temporarily
       await page.route('**/api/**', route => route.abort());
