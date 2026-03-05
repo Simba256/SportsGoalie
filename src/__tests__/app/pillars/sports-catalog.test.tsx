@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
-import SportsPage from '../../../../app/sports/page';
+import SportsPage from '../../../../app/pillars/page';
 import { sportsService } from '../../../lib/database/services/sports.service';
 
 // Mock the sports service

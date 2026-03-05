@@ -167,7 +167,7 @@ function AdminDashboardContent() {
                     Add and edit sports categories and skills
                   </p>
                 </div>
-                <Link href="/admin/sports">
+                <Link href="/admin/pillars">
                   <Button>Manage</Button>
                 </Link>
               </div>

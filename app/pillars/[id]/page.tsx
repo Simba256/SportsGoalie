@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Sport, Skill, DifficultyLevel } from '@/types';
+import { Sport, Skill, DifficultyLevel, PILLARS } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { useSportEnrollment } from '@/src/hooks/useEnrollment';
 import { useAuth } from '@/lib/auth/context';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -21,10 +22,26 @@ import {
   Trophy,
   Heart,
   Loader2,
+  Brain,
+  Footprints,
+  Shapes,
+  Target,
+  Grid3X3,
+  Dumbbell,
 } from 'lucide-react';
 
-interface SportDetailState {
-  sport: Sport | null;
+// Icon map for pillar icons
+const PILLAR_ICONS: Record<string, React.ElementType> = {
+  Brain,
+  Footprints,
+  Shapes,
+  Target,
+  Grid3X3,
+  Dumbbell,
+};
+
+interface PillarDetailState {
+  pillar: Sport | null;
   skills: Skill[];
   loading: boolean;
   skillsLoading: boolean;
@@ -38,19 +55,14 @@ interface SkillProgress {
   } | null;
 }
 
-export default function SportDetailPage() {
+export default function PillarDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const sportId = params.id as string;
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const pillarId = params.id as string;
+  const { user } = useAuth();
 
-  // Debug auth state
-  useEffect(() => {
-    console.log('Auth state changed:', { user: !!user, id: user?.id, authLoading, isAuthenticated });
-  }, [user, authLoading, isAuthenticated]);
-
-  const [state, setState] = useState<SportDetailState>({
-    sport: null,
+  const [state, setState] = useState<PillarDetailState>({
+    pillar: null,
     skills: [],
     loading: true,
     skillsLoading: true,
@@ -62,32 +74,51 @@ export default function SportDetailPage() {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [skillProgress, setSkillProgress] = useState<SkillProgress>({});
 
-  // Use enrollment hook for the sport
+  // Use enrollment hook for the pillar
   const {
     enrolled: _enrolled,
     progress: _progress,
     loading: _enrollmentLoading,
     enroll: _enroll,
     unenroll: _unenroll,
-  } = useSportEnrollment(sportId);
+  } = useSportEnrollment(pillarId);
+
+  // Get pillar display info
+  const getPillarDisplayInfo = (pillar: Sport) => {
+    const slug = getPillarSlugFromDocId(pillar.id);
+    if (slug) {
+      const info = PILLARS.find(p => p.slug === slug);
+      if (info) {
+        return {
+          icon: info.icon,
+          color: info.color,
+          shortName: info.shortName,
+        };
+      }
+    }
+    return {
+      icon: pillar.icon,
+      color: 'blue',
+      shortName: pillar.name.split(' ')[0],
+    };
+  };
 
   useEffect(() => {
-    if (!sportId) return;
+    if (!pillarId) return;
 
-    const loadSportData = async () => {
+    const loadPillarData = async () => {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
       try {
-        // Load sport and skills in parallel
-        const [sportResult, skillsResult] = await Promise.all([
-          sportsService.getSport(sportId),
-          sportsService.getSkillsBySport(sportId),
+        const [pillarResult, skillsResult] = await Promise.all([
+          sportsService.getSport(pillarId),
+          sportsService.getSkillsBySport(pillarId),
         ]);
 
-        if (!sportResult.success || !sportResult.data) {
+        if (!pillarResult.success || !pillarResult.data) {
           setState(prev => ({
             ...prev,
-            error: sportResult.error?.message || 'Sport not found',
+            error: pillarResult.error?.message || 'Pillar not found',
             loading: false,
             skillsLoading: false,
           }));
@@ -97,7 +128,7 @@ export default function SportDetailPage() {
         if (!skillsResult.success) {
           setState(prev => ({
             ...prev,
-            sport: sportResult.data ?? null,
+            pillar: pillarResult.data ?? null,
             error: skillsResult.error?.message || 'Failed to load skills',
             loading: false,
             skillsLoading: false,
@@ -107,7 +138,7 @@ export default function SportDetailPage() {
 
         setState(prev => ({
           ...prev,
-          sport: sportResult.data ?? null,
+          pillar: pillarResult.data ?? null,
           skills: skillsResult.data?.items || [],
           loading: false,
           skillsLoading: false,
@@ -122,8 +153,8 @@ export default function SportDetailPage() {
       }
     };
 
-    loadSportData();
-  }, [sportId]);
+    loadPillarData();
+  }, [pillarId]);
 
   // Load quiz progress for each skill
   useEffect(() => {
@@ -132,24 +163,13 @@ export default function SportDetailPage() {
     const loadSkillProgress = async () => {
       const progressMap: SkillProgress = {};
 
-      // Load video quiz attempts for all skills in parallel
       await Promise.all(
         state.skills.map(async (skill) => {
           try {
-            console.log(`📚 Loading progress for skill ${skill.id}`);
-
-            // Get the latest video quiz attempt for this skill
             const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, {
               skillId: skill.id,
               completed: true,
               limit: 1,
-            });
-
-            console.log(`📈 Progress result for skill ${skill.id}:`, {
-              success: attemptsResult.success,
-              hasData: !!attemptsResult.data,
-              itemsCount: attemptsResult.data?.items?.length || 0,
-              error: attemptsResult.error,
             });
 
             if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
@@ -158,10 +178,8 @@ export default function SportDetailPage() {
                 percentage: latestAttempt.percentage,
                 isCompleted: latestAttempt.isCompleted,
               };
-              console.log(`✅ Found progress for skill ${skill.id}:`, progressMap[skill.id]);
             } else {
               progressMap[skill.id] = null;
-              console.log(`❌ No progress found for skill ${skill.id}`);
             }
           } catch (error) {
             console.error(`Failed to load progress for skill ${skill.id}:`, error);
@@ -189,8 +207,6 @@ export default function SportDetailPage() {
     }
   };
 
-
-  // Handle favorites (placeholder for now)
   const handleToggleFavorite = async () => {
     if (!user) {
       toast.error("Please log in to save favorites.");
@@ -200,14 +216,13 @@ export default function SportDetailPage() {
 
     setFavoriteLoading(true);
     try {
-      // TODO: Implement favorites functionality in backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setIsFavorited(!isFavorited);
       toast.success(
         isFavorited
-          ? `${state.sport?.name} removed from favorites`
-          : `${state.sport?.name} added to favorites`
+          ? `${state.pillar?.name} removed from favorites`
+          : `${state.pillar?.name} added to favorites`
       );
     } catch (error) {
       toast.error("Failed to update favorites. Please try again.");
@@ -232,22 +247,22 @@ export default function SportDetailPage() {
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Loading sport details...</p>
+            <p className="text-muted-foreground">Loading pillar details...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (state.error || !state.sport) {
+  if (state.error || !state.pillar) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <div className="text-red-600 text-4xl">⚠️</div>
+              <div className="text-red-600 text-4xl">!</div>
               <h3 className="text-lg font-medium text-red-900">
-                {state.error || 'Sport not found'}
+                {state.error || 'Pillar not found'}
               </h3>
               <div className="flex gap-2 justify-center">
                 <Button variant="outline" onClick={() => router.back()}>
@@ -265,87 +280,70 @@ export default function SportDetailPage() {
     );
   }
 
-  const { sport } = state;
+  const { pillar } = state;
+  const displayInfo = getPillarDisplayInfo(pillar);
+  const colorClasses = getPillarColorClasses(displayInfo.color);
+  const IconComponent = PILLAR_ICONS[displayInfo.icon] || Target;
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Back Button */}
       <Button variant="ghost" onClick={() => router.back()} className="mb-4">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Sports
+        Back to Pillars
       </Button>
 
-      {/* Sport Header */}
+      {/* Pillar Header */}
       <div className="space-y-6">
-        {sport.imageUrl && (
-          <div className="aspect-video md:aspect-[21/9] relative overflow-hidden rounded-lg">
-            <img
-              src={sport.imageUrl}
-              alt={sport.name}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/40 flex items-end">
-              <div className="p-6 text-white space-y-2 w-full">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-4xl font-bold">{sport.name}</h1>
-                    {sport.isFeatured && (
-                      <span className="bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-medium">
-                        Featured
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleToggleFavorite}
-                    disabled={favoriteLoading}
-                    className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-                  >
-                    {favoriteLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : isFavorited ? (
-                      <Heart className="w-4 h-4 fill-current text-red-500" />
-                    ) : (
-                      <Heart className="w-4 h-4" />
-                    )}
-                    <span className="ml-2">{isFavorited ? 'Favorited' : 'Favorite'}</span>
-                  </Button>
+        {/* Gradient Header with Icon */}
+        <div className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${colorClasses.gradient} p-8 md:p-12`}>
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <IconComponent className="w-10 h-10 md:w-12 md:h-12 text-white" />
+              </div>
+              <div className="text-white space-y-2">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl md:text-4xl font-bold">{pillar.name}</h1>
+                  {pillar.isFeatured && (
+                    <span className="bg-white/20 backdrop-blur-sm text-white text-sm px-3 py-1 rounded-full font-medium">
+                      Featured
+                    </span>
+                  )}
                 </div>
-                <p className="text-lg text-white/90 max-w-3xl">{sport.description}</p>
+                <p className="text-lg text-white/90 max-w-2xl">{pillar.description}</p>
               </div>
             </div>
-          </div>
-        )}
-
-        {!sport.imageUrl && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-4xl font-bold">{sport.name}</h1>
-                <p className="text-xl text-muted-foreground mt-2">{sport.description}</p>
-              </div>
-              {sport.isFeatured && (
-                <span className="bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-medium">
-                  Featured
-                </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+            >
+              {favoriteLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isFavorited ? (
+                <Heart className="w-4 h-4 fill-current text-red-500" />
+              ) : (
+                <Heart className="w-4 h-4" />
               )}
-            </div>
+              <span className="ml-2 hidden md:inline">{isFavorited ? 'Favorited' : 'Favorite'}</span>
+            </Button>
           </div>
-        )}
+        </div>
 
-        {/* Sport Stats */}
+        {/* Pillar Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className={`${colorClasses.border} border-2`}>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(sport.difficulty)}`}
-                >
-                  {sport.difficulty}
+                <span className={`px-3 py-1 rounded ${colorClasses.bgLight} ${colorClasses.text} text-sm font-medium`}>
+                  Pillar {pillar.order}
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Difficulty Level</p>
+              <p className="text-sm text-muted-foreground mt-2">Pillar Number</p>
             </CardContent>
           </Card>
 
@@ -353,7 +351,7 @@ export default function SportDetailPage() {
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
                 <BookOpen className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xl font-semibold">{sport.skillsCount}</span>
+                <span className="text-xl font-semibold">{pillar.skillsCount}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">Skills</p>
             </CardContent>
@@ -363,38 +361,38 @@ export default function SportDetailPage() {
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xl font-semibold">{sport.metadata.totalEnrollments}</span>
+                <span className="text-xl font-semibold">{pillar.metadata.totalEnrollments}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Enrolled</p>
+              <p className="text-sm text-muted-foreground mt-2">Students Enrolled</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Additional Info */}
-        {(sport.metadata.averageRating > 0 || sport.tags.length > 0) && (
+        {(pillar.metadata.averageRating > 0 || pillar.tags.length > 0) && (
           <Card>
             <CardContent className="pt-6 space-y-4">
-              {sport.metadata.averageRating > 0 && (
+              {pillar.metadata.averageRating > 0 && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                    <span className="text-lg font-semibold">{sport.metadata.averageRating.toFixed(1)}</span>
+                    <span className="text-lg font-semibold">{pillar.metadata.averageRating.toFixed(1)}</span>
                     <span className="text-muted-foreground">
-                      ({sport.metadata.totalRatings} reviews)
+                      ({pillar.metadata.totalRatings} reviews)
                     </span>
                   </div>
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <Trophy className="w-4 h-4" />
-                    <span>{sport.metadata.totalCompletions} completed</span>
+                    <span>{pillar.metadata.totalCompletions} completed</span>
                   </div>
                 </div>
               )}
 
-              {sport.tags.length > 0 && (
+              {pillar.tags.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="font-medium">Tags</h4>
                   <div className="flex flex-wrap gap-2">
-                    {sport.tags.map((tag) => (
+                    {pillar.tags.map((tag) => (
                       <span
                         key={tag}
                         className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"
@@ -440,7 +438,7 @@ export default function SportDetailPage() {
               <h3 className="text-lg font-medium">No skills found</h3>
               <p className="text-muted-foreground">
                 {selectedDifficulty === 'all'
-                  ? 'This sport doesn\'t have any skills yet.'
+                  ? 'This pillar doesn\'t have any skills yet.'
                   : `No ${selectedDifficulty} level skills available.`}
               </p>
             </div>
@@ -448,7 +446,7 @@ export default function SportDetailPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSkills.map((skill, index) => (
-              <Link key={skill.id} href={`/sports/${sportId}/skills/${skill.id}`}>
+              <Link key={skill.id} href={`/pillars/${pillarId}/skills/${skill.id}`}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
                   <CardHeader className="space-y-3">
                     <div className="flex items-start justify-between">
@@ -491,7 +489,7 @@ export default function SportDetailPage() {
                         <ul className="text-sm text-muted-foreground space-y-1">
                           {skill.learningObjectives.slice(0, 2).map((objective, idx) => (
                             <li key={idx} className="flex items-start gap-2">
-                              <span className="text-primary text-xs mt-1">•</span>
+                              <span className="text-primary text-xs mt-1">*</span>
                               <span className="line-clamp-1">{objective}</span>
                             </li>
                           ))}

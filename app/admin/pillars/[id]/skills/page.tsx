@@ -24,7 +24,24 @@ import {
   BookOpen,
   Play,
   Target,
+  Brain,
+  Footprints,
+  Shapes,
+  Grid3X3,
+  Dumbbell,
 } from 'lucide-react';
+import { PILLARS } from '@/types';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
+
+// Icon map for pillar icons
+const PILLAR_ICONS: Record<string, React.ElementType> = {
+  Brain,
+  Footprints,
+  Shapes,
+  Target,
+  Grid3X3,
+  Dumbbell,
+};
 
 interface AdminSkillsState {
   sport: Sport | null;
@@ -363,29 +380,65 @@ function AdminSkillsContent() {
     );
   }
 
+  // Get pillar display info
+  const getPillarDisplayInfo = () => {
+    if (!state.sport) return null;
+    const slug = getPillarSlugFromDocId(state.sport.id);
+    if (slug) {
+      const info = PILLARS.find(p => p.slug === slug);
+      if (info) {
+        return {
+          icon: info.icon,
+          color: info.color,
+          shortName: info.shortName,
+        };
+      }
+    }
+    return {
+      icon: state.sport.icon,
+      color: 'blue',
+      shortName: state.sport.name.split(' ')[0],
+    };
+  };
+
+  const displayInfo = getPillarDisplayInfo();
+  const colorClasses = displayInfo ? getPillarColorClasses(displayInfo.color) : null;
+  const IconComponent = displayInfo ? (PILLAR_ICONS[displayInfo.icon] || Target) : Target;
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header */}
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => router.push('/admin/sports')} className="mb-4">
+        <Button variant="ghost" onClick={() => router.push('/admin/pillars')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Sports Management
+          Back to Pillar Management
         </Button>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {state.sport?.icon} {state.sport?.name} - Skills Management
-            </h1>
-            <p className="text-muted-foreground">
-              Manage skills for this sport
-            </p>
+        {/* Pillar Header with Gradient */}
+        {state.sport && colorClasses && (
+          <div className={`rounded-lg bg-gradient-to-r ${colorClasses.gradient} p-6 text-white`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <IconComponent className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <p className="text-white/80 text-sm">Pillar {state.sport.order}</p>
+                  <h1 className="text-2xl font-bold">
+                    {state.sport.name} - Skills
+                  </h1>
+                  <p className="text-white/80 text-sm mt-1">
+                    Manage skills for this pillar
+                  </p>
+                </div>
+              </div>
+              <Button onClick={handleCreate} className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Skill
+              </Button>
+            </div>
           </div>
-          <Button onClick={handleCreate} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Add Skill
-          </Button>
-        </div>
+        )}
       </div>
 
       {/* Error Display */}

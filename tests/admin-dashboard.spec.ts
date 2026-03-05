@@ -109,7 +109,7 @@ test.describe('Admin Dashboard Core Functionality', () => {
     await expect(page.locator('text=System Settings')).toBeVisible();
 
     // Check for management buttons
-    await expect(page.locator('a[href="/admin/sports"] button')).toBeVisible();
+    await expect(page.locator('a[href="/admin/pillars"] button')).toBeVisible();
     await expect(page.locator('a[href="/admin/quizzes"] button')).toBeVisible();
     await expect(page.locator('a[href="/admin/users"] button')).toBeVisible();
     await expect(page.locator('a[href="/admin/analytics"] button')).toBeVisible();
@@ -144,7 +144,7 @@ test.describe('Admin Navigation', () => {
 
   test('should navigate to sports management page', async ({ page }) => {
     await page.waitForLoadState('networkidle');
-    await page.click('a[href="/admin/sports"]');
+    await page.click('a[href="/admin/pillars"]');
     await expect(page).toHaveURL('/admin/sports');
   });
 

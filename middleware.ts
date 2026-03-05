@@ -86,7 +86,7 @@ function isPublicRoute(pathname: string): boolean {
     '/auth/login',
     '/auth/register',
     '/auth/reset-password',
-    '/sports',
+    '/pillars',
     '/quizzes',
     '/help',
     '/contact',

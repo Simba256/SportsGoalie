@@ -320,9 +320,9 @@ export default function SkillDetailPage() {
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href="/sports" className="hover:text-primary">Sports</Link>
+        <Link href="/pillars" className="hover:text-primary">Pillars</Link>
         <span>/</span>
-        <Link href={`/sports/${sportId}`} className="hover:text-primary">{sport.name}</Link>
+        <Link href={`/pillars/${sportId}`} className="hover:text-primary">{sport.name}</Link>
         <span>/</span>
         <span className="text-foreground">{skill.name}</span>
       </nav>
@@ -425,7 +425,7 @@ export default function SkillDetailPage() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {prerequisites.map((prereq) => (
-                      <Link key={prereq.id} href={`/sports/${sportId}/skills/${prereq.id}`}>
+                      <Link key={prereq.id} href={`/pillars/${sportId}/skills/${prereq.id}`}>
                         <span className="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-sm hover:bg-yellow-300 transition-colors">
                           {prereq.name}
                         </span>

@@ -28,11 +28,11 @@ export default function Home() {
 
         <div className="flex gap-4 justify-center">
           <Button size="lg" asChild>
-            <Link href="/sports">Explore Courses</Link>
+            <Link href="/pillars">Explore Courses</Link>
           </Button>
 
           <Button variant="outline" size="lg" asChild>
-            <Link href="/sports">Learn More</Link>
+            <Link href="/pillars">Learn More</Link>
           </Button>
         </div>
       </section>

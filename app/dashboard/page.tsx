@@ -13,6 +13,11 @@ import {
   CheckCircle,
   Clock,
   Users,
+  Brain,
+  Footprints,
+  Shapes,
+  Grid3X3,
+  Dumbbell,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -33,6 +38,18 @@ import { useEnrollment } from '@/src/hooks/useEnrollment';
 import { StatsCards } from '@/components/analytics/StatsCards';
 import { VideoUpload } from '@/src/components/dashboard/VideoUpload';
 import { CustomCurriculumDashboard } from '@/src/components/dashboard/CustomCurriculumDashboard';
+import { PILLARS } from '@/types';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
+
+// Icon map for pillar icons
+const PILLAR_ICONS: Record<string, React.ElementType> = {
+  Brain,
+  Footprints,
+  Shapes,
+  Target,
+  Grid3X3,
+  Dumbbell,
+};
 
 export default function DashboardPage() {
   return (
@@ -106,7 +123,7 @@ function DashboardContent() {
       value: stats?.skillsCompleted || 0,
       description: stats?.skillsCompleted
         ? 'Skills attempted'
-        : 'Explore course skills',
+        : 'Explore pillar skills',
       trend: stats?.skillsCompleted ? ('up' as const) : ('neutral' as const),
       trendValue: '',
       icon: <BookOpen className="h-4 w-4" />,
@@ -141,6 +158,26 @@ function DashboardContent() {
     },
   ];
 
+  // Get pillar display info
+  const getPillarDisplayInfo = (sport: { id: string; icon?: string; name: string }) => {
+    const slug = getPillarSlugFromDocId(sport.id);
+    if (slug) {
+      const info = PILLARS.find(p => p.slug === slug);
+      if (info) {
+        return {
+          icon: info.icon,
+          color: info.color,
+          shortName: info.shortName,
+        };
+      }
+    }
+    return {
+      icon: sport.icon || 'Target',
+      color: 'blue',
+      shortName: sport.name.split(' ')[0],
+    };
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-8">
@@ -150,7 +187,7 @@ function DashboardContent() {
               Welcome back, {user?.displayName || user?.email?.split('@')[0]}!
             </h1>
             <p className="text-muted-foreground">
-              Continue your sports learning journey and track your progress.
+              Continue your goalie training journey and track your progress across all 6 pillars.
             </p>
           </div>
         </div>
@@ -164,18 +201,18 @@ function DashboardContent() {
             <div>
               <h2 className="text-2xl font-bold flex items-center space-x-2">
                 <Trophy className="h-6 w-6 text-primary" />
-                <span>Your Course Progress</span>
+                <span>Your Pillar Progress</span>
               </h2>
               <p className="text-muted-foreground mt-1">
-                Track your progress across all enrolled courses and continue
+                Track your progress across all 6 goaltending pillars and continue
                 your learning journey.
               </p>
             </div>
             {enrolledSports.length > 0 && (
-              <Link href="/sports">
+              <Link href="/pillars">
                 <Button variant="outline">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Browse More Courses
+                  View All Pillars
                 </Button>
               </Link>
             )}
@@ -199,17 +236,16 @@ function DashboardContent() {
                     <Users className="h-12 w-12 text-muted-foreground" />
                   </div>
                   <h3 className="text-xl font-semibold mb-3">
-                    No Courses Enrolled Yet
+                    No Pillars Enrolled Yet
                   </h3>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Start your learning journey by enrolling in your first
-                    course. Explore our comprehensive catalog and begin
-                    mastering new skills today.
+                    Start your goaltending journey by exploring the 6 fundamental
+                    pillars. Each pillar contains essential skills to master.
                   </p>
-                  <Link href="/sports">
+                  <Link href="/pillars">
                     <Button className="bg-primary hover:bg-primary/90">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      Explore Course Catalog
+                      Explore Learning Pillars
                     </Button>
                   </Link>
                 </div>
@@ -218,6 +254,10 @@ function DashboardContent() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {enrolledSports.map(({ sport, progress }) => {
+                const displayInfo = getPillarDisplayInfo(sport);
+                const colorClasses = getPillarColorClasses(displayInfo.color);
+                const IconComponent = PILLAR_ICONS[displayInfo.icon] || Target;
+
                 const getStatusColor = (status: string) => {
                   switch (status) {
                     case 'completed':
@@ -228,9 +268,9 @@ function DashboardContent() {
                       };
                     case 'in_progress':
                       return {
-                        badge: 'bg-primary/10 text-primary border-primary/20',
-                        progress: 'bg-primary',
-                        card: 'border-primary/20 bg-primary/5',
+                        badge: `${colorClasses.bgLight} ${colorClasses.text} ${colorClasses.border}`,
+                        progress: colorClasses.bg,
+                        card: `${colorClasses.border} bg-opacity-5`,
                       };
                     default:
                       return {
@@ -271,23 +311,13 @@ function DashboardContent() {
                     key={sport.id}
                     className={`group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${statusColors.card}`}
                   >
-                    <Link href={`/sports/${sport.id}`} className="block">
+                    <Link href={`/pillars/${sport.id}`} className="block">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center space-x-3">
-                            {sport.imageUrl ? (
-                              <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted ring-2 ring-background shadow-sm">
-                                <img
-                                  src={sport.imageUrl}
-                                  alt={sport.name}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center ring-2 ring-background shadow-sm">
-                                <Trophy className="h-6 w-6 text-primary" />
-                              </div>
-                            )}
+                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center ring-2 ring-background shadow-sm bg-gradient-to-br ${colorClasses.gradient}`}>
+                              <IconComponent className="h-6 w-6 text-white" />
+                            </div>
                             <div>
                               <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
                                 {sport.name}
@@ -409,19 +439,19 @@ function DashboardContent() {
             <CardHeader>
               <CardTitle>Start Learning</CardTitle>
               <CardDescription>
-                Explore our course library and begin your learning journey.
+                Explore the 6 goaltending pillars and begin your training.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Link href="/sports">
+              <Link href="/pillars">
                 <div className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer">
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <BookOpen className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium">Browse Courses</h3>
+                    <h3 className="font-medium">Browse Pillars</h3>
                     <p className="text-sm text-muted-foreground">
-                      Discover courses and skills to master
+                      Discover skills across all 6 pillars
                     </p>
                   </div>
                 </div>
@@ -457,13 +487,13 @@ function DashboardContent() {
             <CardHeader>
               <CardTitle>Overall Progress</CardTitle>
               <CardDescription>
-                Your journey across all courses and skills.
+                Your journey across all pillars and skills.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Courses Completed</span>
+                  <span>Pillars Completed</span>
                   <span className="font-medium">
                     {stats?.sportsCompleted || 0}/6
                   </span>
@@ -557,10 +587,10 @@ function DashboardContent() {
                   <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">No activity yet</h3>
                   <p className="text-muted-foreground mb-4">
-                    Start learning course skills and taking quizzes to see your
+                    Start learning pillar skills and taking quizzes to see your
                     progress here.
                   </p>
-                  <Link href="/sports">
+                  <Link href="/pillars">
                     <Button>Get Started</Button>
                   </Link>
                 </div>

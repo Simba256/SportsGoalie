@@ -9,7 +9,7 @@
 **Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 100% (Phase 1 Complete, Phase 2.0 Multi-Role Foundation Complete)
+**Overall Progress:** 100% (Phase 1 Complete, Phase 2.0 Multi-Role Foundation Complete, Phase 2.1 6-Pillar Conversion 90% Complete)
 
 ---
 
@@ -19,7 +19,7 @@
 - [ ] Implement parent-child relationships with student ID linking (Phase 2.0.4)
 - [ ] Role-based route protection (Phase 2.0.5)
 - [x] Student onboarding & initial evaluation (Phase 2.0.7) - COMPLETE
-- [ ] Convert to 6-pillar ice hockey goalie structure (Phase 2.1)
+- [x] Convert to 6-pillar ice hockey goalie structure (Phase 2.1) - COMPLETE
 
 ### Completed This Sprint
 - [x] Comprehensive project analysis (2026-02-22)
@@ -35,12 +35,21 @@
 - [x] **Dashboard separation for custom vs automated students** (2026-02-26)
 - [x] **Coach Custom Content Creation System** (video lessons + video quizzes with full feature parity) (2026-03-01)
 - [x] **Phase 2.0.7: Student Onboarding Evaluation System** (27 questions, 6 pillars, coach review) (2026-03-04)
+- [x] **Phase 2.1: 6-Pillar Conversion** (fixed pillars, UI updates, migration script) (2026-03-05)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-05 - [Route Renaming (sports to pillars)](docs/sessions/2026-03/2026-03-05-route-renaming-sports-to-pillars.md)
+**Time:** 30min | **Focus:** Refactor - Phase 2.1c Route Renaming
+Renamed URL routes from `/sports` to `/pillars` to complete terminology alignment. Renamed directories (app/sports → app/pillars, app/admin/sports → app/admin/pillars, tests). Updated 14 files with internal link changes. Updated middleware public routes. Updated test import paths. TypeScript and build verified.
+
+### 2026-03-05 - [6-Pillar Conversion](docs/sessions/2026-03/2026-03-05-6-pillar-conversion.md)
+**Time:** 1h 30min | **Focus:** Feature - Phase 2.1 6-Pillar Conversion
+Converted platform from generic sports/courses to fixed 6 Ice Hockey Goalie pillars. Created pillar utilities (src/lib/utils/pillars.ts) with ID mappings, color classes, and helpers. Updated seed data, student-facing pages (sports catalog, detail, dashboard), and admin pages (pillar management, skills). Removed create/delete for pillars (fixed set). Created and executed migration script - deleted 22 old sports, created 6 pillars, reassigned 12 skills and 15 video quizzes. TypeScript and build verified.
 
 ### 2026-03-04 - [Onboarding Redirect Fix & Workflow Filter](docs/sessions/2026-03/2026-03-04-onboarding-redirect-fix-workflow-filter.md)
 **Time:** 45min | **Focus:** Bug Fix / Feature
@@ -150,27 +159,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 41 hours | 🔄 In Progress |
-| **Total** | **~201 hours** | - |
+| Phase 2 | 43 hours | 🔄 In Progress |
+| **Total** | **~203 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 27h | 66% |
+| Development | 28.5h | 66% |
 | Documentation | 1.75h | 4% |
-| Debugging | 9.5h | 23% |
-| Security | 1.5h | 4% |
-| Refactor | 1h | 2% |
+| Debugging | 9.5h | 22% |
+| Security | 1.5h | 3% |
+| Refactor | 1.5h | 3% |
 | Testing | 0.25h | <1% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **41h** | **100%** |
+| **Total** | **43h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 15h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter | 10 |
+| 2026-03-01 | 17h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming | 12 |
 
 ---
 
@@ -189,11 +198,12 @@ Initial project analysis and progress tracking system implementation.
 - [x] 2.0.6b: Coach custom content creation (video lessons + quizzes) - COMPLETE
 - [x] 2.0.7: Student onboarding & initial evaluation - COMPLETE (rules deployed, tested)
 
-#### 2.1 - 6-Pillar Conversion (0% Complete)
-- [ ] Convert sports/skills to 6 fixed pillars
-- [ ] Implement level unlock system
+#### 2.1 - 6-Pillar Conversion (90% Complete)
+- [x] Convert sports/skills to 6 fixed pillars - COMPLETE
+- [x] Rename routes from /sports to /pillars - COMPLETE
+- [ ] Implement level unlock system (deferred to Phase 2.1b)
 - [ ] Build content review functionality
-- [ ] Update all UI to reflect pillar structure
+- [x] Update all UI to reflect pillar structure - COMPLETE
 
 #### 2.2 - Enhanced Analytics (0% Complete)
 - [ ] Per-pillar analytics dashboards
@@ -221,6 +231,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-05: 6-Pillar Architecture
+**Decision:** Repurpose `sports` collection as pillars with fixed document IDs (pillar_mindset, etc.)
+**Rationale:** Minimizes refactoring by reusing existing sportId references throughout codebase
+**Impact:** All existing services work with pillars, no collection renames needed
+**Alternatives Considered:** New `pillars` collection (rejected - too much refactoring), auto-generated IDs (rejected - can't reference pillars in code)
+
+### 2026-03-05: Remove Pillar Create/Delete in Admin
+**Decision:** Admin can edit pillars but cannot create or delete them
+**Rationale:** 6 pillars are fundamental to the Ice Hockey Goalie training system and should be fixed
+**Impact:** Simpler admin UI, prevents accidental data loss, ensures consistent pillar structure
+**Alternatives Considered:** Keep full CRUD (rejected - pillars shouldn't change), hide admin page entirely (rejected - still need to edit descriptions/images)
 
 ### 2026-03-04: Onboarding Evaluation Architecture
 **Decision:** Store evaluations in `onboarding_evaluations` collection with document ID `eval_{userId}`
@@ -429,6 +451,34 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-05 (Session: Route Renaming)
+- **Refactor:** Renamed `app/sports/` directory to `app/pillars/`
+- **Refactor:** Renamed `app/admin/sports/` directory to `app/admin/pillars/`
+- **Refactor:** Renamed `src/__tests__/app/sports/` directory to `src/__tests__/app/pillars/`
+- **Routes:** Updated all internal navigation links (14 files modified)
+- **Routes:** Updated middleware public routes from `/sports` to `/pillars`
+- **Routes:** New routes: `/pillars`, `/pillars/[id]`, `/pillars/[id]/skills/[skillId]`
+- **Routes:** New admin routes: `/admin/pillars`, `/admin/pillars/[id]/skills`
+- **Tests:** Updated test file import paths and link selectors
+- **Build:** TypeScript compiles with zero errors, build succeeds
+
+### 2026-03-05 (Session: 6-Pillar Conversion)
+- **Feature:** Converted platform from generic sports/courses to fixed 6 Ice Hockey Goalie pillars
+- **Feature:** Created pillar utilities (`src/lib/utils/pillars.ts`) with PILLAR_IDS, color classes, helper functions
+- **Feature:** Updated seed data to use PILLARS constant from onboarding types
+- **Feature:** Added `Pillar` type alias for `Sport` in types/index.ts
+- **UI:** Updated `/sports` page to show 6 pillar cards with icons and gradient headers
+- **UI:** Updated `/sports/[id]` page with pillar gradient header showing icon
+- **UI:** Updated dashboard to show pillar-based progress with icons and colors
+- **UI:** Renamed "Course Progress" to "Pillar Progress" throughout dashboard
+- **Admin:** Updated `/admin/sports` to "Pillar Management" - removed create/delete buttons
+- **Admin:** Added info card explaining fixed 6-pillar structure
+- **Admin:** Updated `/admin/sports/[id]/skills` with pillar gradient header
+- **Migration:** Created `scripts/migrate-to-pillars.ts` with dry-run and keep-data support
+- **Migration:** Executed migration - deleted 22 old sports, created 6 pillars
+- **Migration:** Reassigned 12 skills and 15 video quizzes to pillar_mindset (default)
+- **Build:** TypeScript compiles with zero errors, build succeeds
 
 ### 2026-03-04 (Session: Onboarding Redirect Fix & Workflow Filter)
 - **Fix:** Added onboarding fields (onboardingCompleted, onboardingCompletedAt, initialAssessmentLevel) to auth context user object
@@ -736,11 +786,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-04
-**Last Session:** Onboarding Redirect Fix & Workflow Filter
-**Total Sessions This Phase:** 24
-**Current Phase Hours:** 41h
-**Next Session Focus:** Phase 2.1 - 6-pillar conversion, or full end-to-end testing with real accounts
+**Last Updated:** 2026-03-05
+**Last Session:** Route Renaming (sports to pillars)
+**Total Sessions This Phase:** 26
+**Current Phase Hours:** 43h
+**Next Session Focus:** Manual testing of pillar navigation, update remaining Playwright tests, or Phase 2.1b level unlock system
 
 ---
 

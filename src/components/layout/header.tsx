@@ -121,7 +121,7 @@ export function Header() {
           <nav className="hidden md:flex items-center">
             <div className={`${pillContainer} px-1.5 py-1.5`}>
               <div className="flex items-center gap-1">
-                <PillLink href="/sports" onClick={closeMenus}>
+                <PillLink href="/pillars" onClick={closeMenus}>
                   Courses
                 </PillLink>
 
@@ -264,7 +264,7 @@ export function Header() {
         {isMenuOpen && (
           <div className="border-t bg-background/85 backdrop-blur md:hidden">
             <nav className="container mx-auto px-4 py-4 space-y-1">
-              <MobileLink href="/sports" onClick={closeMenus}>
+              <MobileLink href="/pillars" onClick={closeMenus}>
                 Courses
               </MobileLink>
 

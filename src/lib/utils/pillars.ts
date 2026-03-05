@@ -1,0 +1,134 @@
+/**
+ * Pillar Utilities
+ *
+ * Utilities for working with the 6 Ice Hockey Goalie pillars.
+ * These replace the generic "sports" concept with a fixed pillar structure.
+ */
+
+import { PillarSlug, PILLARS, PillarInfo } from '@/types/onboarding';
+
+/**
+ * Fixed pillar document IDs in Firestore
+ */
+export const PILLAR_IDS = {
+  mindset: 'pillar_mindset',
+  skating: 'pillar_skating',
+  form: 'pillar_form',
+  positioning: 'pillar_positioning',
+  seven_point: 'pillar_seven_point',
+  training: 'pillar_training',
+} as const;
+
+export type PillarId = typeof PILLAR_IDS[keyof typeof PILLAR_IDS];
+
+/**
+ * Map pillar color names to Tailwind CSS class combinations
+ */
+export const PILLAR_COLOR_CLASSES: Record<string, {
+  bg: string;
+  bgLight: string;
+  text: string;
+  border: string;
+  gradient: string;
+}> = {
+  purple: {
+    bg: 'bg-purple-500',
+    bgLight: 'bg-purple-100 dark:bg-purple-900/30',
+    text: 'text-purple-600 dark:text-purple-400',
+    border: 'border-purple-200 dark:border-purple-800',
+    gradient: 'from-purple-500 to-purple-700',
+  },
+  blue: {
+    bg: 'bg-blue-500',
+    bgLight: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-200 dark:border-blue-800',
+    gradient: 'from-blue-500 to-blue-700',
+  },
+  green: {
+    bg: 'bg-green-500',
+    bgLight: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-600 dark:text-green-400',
+    border: 'border-green-200 dark:border-green-800',
+    gradient: 'from-green-500 to-green-700',
+  },
+  orange: {
+    bg: 'bg-orange-500',
+    bgLight: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-600 dark:text-orange-400',
+    border: 'border-orange-200 dark:border-orange-800',
+    gradient: 'from-orange-500 to-orange-700',
+  },
+  red: {
+    bg: 'bg-red-500',
+    bgLight: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-600 dark:text-red-400',
+    border: 'border-red-200 dark:border-red-800',
+    gradient: 'from-red-500 to-red-700',
+  },
+  cyan: {
+    bg: 'bg-cyan-500',
+    bgLight: 'bg-cyan-100 dark:bg-cyan-900/30',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    border: 'border-cyan-200 dark:border-cyan-800',
+    gradient: 'from-cyan-500 to-cyan-700',
+  },
+};
+
+/**
+ * Get the fixed Firestore document ID for a pillar slug
+ */
+export function getPillarDocId(slug: PillarSlug): PillarId {
+  return PILLAR_IDS[slug];
+}
+
+/**
+ * Get pillar info by Firestore document ID
+ */
+export function getPillarByDocId(docId: string): PillarInfo | null {
+  const slug = Object.entries(PILLAR_IDS).find(([, id]) => id === docId)?.[0] as PillarSlug | undefined;
+  if (!slug) return null;
+  return PILLARS.find(p => p.slug === slug) || null;
+}
+
+/**
+ * Get pillar slug from document ID
+ */
+export function getPillarSlugFromDocId(docId: string): PillarSlug | null {
+  const entry = Object.entries(PILLAR_IDS).find(([, id]) => id === docId);
+  return entry ? entry[0] as PillarSlug : null;
+}
+
+/**
+ * Check if a document ID is a valid pillar ID
+ */
+export function isPillarDocId(id: string): id is PillarId {
+  return Object.values(PILLAR_IDS).includes(id as PillarId);
+}
+
+/**
+ * Get color classes for a pillar
+ */
+export function getPillarColorClasses(colorName: string) {
+  return PILLAR_COLOR_CLASSES[colorName] || PILLAR_COLOR_CLASSES.blue;
+}
+
+/**
+ * Get all pillar IDs as an array
+ */
+export function getAllPillarIds(): PillarId[] {
+  return Object.values(PILLAR_IDS);
+}
+
+/**
+ * Get all pillars with their document IDs
+ */
+export function getAllPillarsWithIds(): Array<PillarInfo & { docId: PillarId }> {
+  return PILLARS.map(pillar => ({
+    ...pillar,
+    docId: PILLAR_IDS[pillar.slug],
+  }));
+}
+
+// Re-export PILLARS for convenience
+export { PILLARS };

@@ -819,3 +819,9 @@ export {
   getLevelDisplayText,
   getLevelColor,
 } from './onboarding';
+
+/**
+ * Pillar type alias - Pillars use the same structure as Sports
+ * but represent the fixed 6 Ice Hockey Goalie learning pillars
+ */
+export type Pillar = Sport;

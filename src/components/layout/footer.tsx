@@ -19,7 +19,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   const platform = [
-    { href: '/sports', title: 'Courses', desc: 'Expert-led training' },
+    { href: '/pillars', title: 'Courses', desc: 'Expert-led training' },
     { href: '/quizzes', title: 'Skill Quizzes', desc: 'Test your knowledge' },
     { href: '/progress', title: 'Progress Tracking', desc: 'Monitor your growth' },
     { href: '/dashboard', title: 'Dashboard', desc: 'Your training hub' },
@@ -78,7 +78,7 @@ export function Footer() {
 
               <div className="lg:col-span-5 flex flex-col sm:flex-row gap-3 justify-end">
                 <Button variant="outline" className="rounded-xl" asChild>
-                  <Link href="/sports">Explore Courses</Link>
+                  <Link href="/pillars">Explore Courses</Link>
                 </Button>
                 <Button
                   className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90"

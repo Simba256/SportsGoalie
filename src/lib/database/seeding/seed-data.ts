@@ -5,102 +5,67 @@ import {
   QuizQuestion,
   Achievement,
   AppSettings,
-  DifficultyLevel
+  DifficultyLevel,
+  PILLARS,
 } from '@/types';
 
-// Sample Sports Data
-export const sampleSports: Omit<Sport, 'id' | 'createdAt' | 'updatedAt' | 'skillsCount' | 'metadata' | 'createdBy'>[] = [
-  {
-    name: 'Basketball',
-    description: 'Learn the fundamentals of basketball, from basic dribbling to advanced shooting techniques and team strategies.',
-    icon: '🏀',
-    color: '#FF8C00',
-    category: 'Team Sports',
-    difficulty: 'introduction' as DifficultyLevel,
-    estimatedTimeToComplete: 40,
-    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800',
-    tags: ['team-sport', 'indoor', 'cardio', 'coordination'],
-    prerequisites: [],
-    isActive: true,
-    isFeatured: true,
-    order: 1,
-  },
-  {
-    name: 'Soccer',
-    description: 'Master the beautiful game with comprehensive training covering ball control, passing, shooting, and tactical awareness.',
-    icon: '⚽',
-    color: '#4CAF50',
-    category: 'Team Sports',
-    difficulty: 'introduction' as DifficultyLevel,
-    estimatedTimeToComplete: 50,
-    imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800',
-    tags: ['team-sport', 'outdoor', 'cardio', 'endurance'],
-    prerequisites: [],
-    isActive: true,
-    isFeatured: true,
-    order: 2,
-  },
-  {
-    name: 'Tennis',
-    description: 'Develop your tennis skills from basic strokes to advanced match strategies and mental toughness.',
-    icon: '🎾',
-    color: '#FFD700',
-    category: 'Individual Sports',
-    difficulty: 'development' as DifficultyLevel,
-    estimatedTimeToComplete: 35,
-    imageUrl: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=800',
-    tags: ['individual-sport', 'outdoor', 'precision', 'agility'],
-    prerequisites: [],
-    isActive: true,
-    isFeatured: true,
-    order: 3,
-  },
-  {
-    name: 'Swimming',
-    description: 'Learn essential swimming techniques, breathing patterns, and competitive strokes for all skill levels.',
-    icon: '🏊‍♂️',
-    color: '#2196F3',
-    category: 'Individual Sports',
-    difficulty: 'introduction' as DifficultyLevel,
-    estimatedTimeToComplete: 30,
-    imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800',
-    tags: ['individual-sport', 'water', 'cardio', 'full-body'],
-    prerequisites: [],
-    isActive: true,
-    isFeatured: false,
-    order: 4,
-  },
-  {
-    name: 'Rock Climbing',
-    description: 'Build strength, technique, and mental fortitude through progressive rock climbing training and safety protocols.',
-    icon: '🧗‍♂️',
-    color: '#8D4E85',
-    category: 'Adventure Sports',
-    difficulty: 'refinement' as DifficultyLevel,
-    estimatedTimeToComplete: 60,
-    imageUrl: 'https://images.unsplash.com/photo-1551524164-6cf96ac4c4c1?w=800',
-    tags: ['adventure', 'strength', 'outdoor', 'mental-focus'],
-    prerequisites: [],
-    isActive: true,
-    isFeatured: false,
-    order: 5,
-  },
-  {
-    name: 'Yoga',
-    description: 'Discover physical and mental wellness through various yoga practices, poses, and meditation techniques.',
-    icon: '🧘‍♀️',
-    color: '#9C27B0',
-    category: 'Wellness',
-    difficulty: 'introduction' as DifficultyLevel,
-    estimatedTimeToComplete: 25,
-    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800',
-    tags: ['wellness', 'flexibility', 'mindfulness', 'indoor'],
-    prerequisites: [],
-    isActive: true,
-    isFeatured: true,
-    order: 6,
-  },
-];
+/**
+ * Pillar ID mapping - use these fixed IDs for the 6 pillars
+ */
+export const PILLAR_IDS = {
+  mindset: 'pillar_mindset',
+  skating: 'pillar_skating',
+  form: 'pillar_form',
+  positioning: 'pillar_positioning',
+  seven_point: 'pillar_seven_point',
+  training: 'pillar_training',
+} as const;
+
+/**
+ * Map Tailwind color names to hex values
+ */
+const PILLAR_COLORS: Record<string, string> = {
+  purple: '#9333EA',
+  blue: '#3B82F6',
+  green: '#22C55E',
+  orange: '#F97316',
+  red: '#EF4444',
+  cyan: '#06B6D4',
+};
+
+/**
+ * The 6 Ice Hockey Goalie Pillars - fixed set of learning pillars
+ * These replace the generic "sports" with a structured goalie training system
+ */
+export const sampleSports: Omit<Sport, 'id' | 'createdAt' | 'updatedAt' | 'skillsCount' | 'metadata' | 'createdBy'>[] = PILLARS.map((pillar, index) => ({
+  name: pillar.name,
+  description: pillar.description,
+  icon: pillar.icon,
+  color: PILLAR_COLORS[pillar.color] || '#3B82F6',
+  category: 'Ice Hockey Goalie',
+  difficulty: 'introduction' as DifficultyLevel,
+  estimatedTimeToComplete: 120,
+  imageUrl: undefined,
+  tags: ['ice-hockey', 'goalie', pillar.slug, pillar.shortName.toLowerCase()],
+  prerequisites: [],
+  isActive: true,
+  isFeatured: true,
+  order: index + 1,
+}));
+
+/**
+ * Get the fixed pillar ID for a given slug
+ */
+export function getPillarId(slug: keyof typeof PILLAR_IDS): string {
+  return PILLAR_IDS[slug];
+}
+
+/**
+ * Check if an ID is a valid pillar ID
+ */
+export function isPillarId(id: string): boolean {
+  return Object.values(PILLAR_IDS).includes(id as typeof PILLAR_IDS[keyof typeof PILLAR_IDS]);
+}
 
 // Sample Skills Data (Basketball skills)
 export const sampleSkills: Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'createdBy'>[] = [
