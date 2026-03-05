@@ -43,6 +43,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-05 - [Test Files Pillar Route Update](docs/sessions/2026-03/2026-03-05-test-files-pillar-route-update.md)
+**Time:** 45min | **Focus:** Testing - Phase 2.1d Test File Updates
+Updated 5 test files with /sports → /pillars route changes. Fixed test assertions to match actual UI ("Ice Hockey Goalie Pillars" title). Fixed strict mode violations and timeout issues. All 19 sports-workflows.spec.ts tests pass on chromium. TypeScript and build verified.
+
 ### 2026-03-05 - [Route Renaming (sports to pillars)](docs/sessions/2026-03/2026-03-05-route-renaming-sports-to-pillars.md)
 **Time:** 30min | **Focus:** Refactor - Phase 2.1c Route Renaming
 Renamed URL routes from `/sports` to `/pillars` to complete terminology alignment. Renamed directories (app/sports → app/pillars, app/admin/sports → app/admin/pillars, tests). Updated 14 files with internal link changes. Updated middleware public routes. Updated test import paths. TypeScript and build verified.
@@ -159,27 +163,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 43 hours | 🔄 In Progress |
-| **Total** | **~203 hours** | - |
+| Phase 2 | 44 hours | 🔄 In Progress |
+| **Total** | **~204 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 28.5h | 66% |
+| Development | 28.5h | 65% |
 | Documentation | 1.75h | 4% |
 | Debugging | 9.5h | 22% |
 | Security | 1.5h | 3% |
 | Refactor | 1.5h | 3% |
-| Testing | 0.25h | <1% |
+| Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **43h** | **100%** |
+| **Total** | **44h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 17h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming | 12 |
+| 2026-03-01 | 18h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates | 13 |
 
 ---
 
@@ -198,9 +202,10 @@ Initial project analysis and progress tracking system implementation.
 - [x] 2.0.6b: Coach custom content creation (video lessons + quizzes) - COMPLETE
 - [x] 2.0.7: Student onboarding & initial evaluation - COMPLETE (rules deployed, tested)
 
-#### 2.1 - 6-Pillar Conversion (90% Complete)
+#### 2.1 - 6-Pillar Conversion (95% Complete)
 - [x] Convert sports/skills to 6 fixed pillars - COMPLETE
 - [x] Rename routes from /sports to /pillars - COMPLETE
+- [x] Update test files for pillar routes - COMPLETE
 - [ ] Implement level unlock system (deferred to Phase 2.1b)
 - [ ] Build content review functionality
 - [x] Update all UI to reflect pillar structure - COMPLETE
@@ -451,6 +456,16 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-05 (Session: Test Files Pillar Route Update)
+- **Testing:** Updated 5 test files with `/sports` → `/pillars` route changes
+- **Testing:** Fixed sports-workflows.spec.ts assertions to match actual UI
+- **Testing:** Fixed strict mode violations using `.first()` selectors
+- **Testing:** Changed `networkidle` to `domcontentloaded` for timeout reliability
+- **Testing:** Updated admin tests to handle auth redirect/loading/content states
+- **Testing:** Fixed admin-dashboard.spec.ts line 148 assertion (`/admin/pillars`)
+- **Verification:** All 19 sports-workflows.spec.ts tests pass on chromium
+- **Build:** TypeScript compiles with zero errors, build succeeds
 
 ### 2026-03-05 (Session: Route Renaming)
 - **Refactor:** Renamed `app/sports/` directory to `app/pillars/`
@@ -787,10 +802,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-05
-**Last Session:** Route Renaming (sports to pillars)
-**Total Sessions This Phase:** 26
-**Current Phase Hours:** 43h
-**Next Session Focus:** Manual testing of pillar navigation, update remaining Playwright tests, or Phase 2.1b level unlock system
+**Last Session:** Test Files Pillar Route Update
+**Total Sessions This Phase:** 27
+**Current Phase Hours:** 44h
+**Next Session Focus:** Run full Playwright test suite, manual testing of pillar navigation, or Phase 2.1b level unlock system
 
 ---
 
