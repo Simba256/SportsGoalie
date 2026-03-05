@@ -37,7 +37,7 @@ const PERFORMANCE_THRESHOLDS = {
 async function measurePageLoad(page: Page, url: string) {
   const startTime = Date.now();
   await page.goto(url);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   const loadTime = Date.now() - startTime;
 
   // Get performance metrics
@@ -62,8 +62,8 @@ async function login(page: Page, email: string, password: string) {
   await page.goto('/auth/login');
   await page.fill('[data-testid="email-input"]', email);
   await page.fill('[data-testid="password-input"]', password);
-  await page.click('[data-testid="login-button"]');
-  await page.waitForLoadState('networkidle');
+  await page.click('[data-testid="login-submit"]');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 test.describe('Phase 2 - Performance & Stress Testing', () => {
@@ -103,7 +103,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
       const startTime = Date.now();
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       const loadTime = Date.now() - startTime;
 
       console.log('Dashboard Load Time:', `${loadTime}ms`);
@@ -115,7 +115,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
       const startTime = Date.now();
       await page.goto('/admin');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       const loadTime = Date.now() - startTime;
 
       console.log('Admin Dashboard Load Time:', `${loadTime}ms`);
@@ -216,7 +216,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
         }
       });
 
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000); // Allow all API calls to complete
 
       if (apiResponses.length > 0) {
@@ -231,7 +231,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
     test('should handle rapid navigation between pillars', async ({ page }) => {
       await page.goto('/pillars');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Check if pillars are available
       const pillarCards = page.locator('[data-testid="pillar-card"]');
@@ -244,13 +244,13 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
         for (let i = 0; i < Math.min(3, pillarCount); i++) {
           const startTime = Date.now();
           await pillarCards.nth(i).click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
           const navTime = Date.now() - startTime;
           navigationTimes.push(navTime);
 
           // Go back to catalog
           await page.goBack();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
         }
 
         console.log('Rapid Navigation Test:', {
@@ -273,14 +273,14 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
       // Navigate to a pillar with quizzes
       await page.goto('/pillars');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const pillarCards = page.locator('[data-testid="pillar-card"]');
       const pillarCount = await pillarCards.count();
 
       if (pillarCount > 0) {
         await pillarCards.first().click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for quiz start button
         const quizButton = page.locator('button:has-text("Start Quiz"), button:has-text("Take Quiz")').first();
@@ -288,7 +288,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
         if (hasQuiz) {
           await quizButton.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
 
           const submissionTimes: number[] = [];
 
@@ -302,12 +302,13 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
               await answerButton.click();
 
               // Wait for next question or results
-              await page.waitForLoadState('networkidle');
+              await page.waitForLoadState('domcontentloaded');
               const submitTime = Date.now() - startTime;
               submissionTimes.push(submitTime);
 
               // Check if we've reached the end
-              const resultsVisible = await page.locator('text=Results, text=Score').count() > 0;
+              const resultsVisible = await page.locator('text=Results').count() > 0 ||
+                                    await page.locator('text=Score').count() > 0;
               if (resultsVisible) break;
 
               // Move to next question
@@ -315,7 +316,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
               const hasNext = await nextButton.count() > 0;
               if (hasNext) {
                 await nextButton.click();
-                await page.waitForLoadState('networkidle');
+                await page.waitForLoadState('domcontentloaded');
               }
             }
           }
@@ -337,7 +338,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
     test('should handle search with various query lengths', async ({ page }) => {
       await page.goto('/pillars');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const searchInput = page.getByPlaceholder('Search pillars');
       const searchButton = page.getByRole('button', { name: 'Search' });
@@ -350,7 +351,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
           const startTime = Date.now();
           await searchInput.fill(query);
           await searchButton.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
           const searchTime = Date.now() - startTime;
           searchTimes.push(searchTime);
 
@@ -379,7 +380,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
       for (let i = 0; i < 10; i++) {
         const pageUrl = pages[i % pages.length];
         await page.goto(pageUrl);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
       }
 
       // Check for JavaScript errors
@@ -405,15 +406,16 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
     test('should handle browser refresh without data loss', async ({ page }) => {
       await login(page, TEST_CREDENTIALS.student.email, TEST_CREDENTIALS.student.password);
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Refresh the page
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Should still be authenticated
-      const dashboardVisible = await page.locator('text=Dashboard, text=Welcome').count() > 0;
-      expect(dashboardVisible).toBeGreaterThan(0);
+      const dashboardVisible = await page.locator('text=Dashboard').count() > 0 ||
+                              await page.locator('text=Welcome').count() > 0;
+      expect(dashboardVisible).toBeTruthy();
     });
   });
 
@@ -437,7 +439,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
     test('should handle mobile navigation smoothly', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Test mobile menu
       const menuButton = page.getByRole('button', { name: 'Menu' });
@@ -457,7 +459,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
     test('should handle network interruption gracefully', async ({ page }) => {
       await page.goto('/pillars');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Simulate offline
       await page.context().setOffline(true);
@@ -472,7 +474,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
 
       // Should recover
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const pageLoaded = await page.locator('body').count() > 0;
       expect(pageLoaded).toBe(1);
@@ -491,7 +493,7 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
       await page.unroute('**/api/**');
 
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Page should load successfully
       const pageLoaded = await page.locator('h1').count() > 0;

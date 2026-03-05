@@ -434,18 +434,19 @@ test.describe('Stage 4: Pillars & Skills Content Management - Comprehensive Test
         page.locator('text=/pillar/i').first() // Might just show no pillar found
       ];
 
-      let errorFound = false;
+      // Check for error indicators
       for (const indicator of errorIndicators) {
         const visible = await indicator.isVisible().catch(() => false);
         if (visible) {
-          errorFound = true;
-          break;
+          // Error indicator found - page handled missing pillar gracefully
+          expect(true).toBeTruthy();
+          return;
         }
       }
 
       // If no error indicators found, the page might handle it differently
       // (e.g., redirect back to pillars list or show loading state)
-      // This is acceptable behavior
+      // This is acceptable behavior - either error shown or graceful redirect
       expect(true).toBeTruthy(); // Test passes - we verified the page loads without crashing
     });
 
@@ -462,16 +463,17 @@ test.describe('Stage 4: Pillars & Skills Content Management - Comprehensive Test
         page.locator('button:has-text("Try Again")')
       ];
 
-      let errorFound = false;
+      // Check for error indicators
       for (const indicator of errorIndicators) {
         const visible = await indicator.isVisible().catch(() => false);
         if (visible) {
-          errorFound = true;
-          break;
+          // Error indicator found - page handled missing skill gracefully
+          expect(true).toBeTruthy();
+          return;
         }
       }
 
-      // Test passes as long as page loads without crashing
+      // Test passes as long as page loads without crashing - error shown or graceful redirect
       expect(true).toBeTruthy();
     });
 

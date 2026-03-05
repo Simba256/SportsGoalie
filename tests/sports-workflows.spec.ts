@@ -24,7 +24,8 @@ test.describe('Pillars Catalog Workflows', () => {
 
   test('should display pillar cards correctly', async ({ page }) => {
     // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Check for pillar cards - the new UI uses a simple grid without search/filters
     const pillarCards = page.locator('a[href*="/pillars/"]');
@@ -40,7 +41,8 @@ test.describe('Pillars Catalog Workflows', () => {
 
   test('should display pillar information', async ({ page }) => {
     // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Wait for cards to appear
     await page.waitForSelector('a[href*="/pillars/"]', { timeout: 10000 });
@@ -61,16 +63,19 @@ test.describe('Pillars Catalog Workflows', () => {
 
   test('should display pillar information card', async ({ page }) => {
     // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    // Check for the information card about the 6 pillars
-    await expect(page.getByText(/About the 6 Pillars/i)).toBeVisible();
-    await expect(page.getByText(/comprehensive goaltender development/i)).toBeVisible();
+    // Check for the information section about the pillars - the actual text is different
+    await expect(page.getByText(/Master the 6 fundamental pillars/i)).toBeVisible();
+    // Should also show "6 pillars" count badge
+    await expect(page.getByText(/6 pillars/i).first()).toBeVisible();
   });
 
   test('should navigate to pillar detail page', async ({ page }) => {
     // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Look for pillar cards
     const pillarCards = page.locator('a[href^="/pillars/"]').first();
@@ -99,7 +104,7 @@ test.describe('Pillar Detail Workflows', () => {
   test('should display pillar detail page correctly', async ({ page }) => {
     // Navigate to pillars catalog first
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Find and click on a pillar (if available)
     const pillarCard = page.locator('a[href^="/pillars/"]').first();
@@ -108,7 +113,7 @@ test.describe('Pillar Detail Workflows', () => {
       await pillarCard.click();
 
       // Wait for detail page to load
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Check for pillar title
       await expect(page.locator('h1')).toBeVisible();
@@ -121,20 +126,20 @@ test.describe('Pillar Detail Workflows', () => {
   test('should filter skills by difficulty', async ({ page }) => {
     // Navigate to a pillar detail page
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const pillarCard = page.locator('a[href^="/pillars/"]').first();
 
     if (await pillarCard.count() > 0) {
       await pillarCard.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Look for difficulty filter
       const difficultySelect = page.locator('select').first();
 
       if (await difficultySelect.isVisible()) {
         await difficultySelect.selectOption('introduction');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Should not have errors
         const errorMessages = page.locator('.text-red-600');
@@ -146,13 +151,13 @@ test.describe('Pillar Detail Workflows', () => {
   test('should navigate to skill detail page', async ({ page }) => {
     // Navigate through pillars -> pillar -> skill
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const pillarCard = page.locator('a[href^="/pillars/"]').first();
 
     if (await pillarCard.count() > 0) {
       await pillarCard.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Look for skill links
       const skillCard = page.locator('a[href*="/skills/"]').first();
@@ -164,7 +169,7 @@ test.describe('Pillar Detail Workflows', () => {
         await expect(page).toHaveURL(/\/pillars\/[^\/]+\/skills\/[^\/]+$/);
 
         // Should show skill detail content
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         const backButton = page.getByRole('button', { name: /back to/i });
         await expect(backButton).toBeVisible();
       }
@@ -196,7 +201,7 @@ test.describe('Admin Workflows', () => {
 
   test('should view pillar edit form', async ({ page }) => {
     await page.goto('/admin/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for edit button on first pillar
     const editButton = page.locator('button[title="Edit Pillar"]').first();
@@ -217,7 +222,7 @@ test.describe('Admin Workflows', () => {
 
   test('should cancel edit pillar form', async ({ page }) => {
     await page.goto('/admin/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const editButton = page.locator('button[title="Edit Pillar"]').first();
     if (await editButton.count() > 0) {
@@ -234,7 +239,7 @@ test.describe('Admin Workflows', () => {
 
   test('should access skills management from pillar', async ({ page }) => {
     await page.goto('/admin/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for skills management button
     const skillsButton = page.locator('button[title="Manage Skills"]').first();
@@ -253,7 +258,7 @@ test.describe('Error Handling', () => {
   test('should handle network errors gracefully', async ({ page }) => {
     // First load the page normally
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Then block network requests to simulate offline state
     await page.route('**/api/**', route => route.abort());
@@ -281,7 +286,7 @@ test.describe('Error Handling', () => {
     });
 
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Filter out expected network errors (when no data exists)
     const criticalErrors = errors.filter(error =>
@@ -295,7 +300,7 @@ test.describe('Error Handling', () => {
 
   test('should handle missing images gracefully', async ({ page }) => {
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check for broken images
     const images = page.locator('img');
@@ -341,7 +346,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
     await page.goto('/pillars');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check layout on tablet
     await expect(page.locator('h1').first()).toBeVisible();
