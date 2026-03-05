@@ -1,37 +1,30 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:3004';
+// Note: baseURL is configured in playwright.config.ts as http://localhost:3000
 
 test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
 
   test('Pillars Catalog - Core Functionality Test', async ({ page }) => {
     console.log('🔍 Testing Pillars Catalog Page...');
 
-    await page.goto(`${BASE_URL}/pillars`);
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    await page.goto('/pillars');
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
 
     // Take screenshot for analysis
     await page.screenshot({ path: 'test-results/pillars-catalog.png', fullPage: true });
 
-    // Test 1: Page loads and displays header
+    // Test 1: Page loads and displays header - actual title is "Ice Hockey Goalie Pillars"
     try {
-      await expect(page.locator('h1')).toContainText('Pillars Catalog', { timeout: 10000 });
-      console.log('✅ Pillars Catalog header loaded successfully');
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
+      const headerText = await page.locator('h1').first().textContent();
+      console.log('✅ Page header loaded successfully:', headerText);
     } catch (error) {
-      console.log('❌ Pillars Catalog header not found:', error instanceof Error ? error.message : String(error));
+      console.log('❌ Page header not found:', error instanceof Error ? error.message : String(error));
     }
 
-    // Test 2: Search functionality is present
+    // Test 2: Pillar cards are displayed (the new UI has no search/filter - it's a simple 6-card grid)
     try {
-      await expect(page.locator('input[placeholder*="Search"]')).toBeVisible({ timeout: 5000 });
-      console.log('✅ Search input is visible');
-    } catch (error) {
-      console.log('❌ Search input not found:', error instanceof Error ? error.message : String(error));
-    }
-
-    // Test 3: Pillar cards are displayed
-    try {
-      const pillarCards = page.locator('a[href*="/pillars/"], .card');
+      const pillarCards = page.locator('a[href*="/pillars/"]');
       await expect(pillarCards.first()).toBeVisible({ timeout: 10000 });
       const cardCount = await pillarCards.count();
       console.log(`✅ Found ${cardCount} pillar cards`);
@@ -39,12 +32,20 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       console.log('❌ Pillar cards not found:', error instanceof Error ? error.message : String(error));
     }
 
-    // Test 4: Filters button exists
+    // Test 3: Check for the 6 pillars badge
     try {
-      await expect(page.locator('button:has-text("Filters")')).toBeVisible({ timeout: 5000 });
-      console.log('✅ Filters button is visible');
+      await expect(page.locator('text=/\\d+ pillar/i')).toBeVisible({ timeout: 5000 });
+      console.log('✅ Pillars count badge is visible');
     } catch (error) {
-      console.log('❌ Filters button not found:', error instanceof Error ? error.message : String(error));
+      console.log('❌ Pillars count badge not found:', error instanceof Error ? error.message : String(error));
+    }
+
+    // Test 4: Check for About the 6 Pillars info card
+    try {
+      await expect(page.locator('text="About the 6 Pillars"')).toBeVisible({ timeout: 5000 });
+      console.log('✅ About the 6 Pillars info card is visible');
+    } catch (error) {
+      console.log('❌ About the 6 Pillars info card not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Log page content for analysis
@@ -55,8 +56,8 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
   test('Pillar Detail Page - Navigation Test', async ({ page }) => {
     console.log('🔍 Testing Pillar Detail Page Navigation...');
 
-    await page.goto(`${BASE_URL}/pillars`);
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    await page.goto('/pillars');
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
 
     // Find and click first pillar link
     try {
@@ -66,7 +67,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
         console.log('🔗 Clicking pillar link:', href);
 
         await firstPillarLink.click();
-        await page.waitForLoadState('networkidle', { timeout: 10000 });
+        await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
 
         // Take screenshot
         await page.screenshot({ path: 'test-results/pillar-detail.png', fullPage: true });
@@ -74,7 +75,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
         console.log('🔗 Navigated to:', page.url());
 
         // Check if we're on a detail page
-        if (page.url().includes('/pillars/') && page.url() !== `${BASE_URL}/pillars`) {
+        if (page.url().includes('/pillars/') && !page.url().endsWith('/pillars')) {
           console.log('✅ Successfully navigated to pillar detail page');
 
           // Look for back button
@@ -108,8 +109,8 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
   test('Admin Pillars Management - Access Test', async ({ page }) => {
     console.log('🔍 Testing Admin Pillars Management Access...');
 
-    await page.goto(`${BASE_URL}/admin/pillars`);
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    await page.goto('/admin/pillars');
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
 
     // Take screenshot
     await page.screenshot({ path: 'test-results/admin-pillars.png', fullPage: true });
@@ -122,14 +123,19 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
     } else {
       console.log('📋 Admin page accessible, checking interface...');
 
-      // Look for admin interface elements
+      // Look for admin interface elements - title is "Pillar Management"
       try {
-        await expect(page.locator('h1')).toBeVisible({ timeout: 5000 });
+        await expect(page.getByRole('heading', { name: /Pillar Management/i })).toBeVisible({ timeout: 5000 });
         const title = await page.locator('h1').textContent();
         console.log('✅ Admin page title:', title);
 
-        // Pillars are predefined, so no Add button expected
-        console.log('ℹ️ Pillars are predefined - no Add Pillar button expected');
+        // Pillars are predefined, so no Add button expected - check for info card instead
+        try {
+          await expect(page.locator('text=/Fixed 6-Pillar Structure/i')).toBeVisible({ timeout: 3000 });
+          console.log('✅ Fixed 6-Pillar Structure info card visible');
+        } catch {
+          console.log('ℹ️ Fixed 6-Pillar Structure info card not found');
+        }
 
       } catch (error) {
         console.log('❌ Admin interface elements not found:', error instanceof Error ? error.message : String(error));
@@ -141,8 +147,8 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
     console.log('🔍 Testing Error Handling...');
 
     // Test non-existent pillar
-    await page.goto(`${BASE_URL}/pillars/non-existent-pillar-123`);
-    await page.waitForLoadState('networkidle', { timeout: 10000 });
+    await page.goto('/pillars/non-existent-pillar-123');
+    await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
 
     await page.screenshot({ path: 'test-results/error-handling.png', fullPage: true });
 
@@ -193,8 +199,11 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       });
     });
 
-    await page.goto(`${BASE_URL}/pillars`);
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    await page.goto('/pillars');
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
+
+    // Wait a bit for async requests to complete
+    await page.waitForTimeout(2000);
 
     console.log('📡 Network Summary:');
     console.log(`- Total requests: ${requests.length}`);
@@ -226,30 +235,31 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
 
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto(`${BASE_URL}/pillars`);
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    await page.goto('/pillars');
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
 
     await page.screenshot({ path: 'test-results/mobile-view.png', fullPage: true });
 
     // Check if main elements are still visible
     try {
-      await expect(page.locator('h1')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 5000 });
       console.log('✅ Header visible on mobile');
     } catch {
       console.log('❌ Header not visible on mobile');
     }
 
+    // Check pillar cards are visible on mobile
     try {
-      await expect(page.locator('input[placeholder*="Search"]')).toBeVisible({ timeout: 5000 });
-      console.log('✅ Search input visible on mobile');
+      await expect(page.locator('a[href*="/pillars/"]').first()).toBeVisible({ timeout: 5000 });
+      console.log('✅ Pillar cards visible on mobile');
     } catch {
-      console.log('❌ Search input not visible on mobile');
+      console.log('❌ Pillar cards not visible on mobile');
     }
 
     // Test tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.screenshot({ path: 'test-results/tablet-view.png', fullPage: true });
     console.log('✅ Tablet view screenshot captured');
@@ -257,7 +267,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
     // Test desktop viewport
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.screenshot({ path: 'test-results/desktop-view.png', fullPage: true });
     console.log('✅ Desktop view screenshot captured');
