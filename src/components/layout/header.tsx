@@ -122,15 +122,11 @@ export function Header() {
             <div className={`${pillContainer} px-1.5 py-1.5`}>
               <div className="flex items-center gap-1">
                 <PillLink href="/pillars" onClick={closeMenus}>
-                  Courses
+                  Pillars
                 </PillLink>
 
                 {isAuthenticated && (
                   <>
-                    <PillLink href="/quizzes" onClick={closeMenus}>
-                      Quizzes
-                    </PillLink>
-
                     {user?.role === 'admin' ? (
                       <>
                         <PillLink href="/admin" onClick={closeMenus}>
@@ -265,15 +261,11 @@ export function Header() {
           <div className="border-t bg-background/85 backdrop-blur md:hidden">
             <nav className="container mx-auto px-4 py-4 space-y-1">
               <MobileLink href="/pillars" onClick={closeMenus}>
-                Courses
+                Pillars
               </MobileLink>
 
               {isAuthenticated ? (
                 <>
-                  <MobileLink href="/quizzes" onClick={closeMenus}>
-                    Quizzes
-                  </MobileLink>
-
                   {user?.role === 'admin' ? (
                     <>
                       <MobileLink href="/admin" onClick={closeMenus}>
