@@ -166,10 +166,12 @@ export function useOnboardingV2({
   useEffect(() => {
     if (!enabled || !userId) {
       setLoading(false);
+      // Don't change phase if hook is disabled - let page handle redirect
       return;
     }
 
     loadEvaluation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, userId]);
 
   const loadEvaluation = async () => {
@@ -249,6 +251,7 @@ export function useOnboardingV2({
     } catch (err) {
       logger.error('Failed to load V2 onboarding evaluation', 'useOnboardingV2', err);
       setError('Failed to load evaluation');
+      setPhase('welcome'); // Set phase so loading screen doesn't persist
     } finally {
       setLoading(false);
     }

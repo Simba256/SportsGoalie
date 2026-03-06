@@ -69,21 +69,10 @@ export default function OnboardingPage() {
     onRefreshUser: refreshUser,
   });
 
-  // Loading state
-  if (authLoading || loading || phase === 'loading') {
-    return (
-      <OnboardingContainer>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-blue-400 mx-auto mb-4" />
-            <p className="text-slate-400">Loading your evaluation...</p>
-          </div>
-        </div>
-      </OnboardingContainer>
-    );
-  }
+  // Determine if hook is actually enabled
+  const hookEnabled = !authLoading && !!user && !user.onboardingCompleted;
 
-  // Error state
+  // Error state - check BEFORE loading to show errors properly
   if (error) {
     return (
       <OnboardingContainer>
@@ -102,6 +91,20 @@ export default function OnboardingPage() {
             >
               Try Again
             </button>
+          </div>
+        </div>
+      </OnboardingContainer>
+    );
+  }
+
+  // Loading state
+  if (authLoading || (hookEnabled && (loading || phase === 'loading'))) {
+    return (
+      <OnboardingContainer>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-400 mx-auto mb-4" />
+            <p className="text-slate-400">Loading your evaluation...</p>
           </div>
         </div>
       </OnboardingContainer>
