@@ -91,7 +91,7 @@ export function OnboardingProgressV2({
           <span className="text-xs text-slate-500">Progress</span>
           <span className="text-xs text-slate-500">{overallProgress}%</span>
         </div>
-        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
             style={{ width: `${overallProgress}%` }}
@@ -104,7 +104,7 @@ export function OnboardingProgressV2({
         {/* Intake indicator */}
         <div
           className={cn(
-            'flex items-center justify-center w-8 h-8 rounded-lg transition-all',
+            'flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all',
             intakeComplete
               ? 'bg-cyan-500/30 text-cyan-400'
               : phase === 'intake'
@@ -114,16 +114,16 @@ export function OnboardingProgressV2({
           title="Intake Questions"
         >
           {intakeComplete ? (
-            <Check className="w-4 h-4" />
+            <Check className="w-5 h-5 sm:w-6 sm:h-6" />
           ) : (
-            <ClipboardList className="w-4 h-4" />
+            <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6" />
           )}
         </div>
 
         {/* Divider */}
         <div
           className={cn(
-            'w-4 sm:w-6 h-0.5 rounded-full transition-colors',
+            'w-4 sm:w-8 h-0.5 mx-1 rounded-full transition-colors',
             intakeComplete ? 'bg-cyan-500/50' : 'bg-slate-700'
           )}
         />
@@ -141,7 +141,7 @@ export function OnboardingProgressV2({
             <div key={slug} className="flex items-center">
               <div
                 className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-lg transition-all',
+                  'flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all',
                   isComplete
                     ? 'bg-cyan-500/30 text-cyan-400'
                     : isCurrent
@@ -153,9 +153,9 @@ export function OnboardingProgressV2({
                 title={GOALIE_CATEGORIES.find(c => c.slug === slug)?.shortName || slug}
               >
                 {isComplete ? (
-                  <Check className="w-4 h-4" />
+                  <Check className="w-5 h-5 sm:w-6 sm:h-6" />
                 ) : (
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 )}
               </div>
 
@@ -163,7 +163,7 @@ export function OnboardingProgressV2({
               {index < categoryOrder.length - 1 && (
                 <div
                   className={cn(
-                    'w-2 sm:w-4 h-0.5 rounded-full transition-colors ml-1 sm:ml-2',
+                    'w-4 sm:w-6 h-0.5 rounded-full transition-colors ml-1 sm:ml-2',
                     isComplete ? 'bg-cyan-500/50' : 'bg-slate-700'
                   )}
                 />

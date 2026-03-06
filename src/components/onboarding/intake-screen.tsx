@@ -72,7 +72,7 @@ export function IntakeScreen({
             <div
               key={i}
               className={cn(
-                'w-2.5 h-2.5 rounded-full transition-all duration-300',
+                'w-3 h-3 rounded-full transition-all duration-300',
                 i === screen
                   ? 'bg-cyan-400 scale-125'
                   : i < screen
@@ -212,32 +212,33 @@ function IntakeQuestionCard({ question, value, onChange }: IntakeQuestionCardPro
       )}
 
       {/* Options */}
-      <div className="grid gap-3 max-w-lg mx-auto">
-        {question.options.map((option) => {
+      <div className="grid gap-3">
+        {question.options.map((option, index) => {
           const selected = isSelected(option.id);
+          const letter = String.fromCharCode(65 + index); // A, B, C, D...
           return (
             <button
               key={option.id}
               onClick={() => handleOptionClick(option.id)}
               className={cn(
                 'w-full p-4 rounded-xl border-2 text-left transition-all duration-200',
-                'flex items-center gap-3',
+                'flex items-center gap-4',
                 selected
                   ? 'bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-cyan-400 text-white scale-[1.02]'
                   : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500'
               )}
             >
-              {/* Checkbox/Radio indicator */}
+              {/* Letter badge indicator */}
               <div
                 className={cn(
-                  'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors',
+                  'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg transition-colors',
                   selected
-                    ? 'bg-gradient-to-br from-blue-500 to-cyan-400 border-transparent'
-                    : 'bg-transparent border-slate-600',
+                    ? 'bg-gradient-to-br from-blue-500 to-cyan-400 text-white'
+                    : 'bg-slate-700 text-slate-400',
                   isMultiSelect && 'rounded-md'
                 )}
               >
-                {selected && <Check className="w-4 h-4 text-white" />}
+                {selected ? <Check className="w-5 h-5 text-white" /> : letter}
               </div>
 
               {/* Option text */}
