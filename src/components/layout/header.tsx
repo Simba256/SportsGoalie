@@ -142,9 +142,6 @@ export function Header() {
                       </PillLink>
                     ) : (
                       <>
-                        <PillLink href="/dashboard" onClick={closeMenus}>
-                          Dashboard
-                        </PillLink>
                         <PillLink href="/progress" onClick={closeMenus}>
                           Progress
                         </PillLink>
@@ -281,9 +278,6 @@ export function Header() {
                     </MobileLink>
                   ) : (
                     <>
-                      <MobileLink href="/dashboard" onClick={closeMenus}>
-                        Dashboard
-                      </MobileLink>
                       <MobileLink href="/progress" onClick={closeMenus}>
                         Progress
                       </MobileLink>
