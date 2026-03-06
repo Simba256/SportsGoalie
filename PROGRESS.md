@@ -36,12 +36,17 @@
 - [x] **Coach Custom Content Creation System** (video lessons + video quizzes with full feature parity) (2026-03-01)
 - [x] **Phase 2.0.7: Student Onboarding Evaluation System** (27 questions, 6 pillars, coach review) (2026-03-04)
 - [x] **Phase 2.1: 6-Pillar Conversion** (fixed pillars, UI updates, migration script) (2026-03-05)
+- [x] **Service Unit Tests** (133 new tests for 4 critical services) (2026-03-05)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-05 - [Service Unit Tests Implementation](docs/sessions/2026-03/2026-03-05-service-unit-tests-implementation.md)
+**Time:** 1h 0min | **Focus:** Testing - Unit Tests
+Created comprehensive unit tests for 4 critical database services: CustomCurriculumService (43 tests), CustomContentService (40 tests), OnboardingService (30 tests), EnrollmentService (20 tests). Total 133 new tests, all passing. Fixed Timestamp mock in test setup to support instanceof checks. Service test coverage significantly improved.
 
 ### 2026-03-05 - [Test Files Pillar Route Update](docs/sessions/2026-03/2026-03-05-test-files-pillar-route-update.md)
 **Time:** 45min | **Focus:** Testing - Phase 2.1d Test File Updates

@@ -63,9 +63,12 @@ vi.mock('firebase/firestore', () => ({
   startAfter: vi.fn(),
   onSnapshot: vi.fn(),
   serverTimestamp: vi.fn(() => ({ _methodName: 'serverTimestamp' })),
-  Timestamp: {
-    now: vi.fn(() => new Date()),
-    fromDate: vi.fn((date) => date),
+  Timestamp: class MockTimestamp {
+    constructor(public seconds: number = 0, public nanoseconds: number = 0) {}
+    toDate() { return new Date(this.seconds * 1000); }
+    toMillis() { return this.seconds * 1000; }
+    static now() { return new MockTimestamp(Math.floor(Date.now() / 1000), 0); }
+    static fromDate(date: Date) { return new MockTimestamp(Math.floor(date.getTime() / 1000), 0); }
   },
   writeBatch: vi.fn(() => ({
     set: vi.fn(),
