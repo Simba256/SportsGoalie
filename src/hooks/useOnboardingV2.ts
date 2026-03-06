@@ -16,8 +16,7 @@ import {
   CategoryInfo,
 } from '@/types';
 import {
-  getIntakeQuestionsByScreen,
-  getTotalIntakeScreens,
+  GOALIE_INTAKE_QUESTIONS,
 } from '@/data/goalie-intake-questions';
 import {
   getCategoryOrder,
@@ -111,18 +110,19 @@ export function useOnboardingV2({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [intelligenceProfile, setIntelligenceProfile] = useState<IntelligenceProfile | null>(null);
 
-  // Get intake questions by screen
-  const intakeQuestionsByScreen = useMemo(() => getIntakeQuestionsByScreen(), []);
-  const totalIntakeScreens = useMemo(() => getTotalIntakeScreens(), []);
+  // Get all intake questions as a flat array (one question per screen)
+  const allIntakeQuestions = useMemo(() => GOALIE_INTAKE_QUESTIONS, []);
+  const totalIntakeScreens = allIntakeQuestions.length;
 
   // Get category order and questions
   const categoryOrder = useMemo(() => getCategoryOrder(), []);
   const totalCategories = categoryOrder.length;
 
-  // Current intake screen questions
+  // Current intake question (as array for component compatibility)
   const intakeScreenQuestions = useMemo(() => {
-    return intakeQuestionsByScreen.get(currentIntakeScreen + 1) || [];
-  }, [intakeQuestionsByScreen, currentIntakeScreen]);
+    const question = allIntakeQuestions[currentIntakeScreen];
+    return question ? [question] : [];
+  }, [allIntakeQuestions, currentIntakeScreen]);
 
   // Current category info
   const currentCategory = useMemo((): CategoryInfo | null => {
@@ -272,14 +272,14 @@ export function useOnboardingV2({
   const nextIntakeScreen = useCallback(async () => {
     if (!evaluation) return;
 
-    // Save all responses for current screen
-    const screenQuestions = intakeQuestionsByScreen.get(currentIntakeScreen + 1) || [];
-    for (const question of screenQuestions) {
-      const value = intakeResponses[question.id];
+    // Save response for current question
+    const currentQuestion = allIntakeQuestions[currentIntakeScreen];
+    if (currentQuestion) {
+      const value = intakeResponses[currentQuestion.id];
       if (value !== undefined) {
         const response: IntakeResponse = {
-          questionId: question.id,
-          questionCode: question.questionCode,
+          questionId: currentQuestion.id,
+          questionCode: currentQuestion.questionCode,
           value,
           answeredAt: Timestamp.now(),
         };
@@ -287,14 +287,14 @@ export function useOnboardingV2({
       }
     }
 
-    // Check if this was the last screen
+    // Check if this was the last question
     if (currentIntakeScreen >= totalIntakeScreens - 1) {
       // Complete intake
       await completeIntakeInternal();
     } else {
       setCurrentIntakeScreen(prev => prev + 1);
     }
-  }, [evaluation, currentIntakeScreen, intakeResponses, intakeQuestionsByScreen, totalIntakeScreens]);
+  }, [evaluation, currentIntakeScreen, intakeResponses, allIntakeQuestions, totalIntakeScreens]);
 
   const previousIntakeScreen = useCallback(() => {
     if (currentIntakeScreen > 0) {
