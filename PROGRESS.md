@@ -44,6 +44,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-06 - [Navigation Cleanup](docs/sessions/2026-03/2026-03-06-navigation-cleanup.md)
+**Time:** 20min | **Focus:** UI/UX - Navigation
+Renamed "Courses" to "Pillars" in top navigation. Removed "Quizzes" link (students encounter quizzes during studies). Removed "Dashboard" link (redundant - students access pillars and progress directly). Cleaner student nav: Pillars, Progress, Charting, Messages.
+
 ### 2026-03-05 - [Service Unit Tests Implementation](docs/sessions/2026-03/2026-03-05-service-unit-tests-implementation.md)
 **Time:** 1h 0min | **Focus:** Testing - Unit Tests
 Created comprehensive unit tests for 4 critical database services: CustomCurriculumService (43 tests), CustomContentService (40 tests), OnboardingService (30 tests), EnrollmentService (20 tests). Total 133 new tests, all passing. Fixed Timestamp mock in test setup to support instanceof checks. Service test coverage significantly improved.
@@ -188,7 +192,7 @@ Initial project analysis and progress tracking system implementation.
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 18h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates | 13 |
+| 2026-03-01 | 18.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup | 14 |
 
 ---
 
@@ -806,10 +810,10 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-05
-**Last Session:** Test Files Pillar Route Update
-**Total Sessions This Phase:** 27
-**Current Phase Hours:** 44h
+**Last Updated:** 2026-03-06
+**Last Session:** Navigation Cleanup
+**Total Sessions This Phase:** 28
+**Current Phase Hours:** 44.25h
 **Next Session Focus:** Run full Playwright test suite, manual testing of pillar navigation, or Phase 2.1b level unlock system
 
 ---
