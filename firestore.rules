@@ -707,34 +707,58 @@ service cloud.firestore {
 
     // ==================== ONBOARDING EVALUATION SYSTEM (Phase 2.0.7) ====================
 
-    // Onboarding Evaluations collection - Initial student assessment across 6 pillars
-    // Document ID format: eval_{userId}
+    // Onboarding Evaluations collection - Initial student assessment
+    // Document ID formats:
+    //   V1: eval_{userId} (legacy 6-pillar system)
+    //   V2: eval_v2_{userId} (new 7-category, 1.0-4.0 scoring system)
     match /onboarding_evaluations/{evaluationId} {
-      // Helper to extract userId from evaluation ID (removes 'eval_' prefix)
+      // Helper to extract userId from evaluation ID
+      // Handles both V1 (eval_xxx) and V2 (eval_v2_xxx) formats
       function getEvalUserId() {
-        return evaluationId.split('eval_')[1];
+        // For V2 format (eval_v2_{userId}), need to handle differently
+        // Using the userId field from the document data is more reliable
+        return request.resource.data.userId;
+      }
+
+      // Helper to check if this is the user's own evaluation
+      // Works for both V1 and V2 document ID formats
+      function isOwnEvaluation() {
+        return isAuthenticated() && (
+          // V1 format: eval_{userId}
+          evaluationId == 'eval_' + getUserId() ||
+          // V2 format: eval_v2_{userId}
+          evaluationId == 'eval_v2_' + getUserId()
+        );
       }
 
       // Students can read their own evaluation
       // Coaches can read evaluations of any student (needed for review workflow)
       // Admins can read all
       allow read: if isAuthenticated() && (
-        getEvalUserId() == getUserId() ||  // Student reads own
+        isOwnEvaluation() ||               // Student reads own (V1 or V2)
         isCoachOrAdmin()                   // Coaches/admins can read for review
       );
 
       // Students can create their own evaluation during onboarding
+      // V1: requires startedAt, currentPillarIndex, responses
+      // V2: requires phase, currentCategoryIndex, assessmentResponses
       allow create: if isAuthenticated() &&
-                       getEvalUserId() == getUserId() &&
-                       hasRequiredFields(['userId', 'startedAt', 'status', 'currentPillarIndex', 'currentQuestionIndex', 'responses']) &&
+                       isOwnEvaluation() &&
                        request.resource.data.userId == getUserId() &&
                        request.resource.data.status == 'in_progress' &&
-                       request.resource.data.responses is list;
+                       (
+                         // V1 format validation
+                         (hasRequiredFields(['userId', 'startedAt', 'status', 'currentPillarIndex', 'currentQuestionIndex', 'responses']) &&
+                          request.resource.data.responses is list) ||
+                         // V2 format validation
+                         (hasRequiredFields(['userId', 'role', 'phase', 'status', 'currentCategoryIndex', 'currentQuestionIndex', 'assessmentResponses']) &&
+                          request.resource.data.assessmentResponses is list)
+                       );
 
       // Students can update their own evaluation (save responses, complete)
       // Coaches/admins can update coachReview field only
       allow update: if isAuthenticated() && (
-        (getEvalUserId() == getUserId()) ||  // Student updates own (responses, completion)
+        isOwnEvaluation() ||                 // Student updates own (responses, completion)
         (isCoachOrAdmin() &&                 // Coach/admin can only add review
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coachReview', 'status', 'updatedAt']))
       );
