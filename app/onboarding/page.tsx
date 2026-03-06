@@ -179,6 +179,7 @@ export default function OnboardingPage() {
         {phase === 'question' && currentQuestion && currentCategory && (
           <div className="flex-1 flex items-center justify-center p-6">
             <AssessmentQuestionV2
+              key={currentQuestion.id}
               question={currentQuestion}
               categoryName={currentCategory.shortName}
               categoryColor={currentCategory.color}
