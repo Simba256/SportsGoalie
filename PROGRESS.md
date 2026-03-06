@@ -44,6 +44,14 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-06 - [Phase D Goalie Onboarding V2 UI](docs/sessions/2026-03/2026-03-06-phase-d-goalie-onboarding-v2-ui.md)
+**Time:** 1h 30min | **Focus:** Feature - Onboarding UI Integration
+Integrated V2 scoring system (1.0-4.0 scale, 7 categories) into goalie onboarding flow. Created useOnboardingV2 hook with phases (welcome, intake, bridge, category_intro, question, profile, complete). Built 8 new V2 components: WelcomeScreenV2, IntakeScreen, BridgeMessage, CategoryIntro, AssessmentQuestionV2, OnboardingProgressV2, IntelligenceProfileView. Added V2 service methods for intake/assessment response handling and profile generation. Replaced main onboarding page with V2 flow.
+
+### 2026-03-06 - [Michael's Phase 2 Scoring Foundation](docs/sessions/2026-03/2026-03-06-michaels-phase2-scoring-foundation.md)
+**Time:** 2h 0min | **Focus:** Feature - Phase 2 Scoring System
+Implemented Phases A, B, and C of Michael's Phase 2 specification integration. Created new scoring system with 1.0-4.0 continuous scale and 7 categories per role. Built goalie/parent/coach intake questions (4 screens each) and assessment questions (28 per role). Created intelligence profile scoring engine with weighted categories, gap/strength analysis, and pacing level mapping. Built cross-reference engine for comparing goalie/parent/coach assessments with alignment and gap detection.
+
 ### 2026-03-06 - [Navigation Cleanup](docs/sessions/2026-03/2026-03-06-navigation-cleanup.md)
 **Time:** 20min | **Focus:** UI/UX - Navigation
 Renamed "Courses" to "Pillars" in top navigation. Removed "Quizzes" link (students encounter quizzes during studies). Removed "Dashboard" link (redundant - students access pillars and progress directly). Cleaner student nav: Pillars, Progress, Charting, Messages.
@@ -172,27 +180,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 44 hours | 🔄 In Progress |
-| **Total** | **~204 hours** | - |
+| Phase 2 | 46 hours | 🔄 In Progress |
+| **Total** | **~206 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 28.5h | 65% |
+| Development | 30.5h | 66% |
 | Documentation | 1.75h | 4% |
-| Debugging | 9.5h | 22% |
+| Debugging | 9.5h | 21% |
 | Security | 1.5h | 3% |
 | Refactor | 1.5h | 3% |
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **44h** | **100%** |
+| **Total** | **46h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 18.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup | 14 |
+| 2026-03-01 | 20.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation | 15 |
 
 ---
 
@@ -245,6 +253,24 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-06: 1.0-4.0 Continuous Scoring Scale
+**Decision:** Replace discrete levels (beginner/intermediate/advanced) with continuous 1.0-4.0 scoring scale
+**Rationale:** Per Michael's specification - provides finer-grained intelligence profile, enables weighted category scoring, supports gap/strength analysis
+**Impact:** More nuanced assessment results, better personalization, cross-reference engine can compare scores across roles
+**Alternatives Considered:** Keeping discrete levels (rejected - too coarse for intelligence profiling), 0-100 scale (rejected - Michael's spec uses 1.0-4.0)
+
+### 2026-03-06: 7 Assessment Categories per Role
+**Decision:** Use 7 distinct categories for each role (goalie/parent/coach) instead of mapping to 6 pillars
+**Rationale:** Per Michael's scoring guide - each role has unique categories (e.g., parent has "Car Ride Home", coach has "Approach")
+**Impact:** More accurate role-specific assessment, enables meaningful cross-reference comparisons
+**Alternatives Considered:** Map to 6 pillars (rejected - loses role-specific nuance), single category set (rejected - roles assess different aspects)
+
+### 2026-03-06: Pacing Level Thresholds
+**Decision:** Use configurable thresholds: introduction (<2.2), development (2.2-3.1), refinement (>3.1)
+**Rationale:** Per Michael's spec - maps continuous scores to actionable content pacing levels
+**Impact:** Clear content progression path, admin-adjustable thresholds, consistent with existing pillar structure
+**Alternatives Considered:** Fixed percentile-based thresholds (rejected - less intuitive), more granular levels (rejected - adds complexity)
 
 ### 2026-03-05: 6-Pillar Architecture
 **Decision:** Repurpose `sports` collection as pillars with fixed document IDs (pillar_mindset, etc.)
@@ -465,6 +491,24 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-06 (Session: Michael's Phase 2 Scoring Foundation)
+- **Feature:** Implemented Phases A, B, C of Michael's Phase 2 specification integration
+- **Feature:** Created 1.0-4.0 continuous scoring scale with 7 categories per role
+- **Feature:** Built goalie intake questions (7 questions, 4 screens) with PIPEDA compliance triggers
+- **Feature:** Built goalie assessment questions (28 questions, 7 categories) with exact scores from spec
+- **Feature:** Built parent intake/assessment questions (6+28 questions, "car ride home" focus)
+- **Feature:** Built coach intake/assessment questions (7+28 questions)
+- **Feature:** Created intelligence profile scoring engine with weighted category calculation
+- **Feature:** Implemented pacing level mapping (introduction/development/refinement thresholds)
+- **Feature:** Built gap/strength analysis based on deviation from average score
+- **Feature:** Created cross-reference engine for multi-role comparison
+- **Feature:** Implemented alignment detection and gap flagging (confidence_gap, feedback_gap, car_ride_gap, etc.)
+- **Types:** Added PacingLevel, IntelligenceProfile, CrossReferenceResult, CategoryWeight types
+- **Types:** Added OnboardingEvaluationV2 for new scoring system
+- **Types:** Maintained backward compatibility with legacy OnboardingEvaluation
+- **Data:** Created centralized data index (`src/data/index.ts`) for questionnaire exports
+- **Build:** TypeScript compiles with zero errors, build succeeds
 
 ### 2026-03-05 (Session: Test Files Pillar Route Update)
 - **Testing:** Updated 5 test files with `/sports` → `/pillars` route changes
@@ -811,10 +855,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-06
-**Last Session:** Navigation Cleanup
-**Total Sessions This Phase:** 28
-**Current Phase Hours:** 44.25h
-**Next Session Focus:** Run full Playwright test suite, manual testing of pillar navigation, or Phase 2.1b level unlock system
+**Last Session:** Michael's Phase 2 Scoring Foundation
+**Total Sessions This Phase:** 29
+**Current Phase Hours:** 46.25h
+**Next Session Focus:** Phase D UI Integration (onboarding page updates, intake/assessment components), or Phase E Admin Dashboard (Intelligence Profile views, cross-reference visualization)
 
 ---
 

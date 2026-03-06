@@ -1,0 +1,469 @@
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Timestamp } from 'firebase/firestore';
+import { onboardingService } from '@/lib/database';
+import {
+  OnboardingEvaluationV2,
+  IntakeQuestion,
+  IntakeResponse,
+  IntakeData,
+  AssessmentQuestion,
+  AssessmentResponseV2,
+  IntelligenceProfile,
+  IntelligenceScore,
+  GoalieCategorySlug,
+  GOALIE_CATEGORIES,
+  CategoryInfo,
+} from '@/types';
+import {
+  getIntakeQuestionsByScreen,
+  getTotalIntakeScreens,
+} from '@/data/goalie-intake-questions';
+import {
+  getCategoryOrder,
+  getQuestionsForCategory,
+} from '@/data/goalie-assessment-questions';
+import { logger } from '@/lib/utils/logger';
+
+/**
+ * V2 Onboarding phases
+ */
+export type OnboardingPhaseV2 =
+  | 'loading'
+  | 'welcome'
+  | 'intake'
+  | 'bridge'
+  | 'category_intro'
+  | 'question'
+  | 'profile'
+  | 'complete';
+
+interface UseOnboardingV2Options {
+  userId: string | null;
+  studentName?: string;
+  enabled?: boolean;
+  onRefreshUser?: () => Promise<void>;
+}
+
+interface UseOnboardingV2Return {
+  // State
+  phase: OnboardingPhaseV2;
+  loading: boolean;
+  error: string | null;
+  evaluation: OnboardingEvaluationV2 | null;
+
+  // Intake state
+  currentIntakeScreen: number;
+  intakeScreenQuestions: IntakeQuestion[];
+  intakeResponses: Record<string, string | string[]>;
+  intakeData: IntakeData | null;
+
+  // Assessment state
+  currentCategoryIndex: number;
+  currentQuestionIndex: number;
+  currentCategory: CategoryInfo | null;
+  currentQuestion: AssessmentQuestion | null;
+  categoryQuestions: AssessmentQuestion[];
+  intelligenceProfile: IntelligenceProfile | null;
+
+  // Progress
+  totalIntakeScreens: number;
+  totalCategories: number;
+  questionProgress: { current: number; total: number };
+
+  // Actions
+  beginOnboarding: () => void;
+  answerIntake: (questionId: string, value: string | string[]) => void;
+  nextIntakeScreen: () => Promise<void>;
+  previousIntakeScreen: () => void;
+  completeIntake: () => Promise<void>;
+  startCategory: () => void;
+  answerQuestion: (questionId: string, optionId: string, score: IntelligenceScore) => Promise<void>;
+  completeAssessment: () => Promise<void>;
+  goToDashboard: () => void;
+}
+
+/**
+ * Hook for managing the V2 onboarding evaluation flow.
+ * Implements the new 7-category, 1.0-4.0 scoring system.
+ */
+export function useOnboardingV2({
+  userId,
+  studentName: _studentName,
+  enabled = true,
+  onRefreshUser,
+}: UseOnboardingV2Options): UseOnboardingV2Return {
+  const router = useRouter();
+
+  // Core state
+  const [phase, setPhase] = useState<OnboardingPhaseV2>('loading');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<OnboardingEvaluationV2 | null>(null);
+
+  // Intake state
+  const [currentIntakeScreen, setCurrentIntakeScreen] = useState(0);
+  const [intakeResponses, setIntakeResponses] = useState<Record<string, string | string[]>>({});
+  const [intakeData, setIntakeData] = useState<IntakeData | null>(null);
+
+  // Assessment state
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [intelligenceProfile, setIntelligenceProfile] = useState<IntelligenceProfile | null>(null);
+
+  // Get intake questions by screen
+  const intakeQuestionsByScreen = useMemo(() => getIntakeQuestionsByScreen(), []);
+  const totalIntakeScreens = useMemo(() => getTotalIntakeScreens(), []);
+
+  // Get category order and questions
+  const categoryOrder = useMemo(() => getCategoryOrder(), []);
+  const totalCategories = categoryOrder.length;
+
+  // Current intake screen questions
+  const intakeScreenQuestions = useMemo(() => {
+    return intakeQuestionsByScreen.get(currentIntakeScreen + 1) || [];
+  }, [intakeQuestionsByScreen, currentIntakeScreen]);
+
+  // Current category info
+  const currentCategory = useMemo((): CategoryInfo | null => {
+    if (currentCategoryIndex >= categoryOrder.length) return null;
+    const slug = categoryOrder[currentCategoryIndex];
+    return GOALIE_CATEGORIES.find(c => c.slug === slug) || null;
+  }, [categoryOrder, currentCategoryIndex]);
+
+  // Current category questions
+  const categoryQuestions = useMemo(() => {
+    if (!currentCategory) return [];
+    return getQuestionsForCategory(currentCategory.slug as GoalieCategorySlug);
+  }, [currentCategory]);
+
+  // Current question
+  const currentQuestion = useMemo(() => {
+    if (currentQuestionIndex >= categoryQuestions.length) return null;
+    return categoryQuestions[currentQuestionIndex];
+  }, [categoryQuestions, currentQuestionIndex]);
+
+  // Question progress calculation
+  const questionProgress = useMemo(() => {
+    let total = 0;
+    let current = 0;
+
+    for (let i = 0; i < categoryOrder.length; i++) {
+      const catQuestions = getQuestionsForCategory(categoryOrder[i]);
+      total += catQuestions.length;
+
+      if (i < currentCategoryIndex) {
+        current += catQuestions.length;
+      } else if (i === currentCategoryIndex) {
+        current += currentQuestionIndex;
+      }
+    }
+
+    return { current, total };
+  }, [categoryOrder, currentCategoryIndex, currentQuestionIndex]);
+
+  // Load or create evaluation
+  useEffect(() => {
+    if (!enabled || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    loadEvaluation();
+  }, [enabled, userId]);
+
+  const loadEvaluation = async () => {
+    if (!userId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Try to get existing V2 evaluation
+      const result = await onboardingService.getEvaluationV2(userId);
+
+      if (result.success && result.data) {
+        const eval_ = result.data;
+        setEvaluation(eval_);
+
+        // Restore state from evaluation
+        if (eval_.intakeData) {
+          setIntakeData(eval_.intakeData);
+          // Restore intake responses
+          const responses: Record<string, string | string[]> = {};
+          for (const r of eval_.intakeData.responses || []) {
+            responses[r.questionId] = r.value;
+          }
+          setIntakeResponses(responses);
+        }
+
+        if (eval_.intelligenceProfile) {
+          setIntelligenceProfile(eval_.intelligenceProfile);
+        }
+
+        // Resume from saved phase
+        if (eval_.status === 'completed') {
+          setPhase('complete');
+          if (onRefreshUser) {
+            await onRefreshUser();
+          }
+          router.push('/dashboard');
+          return;
+        }
+
+        // Determine phase based on evaluation state
+        switch (eval_.phase) {
+          case 'intake':
+            setCurrentIntakeScreen(eval_.currentQuestionIndex || 0);
+            setPhase('intake');
+            break;
+          case 'bridge':
+            setPhase('bridge');
+            break;
+          case 'assessment':
+            setCurrentCategoryIndex(eval_.currentCategoryIndex);
+            setCurrentQuestionIndex(eval_.currentQuestionIndex);
+            // If at the start of a category, show intro
+            if (eval_.currentQuestionIndex === 0) {
+              setPhase('category_intro');
+            } else {
+              setPhase('question');
+            }
+            break;
+          case 'completed':
+            setPhase('profile');
+            break;
+          default:
+            setPhase('welcome');
+        }
+      } else {
+        // Create new V2 evaluation
+        const createResult = await onboardingService.createEvaluationV2(userId);
+        if (createResult.success && createResult.data) {
+          setEvaluation(createResult.data);
+          setPhase('welcome');
+        } else {
+          setError('Failed to create evaluation');
+        }
+      }
+    } catch (err) {
+      logger.error('Failed to load V2 onboarding evaluation', 'useOnboardingV2', err);
+      setError('Failed to load evaluation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const beginOnboarding = useCallback(() => {
+    setCurrentIntakeScreen(0);
+    setPhase('intake');
+  }, []);
+
+  const answerIntake = useCallback((questionId: string, value: string | string[]) => {
+    setIntakeResponses(prev => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  }, []);
+
+  const nextIntakeScreen = useCallback(async () => {
+    if (!evaluation) return;
+
+    // Save all responses for current screen
+    const screenQuestions = intakeQuestionsByScreen.get(currentIntakeScreen + 1) || [];
+    for (const question of screenQuestions) {
+      const value = intakeResponses[question.id];
+      if (value !== undefined) {
+        const response: IntakeResponse = {
+          questionId: question.id,
+          questionCode: question.questionCode,
+          value,
+          answeredAt: Timestamp.now(),
+        };
+        await onboardingService.saveIntakeResponse(evaluation.id, response, currentIntakeScreen);
+      }
+    }
+
+    // Check if this was the last screen
+    if (currentIntakeScreen >= totalIntakeScreens - 1) {
+      // Complete intake
+      await completeIntakeInternal();
+    } else {
+      setCurrentIntakeScreen(prev => prev + 1);
+    }
+  }, [evaluation, currentIntakeScreen, intakeResponses, intakeQuestionsByScreen, totalIntakeScreens]);
+
+  const previousIntakeScreen = useCallback(() => {
+    if (currentIntakeScreen > 0) {
+      setCurrentIntakeScreen(prev => prev - 1);
+    }
+  }, [currentIntakeScreen]);
+
+  const completeIntakeInternal = async () => {
+    if (!evaluation) return;
+
+    try {
+      setLoading(true);
+      const result = await onboardingService.completeIntake(evaluation.id);
+
+      if (result.success && result.data) {
+        setIntakeData(result.data);
+        setPhase('bridge');
+      } else {
+        setError('Failed to complete intake');
+      }
+    } catch (err) {
+      logger.error('Failed to complete intake', 'useOnboardingV2', err);
+      setError('Failed to complete intake');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeIntake = useCallback(async () => {
+    await completeIntakeInternal();
+  }, [evaluation]);
+
+  const startCategory = useCallback(() => {
+    setPhase('question');
+  }, []);
+
+  const answerQuestion = useCallback(async (
+    questionId: string,
+    optionId: string,
+    score: IntelligenceScore
+  ) => {
+    if (!evaluation || !currentQuestion || !currentCategory) {
+      logger.error('Cannot answer question - missing evaluation or question', 'useOnboardingV2');
+      return;
+    }
+
+    try {
+      const response: AssessmentResponseV2 = {
+        questionId,
+        questionCode: currentQuestion.questionCode,
+        categorySlug: currentCategory.slug,
+        value: optionId,
+        score,
+        answeredAt: Timestamp.now(),
+      };
+
+      // Calculate next position
+      let nextCategoryIndex = currentCategoryIndex;
+      let nextQuestionIndex = currentQuestionIndex + 1;
+
+      // Check if we're done with current category
+      if (nextQuestionIndex >= categoryQuestions.length) {
+        nextCategoryIndex = currentCategoryIndex + 1;
+        nextQuestionIndex = 0;
+      }
+
+      // Save response
+      await onboardingService.saveAssessmentResponseV2(
+        evaluation.id,
+        response,
+        nextCategoryIndex,
+        nextQuestionIndex
+      );
+
+      // Update local state
+      setEvaluation(prev => prev ? {
+        ...prev,
+        assessmentResponses: [
+          ...prev.assessmentResponses.filter(r => r.questionId !== response.questionId),
+          response,
+        ],
+        currentCategoryIndex: nextCategoryIndex,
+        currentQuestionIndex: nextQuestionIndex,
+      } : null);
+
+      // Transition to next state
+      if (nextCategoryIndex >= totalCategories) {
+        // All categories complete - show profile
+        await completeAssessmentInternal();
+      } else if (nextQuestionIndex === 0 && nextCategoryIndex > currentCategoryIndex) {
+        // New category - show intro
+        setCurrentCategoryIndex(nextCategoryIndex);
+        setCurrentQuestionIndex(0);
+        setPhase('category_intro');
+      } else {
+        // Next question in same category
+        setCurrentQuestionIndex(nextQuestionIndex);
+      }
+    } catch (err) {
+      logger.error('Failed to save response', 'useOnboardingV2', err);
+      setError('Failed to save your answer. Please try again.');
+    }
+  }, [evaluation, currentQuestion, currentCategory, currentCategoryIndex, currentQuestionIndex, categoryQuestions.length, totalCategories]);
+
+  const completeAssessmentInternal = async () => {
+    if (!userId || !evaluation) return;
+
+    try {
+      setLoading(true);
+      const result = await onboardingService.completeEvaluationV2(userId);
+
+      if (result.success && result.data) {
+        setIntelligenceProfile(result.data);
+        setPhase('profile');
+      } else {
+        setError('Failed to complete assessment');
+      }
+    } catch (err) {
+      logger.error('Failed to complete assessment', 'useOnboardingV2', err);
+      setError('Failed to complete assessment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeAssessment = useCallback(async () => {
+    await completeAssessmentInternal();
+  }, [userId, evaluation]);
+
+  const goToDashboard = useCallback(async () => {
+    setPhase('complete');
+    if (onRefreshUser) {
+      await onRefreshUser();
+    }
+    router.push('/dashboard');
+  }, [router, onRefreshUser]);
+
+  return {
+    // State
+    phase,
+    loading,
+    error,
+    evaluation,
+
+    // Intake state
+    currentIntakeScreen,
+    intakeScreenQuestions,
+    intakeResponses,
+    intakeData,
+
+    // Assessment state
+    currentCategoryIndex,
+    currentQuestionIndex,
+    currentCategory,
+    currentQuestion,
+    categoryQuestions,
+    intelligenceProfile,
+
+    // Progress
+    totalIntakeScreens,
+    totalCategories,
+    questionProgress,
+
+    // Actions
+    beginOnboarding,
+    answerIntake,
+    nextIntakeScreen,
+    previousIntakeScreen,
+    completeIntake,
+    startCategory,
+    answerQuestion,
+    completeAssessment,
+    goToDashboard,
+  };
+}

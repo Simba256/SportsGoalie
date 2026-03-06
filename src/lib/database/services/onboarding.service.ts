@@ -2,8 +2,12 @@ import { BaseDatabaseService } from '../base.service';
 import {
   ApiResponse,
   OnboardingEvaluation,
+  OnboardingEvaluationV2,
   OnboardingQuestion,
   AssessmentResponse,
+  AssessmentResponseV2,
+  IntakeResponse,
+  IntakeData,
   PillarAssessmentResult,
   AssessmentLevel,
   PillarSlug,
@@ -12,10 +16,22 @@ import {
   PILLARS,
   calculateLevel,
   User,
+  IntelligenceProfile,
+  pacingLevelToAssessmentLevel,
 } from '@/types';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { ONBOARDING_QUESTIONS } from '@/data/onboarding-questions';
+import {
+  extractAgeRange,
+  extractExperienceLevel,
+  extractPlayingLevel,
+  extractGoalieCoachStatus,
+  extractPrimaryReasons,
+} from '@/data/goalie-intake-questions';
+// Goalie assessment questions imported if needed for direct access
+// import { GOALIE_ASSESSMENT_QUESTIONS, getCategoryOrder } from '@/data/goalie-assessment-questions';
+import { generateGoalieIntelligenceProfile } from '@/lib/scoring/intelligence-profile';
 
 /**
  * Service for managing student onboarding evaluations.
@@ -591,6 +607,489 @@ export class OnboardingService extends BaseDatabaseService {
         error: {
           code: 'GET_EVALUATION_FAILED',
           message: 'Failed to retrieve evaluation',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  // ==========================================
+  // V2 ONBOARDING METHODS (New Scoring System)
+  // ==========================================
+
+  /**
+   * Create a new V2 evaluation for a user
+   * Uses the new 7-category, 1.0-4.0 scoring system
+   */
+  async createEvaluationV2(userId: string): Promise<ApiResponse<OnboardingEvaluationV2>> {
+    logger.info('Creating V2 onboarding evaluation', 'OnboardingService', { userId });
+
+    try {
+      // Check if evaluation already exists
+      const existingResult = await this.getEvaluationV2(userId);
+      if (existingResult.success && existingResult.data) {
+        logger.info('Returning existing V2 evaluation', 'OnboardingService', {
+          userId,
+          evaluationId: existingResult.data.id,
+        });
+        return {
+          success: true,
+          data: existingResult.data,
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluationId = `eval_v2_${userId}`;
+      const now = Timestamp.now();
+
+      const evaluationData: Omit<OnboardingEvaluationV2, 'id' | 'createdAt' | 'updatedAt'> = {
+        userId,
+        role: 'goalie',
+        phase: 'intake',
+        currentCategoryIndex: 0,
+        currentQuestionIndex: 0,
+        assessmentResponses: [],
+        status: 'in_progress',
+      };
+
+      await this.createWithId<OnboardingEvaluationV2>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId,
+        evaluationData
+      );
+
+      const evaluation: OnboardingEvaluationV2 = {
+        id: evaluationId,
+        ...evaluationData,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      logger.info('V2 Evaluation created successfully', 'OnboardingService', {
+        userId,
+        evaluationId,
+      });
+
+      return {
+        success: true,
+        data: evaluation,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to create V2 evaluation', 'OnboardingService', { userId, error });
+      return {
+        success: false,
+        error: {
+          code: 'CREATE_EVALUATION_V2_FAILED',
+          message: 'Failed to create V2 onboarding evaluation',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Get a user's V2 evaluation
+   */
+  async getEvaluationV2(userId: string): Promise<ApiResponse<OnboardingEvaluationV2 | null>> {
+    logger.database('read', this.EVALUATIONS_COLLECTION, `eval_v2_${userId}`);
+
+    try {
+      const result = await this.getById<OnboardingEvaluationV2>(
+        this.EVALUATIONS_COLLECTION,
+        `eval_v2_${userId}`
+      );
+
+      return {
+        success: true,
+        data: result.data || null,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to get V2 evaluation', 'OnboardingService', { userId, error });
+      return {
+        success: false,
+        error: {
+          code: 'GET_EVALUATION_V2_FAILED',
+          message: 'Failed to retrieve V2 evaluation',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Save an intake response (Front Door questions)
+   */
+  async saveIntakeResponse(
+    evaluationId: string,
+    response: IntakeResponse,
+    currentIntakeScreen: number
+  ): Promise<ApiResponse<void>> {
+    logger.info('Saving intake response', 'OnboardingService', {
+      evaluationId,
+      questionId: response.questionId,
+    });
+
+    try {
+      const evalResult = await this.getById<OnboardingEvaluationV2>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      if (!evalResult.success || !evalResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'EVALUATION_NOT_FOUND',
+            message: 'V2 Evaluation not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluation = evalResult.data;
+      const existingResponses = evaluation.intakeData?.responses || [];
+
+      // Update or add response
+      const updatedResponses = [...existingResponses.filter(r => r.questionId !== response.questionId), response];
+
+      // Build partial intake data
+      const intakeData: Partial<IntakeData> = {
+        userId: evaluation.userId,
+        role: 'goalie',
+        responses: updatedResponses,
+      };
+
+      await this.update<OnboardingEvaluationV2>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        intakeData: intakeData as IntakeData,
+        // Store current screen for resume functionality
+        currentQuestionIndex: currentIntakeScreen,
+      });
+
+      logger.info('Intake response saved successfully', 'OnboardingService', {
+        evaluationId,
+        questionId: response.questionId,
+        totalResponses: updatedResponses.length,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to save intake response', 'OnboardingService', { evaluationId, error });
+      return {
+        success: false,
+        error: {
+          code: 'SAVE_INTAKE_RESPONSE_FAILED',
+          message: 'Failed to save intake response',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Complete intake phase and transition to assessment
+   */
+  async completeIntake(evaluationId: string): Promise<ApiResponse<IntakeData>> {
+    logger.info('Completing intake phase', 'OnboardingService', { evaluationId });
+
+    try {
+      const evalResult = await this.getById<OnboardingEvaluationV2>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      if (!evalResult.success || !evalResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'EVALUATION_NOT_FOUND',
+            message: 'V2 Evaluation not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluation = evalResult.data;
+      const responses = evaluation.intakeData?.responses || [];
+
+      // Convert responses to the format expected by extraction functions
+      const extractionFormat = responses.map(r => ({
+        questionId: r.questionId,
+        value: Array.isArray(r.value) ? r.value[0] : r.value,
+      }));
+      const extractionFormatMulti = responses.map(r => ({
+        questionId: r.questionId,
+        value: r.value,
+      }));
+
+      // Extract key data from intake responses
+      const ageRange = extractAgeRange(extractionFormat);
+      const experienceLevel = extractExperienceLevel(extractionFormat);
+      const playingLevel = extractPlayingLevel(extractionFormat);
+      const hasGoalieCoach = extractGoalieCoachStatus(extractionFormat);
+      const primaryReasons = extractPrimaryReasons(extractionFormatMulti);
+
+      const completedAt = Timestamp.now();
+
+      const intakeData: IntakeData = {
+        userId: evaluation.userId,
+        role: 'goalie',
+        responses,
+        completedAt,
+        ageRange,
+        experienceLevel,
+        playingLevel,
+        hasGoalieCoach,
+        primaryReasons,
+      };
+
+      await this.update<OnboardingEvaluationV2>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        intakeData,
+        intakeCompletedAt: completedAt,
+        phase: 'bridge',
+        currentCategoryIndex: 0,
+        currentQuestionIndex: 0,
+      });
+
+      logger.info('Intake phase completed successfully', 'OnboardingService', {
+        evaluationId,
+        ageRange,
+        experienceLevel,
+      });
+
+      return {
+        success: true,
+        data: intakeData,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to complete intake', 'OnboardingService', { evaluationId, error });
+      return {
+        success: false,
+        error: {
+          code: 'COMPLETE_INTAKE_FAILED',
+          message: 'Failed to complete intake phase',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Start assessment phase (after bridge message)
+   */
+  async startAssessment(evaluationId: string): Promise<ApiResponse<void>> {
+    logger.info('Starting assessment phase', 'OnboardingService', { evaluationId });
+
+    try {
+      await this.update<OnboardingEvaluationV2>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        phase: 'assessment',
+        assessmentStartedAt: Timestamp.now(),
+        currentCategoryIndex: 0,
+        currentQuestionIndex: 0,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to start assessment', 'OnboardingService', { evaluationId, error });
+      return {
+        success: false,
+        error: {
+          code: 'START_ASSESSMENT_FAILED',
+          message: 'Failed to start assessment phase',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Save an assessment response with V2 scoring (1.0-4.0)
+   */
+  async saveAssessmentResponseV2(
+    evaluationId: string,
+    response: AssessmentResponseV2,
+    currentCategoryIndex: number,
+    currentQuestionIndex: number
+  ): Promise<ApiResponse<void>> {
+    logger.info('Saving V2 assessment response', 'OnboardingService', {
+      evaluationId,
+      questionId: response.questionId,
+      score: response.score,
+    });
+
+    try {
+      const evalResult = await this.getById<OnboardingEvaluationV2>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      if (!evalResult.success || !evalResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'EVALUATION_NOT_FOUND',
+            message: 'V2 Evaluation not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluation = evalResult.data;
+      const responses = [...evaluation.assessmentResponses];
+      const existingIndex = responses.findIndex(r => r.questionId === response.questionId);
+
+      if (existingIndex >= 0) {
+        responses[existingIndex] = response;
+      } else {
+        responses.push(response);
+      }
+
+      await this.update<OnboardingEvaluationV2>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        assessmentResponses: responses,
+        currentCategoryIndex,
+        currentQuestionIndex,
+      });
+
+      logger.info('V2 Assessment response saved successfully', 'OnboardingService', {
+        evaluationId,
+        questionId: response.questionId,
+        totalResponses: responses.length,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to save V2 assessment response', 'OnboardingService', { evaluationId, error });
+      return {
+        success: false,
+        error: {
+          code: 'SAVE_ASSESSMENT_RESPONSE_V2_FAILED',
+          message: 'Failed to save V2 assessment response',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Complete V2 evaluation and generate intelligence profile
+   */
+  async completeEvaluationV2(userId: string): Promise<ApiResponse<IntelligenceProfile>> {
+    logger.info('Completing V2 evaluation', 'OnboardingService', { userId });
+
+    try {
+      const evaluationId = `eval_v2_${userId}`;
+      const evalResult = await this.getById<OnboardingEvaluationV2>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      if (!evalResult.success || !evalResult.data) {
+        return {
+          success: false,
+          error: {
+            code: 'EVALUATION_NOT_FOUND',
+            message: 'V2 Evaluation not found',
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluation = evalResult.data;
+      const ageRange = evaluation.intakeData?.ageRange;
+
+      // Generate intelligence profile
+      const intelligenceProfile = generateGoalieIntelligenceProfile(
+        userId,
+        evaluation.assessmentResponses,
+        ageRange
+      );
+
+      const completedAt = Timestamp.now();
+      const duration = evaluation.assessmentStartedAt
+        ? Math.round((completedAt.toMillis() - evaluation.assessmentStartedAt.toMillis()) / 1000)
+        : 0;
+
+      // Update evaluation
+      await this.update<OnboardingEvaluationV2>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        status: 'completed',
+        phase: 'completed',
+        completedAt,
+        duration,
+        intelligenceProfile,
+        pacingLevel: intelligenceProfile.pacingLevel,
+        // Legacy compatibility
+        overallLevel: pacingLevelToAssessmentLevel(intelligenceProfile.pacingLevel),
+        overallPercentage: Math.round(((intelligenceProfile.overallScore - 1) / 3) * 100),
+      });
+
+      // Update user document
+      await this.update<User>(this.USERS_COLLECTION, userId, {
+        onboardingCompleted: true,
+        onboardingCompletedAt: completedAt,
+        initialAssessmentLevel: pacingLevelToAssessmentLevel(intelligenceProfile.pacingLevel),
+      });
+
+      logger.info('V2 Evaluation completed successfully', 'OnboardingService', {
+        userId,
+        pacingLevel: intelligenceProfile.pacingLevel,
+        overallScore: intelligenceProfile.overallScore,
+        duration,
+      });
+
+      return {
+        success: true,
+        data: intelligenceProfile,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to complete V2 evaluation', 'OnboardingService', { userId, error });
+      return {
+        success: false,
+        error: {
+          code: 'COMPLETE_EVALUATION_V2_FAILED',
+          message: 'Failed to complete V2 evaluation',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Update V2 evaluation phase
+   */
+  async updatePhaseV2(
+    evaluationId: string,
+    phase: OnboardingEvaluationV2['phase'],
+    additionalData: Partial<OnboardingEvaluationV2> = {}
+  ): Promise<ApiResponse<void>> {
+    try {
+      await this.update<OnboardingEvaluationV2>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        phase,
+        ...additionalData,
+      });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to update V2 phase', 'OnboardingService', { evaluationId, phase, error });
+      return {
+        success: false,
+        error: {
+          code: 'UPDATE_PHASE_V2_FAILED',
+          message: 'Failed to update V2 phase',
         },
         timestamp: new Date(),
       };

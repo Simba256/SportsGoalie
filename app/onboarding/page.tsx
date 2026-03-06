@@ -4,23 +4,21 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboardingV2 } from '@/hooks/useOnboardingV2';
 import {
   OnboardingContainer,
-  OnboardingProgress,
-  WelcomeScreen,
-  PillarIntro,
-  RatingQuestion,
-  MultipleChoiceQuestion,
-  TrueFalseQuestion,
-  VideoScenarioQuestion,
-  ResultsScreen,
+  WelcomeScreenV2,
+  IntakeScreen,
+  BridgeMessage,
+  CategoryIntro,
+  AssessmentQuestionV2,
+  OnboardingProgressV2,
+  IntelligenceProfileView,
 } from '@/components/onboarding';
-import { getQuestionCountByPillar } from '@/data/onboarding-questions';
 
 /**
- * Main onboarding evaluation page.
- * Full-screen immersive flow through the 6 Goalie Pillars.
+ * Main onboarding evaluation page (V2).
+ * Full-screen immersive flow with new 7-category, 1.0-4.0 scoring system.
  */
 export default function OnboardingPage() {
   const router = useRouter();
@@ -44,17 +42,27 @@ export default function OnboardingPage() {
     phase,
     loading,
     error,
-    evaluation,
-    currentPillarIndex,
-    currentPillar,
+    currentIntakeScreen,
+    intakeScreenQuestions,
+    intakeResponses,
+    intakeData,
+    currentCategoryIndex,
+    currentQuestionIndex,
+    currentCategory,
     currentQuestion,
-    completedPillars,
+    categoryQuestions,
+    intelligenceProfile,
+    totalIntakeScreens,
+    totalCategories,
     questionProgress,
-    beginEvaluation,
-    startPillar,
+    beginOnboarding,
+    answerIntake,
+    nextIntakeScreen,
+    previousIntakeScreen,
+    startCategory,
     answerQuestion,
     goToDashboard,
-  } = useOnboarding({
+  } = useOnboardingV2({
     userId: user?.id || null,
     studentName: user?.displayName || 'Student',
     enabled: !authLoading && !!user && !user.onboardingCompleted,
@@ -100,27 +108,19 @@ export default function OnboardingPage() {
     );
   }
 
-  // Question counts for pillar intros
-  const questionCounts = getQuestionCountByPillar();
-
   return (
     <OnboardingContainer>
-      {/* Progress bar (hidden on welcome and results) */}
-      {phase !== 'welcome' && phase !== 'results' && phase !== 'complete' && (
+      {/* Progress bar (shown during intake and assessment phases) */}
+      {(phase === 'intake' || phase === 'question' || phase === 'category_intro') && (
         <div className="p-4 sm:p-6">
-          <OnboardingProgress
-            currentPillarIndex={currentPillarIndex}
-            completedPillars={completedPillars}
+          <OnboardingProgressV2
+            phase={phase === 'category_intro' || phase === 'question' ? 'assessment' : phase}
+            currentIntakeScreen={currentIntakeScreen}
+            totalIntakeScreens={totalIntakeScreens}
+            currentCategoryIndex={currentCategoryIndex}
+            currentQuestionIndex={currentQuestionIndex}
+            questionProgress={questionProgress}
           />
-
-          {/* Question counter */}
-          {phase === 'question' && (
-            <div className="text-center mt-4">
-              <span className="text-sm text-slate-500">
-                Question {questionProgress.current + 1} of {questionProgress.total}
-              </span>
-            </div>
-          )}
         </div>
       )}
 
@@ -128,63 +128,69 @@ export default function OnboardingPage() {
       <div className="flex-1 flex flex-col">
         {/* Welcome Screen */}
         {phase === 'welcome' && user && (
-          <WelcomeScreen
+          <WelcomeScreenV2
             studentName={user.displayName?.split(' ')[0] || 'Student'}
-            onBegin={beginEvaluation}
+            onBegin={beginOnboarding}
           />
         )}
 
-        {/* Pillar Introduction */}
-        {phase === 'pillar_intro' && currentPillar && (
-          <PillarIntro
-            pillar={currentPillar}
-            pillarIndex={currentPillarIndex}
-            questionCount={questionCounts[currentPillar.slug] || 0}
-            onContinue={startPillar}
+        {/* Intake Screen */}
+        {phase === 'intake' && (
+          <IntakeScreen
+            screen={currentIntakeScreen}
+            totalScreens={totalIntakeScreens}
+            questions={intakeScreenQuestions}
+            responses={intakeResponses}
+            onAnswer={answerIntake}
+            onNext={nextIntakeScreen}
+            onBack={previousIntakeScreen}
+            loading={loading}
           />
         )}
 
-        {/* Question */}
-        {phase === 'question' && currentQuestion && (
+        {/* Bridge Message */}
+        {phase === 'bridge' && intakeData && user && (
+          <BridgeMessage
+            studentName={user.displayName?.split(' ')[0] || 'Student'}
+            ageRange={intakeData.ageRange}
+            experienceLevel={intakeData.experienceLevel}
+            primaryReasons={intakeData.primaryReasons}
+            onContinue={startCategory}
+          />
+        )}
+
+        {/* Category Introduction */}
+        {phase === 'category_intro' && currentCategory && (
+          <CategoryIntro
+            categorySlug={currentCategory.slug as any}
+            categoryName={currentCategory.name}
+            categoryDescription={currentCategory.description}
+            questionCount={categoryQuestions.length}
+            categoryIndex={currentCategoryIndex}
+            totalCategories={totalCategories}
+            onStart={startCategory}
+          />
+        )}
+
+        {/* Assessment Question */}
+        {phase === 'question' && currentQuestion && currentCategory && (
           <div className="flex-1 flex items-center justify-center p-6">
-            {currentQuestion.type === 'rating' && (
-              <RatingQuestion
-                key={currentQuestion.id}
-                question={currentQuestion}
-                onAnswer={(value, points) => answerQuestion(value, points)}
-              />
-            )}
-
-            {currentQuestion.type === 'multiple_choice' && (
-              <MultipleChoiceQuestion
-                key={currentQuestion.id}
-                question={currentQuestion}
-                onAnswer={(optionId, points) => answerQuestion(optionId, points)}
-              />
-            )}
-
-            {currentQuestion.type === 'true_false' && (
-              <TrueFalseQuestion
-                key={currentQuestion.id}
-                question={currentQuestion}
-                onAnswer={(optionId, points) => answerQuestion(optionId, points)}
-              />
-            )}
-
-            {currentQuestion.type === 'video_scenario' && (
-              <VideoScenarioQuestion
-                key={currentQuestion.id}
-                question={currentQuestion}
-                onAnswer={(optionId, points) => answerQuestion(optionId, points)}
-              />
-            )}
+            <AssessmentQuestionV2
+              question={currentQuestion}
+              categoryName={currentCategory.shortName}
+              categoryColor={currentCategory.color}
+              questionNumber={currentQuestionIndex + 1}
+              totalQuestionsInCategory={categoryQuestions.length}
+              onAnswer={(optionId, score) => answerQuestion(currentQuestion.id, optionId, score)}
+            />
           </div>
         )}
 
-        {/* Results Screen */}
-        {phase === 'results' && evaluation && (
-          <ResultsScreen
-            evaluation={evaluation}
+        {/* Intelligence Profile */}
+        {phase === 'profile' && intelligenceProfile && (
+          <IntelligenceProfileView
+            profile={intelligenceProfile}
+            ageRange={intakeData?.ageRange}
             onContinue={goToDashboard}
           />
         )}

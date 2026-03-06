@@ -476,12 +476,13 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
       await page.goto('/');
       await page.waitForLoadState('domcontentloaded');
 
-      const pageLoaded = await page.locator('body').count() > 0;
-      expect(pageLoaded).toBe(1);
+      const bodyCount = await page.locator('body').count();
+      expect(bodyCount).toBe(1);
     });
 
     test('should recover from failed API calls', async ({ page }) => {
       await page.goto('/pillars');
+      await page.waitForLoadState('domcontentloaded');
 
       // Block API calls temporarily
       await page.route('**/api/**', route => route.abort());
@@ -495,9 +496,9 @@ test.describe('Phase 2 - Performance & Stress Testing', () => {
       await page.reload();
       await page.waitForLoadState('domcontentloaded');
 
-      // Page should load successfully
-      const pageLoaded = await page.locator('h1').count() > 0;
-      expect(pageLoaded).toBeGreaterThan(0);
+      // Page should load successfully - check for any heading (h1, h2, h3) since page may not have h1
+      const headingCount = await page.locator('h1, h2, h3').count();
+      expect(headingCount).toBeGreaterThan(0);
     });
   });
 });
@@ -514,13 +515,19 @@ test.describe('Phase 2 - Accessibility & Usability Testing', () => {
 
   test('should have accessible form labels', async ({ page }) => {
     await page.goto('/auth/login');
+    await page.waitForLoadState('domcontentloaded');
 
-    const emailLabel = page.locator('label[for="email"]');
+    // Wait for form to be visible
+    await expect(page.getByTestId('login-form')).toBeVisible();
 
     // Labels should exist or inputs should have aria-labels
     const emailInput = page.getByTestId('email-input');
-    const hasEmailLabel = await emailLabel.count() > 0 ||
-                         await emailInput.getAttribute('aria-label') !== null;
+    await expect(emailInput).toBeVisible();
+
+    // Check for label with for attribute or aria-label
+    const emailLabelCount = await page.locator('label[for="email"]').count();
+    const emailAriaLabel = await emailInput.getAttribute('aria-label');
+    const hasEmailLabel = emailLabelCount > 0 || emailAriaLabel !== null;
 
     expect(hasEmailLabel).toBeTruthy();
   });
