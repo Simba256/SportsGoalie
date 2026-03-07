@@ -150,6 +150,25 @@ export default function CoachEvaluationPage() {
   // Assessment responses expansion state
   const [showResponses, setShowResponses] = useState(false);
 
+  // Group assessment responses by category (must be before early returns)
+  const responsesByCategory = useMemo(() => {
+    if (!evaluation?.assessmentResponses) return {};
+    const grouped: Record<string, AssessmentResponse[]> = {};
+    evaluation.assessmentResponses.forEach(response => {
+      if (!grouped[response.categorySlug]) {
+        grouped[response.categorySlug] = [];
+      }
+      grouped[response.categorySlug].push(response);
+    });
+    // Sort responses within each category by questionCode
+    Object.values(grouped).forEach(responses => {
+      responses.sort((a, b) => a.questionCode.localeCompare(b.questionCode));
+    });
+    return grouped;
+  }, [evaluation?.assessmentResponses]);
+
+  const totalResponses = evaluation?.assessmentResponses?.length || 0;
+
   useEffect(() => {
     if (studentId && coach?.id) {
       loadData();
@@ -271,24 +290,6 @@ export default function CoachEvaluationPage() {
   // Get strengths and gaps from profile
   const strengths = profile?.identifiedStrengths || [];
   const gaps = profile?.identifiedGaps || [];
-
-  // Group assessment responses by category
-  const responsesByCategory = useMemo(() => {
-    const grouped: Record<string, AssessmentResponse[]> = {};
-    evaluation.assessmentResponses?.forEach(response => {
-      if (!grouped[response.categorySlug]) {
-        grouped[response.categorySlug] = [];
-      }
-      grouped[response.categorySlug].push(response);
-    });
-    // Sort responses within each category by questionCode
-    Object.values(grouped).forEach(responses => {
-      responses.sort((a, b) => a.questionCode.localeCompare(b.questionCode));
-    });
-    return grouped;
-  }, [evaluation.assessmentResponses]);
-
-  const totalResponses = evaluation.assessmentResponses?.length || 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
