@@ -44,6 +44,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-07 - [Remove Onboarding V2 Backward Compatibility](docs/sessions/2026-03/2026-03-07-remove-onboarding-v2-backward-compatibility.md)
+**Time:** 30min | **Focus:** Refactor / Code Cleanup
+Removed all V2 backward compatibility code from onboarding system. Renamed component files (removed -v2 suffix), removed type aliases (AssessmentResponseV2, OnboardingEvaluationV2), removed legacy functions (getLevelDisplayText, getLevelColor), removed legacy fields (overallLevel, overallPercentage), removed service method aliases. Net removal of ~2,259 lines. All tests pass.
+
 ### 2026-03-07 - [Fix Custom Quiz Not Found Bug](docs/sessions/2026-03/2026-03-07-fix-custom-quiz-not-found.md)
 **Time:** 15min | **Focus:** Bug Fix - Quiz Access
 Fixed "Video quiz not found" error when students click "Take Quiz" on custom content items. Custom content uses `content_xxx` IDs that reference actual quiz IDs in `video_quizzes` collection. Updated quiz page to resolve custom content references before loading quiz.
@@ -192,27 +196,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 47 hours | 🔄 In Progress |
-| **Total** | **~207 hours** | - |
+| Phase 2 | 47.5 hours | 🔄 In Progress |
+| **Total** | **~207.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 31h | 66% |
+| Development | 31h | 65% |
 | Documentation | 1.75h | 4% |
 | Debugging | 10h | 21% |
 | Security | 1.5h | 3% |
-| Refactor | 1.5h | 3% |
+| Refactor | 2h | 4% |
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **47h** | **100%** |
+| **Total** | **47.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 21.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding | 17 |
+| 2026-03-01 | 21.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal | 18 |
 
 ---
 
@@ -509,6 +513,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-07 (Session: Remove Onboarding V2 Backward Compatibility)
+- **Refactor:** Renamed component files: `welcome-screen-v2.tsx` → `welcome-screen.tsx`, etc.
+- **Refactor:** Removed type aliases: `AssessmentResponseV2`, `OnboardingEvaluationV2`
+- **Refactor:** Removed legacy functions: `getLevelDisplayText`, `getLevelColor`
+- **Refactor:** Removed legacy fields from `OnboardingEvaluation`: `overallLevel`, `overallPercentage`
+- **Refactor:** Removed 5 service method aliases (`createEvaluationV2`, `getEvaluationV2`, etc.)
+- **Refactor:** Removed `eval_v2_` ID fallback logic in service methods
+- **Refactor:** Updated coach students page to use pacing level only
+- **Refactor:** Updated scoring files to use `AssessmentResponse` instead of `AssessmentResponseV2`
+- **Testing:** Removed backward compatibility test suite, all 26 onboarding tests pass
+- **Build:** Net removal of ~2,259 lines, TypeScript compiles with zero errors
 
 ### 2026-03-07 (Session: Fix Custom Quiz Not Found Bug)
 - **Fix:** Added custom content ID resolution to video quiz page
@@ -903,10 +919,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-07
-**Last Session:** Fix Custom Quiz Not Found Bug
-**Total Sessions This Phase:** 32
-**Current Phase Hours:** 47.25h
-**Next Session Focus:** Verify custom quiz fix works in production, test V2 onboarding flow end-to-end
+**Last Session:** Remove Onboarding V2 Backward Compatibility
+**Total Sessions This Phase:** 33
+**Current Phase Hours:** 47.5h
+**Next Session Focus:** Verify onboarding flow works end-to-end in production
 
 ---
 
