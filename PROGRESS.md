@@ -44,6 +44,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-07 - [V2 Onboarding UI Fixes](docs/sessions/2026-03/2026-03-07-v2-onboarding-ui-fixes.md)
+**Time:** 30min | **Focus:** Bug Fix / UI Improvement
+Fixed V2 onboarding UI proportions to match old styling: enlarged progress dots, removed max-width constraint on options, added letter badges (A,B,C,D), increased icon sizes in progress bar. Fixed critical bug where assessment questions got stuck after answering - added key prop to force component remount on question change.
+
 ### 2026-03-06 - [Phase D Goalie Onboarding V2 UI](docs/sessions/2026-03/2026-03-06-phase-d-goalie-onboarding-v2-ui.md)
 **Time:** 1h 30min | **Focus:** Feature - Onboarding UI Integration
 Integrated V2 scoring system (1.0-4.0 scale, 7 categories) into goalie onboarding flow. Created useOnboardingV2 hook with phases (welcome, intake, bridge, category_intro, question, profile, complete). Built 8 new V2 components: WelcomeScreenV2, IntakeScreen, BridgeMessage, CategoryIntro, AssessmentQuestionV2, OnboardingProgressV2, IntelligenceProfileView. Added V2 service methods for intake/assessment response handling and profile generation. Replaced main onboarding page with V2 flow.
@@ -180,27 +184,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 46 hours | 🔄 In Progress |
-| **Total** | **~206 hours** | - |
+| Phase 2 | 46.5 hours | 🔄 In Progress |
+| **Total** | **~206.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
 | Development | 30.5h | 66% |
 | Documentation | 1.75h | 4% |
-| Debugging | 9.5h | 21% |
+| Debugging | 10h | 22% |
 | Security | 1.5h | 3% |
 | Refactor | 1.5h | 3% |
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **46h** | **100%** |
+| **Total** | **46.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 20.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation | 15 |
+| 2026-03-01 | 20.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes | 16 |
 
 ---
 
@@ -253,6 +257,12 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-07: Component Key Prop for State Reset
+**Decision:** Use React `key` prop to force component remount instead of `useEffect` for state reset
+**Rationale:** `key` prop is more idiomatic React pattern - React handles full state reset automatically on remount
+**Impact:** Cleaner code, no manual state reset logic needed, prevents bugs from incomplete state cleanup
+**Alternatives Considered:** `useEffect` watching `question.id` to reset state (rejected - more code, potential for missed state)
 
 ### 2026-03-06: 1.0-4.0 Continuous Scoring Scale
 **Decision:** Replace discrete levels (beginner/intermediate/advanced) with continuous 1.0-4.0 scoring scale
@@ -491,6 +501,19 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-07 (Session: V2 Onboarding UI Fixes)
+- **UI:** Fixed intake screen progress dots size (`w-2.5` → `w-3`)
+- **UI:** Removed `max-w-lg` constraint on intake options container
+- **UI:** Added letter badges (A, B, C, D) to intake options matching old design
+- **UI:** Increased option badge size from `w-6 h-6` to `w-10 h-10`
+- **UI:** Increased progress bar height from `h-1.5` to `h-2`
+- **UI:** Increased progress icon sizes from `w-8 h-8` to `w-10 h-10 sm:w-12 sm:h-12`
+- **UI:** Increased inner icon sizes from `w-4 h-4` to `w-5 h-5 sm:w-6 sm:h-6`
+- **UI:** Widened progress connectors for better visual balance
+- **Fix:** Added `key` prop to `AssessmentQuestionV2` to force remount on question change
+- **Fix:** Resolved stuck assessment flow (component not advancing after answer)
+- **Build:** TypeScript compiles with zero errors, build succeeds
 
 ### 2026-03-06 (Session: Michael's Phase 2 Scoring Foundation)
 - **Feature:** Implemented Phases A, B, C of Michael's Phase 2 specification integration
@@ -854,11 +877,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-06
-**Last Session:** Michael's Phase 2 Scoring Foundation
-**Total Sessions This Phase:** 29
-**Current Phase Hours:** 46.25h
-**Next Session Focus:** Phase D UI Integration (onboarding page updates, intake/assessment components), or Phase E Admin Dashboard (Intelligence Profile views, cross-reference visualization)
+**Last Updated:** 2026-03-07
+**Last Session:** V2 Onboarding UI Fixes
+**Total Sessions This Phase:** 30
+**Current Phase Hours:** 46.5h
+**Next Session Focus:** Test complete V2 onboarding flow end-to-end, verify intelligence profile generation, Phase E Admin Dashboard (Intelligence Profile views, cross-reference visualization)
 
 ---
 
