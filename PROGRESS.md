@@ -6,20 +6,25 @@
 
 ## 📊 Project Status
 
-**Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Transformation
+**Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Framework
 **Phase Start Date:** 2026-02-22
 **Target Completion:** TBD
-**Overall Progress:** 100% (Phase 1 Complete, Phase 2.0 Multi-Role Foundation Complete, Phase 2.1 6-Pillar Conversion 90% Complete)
+**Overall Progress:** Phase 2.0-2.2 Complete (94 hours), Phase 2.3-2.5 Pending
 
 ---
 
 ## 🎯 Current Sprint Goals
 
 ### Active Tasks
-- [ ] Implement parent-child relationships with student ID linking (Phase 2.0.4)
-- [ ] Role-based route protection (Phase 2.0.5)
-- [x] Student onboarding & initial evaluation (Phase 2.0.7) - COMPLETE
-- [x] Convert to 6-pillar ice hockey goalie structure (Phase 2.1) - COMPLETE
+- [ ] Implement parent-child relationships with student ID linking (Phase 2.3)
+- [ ] Parent onboarding flow with assessment (Phase 2.3)
+- [ ] Age compliance - Canadian PIPEDA (Phase 2.3)
+- [ ] Pillar level structure and lesson management (Phase 2.4)
+
+### Completed This Phase
+- [x] Multi-Role Foundation (Phase 2.0) - COMPLETE
+- [x] 6-Pillar Framework (Phase 2.1) - COMPLETE
+- [x] Intelligence-Based Onboarding (Phase 2.2) - COMPLETE
 
 ### Completed This Sprint
 - [x] Comprehensive project analysis (2026-02-22)
@@ -43,6 +48,10 @@
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-07 - [Reset Incomplete Evaluations Script](docs/sessions/2026-03/2026-03-07-reset-incomplete-evaluations-script.md)
+**Time:** 15min | **Focus:** Migration / Data Cleanup
+Created one-time migration script to reset incomplete or old onboarding evaluations. Script detects stuck (in_progress) and pre-V2 (no assessment responses) evaluations, deletes them, and resets user onboarding flags. Executed script: reset 4 evaluations (1 active user, 3 orphaned).
 
 ### 2026-03-07 - [Add Detailed Q&A View to Evaluation Page](docs/sessions/2026-03/2026-03-07-evaluation-qa-detail-view.md)
 **Time:** 15min | **Focus:** Feature - Coach/Admin UI Enhancement
@@ -204,13 +213,13 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 48 hours | 🔄 In Progress |
-| **Total** | **~208 hours** | - |
+| Phase 2 | 48.25 hours | 🔄 In Progress |
+| **Total** | **~208.25 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 31.5h | 66% |
+| Development | 31.75h | 66% |
 | Documentation | 1.75h | 4% |
 | Debugging | 10h | 21% |
 | Security | 1.5h | 3% |
@@ -218,13 +227,13 @@ Initial project analysis and progress tracking system implementation.
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **48h** | **100%** |
+| **Total** | **48.25h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 22h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view | 20 |
+| 2026-03-01 | 22.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script | 21 |
 
 ---
 
@@ -232,30 +241,44 @@ Initial project analysis and progress tracking system implementation.
 
 ### Phase 2 Milestones
 
-#### 2.0 - Multi-Role Foundation (100% Complete)
-- [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin) - COMPLETE
-- [x] 2.0.1b: Student ID system & registration security - COMPLETE
-- [x] 2.0.2: Coach invitation system with email infrastructure - COMPLETE
-- [x] 2.0.3: Coach-student relationships & dashboard separation - COMPLETE
-- [ ] 2.0.4: Parent-child relationships with student ID linking (deferred)
-- [ ] 2.0.5: Role-based route protection (deferred)
-- [x] 2.0.6: Student workflow types & custom curriculum system (MVP) - COMPLETE
-- [x] 2.0.6b: Coach custom content creation (video lessons + quizzes) - COMPLETE
-- [x] 2.0.7: Student onboarding & initial evaluation - COMPLETE (rules deployed, tested)
+#### 2.0 - Multi-Role Foundation (100% Complete) ✅
+- [x] 2.0.1: Extended user roles (Student, Coach, Parent, Admin)
+- [x] 2.0.2: Student ID system & registration security
+- [x] 2.0.3: Coach invitation system with email infrastructure
+- [x] 2.0.4: Coach-student relationships & dashboard separation
+- [x] 2.0.5: Student workflow types & custom curriculum system (MVP)
+- [x] 2.0.6: Coach custom content creation (video lessons + quizzes)
+- [x] 2.0.7: AI Project Assistant
 
-#### 2.1 - 6-Pillar Conversion (95% Complete)
-- [x] Convert sports/skills to 6 fixed pillars - COMPLETE
-- [x] Rename routes from /sports to /pillars - COMPLETE
-- [x] Update test files for pillar routes - COMPLETE
-- [ ] Implement level unlock system (deferred to Phase 2.1b)
-- [ ] Build content review functionality
-- [x] Update all UI to reflect pillar structure - COMPLETE
+#### 2.1 - 6-Pillar Framework (100% Complete) ✅
+- [x] Database migration to 6 fixed pillars
+- [x] Rename routes from /sports to /pillars
+- [x] Update test files for pillar routes
+- [x] Update all UI to reflect pillar structure
+- [x] Navigation cleanup (Courses → Pillars)
 
-#### 2.2 - Enhanced Analytics (0% Complete)
-- [ ] Per-pillar analytics dashboards
-- [ ] Coach analytics views
-- [ ] Parent progress reports
-- [ ] Cross-pillar performance insights
+#### 2.2 - Intelligence-Based Onboarding (100% Complete) ✅
+- [x] Student onboarding evaluation (28 questions, 7 categories)
+- [x] Intelligence Profile scoring (1.0-4.0 scale)
+- [x] V2 onboarding flow (intake, assessment, profile)
+- [x] Coach evaluation review with Q&A details
+- [x] Cross-reference engine for multi-role comparison
+
+#### 2.3 - Parent System & Compliance (0% Complete) 🔲
+- [ ] Parent-child relationships with student ID linking
+- [ ] Parent onboarding flow with assessment
+- [ ] Age compliance (Canadian PIPEDA)
+
+#### 2.4 - Pillar Content & Level System (0% Complete) 🔲
+- [ ] Pillar level structure (3 levels per pillar)
+- [ ] Lesson management for pillar content
+- [ ] Level evaluations (quiz gates)
+- [ ] Level unlock progression
+- [ ] Remedial content system
+
+#### 2.5 - Role-Based Access Hardening (0% Complete) 🔲
+- [ ] Enhanced route protection middleware
+- [ ] Full coach content access controls
 
 ---
 
@@ -521,6 +544,14 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-07 (Session: Reset Incomplete Evaluations Script)
+- **Script:** Created `scripts/reset-incomplete-evaluations.ts` migration script
+- **Feature:** Detects incomplete evaluations (stuck in_progress or missing assessmentResponses)
+- **Feature:** Supports `--dry-run` flag for safe previewing
+- **Feature:** Deletes evaluation docs and resets user onboarding flags
+- **Execution:** Reset 4 evaluations (1 active user can restart, 3 orphaned docs cleaned up)
+- **Build:** Script runs successfully with `npx tsx`
 
 ### 2026-03-07 (Session: Add Detailed Q&A View to Evaluation Page)
 - **Feature:** Added collapsible "Assessment Responses" section to coach evaluation page
@@ -942,10 +973,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-07
-**Last Session:** Add Detailed Q&A View to Evaluation Page
-**Total Sessions This Phase:** 35
-**Current Phase Hours:** 48h
-**Next Session Focus:** Manual testing of evaluation Q&A view with real student data
+**Last Session:** Reset Incomplete Evaluations Script
+**Total Sessions This Phase:** 36
+**Current Phase Hours:** 48.25h
+**Next Session Focus:** Verify affected students can restart onboarding
 
 ---
 

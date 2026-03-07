@@ -1,34 +1,47 @@
-# SportsGoalie Phase Timeline (Revised)
+# SmarterGoalie Phase Timeline (Revised March 2026)
 
 ## Project Goal
 
 Transform the existing dynamic sports learning platform into a specialized **Ice Hockey Goalie Training System** with:
 - 4 user roles (Student, Coach, Parent, Admin)
 - 6 fixed pillars with 3 levels each
+- Intelligence-based assessment and personalized learning
 - Subscription tiers with Stripe
 - Scalable architecture for thousands of users
 
 ---
 
-## Time Estimates Summary
+## Time Investment Summary
 
-| Phase | Description | Hours | Days (8hr) |
-|-------|-------------|-------|------------|
-| **Phase 2** | Roles + 6 Pillars | 170-220 | 21-28 |
-| **Phase 3** | Rich Content & Media | 86-112 | 11-14 |
-| **Phase 4** | Analytics & Dashboards | 80-106 | 10-13 |
-| **Phase 5** | Communication & Scheduling | 62-82 | 8-10 |
-| **Phase 6** | Mobile & Performance | 92-124 | 12-16 |
-| **Phase 7** | Payments & Subscriptions | 80-106 | 10-13 |
-| **TOTAL** | All Phases | **570-750** | **71-94** |
+### Completed Work
 
-*Estimates assume a competent mid-level developer familiar with Next.js/Firebase*
+| Phase | Description | Actual Hours | Status |
+|-------|-------------|--------------|--------|
+| **Phase 1** | Foundation (Auth, Quizzes, Charting) | ~160 | ✅ Complete |
+| **Phase 2.0** | Multi-Role Foundation | 65 | ✅ Complete |
+| **Phase 2.1** | 6-Pillar Framework | 14 | ✅ Complete |
+| **Phase 2.2** | Intelligence-Based Onboarding | 15 | ✅ Complete |
+| **Total Completed** | | **~254** | |
+
+### Remaining Work Estimates
+
+| Phase | Description | Est. Hours | Priority |
+|-------|-------------|------------|----------|
+| **Phase 2.3** | Parent System & Compliance | 24-32 | HIGH |
+| **Phase 2.4** | Pillar Content & Level System | 40-52 | HIGH |
+| **Phase 2.5** | Role-Based Access Hardening | 12-16 | MEDIUM |
+| **Phase 3** | Rich Content & Media | 60-80 | MEDIUM |
+| **Phase 4** | Analytics & Dashboards | 50-70 | MEDIUM |
+| **Phase 5** | Communication & Scheduling | 40-55 | LOW |
+| **Phase 6** | Mobile & Performance | 60-80 | LOW |
+| **Phase 7** | Payments & Subscriptions | 60-80 | LOW |
+| **Remaining Total** | | **346-465** | |
 
 ---
 
-## Phase 1: Authentication, Sports CRUD & Video Quizzes (COMPLETED)
+## Phase 1: Foundation (COMPLETED)
 
-**Status:** Done
+**Status:** ✅ Complete (~160 hours)
 
 ### What Was Built
 - Firebase Auth with Student/Admin roles
@@ -42,634 +55,409 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 
 ---
 
-## Phase 2: Multi-Role System & 6 Fixed Pillars
+## Phase 2: Multi-Role System & 6-Pillar Framework
 
-### Phase 2.0.1: Extend User Roles (Student/Coach/Parent/Admin)
+### Phase 2.0: Multi-Role Foundation (COMPLETED)
 
-**Estimated Time:** 6-8 hours
+**Status:** ✅ Complete (65 hours)
+**Completed:** February 22 - March 7, 2026
 
-**What Changes:**
-- Update `UserRole` type: `'student' | 'coach' | 'parent' | 'admin'`
-- Add role-specific fields to User interface
-- Update registration flow with role selection
+#### 2.0.1: User Roles & Authentication ✅
+- Extended UserRole type: student | coach | parent | admin
+- Role-specific fields in User interface
+- Registration flow with role selection
 - Role validation in auth context
 
-**Outcome:** System supports 4 distinct user roles.
+#### 2.0.2: Student ID System ✅
+- Crypto-random student ID generation (SG-XXXX-XXXX format)
+- Profile display with copy-to-clipboard
+- Registration security (Student/Parent only for public registration)
+
+#### 2.0.3: Coach Invitation System ✅
+- Email-based invitation workflow
+- 32-character crypto-random tokens with 7-day expiry
+- Admin UI for invitation management
+- Coach acceptance flow with email verification skip
+
+#### 2.0.4: Coach-Student Relationships ✅
+- Direct coach-student linking via search
+- Add/remove student functionality
+- Student roster management
+- Dashboard separation for custom vs automated students
+
+#### 2.0.5: Custom Curriculum System ✅
+- Student workflow types (automated vs custom)
+- CustomCurriculumService with full CRUD
+- Coach dashboard with statistics
+- Curriculum builder interface with content browser
+- Custom content library for reusable coach materials
+
+#### 2.0.6: Coach Custom Content Creation ✅
+- Video lesson creator with upload
+- Quiz creator with 3-step wizard (VideoQuestionBuilder)
+- Content library management
+- Full feature parity with admin quiz tools
+
+#### 2.0.7: AI Project Assistant ✅
+- Intelligent chatbot with project knowledge
+- Smart context loading (80-90% token savings)
+- Claude Sonnet 4 integration
+- Admin dashboard integration
 
 ---
 
-### Phase 2.0.2: Coach-Student Relationship Model
+### Phase 2.1: 6-Pillar Framework (COMPLETED)
 
-**Estimated Time:** 16-20 hours
+**Status:** ✅ Complete (14 hours)
+**Completed:** March 5-6, 2026
 
-**What Changes:**
-- Create `coach_students` collection
-- CoachStudentService with assign/unassign/list methods
-- Admin UI to assign students to coaches
-- Coach can view assigned students list
-- Student profile shows assigned coach
+#### 2.1.1: Database Migration ✅
+- Created 6 fixed pillar documents with specific IDs
+- Migration script for existing content
+- Pillar utility functions (colors, icons, helpers)
 
-**Outcome:** Coaches have their own roster of students.
+#### 2.1.2: Route & UI Updates ✅
+- Renamed routes from /sports to /pillars
+- Updated all internal navigation links
+- Pillar management UI (view/edit only, no create/delete)
+- Student dashboard with pillar progress cards
+
+#### 2.1.3: Navigation Cleanup ✅
+- Renamed "Courses" to "Pillars"
+- Removed redundant navigation items
+- Cleaner student nav: Pillars, Progress, Charting, Messages
 
 ---
 
-### Phase 2.0.3: Parent-Child Relationship Model
+### Phase 2.2: Intelligence-Based Onboarding (COMPLETED)
 
-**Estimated Time:** 20-24 hours (includes compliance additions)
+**Status:** ✅ Complete (15 hours)
+**Completed:** March 4-7, 2026
 
-**What Changes:**
+#### 2.2.1: Student Onboarding Evaluation ✅
+- 28-question assessment across 7 categories
+- Immersive full-screen dark theme UI
+- Auto-save and resume capability
+- Question types: rating scales, multiple choice, true/false
+
+#### 2.2.2: Intelligence Profile Scoring ✅
+- 1.0-4.0 continuous scoring scale
+- 7 assessment categories per role (goalie/parent/coach)
+- Weighted category calculation
+- Gap and strength analysis
+- Pacing level mapping (Introduction/Development/Refinement)
+
+#### 2.2.3: V2 Onboarding Flow ✅
+- Intake questions (background, experience, goals)
+- Bridge messages between sections
+- Category introductions with icons
+- Intelligence profile generation
+- Coach review with level adjustment
+
+#### 2.2.4: Cross-Reference Engine ✅
+- Multi-role comparison (goalie vs parent vs coach assessments)
+- Alignment detection and gap flagging
+- Confidence gap, feedback gap, car ride gap identification
+
+---
+
+### Phase 2.3: Parent System & Compliance (NOT STARTED)
+
+**Status:** 🔲 Not Started
+**Estimated:** 24-32 hours
+**Priority:** HIGH
+
+#### 2.3.1: Parent-Child Relationships (8-10 hours)
 - Create `parent_children` collection
 - ParentChildService with link/unlink/list methods
-- Parent can have multiple children (students)
+- Parent links using student ID (no approval required)
+- Multiple children per parent support
 - Child profile shows linked parents
-- Admin UI to link parents to children
-- Under-13 consent workflow
 
-**Outcome:** Parents linked to their children's accounts.
+#### 2.3.2: Parent Onboarding Flow (8-12 hours)
+- Parent intake questions (7 questions from scoring spec)
+- Parent assessment (28 questions)
+- Parent intelligence profile generation
+- Cross-reference with child's goalie assessment
+
+#### 2.3.3: Age Compliance (Canadian PIPEDA) (8-10 hours)
+- Date of birth collection on registration
+- Under-13 consent workflow (parent creates account first)
+- Age-appropriate registration routing
+- Privacy-first default settings
+- Parent data access and deletion rights
 
 ---
 
-### Phase 2.0.4: Role-Based Route Protection
+### Phase 2.4: Pillar Content & Level System (NOT STARTED)
 
-**Estimated Time:** 12-16 hours
+**Status:** 🔲 Not Started
+**Estimated:** 40-52 hours
+**Priority:** HIGH
 
-**What Changes:**
-- Update ProtectedRoute component for role checking
-- Create role-specific middleware
+#### 2.4.1: Pillar Level Structure (10-14 hours)
+- Create `pillar_levels` collection (18 docs: 6 pillars × 3 levels)
+- Create `lessons` collection for pillar-based content
+- Level status tracking per student per pillar
+- Hidden locked content (students only see unlocked levels)
+
+#### 2.4.2: Lesson Management (12-16 hours)
+- Admin/coach lesson CRUD for pillar levels
+- Lesson page with content, video, objectives
+- "Mark as Complete" functionality
+- Lesson ordering and navigation
+- Completed lessons show checkmark
+
+#### 2.4.3: Level Evaluations (10-12 hours)
+- Link existing video quizzes as level evaluations
+- Score-based level unlocking (pass threshold → unlock next)
+- Pass/fail display (no numerical scores shown to students)
+- Evaluation history tracking
+
+#### 2.4.4: Remedial Content (8-10 hours)
+- Remedial content collection per level
+- Review page after failing evaluation
+- "Retake Evaluation" after reviewing
+- Admin UI to manage remedial content
+
+---
+
+### Phase 2.5: Role-Based Access Hardening (NOT STARTED)
+
+**Status:** 🔲 Not Started
+**Estimated:** 12-16 hours
+**Priority:** MEDIUM
+
+#### 2.5.1: Route Protection Middleware (6-8 hours)
+- Enhanced ProtectedRoute component for role checking
 - `/coach/*` routes require coach role
 - `/parent/*` routes require parent role
 - `/admin/*` routes require admin role
-- Redirect unauthorized users appropriately
+- Proper redirects for unauthorized access
 
-**Outcome:** Routes protected by role, not just authentication.
-
----
-
-### Phase 2.0.5: Student Onboarding & Initial Evaluation
-
-**Estimated Time:** 20-26 hours
-
-**What Changes:**
-- **Date of birth collection** on registration (required for compliance)
-- Age-based registration routing (under 13 → parent consent first)
-- Background history survey (years playing, games, level)
-- `student_onboarding` collection tracking evaluation status
-- Assign initial evaluation quizzes automatically
-- **Automated scoring** → level unlocking (no manual review)
-- Student blocked from pillar content until evaluation complete
-
-**Outcome:** Age-compliant registration with automated placement.
-
----
-
-### Phase 2.1: Database Migration & Seed 6 Fixed Pillars
-
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
-- Create `pillars` collection with 6 fixed documents
-- Create `pillar_levels` collection (18 docs: 6 pillars × 3 levels)
-- Create `lessons` collection (empty, admin adds content)
-- PillarService with constrained operations (no add/delete pillars)
-- Remove "create new sport" functionality from admin UI
-
-**Outcome:** Database contains exactly 6 pillars, structure is fixed.
-
----
-
-### Phase 2.2: Student Dashboard with Hidden Locked Content
-
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
-- `/pillars` page showing 6 pillar cards
-- Pillar card shows current level and completion status
-- **Locked levels are HIDDEN, not shown with lock icon**
-- Students only see Introduction level initially
-- Development/Refinement revealed only when unlocked
-- Visual progress indicator (no numerical scores)
-
-**Outcome:** Students see only what they've unlocked, unaware of hidden content.
-
----
-
-### Phase 2.3: Lesson Viewing & Completion Tracking
-
-**Estimated Time:** 14-18 hours
-
-**What Changes:**
-- Level page lists lessons for unlocked level only
-- Lesson detail page with content (text, video)
-- "Mark as Complete" button updates progress
-- Completed lessons show checkmark
-- Cannot access lessons in locked levels (404, not "locked")
-
-**Outcome:** Students progress through lessons in unlocked levels.
-
----
-
-### Phase 2.4: Admin & Coach Lesson Management
-
-**Estimated Time:** 20-26 hours
-
-**What Changes:**
-- `/admin/pillars` overview (6 pillars, view-only structure)
-- `/admin/pillars/[id]/levels/[level]/lessons` management
-- Create lesson form: title, description, content, video URL, order
-- Edit/delete existing lessons
-- Drag-and-drop reordering
-- **Coaches can also edit lessons** (same UI, role-checked)
-- Preview lesson as student
-
-**Outcome:** Admins and coaches manage lesson content.
-
----
-
-### Phase 2.5: Link Video Quizzes as Level Evaluations
-
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
-- `pillar_level_evaluations` collection maps levels to video quizzes
-- Admin assigns existing video quiz as level evaluation
-- Student takes evaluation from level completion page
-- Score stored but **not shown to student** (pass/fail only)
-- Pass (≥ threshold) → unlock next level
-- Fail → redirect to remedial content
-
-**Outcome:** Video quiz evaluations gate level progression.
-
----
-
-### Phase 2.6: Remedial Content for Failed Evaluations
-
-**Estimated Time:** 18-22 hours
-
-**What Changes:**
-- `remedial_content` collection per level
-- Review page after failing evaluation
-- Lists lessons to revisit
-- Additional simplified videos/resources
-- "Retake Evaluation" button (after reviewing)
-- Admin UI to manage remedial content
-
-**Outcome:** Failed students get targeted review before retry.
-
----
-
-### Phase 2.7: Coach & Parent Content Access
-
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
-- **Coach**: Full content access, can edit lessons
-- **Coach**: Sees all student scores (numerical)
-- **Coach**: Can leave comments/reviews on student progress
-- **Coach**: Can add custom notes per student
-- **Parent**: Full visibility of child's data:
-  - All scores and test results
-  - Video uploads
-  - Coach comments and feedback
-  - Charting entries
-  - Progress history
-- Parent is view-only (cannot edit)
-
-**Outcome:** Coaches edit and comment, parents see everything.
-
----
-
-### Phase 2.8: Navigation & Dashboard Updates
-
-**Estimated Time:** 12-16 hours
-
-**What Changes:**
-- Student sidebar: "My Training" → 6 pillars
-- Coach sidebar: "My Students", "Content Library"
-- Parent sidebar: "My Children", "Progress"
-- Admin sidebar: unchanged (full access)
-- Dashboard widgets per role
-- Remove all "Add Sport" buttons
-
-**Outcome:** Navigation reflects role and fixed pillar structure.
-
----
-
-**Phase 2 Total: 170-220 hours (21-28 days)**
+#### 2.5.2: Coach Content Access (6-8 hours)
+- Coaches can edit pillar lessons
+- Coaches see all student scores (numerical)
+- Coach comments/reviews on student progress
+- Custom notes per student
 
 ---
 
 ## Phase 3: Rich Content & Media
 
-### Phase 3.1: Rich Text Editor for Lesson Content
+**Status:** 🔲 Not Started
+**Estimated:** 60-80 hours (reduced from original 86-112)
+**Dependencies:** Phase 2.4 (Pillar Lessons)
 
-**Estimated Time:** 12-16 hours
-
-**What Changes:**
+### 3.1: Rich Text Editor (10-14 hours)
 - Integrate TipTap or similar editor
 - Support headings, lists, bold/italic, links
 - Image upload within content
 - Admin lesson form uses rich editor
 
-**Outcome:** Formatted lesson content with embedded images.
-
----
-
-### Phase 3.2: Video Lesson Progress Tracking
-
-**Estimated Time:** 14-18 hours
-
-**What Changes:**
-- Extend existing VideoProgress for non-quiz videos
+### 3.2: Video Progress Tracking (12-16 hours)
 - Track watch percentage per lesson video
 - Require minimum watch % for lesson completion
 - Resume from last position
 - Support YouTube, Vimeo, direct uploads
 
-**Outcome:** Video engagement tracked for all lesson types.
-
----
-
-### Phase 3.3: Downloadable Resources & Attachments
-
-**Estimated Time:** 14-18 hours
-
-**What Changes:**
+### 3.3: Downloadable Resources (10-14 hours)
 - File upload for PDFs, images, documents
 - Resource list per lesson with download buttons
 - Firebase Storage integration
-- Admin UI to attach files to lessons
 
-**Outcome:** Lessons include downloadable materials.
-
----
-
-### Phase 3.4: Practice Drill Library
-
-**Estimated Time:** 20-26 hours
-
-**What Changes:**
-- `drills` collection with instructions, difficulty, duration
+### 3.4: Practice Drill Library (16-20 hours)
+- Drills collection with instructions, difficulty, duration
 - Browsable drill library page
 - Link drills to lessons/levels
 - Filter by pillar, difficulty, on-ice/off-ice
-- Student practice log
 
-**Outcome:** Structured practice drills accessible to students.
-
----
-
-### Phase 3.5: Video Upload & Compression
-
-**Estimated Time:** 26-34 hours
-
-**What Changes:**
-- Student video upload (for premium tier)
-- Auto-compress to 720p via Cloud Function
-- Upload to Firebase Storage with quota limits
-- Coach/Admin review queue for uploaded videos
-- Parent can view child's uploaded videos
-
-**Outcome:** Students can upload videos for analysis.
-
----
-
-**Phase 3 Total: 86-112 hours (11-14 days)**
+### 3.5: Student Video Upload (12-16 hours)
+- Student video upload (premium tier)
+- Auto-compress via Cloud Function
+- Upload quota limits
+- Coach/admin review queue
 
 ---
 
 ## Phase 4: Analytics & Role Dashboards
 
-### Phase 4.1: Student Personal Progress Dashboard
+**Status:** 🔲 Not Started
+**Estimated:** 50-70 hours (reduced from original 80-106)
+**Dependencies:** Phase 2.4 (Level System)
 
-**Estimated Time:** 18-24 hours
-
-**What Changes:**
-- `/progress` page with pillar completion visualization
+### 4.1: Student Progress Dashboard (12-16 hours)
+- Pillar completion visualization
 - Lessons completed, time spent metrics
 - Streak and consistency tracking
 - Milestone achievements
-- Recent activity timeline
-- **No numerical evaluation scores shown**
+- No numerical evaluation scores shown
 
-**Outcome:** Students see progress without score anxiety.
-
----
-
-### Phase 4.2: Coach Student Management Dashboard
-
-**Estimated Time:** 22-28 hours
-
-**What Changes:**
-- `/coach/students` roster of assigned students
-- Per-student progress cards with pillar status
-- Click through to detailed student view
-- **Evaluation scores visible to coach**
+### 4.2: Coach Student Dashboard (14-18 hours)
+- Enhanced roster with pillar status
+- Evaluation scores visible to coach
 - Filter by status (stuck, advancing, completed)
-- Add notes/comments to student profile
-- Custom content assignment
+- Custom content assignment tracking
 
-**Outcome:** Coaches monitor and support their students.
+### 4.3: Parent Progress Dashboard (14-18 hours)
+- Full child progress overview
+- All evaluation scores and quiz results
+- Video uploads and coach feedback
+- Charting entries and history
+- Data export capability
 
----
-
-### Phase 4.3: Parent Progress Viewing Dashboard
-
-**Estimated Time:** 20-26 hours
-
-**What Changes:**
-- `/parent/children` list of linked children
-- Per-child full progress overview:
-  - **All evaluation scores** (numerical)
-  - **All test/quiz results**
-  - **Video uploads and coach feedback**
-  - **Coach comments and reviews**
-  - Charting entries (games, practices)
-  - Lesson completion history
-- Data export (download child's data)
-- Consent management (revoke, delete)
-- **View-only, no editing capabilities**
-
-**Outcome:** Parents have complete visibility of child's journey.
-
----
-
-### Phase 4.4: Admin Analytics & Content Effectiveness
-
-**Estimated Time:** 20-28 hours
-
-**What Changes:**
-- `/admin/analytics` comprehensive dashboard
+### 4.4: Admin Analytics (10-18 hours)
 - Evaluation pass/fail rates per level
 - Lesson completion rates, drop-off points
-- Average time to complete levels
 - Student cohort comparisons
 - Coach performance metrics
 - CSV/Excel export
-
-**Outcome:** Data-driven content and coaching decisions.
-
----
-
-**Phase 4 Total: 80-106 hours (10-13 days)**
 
 ---
 
 ## Phase 5: Communication & Scheduling
 
-### Phase 5.1: Coach Feedback on Evaluations
+**Status:** 🔲 Not Started
+**Estimated:** 40-55 hours (reduced from original 62-82)
+**Dependencies:** Phase 4 (Dashboards)
 
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
-- Coach can add written feedback after viewing evaluation
-- Student notified when feedback received
-- Feedback history on evaluation page
-- Coach can require re-attempt with guidance
+### 5.1: Coach Feedback System (10-14 hours)
+- Written feedback on evaluations
+- Student notifications for feedback
 - Feedback visible to parent
+- Re-attempt guidance
 
-**Outcome:** Personalized feedback from coaches.
-
----
-
-### Phase 5.2: Announcements & Notifications
-
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
-- Admin/coach can post announcements
+### 5.2: Notifications (12-16 hours)
 - Notification bell with unread count
-- Notifications for: level unlocked, feedback, new content
 - Email notification preferences
-- Parent receives notifications about child
+- Triggers: level unlocked, feedback, new content
+- Parent notifications about child
 
-**Outcome:** Users stay informed of updates.
-
----
-
-### Phase 5.3: Bulk Messaging (Coach/Admin to Students)
-
-**Estimated Time:** 12-16 hours
-
-**What Changes:**
-- Extend existing messaging for coaches
-- Bulk select students for message
+### 5.3: Bulk Messaging (8-12 hours)
+- Coach bulk select students for message
 - Message templates
-- Delivery confirmation
 - Parent can view messages sent to child
 
-**Outcome:** Efficient communication with student groups.
-
----
-
-### Phase 5.4: Calendar Integration & Reminders
-
-**Estimated Time:** 18-26 hours
-
-**What Changes:**
-- Learning schedule goals (lessons per week)
-- Calendar view of games/practices from charting
-- Reminder notifications for charting after games
+### 5.4: Calendar & Reminders (10-13 hours)
+- Learning schedule goals
+- Charting reminders after games
 - Inactive student reminders
-- Coach-suggested schedules
-
-**Outcome:** Structured learning pacing with reminders.
-
----
-
-**Phase 5 Total: 62-82 hours (8-10 days)**
 
 ---
 
 ## Phase 6: Mobile & Performance
 
-### Phase 6.1: Mobile-Optimized Experience
+**Status:** 🔲 Not Started
+**Estimated:** 60-80 hours (reduced from original 92-124)
+**Dependencies:** Phase 5 (Communication)
 
-**Estimated Time:** 26-34 hours
-
-**What Changes:**
-- Touch-friendly navigation and buttons
-- Swipe gestures for lesson navigation
+### 6.1: Mobile Optimization (20-26 hours)
+- Touch-friendly navigation
 - PWA manifest for home screen install
 - Offline lesson access (cached)
-- Mobile video upload from camera roll
+- Mobile video upload
 - Mobile-specific layouts
 
-**Outcome:** Full functionality on phones and tablets.
-
----
-
-### Phase 6.2: Performance Optimization & Caching
-
-**Estimated Time:** 24-32 hours
-
-**What Changes:**
+### 6.2: Performance Optimization (18-24 hours)
 - Firestore composite indexes audit
 - React Query/SWR for client caching
-- Image lazy loading and optimization
+- Image lazy loading
 - Code splitting by route
-- Cloud Functions for heavy operations
 - Target < 2s initial load time
 
-**Outcome:** Fast experience at scale (1000s of users).
-
----
-
-### Phase 6.3: Admin Preview as Student
-
-**Estimated Time:** 10-14 hours
-
-**What Changes:**
+### 6.3: Admin Preview (8-12 hours)
 - Admin can "impersonate" any student view
-- See exactly what student sees (hidden content, etc.)
 - Clear visual indicator of preview mode
 - Audit log of preview sessions
 
-**Outcome:** Admin can debug and verify student experience.
-
----
-
-### Phase 6.4: Production Hardening & Launch
-
-**Estimated Time:** 32-44 hours
-
-**What Changes:**
+### 6.4: Production Hardening (14-18 hours)
 - Comprehensive error boundaries
-- Security audit (auth rules, input validation)
-- Automated backup verification
-- Monitoring/alerting (Sentry, Firebase Performance)
-- Load testing (1000+ concurrent users)
-- Rate limiting enforcement
-- User documentation and help pages
-
-**Outcome:** Production-ready, reliable application.
-
----
-
-**Phase 6 Total: 92-124 hours (12-16 days)**
+- Security audit
+- Monitoring/alerting (Sentry)
+- Load testing
+- User documentation
 
 ---
 
 ## Phase 7: Payments & Subscriptions
 
-### Phase 7.1: Stripe Integration Setup
+**Status:** 🔲 Not Started
+**Estimated:** 60-80 hours (reduced from original 80-106)
+**Dependencies:** Phase 6 (Production Ready)
 
-**Estimated Time:** 18-24 hours
-
-**What Changes:**
+### 7.1: Stripe Integration (14-18 hours)
 - Stripe account connection
 - Customer creation on registration
-- Webhook handling for events
+- Webhook handling
 - Payment method management
 
-**Outcome:** Stripe infrastructure ready.
-
----
-
-### Phase 7.2: Subscription Tiers Definition
-
-**Estimated Time:** 12-16 hours
-
-**What Changes:**
+### 7.2: Subscription Tiers (10-14 hours)
 - Define tiers: Free, Basic, Pro, Premium
 - Feature matrix per tier
-- Pricing configuration
 - Trial period support
 
-**Tier Features:**
-- Free: Limited pillars, no video upload
-- Basic: All pillars, no video analysis
-- Pro: Video upload, coach feedback
-- Premium: Advanced video analysis, priority support
-
-**Outcome:** Clear tier structure defined.
-
----
-
-### Phase 7.3: Parent Account Requirements
-
-**Estimated Time:** 10-14 hours
-
-**What Changes:**
+### 7.3: Parent Account Requirements (8-12 hours)
 - Parent registration requires linked paid child
-- Validation during parent signup
 - Parent inherits access from child's tier
 - Multiple children → highest tier applies
 
-**Outcome:** Parents only access with paid student account.
-
----
-
-### Phase 7.4: Feature Gating by Tier
-
-**Estimated Time:** 16-20 hours
-
-**What Changes:**
+### 7.4: Feature Gating (12-16 hours)
 - Middleware to check tier for features
-- UI shows upgrade prompts for locked features
+- Upgrade prompts for locked features
 - Graceful degradation for expired subscriptions
-- Admin can override/grant access
 
-**Outcome:** Features properly gated by subscription.
-
----
-
-### Phase 7.5: Billing Management & History
-
-**Estimated Time:** 24-32 hours
-
-**What Changes:**
+### 7.5: Billing Management (16-20 hours)
 - Billing history page
 - Invoice downloads
 - Subscription management (upgrade/downgrade/cancel)
 - Payment failure handling
-- Admin billing dashboard
-
-**Outcome:** Complete billing self-service.
-
----
-
-**Phase 7 Total: 80-106 hours (10-13 days)**
 
 ---
 
 ## Phase 8: Future Expansion
 
-### Phase 8.1: Teams & Organizations
+**Status:** 🔲 Not Planned (Post-Launch)
 
-**What Changes:**
+### 8.1: Teams & Organizations
 - Organization accounts
-- Team management within organizations
-- Shared tournaments/games
+- Team management
 - Organization billing
-- Organization admin role
 
-**Outcome:** Support for hockey organizations.
-
----
-
-### Phase 8.2: Multi-Sport Architecture
-
-**What Changes:**
+### 8.2: Multi-Sport Architecture
 - Sport selection on registration
 - Sport-specific pillar configurations
-- Shared vs sport-specific content
-- Multi-sport admin tools
-- URL structure: `/sports/[sport]/pillars`
 
-**Outcome:** Platform ready for additional sports.
+### 8.3: Social & Community
+- Achievement sharing
+- Community feed
+- Student recognition
 
 ---
 
-### Phase 8.3: Social & Community Features
+## Recommended Priority Order
 
-**What Changes:**
-- Public achievement sharing
-- Progress sharing to social media
-- Community feed
-- Student recognition/spotlight
-- Privacy controls
+### Immediate (Next 2-4 weeks)
+1. **Phase 2.3** - Parent System & Compliance
+   - Critical for PIPEDA compliance
+   - Enables parent onboarding flow
+   - Completes the role system
 
-**Outcome:** Community engagement features.
+2. **Phase 2.4** - Pillar Content & Level System
+   - Core learning functionality
+   - Level progression mechanics
+   - Enables student learning journey
+
+### Short-term (1-2 months)
+3. **Phase 2.5** - Role-Based Access Hardening
+4. **Phase 3** - Rich Content & Media (partial)
+5. **Phase 4** - Analytics & Dashboards
+
+### Medium-term (2-4 months)
+6. **Phase 5** - Communication & Scheduling
+7. **Phase 6** - Mobile & Performance
+
+### Pre-Launch (4-5 months)
+8. **Phase 7** - Payments & Subscriptions
 
 ---
 
@@ -678,64 +466,31 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 ```
 Phase 1 (DONE)
     │
-    └── Phase 2.0.x (Roles) ←── CRITICAL FOUNDATION
+    └── Phase 2.0 (DONE) ─── Multi-Role Foundation
             │
-            ├── 2.0.1 (Role Types)
-            │       └── 2.0.2 (Coach-Student)
-            │               └── 2.0.3 (Parent-Child)
-            │                       └── 2.0.4 (Route Protection)
-            │                               └── 2.0.5 (Onboarding)
+            ├── Phase 2.1 (DONE) ─── 6-Pillar Framework
             │
-            └── 2.1 (6 Pillars DB) ←── Can run in parallel with 2.0.x
+            ├── Phase 2.2 (DONE) ─── Intelligence-Based Onboarding
+            │
+            ├── Phase 2.3 ─── Parent System & Compliance
+            │       │
+            │       └── Phase 4.3 (Parent Dashboard)
+            │
+            └── Phase 2.4 ─── Pillar Content & Level System
                     │
-                    ├── 2.2 (Student Pillar UI)
-                    │       └── 2.3 (Lesson Viewing)
-                    │               └── 2.5 (Evaluations)
-                    │                       └── 2.6 (Remedial)
+                    ├── Phase 2.5 (Role Access)
                     │
-                    └── 2.4 (Admin Lessons)
-                            └── 2.7 (Role Access)
-                                    └── 2.8 (Navigation)
-
-Phase 2.8 ──→ Phase 3 (Content)
-                    └── 3.1 → 3.2 → 3.3 → 3.4 → 3.5
-
-Phase 2.8 ──→ Phase 4 (Analytics)
-                    └── 4.1 → 4.2 → 4.3 → 4.4
-
-Phase 4 ────→ Phase 5 (Communication)
-                    └── 5.1 → 5.2 → 5.3 → 5.4
-
-Phase 5 ────→ Phase 6 (Mobile/Performance)
-                    └── 6.1 → 6.2 → 6.3 → 6.4
-
-Phase 6 ────→ Phase 7 (Payments)
-                    └── 7.1 → 7.2 → 7.3 → 7.4 → 7.5
-
-Phase 7 ────→ Phase 8 (Future)
-                    └── 8.1 → 8.2 → 8.3
+                    ├── Phase 3 (Rich Content)
+                    │       └── Phase 3.5 (Video Upload)
+                    │
+                    └── Phase 4 (Analytics)
+                            │
+                            └── Phase 5 (Communication)
+                                    │
+                                    └── Phase 6 (Mobile/Performance)
+                                            │
+                                            └── Phase 7 (Payments)
 ```
-
----
-
-## Current Focus: Phase 2
-
-| Sub-Phase | Name | Hours | Status | Priority |
-|-----------|------|-------|--------|----------|
-| 2.0.1 | Extend User Roles | 6-8 | **Next** | CRITICAL |
-| 2.0.2 | Coach-Student Relationships | 16-20 | Next | CRITICAL |
-| 2.0.3 | Parent-Child Relationships | 20-24 | Next | CRITICAL |
-| 2.0.4 | Role-Based Route Protection | 12-16 | Pending | HIGH |
-| 2.0.5 | Student Onboarding & Evaluation | 20-26 | Pending | HIGH |
-| 2.1 | Database Migration & Seed 6 Pillars | 16-20 | **Parallel** | HIGH |
-| 2.2 | Student Dashboard (Hidden Locked) | 16-20 | Pending | HIGH |
-| 2.3 | Lesson Viewing & Completion | 14-18 | Pending | MEDIUM |
-| 2.4 | Admin & Coach Lesson CRUD | 20-26 | Pending | MEDIUM |
-| 2.5 | Level Evaluations | 16-20 | Pending | MEDIUM |
-| 2.6 | Remedial Content | 18-22 | Pending | MEDIUM |
-| 2.7 | Coach & Parent Access | 16-20 | Pending | MEDIUM |
-| 2.8 | Navigation Updates | 12-16 | Pending | MEDIUM |
-| | **Phase 2 Total** | **170-220** | | |
 
 ---
 
@@ -746,24 +501,25 @@ Phase 7 ────→ Phase 8 (Future)
 | **Coach Permissions** | Can edit lessons AND leave comments/reviews for individual students |
 | **Parent Visibility** | Full access: scores, tests, video uploads, coach comments |
 | **Evaluation Review** | Automated - score-based level unlocking |
-| **Payment Timeline** | After Phase 6 (basic features), before Phase 8 (social/multi-sport) |
+| **Scoring System** | 1.0-4.0 continuous scale with 7 categories per role |
+| **Pacing Levels** | Introduction (<2.2), Development (2.2-3.1), Refinement (>3.1) |
+| **Payment Timeline** | After Phase 6 (core features), before Phase 8 (social/multi-sport) |
 | **Age Compliance** | Canadian PIPEDA - see `/docs/COMPLIANCE-CANADA.md` |
 
 ---
 
-## Canadian Compliance Requirements (Ages 6+)
+## Key Metrics
 
-| Age | Requirement |
-|-----|-------------|
-| Under 13 | Parental consent required before account creation |
-| 13-17 | Age-appropriate consent, parent linking optional |
-| 18+ | Standard consent |
+### Completed (as of March 7, 2026)
+- **Total Hours:** ~254 hours (Phase 1 + Phase 2.0-2.2)
+- **Sessions:** 38 documented sessions
+- **Working Days:** 14 days in Phase 2
 
-**Key Requirements:**
-- Collect date of birth on registration
-- Privacy by default (most restrictive settings)
-- Parents can view/delete all child data
-- Kid-friendly privacy explanations
-- No dark patterns in UI
+### Remaining Estimate
+- **Phase 2 Completion:** 76-100 hours
+- **Full Platform:** 346-465 hours
+- **Timeline:** 4-6 months to launch-ready
 
-See `/docs/COMPLIANCE-CANADA.md` for full details.
+---
+
+*Last Updated: March 7, 2026*
