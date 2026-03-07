@@ -162,6 +162,6 @@ docs/client/sessions/
 
 ---
 
-*Last Updated: 2026-02-24*
-*Total Sessions: 9*
+*Last Updated: 2026-03-07*
+*Total Sessions: 38*
 

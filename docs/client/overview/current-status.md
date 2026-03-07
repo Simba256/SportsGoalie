@@ -1,9 +1,9 @@
 # Current Project Status
 
-**Last Updated:** February 24, 2026
+**Last Updated:** March 7, 2026
 **Live Site:** https://sports-goalie.vercel.app/
-**Current Phase:** Phase 2 - Multi-Role System & Advanced Features
-**Phase Progress:** 60% Complete
+**Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Framework
+**Phase Progress:** 90% Complete
 
 ## Recent Work
 
@@ -11,21 +11,25 @@
 
 For detailed information about recent work, see the session files in `/docs/client/sessions/`:
 
-- **[Custom Curriculum System MVP](../sessions/2026-02-23-custom-curriculum-system-mvp.md)** - Complete workflow type system with coach dashboard and curriculum builder
-- **[Curriculum Content Browser](../sessions/2026-02-23-curriculum-content-browser.md)** - Full content selection with search and filtering
-- **[Admin Curriculum Access](../sessions/2026-02-23-admin-curriculum-management-access.md)** - Extended curriculum management to admins
-- **[Coach Invitation System](../sessions/2026-02-22-coach-invitation-system.md)** - Email-based invitation workflow
-- **[Multi-Role Authentication](../sessions/2026-02-22-multi-role-authentication.md)** - Four-role system implementation
-- **[Student ID System](../sessions/2026-02-22-student-id-system.md)** - Automatic ID generation and security
-- **[Visual Branding Update](../sessions/2026-02-22-visual-branding-update.md)** (Feb 22, 30min) - Brand refresh
-- **[Documentation System](../sessions/2026-02-22-documentation-system-setup.md)** - Progress tracking infrastructure
+**March 2026:**
+- **[Evaluation Detail View & Maintenance](../sessions/2026-03-07-evaluation-enhancements.md)** - Q&A detail view for coach evaluation review
+- **[Intelligence-Based Onboarding V2](../sessions/2026-03-06-intelligence-based-onboarding.md)** - 1.0-4.0 scoring with 7 assessment categories
+- **[6-Pillar Platform Conversion](../sessions/2026-03-05-six-pillar-conversion.md)** - Core architecture change to 6 training pillars
+- **[Student Onboarding Evaluation](../sessions/2026-03-04-student-onboarding-system.md)** - 27-question immersive assessment system
+- **[Coach Content Creation System](../sessions/2026-03-01-coach-content-creation.md)** - Video lessons and quiz creator for coaches
+
+**February 2026:**
+- **[Curriculum Enhancements](../sessions/2026-02-28-curriculum-enhancements.md)** - Progress tracking and difficulty level update
+- **[Coach-Student Linking](../sessions/2026-02-26-coach-student-linking.md)** - Direct student management for coaches
+- **[Session Tracking Dashboard](../sessions/2026-02-25-session-tracking-dashboard.md)** - Development progress panel
+- **[Custom Curriculum System MVP](../sessions/2026-02-24-custom-curriculum-system-mvp.md)** - Workflow types with curriculum builder
 - **[AI Project Assistant](../sessions/2026-02-24-ai-project-assistant.md)** - Intelligent chatbot for project knowledge
 
 
 ## Active Development
 
-### Current Sprint (Phase 2.0)
-Focus: Multi-role foundation with coach and parent features
+### Current Sprint (Phase 2.1)
+Focus: 6-Pillar Framework with Intelligence-Based Assessment
 
 **Completed:**
 - ✅ Multi-role extension (Student, Coach, Parent, Admin)
@@ -36,12 +40,19 @@ Focus: Multi-role foundation with coach and parent features
 - ✅ Full content browser with real data
 - ✅ Admin curriculum management access
 - ✅ AI project assistant chatbot
+- ✅ Coach-student direct linking
+- ✅ Coach custom content creation (lessons & quizzes)
+- ✅ 6-Pillar platform conversion
+- ✅ Student onboarding evaluation (27 questions)
+- ✅ Intelligence Profile system (1.0-4.0 scoring)
+- ✅ 7-category assessment framework
+- ✅ Coach evaluation review with Q&A details
 
 **Next Up:**
-- Coach-student relationship formalization
-- Parent-child relationship system
-- Enhanced role-based route protection
-- Student curriculum view for custom workflow
+- Parent onboarding flow
+- Coach onboarding flow
+- Cross-reference visualization dashboard
+- Admin scoring configuration
 
 ## Platform Capabilities
 
@@ -55,26 +66,44 @@ Focus: Multi-role foundation with coach and parent features
 - Role-based access control
 - Secure registration workflows
 
+**6-Pillar Training Framework**
+- Mind-Set Development
+- Skating as a Skill
+- Form & Structure
+- Positional Systems
+- 7 Point System Below Icing Line
+- Game/Practice/Off-Ice
+
+**Student Onboarding & Assessment**
+- 27-question immersive evaluation
+- 7-category assessment framework
+- 1.0-4.0 Intelligence Profile scoring
+- Strength and gap identification
+- Personalized recommendations
+- Coach review and level adjustment
+
 **Learning Systems**
-- Sports and skills catalog
+- Pillar-based content organization
 - Interactive quiz system (multiple question types)
 - Video quizzes with embedded questions
 - Progress tracking and analytics
-- Achievement system with badges
 - Automated workflow (self-paced learning)
 - Custom workflow (coach-guided learning)
 
 **Coach Features**
 - Coach dashboard with student statistics
-- Student list with progress tracking
+- Direct student search and assignment
 - Curriculum builder interface
-- Content browser with search/filter
-- Unlock content control
+- Custom lesson creator with video upload
+- Custom quiz creator (3-step wizard)
+- Personal content library
+- Evaluation review with Q&A details
 - Real-time progress monitoring
 
 **Admin Tools**
 - Complete admin dashboard
 - User management system
+- Pillar management (edit-only)
 - Coach invitation management
 - Full curriculum oversight
 - Project assistant chatbot
@@ -88,18 +117,17 @@ Focus: Multi-role foundation with coach and parent features
 - Calendar heatmap visualization
 
 ### In Development 🔄
-- Coach-student relationship system
-- Parent dashboard and features
-- Enhanced route protection middleware
-- Student curriculum view
+- Parent onboarding flow
+- Coach onboarding flow
+- Cross-reference visualization
+- Admin scoring configuration
 
 ### Planned 📋
-- 6-pillar framework conversion
 - Enhanced per-pillar analytics
-- Custom content creator UI
 - Notification system
 - Production email service
 - Curriculum templates
+- Parent dashboard features
 
 ## Technical Health
 
@@ -132,29 +160,29 @@ Focus: Multi-role foundation with coach and parent features
 ## Development Metrics
 
 ### Time Investment (Phase 2)
-- **Session Count:** 9 detailed sessions
+- **Session Count:** 17 detailed sessions
 
 ### Recent Accomplishments
-- 8 major features implemented
-- 2,000+ lines of documentation created
-- 9 detailed session logs published
+- 15+ major features implemented
+- 6-pillar training framework established
+- Intelligence Profile system launched
+- Coach content creation tools built
+- Student onboarding evaluation system
 - Zero critical bugs in production
 - 100% TypeScript type safety maintained
 
 ## Upcoming Milestones
 
 ### Short-term (1-2 weeks)
-- Complete remaining Phase 2.0 sub-phases
-- Implement student curriculum view
-- Add coach-student assignment system
-- Write E2E tests for new features
-- Deploy enhancements to production
+- Parent onboarding flow
+- Coach onboarding flow
+- Cross-reference dashboard
+- Admin scoring configuration UI
 
 ### Medium-term (2-4 weeks)
-- Begin Phase 2.1 (6-pillar conversion)
-- Implement custom content creator UI
-- Add parent dashboard features
-- Enable production email service
+- Enhanced per-pillar analytics
+- Production email service
+- Parent dashboard features
 - Expand test coverage
 
 ### Long-term (1-2 months)

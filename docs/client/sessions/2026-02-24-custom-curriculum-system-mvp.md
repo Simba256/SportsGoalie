@@ -1,7 +1,8 @@
 # Custom Curriculum System - MVP Launch
 
-**Date:** 2026-02-23
+**Date:** 2026-02-24
 **Type:** Major Feature Launch
+**Time Investment:** 5 hours
 
 ## Summary
 
