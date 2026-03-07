@@ -93,8 +93,11 @@ export default function LoginPage() {
         router.push('/admin');
       } else if (user.role === 'coach') {
         router.push('/coach');
+      } else if (user.role === 'student' && !user.onboardingCompleted) {
+        // Students who haven't completed onboarding go to onboarding
+        router.push('/onboarding');
       } else {
-        // Students and parents go to dashboard
+        // Students (completed) and parents go to dashboard
         router.push('/dashboard');
       }
     }
