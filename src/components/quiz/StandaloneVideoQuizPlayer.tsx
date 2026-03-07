@@ -55,7 +55,7 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
   const [isReady, setIsReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(quiz.videoDuration || 0); // Use stored duration as initial value
   const [displayTime, setDisplayTime] = useState(0);
   const [overlayQuestion, setOverlayQuestion] = useState<VideoQuizQuestionWithState | null>(null);
   const [answeredCount, setAnsweredCount] = useState(0);
@@ -256,7 +256,10 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
   }, [initialProgress?.currentTime]);
 
   const handleDuration = useCallback((dur: number) => {
-    setDuration(dur);
+    // Only update if we get a valid duration from ReactPlayer
+    if (dur && Number.isFinite(dur) && dur > 0) {
+      setDuration(dur);
+    }
   }, []);
 
   const handleEnded = useCallback(() => {
