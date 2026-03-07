@@ -455,92 +455,110 @@ export default function CoachEvaluationPage() {
           </Card>
 
           {/* Assessment Responses - Collapsible Section */}
-          {totalResponses > 0 && (
-            <Card>
-              <CardHeader
-                className="cursor-pointer select-none"
-                onClick={() => setShowResponses(!showResponses)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      Assessment Responses
-                      {showResponses ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </CardTitle>
-                    <CardDescription>
-                      View all {totalResponses} questions and answers
-                    </CardDescription>
+          <Card>
+            {totalResponses > 0 ? (
+              <>
+                <CardHeader
+                  className="cursor-pointer select-none"
+                  onClick={() => setShowResponses(!showResponses)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        Assessment Responses
+                        {showResponses ? (
+                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        View all {totalResponses} questions and answers
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary">{totalResponses} questions</Badge>
                   </div>
-                  <Badge variant="secondary">{totalResponses} questions</Badge>
-                </div>
-              </CardHeader>
-              {showResponses && (
-                <CardContent className="space-y-6">
-                  {GOALIE_CATEGORIES.map((category) => {
-                    const Icon = categoryIcons[category.slug as GoalieCategorySlug];
-                    const responses = responsesByCategory[category.slug] || [];
-                    if (responses.length === 0) return null;
+                </CardHeader>
+                {showResponses && (
+                  <CardContent className="space-y-6">
+                    {GOALIE_CATEGORIES.map((category) => {
+                      const Icon = categoryIcons[category.slug as GoalieCategorySlug];
+                      const responses = responsesByCategory[category.slug] || [];
+                      if (responses.length === 0) return null;
 
-                    return (
-                      <div key={category.slug} className="space-y-3">
-                        {/* Category Header */}
-                        <div className="flex items-center gap-2 pb-2 border-b">
-                          <Icon className="h-5 w-5 text-primary" />
-                          <h4 className="font-semibold">{category.name}</h4>
-                          <span className="text-sm text-muted-foreground">
-                            ({responses.length} question{responses.length > 1 ? 's' : ''})
-                          </span>
-                        </div>
+                      return (
+                        <div key={category.slug} className="space-y-3">
+                          {/* Category Header */}
+                          <div className="flex items-center gap-2 pb-2 border-b">
+                            <Icon className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold">{category.name}</h4>
+                            <span className="text-sm text-muted-foreground">
+                              ({responses.length} question{responses.length > 1 ? 's' : ''})
+                            </span>
+                          </div>
 
-                        {/* Questions in this category */}
-                        <div className="space-y-3 pl-7">
-                          {responses.map((response) => {
-                            const question = getQuestionById(response.questionId);
-                            const answerText = getSelectedOptionText(
-                              response.questionId,
-                              response.value
-                            );
+                          {/* Questions in this category */}
+                          <div className="space-y-3 pl-7">
+                            {responses.map((response) => {
+                              const question = getQuestionById(response.questionId);
+                              const answerText = getSelectedOptionText(
+                                response.questionId,
+                                response.value
+                              );
 
-                            return (
-                              <div
-                                key={response.questionId}
-                                className="p-3 bg-muted/50 rounded-lg space-y-2"
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1">
-                                    <span className="text-xs font-mono text-muted-foreground">
-                                      {response.questionCode}
-                                    </span>
-                                    <p className="text-sm font-medium">
-                                      {question?.question || 'Unknown question'}
-                                    </p>
+                              return (
+                                <div
+                                  key={response.questionId}
+                                  className="p-3 bg-muted/50 rounded-lg space-y-2"
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <span className="text-xs font-mono text-muted-foreground">
+                                        {response.questionCode}
+                                      </span>
+                                      <p className="text-sm font-medium">
+                                        {question?.question || 'Unknown question'}
+                                      </p>
+                                    </div>
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-xs font-mono shrink-0 ${getScoreBadgeColor(response.score)}`}
+                                    >
+                                      {formatScore(response.score)}
+                                    </Badge>
                                   </div>
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-xs font-mono shrink-0 ${getScoreBadgeColor(response.score)}`}
-                                  >
-                                    {formatScore(response.score)}
-                                  </Badge>
+                                  <p className="text-sm text-muted-foreground">
+                                    <span className="font-medium text-foreground">Answer:</span>{' '}
+                                    {answerText}
+                                  </p>
                                 </div>
-                                <p className="text-sm text-muted-foreground">
-                                  <span className="font-medium text-foreground">Answer:</span>{' '}
-                                  {answerText}
-                                </p>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </CardContent>
+                )}
+              </>
+            ) : (
+              <>
+                <CardHeader>
+                  <CardTitle>Assessment Responses</CardTitle>
+                  <CardDescription>
+                    Individual question and answer details
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Detailed response data is not available for this evaluation.
+                    This student may have completed onboarding before the detailed
+                    response tracking feature was added.
+                  </p>
                 </CardContent>
-              )}
-            </Card>
-          )}
+              </>
+            )}
+          </Card>
 
           {/* Strengths & Gaps */}
           {(strengths.length > 0 || gaps.length > 0) && (
