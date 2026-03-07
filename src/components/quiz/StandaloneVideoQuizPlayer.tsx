@@ -106,6 +106,12 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
       progressRef.current.status = 'submitted';
       progressRef.current.completedAt = Timestamp.now();
 
+      // Calculate total time spent (in seconds)
+      const startTime = progressRef.current.startedAt?.toDate?.() || new Date();
+      const endTime = new Date();
+      progressRef.current.totalTimeSpent = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+      progressRef.current.watchTime = currentTimeRef.current; // How much video was watched
+
       setTimeout(() => {
         onComplete(progressRef.current);
       }, 1000);
