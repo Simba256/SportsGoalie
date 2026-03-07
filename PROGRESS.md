@@ -44,6 +44,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-07 - [Fix Custom Quiz Not Found Bug](docs/sessions/2026-03/2026-03-07-fix-custom-quiz-not-found.md)
+**Time:** 15min | **Focus:** Bug Fix - Quiz Access
+Fixed "Video quiz not found" error when students click "Take Quiz" on custom content items. Custom content uses `content_xxx` IDs that reference actual quiz IDs in `video_quizzes` collection. Updated quiz page to resolve custom content references before loading quiz.
+
 ### 2026-03-07 - [Email Verification Branding](docs/sessions/2026-03/2026-03-07-email-verification-branding.md)
 **Time:** 30min | **Focus:** Feature - Email Infrastructure
 Added Resend email integration infrastructure for branded verification emails. Created verification email templates with "Smarter Goalie" branding, API endpoint for custom emails, and updated email service. Using Firebase's built-in verification for now (no domain); Resend code ready for Phase B when domain is purchased.
@@ -506,6 +510,13 @@ Initial project analysis and progress tracking system implementation.
 
 ## 🔄 Recent Changes (Last 30 Days)
 
+### 2026-03-07 (Session: Fix Custom Quiz Not Found Bug)
+- **Fix:** Added custom content ID resolution to video quiz page
+- **Fix:** Quiz page now detects `content_xxx` IDs and fetches actual `videoQuizId` from custom content library
+- **Fix:** Students can now access coach-created quizzes assigned in their curriculum
+- **Import:** Added `customContentService` import to quiz page
+- **Build:** TypeScript compiles with zero errors, build succeeds
+
 ### 2026-03-07 (Session: Email Verification Branding)
 - **Feature:** Added Resend email service integration for branded verification emails
 - **Feature:** Created verification email API endpoint (`/api/auth/send-verification`)
@@ -892,10 +903,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-07
-**Last Session:** Email Verification Branding
-**Total Sessions This Phase:** 31
-**Current Phase Hours:** 47h
-**Next Session Focus:** Update Firebase Console templates with "Smarter Goalie" branding, test V2 onboarding flow end-to-end
+**Last Session:** Fix Custom Quiz Not Found Bug
+**Total Sessions This Phase:** 32
+**Current Phase Hours:** 47.25h
+**Next Session Focus:** Verify custom quiz fix works in production, test V2 onboarding flow end-to-end
 
 ---
 

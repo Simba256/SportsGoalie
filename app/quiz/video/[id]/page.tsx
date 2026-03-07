@@ -7,6 +7,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { StandaloneVideoQuizPlayer } from '@/components/quiz/StandaloneVideoQuizPlayer';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
+import { customContentService } from '@/lib/database/services/custom-content.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,8 +37,40 @@ function VideoQuizPageContent() {
       setLoading(true);
       setError(null);
 
-      // Load the quiz
-      const quizResult = await videoQuizService.getVideoQuiz(quizId);
+      let actualQuizId = quizId;
+
+      // If this is a custom content reference, resolve to actual quiz ID
+      if (quizId.startsWith('content_')) {
+        const contentResult = await customContentService.getContent(quizId);
+
+        if (!contentResult.success || !contentResult.data) {
+          setError('Content not found');
+          toast.error('Content not found');
+          setTimeout(() => router.push('/dashboard'), 2000);
+          return;
+        }
+
+        // Parse the content field to get the real videoQuizId
+        try {
+          const contentData = JSON.parse(contentResult.data.content);
+          if (contentData.videoQuizId) {
+            actualQuizId = contentData.videoQuizId;
+          } else {
+            setError('Invalid quiz reference');
+            toast.error('Invalid quiz reference');
+            setTimeout(() => router.push('/dashboard'), 2000);
+            return;
+          }
+        } catch {
+          setError('Invalid quiz data');
+          toast.error('Invalid quiz data');
+          setTimeout(() => router.push('/dashboard'), 2000);
+          return;
+        }
+      }
+
+      // Load the quiz using the resolved ID
+      const quizResult = await videoQuizService.getVideoQuiz(actualQuizId);
 
       if (!quizResult.success || !quizResult.data) {
         setError('Video quiz not found');
