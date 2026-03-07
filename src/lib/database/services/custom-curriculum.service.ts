@@ -870,6 +870,57 @@ export class CustomCurriculumService extends BaseDatabaseService {
       };
     }
   }
+
+  /**
+   * Mark curriculum item as completed by contentId
+   * Used when a student completes a quiz/lesson referenced by contentId
+   */
+  static async markItemCompleteByContentId(
+    studentId: string,
+    contentId: string
+  ): Promise<ApiResponse<void>> {
+    try {
+      // Find the student's curriculum
+      const curriculumResult = await this.getStudentCurriculum(studentId);
+
+      if (!curriculumResult.success || !curriculumResult.data) {
+        // No curriculum found - might be automated workflow student
+        return { success: true, timestamp: new Date() };
+      }
+
+      const curriculum = curriculumResult.data;
+
+      // Find the item with matching contentId
+      const item = curriculum.items.find(i => i.contentId === contentId);
+
+      if (!item) {
+        // Item not in curriculum - might be direct access
+        logger.debug('Content not found in curriculum', 'CustomCurriculumService', {
+          studentId,
+          contentId,
+        });
+        return { success: true, timestamp: new Date() };
+      }
+
+      // Mark the item complete
+      return await this.markItemComplete(curriculum.id, item.id, studentId);
+    } catch (error) {
+      logger.error('Failed to mark item complete by contentId', 'CustomCurriculumService', {
+        studentId,
+        contentId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'CURRICULUM_UPDATE_ERROR',
+          message: 'Failed to mark curriculum item complete',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
 }
 
 // Export singleton instance

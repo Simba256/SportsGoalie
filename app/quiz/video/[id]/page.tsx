@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth/context';
 import { StandaloneVideoQuizPlayer } from '@/components/quiz/StandaloneVideoQuizPlayer';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { customContentService } from '@/lib/database/services/custom-content.service';
+import { customCurriculumService } from '@/lib/database/services/custom-curriculum.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -124,6 +125,11 @@ function VideoQuizPageContent() {
             progress.timeSpent || 0,
             progress.percentage >= (quiz.settings?.passingScore || 70)
           );
+
+          // If this is a custom content item, mark it complete in the curriculum
+          if (quizId.startsWith('content_')) {
+            await customCurriculumService.markItemCompleteByContentId(user.id, quizId);
+          }
         }
 
         toast.success('Video quiz completed!', {
