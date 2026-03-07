@@ -1,12 +1,12 @@
-# Coach Curriculum Builder
+# Coach Curriculum & Content System
 
-**Status:** ✅ MVP Complete (Phase 2.0.6)
-**Routes:** `/coach`, `/coach/students`, `/coach/students/[studentId]/curriculum`
-**Implemented:** February 23, 2026
+**Status:** ✅ Complete (Phase 2.0.6)
+**Routes:** `/coach`, `/coach/students`, `/coach/students/[studentId]/curriculum`, `/coach/content`
+**Last Updated:** March 7, 2026
 
 ## Overview
 
-Coaches can create personalized learning paths for students assigned to them with "custom" workflow type. The curriculum builder allows coaches to select content, sequence learning, unlock items progressively, and track student progress.
+Coaches can create personalized learning paths for students assigned to them with "custom" workflow type. The system includes a curriculum builder for assigning content, and a complete content creation system for coaches to build their own lessons and quizzes.
 
 ## Core Features
 
@@ -30,19 +30,36 @@ Coaches can create personalized learning paths for students assigned to them wit
 
 **Features:**
 - View all assigned students
-- Filter by workflow type (custom only)
+- **Workflow filter tabs** (All / Custom / Automated)
+- **Student search dialog** to add new students
 - See student progress at a glance
 - Quick access to curriculum builder
 - Student cards with key metrics
+- **Evaluation status badges** (Pending / Completed / Reviewed)
+- **View Evaluation button** for completed evaluations
 
 **Displayed Information:**
 - Student name and email
-- Workflow type badge
+- Workflow type badge (Custom=purple, Automated=blue)
 - Curriculum progress (X/Y items completed)
 - Completion percentage with progress bar
-- "Manage Curriculum" button
+- "Manage Curriculum" button (custom workflow)
+- "View Evaluation" button (all students)
 
-### 3. Curriculum Builder
+### 3. Student Evaluation Review
+**Route:** `/coach/students/[studentId]/evaluation`
+
+**Features:**
+- View student's intelligence profile
+- Category scores with 1.0-4.0 scale
+- Pacing level recommendation
+- Strengths and gaps analysis
+- **Collapsible Q&A section** showing all assessment responses
+- Question codes, text, answers with color-coded scores
+- Level adjustment capability
+- Coach notes field
+
+### 4. Curriculum Builder
 **Route:** `/coach/students/[studentId]/curriculum`
 
 **Features:**
@@ -58,15 +75,15 @@ Coaches can create personalized learning paths for students assigned to them wit
 ## Content Selection
 
 ### Content Browser
-**Status:** ✅ Complete (Feb 23, 2026)
+**Status:** ✅ Complete
 
 **Features:**
-- Sport/pillar selection dropdown
-- Tabbed interface: Lessons vs Quizzes
+- Pillar selection dropdown
+- Tabbed interface: Lessons vs Quizzes vs My Content
 - Real-time search across content
-- Difficulty level filtering (beginner/intermediate/advanced)
+- Difficulty level filtering (Introduction/Development/Refinement)
 - Visual content cards with:
-  - Sport icon and color coding
+  - Pillar icon and color coding
   - Content title and description
   - Difficulty badge
   - Estimated completion time
@@ -77,28 +94,86 @@ Coaches can create personalized learning paths for students assigned to them wit
 - Responsive design
 
 **Data Sources:**
-- **Lessons:** Skills from sports catalog (via SportsService)
+- **Lessons:** Skills from pillars catalog (via SportsService)
 - **Quizzes:** Video quizzes (via VideoQuizService)
-- **Sports:** All available sports with metadata
+- **Custom Content:** Coach's personal library (via CustomContentService)
 
-### Custom Content
-**Status:** Backend complete, UI pending
+## Coach Custom Content Creation
 
-**Planned Features:**
-- Create custom lessons with rich text
-- Upload attachments (PDFs, images, videos)
-- Create custom quizzes
-- Save to personal content library
-- Share content with other coaches (optional)
-- Clone content from library
+### Content Library
+**Route:** `/coach/content`
+**Status:** ✅ Complete (March 1-3, 2026)
+
+**Features:**
+- Personal library overview
+- Statistics: Total content, Lessons, Quizzes, Total views
+- Search and filter functionality
+- Grid view of content cards
+- Quick actions: Edit, Delete
+- **Create Content button** → Content type selector
+
+### Lesson Creator
+**Route:** `/coach/content/lesson/create`
+
+**Features:**
+- Title and description fields
+- Pillar and level selection
+- **Video upload** with drag-drop (Firebase Storage)
+- **YouTube/Vimeo URL support**
+- Learning objectives list
+- Rich text content area
+- Tags for organization
+- Preview before save
+
+### Quiz Creator
+**Route:** `/coach/content/quiz/create`
+**Status:** ✅ Complete with full-page 3-step wizard
+
+**Step 1: Quiz Info**
+- Title and description
+- Pillar and level selection
+- Difficulty level
+- Passing score threshold
+
+**Step 2: Video**
+- Video upload or URL
+- Video preview
+- Duration detection (auto for YouTube/Vimeo)
+
+**Step 3: Questions**
+- **VideoQuestionBuilder** component
+- Supports multiple question types:
+  - **Multiple Choice:** 4 options with correct answer
+  - **True/False:** Visual toggle buttons (green/red)
+  - **Fill in the Blank:** Split input (before/after fields)
+- Timestamp linking to video
+- Question reordering
+- Live preview of questions
+
+### Question Types
+
+**Multiple Choice:**
+- 4 answer options
+- Single correct answer
+- Score points configurable
+
+**True/False:**
+- Visual toggle buttons instead of dropdown
+- Green (True) / Red (False) color coding
+- Clear selection indication
+
+**Fill in the Blank:**
+- Split input approach (text before blank, text after blank)
+- No manual `___` placement needed
+- Live preview shows student view
 
 ## Curriculum Item Management
 
 ### Item Types
-1. **Lesson (Standard):** Skill from sports catalog
+1. **Lesson (Standard):** Skill from pillars catalog
 2. **Quiz (Standard):** Video quiz from database
-3. **Custom Lesson:** Coach-created lesson
-4. **Custom Quiz:** Coach-created quiz
+3. **Custom Lesson:** Coach-created lesson (type: `custom_lesson`)
+4. **Custom Quiz:** Coach-created quiz (type: `custom_quiz`)
 
 ### Item Status
 - **Locked:** Not yet accessible to student (gray lock icon)
@@ -106,34 +181,33 @@ Coaches can create personalized learning paths for students assigned to them wit
 - **In Progress:** Student has started (yellow progress icon)
 - **Completed:** Student has finished (green check icon)
 
+### Item Sorting
+Items are sorted by status priority:
+1. Completed (first)
+2. In Progress
+3. Unlocked
+4. Locked (last)
+
 ### Operations
 1. **Add Item**
    - Open content browser
-   - Select sport/pillar
-   - Choose lesson or quiz
+   - Select pillar
+   - Choose lesson, quiz, or custom content
    - Preview details
    - Add to curriculum
 
 2. **Unlock Item**
    - Click unlock button on locked item
    - Item becomes immediately available to student
-   - Student receives notification (future)
 
 3. **Unlock All**
    - Bulk unlock button
    - Unlocks all locked items at once
-   - Useful for "open access" approach
 
 4. **Remove Item**
    - Delete button on each item
    - Confirmation dialog
    - Item removed from curriculum
-   - Student loses access immediately
-
-5. **Reorder Items** (Future)
-   - Drag-and-drop interface
-   - Change learning sequence
-   - Update order numbers
 
 ## Technical Implementation
 
@@ -150,9 +224,9 @@ Coaches can create personalized learning paths for students assigned to them wit
 - `unlockItem(curriculumId, itemId)` - Unlock single item
 - `unlockAllItems(curriculumId)` - Bulk unlock
 - `reorderItems(curriculumId, newOrder)` - Change sequence
-- `markItemComplete(curriculumId, itemId)` - Student completes item
+- `recordLessonCompletion(curriculumId, itemId)` - Mark lesson complete
 - `getProgress(curriculumId)` - Get completion stats
-- `getNextItem(curriculumId)` - Get next unlocked item
+- `toFirestore()` / `fromFirestore()` - Static conversion methods
 
 **CustomContentService** (`src/lib/database/services/custom-content.service.ts`)
 
@@ -161,11 +235,9 @@ Coaches can create personalized learning paths for students assigned to them wit
 - `updateContent(contentId, updates)` - Edit content
 - `deleteContent(contentId)` - Remove content
 - `getContentByCoach(coachId)` - Coach's library
-- `getSharedContent()` - Public/shared content
-- `uploadAttachment(file)` - Upload to Firebase Storage
-- `cloneContent(contentId, newCoachId)` - Copy to own library
-- `trackUsage(contentId, studentId)` - Record usage
-- `getUsageStats(contentId)` - View analytics
+- `getContentById(contentId)` - Get single content item
+- `incrementViewCount(contentId)` - Track usage (non-blocking)
+- `toFirestore()` / `fromFirestore()` - Static conversion methods
 
 ### Database Schema
 
@@ -188,8 +260,7 @@ Coaches can create personalized learning paths for students assigned to them wit
 {
   id: string;
   type: 'lesson' | 'quiz' | 'custom_lesson' | 'custom_quiz';
-  contentId?: string;  // Reference to standard content
-  customContent?: CustomContent;  // Inline custom content
+  contentId: string;  // Reference to content
   pillarId: string;
   levelId: string;
   order: number;
@@ -210,15 +281,15 @@ Coaches can create personalized learning paths for students assigned to them wit
   type: 'lesson' | 'quiz';
   title: string;
   description: string;
-  content: string;  // HTML or markdown
-  attachments?: {
-    name: string;
-    url: string;
-    type: string;
-    size: number;
-  }[];
-  isShared: boolean;
-  usageCount: number;
+  pillarId: string;
+  levelId: string;
+  difficulty: 'introduction' | 'development' | 'refinement';
+  videoUrl?: string;
+  videoQuizId?: string;  // Reference to video_quizzes for custom quizzes
+  content?: string;  // For lessons
+  objectives?: string[];
+  tags?: string[];
+  viewCount: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -237,30 +308,51 @@ match /custom_curriculum/{curriculumId} {
 }
 
 // Coaches can manage their own content library
+// Public read for students to access assigned content
 match /custom_content_library/{contentId} {
-  allow read: if resource.data.isShared == true ||
-    resource.data.coachId == request.auth.uid || isAdmin();
+  allow read: if true;  // Public read for students
   allow create: if isCoachOrAdmin();
   allow update, delete: if resource.data.coachId == request.auth.uid || isAdmin();
 }
+
+// Coach video quizzes stored in video_quizzes collection
+match /video_quizzes/{quizId} {
+  allow read: if true;
+  allow create: if isCoachOrAdmin();
+  allow update, delete: if
+    (resource.data.source == 'coach' && resource.data.createdBy == request.auth.uid)
+    || isAdmin();
+}
 ```
 
-## Workflow Integration
+### Client-Side Sorting
+- **Decision:** Remove `orderBy` from Firestore queries, sort client-side
+- **Rationale:** Avoids composite index requirements for where + orderBy combinations
+- **Impact:** Works immediately, acceptable for coach content data sizes
 
-### ProgressService Integration
+## Student Experience
 
-**Workflow-Aware Methods:**
-- `canAccessContent(userId, contentId)` - Checks if student can access based on workflow
-  - **Automated:** All content available immediately
-  - **Custom:** Only unlocked curriculum items accessible
-- `notifyCoachOfCompletion(studentId, itemId)` - Notify coach when student completes item
-- `recordQuizCompletion(userId, quizId, score)` - Auto-unlock next item for automated, notify coach for custom
+### Custom Lesson Viewer
+**Route:** `/learn/lesson/[id]`
 
-### Student Experience
+**Features:**
+- Video player (YouTube embed or direct URL)
+- Learning objectives display
+- Lesson content with paragraph formatting
+- Tags display
+- "Mark Complete" button
+- Progress tracking
+
+### Custom Quiz Access
+- Custom quizzes use same video quiz player
+- Quiz page resolves `content_xxx` IDs to actual `videoQuizId`
+- Seamless experience for students
+
+### Dashboard Experience
 
 **Automated Workflow:**
-- Full catalog available immediately
-- Progress through sports/skills freely
+- Full pillar catalog available immediately
+- Progress through pillars/skills freely
 - No coach involvement needed
 - Standard progress tracking
 
@@ -269,15 +361,22 @@ match /custom_content_library/{contentId} {
 - Cannot access content not in curriculum
 - "Waiting for coach" message for locked items
 - Progress tied to curriculum completion
+- Shows coach name and contact info
 
 ## User Interface
 
 ### Component Architecture
 - **CoachLayout** - Navigation wrapper for coach routes
-- **StudentList** - Grid of student cards
+- **StudentList** - Grid of student cards with workflow filter
+- **StudentSearchDialog** - Modal for finding/adding students
 - **CurriculumBuilder** - Main curriculum management interface
-- **ContentBrowser** - Modal for content selection (500+ lines)
+- **ContentBrowser** - Modal for content selection (with "My Content" tab)
 - **CurriculumItemCard** - Individual item display with actions
+- **ContentTypeSelector** - Modal for lesson vs quiz selection
+- **LessonCreator** - Full lesson creation form
+- **QuizCreator** - 3-step quiz creation wizard
+- **VideoUploader** - Drag-drop upload with progress
+- **VideoQuestionBuilder** - Question editing component
 
 ### Design Patterns
 - shadcn/ui components for consistency
@@ -287,46 +386,9 @@ match /custom_content_library/{contentId} {
 - Confirmation dialogs for destructive actions
 - Status badges with color coding
 - Progress bars for visual feedback
-
-## Current Limitations
-
-1. **Content Browser:** Shows actual lessons and quizzes from database (Complete as of Feb 23)
-2. **Custom Content UI:** Backend ready, rich editor UI pending
-3. **Reordering:** Drag-and-drop not yet implemented
-4. **Notifications:** Student alerts for unlocked items pending
-5. **Templates:** Curriculum templates not yet available
-6. **Sharing:** Coach content sharing UI pending
-
-## Upcoming Enhancements
-
-### Short-term
-1. **Student Curriculum View** - Display assigned items in student dashboard
-2. **Notification System** - Alert students when content unlocked
-3. **Custom Content Editor** - Rich text editor for coaches
-4. **Drag-and-Drop Reordering** - Intuitive item sequencing
-
-### Medium-term
-1. **Curriculum Templates** - Quick-start curriculum sets
-2. **Content Sharing** - Coach-to-coach content sharing
-3. **Feedback System** - Coach notes on student items
-4. **Analytics** - Curriculum effectiveness metrics
-
-### Long-term
-1. **AI Recommendations** - Suggest content based on student performance
-2. **Adaptive Paths** - Auto-adjust difficulty
-3. **Group Curricula** - Assign same curriculum to multiple students
-4. **Version Control** - Track curriculum changes over time
-
-## Usage Statistics (as of Feb 24, 2026)
-
-- **Coaches with Access:** Admin + Coach roles
-- **Students Eligible:** Students with "custom" workflow type
-- **Curricula Created:** TBD (newly launched)
-- **Content Items Added:** TBD
-- **Completion Rate:** TBD
+- Tab-based navigation for complex forms
 
 ## Related Documentation
-- [Student Workflow Types](../technical/workflow-types.md)
-- [Custom Content System](../technical/custom-content.md)
-- [Coach Routes](../pages/coach-routes.md)
-- [Progress Tracking](./progress-tracking.md)
+- [Authentication](./authentication.md)
+- [All Routes](../pages/all-routes.md)
+- [Key Decisions](../decisions/key-decisions.md)
