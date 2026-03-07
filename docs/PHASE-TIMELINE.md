@@ -27,15 +27,16 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 
 | Phase | Description | Est. Hours | Priority |
 |-------|-------------|------------|----------|
-| **Phase 2.3** | Parent System & Compliance | 24-32 | HIGH |
-| **Phase 2.4** | Pillar Content & Level System | 40-52 | HIGH |
-| **Phase 2.5** | Role-Based Access Hardening | 12-16 | MEDIUM |
+| **Phase 2.3** | Public Experience & Registration Flow | 40-55 | CRITICAL |
+| **Phase 2.4** | Parent System & Compliance | 24-32 | HIGH |
+| **Phase 2.5** | Pillar Content & Level System | 40-52 | HIGH |
+| **Phase 2.6** | Role-Based Access Hardening | 12-16 | MEDIUM |
 | **Phase 3** | Rich Content & Media | 60-80 | MEDIUM |
 | **Phase 4** | Analytics & Dashboards | 50-70 | MEDIUM |
 | **Phase 5** | Communication & Scheduling | 40-55 | LOW |
 | **Phase 6** | Mobile & Performance | 60-80 | LOW |
 | **Phase 7** | Payments & Subscriptions | 60-80 | LOW |
-| **Remaining Total** | | **346-465** | |
+| **Remaining Total** | | **396-520** | |
 
 ---
 
@@ -161,26 +162,95 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 
 ---
 
-### Phase 2.3: Parent System & Compliance (NOT STARTED)
+### Phase 2.3: Public Experience & Registration Flow (NOT STARTED)
+
+**Status:** 🔲 Not Started
+**Estimated:** 40-55 hours
+**Priority:** CRITICAL - Entry point for all users
+
+This phase creates the public-facing experience that visitors see before registration, showcasing the platform and guiding them toward signing up.
+
+#### 2.3.1: Landing Page (16-22 hours)
+**Marketing-grade landing page with professional design:**
+- Hero section with compelling value proposition and CTA
+- 6 Pillars showcase with visual cards/icons
+- Platform features overview with animations
+- How it works / Learning journey visualization
+- Testimonials section (placeholder for real testimonials)
+- Pricing preview section (if applicable)
+- FAQ accordion section
+- Footer with links, social, contact
+
+**Design Elements:**
+- Smooth scroll animations (Framer Motion)
+- Responsive design (mobile-first)
+- Professional imagery (goalie/hockey themed)
+- Consistent branding with dark/ice theme
+
+#### 2.3.2: Public Pages (12-16 hours)
+**Separate audience-specific pages:**
+
+**For Goalies/Students:**
+- What you'll learn (6 pillars breakdown)
+- Training methodology explanation
+- Sample content preview (locked)
+- Success stories / Progress examples
+- Clear CTA to start questionnaire
+
+**For Parents:**
+- Why SmarterGoalie for your child
+- What parents can monitor and see
+- How coaching feedback works
+- Safety and privacy commitments
+- Age-appropriate training approach
+- Clear CTA to start questionnaire
+
+**About/Methodology:**
+- Michael's coaching philosophy
+- The science behind the 6 pillars
+- Credentials and experience
+- Platform story
+
+#### 2.3.3: Pre-Registration Questionnaire (8-12 hours)
+**Short questionnaire BEFORE account creation:**
+- Role selection (Goalie/Student, Parent, Coach)
+- 5-8 targeted questions based on role:
+  - **Goalies:** Age, experience level, current team, goals
+  - **Parents:** Child's age, experience, what they're looking for
+  - **Coaches:** Coaching experience, team size, training approach
+- Clean, immersive UI (similar to onboarding)
+- Progress indicator
+- Data stored temporarily, transferred to profile on registration
+
+#### 2.3.4: Updated Registration Flow (4-5 hours)
+- Integrate questionnaire data into registration
+- Pre-populate profile fields from questionnaire
+- Role-specific registration paths
+- Clear next steps after registration
+- Seamless transition to detailed onboarding evaluation
+
+---
+
+### Phase 2.4: Parent System & Compliance (NOT STARTED)
 
 **Status:** 🔲 Not Started
 **Estimated:** 24-32 hours
 **Priority:** HIGH
 
-#### 2.3.1: Parent-Child Relationships (8-10 hours)
+#### 2.4.1: Parent-Child Relationships (8-10 hours)
 - Create `parent_children` collection
 - ParentChildService with link/unlink/list methods
 - Parent links using student ID (no approval required)
 - Multiple children per parent support
 - Child profile shows linked parents
 
-#### 2.3.2: Parent Onboarding Flow (8-12 hours)
+#### 2.4.2: Parent Onboarding Flow (8-12 hours)
 - Parent intake questions (7 questions from scoring spec)
 - Parent assessment (28 questions)
 - Parent intelligence profile generation
 - Cross-reference with child's goalie assessment
 
-#### 2.3.3: Age Compliance (Canadian PIPEDA) (8-10 hours)
+#### 2.4.3: Age Compliance (Canadian PIPEDA) (8-10 hours)
 - Date of birth collection on registration
 - Under-13 consent workflow (parent creates account first)
 - Age-appropriate registration routing
@@ -189,32 +259,32 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 
 ---
 
-### Phase 2.4: Pillar Content & Level System (NOT STARTED)
+### Phase 2.5: Pillar Content & Level System (NOT STARTED)
 
 **Status:** 🔲 Not Started
 **Estimated:** 40-52 hours
 **Priority:** HIGH
 
-#### 2.4.1: Pillar Level Structure (10-14 hours)
+#### 2.5.1: Pillar Level Structure (10-14 hours)
 - Create `pillar_levels` collection (18 docs: 6 pillars × 3 levels)
 - Create `lessons` collection for pillar-based content
 - Level status tracking per student per pillar
 - Hidden locked content (students only see unlocked levels)
 
-#### 2.4.2: Lesson Management (12-16 hours)
+#### 2.5.2: Lesson Management (12-16 hours)
 - Admin/coach lesson CRUD for pillar levels
 - Lesson page with content, video, objectives
 - "Mark as Complete" functionality
 - Lesson ordering and navigation
 - Completed lessons show checkmark
 
-#### 2.4.3: Level Evaluations (10-12 hours)
+#### 2.5.3: Level Evaluations (10-12 hours)
 - Link existing video quizzes as level evaluations
 - Score-based level unlocking (pass threshold → unlock next)
 - Pass/fail display (no numerical scores shown to students)
 - Evaluation history tracking
 
-#### 2.4.4: Remedial Content (8-10 hours)
+#### 2.5.4: Remedial Content (8-10 hours)
 - Remedial content collection per level
 - Review page after failing evaluation
 - "Retake Evaluation" after reviewing
@@ -222,20 +292,20 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 
 ---
 
-### Phase 2.5: Role-Based Access Hardening (NOT STARTED)
+### Phase 2.6: Role-Based Access Hardening (NOT STARTED)
 
 **Status:** 🔲 Not Started
 **Estimated:** 12-16 hours
 **Priority:** MEDIUM
 
-#### 2.5.1: Route Protection Middleware (6-8 hours)
+#### 2.6.1: Route Protection Middleware (6-8 hours)
 - Enhanced ProtectedRoute component for role checking
 - `/coach/*` routes require coach role
 - `/parent/*` routes require parent role
 - `/admin/*` routes require admin role
 - Proper redirects for unauthorized access
 
-#### 2.5.2: Coach Content Access (6-8 hours)
+#### 2.6.2: Coach Content Access (6-8 hours)
 - Coaches can edit pillar lessons
 - Coaches see all student scores (numerical)
 - Coach comments/reviews on student progress
@@ -437,27 +507,32 @@ Transform the existing dynamic sports learning platform into a specialized **Ice
 ## Recommended Priority Order
 
 ### Immediate (Next 2-4 weeks)
-1. **Phase 2.3** - Parent System & Compliance
+1. **Phase 2.3** - Public Experience & Registration Flow
+   - Entry point for ALL users - critical for conversion
+   - Landing page, public showcase pages
+   - Pre-registration questionnaire
+   - Must be compelling and professional
+
+### Short-term (1-2 months)
+2. **Phase 2.4** - Parent System & Compliance
    - Critical for PIPEDA compliance
    - Enables parent onboarding flow
    - Completes the role system
 
-2. **Phase 2.4** - Pillar Content & Level System
+3. **Phase 2.5** - Pillar Content & Level System
    - Core learning functionality
    - Level progression mechanics
    - Enables student learning journey
 
-### Short-term (1-2 months)
-3. **Phase 2.5** - Role-Based Access Hardening
-4. **Phase 3** - Rich Content & Media (partial)
-5. **Phase 4** - Analytics & Dashboards
+### Medium-term (2-3 months)
+4. **Phase 2.6** - Role-Based Access Hardening
+5. **Phase 3** - Rich Content & Media (partial)
+6. **Phase 4** - Analytics & Dashboards
 
-### Medium-term (2-4 months)
-6. **Phase 5** - Communication & Scheduling
-7. **Phase 6** - Mobile & Performance
-
-### Pre-Launch (4-5 months)
-8. **Phase 7** - Payments & Subscriptions
+### Pre-Launch (3-5 months)
+7. **Phase 5** - Communication & Scheduling
+8. **Phase 6** - Mobile & Performance
+9. **Phase 7** - Payments & Subscriptions
 
 ---
 
@@ -472,13 +547,17 @@ Phase 1 (DONE)
             │
             ├── Phase 2.2 (DONE) ─── Intelligence-Based Onboarding
             │
-            ├── Phase 2.3 ─── Parent System & Compliance
+            ├── Phase 2.3 ─── Public Experience & Registration ←── NEXT
+            │       │
+            │       └── Drives user acquisition & conversion
+            │
+            ├── Phase 2.4 ─── Parent System & Compliance
             │       │
             │       └── Phase 4.3 (Parent Dashboard)
             │
-            └── Phase 2.4 ─── Pillar Content & Level System
+            └── Phase 2.5 ─── Pillar Content & Level System
                     │
-                    ├── Phase 2.5 (Role Access)
+                    ├── Phase 2.6 (Role Access)
                     │
                     ├── Phase 3 (Rich Content)
                     │       └── Phase 3.5 (Video Upload)
@@ -505,6 +584,9 @@ Phase 1 (DONE)
 | **Pacing Levels** | Introduction (<2.2), Development (2.2-3.1), Refinement (>3.1) |
 | **Payment Timeline** | After Phase 6 (core features), before Phase 8 (social/multi-sport) |
 | **Age Compliance** | Canadian PIPEDA - see `/docs/COMPLIANCE-CANADA.md` |
+| **Landing Page** | Marketing-grade with animations, testimonials, professional design |
+| **Pre-Registration Flow** | Short questionnaire BEFORE account creation, data transfers to profile |
+| **Public Pages** | Separate pages for Goalies/Students vs Parents with role-specific content |
 
 ---
 

@@ -4,7 +4,7 @@
 
 **Status:** Multi-Role System & 6-Pillar Framework
 - Phase 2.0-2.2: ✅ Complete (94 hours)
-- Phase 2.3-2.5: 🔲 Pending (~76-100 hours remaining)
+- Phase 2.3-2.6: 🔲 Pending (~116-155 hours remaining)
 
 **Started:** February 22, 2026
 
@@ -272,7 +272,17 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 
 ## Remaining Phase 2 Work
 
-### Phase 2.3: Parent System & Compliance (Not Started)
+### Phase 2.3: Public Experience & Registration Flow (Not Started)
+
+**Estimated:** 40-55 hours | **Priority:** CRITICAL
+
+- Marketing-grade landing page with animations and testimonials
+- Public pages for Goalies/Students (what you'll learn, methodology)
+- Public pages for Parents (monitoring, safety, coaching feedback)
+- Pre-registration questionnaire (5-8 questions based on role)
+- Updated registration flow with questionnaire data integration
+
+### Phase 2.4: Parent System & Compliance (Not Started)
 
 **Estimated:** 24-32 hours | **Priority:** HIGH
 
@@ -280,7 +290,7 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 - Parent onboarding flow with assessment
 - Age compliance (Canadian PIPEDA)
 
-### Phase 2.4: Pillar Content & Level System (Not Started)
+### Phase 2.5: Pillar Content & Level System (Not Started)
 
 **Estimated:** 40-52 hours | **Priority:** HIGH
 
@@ -290,7 +300,7 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 - Level unlock progression
 - Remedial content system
 
-### Phase 2.5: Role-Based Access Hardening (Not Started)
+### Phase 2.6: Role-Based Access Hardening (Not Started)
 
 **Estimated:** 12-16 hours | **Priority:** MEDIUM
 
@@ -314,4 +324,4 @@ See `/docs/PHASE-TIMELINE.md` for detailed breakdown.
 ---
 
 *Last Updated: March 7, 2026*
-*Total Sessions: 38 | Completed Hours: 94 | Remaining Phase 2: ~76-100 hours*
+*Total Sessions: 38 | Completed Hours: 94 | Remaining Phase 2: ~116-155 hours*

@@ -101,12 +101,18 @@ For detailed session information, see `/docs/client/sessions/`
 
 ### In Development 🔄
 
-**Phase 2.3 - Parent System (Next)**
+**Phase 2.3 - Public Experience & Registration (NEXT)**
+- Marketing-grade landing page
+- Public pages for Goalies/Students and Parents
+- Pre-registration questionnaire flow
+- Updated registration with questionnaire data
+
+**Phase 2.4 - Parent System**
 - Parent-child account linking
 - Parent onboarding flow with assessment
 - Age compliance (Canadian PIPEDA)
 
-**Phase 2.4 - Pillar Content System**
+**Phase 2.5 - Pillar Content System**
 - Pillar level structure (3 levels per pillar)
 - Lesson management for pillar content
 - Level evaluations (quiz gates)
@@ -114,7 +120,7 @@ For detailed session information, see `/docs/client/sessions/`
 
 ### Planned 📋
 
-**Phase 2.5 - Access Hardening**
+**Phase 2.6 - Access Hardening**
 - Enhanced route protection middleware
 - Full coach content access controls
 
@@ -172,20 +178,22 @@ For detailed session information, see `/docs/client/sessions/`
 
 ## Upcoming Milestones
 
-### Immediate (Next 2 weeks)
+### Immediate (Next 2-4 weeks)
+- Marketing-grade landing page
+- Public pages for goalies and parents
+- Pre-registration questionnaire
+- Registration flow integration
+
+### Short-term (1-2 months)
 - Parent-child linking system
 - Parent onboarding flow
 - Age compliance implementation
-
-### Short-term (2-4 weeks)
 - Pillar level structure
+
+### Medium-term (2-3 months)
 - Lesson management for pillars
 - Level evaluations and unlocking
-
-### Medium-term (1-2 months)
-- Rich content editor
 - Enhanced analytics dashboards
-- Communication tools
 
 ---
 

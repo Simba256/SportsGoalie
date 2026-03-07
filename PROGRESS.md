@@ -16,10 +16,14 @@
 ## 🎯 Current Sprint Goals
 
 ### Active Tasks
-- [ ] Implement parent-child relationships with student ID linking (Phase 2.3)
-- [ ] Parent onboarding flow with assessment (Phase 2.3)
-- [ ] Age compliance - Canadian PIPEDA (Phase 2.3)
-- [ ] Pillar level structure and lesson management (Phase 2.4)
+- [ ] Marketing-grade landing page with animations (Phase 2.3)
+- [ ] Public pages for Goalies/Students and Parents (Phase 2.3)
+- [ ] Pre-registration questionnaire flow (Phase 2.3)
+- [ ] Updated registration with questionnaire data (Phase 2.3)
+
+### Next Up
+- [ ] Parent-child relationships with student ID linking (Phase 2.4)
+- [ ] Pillar level structure and lesson management (Phase 2.5)
 
 ### Completed This Phase
 - [x] Multi-Role Foundation (Phase 2.0) - COMPLETE
@@ -264,19 +268,26 @@ Initial project analysis and progress tracking system implementation.
 - [x] Coach evaluation review with Q&A details
 - [x] Cross-reference engine for multi-role comparison
 
-#### 2.3 - Parent System & Compliance (0% Complete) 🔲
+#### 2.3 - Public Experience & Registration Flow (0% Complete) 🔲 ← NEXT
+- [ ] Marketing-grade landing page with animations
+- [ ] Public pages for Goalies/Students
+- [ ] Public pages for Parents
+- [ ] Pre-registration questionnaire
+- [ ] Updated registration flow with questionnaire data
+
+#### 2.4 - Parent System & Compliance (0% Complete) 🔲
 - [ ] Parent-child relationships with student ID linking
 - [ ] Parent onboarding flow with assessment
 - [ ] Age compliance (Canadian PIPEDA)
 
-#### 2.4 - Pillar Content & Level System (0% Complete) 🔲
+#### 2.5 - Pillar Content & Level System (0% Complete) 🔲
 - [ ] Pillar level structure (3 levels per pillar)
 - [ ] Lesson management for pillar content
 - [ ] Level evaluations (quiz gates)
 - [ ] Level unlock progression
 - [ ] Remedial content system
 
-#### 2.5 - Role-Based Access Hardening (0% Complete) 🔲
+#### 2.6 - Role-Based Access Hardening (0% Complete) 🔲
 - [ ] Enhanced route protection middleware
 - [ ] Full coach content access controls
 
