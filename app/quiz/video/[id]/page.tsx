@@ -130,10 +130,10 @@ function VideoQuizPageContent() {
           description: `You scored ${progress.percentage.toFixed(1)}%`,
         });
 
-        // Redirect to results page
+        // Redirect to results page quickly
         setTimeout(() => {
           router.push(`/quiz/video/${quizId}/results`);
-        }, 1500);
+        }, 500);
       } else {
         toast.error('Failed to save quiz results');
       }
