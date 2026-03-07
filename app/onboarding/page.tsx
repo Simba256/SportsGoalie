@@ -13,7 +13,7 @@ import {
   CategoryIntro,
   AssessmentQuestionV2,
   OnboardingProgressV2,
-  IntelligenceProfileView,
+  AssessmentComplete,
 } from '@/components/onboarding';
 
 /**
@@ -51,7 +51,6 @@ export default function OnboardingPage() {
     currentCategory,
     currentQuestion,
     categoryQuestions,
-    intelligenceProfile,
     totalIntakeScreens,
     totalCategories,
     questionProgress,
@@ -190,11 +189,10 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Intelligence Profile */}
-        {phase === 'profile' && intelligenceProfile && (
-          <IntelligenceProfileView
-            profile={intelligenceProfile}
-            ageRange={intakeData?.ageRange}
+        {/* Assessment Complete - simple message for students (profile is for coaches/admins) */}
+        {phase === 'profile' && (
+          <AssessmentComplete
+            studentName={user?.displayName?.split(' ')[0]}
             onContinue={goToDashboard}
           />
         )}
