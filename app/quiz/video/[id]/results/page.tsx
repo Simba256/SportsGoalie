@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
+import { customContentService } from '@/lib/database/services/custom-content.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,10 +47,36 @@ function VideoQuizResultsContent() {
       setLoading(true);
       setError(null);
 
-      // Load quiz data
+      let actualQuizId = quizId;
+
+      // If this is a custom content reference, resolve to actual quiz ID
+      if (quizId.startsWith('content_')) {
+        const contentResult = await customContentService.getContent(quizId);
+
+        if (!contentResult.success || !contentResult.data) {
+          setError('Content not found');
+          return;
+        }
+
+        // Parse the content field to get the real videoQuizId
+        try {
+          const contentData = JSON.parse(contentResult.data.content);
+          if (contentData.videoQuizId) {
+            actualQuizId = contentData.videoQuizId;
+          } else {
+            setError('Invalid quiz reference');
+            return;
+          }
+        } catch {
+          setError('Invalid quiz data');
+          return;
+        }
+      }
+
+      // Load quiz data using resolved ID
       const [quizResult, progressResult] = await Promise.all([
-        videoQuizService.getVideoQuiz(quizId),
-        videoQuizService.getUserProgress(user!.id, quizId)
+        videoQuizService.getVideoQuiz(actualQuizId),
+        videoQuizService.getUserProgress(user!.id, actualQuizId)
       ]);
 
       if (!quizResult.success || !quizResult.data) {

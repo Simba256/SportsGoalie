@@ -35,7 +35,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
-    if (isNaN(seconds)) return '0:00';
+    if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return '0:00';
 
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
