@@ -169,7 +169,7 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 - Dead code cleanup
 - V2 backward compatibility removal (~2,259 lines removed)
 - TypeScript fixes
-- *Sessions:* [dead-code-cleanup](../sessions/2026-03-03-dead-code-cleanup-typescript-fixes.md), [v2-cleanup](../sessions/2026-03-07-remove-onboarding-v2-backward-compatibility.md)
+- *Sessions:* [dead-code-cleanup](../sessions/2026-03-03-dead-code-cleanup-typescript.md), [v2-cleanup](../sessions/2026-03-07-remove-onboarding-v2-backward-compatibility.md)
 
 **Email Infrastructure** (1 hr)
 - Resend integration for future custom domain emails
@@ -193,19 +193,19 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 | Feb 24 | AI Project Assistant | Feature | 3 |
 | Feb 25 | Session Tracking Dashboard | Feature | 2 |
 | Feb 26 | Coach-Student Linking & Dashboard | Feature | 3 |
-| Feb 27 | Coach Invitation Auth Fixes | Bug Fix | 3 |
-| Feb 28 | Curriculum Fixes & Difficulty Levels | Bug Fix | 5 |
+| Feb 27 | Coach Invitation Auth Improvements | Enhancement | 3 |
+| Feb 28 | Curriculum Improvements & Difficulty Levels | Enhancement | 5 |
 | Feb 28 | Custom Curriculum Progress Tracking | Feature | 4 |
 | Mar 1 | Coach Custom Content Creation | Feature | 7 |
-| Mar 2 | Custom Content Student Access Fixes | Bug Fix | 4 |
+| Mar 2 | Custom Content Student Access | Feature | 4 |
 | Mar 3 | Video Quiz Full-Page Conversion | Feature | 4 |
-| Mar 3 | Video Handling System Verification | Bug Fix | 1 |
+| Mar 3 | Video Handling System Verification | Enhancement | 1 |
 | Mar 3 | Security Hardening & Best Practices | Security | 3 |
-| Mar 3 | Dead Code Cleanup & TypeScript Fixes | Refactor | 2 |
+| Mar 3 | Dead Code Cleanup & TypeScript | Refactor | 2 |
 | Mar 4 | Student Onboarding Evaluation System | Feature | 5 |
 | Mar 4 | Onboarding Rules & Coach UX | Testing | 2 |
-| Mar 4 | Codebase Verification & Bug Fixes | Bug Fix | 1 |
-| Mar 4 | Onboarding Redirect Fix & Workflow Filter | Bug Fix | 2 |
+| Mar 4 | Codebase Verification & Quality | Enhancement | 1 |
+| Mar 4 | Onboarding Redirect & Workflow Filter | Enhancement | 2 |
 | Mar 5 | 6-Pillar Conversion | Feature | 3 |
 | Mar 5 | Route Renaming (sports to pillars) | Refactor | 1 |
 | Mar 5 | Test Files Pillar Route Update | Testing | 2 |
@@ -213,11 +213,11 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 | Mar 6 | Navigation Cleanup | Enhancement | 1 |
 | Mar 6 | Phase 2 Scoring Foundation | Feature | 4 |
 | Mar 6 | Phase D V2 UI Integration | Feature | 3 |
-| Mar 7 | V2 Onboarding UI Fixes | Bug Fix | 1 |
+| Mar 7 | V2 Onboarding UI Improvements | Enhancement | 1 |
 | Mar 7 | Email Verification Branding | Feature | 1 |
-| Mar 7 | Fix Custom Quiz Not Found | Bug Fix | 1 |
+| Mar 7 | Custom Quiz Content Resolution | Enhancement | 1 |
 | Mar 7 | Remove V2 Backward Compatibility | Refactor | 1 |
-| Mar 7 | Fix Onboarding Redirect for Students | Bug Fix | 1 |
+| Mar 7 | Student Onboarding Redirect | Enhancement | 1 |
 | Mar 7 | Evaluation Q&A Detail View | Feature | 1 |
 | Mar 7 | Reset Incomplete Evaluations Script | Infrastructure | 1 |
 
