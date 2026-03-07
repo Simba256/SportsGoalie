@@ -20,7 +20,7 @@ import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Z
 import { useAuth } from '@/lib/auth/context';
 import { userService, onboardingService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
-import { User, OnboardingEvaluation, OnboardingEvaluationV2, getLevelDisplayText, getLevelColor } from '@/types';
+import { User, OnboardingEvaluation } from '@/types';
 import { toast } from 'sonner';
 import { StudentSearchDialog } from '@/components/coach/student-search-dialog';
 
@@ -35,7 +35,6 @@ interface StudentWithCurriculum {
     progressPercentage: number;
   };
   evaluation?: OnboardingEvaluation | null;
-  evaluationV2?: OnboardingEvaluationV2 | null;
 }
 
 export default function CoachStudentsPage() {
@@ -69,17 +68,15 @@ export default function CoachStudentsPage() {
       // Load curriculum and evaluation data for each student
       const studentsWithData: StudentWithCurriculum[] = await Promise.all(
         studentsResult.data.items.map(async (student) => {
-          const [curriculumResult, evaluationResult, evaluationV2Result] = await Promise.all([
+          const [curriculumResult, evaluationResult] = await Promise.all([
             customCurriculumService.getStudentCurriculum(student.id),
             onboardingService.getEvaluation(student.id),
-            onboardingService.getEvaluationV2(student.id),
           ]);
 
           const result: StudentWithCurriculum = {
             student,
             hasCurriculum: false,
             evaluation: evaluationResult.success ? evaluationResult.data : null,
-            evaluationV2: evaluationV2Result.success ? evaluationV2Result.data : null,
           };
 
           if (curriculumResult.success && curriculumResult.data) {
@@ -218,12 +215,10 @@ export default function CoachStudentsPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudents.map(({ student, hasCurriculum, curriculumProgress, evaluation, evaluationV2 }) => {
+          {filteredStudents.map(({ student, hasCurriculum, curriculumProgress, evaluation }) => {
             const isCustomWorkflow = student.workflowType === 'custom';
-            // Prefer V2 evaluation, fall back to V1
-            const hasV2Evaluation = evaluationV2 && evaluationV2.status;
-            const evalStatus = hasV2Evaluation ? evaluationV2.status : evaluation?.status;
-            const evalCoachReview = hasV2Evaluation ? evaluationV2.coachReview : evaluation?.coachReview;
+            const evalStatus = evaluation?.status;
+            const evalCoachReview = evaluation?.coachReview;
             const hasCompletedEvaluation = evalStatus === 'completed' || evalStatus === 'reviewed';
 
             return (
@@ -284,7 +279,6 @@ export default function CoachStudentsPage() {
                       >
                         <ClipboardCheck className="h-3 w-3 mr-1" />
                         {evalCoachReview ? 'Evaluation Reviewed' : 'Evaluation Pending Review'}
-                        {hasV2Evaluation && <span className="ml-1 text-xs">(V2)</span>}
                       </Badge>
                     ) : !student.onboardingCompleted ? (
                       <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
@@ -321,20 +315,12 @@ export default function CoachStudentsPage() {
                   )}
 
                   {/* Evaluation Summary */}
-                  {(evaluationV2?.intelligenceProfile?.pacingLevel || evaluation?.overallLevel) && (
+                  {evaluation?.intelligenceProfile?.pacingLevel && (
                     <div className="flex items-center justify-between text-sm py-2 border-t">
-                      <span className="text-muted-foreground">
-                        {hasV2Evaluation ? 'Pacing Level' : 'Initial Level'}
-                      </span>
-                      {hasV2Evaluation && evaluationV2?.intelligenceProfile?.pacingLevel ? (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 capitalize">
-                          {evaluationV2.intelligenceProfile.pacingLevel}
-                        </Badge>
-                      ) : evaluation?.overallLevel ? (
-                        <Badge variant="outline" className={getLevelColor(evaluation.overallLevel)}>
-                          {getLevelDisplayText(evaluation.overallLevel)}
-                        </Badge>
-                      ) : null}
+                      <span className="text-muted-foreground">Pacing Level</span>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 capitalize">
+                        {evaluation.intelligenceProfile.pacingLevel}
+                      </Badge>
                     </div>
                   )}
 

@@ -9,7 +9,7 @@ import {
   GapAnalysis,
   StrengthAnalysis,
   ContentRecommendation,
-  AssessmentResponseV2,
+  AssessmentResponse,
   AssessmentQuestion,
   GoalieAgeRange,
   DEFAULT_PACING_THRESHOLDS,
@@ -34,7 +34,7 @@ import { GOALIE_ASSESSMENT_QUESTIONS } from '@/data/goalie-assessment-questions'
  * Calculate the average score for a category
  */
 function calculateCategoryAverage(
-  responses: AssessmentResponseV2[],
+  responses: AssessmentResponse[],
   categorySlug: string
 ): { average: number; count: number; total: number } {
   const categoryResponses = responses.filter(r => r.categorySlug === categorySlug);
@@ -54,7 +54,7 @@ function calculateCategoryAverage(
  * Calculate all category scores
  */
 export function calculateCategoryScores(
-  responses: AssessmentResponseV2[],
+  responses: AssessmentResponse[],
   questions: AssessmentQuestion[],
   categoryWeights: CategoryWeight[]
 ): CategoryScoreResult[] {
@@ -292,7 +292,7 @@ function determineChartingEmphasis(gaps: GapAnalysis[]): string[] {
 export function generateIntelligenceProfile(
   userId: string,
   role: QuestionnaireRole,
-  responses: AssessmentResponseV2[],
+  responses: AssessmentResponse[],
   questions: AssessmentQuestion[],
   ageRange?: GoalieAgeRange,
   thresholds: PacingThresholds = DEFAULT_PACING_THRESHOLDS
@@ -339,7 +339,7 @@ export function generateIntelligenceProfile(
  */
 export function generateGoalieIntelligenceProfile(
   userId: string,
-  responses: AssessmentResponseV2[],
+  responses: AssessmentResponse[],
   ageRange?: GoalieAgeRange
 ): IntelligenceProfile {
   return generateIntelligenceProfile(
@@ -418,7 +418,7 @@ export function convertLegacyResponses(
     answeredAt: Timestamp;
   }>,
   questions: AssessmentQuestion[]
-): AssessmentResponseV2[] {
+): AssessmentResponse[] {
   return legacyResponses.map(lr => {
     const question = questions.find(q => q.id === lr.questionId);
 

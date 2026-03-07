@@ -4,20 +4,37 @@ import { Timestamp } from 'firebase/firestore';
 import { onboardingService } from '@/lib/database';
 import {
   OnboardingEvaluation,
-  OnboardingQuestion,
+  IntakeQuestion,
+  IntakeResponse,
+  IntakeData,
+  AssessmentQuestion,
   AssessmentResponse,
-  PillarSlug,
-  PILLARS,
+  IntelligenceProfile,
+  IntelligenceScore,
+  GoalieCategorySlug,
+  GOALIE_CATEGORIES,
+  CategoryInfo,
 } from '@/types';
-import { getQuestionsByPillar } from '@/data/onboarding-questions';
+import {
+  GOALIE_INTAKE_QUESTIONS,
+} from '@/data/goalie-intake-questions';
+import {
+  getCategoryOrder,
+  getQuestionsForCategory,
+} from '@/data/goalie-assessment-questions';
 import { logger } from '@/lib/utils/logger';
 
+/**
+ * Onboarding phases
+ */
 export type OnboardingPhase =
   | 'loading'
   | 'welcome'
-  | 'pillar_intro'
+  | 'intake'
+  | 'bridge'
+  | 'category_intro'
   | 'question'
-  | 'results'
+  | 'profile'
   | 'complete';
 
 interface UseOnboardingOptions {
@@ -34,27 +51,40 @@ interface UseOnboardingReturn {
   error: string | null;
   evaluation: OnboardingEvaluation | null;
 
-  // Current position
-  currentPillarIndex: number;
+  // Intake state
+  currentIntakeScreen: number;
+  intakeScreenQuestions: IntakeQuestion[];
+  intakeResponses: Record<string, string | string[]>;
+  intakeData: IntakeData | null;
+
+  // Assessment state
+  currentCategoryIndex: number;
   currentQuestionIndex: number;
-  currentPillar: typeof PILLARS[number] | null;
-  currentQuestion: OnboardingQuestion | null;
+  currentCategory: CategoryInfo | null;
+  currentQuestion: AssessmentQuestion | null;
+  categoryQuestions: AssessmentQuestion[];
+  intelligenceProfile: IntelligenceProfile | null;
 
   // Progress
-  completedPillars: PillarSlug[];
+  totalIntakeScreens: number;
+  totalCategories: number;
   questionProgress: { current: number; total: number };
-  pillarQuestions: OnboardingQuestion[];
 
   // Actions
-  beginEvaluation: () => void;
-  startPillar: () => void;
-  answerQuestion: (value: string | number, points: number) => Promise<void>;
-  completeEvaluation: () => Promise<void>;
+  beginOnboarding: () => void;
+  answerIntake: (questionId: string, value: string | string[]) => void;
+  nextIntakeScreen: () => Promise<void>;
+  previousIntakeScreen: () => void;
+  completeIntake: () => Promise<void>;
+  startCategory: () => void;
+  answerQuestion: (questionId: string, optionId: string, score: IntelligenceScore) => Promise<void>;
+  completeAssessment: () => Promise<void>;
   goToDashboard: () => void;
 }
 
 /**
  * Hook for managing the onboarding evaluation flow.
+ * Implements the 7-category, 1.0-4.0 scoring system.
  */
 export function useOnboarding({
   userId,
@@ -64,70 +94,84 @@ export function useOnboarding({
 }: UseOnboardingOptions): UseOnboardingReturn {
   const router = useRouter();
 
-  // State
+  // Core state
   const [phase, setPhase] = useState<OnboardingPhase>('loading');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [evaluation, setEvaluation] = useState<OnboardingEvaluation | null>(null);
 
-  // Current position
-  const [currentPillarIndex, setCurrentPillarIndex] = useState(0);
+  // Intake state
+  const [currentIntakeScreen, setCurrentIntakeScreen] = useState(0);
+  const [intakeResponses, setIntakeResponses] = useState<Record<string, string | string[]>>({});
+  const [intakeData, setIntakeData] = useState<IntakeData | null>(null);
+
+  // Assessment state
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [intelligenceProfile, setIntelligenceProfile] = useState<IntelligenceProfile | null>(null);
 
-  // Get questions organized by pillar
-  const questionsByPillar = useMemo(() => getQuestionsByPillar(), []);
+  // Get all intake questions as a flat array (one question per screen)
+  const allIntakeQuestions = useMemo(() => GOALIE_INTAKE_QUESTIONS, []);
+  const totalIntakeScreens = allIntakeQuestions.length;
 
-  // Derived state
-  const currentPillar = currentPillarIndex < PILLARS.length
-    ? PILLARS[currentPillarIndex]
-    : null;
+  // Get category order and questions
+  const categoryOrder = useMemo(() => getCategoryOrder(), []);
+  const totalCategories = categoryOrder.length;
 
-  const pillarQuestions = currentPillar
-    ? questionsByPillar[currentPillar.slug] || []
-    : [];
+  // Current intake question (as array for component compatibility)
+  const intakeScreenQuestions = useMemo(() => {
+    const question = allIntakeQuestions[currentIntakeScreen];
+    return question ? [question] : [];
+  }, [allIntakeQuestions, currentIntakeScreen]);
 
-  const currentQuestion = currentQuestionIndex < pillarQuestions.length
-    ? pillarQuestions[currentQuestionIndex]
-    : null;
+  // Current category info
+  const currentCategory = useMemo((): CategoryInfo | null => {
+    if (currentCategoryIndex >= categoryOrder.length) return null;
+    const slug = categoryOrder[currentCategoryIndex];
+    return GOALIE_CATEGORIES.find(c => c.slug === slug) || null;
+  }, [categoryOrder, currentCategoryIndex]);
 
-  const completedPillars = useMemo(() => {
-    const completed: PillarSlug[] = [];
-    if (!evaluation) return completed;
+  // Current category questions
+  const categoryQuestions = useMemo(() => {
+    if (!currentCategory) return [];
+    return getQuestionsForCategory(currentCategory.slug as GoalieCategorySlug);
+  }, [currentCategory]);
 
-    for (let i = 0; i < currentPillarIndex; i++) {
-      completed.push(PILLARS[i].slug);
-    }
-    return completed;
-  }, [evaluation, currentPillarIndex]);
+  // Current question
+  const currentQuestion = useMemo(() => {
+    if (currentQuestionIndex >= categoryQuestions.length) return null;
+    return categoryQuestions[currentQuestionIndex];
+  }, [categoryQuestions, currentQuestionIndex]);
 
+  // Question progress calculation
   const questionProgress = useMemo(() => {
     let total = 0;
     let current = 0;
 
-    // Count total questions across all pillars
-    for (const pillar of PILLARS) {
-      const questions = questionsByPillar[pillar.slug] || [];
-      total += questions.length;
-    }
+    for (let i = 0; i < categoryOrder.length; i++) {
+      const catQuestions = getQuestionsForCategory(categoryOrder[i]);
+      total += catQuestions.length;
 
-    // Count completed questions
-    for (let i = 0; i < currentPillarIndex; i++) {
-      const pillarQuestions = questionsByPillar[PILLARS[i].slug] || [];
-      current += pillarQuestions.length;
+      if (i < currentCategoryIndex) {
+        current += catQuestions.length;
+      } else if (i === currentCategoryIndex) {
+        current += currentQuestionIndex;
+      }
     }
-    current += currentQuestionIndex;
 
     return { current, total };
-  }, [questionsByPillar, currentPillarIndex, currentQuestionIndex]);
+  }, [categoryOrder, currentCategoryIndex, currentQuestionIndex]);
 
   // Load or create evaluation
   useEffect(() => {
     if (!enabled || !userId) {
       setLoading(false);
+      // Don't change phase if hook is disabled - let page handle redirect
       return;
     }
 
     loadEvaluation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, userId]);
 
   const loadEvaluation = async () => {
@@ -141,39 +185,58 @@ export function useOnboarding({
       const result = await onboardingService.getEvaluation(userId);
 
       if (result.success && result.data) {
-        setEvaluation(result.data);
+        const eval_ = result.data;
+        setEvaluation(eval_);
 
-        // Resume from saved position if in progress
-        if (result.data.status === 'in_progress') {
-          setCurrentPillarIndex(result.data.currentPillarIndex);
-          setCurrentQuestionIndex(result.data.currentQuestionIndex);
-
-          // Determine phase based on position
-          if (result.data.currentPillarIndex === 0 && result.data.currentQuestionIndex === 0) {
-            setPhase('welcome');
-          } else {
-            // Check if we need to show pillar intro or continue with questions
-            const pillarQuestions = questionsByPillar[PILLARS[result.data.currentPillarIndex]?.slug] || [];
-            if (result.data.currentQuestionIndex === 0) {
-              setPhase('pillar_intro');
-            } else if (result.data.currentQuestionIndex < pillarQuestions.length) {
-              setPhase('question');
-            } else {
-              // Move to next pillar
-              setCurrentPillarIndex(prev => prev + 1);
-              setCurrentQuestionIndex(0);
-              setPhase('pillar_intro');
-            }
+        // Restore state from evaluation
+        if (eval_.intakeData) {
+          setIntakeData(eval_.intakeData);
+          // Restore intake responses
+          const responses: Record<string, string | string[]> = {};
+          for (const r of eval_.intakeData.responses || []) {
+            responses[r.questionId] = r.value;
           }
-        } else if (result.data.status === 'completed' || result.data.status === 'reviewed') {
-          // Evaluation already complete - redirect to dashboard
-          // Students should not see their results; coaches/admins can view via review page
+          setIntakeResponses(responses);
+        }
+
+        if (eval_.intelligenceProfile) {
+          setIntelligenceProfile(eval_.intelligenceProfile);
+        }
+
+        // Resume from saved phase
+        if (eval_.status === 'completed') {
           setPhase('complete');
-          // Refresh user context before redirecting so dashboard sees onboardingCompleted: true
           if (onRefreshUser) {
             await onRefreshUser();
           }
           router.push('/dashboard');
+          return;
+        }
+
+        // Determine phase based on evaluation state
+        switch (eval_.phase) {
+          case 'intake':
+            setCurrentIntakeScreen(eval_.currentQuestionIndex || 0);
+            setPhase('intake');
+            break;
+          case 'bridge':
+            setPhase('bridge');
+            break;
+          case 'assessment':
+            setCurrentCategoryIndex(eval_.currentCategoryIndex);
+            setCurrentQuestionIndex(eval_.currentQuestionIndex);
+            // If at the start of a category, show intro
+            if (eval_.currentQuestionIndex === 0) {
+              setPhase('category_intro');
+            } else {
+              setPhase('question');
+            }
+            break;
+          case 'completed':
+            setPhase('profile');
+            break;
+          default:
+            setPhase('welcome');
         }
       } else {
         // Create new evaluation
@@ -188,84 +251,155 @@ export function useOnboarding({
     } catch (err) {
       logger.error('Failed to load onboarding evaluation', 'useOnboarding', err);
       setError('Failed to load evaluation');
+      setPhase('welcome'); // Set phase so loading screen doesn't persist
     } finally {
       setLoading(false);
     }
   };
 
-  const beginEvaluation = useCallback(() => {
-    setCurrentPillarIndex(0);
-    setCurrentQuestionIndex(0);
-    setPhase('pillar_intro');
+  const beginOnboarding = useCallback(() => {
+    setCurrentIntakeScreen(0);
+    setPhase('intake');
   }, []);
 
-  const startPillar = useCallback(() => {
+  const answerIntake = useCallback((questionId: string, value: string | string[]) => {
+    setIntakeResponses(prev => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  }, []);
+
+  const nextIntakeScreen = useCallback(async () => {
+    if (!evaluation) return;
+
+    // Save response for current question
+    const currentQuestion = allIntakeQuestions[currentIntakeScreen];
+    if (currentQuestion) {
+      const value = intakeResponses[currentQuestion.id];
+      if (value !== undefined) {
+        const response: IntakeResponse = {
+          questionId: currentQuestion.id,
+          questionCode: currentQuestion.questionCode,
+          value,
+          answeredAt: Timestamp.now(),
+        };
+        await onboardingService.saveIntakeResponse(evaluation.id, response, currentIntakeScreen);
+      }
+    }
+
+    // Check if this was the last question
+    if (currentIntakeScreen >= totalIntakeScreens - 1) {
+      // Complete intake
+      await completeIntakeInternal();
+    } else {
+      setCurrentIntakeScreen(prev => prev + 1);
+    }
+  }, [evaluation, currentIntakeScreen, intakeResponses, allIntakeQuestions, totalIntakeScreens]);
+
+  const previousIntakeScreen = useCallback(() => {
+    if (currentIntakeScreen > 0) {
+      setCurrentIntakeScreen(prev => prev - 1);
+    }
+  }, [currentIntakeScreen]);
+
+  const completeIntakeInternal = async () => {
+    if (!evaluation) return;
+
+    try {
+      setLoading(true);
+      const result = await onboardingService.completeIntake(evaluation.id);
+
+      if (result.success && result.data) {
+        setIntakeData(result.data);
+        setPhase('bridge');
+      } else {
+        setError('Failed to complete intake');
+      }
+    } catch (err) {
+      logger.error('Failed to complete intake', 'useOnboarding', err);
+      setError('Failed to complete intake');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeIntake = useCallback(async () => {
+    await completeIntakeInternal();
+  }, [evaluation]);
+
+  const startCategory = useCallback(() => {
     setPhase('question');
   }, []);
 
-  const answerQuestion = useCallback(async (value: string | number, points: number) => {
-    if (!evaluation || !currentQuestion || !currentPillar) {
+  const answerQuestion = useCallback(async (
+    questionId: string,
+    optionId: string,
+    score: IntelligenceScore
+  ) => {
+    if (!evaluation || !currentQuestion || !currentCategory) {
       logger.error('Cannot answer question - missing evaluation or question', 'useOnboarding');
       return;
     }
 
     try {
       const response: AssessmentResponse = {
-        questionId: currentQuestion.id,
-        pillarSlug: currentPillar.slug,
-        questionType: currentQuestion.type,
-        value,
-        points,
-        maxPoints: currentQuestion.maxPoints,
+        questionId,
+        questionCode: currentQuestion.questionCode,
+        categorySlug: currentCategory.slug,
+        value: optionId,
+        score,
         answeredAt: Timestamp.now(),
       };
 
       // Calculate next position
-      let nextPillarIndex = currentPillarIndex;
+      let nextCategoryIndex = currentCategoryIndex;
       let nextQuestionIndex = currentQuestionIndex + 1;
 
-      // Check if we're done with current pillar
-      if (nextQuestionIndex >= pillarQuestions.length) {
-        nextPillarIndex = currentPillarIndex + 1;
+      // Check if we're done with current category
+      if (nextQuestionIndex >= categoryQuestions.length) {
+        nextCategoryIndex = currentCategoryIndex + 1;
         nextQuestionIndex = 0;
       }
 
-      // Save response with next position
-      await onboardingService.saveResponse(
+      // Save response
+      await onboardingService.saveAssessmentResponse(
         evaluation.id,
         response,
-        nextPillarIndex,
+        nextCategoryIndex,
         nextQuestionIndex
       );
 
       // Update local state
       setEvaluation(prev => prev ? {
         ...prev,
-        responses: [...prev.responses.filter(r => r.questionId !== response.questionId), response],
-        currentPillarIndex: nextPillarIndex,
+        assessmentResponses: [
+          ...prev.assessmentResponses.filter(r => r.questionId !== response.questionId),
+          response,
+        ],
+        currentCategoryIndex: nextCategoryIndex,
         currentQuestionIndex: nextQuestionIndex,
       } : null);
 
       // Transition to next state
-      if (nextPillarIndex >= PILLARS.length) {
-        // All pillars complete - show results
-        await completeEvaluationInternal();
-      } else if (nextQuestionIndex === 0 && nextPillarIndex > currentPillarIndex) {
-        // New pillar - show intro
-        setCurrentPillarIndex(nextPillarIndex);
+      if (nextCategoryIndex >= totalCategories) {
+        // All categories complete - show profile
+        await completeAssessmentInternal();
+      } else if (nextQuestionIndex === 0 && nextCategoryIndex > currentCategoryIndex) {
+        // New category - show intro
+        setCurrentCategoryIndex(nextCategoryIndex);
         setCurrentQuestionIndex(0);
-        setPhase('pillar_intro');
+        setPhase('category_intro');
       } else {
-        // Next question in same pillar
+        // Next question in same category
         setCurrentQuestionIndex(nextQuestionIndex);
       }
     } catch (err) {
       logger.error('Failed to save response', 'useOnboarding', err);
       setError('Failed to save your answer. Please try again.');
     }
-  }, [evaluation, currentQuestion, currentPillar, currentPillarIndex, currentQuestionIndex, pillarQuestions.length]);
+  }, [evaluation, currentQuestion, currentCategory, currentCategoryIndex, currentQuestionIndex, categoryQuestions.length, totalCategories]);
 
-  const completeEvaluationInternal = async () => {
+  const completeAssessmentInternal = async () => {
     if (!userId || !evaluation) return;
 
     try {
@@ -273,51 +407,66 @@ export function useOnboarding({
       const result = await onboardingService.completeEvaluation(userId);
 
       if (result.success && result.data) {
-        setEvaluation(result.data);
-        // Skip results screen for students - go directly to dashboard
-        // Coaches/admins can view results via the coach evaluation review page
-        setPhase('complete');
-        // Refresh user context before redirecting so dashboard sees onboardingCompleted: true
-        if (onRefreshUser) {
-          await onRefreshUser();
-        }
-        router.push('/dashboard');
+        setIntelligenceProfile(result.data);
+        setPhase('profile');
       } else {
-        setError('Failed to complete evaluation');
+        setError('Failed to complete assessment');
       }
     } catch (err) {
-      logger.error('Failed to complete evaluation', 'useOnboarding', err);
-      setError('Failed to complete evaluation');
+      logger.error('Failed to complete assessment', 'useOnboarding', err);
+      setError('Failed to complete assessment');
     } finally {
       setLoading(false);
     }
   };
 
-  const completeEvaluation = useCallback(async () => {
-    await completeEvaluationInternal();
+  const completeAssessment = useCallback(async () => {
+    await completeAssessmentInternal();
   }, [userId, evaluation]);
 
-  const goToDashboard = useCallback(() => {
+  const goToDashboard = useCallback(async () => {
     setPhase('complete');
+    if (onRefreshUser) {
+      await onRefreshUser();
+    }
     router.push('/dashboard');
-  }, [router]);
+  }, [router, onRefreshUser]);
 
   return {
+    // State
     phase,
     loading,
     error,
     evaluation,
-    currentPillarIndex,
+
+    // Intake state
+    currentIntakeScreen,
+    intakeScreenQuestions,
+    intakeResponses,
+    intakeData,
+
+    // Assessment state
+    currentCategoryIndex,
     currentQuestionIndex,
-    currentPillar,
+    currentCategory,
     currentQuestion,
-    completedPillars,
+    categoryQuestions,
+    intelligenceProfile,
+
+    // Progress
+    totalIntakeScreens,
+    totalCategories,
     questionProgress,
-    pillarQuestions,
-    beginEvaluation,
-    startPillar,
+
+    // Actions
+    beginOnboarding,
+    answerIntake,
+    nextIntakeScreen,
+    previousIntakeScreen,
+    completeIntake,
+    startCategory,
     answerQuestion,
-    completeEvaluation,
+    completeAssessment,
     goToDashboard,
   };
 }

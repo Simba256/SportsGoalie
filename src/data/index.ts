@@ -58,10 +58,6 @@ export {
   getCoachTotalQuestionCount,
 } from './coach-assessment-questions';
 
-// Legacy onboarding questions (backward compatibility)
-export {
-  ONBOARDING_QUESTIONS,
-  getQuestionsByPillar,
-  getTotalQuestionCount as getLegacyTotalQuestionCount,
-  getQuestionCountByPillar,
-} from './onboarding-questions';
+// Legacy exports - now use goalie assessment questions as primary
+// These aliases maintain backward compatibility
+export { getTotalQuestionCount as getLegacyTotalQuestionCount } from './goalie-assessment-questions';

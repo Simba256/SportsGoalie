@@ -4,21 +4,21 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { useOnboardingV2 } from '@/hooks/useOnboardingV2';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import {
   OnboardingContainer,
-  WelcomeScreenV2,
+  WelcomeScreen,
   IntakeScreen,
   BridgeMessage,
   CategoryIntro,
-  AssessmentQuestionV2,
-  OnboardingProgressV2,
+  AssessmentQuestion,
+  OnboardingProgress,
   AssessmentComplete,
 } from '@/components/onboarding';
 
 /**
- * Main onboarding evaluation page (V2).
- * Full-screen immersive flow with new 7-category, 1.0-4.0 scoring system.
+ * Main onboarding evaluation page.
+ * Full-screen immersive flow with 7-category, 1.0-4.0 scoring system.
  */
 export default function OnboardingPage() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export default function OnboardingPage() {
     startCategory,
     answerQuestion,
     goToDashboard,
-  } = useOnboardingV2({
+  } = useOnboarding({
     userId: user?.id || null,
     studentName: user?.displayName || 'Student',
     enabled: !authLoading && !!user && !user.onboardingCompleted,
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
       {/* Progress bar (shown during intake and assessment phases) */}
       {(phase === 'intake' || phase === 'question' || phase === 'category_intro') && (
         <div className="p-4 sm:p-6">
-          <OnboardingProgressV2
+          <OnboardingProgress
             phase={phase === 'category_intro' || phase === 'question' ? 'assessment' : phase}
             currentIntakeScreen={currentIntakeScreen}
             totalIntakeScreens={totalIntakeScreens}
@@ -130,7 +130,7 @@ export default function OnboardingPage() {
       <div className="flex-1 flex flex-col">
         {/* Welcome Screen */}
         {phase === 'welcome' && user && (
-          <WelcomeScreenV2
+          <WelcomeScreen
             studentName={user.displayName?.split(' ')[0] || 'Student'}
             onBegin={beginOnboarding}
           />
@@ -177,7 +177,7 @@ export default function OnboardingPage() {
         {/* Assessment Question */}
         {phase === 'question' && currentQuestion && currentCategory && (
           <div className="flex-1 flex items-center justify-center p-6">
-            <AssessmentQuestionV2
+            <AssessmentQuestion
               key={currentQuestion.id}
               question={currentQuestion}
               categoryName={currentCategory.shortName}

@@ -794,48 +794,27 @@ export type {
 } from './curriculum';
 
 // Onboarding Evaluation Types - Export from onboarding.ts
-// Legacy types (backward compatibility)
 export type {
   AssessmentLevel,
   PillarSlug,
   OnboardingQuestionType,
   PillarInfo,
-  OnboardingQuestionOption,
-  OnboardingQuestion,
-  AssessmentResponse,
-  PillarAssessmentResult,
-  CoachReview,
-  OnboardingEvaluation,
-  CreateEvaluationInput,
-  SaveResponseInput,
-  CompleteEvaluationInput,
-  CoachReviewInput,
-  EvaluationSummary,
-} from './onboarding';
-
-// V2 Types (Michael's Phase 2 Specification)
-export type {
-  // Core types
   PacingLevel,
   QuestionnaireRole,
   GoalieAgeRange,
   IntelligenceScore,
-  // Category types
   GoalieCategorySlug,
   ParentCategorySlug,
   CoachCategorySlug,
   CategorySlug,
-  // Intake types
   IntakeQuestionType,
   IntakeQuestionOption,
   IntakeQuestion,
   IntakeResponse,
   IntakeData,
-  // Assessment V2 types
   AssessmentQuestionOption,
   AssessmentQuestion,
-  AssessmentResponseV2,
-  // Scoring types
+  AssessmentResponse,
   PacingThresholds,
   CategoryWeight,
   CategoryScoreResult,
@@ -843,29 +822,23 @@ export type {
   GapAnalysis,
   StrengthAnalysis,
   ContentRecommendation,
-  // Cross-reference types
   CrossReferenceType,
   CrossReferenceFlag,
   CrossReferenceRule,
   CrossReferenceResult,
-  // Configuration types
   QuestionnaireConfig,
   BridgeMessageTemplate,
   ProfileSummaryTemplate,
-  // V2 evaluation
-  OnboardingEvaluationV2,
-  // Category info
+  OnboardingEvaluation,
+  CoachReview,
+  CoachReviewInput,
+  EvaluationSummary,
   CategoryInfo,
 } from './onboarding';
 
 export {
-  // Legacy exports
   PILLARS,
   getPillarInfo,
-  calculateLevel,
-  getLevelDisplayText,
-  getLevelColor,
-  // V2 exports
   DEFAULT_PACING_THRESHOLDS,
   GOALIE_CATEGORY_WEIGHTS,
   PARENT_CATEGORY_WEIGHTS,

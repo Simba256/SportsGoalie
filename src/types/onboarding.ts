@@ -6,14 +6,13 @@ import { Timestamp } from 'firebase/firestore';
 // ==========================================
 
 /**
- * Pacing levels for content delivery (replaces old beginner/intermediate/advanced)
+ * Pacing levels for content delivery
  * Per Michael's spec: Everyone starts at fundamentals, level determines pacing
  */
 export type PacingLevel = 'introduction' | 'development' | 'refinement';
 
 /**
- * Legacy assessment level type - kept for backward compatibility
- * @deprecated Use PacingLevel instead
+ * Assessment level type (maps to pacing levels for display)
  */
 export type AssessmentLevel = 'beginner' | 'intermediate' | 'advanced';
 
@@ -72,8 +71,8 @@ export type CoachCategorySlug =
 export type CategorySlug = GoalieCategorySlug | ParentCategorySlug | CoachCategorySlug;
 
 /**
- * The 6 Ice Hockey Goalie Pillars (legacy - used for content organization)
- * @deprecated Assessment now uses 7 categories; pillars are for content only
+ * The 6 Ice Hockey Goalie Pillars (used for content organization)
+ * Assessment uses 7 categories; pillars are for content organization
  */
 export type PillarSlug =
   | 'mindset'      // Mind-Set Development
@@ -359,7 +358,7 @@ export interface CrossReferenceResult {
 }
 
 // ==========================================
-// ASSESSMENT QUESTION TYPES (V2)
+// ASSESSMENT QUESTION TYPES
 // ==========================================
 
 /**
@@ -372,7 +371,7 @@ export interface AssessmentQuestionOption {
 }
 
 /**
- * Assessment question (V2 - category-based)
+ * Assessment question (category-based)
  */
 export interface AssessmentQuestion {
   id: string;
@@ -395,9 +394,9 @@ export interface AssessmentQuestion {
 }
 
 /**
- * Assessment response (V2)
+ * Assessment response
  */
-export interface AssessmentResponseV2 {
+export interface AssessmentResponse {
   questionId: string;
   questionCode: string;
   categorySlug: string;
@@ -405,6 +404,7 @@ export interface AssessmentResponseV2 {
   score: IntelligenceScore;   // 1.0-4.0
   answeredAt: Timestamp;
 }
+
 
 /**
  * Complete questionnaire configuration
@@ -458,76 +458,8 @@ export interface ProfileSummaryTemplate {
 }
 
 // ==========================================
-// LEGACY TYPES (Backward Compatibility)
+// COACH REVIEW TYPE
 // ==========================================
-
-/**
- * Pillar metadata with display information
- * @deprecated Use category-based system for assessment
- */
-export interface PillarInfo {
-  slug: PillarSlug;
-  name: string;
-  shortName: string;
-  description: string;
-  icon: string;  // Lucide icon name
-  color: string; // Tailwind color class
-}
-
-/**
- * Option for multiple choice questions
- */
-export interface OnboardingQuestionOption {
-  id: string;
-  text: string;
-  points: number;
-}
-
-/**
- * Onboarding assessment question
- */
-export interface OnboardingQuestion {
-  id: string;
-  pillarSlug: PillarSlug;
-  type: OnboardingQuestionType;
-  question: string;
-  description?: string;
-  videoUrl?: string;
-  videoThumbnail?: string;
-  options?: OnboardingQuestionOption[];
-  ratingMin?: number;
-  ratingMax?: number;
-  ratingLabels?: { min: string; max: string };
-  maxPoints: number;
-  order: number;
-}
-
-/**
- * User's response to an onboarding question
- */
-export interface AssessmentResponse {
-  questionId: string;
-  pillarSlug: PillarSlug;
-  questionType: OnboardingQuestionType;
-  value: string | number;  // Option ID for MC, boolean for T/F, number for rating
-  points: number;
-  maxPoints: number;
-  answeredAt: Timestamp;
-}
-
-/**
- * Calculated result for a single pillar
- */
-export interface PillarAssessmentResult {
-  pillarSlug: PillarSlug;
-  pillarName: string;
-  rawScore: number;
-  maxScore: number;
-  percentage: number;
-  level: AssessmentLevel;
-  strengths: string[];
-  weaknesses: string[];
-}
 
 /**
  * Coach review data for an evaluation
@@ -538,64 +470,7 @@ export interface CoachReview {
   reviewerName?: string;
   notes: string;
   adjustedLevel?: AssessmentLevel;
-  adjustedPillarLevels?: Partial<Record<PillarSlug, AssessmentLevel>>;
-}
-
-/**
- * Complete onboarding evaluation record
- */
-export interface OnboardingEvaluation {
-  id: string;
-  userId: string;
-  startedAt: Timestamp;
-  completedAt?: Timestamp;
-  duration?: number; // Seconds
-  status: 'in_progress' | 'completed' | 'reviewed';
-
-  // Current progress (for resuming)
-  currentPillarIndex: number;
-  currentQuestionIndex: number;
-
-  // Results (populated on completion)
-  overallLevel?: AssessmentLevel;
-  overallPercentage?: number;
-  pillarAssessments?: Record<PillarSlug, PillarAssessmentResult>;
-  responses: AssessmentResponse[];
-
-  // Coach review
-  coachReview?: CoachReview;
-
-  // Timestamps
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-/**
- * Input for creating a new evaluation
- */
-export interface CreateEvaluationInput {
-  userId: string;
-}
-
-/**
- * Input for saving a response
- */
-export interface SaveResponseInput {
-  evaluationId: string;
-  questionId: string;
-  pillarSlug: PillarSlug;
-  questionType: OnboardingQuestionType;
-  value: string | number;
-  points: number;
-  maxPoints: number;
-}
-
-/**
- * Input for completing an evaluation
- */
-export interface CompleteEvaluationInput {
-  evaluationId: string;
-  userId: string;
+  adjustedPacingLevel?: PacingLevel;
 }
 
 /**
@@ -607,7 +482,7 @@ export interface CoachReviewInput {
   coachName: string;
   notes: string;
   adjustedLevel?: AssessmentLevel;
-  adjustedPillarLevels?: Partial<Record<PillarSlug, AssessmentLevel>>;
+  adjustedPacingLevel?: PacingLevel;
 }
 
 /**
@@ -619,116 +494,20 @@ export interface EvaluationSummary {
   studentName: string;
   studentEmail: string;
   completedAt: Timestamp;
-  overallLevel: AssessmentLevel;
-  overallPercentage: number;
+  pacingLevel: PacingLevel;
+  overallScore: number;
   hasCoachReview: boolean;
   reviewedAt?: Timestamp;
 }
 
-/**
- * Pillar definitions with metadata
- */
-export const PILLARS: PillarInfo[] = [
-  {
-    slug: 'mindset',
-    name: 'Mind-Set Development',
-    shortName: 'Mindset',
-    description: 'Mental resilience, focus, and emotional regulation skills',
-    icon: 'Brain',
-    color: 'purple',
-  },
-  {
-    slug: 'skating',
-    name: 'Skating as a Skill',
-    shortName: 'Skating',
-    description: 'Movement confidence and skating knowledge',
-    icon: 'Footprints',
-    color: 'blue',
-  },
-  {
-    slug: 'form',
-    name: 'Form & Structure',
-    shortName: 'Form',
-    description: 'Stance awareness and positioning fundamentals',
-    icon: 'Shapes',
-    color: 'green',
-  },
-  {
-    slug: 'positioning',
-    name: 'Positional Systems',
-    shortName: 'Positioning',
-    description: 'Understanding of positioning concepts',
-    icon: 'Target',
-    color: 'orange',
-  },
-  {
-    slug: 'seven_point',
-    name: '7 Point System Below Icing Line',
-    shortName: '7 Point',
-    description: 'Zone awareness and coverage patterns',
-    icon: 'Grid3X3',
-    color: 'red',
-  },
-  {
-    slug: 'training',
-    name: 'Game/Practice/Off-Ice',
-    shortName: 'Training',
-    description: 'Training habits and preparation routines',
-    icon: 'Dumbbell',
-    color: 'cyan',
-  },
-];
-
-/**
- * Helper to get pillar info by slug
- */
-export function getPillarInfo(slug: PillarSlug): PillarInfo {
-  const pillar = PILLARS.find(p => p.slug === slug);
-  if (!pillar) {
-    throw new Error(`Unknown pillar slug: ${slug}`);
-  }
-  return pillar;
-}
-
-/**
- * Calculate assessment level from percentage score
- */
-export function calculateLevel(percentage: number): AssessmentLevel {
-  if (percentage >= 70) return 'advanced';
-  if (percentage >= 40) return 'intermediate';
-  return 'beginner';
-}
-
-/**
- * Get display text for assessment level
- */
-export function getLevelDisplayText(level: AssessmentLevel): string {
-  switch (level) {
-    case 'beginner': return 'Beginner';
-    case 'intermediate': return 'Intermediate';
-    case 'advanced': return 'Advanced';
-  }
-}
-
-/**
- * Get color class for assessment level
- */
-export function getLevelColor(level: AssessmentLevel): string {
-  switch (level) {
-    case 'beginner': return 'text-amber-500 bg-amber-50 border-amber-200';
-    case 'intermediate': return 'text-blue-500 bg-blue-50 border-blue-200';
-    case 'advanced': return 'text-green-500 bg-green-50 border-green-200';
-  }
-}
-
 // ==========================================
-// V2 EVALUATION TYPES & HELPERS
+// EVALUATION TYPES & HELPERS
 // ==========================================
 
 /**
- * Complete onboarding evaluation record (V2 - supports new scoring)
+ * Complete onboarding evaluation record
  */
-export interface OnboardingEvaluationV2 {
+export interface OnboardingEvaluation {
   id: string;
   userId: string;
   role: QuestionnaireRole;
@@ -743,10 +522,10 @@ export interface OnboardingEvaluationV2 {
   // Assessment progress
   currentCategoryIndex: number;
   currentQuestionIndex: number;
-  assessmentResponses: AssessmentResponseV2[];
+  assessmentResponses: AssessmentResponse[];
   assessmentStartedAt?: Timestamp;
 
-  // Results (V2 scoring)
+  // Results
   intelligenceProfile?: IntelligenceProfile;
   pacingLevel?: PacingLevel;
 
@@ -755,10 +534,6 @@ export interface OnboardingEvaluationV2 {
   linkedGoalieId?: string;    // For parent/coach linking
   linkedParentIds?: string[]; // For goalie linking
   linkedCoachIds?: string[];  // For goalie linking
-
-  // Legacy compatibility fields
-  overallLevel?: AssessmentLevel;
-  overallPercentage?: number;
 
   // Status
   status: 'in_progress' | 'completed' | 'reviewed';
@@ -980,4 +755,88 @@ export function getCategoryInfo(slug: string, role: QuestionnaireRole = 'goalie'
   }
   // TODO: Add parent and coach category info
   return undefined;
+}
+
+// ==========================================
+// CONTENT PILLAR TYPES (Not Assessment)
+// Used for organizing learning content
+// ==========================================
+
+/**
+ * Pillar metadata with display information
+ * Used for content organization (6 learning pillars)
+ */
+export interface PillarInfo {
+  slug: PillarSlug;
+  name: string;
+  shortName: string;
+  description: string;
+  icon: string;  // Lucide icon name
+  color: string; // Tailwind color class
+}
+
+/**
+ * The 6 Ice Hockey Goalie content pillars
+ * Used for organizing learning content (not assessment)
+ */
+export const PILLARS: PillarInfo[] = [
+  {
+    slug: 'mindset',
+    name: 'Mind-Set Development',
+    shortName: 'Mindset',
+    description: 'Mental resilience, focus, and emotional regulation skills',
+    icon: 'Brain',
+    color: 'purple',
+  },
+  {
+    slug: 'skating',
+    name: 'Skating as a Skill',
+    shortName: 'Skating',
+    description: 'Movement confidence and skating knowledge',
+    icon: 'Footprints',
+    color: 'blue',
+  },
+  {
+    slug: 'form',
+    name: 'Form & Structure',
+    shortName: 'Form',
+    description: 'Stance awareness and positioning fundamentals',
+    icon: 'Shapes',
+    color: 'green',
+  },
+  {
+    slug: 'positioning',
+    name: 'Positional Systems',
+    shortName: 'Positioning',
+    description: 'Understanding of positioning concepts',
+    icon: 'Target',
+    color: 'orange',
+  },
+  {
+    slug: 'seven_point',
+    name: '7 Point System Below Icing Line',
+    shortName: '7 Point',
+    description: 'Zone awareness and coverage patterns',
+    icon: 'Grid3X3',
+    color: 'red',
+  },
+  {
+    slug: 'training',
+    name: 'Game/Practice/Off-Ice',
+    shortName: 'Training',
+    description: 'Training habits and preparation routines',
+    icon: 'Dumbbell',
+    color: 'cyan',
+  },
+];
+
+/**
+ * Helper to get pillar info by slug
+ */
+export function getPillarInfo(slug: PillarSlug): PillarInfo {
+  const pillar = PILLARS.find(p => p.slug === slug);
+  if (!pillar) {
+    throw new Error(`Unknown pillar slug: ${slug}`);
+  }
+  return pillar;
 }

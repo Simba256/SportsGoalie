@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Shield, ChevronRight } from 'lucide-react';
+import { Shield, ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen } from 'lucide-react';
 
 interface WelcomeScreenProps {
   studentName: string;
@@ -9,7 +9,31 @@ interface WelcomeScreenProps {
 }
 
 /**
- * Initial welcome screen before starting the onboarding evaluation.
+ * Category preview data
+ */
+const CATEGORIES = [
+  { name: 'Feelings', icon: Heart, color: 'purple' },
+  { name: 'Knowledge', icon: Brain, color: 'blue' },
+  { name: 'Pre-Game', icon: Clock, color: 'cyan' },
+  { name: 'In-Game', icon: Target, color: 'red' },
+  { name: 'Post-Game', icon: MessageCircle, color: 'green' },
+  { name: 'Training', icon: Dumbbell, color: 'orange' },
+  { name: 'Learning', icon: BookOpen, color: 'indigo' },
+];
+
+const COLOR_CLASSES: Record<string, string> = {
+  purple: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  cyan: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+  red: 'bg-red-500/20 text-red-300 border-red-500/30',
+  green: 'bg-green-500/20 text-green-300 border-green-500/30',
+  orange: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+  indigo: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+};
+
+/**
+ * Welcome screen for the onboarding flow.
+ * Introduces the 7-category assessment system.
  */
 export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
   return (
@@ -29,18 +53,21 @@ export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
 
         <p className="text-lg sm:text-xl text-slate-300 mb-8 leading-relaxed">
           Before we begin your goaltending journey, let's discover where you are today.
-          This evaluation will assess your skills across the{' '}
-          <span className="text-cyan-400 font-semibold">6 Ice Hockey Goalie Pillars</span>.
+          We'll start with a few quick questions about you, then explore{' '}
+          <span className="text-cyan-400 font-semibold">7 areas of your game</span>.
         </p>
 
-        {/* Pillar preview */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10 text-sm">
-          <PillarPreview name="Mind-Set" color="purple" />
-          <PillarPreview name="Skating" color="blue" />
-          <PillarPreview name="Form" color="green" />
-          <PillarPreview name="Positioning" color="orange" />
-          <PillarPreview name="7 Point System" color="red" />
-          <PillarPreview name="Training" color="cyan" />
+        {/* Category preview */}
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {CATEGORIES.map(({ name, icon: Icon, color }) => (
+            <div
+              key={name}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${COLOR_CLASSES[color]}`}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="text-sm">{name}</span>
+            </div>
+          ))}
         </div>
 
         {/* Info */}
@@ -49,19 +76,23 @@ export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
           <ul className="space-y-2 text-slate-300">
             <li className="flex items-start gap-2">
               <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-              <span>About 27 questions across 6 skill areas</span>
+              <span>Quick intake questions to learn about you</span>
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-              <span>Mix of self-ratings, multiple choice, and video scenarios</span>
+              <span>28 assessment questions across 7 categories</span>
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-              <span>Takes approximately 10-15 minutes to complete</span>
+              <span>All multiple choice — no right or wrong answers</span>
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-              <span>Your progress is saved automatically</span>
+              <span>Your personalized Intelligence Profile at the end</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <span>Progress is saved automatically</span>
             </li>
           </ul>
         </div>
@@ -72,33 +103,14 @@ export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
           onClick={onBegin}
           className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105"
         >
-          Begin Evaluation
+          Let's Get Started
           <ChevronRight className="ml-2 w-5 h-5" />
         </Button>
 
         <p className="mt-6 text-sm text-slate-500">
-          Answer honestly — there are no wrong answers. This helps us personalize your training.
+          Answer honestly — this helps us personalize your learning path.
         </p>
       </div>
-    </div>
-  );
-}
-
-function PillarPreview({ name, color }: { name: string; color: string }) {
-  const colorClasses: Record<string, string> = {
-    purple: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    green: 'bg-green-500/20 text-green-300 border-green-500/30',
-    orange: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    red: 'bg-red-500/20 text-red-300 border-red-500/30',
-    cyan: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-  };
-
-  return (
-    <div
-      className={`px-3 py-2 rounded-lg border ${colorClasses[color] || colorClasses.blue}`}
-    >
-      {name}
     </div>
   );
 }

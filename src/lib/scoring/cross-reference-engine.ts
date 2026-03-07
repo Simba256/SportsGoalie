@@ -5,7 +5,7 @@ import {
   CrossReferenceType,
   CrossReferenceRule,
   IntelligenceScore,
-  AssessmentResponseV2,
+  AssessmentResponse,
 } from '@/types';
 
 /**
@@ -106,9 +106,9 @@ export const DEFAULT_CROSS_REFERENCE_RULES: CrossReferenceRule[] = [
  * Find response for a specific question ID
  */
 function findResponse(
-  responses: AssessmentResponseV2[],
+  responses: AssessmentResponse[],
   questionId: string
-): AssessmentResponseV2 | undefined {
+): AssessmentResponse | undefined {
   return responses.find(r => r.questionId === questionId);
 }
 
@@ -212,8 +212,8 @@ function createFlag(
  * Run cross-reference comparison between goalie and parent assessments
  */
 export function compareGoalieAndParent(
-  goalieResponses: AssessmentResponseV2[],
-  parentResponses: AssessmentResponseV2[],
+  goalieResponses: AssessmentResponse[],
+  parentResponses: AssessmentResponse[],
   rules: CrossReferenceRule[] = DEFAULT_CROSS_REFERENCE_RULES
 ): CrossReferenceFlag[] {
   const flags: CrossReferenceFlag[] = [];
@@ -249,8 +249,8 @@ export function compareGoalieAndParent(
  * Run cross-reference comparison between goalie and coach assessments
  */
 export function compareGoalieAndCoach(
-  goalieResponses: AssessmentResponseV2[],
-  coachResponses: AssessmentResponseV2[],
+  goalieResponses: AssessmentResponse[],
+  coachResponses: AssessmentResponse[],
   rules: CrossReferenceRule[] = DEFAULT_CROSS_REFERENCE_RULES
 ): CrossReferenceFlag[] {
   const flags: CrossReferenceFlag[] = [];
@@ -286,11 +286,11 @@ export function compareGoalieAndCoach(
  */
 export function generateCrossReferenceResult(
   goalieUserId: string,
-  goalieResponses: AssessmentResponseV2[],
+  goalieResponses: AssessmentResponse[],
   parentUserId?: string,
-  parentResponses?: AssessmentResponseV2[],
+  parentResponses?: AssessmentResponse[],
   coachUserId?: string,
-  coachResponses?: AssessmentResponseV2[],
+  coachResponses?: AssessmentResponse[],
   rules: CrossReferenceRule[] = DEFAULT_CROSS_REFERENCE_RULES
 ): CrossReferenceResult {
   const allFlags: CrossReferenceFlag[] = [];

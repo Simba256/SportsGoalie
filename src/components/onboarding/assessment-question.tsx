@@ -5,7 +5,7 @@ import { AssessmentQuestion, IntelligenceScore } from '@/types';
 import { cn } from '@/lib/utils';
 import { Check, Info } from 'lucide-react';
 
-interface AssessmentQuestionV2Props {
+interface AssessmentQuestionProps {
   question: AssessmentQuestion;
   categoryName: string;
   categoryColor: string;
@@ -60,7 +60,7 @@ const CATEGORY_COLOR_CLASSES: Record<string, { badge: string; selected: string; 
  * Assessment question component with 1.0-4.0 scoring.
  * Auto-advances after selection with visual feedback.
  */
-export function AssessmentQuestionV2({
+export function AssessmentQuestionComponent({
   question,
   categoryName,
   categoryColor,
@@ -68,7 +68,7 @@ export function AssessmentQuestionV2({
   totalQuestionsInCategory,
   onAnswer,
   disabled,
-}: AssessmentQuestionV2Props) {
+}: AssessmentQuestionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);

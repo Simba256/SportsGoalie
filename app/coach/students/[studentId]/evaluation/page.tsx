@@ -23,14 +23,14 @@ import {
 import {
   Loader2,
   ArrowLeft,
+  Heart,
   Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
-  Save,
   Clock,
+  Target,
+  MessageCircle,
+  Dumbbell,
+  BookOpen,
+  Save,
   CheckCircle,
   TrendingUp,
   AlertCircle,
@@ -41,39 +41,40 @@ import { userService, onboardingService } from '@/lib/database';
 import {
   User,
   OnboardingEvaluation,
-  PillarSlug,
-  AssessmentLevel,
-  PILLARS,
-  getLevelDisplayText,
-  getLevelColor,
+  PacingLevel,
+  GoalieCategorySlug,
+  getPacingLevelDisplayText,
+  getPacingLevelColor,
+  GOALIE_CATEGORIES,
+  CategoryScoreResult,
 } from '@/types';
 import { toast } from 'sonner';
 
-const pillarIcons: Record<PillarSlug, LucideIcon> = {
-  mindset: Brain,
-  skating: Footprints,
-  form: Shapes,
-  positioning: Target,
-  seven_point: Grid3X3,
+// Icons for the 7 goalie categories
+const categoryIcons: Record<GoalieCategorySlug, LucideIcon> = {
+  feelings: Heart,
+  knowledge: Brain,
+  pre_game: Clock,
+  in_game: Target,
+  post_game: MessageCircle,
   training: Dumbbell,
+  learning: BookOpen,
 };
 
+const pacingOptions: PacingLevel[] = ['introduction', 'development', 'refinement'];
+
 // Helper to safely convert Firestore Timestamp to Date
-// Timestamps may come as objects with seconds/nanoseconds after serialization
 function toDate(timestamp: unknown): Date | null {
   if (!timestamp) return null;
 
-  // If it has toDate method (real Firestore Timestamp)
   if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof (timestamp as { toDate: unknown }).toDate === 'function') {
     return (timestamp as { toDate: () => Date }).toDate();
   }
 
-  // If it's a serialized timestamp with seconds
   if (typeof timestamp === 'object' && 'seconds' in timestamp) {
     return new Date((timestamp as { seconds: number }).seconds * 1000);
   }
 
-  // If it's already a Date
   if (timestamp instanceof Date) {
     return timestamp;
   }
@@ -81,7 +82,24 @@ function toDate(timestamp: unknown): Date | null {
   return null;
 }
 
-const levelOptions: AssessmentLevel[] = ['beginner', 'intermediate', 'advanced'];
+// Format score for display (1.0 - 4.0 scale)
+function formatScore(score: number): string {
+  return score.toFixed(1);
+}
+
+// Get color class for score
+function getScoreColor(score: number): string {
+  if (score >= 3.1) return 'text-emerald-600';
+  if (score >= 2.2) return 'text-blue-600';
+  return 'text-amber-600';
+}
+
+// Get progress bar color for score
+function getProgressBarColor(score: number): string {
+  if (score >= 3.1) return 'bg-emerald-500';
+  if (score >= 2.2) return 'bg-blue-500';
+  return 'bg-amber-500';
+}
 
 export default function CoachEvaluationPage() {
   const params = useParams();
@@ -96,10 +114,7 @@ export default function CoachEvaluationPage() {
 
   // Review form state
   const [notes, setNotes] = useState('');
-  const [adjustedLevel, setAdjustedLevel] = useState<AssessmentLevel | ''>('');
-  const [adjustedPillarLevels, setAdjustedPillarLevels] = useState<
-    Partial<Record<PillarSlug, AssessmentLevel>>
-  >({});
+  const [adjustedPacingLevel, setAdjustedPacingLevel] = useState<PacingLevel | ''>('');
 
   useEffect(() => {
     if (studentId && coach?.id) {
@@ -119,12 +134,9 @@ export default function CoachEvaluationPage() {
         return;
       }
 
-      // Verify access (admin or assigned coach)
-      if (
-        coach?.role !== 'admin' &&
-        studentResult.data.assignedCoachId !== coach?.id
-      ) {
-        toast.error('Unauthorized: This student is not assigned to you');
+      // Verify access (admin or any coach can view)
+      if (coach?.role !== 'admin' && coach?.role !== 'coach') {
+        toast.error('Unauthorized: Only coaches and admins can view evaluations');
         router.push('/coach/students');
         return;
       }
@@ -139,10 +151,7 @@ export default function CoachEvaluationPage() {
         // Pre-fill form with existing review if any
         if (evalResult.data.coachReview) {
           setNotes(evalResult.data.coachReview.notes || '');
-          setAdjustedLevel(evalResult.data.coachReview.adjustedLevel || '');
-          setAdjustedPillarLevels(
-            evalResult.data.coachReview.adjustedPillarLevels || {}
-          );
+          setAdjustedPacingLevel(evalResult.data.coachReview.adjustedPacingLevel || '');
         }
       }
     } catch (error) {
@@ -164,11 +173,7 @@ export default function CoachEvaluationPage() {
         coachId: coach.id,
         coachName: coach.displayName,
         notes,
-        adjustedLevel: adjustedLevel || undefined,
-        adjustedPillarLevels:
-          Object.keys(adjustedPillarLevels).length > 0
-            ? adjustedPillarLevels
-            : undefined,
+        adjustedPacingLevel: adjustedPacingLevel || undefined,
       });
 
       if (result.success) {
@@ -182,19 +187,6 @@ export default function CoachEvaluationPage() {
       toast.error('Failed to save review');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handlePillarLevelChange = (pillar: PillarSlug, level: string) => {
-    if (level === 'none') {
-      const updated = { ...adjustedPillarLevels };
-      delete updated[pillar];
-      setAdjustedPillarLevels(updated);
-    } else {
-      setAdjustedPillarLevels({
-        ...adjustedPillarLevels,
-        [pillar]: level as AssessmentLevel,
-      });
     }
   };
 
@@ -237,8 +229,14 @@ export default function CoachEvaluationPage() {
   }
 
   const hasCoachReview = !!evaluation.coachReview;
-  const overallLevel = evaluation.overallLevel || 'beginner';
-  const overallPercentage = evaluation.overallPercentage || 0;
+  const profile = evaluation.intelligenceProfile;
+  const pacingLevel = profile?.pacingLevel || evaluation.pacingLevel || 'introduction';
+  const overallScore = profile?.overallScore || 1.0;
+  const categoryScores = profile?.categoryScores || [];
+
+  // Get strengths and gaps from profile
+  const strengths = profile?.identifiedStrengths || [];
+  const gaps = profile?.identifiedGaps || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -256,10 +254,10 @@ export default function CoachEvaluationPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              {student.displayName}'s Evaluation
+              {student.displayName}&apos;s Evaluation
             </h1>
             <p className="text-muted-foreground">
-              Review assessment results and adjust recommended levels
+              Review assessment results and adjust recommended pacing level
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -284,7 +282,7 @@ export default function CoachEvaluationPage() {
           {/* Overall Summary Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Overall Assessment</CardTitle>
+              <CardTitle>Intelligence Profile</CardTitle>
               <CardDescription>
                 Completed{' '}
                 {evaluation.completedAt
@@ -298,63 +296,61 @@ export default function CoachEvaluationPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    Recommended Starting Level
+                    Pacing Level
                   </p>
                   <Badge
                     variant="outline"
-                    className={`text-lg px-4 py-1 ${getLevelColor(overallLevel)}`}
+                    className={`text-lg px-4 py-1 capitalize ${getPacingLevelColor(pacingLevel)}`}
                   >
-                    {getLevelDisplayText(overallLevel)}
+                    {getPacingLevelDisplayText(pacingLevel)}
                   </Badge>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground mb-1">
                     Overall Score
                   </p>
-                  <p className="text-3xl font-bold">{overallPercentage}%</p>
+                  <p className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
+                    {formatScore(overallScore)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">out of 4.0</p>
                 </div>
               </div>
 
               {/* Score breakdown bar */}
               <div className="h-3 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className={`h-full transition-all ${
-                    overallLevel === 'advanced'
-                      ? 'bg-green-500'
-                      : overallLevel === 'intermediate'
-                      ? 'bg-blue-500'
-                      : 'bg-amber-500'
-                  }`}
-                  style={{ width: `${overallPercentage}%` }}
+                  className={`h-full transition-all ${getProgressBarColor(overallScore)}`}
+                  style={{ width: `${((overallScore - 1) / 3) * 100}%` }}
                 />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                <span>Beginner (0-39%)</span>
-                <span>Intermediate (40-69%)</span>
-                <span>Advanced (70%+)</span>
+                <span>Introduction (1.0-2.2)</span>
+                <span>Development (2.2-3.1)</span>
+                <span>Refinement (3.1-4.0)</span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Pillar Results Grid */}
+          {/* Category Results Grid */}
           <Card>
             <CardHeader>
-              <CardTitle>Pillar Breakdown</CardTitle>
+              <CardTitle>Category Breakdown</CardTitle>
               <CardDescription>
-                Performance across the 6 Goalie Pillars
+                Performance across the 7 assessment categories
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
-                {PILLARS.map((pillar) => {
-                  const Icon = pillarIcons[pillar.slug];
-                  const result = evaluation.pillarAssessments?.[pillar.slug];
-                  const adjustedPillarLevel = adjustedPillarLevels[pillar.slug];
-                  const displayLevel = adjustedPillarLevel || result?.level || 'beginner';
+                {GOALIE_CATEGORIES.map((category) => {
+                  const Icon = categoryIcons[category.slug as GoalieCategorySlug];
+                  const result = categoryScores.find(
+                    (cs: CategoryScoreResult) => cs.categorySlug === category.slug
+                  );
+                  const score = result?.averageScore || 1.0;
 
                   return (
                     <div
-                      key={pillar.slug}
+                      key={category.slug}
                       className="p-4 border rounded-lg space-y-3"
                     >
                       {/* Header */}
@@ -363,68 +359,41 @@ export default function CoachEvaluationPage() {
                           <Icon className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-semibold">{pillar.shortName}</h4>
+                          <h4 className="font-semibold text-sm">{category.shortName}</h4>
                           <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${getLevelColor(displayLevel)}`}
-                            >
-                              {getLevelDisplayText(displayLevel)}
-                            </Badge>
-                            {adjustedPillarLevel && (
-                              <span className="text-xs text-muted-foreground">
-                                (adjusted)
-                              </span>
-                            )}
+                            <span className={`text-lg font-bold ${getScoreColor(score)}`}>
+                              {formatScore(score)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              ({category.weight}% weight)
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Score */}
-                      {result && (
-                        <>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Score</span>
-                            <span className="font-semibold">
-                              {result.percentage}%
-                            </span>
-                          </div>
-                          <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                            <div
-                              className={`h-full ${
-                                result.level === 'advanced'
-                                  ? 'bg-green-500'
-                                  : result.level === 'intermediate'
-                                  ? 'bg-blue-500'
-                                  : 'bg-amber-500'
-                              }`}
-                              style={{ width: `${result.percentage}%` }}
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {/* Adjust level */}
-                      <div>
-                        <Select
-                          value={adjustedPillarLevel || 'none'}
-                          onValueChange={(value) =>
-                            handlePillarLevelChange(pillar.slug, value)
-                          }
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Adjust level..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No adjustment</SelectItem>
-                            {levelOptions.map((level) => (
-                              <SelectItem key={level} value={level}>
-                                {getLevelDisplayText(level)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      {/* Score bar */}
+                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${getProgressBarColor(score)}`}
+                          style={{ width: `${((score - 1) / 3) * 100}%` }}
+                        />
                       </div>
+
+                      {/* Strengths/Gaps indicators */}
+                      {result && (result.strengths.length > 0 || result.gaps.length > 0) && (
+                        <div className="flex gap-2 flex-wrap">
+                          {result.strengths.length > 0 && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              {result.strengths.length} strength{result.strengths.length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                          {result.gaps.length > 0 && (
+                            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                              {result.gaps.length} gap{result.gaps.length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -432,8 +401,8 @@ export default function CoachEvaluationPage() {
             </CardContent>
           </Card>
 
-          {/* Strengths & Weaknesses */}
-          {evaluation.pillarAssessments && (
+          {/* Strengths & Gaps */}
+          {(strengths.length > 0 || gaps.length > 0) && (
             <div className="grid gap-6 sm:grid-cols-2">
               <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
                 <CardHeader>
@@ -444,15 +413,18 @@ export default function CoachEvaluationPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
-                    {getTopPillars(evaluation, 'high').map(({ pillar, result }) => (
-                      <li key={pillar.slug} className="flex items-center gap-2">
-                        <span className="text-green-600 dark:text-green-500">
-                          •
-                        </span>
-                        {pillar.shortName} ({result.percentage}%)
+                    {strengths.slice(0, 4).map((strength) => (
+                      <li key={strength.categorySlug} className="flex items-start gap-2">
+                        <span className="text-green-600 dark:text-green-500 mt-1">•</span>
+                        <div>
+                          <span className="font-medium">{strength.categoryName}</span>
+                          <span className="text-muted-foreground ml-1">
+                            ({formatScore(strength.score)})
+                          </span>
+                        </div>
                       </li>
                     ))}
-                    {getTopPillars(evaluation, 'high').length === 0 && (
+                    {strengths.length === 0 && (
                       <li className="text-muted-foreground">
                         Focus on building foundational skills
                       </li>
@@ -470,23 +442,75 @@ export default function CoachEvaluationPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
-                    {getTopPillars(evaluation, 'low').map(({ pillar, result }) => (
-                      <li key={pillar.slug} className="flex items-center gap-2">
-                        <span className="text-amber-600 dark:text-amber-500">
-                          •
-                        </span>
-                        {pillar.shortName} ({result.percentage}%)
+                    {gaps.slice(0, 4).map((gap) => (
+                      <li key={gap.categorySlug} className="flex items-start gap-2">
+                        <span className="text-amber-600 dark:text-amber-500 mt-1">•</span>
+                        <div>
+                          <span className="font-medium">{gap.categoryName}</span>
+                          <span className="text-muted-foreground ml-1">
+                            ({formatScore(gap.score)})
+                          </span>
+                          {gap.priority === 'high' && (
+                            <Badge variant="outline" className="ml-2 text-xs bg-red-50 text-red-700 border-red-200">
+                              Priority
+                            </Badge>
+                          )}
+                        </div>
                       </li>
                     ))}
-                    {getTopPillars(evaluation, 'low').length === 0 && (
+                    {gaps.length === 0 && (
                       <li className="text-muted-foreground">
-                        Strong performance across all pillars
+                        Strong performance across all categories
                       </li>
                     )}
                   </ul>
                 </CardContent>
               </Card>
             </div>
+          )}
+
+          {/* Intake Data Summary */}
+          {evaluation.intakeData && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Student Background</CardTitle>
+                <CardDescription>Information from intake questionnaire</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {evaluation.intakeData.ageRange && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Age Range</p>
+                      <p className="font-medium">{evaluation.intakeData.ageRange}</p>
+                    </div>
+                  )}
+                  {evaluation.intakeData.experienceLevel && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Experience</p>
+                      <p className="font-medium">{evaluation.intakeData.experienceLevel}</p>
+                    </div>
+                  )}
+                  {evaluation.intakeData.playingLevel && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Playing Level</p>
+                      <p className="font-medium">{evaluation.intakeData.playingLevel}</p>
+                    </div>
+                  )}
+                  {evaluation.intakeData.hasGoalieCoach !== undefined && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Has Goalie Coach</p>
+                      <p className="font-medium">{evaluation.intakeData.hasGoalieCoach ? 'Yes' : 'No'}</p>
+                    </div>
+                  )}
+                  {evaluation.intakeData.primaryReasons && evaluation.intakeData.primaryReasons.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <p className="text-sm text-muted-foreground">Primary Reasons for Joining</p>
+                      <p className="font-medium">{evaluation.intakeData.primaryReasons.join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
@@ -496,19 +520,19 @@ export default function CoachEvaluationPage() {
             <CardHeader>
               <CardTitle>Coach Review</CardTitle>
               <CardDescription>
-                Add notes and adjust the recommended starting level
+                Add notes and adjust the recommended pacing level
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Adjust Overall Level */}
+              {/* Adjust Pacing Level */}
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Adjust Overall Level
+                  Adjust Pacing Level
                 </label>
                 <Select
-                  value={adjustedLevel || 'none'}
+                  value={adjustedPacingLevel || 'none'}
                   onValueChange={(value) =>
-                    setAdjustedLevel(value === 'none' ? '' : value as AssessmentLevel)
+                    setAdjustedPacingLevel(value === 'none' ? '' : value as PacingLevel)
                   }
                 >
                   <SelectTrigger>
@@ -516,17 +540,17 @@ export default function CoachEvaluationPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Keep assessed level</SelectItem>
-                    {levelOptions.map((level) => (
+                    {pacingOptions.map((level) => (
                       <SelectItem key={level} value={level}>
-                        {getLevelDisplayText(level)}
+                        {getPacingLevelDisplayText(level)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {adjustedLevel && (
+                {adjustedPacingLevel && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Will change from {getLevelDisplayText(overallLevel)} to{' '}
-                    {getLevelDisplayText(adjustedLevel)}
+                    Will change from {getPacingLevelDisplayText(pacingLevel)} to{' '}
+                    {getPacingLevelDisplayText(adjustedPacingLevel)}
                   </p>
                 )}
               </div>
@@ -593,29 +617,4 @@ export default function CoachEvaluationPage() {
       </div>
     </div>
   );
-}
-
-// Helper function to get top/bottom pillars
-function getTopPillars(
-  evaluation: OnboardingEvaluation,
-  type: 'high' | 'low'
-): Array<{ pillar: (typeof PILLARS)[number]; result: { percentage: number } }> {
-  if (!evaluation.pillarAssessments) return [];
-
-  const pillarsWithScores = PILLARS.map((pillar) => ({
-    pillar,
-    result: evaluation.pillarAssessments![pillar.slug],
-  })).filter(({ result }) => result);
-
-  if (type === 'high') {
-    return pillarsWithScores
-      .filter(({ result }) => result.percentage >= 60)
-      .sort((a, b) => b.result.percentage - a.result.percentage)
-      .slice(0, 3);
-  } else {
-    return pillarsWithScores
-      .filter(({ result }) => result.percentage < 60)
-      .sort((a, b) => a.result.percentage - b.result.percentage)
-      .slice(0, 3);
-  }
 }

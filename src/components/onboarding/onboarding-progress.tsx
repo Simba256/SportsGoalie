@@ -5,7 +5,7 @@ import { GoalieCategorySlug, GOALIE_CATEGORIES } from '@/types';
 import { cn } from '@/lib/utils';
 import { Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen, Check, ClipboardList } from 'lucide-react';
 
-interface OnboardingProgressV2Props {
+interface OnboardingProgressProps {
   phase: 'intake' | 'bridge' | 'assessment' | 'profile' | 'completed';
   currentIntakeScreen?: number;
   totalIntakeScreens?: number;
@@ -41,16 +41,16 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 /**
- * Progress indicator for V2 onboarding flow.
+ * Progress indicator for onboarding flow.
  * Shows intake phase + 7 category icons with completion state.
  */
-export function OnboardingProgressV2({
+export function OnboardingProgress({
   phase,
   currentIntakeScreen = 0,
   totalIntakeScreens = 4,
   currentCategoryIndex = 0,
   questionProgress,
-}: OnboardingProgressV2Props) {
+}: OnboardingProgressProps) {
   const categoryOrder: GoalieCategorySlug[] = [
     'feelings',
     'knowledge',
