@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -35,6 +35,8 @@ import {
   TrendingUp,
   AlertCircle,
   LucideIcon,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { userService, onboardingService } from '@/lib/database';
@@ -47,7 +49,9 @@ import {
   getPacingLevelColor,
   GOALIE_CATEGORIES,
   CategoryScoreResult,
+  AssessmentResponse,
 } from '@/types';
+import { GOALIE_ASSESSMENT_QUESTIONS } from '@/data/goalie-assessment-questions';
 import { toast } from 'sonner';
 
 // Icons for the 7 goalie categories
@@ -101,6 +105,33 @@ function getProgressBarColor(score: number): string {
   return 'bg-amber-500';
 }
 
+// Get score badge color class
+function getScoreBadgeColor(score: number): string {
+  if (score >= 3.1) return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+  if (score >= 2.2) return 'bg-blue-100 text-blue-700 border-blue-200';
+  return 'bg-amber-100 text-amber-700 border-amber-200';
+}
+
+// Look up question by ID from the assessment questions
+function getQuestionById(questionId: string) {
+  return GOALIE_ASSESSMENT_QUESTIONS.find(q => q.id === questionId);
+}
+
+// Get the text of the selected option
+function getSelectedOptionText(questionId: string, optionId: string | string[]): string {
+  const question = getQuestionById(questionId);
+  if (!question) return 'Unknown';
+
+  // Handle both single select and multi-select
+  const optionIds = Array.isArray(optionId) ? optionId : [optionId];
+  const selectedTexts = optionIds.map(id => {
+    const option = question.options.find(opt => opt.id === id);
+    return option?.text || 'Unknown';
+  });
+
+  return selectedTexts.join(', ');
+}
+
 export default function CoachEvaluationPage() {
   const params = useParams();
   const router = useRouter();
@@ -115,6 +146,9 @@ export default function CoachEvaluationPage() {
   // Review form state
   const [notes, setNotes] = useState('');
   const [adjustedPacingLevel, setAdjustedPacingLevel] = useState<PacingLevel | ''>('');
+
+  // Assessment responses expansion state
+  const [showResponses, setShowResponses] = useState(false);
 
   useEffect(() => {
     if (studentId && coach?.id) {
@@ -237,6 +271,24 @@ export default function CoachEvaluationPage() {
   // Get strengths and gaps from profile
   const strengths = profile?.identifiedStrengths || [];
   const gaps = profile?.identifiedGaps || [];
+
+  // Group assessment responses by category
+  const responsesByCategory = useMemo(() => {
+    const grouped: Record<string, AssessmentResponse[]> = {};
+    evaluation.assessmentResponses?.forEach(response => {
+      if (!grouped[response.categorySlug]) {
+        grouped[response.categorySlug] = [];
+      }
+      grouped[response.categorySlug].push(response);
+    });
+    // Sort responses within each category by questionCode
+    Object.values(grouped).forEach(responses => {
+      responses.sort((a, b) => a.questionCode.localeCompare(b.questionCode));
+    });
+    return grouped;
+  }, [evaluation.assessmentResponses]);
+
+  const totalResponses = evaluation.assessmentResponses?.length || 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -400,6 +452,94 @@ export default function CoachEvaluationPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Assessment Responses - Collapsible Section */}
+          {totalResponses > 0 && (
+            <Card>
+              <CardHeader
+                className="cursor-pointer select-none"
+                onClick={() => setShowResponses(!showResponses)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      Assessment Responses
+                      {showResponses ? (
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      View all {totalResponses} questions and answers
+                    </CardDescription>
+                  </div>
+                  <Badge variant="secondary">{totalResponses} questions</Badge>
+                </div>
+              </CardHeader>
+              {showResponses && (
+                <CardContent className="space-y-6">
+                  {GOALIE_CATEGORIES.map((category) => {
+                    const Icon = categoryIcons[category.slug as GoalieCategorySlug];
+                    const responses = responsesByCategory[category.slug] || [];
+                    if (responses.length === 0) return null;
+
+                    return (
+                      <div key={category.slug} className="space-y-3">
+                        {/* Category Header */}
+                        <div className="flex items-center gap-2 pb-2 border-b">
+                          <Icon className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold">{category.name}</h4>
+                          <span className="text-sm text-muted-foreground">
+                            ({responses.length} question{responses.length > 1 ? 's' : ''})
+                          </span>
+                        </div>
+
+                        {/* Questions in this category */}
+                        <div className="space-y-3 pl-7">
+                          {responses.map((response) => {
+                            const question = getQuestionById(response.questionId);
+                            const answerText = getSelectedOptionText(
+                              response.questionId,
+                              response.value
+                            );
+
+                            return (
+                              <div
+                                key={response.questionId}
+                                className="p-3 bg-muted/50 rounded-lg space-y-2"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <span className="text-xs font-mono text-muted-foreground">
+                                      {response.questionCode}
+                                    </span>
+                                    <p className="text-sm font-medium">
+                                      {question?.question || 'Unknown question'}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs font-mono shrink-0 ${getScoreBadgeColor(response.score)}`}
+                                  >
+                                    {formatScore(response.score)}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="font-medium text-foreground">Answer:</span>{' '}
+                                  {answerText}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              )}
+            </Card>
+          )}
 
           {/* Strengths & Gaps */}
           {(strengths.length > 0 || gaps.length > 0) && (
