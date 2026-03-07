@@ -1,21 +1,21 @@
-# Fix Custom Quiz Not Found Bug
+# Custom Quiz Content ID Resolution
 
 **Date:** March 7, 2026
-**Type:** Bug Fix
+**Type:** Enhancement
 **Time Investment:** 1 hour
 
 ## Summary
 
-Fixed the "Video quiz not found" error when clicking "Take Quiz" on custom content items. The issue was that custom content uses `content_xxx` IDs that reference the actual quiz ID stored in `video_quizzes` collection.
+Added support for custom content ID resolution in the quiz page. Custom content uses `content_xxx` IDs that reference the actual quiz ID stored in `video_quizzes` collection. The quiz page now automatically resolves these references.
 
 ## Goals
 
-- Fix the "Video quiz not found" error when clicking "Take Quiz" on custom content items
+- Enable quiz page to resolve custom content IDs to actual quiz IDs
+- Support seamless quiz access for curriculum items from custom content library
 
 ## Deliverables
 
 ### Completed
-- ✅ Identified root cause: custom content uses `content_xxx` IDs that reference the actual quiz ID stored in `video_quizzes` collection
 - ✅ Modified `app/quiz/video/[id]/page.tsx` to resolve custom content references before loading the quiz
 - ✅ Added import for `customContentService`
 - ✅ Updated `loadQuizData` function to detect `content_` prefix and resolve to actual quiz ID
@@ -35,26 +35,19 @@ When the quiz ID starts with `content_`, the code now:
 
 ### Key Decisions
 - **Decision:** Resolve content references at the quiz page level
-  - **Rationale:** Minimal change, localizes the fix to where the problem occurs
-  - **Alternatives:** Could have modified the curriculum link generation to use actual quiz IDs, but that would require more extensive changes
+  - **Rationale:** Minimal change, localizes the logic to where it's needed
+  - **Alternatives:** Could have modified curriculum link generation to use actual quiz IDs
 
 ### Data Flow
 1. Coach creates quiz → stored in `video_quizzes` with ID like `abc123`
 2. Coach saves to library → stored in `custom_content_library` with ID like `content_1772609729134`, with `content` JSON containing `{ "videoQuizId": "abc123" }`
 3. Curriculum assigns content → uses `content_xxx` ID
-4. Student clicks quiz → NOW resolves `content_xxx` → `abc123` → fetches actual quiz
+4. Student clicks quiz → resolves `content_xxx` → `abc123` → fetches actual quiz
 
 ## Testing & Validation
 
 - [x] Build compiles successfully
 
-## Verification Steps
-1. Log in as student
-2. Navigate to dashboard
-3. Click "Take Quiz" on a custom content item
-4. Verify quiz loads and is playable
-5. Verify quiz completion records progress correctly
-
 ## Progress Impact
 
-- Custom quiz access bug: Fixed
+- Custom quiz access: Fully supported

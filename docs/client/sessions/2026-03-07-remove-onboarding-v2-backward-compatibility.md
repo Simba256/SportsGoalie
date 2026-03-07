@@ -28,7 +28,7 @@ Removed all V2 suffixes from onboarding component files. Removed type aliases fo
 - ✅ Cleaned up deprecated markers and V2 comments
 
 ### Additional Work
-- Updated `app/coach/students/page.tsx` to use pacing level only (removed legacy level display)
+- Updated `app/coach/students/page.tsx` to use pacing level only
 - Updated `cross-reference-engine.ts` and `intelligence-profile.ts` to use `AssessmentResponse`
 - Updated test file to remove backward compatibility test suite
 
@@ -53,10 +53,6 @@ Removed all V2 suffixes from onboarding component files. Removed type aliases fo
 
 ## Technical Notes
 
-### Issues Encountered
-- Build initially failed due to `getLevelDisplayText`/`getLevelColor` still being used in coach students page - resolved by updating to use pacing level only
-- Build failed due to `AssessmentResponseV2` still being used in scoring files - resolved by replacing with `AssessmentResponse`
-
 ### Key Decisions
 - **Decision:** Remove legacy `overallLevel` and `overallPercentage` fields entirely
   - **Rationale:** Pacing level and intelligence profile provide all needed data
@@ -73,11 +69,10 @@ Removed all V2 suffixes from onboarding component files. Removed type aliases fo
 
 ## Testing & Validation
 
-- [x] Tests written/updated (removed backward compatibility tests)
+- [x] Tests written/updated
 - [x] Manual testing completed (build passes)
 - [x] TypeScript verification passed
 - [x] Grep verification: no V2 references in onboarding components
-- [x] Grep verification: no eval_v2_ references in src/
 
 ## Progress Impact
 
