@@ -29,7 +29,7 @@
 ### Block 1: Launch Critical (Active) - Est. 35-50 hours
 | # | Task | Est | Status |
 |---|------|-----|--------|
-| 1 | Branding: SportsGoalie → Smarter Goalie | 2-3h | 🔲 |
+| 1 | Branding: SportsGoalie → Smarter Goalie | 2-3h | ✅ |
 | 2 | 7th Pillar: Add Lifestyle | 2h | 🔲 |
 | 3 | Landing Page + 8-Role Selection | 5-8h | 🔲 |
 | 4 | Video Database + Tagging System | 8-12h | 🔲 |
@@ -64,6 +64,10 @@
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-12 - [Branding Update: Smarter Goalie](docs/sessions/2026-03/2026-03-12-branding-update-smarter-goalie.md)
+**Time:** 2h 30min | **Focus:** Branding / Documentation | **Block:** 1.1
+Complete branding update across 42 files. Updated package.json name (sportscoach-v3 → smarter-goalie), all user-facing metadata, AI system prompts, README/CLAUDE.md/TESTING.md, Docker infrastructure, planning docs, technical architecture docs, client documentation, internal documentation, test files, and service comments. Build verified, pushed to remote.
 
 ### 2026-03-11 - Work Directive Integration
 **Time:** 30min | **Focus:** Planning / Documentation
@@ -237,27 +241,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 48.75 hours | 🔄 In Progress |
-| **Total** | **~208.75 hours** | - |
+| Phase 2 | 51.25 hours | 🔄 In Progress |
+| **Total** | **~211.25 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 31.75h | 66% |
-| Documentation | 2.25h | 5% |
-| Debugging | 10h | 21% |
+| Development | 31.75h | 62% |
+| Documentation | 4.75h | 9% |
+| Debugging | 10h | 20% |
 | Security | 1.5h | 3% |
 | Refactor | 2h | 4% |
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **48.75h** | **100%** |
+| **Total** | **51.25h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 22.25h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script | 21 |
+| 2026-03-01 | 24.75h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script, branding update | 22 |
 
 ---
 
@@ -288,10 +292,10 @@ Initial project analysis and progress tracking system implementation.
 - [x] Coach evaluation review with Q&A details
 - [x] Cross-reference engine for multi-role comparison
 
-#### Block 1 - Launch Critical (0% Complete) 🔲 ← CURRENT
+#### Block 1 - Launch Critical (14% Complete) 🔄 ← CURRENT
 > **Priority:** Work in order. Do not skip without written approval.
 
-- [ ] **B1.1:** Branding update (SportsGoalie → Smarter Goalie) - 2-3h
+- [x] **B1.1:** Branding update (SportsGoalie → Smarter Goalie) - 2-3h ✅
   - Logo, headers, footers, meta tags, URLs
 - [ ] **B1.2:** 7th Pillar: Lifestyle - 2h
   - Database update, navigation, routes, UI
@@ -647,6 +651,18 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-12 (Session: Branding Update - Smarter Goalie)
+- **Branding:** Updated package.json name from `sportscoach-v3` to `smarter-goalie`
+- **Branding:** Updated all user-facing metadata and page titles
+- **Branding:** Updated AI system prompts in project assistant
+- **Branding:** Updated README.md, CLAUDE.md, TESTING.md documentation
+- **Branding:** Updated Dockerfile, Dockerfile.dev, docker.sh infrastructure
+- **Branding:** Updated planning and technical architecture docs (8 files)
+- **Branding:** Updated client and internal documentation (16 files)
+- **Branding:** Updated test files and service comments (8 files)
+- **Verification:** Build passes, 42 files modified, pushed to remote
+- **Block 1.1:** Complete ✅
 
 ### 2026-03-07 (Session: Reset Incomplete Evaluations Script)
 - **Script:** Created `scripts/reset-incomplete-evaluations.ts` migration script
@@ -1075,11 +1091,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-11
-**Last Session:** Work Directive Integration
-**Total Sessions This Phase:** 38
-**Current Phase Hours:** 48.75h
-**Next Session Focus:** Block 1.1 - Branding Update (SportsGoalie → Smarter Goalie)
+**Last Updated:** 2026-03-12
+**Last Session:** Branding Update: Smarter Goalie (Block 1.1)
+**Total Sessions This Phase:** 39
+**Current Phase Hours:** 51.25h
+**Next Session Focus:** Block 1.2 - 7th Pillar: Lifestyle
 
 ---
 
