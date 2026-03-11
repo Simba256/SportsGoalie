@@ -32,7 +32,7 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       console.log('❌ Pillar cards not found:', error instanceof Error ? error.message : String(error));
     }
 
-    // Test 3: Check for the 6 pillars badge (use first() since multiple elements match)
+    // Test 3: Check for the 7 pillars badge (use first() since multiple elements match)
     try {
       await expect(page.locator('text=/\\d+ pillar/i').first()).toBeVisible({ timeout: 5000 });
       console.log('✅ Pillars count badge is visible');
@@ -40,12 +40,12 @@ test.describe('Stage 4 Focused Testing - Core Functionality Analysis', () => {
       console.log('❌ Pillars count badge not found:', error instanceof Error ? error.message : String(error));
     }
 
-    // Test 4: Check for About the 6 Pillars info card
+    // Test 4: Check for About the 7 Pillars info card
     try {
-      await expect(page.locator('text="About the 6 Pillars"')).toBeVisible({ timeout: 5000 });
-      console.log('✅ About the 6 Pillars info card is visible');
+      await expect(page.locator('text="About the 7 Pillars"')).toBeVisible({ timeout: 5000 });
+      console.log('✅ About the 7 Pillars info card is visible');
     } catch (error) {
-      console.log('❌ About the 6 Pillars info card not found:', error instanceof Error ? error.message : String(error));
+      console.log('❌ About the 7 Pillars info card not found:', error instanceof Error ? error.message : String(error));
     }
 
     // Log page content for analysis

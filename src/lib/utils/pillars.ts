@@ -1,7 +1,7 @@
 /**
  * Pillar Utilities
  *
- * Utilities for working with the 6 Ice Hockey Goalie pillars.
+ * Utilities for working with the 7 Ice Hockey Goalie pillars.
  * These replace the generic "sports" concept with a fixed pillar structure.
  */
 
@@ -17,6 +17,7 @@ export const PILLAR_IDS = {
   positioning: 'pillar_positioning',
   seven_point: 'pillar_seven_point',
   training: 'pillar_training',
+  lifestyle: 'pillar_lifestyle',
 } as const;
 
 export type PillarId = typeof PILLAR_IDS[keyof typeof PILLAR_IDS];
@@ -72,6 +73,13 @@ export const PILLAR_COLOR_CLASSES: Record<string, {
     text: 'text-cyan-600 dark:text-cyan-400',
     border: 'border-cyan-200 dark:border-cyan-800',
     gradient: 'from-cyan-500 to-cyan-700',
+  },
+  pink: {
+    bg: 'bg-pink-500',
+    bgLight: 'bg-pink-100 dark:bg-pink-900/30',
+    text: 'text-pink-600 dark:text-pink-400',
+    border: 'border-pink-200 dark:border-pink-800',
+    gradient: 'from-pink-500 to-pink-700',
   },
 };
 

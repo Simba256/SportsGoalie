@@ -16,6 +16,7 @@ import {
   Target,
   Grid3X3,
   Dumbbell,
+  Heart,
   Users,
   Sparkles,
   BookOpen,
@@ -29,6 +30,7 @@ const PILLAR_ICONS: Record<string, React.ElementType> = {
   Target,
   Grid3X3,
   Dumbbell,
+  Heart,
 };
 
 interface PillarsPageState {
@@ -125,11 +127,11 @@ export default function PillarsPage() {
               <Sparkles className="w-6 h-6 text-blue-500" />
             </div>
             <p className="text-muted-foreground max-w-2xl">
-              Master the 6 fundamental pillars of goaltending. Each pillar builds upon the others to develop you into a complete goalie.
+              Master the 7 fundamental pillars of goaltending. Each pillar builds upon the others to develop you into a complete goalie.
             </p>
           </div>
           <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
-            6 pillars
+            7 pillars
           </div>
         </div>
       </div>
@@ -236,9 +238,9 @@ export default function PillarsPage() {
               <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">About the 6 Pillars</h3>
+              <h3 className="font-semibold text-lg">About the 7 Pillars</h3>
               <p className="text-muted-foreground">
-                These 6 pillars form the foundation of comprehensive goaltender development.
+                These 7 pillars form the foundation of comprehensive goaltender development.
                 Each pillar contains skills, drills, and assessments designed to help you
                 progress from beginner to advanced levels. Work through each pillar to
                 build a well-rounded skill set.

@@ -18,7 +18,7 @@ test.describe('Pillars Catalog Workflows', () => {
     const pillarCards = page.locator('a[href*="/pillars/"]');
     const cardCount = await pillarCards.count();
 
-    // Should have 6 pillars
+    // Should have 7 pillars
     expect(cardCount).toBeGreaterThanOrEqual(1);
   });
 
@@ -55,7 +55,7 @@ test.describe('Pillars Catalog Workflows', () => {
     expect(cardCount).toBeGreaterThanOrEqual(1);
 
     // Check that the information card about pillars is visible
-    const infoCard = page.getByText(/About the 6 Pillars/i);
+    const infoCard = page.getByText(/About the 7 Pillars/i);
     if (await infoCard.count() > 0) {
       await expect(infoCard).toBeVisible();
     }
@@ -67,9 +67,9 @@ test.describe('Pillars Catalog Workflows', () => {
     await page.waitForTimeout(1000);
 
     // Check for the information section about the pillars - the actual text is different
-    await expect(page.getByText(/Master the 6 fundamental pillars/i)).toBeVisible();
-    // Should also show "6 pillars" count badge
-    await expect(page.getByText(/6 pillars/i).first()).toBeVisible();
+    await expect(page.getByText(/Master the 7 fundamental pillars/i)).toBeVisible();
+    // Should also show "7 pillars" count badge
+    await expect(page.getByText(/7 pillars/i).first()).toBeVisible();
   });
 
   test('should navigate to pillar detail page', async ({ page }) => {

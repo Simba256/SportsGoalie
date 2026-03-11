@@ -42,11 +42,11 @@ test.describe('Stage 4: Pillars & Skills Content Management - Comprehensive Test
       // Wait for pillars grid to load
       await page.waitForSelector('.grid', { timeout: 10000 });
 
-      // Check if pillar cards are displayed (6 pillars expected)
+      // Check if pillar cards are displayed (7 pillars expected)
       const pillarCards = page.locator('a[href*="/pillars/"]');
       await expect(pillarCards.first()).toBeVisible();
 
-      // Should have exactly 6 pillar cards
+      // Should have exactly 7 pillar cards
       const cardCount = await pillarCards.count();
       expect(cardCount).toBeGreaterThanOrEqual(1);
 
@@ -62,8 +62,8 @@ test.describe('Stage 4: Pillars & Skills Content Management - Comprehensive Test
       // Check that pillar cards have skills count displayed
       await expect(page.locator('text=/\\d+ skills/i').first()).toBeVisible();
 
-      // Check for the About the 6 Pillars information card at the bottom
-      await expect(page.locator('text="About the 6 Pillars"')).toBeVisible();
+      // Check for the About the 7 Pillars information card at the bottom
+      await expect(page.locator('text="About the 7 Pillars"')).toBeVisible();
     });
 
     test('should be responsive on mobile', async () => {

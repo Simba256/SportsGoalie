@@ -18,6 +18,7 @@ import {
   Shapes,
   Grid3X3,
   Dumbbell,
+  Heart,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -49,6 +50,7 @@ const PILLAR_ICONS: Record<string, React.ElementType> = {
   Target,
   Grid3X3,
   Dumbbell,
+  Heart,
 };
 
 export default function DashboardPage() {
@@ -187,7 +189,7 @@ function DashboardContent() {
               Welcome back, {user?.displayName || user?.email?.split('@')[0]}!
             </h1>
             <p className="text-muted-foreground">
-              Continue your goalie training journey and track your progress across all 6 pillars.
+              Continue your goalie training journey and track your progress across all 7 pillars.
             </p>
           </div>
         </div>
@@ -451,7 +453,7 @@ function DashboardContent() {
                   <div className="flex-1">
                     <h3 className="font-medium">Browse Pillars</h3>
                     <p className="text-sm text-muted-foreground">
-                      Discover skills across all 6 pillars
+                      Discover skills across all 7 pillars
                     </p>
                   </div>
                 </div>

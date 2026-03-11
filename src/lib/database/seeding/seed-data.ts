@@ -31,6 +31,7 @@ const PILLAR_COLORS: Record<string, string> = {
   orange: '#F97316',
   red: '#EF4444',
   cyan: '#06B6D4',
+  pink: '#EC4899',
 };
 
 /**

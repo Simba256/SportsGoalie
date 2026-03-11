@@ -24,6 +24,7 @@ import {
   Target,
   Grid3X3,
   Dumbbell,
+  Heart,
   Info,
 } from 'lucide-react';
 
@@ -35,6 +36,7 @@ const PILLAR_ICONS: Record<string, React.ElementType> = {
   Target,
   Grid3X3,
   Dumbbell,
+  Heart,
 };
 
 interface AdminPillarsState {
@@ -254,7 +256,7 @@ function AdminPillarsContent() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Pillar Management</h1>
           <p className="text-muted-foreground">
-            Manage the 6 Ice Hockey Goalie pillars and their content
+            Manage the 7 Ice Hockey Goalie pillars and their content
           </p>
         </div>
       </div>
@@ -266,10 +268,10 @@ function AdminPillarsContent() {
             <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div className="space-y-1">
               <p className="font-medium text-blue-900 dark:text-blue-100">
-                Fixed 6-Pillar Structure
+                Fixed 7-Pillar Structure
               </p>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                The platform uses 6 fixed pillars that align with the Ice Hockey Goalie training system.
+                The platform uses 7 fixed pillars that align with the Ice Hockey Goalie training system.
                 You can edit pillar details and manage skills within each pillar, but cannot add or remove pillars.
               </p>
             </div>
@@ -353,7 +355,7 @@ function AdminPillarsContent() {
                   placeholder="1-6"
                   disabled
                 />
-                <p className="text-xs text-muted-foreground">Order is fixed for the 6 pillars</p>
+                <p className="text-xs text-muted-foreground">Order is fixed for the 7 pillars</p>
               </div>
             </div>
 
@@ -446,7 +448,7 @@ function AdminPillarsContent() {
 
       {/* Pillars List */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">The 6 Pillars ({state.pillars.length})</h2>
+        <h2 className="text-xl font-semibold">The 7 Pillars ({state.pillars.length})</h2>
 
         {state.pillars.length === 0 ? (
           <Card className="p-8">
@@ -454,7 +456,7 @@ function AdminPillarsContent() {
               <div className="text-6xl">!</div>
               <h3 className="text-lg font-medium">No pillars found</h3>
               <p className="text-muted-foreground">
-                Run the migration script to create the 6 pillars.
+                Run the migration script to create the 7 pillars.
               </p>
             </div>
           </Card>

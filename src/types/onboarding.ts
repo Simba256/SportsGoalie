@@ -71,7 +71,7 @@ export type CoachCategorySlug =
 export type CategorySlug = GoalieCategorySlug | ParentCategorySlug | CoachCategorySlug;
 
 /**
- * The 6 Ice Hockey Goalie Pillars (used for content organization)
+ * The 7 Ice Hockey Goalie Pillars (used for content organization)
  * Assessment uses 7 categories; pillars are for content organization
  */
 export type PillarSlug =
@@ -80,7 +80,8 @@ export type PillarSlug =
   | 'form'         // Form & Structure
   | 'positioning'  // Positional Systems
   | 'seven_point'  // 7 Point System Below Icing Line
-  | 'training';    // Game/Practice/Off-Ice
+  | 'training'     // Game/Practice/Off-Ice
+  | 'lifestyle';   // Lifestyle (off-ice habits, nutrition, recovery, sleep, life balance)
 
 /**
  * Types of questions in the onboarding assessment
@@ -764,7 +765,7 @@ export function getCategoryInfo(slug: string, role: QuestionnaireRole = 'goalie'
 
 /**
  * Pillar metadata with display information
- * Used for content organization (6 learning pillars)
+ * Used for content organization (7 learning pillars)
  */
 export interface PillarInfo {
   slug: PillarSlug;
@@ -776,7 +777,7 @@ export interface PillarInfo {
 }
 
 /**
- * The 6 Ice Hockey Goalie content pillars
+ * The 7 Ice Hockey Goalie content pillars
  * Used for organizing learning content (not assessment)
  */
 export const PILLARS: PillarInfo[] = [
@@ -827,6 +828,14 @@ export const PILLARS: PillarInfo[] = [
     description: 'Training habits and preparation routines',
     icon: 'Dumbbell',
     color: 'cyan',
+  },
+  {
+    slug: 'lifestyle',
+    name: 'Lifestyle',
+    shortName: 'Lifestyle',
+    description: 'Off-ice habits, nutrition, recovery, sleep, life balance, and overall wellness essential for peak goaltending performance',
+    icon: 'Heart',
+    color: 'pink',
   },
 ];
 
