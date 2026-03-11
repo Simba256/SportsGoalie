@@ -101,6 +101,7 @@ storybook-static/
 
 client_data/
 scripts/
+docs/invoices/
 
 # Allow important project documentation
 !PROGRESS.md

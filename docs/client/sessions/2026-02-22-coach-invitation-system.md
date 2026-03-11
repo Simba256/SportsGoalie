@@ -158,10 +158,6 @@ Current development mode logs emails to console. Production-ready architecture s
 - Mailgun
 - Similar email services
 
-## Known Issues
-
-None at this time. All functionality working as expected in production.
-
 ## Next Steps
 
 1. Monitor invitation acceptance rates

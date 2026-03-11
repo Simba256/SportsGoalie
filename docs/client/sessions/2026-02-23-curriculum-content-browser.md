@@ -146,10 +146,6 @@ The content browser is a standalone component that can be reused anywhere in the
 ### Sport Color Coding
 Each sport has specific colors used throughout the interface, making it easy to visually identify content at a glance.
 
-## Known Issues
-
-None at this time. All functionality working as expected.
-
 ## Next Steps
 
 1. Add content preview modal with full details

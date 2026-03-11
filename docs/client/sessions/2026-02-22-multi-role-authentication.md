@@ -109,10 +109,6 @@ Extended TypeScript types to include all four roles with complete type safety ac
 - Parent (gray) - Secondary role, support function
 - Student (outline) - Largest group, subtle styling
 
-## Known Issues
-
-None at this time. All functionality working as expected.
-
 ## Next Steps
 
 1. Build coach-specific dashboard and features

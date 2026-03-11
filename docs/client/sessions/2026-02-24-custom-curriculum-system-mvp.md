@@ -227,10 +227,6 @@ This MVP includes core curriculum management capabilities while deferring advanc
 - ⏳ Curriculum templates (future)
 - ⏳ Sharing and cloning (future)
 
-## Known Issues
-
-None at this time. All core functionality working as expected.
-
 ## Next Steps
 
 1. **Custom Content Creator UI:** Build rich interface for coaches to create custom lessons and quizzes

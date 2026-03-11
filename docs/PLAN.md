@@ -5,7 +5,7 @@
 > For current Phase 2 development, see:
 > - `PROGRESS.md` - Current sprint goals (Block 1/2/3 structure)
 > - `client_data/Phase2/basim-work-directive-march10.md` - Work directive with priorities
-> - `docs/PHASE-2-1-PILLARS-IMPLEMENTATION.md` - 7 Pillars technical implementation
+> - `docs/technical/architecture/7-pillars-implementation.md` - 7 Pillars technical implementation
 
 ---
 

@@ -101,10 +101,6 @@ This provides appropriate context for each user type while using the same underl
 - **Monitoring:** Track how custom workflows are being used
 - **Troubleshooting:** Diagnose and fix curriculum issues
 
-## Known Issues
-
-None at this time. All functionality working as expected.
-
 ## Next Steps
 
 1. Monitor admin usage of curriculum features

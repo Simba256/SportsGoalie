@@ -106,10 +106,6 @@ Public registration now only allows student and parent accounts. Coach and admin
 ### Parent-Child Linking Model
 Parents will be able to link to their children by entering the student ID during registration. This provides a simple, secure method for family account connections without complex approval workflows.
 
-## Known Issues
-
-None at this time. All functionality working as expected.
-
 ## Next Steps
 
 1. Implement parent-child linking using student IDs
