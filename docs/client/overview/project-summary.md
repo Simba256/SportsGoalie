@@ -1,12 +1,12 @@
-# SportsGoalie Project Summary
+# Smarter Goalie Project Summary
 
 ## Project Overview
 
-**Project Name:** SportsGoalie
+**Project Name:** Smarter Goalie
 **Type:** Sports Learning & Training Platform
 **Primary Focus:** Ice Hockey Goalie Training & Development
 **Live Site:** https://sports-goalie.vercel.app/
-**Status:** Phase 2 - Multi-Role System & Advanced Features (60% Complete)
+**Status:** Phase 2 - Block 1 Launch Critical (56% Complete)
 
 ## Mission
 
@@ -14,10 +14,15 @@ Create a comprehensive digital sports coaching platform that combines structured
 
 ## Core Capabilities
 
-### 1. Multi-Role System
-- **Students:** Choose between self-paced learning or coach-guided custom curriculum
-- **Coaches:** Create personalized curricula, manage students, track progress
-- **Parents:** Monitor children's progress and performance
+### 1. Multi-Role System (8 Roles)
+- **Goalies:** Self-paced learning through 7 Pillars methodology
+- **Goalie Parents:** Monitor children's progress, scores, and coach feedback
+- **Coaches:** Team coaches with goalie oversight capabilities
+- **Goalie Coaches:** Specialized goalie training, create curricula, track progress
+- **Team Managers:** Manage team rosters and goalie development
+- **Organizations:** Multi-team management and oversight
+- **Federations:** League-wide goalie development programs
+- **Camp Information:** Camp registration and training programs
 - **Admins:** Full system management, content creation, and oversight
 
 ### 2. Flexible Learning Pathways
@@ -26,7 +31,19 @@ Create a comprehensive digital sports coaching platform that combines structured
 - **Video Learning:** YouTube integration with progress tracking
 - **Interactive Quizzes:** Multiple question types with instant feedback
 
-### 3. Ice Hockey Goalie Specialization
+### 3. Ice Hockey Goalie Specialization - 7 Pillars
+**The 7 Pillars of Goaltending:**
+1. **Mind-Set Development** - Mental game, resilience, the Mind Vault
+2. **Skating as a Skill** - Edgework, lateral movement, efficiency
+3. **Form & Structure** - Stance, positioning, paddle control
+4. **Positional Systems** - 7 Angle-Marker and 7 Point Systems
+5. **7 Point System Below Icing Line** - Specialized below-line positioning
+6. **Game/Practice/Off-Ice Performance** - Holistic training approach
+7. **Lifestyle** - Off-ice habits, nutrition, recovery, life balance
+
+**Each pillar has 3 levels:** Introduction → Development → Refinement
+
+**Additional Features:**
 - **Session Charting:** Detailed game and practice tracking
 - **Performance Metrics:** 20+ specialized goalie metrics
 - **Multi-Stage Analysis:** Pre-game, period-by-period, post-game tracking
@@ -116,19 +133,41 @@ Comprehensive content browser with search, filtering, and real-time data integra
 
 ## Current Phase Focus
 
-**Phase 2.0: Multi-Role Foundation** (60% Complete)
+**Work Directive:** Development follows Block 1 → Block 2 → Block 3 order per Michael's directive (2026-03-10).
+
+### Block 1: Launch Critical (In Progress)
+| # | Task | Status |
+|---|------|--------|
+| 1 | Branding: SportsGoalie → Smarter Goalie | 🔲 Pending |
+| 2 | 7th Pillar: Add Lifestyle | 🔲 Pending |
+| 3 | Landing Page + 8-Role Selection | 🔲 Pending |
+| 4 | Video Database + Tagging System | 🔲 Pending |
+| 5 | Parent Dashboard + Child Linking | 🔲 Pending |
+| 6 | Dashboard Visualization + Integration | 🔲 Pending |
+| 7 | Production Email (Resend domain config) | 🔲 Pending |
+
+### Block 2: Depth & Quality (Upcoming)
+- Questionnaire Alignment (84 questions verification)
+- LMS Enhancements (content recommendations)
+- Analytics Upgrades (parent/coach views)
+- Mobile Polish
+- Bug Fixes + Iteration Buffer
+
+### Block 3: Experience Features (Project Active)
+- Contextual Support System
+- Milestone Recognition System
+- Learning Portfolio
+
+### Foundation Complete (Phase 2.0)
 - ✅ Multi-role authentication (Student, Coach, Parent, Admin)
-- ✅ Student ID generation and security
+- ✅ Student ID generation (SG-XXXX-XXXX format)
 - ✅ Coach invitation system with email
-- ✅ Student workflow types (automated vs custom)
 - ✅ Coach curriculum builder MVP
 - ✅ Content browser with real data
-- ✅ Admin curriculum management access
-- 🔄 Coach-student relationship formalization (upcoming)
-- 🔄 Parent-child relationship system (upcoming)
-
-**Next: Phase 2.1 - 6-Pillar Framework**
-Transform platform to use fixed 6-pillar ice hockey goalie training structure.
+- ✅ Charting systems (Legacy 5-Pillar + Dynamic Forms)
+- ✅ Scoring engine (1.0-4.0 scale)
+- ✅ Cross-reference engine (6 rules)
+- ✅ Admin analytics dashboard
 
 ## Quick Access
 
@@ -146,9 +185,9 @@ Transform platform to use fixed 6-pillar ice hockey goalie training structure.
 - **Student List:** https://sports-goalie.vercel.app/coach/students - All assigned students
 - **Curriculum Builder:** https://sports-goalie.vercel.app/coach/students/[studentId]/curriculum - Create learning paths (replace [studentId] with actual student ID)
 
-### For Students
+### For Students/Goalies
 - **Dashboard:** https://sports-goalie.vercel.app/dashboard - Personal progress and achievements
-- **Sports Catalog:** https://sports-goalie.vercel.app/sports - Browse all available content
+- **7 Pillars:** https://sports-goalie.vercel.app/pillars - Browse the 7 Pillars of Goaltending
 - **Session Charting:** https://sports-goalie.vercel.app/charting - Track game and practice sessions
 
 ### Public Pages

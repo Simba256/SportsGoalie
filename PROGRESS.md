@@ -6,52 +6,72 @@
 
 ## 📊 Project Status
 
-**Current Phase:** Phase 2 - Multi-Role System & 6-Pillar Framework
+**Current Phase:** Block 1 - Launch Critical (per Michael's Work Directive 2026-03-10)
 **Phase Start Date:** 2026-02-22
-**Target Completion:** TBD
-**Overall Progress:** Phase 2.0-2.2 Complete (94 hours), Phase 2.3-2.5 Pending
+**Target Completion:** End of March 2026 (Block 1+2), Early April 2026 (Launch Ready)
+**Overall Progress:** Phase 2.0-2.2 Complete, Blocks 1-3 Pending
+
+### SOW Compliance Requirements
+| Requirement | Frequency | Detail |
+|-------------|-----------|--------|
+| Progress updates | Twice weekly | Brief summary: work done, hours, next steps |
+| SR&ED categorization | Every update | Tag each task as SR&ED-eligible or routine |
+| Time logs | Every update | Date, description, feature reference, hours |
+| Weekly work plan | Weekly | What you plan to work on the coming week |
 
 ---
 
 ## 🎯 Current Sprint Goals
 
-### Active Tasks
-- [ ] Marketing-grade landing page with animations (Phase 2.3)
-- [ ] Public pages for Goalies/Students and Parents (Phase 2.3)
-- [ ] Pre-registration questionnaire flow (Phase 2.3)
-- [ ] Updated registration with questionnaire data (Phase 2.3)
+> **Work Directive:** Per Michael's directive (2026-03-10), work follows Block 1 → Block 2 → Block 3 order.
+> Do not skip ahead without written approval. See `client_data/Phase2/basim-work-directive-march10.md`
 
-### Next Up
-- [ ] Parent-child relationships with student ID linking (Phase 2.4)
-- [ ] Pillar level structure and lesson management (Phase 2.5)
+### Block 1: Launch Critical (Active) - Est. 35-50 hours
+| # | Task | Est | Status |
+|---|------|-----|--------|
+| 1 | Branding: SportsGoalie → Smarter Goalie | 2-3h | 🔲 |
+| 2 | 7th Pillar: Add Lifestyle | 2h | 🔲 |
+| 3 | Landing Page + 8-Role Selection | 5-8h | 🔲 |
+| 4 | Video Database + Tagging System | 8-12h | 🔲 |
+| 5 | Parent Dashboard + Child Linking | 10-15h | 🔲 |
+| 6 | Dashboard Visualization + Integration | 4-6h | 🔲 |
+| 7 | Production Email (Resend domain config) | 2-3h | 🔲 |
 
-### Completed This Phase
+### Block 2: Depth & Quality (Next) - Est. 21-36 hours
+| # | Task | Est | Status |
+|---|------|-----|--------|
+| 8 | Questionnaire Alignment (verify specs) | 3-5h | 🔲 |
+| 9 | LMS Enhancements (content recommendations) | 5-8h | 🔲 |
+| 10 | Analytics Upgrades (trend views) | 5-8h | 🔲 |
+| 11 | Mobile Polish | 3-5h | 🔲 |
+| 12 | Bug Fixes + Iteration Buffer | 5-10h | 🔲 |
+
+### Block 3: Experience Features (Project Active)
+| # | Task | Status |
+|---|------|--------|
+| 13 | Contextual Support System | 🔲 |
+| 14 | Milestone Recognition System | 🔲 |
+| 15 | Learning Portfolio | 🔲 |
+
+### Completed Foundation
 - [x] Multi-Role Foundation (Phase 2.0) - COMPLETE
 - [x] 6-Pillar Framework (Phase 2.1) - COMPLETE
 - [x] Intelligence-Based Onboarding (Phase 2.2) - COMPLETE
-
-### Completed This Sprint
-- [x] Comprehensive project analysis (2026-02-22)
-- [x] Progress tracking system setup (2026-02-22)
-- [x] Branding integration (header, footer, logo, colors, favicon) (2026-02-22)
-- [x] Progress tracking restructure with individual session files (2026-02-22)
-- [x] **Phase 2.0.1: Multi-role extension (Coach & Parent roles)** (2026-02-22)
-- [x] **Phase 2.0.1b: Student ID system & registration security** (2026-02-22)
-- [x] **Phase 2.0.2: Coach invitation system with email infrastructure** (2026-02-22)
-- [x] **Phase 2.0.6: Student workflow types & coach curriculum builder MVP** (2026-02-24)
-- [x] **Session Tracking Dashboard** (2026-02-25)
-- [x] **Phase 2.0.3: Coach-student direct linking** (2026-02-26)
-- [x] **Dashboard separation for custom vs automated students** (2026-02-26)
-- [x] **Coach Custom Content Creation System** (video lessons + video quizzes with full feature parity) (2026-03-01)
-- [x] **Phase 2.0.7: Student Onboarding Evaluation System** (27 questions, 6 pillars, coach review) (2026-03-04)
-- [x] **Phase 2.1: 6-Pillar Conversion** (fixed pillars, UI updates, migration script) (2026-03-05)
-- [x] **Service Unit Tests** (133 new tests for 4 critical services) (2026-03-05)
+- [x] System Analysis for Michael (2026-03-10)
 
 ---
 
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-11 - Work Directive Integration
+**Time:** 30min | **Focus:** Planning / Documentation
+Integrated Michael's Work Directive (2026-03-10) into PROGRESS.md. Replaced Phase 2.3-2.6 structure with Block 1/2/3 priority system. Key changes: added 7th pillar (Lifestyle), 8-role landing page, video tagging system, parent dashboard. Block 3 introduces experience features (Contextual Support, Milestones, Portfolio). Added SOW compliance requirements and admin configuration notes.
+
+### 2026-03-10 - [System Analysis for Michael](docs/client/sessions/2026-03-10-system-analysis-for-michael.md)
+**Time:** 30min | **Focus:** Documentation / Analysis
+Comprehensive system analysis documenting existing charting, questionnaire, scoring, and analytics systems. Verified: Legacy charting (5-Pillar, database-backed), Dynamic charting (full admin UI for creating any chart type), 84 assessment questions (28 per role, complete), 1.0-4.0 scoring engine, 6 cross-reference rules. Hour estimates: 5-10 hrs for dashboard/integration work, +8-10 hrs optional for admin question editing UI. Most systems are fully built.
 
 ### 2026-03-07 - [Reset Incomplete Evaluations Script](docs/sessions/2026-03/2026-03-07-reset-incomplete-evaluations-script.md)
 **Time:** 15min | **Focus:** Migration / Data Cleanup
@@ -217,21 +237,21 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 48.25 hours | 🔄 In Progress |
-| **Total** | **~208.25 hours** | - |
+| Phase 2 | 48.75 hours | 🔄 In Progress |
+| **Total** | **~208.75 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
 | Development | 31.75h | 66% |
-| Documentation | 1.75h | 4% |
+| Documentation | 2.25h | 5% |
 | Debugging | 10h | 21% |
 | Security | 1.5h | 3% |
 | Refactor | 2h | 4% |
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **48.25h** | **100%** |
+| **Total** | **48.75h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
@@ -268,28 +288,91 @@ Initial project analysis and progress tracking system implementation.
 - [x] Coach evaluation review with Q&A details
 - [x] Cross-reference engine for multi-role comparison
 
-#### 2.3 - Public Experience & Registration Flow (0% Complete) 🔲 ← NEXT
-- [ ] Marketing-grade landing page with animations
-- [ ] Public pages for Goalies/Students
-- [ ] Public pages for Parents
-- [ ] Pre-registration questionnaire
-- [ ] Updated registration flow with questionnaire data
+#### Block 1 - Launch Critical (0% Complete) 🔲 ← CURRENT
+> **Priority:** Work in order. Do not skip without written approval.
 
-#### 2.4 - Parent System & Compliance (0% Complete) 🔲
-- [ ] Parent-child relationships with student ID linking
-- [ ] Parent onboarding flow with assessment
-- [ ] Age compliance (Canadian PIPEDA)
+- [ ] **B1.1:** Branding update (SportsGoalie → Smarter Goalie) - 2-3h
+  - Logo, headers, footers, meta tags, URLs
+- [ ] **B1.2:** 7th Pillar: Lifestyle - 2h
+  - Database update, navigation, routes, UI
+- [ ] **B1.3:** Landing Page + Role Selection - 5-8h
+  - 8 roles: Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp
+  - Introduction video placement
+  - Each selection routes to appropriate intake flow
+- [ ] **B1.4:** Video Database + Tagging System - 8-12h
+  - Tagging schema: Pillar (1-7), System (7AMS/7PTS/4LAS/Box/General)
+  - User Type, Level (Introduction/Development/Refinement)
+  - Angle Marker (AM1-7), Arch Level (L1-L4)
+  - Search and filter by any tag combination
+- [ ] **B1.5:** Parent Dashboard + Child Linking - 10-15h
+  - View linked child's progress, scores, chart history, module completion
+  - Parent-child linking via Student ID (SG-XXXX-XXXX)
+  - Admin-controlled permissions
+- [ ] **B1.6:** Dashboard Visualization + Integration - 4-6h
+  - Cross-reference results display
+  - Connect scoring engine, gap analysis, charting to dashboards
+  - Admin, coach, and parent views
+- [ ] **B1.7:** Production Email - 2-3h
+  - Domain configured for Resend
+  - Verification, invitation, notification emails from professional domain
 
-#### 2.5 - Pillar Content & Level System (0% Complete) 🔲
-- [ ] Pillar level structure (3 levels per pillar)
-- [ ] Lesson management for pillar content
-- [ ] Level evaluations (quiz gates)
-- [ ] Level unlock progression
-- [ ] Remedial content system
+#### Block 2 - Depth & Quality (0% Complete) 🔲
+> **Start:** As Block 1 tasks complete or run in parallel where logical.
 
-#### 2.6 - Role-Based Access Hardening (0% Complete) 🔲
-- [ ] Enhanced route protection middleware
-- [ ] Full coach content access controls
+- [ ] **B2.8:** Questionnaire Alignment - 3-5h
+  - Verify all 104 questions match specification documents
+  - Flag and fix any mismatches
+  - Confirm scoring weights match specs
+- [ ] **B2.9:** LMS Enhancements - 5-8h
+  - Content recommendation engine
+  - When scoring identifies weak area → recommend relevant content
+  - Ties scoring engine to content delivery
+- [ ] **B2.10:** Analytics Upgrades - 5-8h
+  - Parent view: goalie progress over time with trend data
+  - Coach view: student development tracking across games/practices
+  - Period-by-period pattern recognition
+- [ ] **B2.11:** Mobile Polish - 3-5h
+  - Review all user-facing screens on iOS/Android
+  - Improve touch targets, transitions, load times
+  - Charting and questionnaire flows smooth on mobile
+- [ ] **B2.12:** Bug Fixes + Iteration Buffer - 5-10h
+  - Reserved for issues surfacing with real users
+  - Safety net for launch quality
+
+#### Block 3 - Experience Features (0% Complete) 🔲
+> **Start:** "Project Active" when capacity allows. These define the personality of Smarter Goalie.
+
+- [ ] **B3.13:** Contextual Support System
+  - Pop-up help for terms (M.E.T., V.M.P., Line System, etc.)
+  - Layer 1: Quick text/voice explanation
+  - Layer 2: Link to short video/deeper dive
+  - Layer 3: Additional perspective/related content
+  - Analytics: which terms triggered support, depth accessed, helpfulness
+  - Admin configures all support content through admin panel
+- [ ] **B3.14:** Milestone Recognition System
+  - Celebrate knowledge acquisition benchmarks
+  - Inspirational quotes, motivational video clips, achievement highlights
+  - Students can add own content (highlights, favourite saves)
+  - Milestones logged in student's portfolio
+- [ ] **B3.15:** Learning Portfolio
+  - Permanent record: what learned, when, struggles, support accessed, milestones
+  - Feeds analytics, shows parents/coaches the journey
+  - Business intelligence: aggregated data reveals what works
+
+> **Note:** These three features are interconnected. Design as one integrated system.
+
+#### NOT IN SCOPE (Requires Written Approval)
+- ❌ Stripe / payment integration
+- ❌ Multi-language (i18n)
+- ❌ AI project assistant improvements
+- ❌ Code refactoring or cleanup
+- ❌ Organization / Federation portal features
+- ❌ Affiliate network system
+
+#### Admin Configuration Work (Admin Assistant)
+> **Note:** Per Michael's directive, the following is data entry work for an admin assistant, NOT development work:
+- Create chart templates (Practice, Parent Observation, Coach Evaluation) via `/admin/form-templates/new/`
+- Verify questionnaire configurations against specs
 
 ---
 
@@ -311,6 +394,15 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 📝 Recent Decisions
+
+### 2026-03-11: Work Directive Block Structure
+**Decision:** Replace Phase 2.3-2.6 with Michael's Block 1/2/3 priority structure
+**Rationale:** Per Michael's Work Directive (2026-03-10) - clear prioritization with launch-critical features first
+**Impact:** New 7th pillar (Lifestyle), 8-role landing page, video tagging system, parent dashboard prioritized. Phase 2.5 (Pillar Levels) and 2.6 (Access Hardening) removed from immediate scope
+**Key Changes:**
+- Block 1: Launch Critical - Branding, 7th pillar, landing page, video DB, parent dashboard, email
+- Block 2: Depth & Quality - Questionnaire verification, LMS, analytics, mobile, bug buffer
+- Block 3: Experience Features - Contextual Support, Milestones, Portfolio (interconnected system)
 
 ### 2026-03-07: Component Key Prop for State Reset
 **Decision:** Use React `key` prop to force component remount instead of `useEffect` for state reset
@@ -428,13 +520,13 @@ Initial project analysis and progress tracking system implementation.
 
 ### 2026-02-24: Smart Context Loading for AI Chatbot
 **Decision:** Default to smart context loading (5-10 relevant docs) instead of full context
-**Rationale:** Reduces token usage 80-90%, faster responses, better cost efficiency (~$0.04-0.08 vs $0.20-0.40 per query)
+**Rationale:** Reduces token usage 80-90%, faster responses, better efficiency
 **Impact:** Cost-efficient AI assistant, acceptable response quality, can load full context if needed
 **Alternatives Considered:** Always full context (rejected - expensive), no filtering (rejected - too simple)
 
 ### 2026-02-24: Claude Sonnet 4 Model Selection
 **Decision:** Use Claude Sonnet 4 instead of Opus 4.5 for project assistant chatbot
-**Rationale:** 5x cheaper ($3/$15 vs $15/$75 per 1M tokens), sufficient quality for Q&A, admin-only tool
+**Rationale:** More efficient, sufficient quality for Q&A, admin-only tool
 **Impact:** 80% cost savings with acceptable response quality for documentation queries
 **Alternatives Considered:** Opus 4.5 (rejected - overkill for Q&A), Haiku (rejected - insufficient intelligence)
 
@@ -983,11 +1075,11 @@ Initial project analysis and progress tracking system implementation.
 
 ## 📞 Quick Reference
 
-**Last Updated:** 2026-03-07
-**Last Session:** Reset Incomplete Evaluations Script
-**Total Sessions This Phase:** 36
-**Current Phase Hours:** 48.25h
-**Next Session Focus:** Verify affected students can restart onboarding
+**Last Updated:** 2026-03-11
+**Last Session:** Work Directive Integration
+**Total Sessions This Phase:** 38
+**Current Phase Hours:** 48.75h
+**Next Session Focus:** Block 1.1 - Branding Update (SportsGoalie → Smarter Goalie)
 
 ---
 

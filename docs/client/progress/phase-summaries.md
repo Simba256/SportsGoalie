@@ -1,14 +1,18 @@
 # Development Progress Overview
 
-## Current Phase: Phase 2
+## Current Phase: Phase 2 - Block 1
 
-**Status:** Multi-Role System & 6-Pillar Framework
-- Phase 2.0-2.2: ✅ Complete (94 hours)
-- Phase 2.3-2.6: 🔲 Pending (~116-155 hours remaining)
+**Status:** Multi-Role System & 7-Pillar Framework
+- Foundation (Phase 2.0-2.2): ✅ Complete (94+ hours)
+- Block 1 (Launch Critical): 🔄 In Progress
+- Block 2 (Depth & Quality): 🔲 Pending
+- Block 3 (Experience Features): 🔲 Pending
 
 **Started:** February 22, 2026
 
-**Total Development:** 38 sessions | 94 hours | 14 working days
+**Work Directive:** Per Michael's directive (2026-03-10), work follows Block 1 → Block 2 → Block 3 order.
+
+**Total Development:** 38+ sessions | 94+ hours | 14+ working days
 
 ## Time Investment Summary
 
@@ -100,12 +104,12 @@ Building the foundational multi-role system with coach and parent capabilities.
 
 ---
 
-### Phase 2.1: 6-Pillar Framework (100% Complete) ✅
+### Phase 2.1: 7-Pillar Framework (100% Complete) ✅
 
-Transformed platform from general sports/skills structure to fixed 6-pillar ice hockey goalie framework.
+Transformed platform from general sports/skills structure to fixed 7-pillar ice hockey goalie framework.
 
-**6-Pillar Conversion** (3 hrs)
-- Defined 6 fixed pillars: Mind-Set, Skating, Form, Positioning, 7 Point System, Training
+**7-Pillar Conversion** (3 hrs)
+- Defined 7 fixed pillars: Mind-Set, Skating, Form, Positioning, 7 Point System, Training, Lifestyle
 - Updated seed data with pillar definitions
 - Created pillar utility functions
 - Database migration for existing content
@@ -229,14 +233,14 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 ### What's Been Built
 
 **Authentication & Roles**
-- Complete 4-role system (Student, Coach, Parent, Admin)
+- Complete 8-role system (Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp, Admin)
 - Coach invitation workflow
 - Student ID system (SG-XXXX-XXXX)
 - Role-based navigation and access control
 
 **Learning System**
 - Dual learning pathway (automated + custom)
-- 6-pillar ice hockey goalie framework
+- 7-pillar ice hockey goalie framework
 - Coach curriculum builder
 - Content browser with search/filter
 - Video lessons and quizzes
@@ -270,58 +274,53 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 
 ---
 
-## Remaining Phase 2 Work
+## Remaining Phase 2 Work (Block Structure)
 
-### Phase 2.3: Public Experience & Registration Flow (Not Started)
+> **Work Directive:** Per Michael's directive (2026-03-10), work follows Block 1 → Block 2 → Block 3 order.
+> Do not skip ahead without written approval. See `client_data/Phase2/basim-work-directive-march10.md`
 
-**Estimated:** 40-55 hours | **Priority:** CRITICAL
+### Block 1: Launch Critical (In Progress)
 
-- Marketing-grade landing page with animations and testimonials
-- Public pages for Goalies/Students (what you'll learn, methodology)
-- Public pages for Parents (monitoring, safety, coaching feedback)
-- Pre-registration questionnaire (5-8 questions based on role)
-- Updated registration flow with questionnaire data integration
+| # | Task | Status |
+|---|------|--------|
+| 1 | Branding: SportsGoalie → Smarter Goalie | 🔲 Pending |
+| 2 | 7th Pillar: Add Lifestyle | 🔲 Pending |
+| 3 | Landing Page + 8-Role Selection | 🔲 Pending |
+| 4 | Video Database + Tagging System | 🔲 Pending |
+| 5 | Parent Dashboard + Child Linking | 🔲 Pending |
+| 6 | Dashboard Visualization + Integration | 🔲 Pending |
+| 7 | Production Email (Resend domain config) | 🔲 Pending |
 
-### Phase 2.4: Parent System & Compliance (Not Started)
+### Block 2: Depth & Quality (Upcoming)
 
-**Estimated:** 24-32 hours | **Priority:** HIGH
+| # | Task | Status |
+|---|------|--------|
+| 8 | Questionnaire Alignment (84 questions verification) | 🔲 Pending |
+| 9 | LMS Enhancements (content recommendations) | 🔲 Pending |
+| 10 | Analytics Upgrades (parent/coach views) | 🔲 Pending |
+| 11 | Mobile Polish | 🔲 Pending |
+| 12 | Bug Fixes + Iteration Buffer | 🔲 Reserved |
 
-- Parent-child relationships with student ID linking
-- Parent onboarding flow with assessment
-- Age compliance (Canadian PIPEDA)
+### Block 3: Experience Features (Project Active)
 
-### Phase 2.5: Pillar Content & Level System (Not Started)
-
-**Estimated:** 40-52 hours | **Priority:** HIGH
-
-- Pillar level structure (3 levels per pillar)
-- Lesson management for pillar content
-- Level evaluations (quiz gates)
-- Level unlock progression
-- Remedial content system
-
-### Phase 2.6: Role-Based Access Hardening (Not Started)
-
-**Estimated:** 12-16 hours | **Priority:** MEDIUM
-
-- Enhanced route protection middleware
-- Full coach content access controls
+| # | Task | Status |
+|---|------|--------|
+| 13 | Contextual Support System | 🔲 Pending |
+| 14 | Milestone Recognition System | 🔲 Pending |
+| 15 | Learning Portfolio | 🔲 Pending |
 
 ---
 
-## Future Phases
+## Completion Targets
 
-| Phase | Description | Est. Hours |
-|-------|-------------|------------|
-| Phase 3 | Rich Content & Media | 60-80 |
-| Phase 4 | Analytics & Dashboards | 50-70 |
-| Phase 5 | Communication & Scheduling | 40-55 |
-| Phase 6 | Mobile & Performance | 60-80 |
-| Phase 7 | Payments & Subscriptions | 60-80 |
-
-See `/docs/PHASE-TIMELINE.md` for detailed breakdown.
+| Milestone | Target | Platform % |
+|-----------|--------|------------|
+| Block 1 + Block 2 complete | End of March 2026 | ~85% |
+| Launch ready | Early April 2026 | ~85% |
+| Revenue generating | Early April 2026 | LIVE |
 
 ---
 
-*Last Updated: March 7, 2026*
-*Total Sessions: 38 | Completed Hours: 94 | Remaining Phase 2: ~116-155 hours*
+*Last Updated: March 10, 2026*
+*Foundation Complete: 38+ sessions | 94+ hours*
+*Current Status: Block 1 in progress (~56% complete)*

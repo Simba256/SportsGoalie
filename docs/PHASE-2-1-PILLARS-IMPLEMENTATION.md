@@ -1,16 +1,17 @@
-# Phase 2.1: Convert to 6 Pillars Structure
+# Phase 2.1: Convert to 7 Pillars Structure
 
 ## Overview
 
-Convert the current dynamic unlimited sports system to a fixed 6 Pillars structure for ice hockey goalies, while maintaining backward compatibility for potential future dynamic sports.
+Convert the current dynamic unlimited sports system to a fixed 7 Pillars structure for ice hockey goalies, while maintaining backward compatibility for potential future dynamic sports.
 
-**The 6 Pillars:**
+**The 7 Pillars:**
 1. **Mind-Set Development** - Psychological resilience, strategic thinking, mental fortitude, emotional regulation (the Mind Vault)
 2. **Skating as a Skill** - Precise edgework, explosive lateral pushes, seamless transitions, calculated efficiency
 3. **Form & Structure** - Stance, posture, glove/blocker positioning, paddle down control (foundation before flair)
 4. **Positional Systems** - Systematic positional play, 7 Angle-Marker system, 7 Point System for optimal crease positioning
 5. **7 Point System Below Icing Line** - Specialized positioning for the critical zone below the icing line
 6. **Game/Practice/Off-Ice Performance** - Holistic training: game performance, practice drills, off-ice conditioning
+7. **Lifestyle** - Off-ice habits, nutrition, recovery, sleep, life balance, and overall wellness for peak performance
 
 **The 3 Levels per Pillar:**
 - Introduction (Level 1)
@@ -29,7 +30,7 @@ Create new types for the pillar system:
 
 ```typescript
 // Core types
-export type PillarSlug = 'mindset_development' | 'skating_skill' | 'form_structure' | 'positional_systems' | 'seven_point_below_icing' | 'performance_programs';
+export type PillarSlug = 'mindset_development' | 'skating_skill' | 'form_structure' | 'positional_systems' | 'seven_point_below_icing' | 'performance_programs' | 'lifestyle';
 export type PillarLevelSlug = 'introduction' | 'development' | 'refinement';
 export type UnlockStatus = 'locked' | 'unlocked' | 'completed';
 
@@ -47,7 +48,7 @@ export interface Pillar {
   updatedAt: Timestamp;
 }
 
-// Level interface (3 per pillar = 18 total)
+// Level interface (3 per pillar = 21 total)
 export interface PillarLevel {
   id: string;
   pillarId: string;
@@ -115,8 +116,8 @@ export * from './pillar';
 
 Core service with these methods:
 
-**Pillar CRUD (mostly read-only for fixed 6):**
-- `getAllPillars()` - Get all 6 pillars
+**Pillar CRUD (mostly read-only for fixed 7):**
+- `getAllPillars()` - Get all 7 pillars
 - `getPillar(pillarId)` - Get single pillar
 - `getPillarBySlug(slug)` - Get by slug name
 
@@ -132,7 +133,7 @@ Core service with these methods:
 - `getLesson(lessonId)` - Get single lesson
 
 **Progress Operations:**
-- `initializeStudentProgress(userId)` - Create progress for all 6 pillars
+- `initializeStudentProgress(userId)` - Create progress for all 7 pillars
 - `getStudentPillarProgress(userId, pillarId)` - Get progress
 - `getAllStudentProgress(userId)` - Get all 6 pillar progress
 - `markLessonComplete(userId, lessonId)` - Mark lesson done
@@ -157,6 +158,7 @@ export const PILLARS_SEED_DATA: Omit<Pillar, 'id' | 'createdAt' | 'updatedAt'>[]
   { slug: 'positional_systems', name: 'Positional Systems', description: 'Systematic positional play including the 7 Angle-Marker and 7 Point Systems for optimal crease positioning', icon: 'target', color: '#dc2626', order: 4, isActive: true },
   { slug: 'seven_point_below_icing', name: '7 Point System Below Icing Line', description: 'Specialized positioning for the unique challenges and opportunities in the critical zone below the icing line', icon: 'map-pin', color: '#ca8a04', order: 5, isActive: true },
   { slug: 'performance_programs', name: 'Game/Practice/Off-Ice Performance', description: 'Holistic training extending beyond on-ice drills - game performance, practice sessions, and off-ice conditioning', icon: 'activity', color: '#2563eb', order: 6, isActive: true },
+  { slug: 'lifestyle', name: 'Lifestyle', description: 'Off-ice habits, nutrition, recovery, sleep, life balance, and overall wellness essential for peak goaltending performance', icon: 'heart', color: '#ec4899', order: 7, isActive: true },
 ];
 
 export const LEVELS_SEED_DATA = [
@@ -173,8 +175,8 @@ export const LEVELS_SEED_DATA = [
 **File:** `/src/lib/database/migrations/002-pillars.ts` (NEW)
 
 Migration to:
-1. Create `pillars` collection with 6 documents
-2. Create `pillar_levels` collection with 18 documents (6 pillars × 3 levels)
+1. Create `pillars` collection with 7 documents
+2. Create `pillar_levels` collection with 21 documents (7 pillars × 3 levels)
 3. Create `lessons` collection (empty, admin will add)
 4. Create `student_pillar_progress` collection (empty, created on enrollment)
 
@@ -241,7 +243,7 @@ export function usePillarProgressMutations() {
 
 | Route | Purpose |
 |-------|---------|
-| `/pillars` | Main dashboard showing 6 pillars |
+| `/pillars` | Main dashboard showing 7 pillars |
 | `/pillars/[pillarId]` | Single pillar with 3 level tabs |
 | `/pillars/[pillarId]/levels/[levelSlug]` | Level detail with lessons |
 | `/pillars/[pillarId]/levels/[levelSlug]/lessons/[lessonId]` | Lesson view |
@@ -382,11 +384,11 @@ async deleteRemedialContent(contentId: string): Promise<void>
 
 | Collection | Documents | Purpose |
 |------------|-----------|---------|
-| `pillars` | 6 (fixed) | The 6 pillars |
-| `pillar_levels` | 18 (fixed) | 3 levels per pillar |
+| `pillars` | 7 (fixed) | The 7 pillars |
+| `pillar_levels` | 21 (fixed) | 3 levels per pillar |
 | `lessons` | Dynamic | Lessons created by admin |
 | `student_pillar_progress` | Dynamic | Per-student progress |
-| `pillar_level_evaluations` | Up to 18 | Maps levels to video quizzes |
+| `pillar_level_evaluations` | Up to 21 | Maps levels to video quizzes |
 | `remedial_content` | Dynamic | Failure/remedial content per level |
 
 ---
@@ -395,24 +397,24 @@ async deleteRemedialContent(contentId: string): Promise<void>
 
 ### 1. Database Setup
 ```bash
-# Run migration to create collections and seed 6 pillars
+# Run migration to create collections and seed 7 pillars
 npm run db:migrate
 ```
 
 ### 2. Service Tests
-- Verify `pillarService.getAllPillars()` returns 6 pillars
+- Verify `pillarService.getAllPillars()` returns 7 pillars
 - Verify `pillarService.getLevelsByPillar(id)` returns 3 levels
-- Verify progress initialization creates records for all 6 pillars
+- Verify progress initialization creates records for all 7 pillars
 
 ### 3. UI Tests (Playwright)
-- Student can see all 6 pillars on `/pillars`
+- Student can see all 7 pillars on `/pillars`
 - Student only sees Introduction level unlocked initially
 - Student cannot access Development/Refinement (locked)
 - Admin can create lessons for any level
 - After passing Introduction evaluation, Development unlocks
 
 ### 4. Manual Testing
-- [ ] Navigate to `/pillars` - see 6 pillar cards with correct names
+- [ ] Navigate to `/pillars` - see 7 pillar cards with correct names
 - [ ] Click pillar - see 3 level tabs (Development & Refinement locked)
 - [ ] View Introduction lessons
 - [ ] Complete lessons and take evaluation (video quiz)

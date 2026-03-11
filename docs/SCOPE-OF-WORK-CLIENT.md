@@ -1,20 +1,20 @@
-# SmarterGoalie - Scope of Work
+# Smarter Goalie - Scope of Work
 
 **Prepared for:** Michael
-**Date:** 16th February 2026
-**Version:** 1.0
+**Date:** 16th February 2026 (Updated: March 10, 2026)
+**Version:** 1.1
 
 ---
 
 ## Project Overview
 
-We're building **SmarterGoalie** - a digital training platform for ice hockey goalies based on your 6 Pillars methodology. The platform will allow students to learn through video lessons, take evaluations, track their progress, and receive coaching feedback.
+We're building **Smarter Goalie** - a digital training platform for ice hockey goalies based on your 7 Pillars methodology. The platform will allow students to learn through video lessons, take evaluations, track their progress, and receive coaching feedback.
 
 ---
 
 ## What We're Building
 
-### The 6 Pillars System
+### The 7 Pillars System
 
 Your training methodology organized into a digital learning path:
 
@@ -24,6 +24,7 @@ Your training methodology organized into a digital learning path:
 4. **Positional Systems** - 7 Angle-Marker and 7 Point Systems
 5. **7 Point System Below Icing Line** - Specialized below-line positioning
 6. **Game/Practice/Off-Ice Performance** - Holistic training approach
+7. **Lifestyle** - Off-ice habits, nutrition, recovery, life balance
 
 Each pillar has **3 levels**: Introduction → Development → Refinement
 
@@ -31,13 +32,18 @@ Students must pass evaluations to unlock the next level.
 
 ---
 
-### User Types
+### User Types (8 Roles)
 
 | User | What They Can Do |
 |------|------------------|
-| **Student** | Learn through lessons, take evaluations, track progress, upload videos, chart games/practices |
-| **Coach** | View and manage assigned students, edit lessons, leave feedback and comments, see all scores |
-| **Parent** | View everything for their children (scores, tests, videos, coach comments) - view only |
+| **Goalie** | Learn through lessons, take evaluations, track progress, upload videos, chart games/practices |
+| **Goalie Parent** | View everything for their children (scores, tests, videos, coach comments) - view only |
+| **Coach** | Team coach with goalie oversight capabilities |
+| **Goalie Coach** | Specialized goalie training, manage students, edit lessons, leave feedback, see all scores |
+| **Team Manager** | Manage team rosters and goalie development tracking |
+| **Organization** | Multi-team management and oversight |
+| **Federation** | League-wide goalie development programs |
+| **Camp Information** | Camp registration and training program management |
 | **Admin** | Full platform control, content management, analytics |
 
 ---
@@ -82,11 +88,11 @@ We've organized the work into phases. Each phase builds on the previous one, del
 ### Phase 2: Core Platform (Weeks 1-6)
 
 **What Gets Built:**
-- 4 user roles (Student, Coach, Parent, Admin)
+- 8 user roles (Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp)
 - Coach-student and parent-child account linking
 - Student registration with age verification (Canadian compliance)
 - Background survey and initial evaluation placement
-- The 6 Pillars structure with 3 levels each
+- The 7 Pillars structure with 3 levels each
 - Lesson viewing and completion tracking
 - Video quiz evaluations with automatic scoring
 - Level unlocking when students pass
@@ -248,7 +254,7 @@ This gives us a head start - we're building on a solid foundation, not starting 
 
 By the end of this project:
 
-✅ Students can work through your 6 Pillars methodology at their own pace
+✅ Students can work through your 7 Pillars methodology at their own pace
 ✅ Coaches can monitor students and provide personalized feedback
 ✅ Parents stay informed about their child's progress
 ✅ You have full control over content and can update it anytime
@@ -262,7 +268,7 @@ By the end of this project:
 
 1. **Review this document** - Let us know if anything needs adjustment
 2. **Confirm priorities** - Which features matter most for initial launch?
-3. **Begin Phase 2** - Start with the user roles and 6 Pillars structure
+3. **Begin Phase 2** - Start with the user roles and 7 Pillars structure
 4. **Regular check-ins** - We'll keep you updated on progress
 
 ---
