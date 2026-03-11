@@ -1,4 +1,4 @@
-# SportsCoach V3 - Production-ready Docker image
+# Smarter Goalie - Production-ready Docker image
 # Multi-stage build for optimized image size
 
 # Stage 1: Dependencies

@@ -44,7 +44,7 @@
 
 ## Phase 2 Overview
 
-Transforming SportsGoalie from a basic learning platform into a sophisticated multi-role system with personalized learning paths, coach tools, parent monitoring, and advanced ice hockey goalie specialization.
+Transforming Smarter Goalie from a basic learning platform into a sophisticated multi-role system with personalized learning paths, coach tools, parent monitoring, and advanced ice hockey goalie specialization.
 
 ### Phase 2.0: Multi-Role Foundation (100% Complete) ✅
 

@@ -81,7 +81,7 @@ export interface DatabaseInitResult {
 }
 
 /**
- * Central database management class for SportsCoach V3
+ * Central database management class for Smarter Goalie
  *
  * Provides high-level operations for database initialization, health checking,
  * and maintenance operations. This class orchestrates migrations, seeding,
@@ -133,7 +133,7 @@ export class DatabaseManager {
     let seedingResult;
 
     try {
-      logger.info('Initializing SportsCoach V3 Database', 'DatabaseManager', options);
+      logger.info('Initializing Smarter Goalie Database', 'DatabaseManager', options);
 
       // Run migrations if requested
       if (options.runMigrations !== false) {

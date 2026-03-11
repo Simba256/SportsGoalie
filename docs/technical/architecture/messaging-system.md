@@ -1,6 +1,6 @@
 # Admin-to-Student Messaging System
 
-**Project**: SportsCoach V3
+**Project**: Smarter Goalie
 **Feature**: Admin-to-Student Messaging with Video Review Integration
 **Date**: October 2025
 **Status**: In Development
@@ -414,7 +414,7 @@ interface NotificationData {
 
 ```
 ┌─────────────────────────────────────────┐
-│  SportsCoach V3         👤 John  [🔔 1] │
+│  Smarter Goalie         👤 John  [🔔 1] │
 ├─────────────────────────────────────────┤
 │  Dashboard | Sports | Progress | ✉️ (2) │
 └─────────────────────────────────────────┘

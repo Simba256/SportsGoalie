@@ -1,4 +1,4 @@
-# SportsCoach V3 - Development Docker image
+# Smarter Goalie - Development Docker image
 # Optimized for hot-reload and fast development
 
 FROM node:20-alpine

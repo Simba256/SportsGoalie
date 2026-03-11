@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides comprehensive guidance to Claude Code when working with the SportsCoach V3 project.
+This file provides comprehensive guidance to Claude Code when working with the Smarter Goalie project.
 
 ## 🎯 Project Mission
 
-SportsCoach V3 is a modern, production-ready sports learning platform designed to help athletes and sports enthusiasts learn skills, track progress, and assess their knowledge through interactive content.
+Smarter Goalie is a modern, production-ready sports learning platform designed to help athletes and sports enthusiasts learn skills, track progress, and assess their knowledge through interactive content.
 
 ## 📋 Project Overview
 
@@ -56,7 +56,7 @@ Create a comprehensive digital sports coaching platform that combines:
 ## 📁 Project Structure
 
 ```
-sportscoach-v3/
+smarter-goalie/
 ├── docs/                    # Project documentation
 │   ├── sessions/           # **MANDATORY** Individual session logs
 │   │   ├── template.md    # Template for new sessions

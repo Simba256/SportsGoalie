@@ -1,8 +1,8 @@
-# Canadian Privacy Compliance for SportsGoalie
+# Canadian Privacy Compliance for Smarter Goalie
 
 ## Overview
 
-SportsGoalie serves users aged 6+, which means we must comply with Canadian privacy laws (PIPEDA) with special considerations for children.
+Smarter Goalie serves users aged 6+, which means we must comply with Canadian privacy laws (PIPEDA) with special considerations for children.
 
 ---
 

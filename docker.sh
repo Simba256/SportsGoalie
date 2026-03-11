@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SportsCoach V3 - Docker Management Script
+# Smarter Goalie - Docker Management Script
 # Usage: ./docker.sh [command]
 
 set -e
@@ -19,7 +19,7 @@ print_msg() {
 
 # Show usage
 show_usage() {
-    print_msg "SportsCoach V3 - Docker Management Script" "$BLUE"
+    print_msg "Smarter Goalie - Docker Management Script" "$BLUE"
     echo ""
     echo "Usage: ./docker.sh [command]"
     echo ""

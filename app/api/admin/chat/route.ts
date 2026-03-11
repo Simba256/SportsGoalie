@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 6. Prepare system prompt
-    const systemPrompt = `You are a friendly project assistant for the SportsGoalie platform.
+    const systemPrompt = `You are a friendly project assistant for the Smarter Goalie platform.
 
 Your role is to help the admin understand what they can do with the platform and how it's progressing.
 

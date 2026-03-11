@@ -1,5 +1,5 @@
 /**
- * Production-ready logging utility for SportsCoach V3
+ * Production-ready logging utility for Smarter Goalie
  * Replaces console.log statements with structured, configurable logging
  */
 

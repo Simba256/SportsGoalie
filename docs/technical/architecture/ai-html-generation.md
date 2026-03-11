@@ -1,6 +1,6 @@
 # AI-Powered HTML Generation for Skills
 
-This document describes the AI-powered HTML generation feature implemented for the SportsCoach admin portal.
+This document describes the AI-powered HTML generation feature implemented for the Smarter Goalie admin portal.
 
 ## Overview
 

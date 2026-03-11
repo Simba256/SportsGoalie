@@ -1,7 +1,7 @@
 # 🗺️ Firebase Field Mapping Matrix
 
 ## 📋 **Overview**
-This document provides a comprehensive mapping between TypeScript interfaces and Firebase database collections, ensuring data integrity and consistency across the SportsCoach V3 application.
+This document provides a comprehensive mapping between TypeScript interfaces and Firebase database collections, ensuring data integrity and consistency across the Smarter Goalie application.
 
 ## 🏗️ **Data Architecture Overview**
 

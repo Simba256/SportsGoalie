@@ -1,6 +1,6 @@
-# SportsGoalie (SmarterGoalie) - Comprehensive Feature Documentation
+# Smarter Goalie - Comprehensive Feature Documentation
 
-**Platform Name**: SportsGoalie / SmarterGoalie
+**Platform Name**: Smarter Goalie
 **Version**: V3
 **Technology Stack**: Next.js 14, TypeScript, Firebase (Firestore, Auth, Storage), Anthropic Claude API, Tailwind CSS, shadcn/ui
 **Deployment**: Vercel (https://sports-goalie.vercel.app)
@@ -25,7 +25,7 @@
 
 ## Platform Overview
 
-SportsGoalie is a **comprehensive digital sports coaching platform** specifically designed for **hockey goalies** (though extensible to other sports). It combines structured learning, performance tracking, interactive assessments, and coach-student communication in a modern, mobile-first web application.
+Smarter Goalie is a **comprehensive digital sports coaching platform** specifically designed for **hockey goalies** (though extensible to other sports). It combines structured learning, performance tracking, interactive assessments, and coach-student communication in a modern, mobile-first web application.
 
 ### Core Mission
 - Help athletes learn goaltending skills through structured courses

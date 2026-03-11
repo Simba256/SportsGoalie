@@ -1,6 +1,6 @@
 # Testing Infrastructure
 
-This document outlines the comprehensive testing setup for SportsCoach V3, including unit tests, integration tests, and end-to-end tests.
+This document outlines the comprehensive testing setup for Smarter Goalie, including unit tests, integration tests, and end-to-end tests.
 
 ## 🧪 Testing Stack
 

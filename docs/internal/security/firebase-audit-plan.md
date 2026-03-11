@@ -1,7 +1,7 @@
 # 🔍 Firebase Database & Storage Access Audit Plan
 
 ## 📋 **Overview**
-A comprehensive audit to validate all Firebase database and storage access patterns across the entire SportsCoach V3 application, ensuring data integrity, proper field mappings, and consistent API usage.
+A comprehensive audit to validate all Firebase database and storage access patterns across the entire Smarter Goalie application, ensuring data integrity, proper field mappings, and consistent API usage.
 
 ## 🎯 **Audit Objectives**
 1. **Field Mapping Validation**: Verify all database field names match TypeScript interfaces

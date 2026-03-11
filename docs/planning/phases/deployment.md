@@ -1,4 +1,4 @@
-# Deployment Strategy - SportsCoach V3
+# Deployment Strategy - Smarter Goalie
 
 ## 🎯 Deployment Philosophy
 
@@ -171,7 +171,7 @@ npm run lighthouse     # Performance audit
 ### GitHub Actions Workflow (.github/workflows/deploy.yml)
 
 ```yaml
-name: Deploy SportsCoach V3
+name: Deploy Smarter Goalie
 
 on:
   push:
@@ -250,7 +250,7 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: success
-          text: 'SportsCoach V3 deployed successfully to production!'
+          text: 'Smarter Goalie deployed successfully to production!'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 ```
@@ -373,7 +373,7 @@ vercel promote <previous-deployment-url> --scope=production
 curl -f https://sportscoach.app/api/health
 
 # 4. Notify team of rollback
-slack-notify "Emergency rollback completed for SportsCoach V3"
+slack-notify "Emergency rollback completed for Smarter Goalie"
 ```
 
 ### Post-Rollback Actions

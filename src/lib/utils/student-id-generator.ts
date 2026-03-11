@@ -2,7 +2,7 @@
  * Student ID Generator
  *
  * Generates random, unique student IDs in format: SG-XXXX-XXXX
- * - SG prefix (SportsGoalie)
+ * - SG prefix (Smarter Goalie)
  * - 8 characters total (excluding hyphens)
  * - Uses crypto-random values for security
  * - Excludes confusing characters: 0, O, 1, I, l

@@ -6,7 +6,7 @@
 **Scope**: Authentication system functionality and debugging
 
 ## Test Environment
-- **Application**: SportsCoach V3
+- **Application**: Smarter Goalie
 - **Framework**: Next.js 14 with App Router
 - **Authentication**: Firebase Auth
 - **Database**: Firebase Firestore

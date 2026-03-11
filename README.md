@@ -1,10 +1,10 @@
-# SportsCoach V3 🏆
+# Smarter Goalie 🏆
 
 A modern, production-ready sports learning platform designed to help athletes and sports enthusiasts learn skills, track progress, and assess their knowledge through interactive content.
 
 ## 🎯 Project Overview
 
-SportsCoach V3 is a comprehensive digital sports coaching platform that combines structured learning, progress tracking, interactive assessments, and content management in a clean, responsive, mobile-first design.
+Smarter Goalie is a comprehensive digital sports coaching platform that combines structured learning, progress tracking, interactive assessments, and content management in a clean, responsive, mobile-first design.
 
 ### Key Features
 
@@ -40,7 +40,7 @@ SportsCoach V3 is a comprehensive digital sports coaching platform that combines
 
    ```bash
    git clone <repository-url>
-   cd sportscoach-v3
+   cd smarter-goalie
    ```
 
 2. **Install dependencies**
@@ -97,7 +97,7 @@ npm run test:coverage # Run tests with coverage report
 ## 🏗️ Project Structure
 
 ```
-sportscoach-v3/
+smarter-goalie/
 ├── docs/                    # Project documentation
 │   ├── PLAN.md             # Detailed development plan
 │   ├── TESTING.md          # Testing strategy
@@ -307,7 +307,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**SportsCoach V3** - Empowering athletes through digital learning and progress tracking.
+**Smarter Goalie** - Empowering athletes through digital learning and progress tracking.
 
 <!-- Testing pre-commit hooks -->
 

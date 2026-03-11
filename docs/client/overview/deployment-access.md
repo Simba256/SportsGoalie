@@ -4,7 +4,7 @@
 
 **URL:** https://sports-goalie.vercel.app/
 
-The SportsGoalie platform is deployed and accessible 24/7 at the URL above.
+The Smarter Goalie platform is deployed and accessible 24/7 at the URL above.
 
 ## Platform Access
 

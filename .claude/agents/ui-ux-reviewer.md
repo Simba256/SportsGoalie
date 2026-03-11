@@ -57,4 +57,4 @@ Provide findings in this structured format:
 - Provide clear, actionable feedback that development teams can implement
 - Balance user needs with technical feasibility and project constraints
 
-Your goal is to ensure the interface provides an exceptional user experience that is accessible, intuitive, and aligned with modern design standards while serving the specific needs of the SportsCoach V3 platform users.
+Your goal is to ensure the interface provides an exceptional user experience that is accessible, intuitive, and aligned with modern design standards while serving the specific needs of the Smarter Goalie platform users.

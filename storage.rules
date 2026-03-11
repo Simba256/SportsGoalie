@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Firebase Storage Security Rules for SportsGoalie
+// Firebase Storage Security Rules for Smarter Goalie
 service firebase.storage {
   match /b/{bucket}/o {
 

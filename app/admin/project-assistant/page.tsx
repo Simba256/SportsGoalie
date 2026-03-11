@@ -7,7 +7,7 @@ import { Bot, MessageCircle, Zap, Shield, Info } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Project Assistant | Admin',
-  description: 'Your AI assistant for the SportsGoalie platform',
+  description: 'Your AI assistant for the Smarter Goalie platform',
 };
 
 export default function ProjectAssistantPage() {

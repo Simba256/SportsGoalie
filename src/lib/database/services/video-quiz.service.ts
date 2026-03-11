@@ -13,7 +13,7 @@ import { logger } from '../../utils/logger';
 import { Timestamp } from 'firebase/firestore';
 
 /**
- * Service for managing video quizzes and student progress in the SportsCoach application.
+ * Service for managing video quizzes and student progress in the Smarter Goalie application.
  *
  * This service provides comprehensive functionality for:
  * - CRUD operations for video quizzes

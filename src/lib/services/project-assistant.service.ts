@@ -168,8 +168,8 @@ export class ProjectAssistantService {
    * Format documents into context string for AI
    */
   formatContextForAI(documents: DocumentContent[]): string {
-    let context = '# SportsGoalie Project Documentation\n\n';
-    context += 'The following documentation provides comprehensive information about the SportsGoalie project.\n\n';
+    let context = '# Smarter Goalie Project Documentation\n\n';
+    context += 'The following documentation provides comprehensive information about the Smarter Goalie project.\n\n';
     context += '---\n\n';
 
     // Group by category
@@ -192,7 +192,7 @@ export class ProjectAssistantService {
       }
     }
 
-    context += '\n\nUse this documentation to answer questions about the SportsGoalie project.';
+    context += '\n\nUse this documentation to answer questions about the Smarter Goalie project.';
     context += '\nProvide specific details, reference file paths when relevant, and be helpful.';
 
     return context;

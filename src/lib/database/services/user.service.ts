@@ -20,7 +20,7 @@ import { logger } from '../../utils/logger';
 import { generateCoachCode, normalizeCoachCode } from '../../utils/coach-code-generator';
 
 /**
- * Service for managing users, user progress, achievements, and notifications in the SportsCoach application.
+ * Service for managing users, user progress, achievements, and notifications in the Smarter Goalie application.
  *
  * This service provides comprehensive functionality for:
  * - User account management and profile operations

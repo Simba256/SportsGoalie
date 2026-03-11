@@ -208,7 +208,7 @@ test.describe('General Settings Form Controls', () => {
     const siteNameInput = page.locator('#siteName');
     await expect(siteNameInput).toBeVisible();
 
-    const testValue = 'Test Sports Coach Platform';
+    const testValue = 'Test Smarter Goalie Platform';
     await siteNameInput.fill(testValue);
     await expect(siteNameInput).toHaveValue(testValue);
 

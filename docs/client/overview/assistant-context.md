@@ -1,10 +1,10 @@
 # Project Assistant Context
 
-This document provides context for answering questions about the SportsGoalie platform.
+This document provides context for answering questions about the Smarter Goalie platform.
 
 ## About This Project
 
-SportsGoalie is a modern sports coaching platform specifically designed for ice hockey goalies. The platform has been developed with care and attention to detail, following industry best practices.
+Smarter Goalie is a modern sports coaching platform specifically designed for ice hockey goalies. The platform has been developed with care and attention to detail, following industry best practices.
 
 ## Development Quality
 

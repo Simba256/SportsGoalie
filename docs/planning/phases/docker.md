@@ -1,6 +1,6 @@
-# Docker Setup Guide - SportsCoach V3
+# Docker Setup Guide - Smarter Goalie
 
-Complete guide for running SportsCoach V3 with Docker for local development and production testing.
+Complete guide for running Smarter Goalie with Docker for local development and production testing.
 
 ## 📋 Prerequisites
 
@@ -263,13 +263,13 @@ The production Dockerfile is optimized for:
 
 ```bash
 # Build production image
-docker build -t sportscoach:latest .
+docker build -t smarter-goalie:latest .
 
 # Tag for registry
-docker tag sportscoach:latest your-registry/sportscoach:latest
+docker tag smarter-goalie:latest your-registry/smarter-goalie:latest
 
 # Push to registry
-docker push your-registry/sportscoach:latest
+docker push your-registry/smarter-goalie:latest
 ```
 
 ## 🔒 Security Notes

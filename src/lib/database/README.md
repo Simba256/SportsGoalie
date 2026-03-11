@@ -1,6 +1,6 @@
 # Database Services Documentation
 
-This directory contains the comprehensive database layer for SportsCoach V3, built on Firebase Firestore. The services provide a robust, scalable, and type-safe interface for all database operations.
+This directory contains the comprehensive database layer for Smarter Goalie, built on Firebase Firestore. The services provide a robust, scalable, and type-safe interface for all database operations.
 
 ## 📁 Directory Structure
 
@@ -457,4 +457,4 @@ const healthCheck = await sportsService.healthCheck();
 const allHealth = await DatabaseHelpers.healthCheck();
 ```
 
-This database layer provides a robust foundation for the SportsCoach V3 application with comprehensive error handling, performance optimization, and developer-friendly APIs.
+This database layer provides a robust foundation for the Smarter Goalie application with comprehensive error handling, performance optimization, and developer-friendly APIs.

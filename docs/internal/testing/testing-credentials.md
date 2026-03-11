@@ -1,6 +1,6 @@
 # Testing Credentials & Test Accounts
 
-This document contains all test accounts and credentials used for testing the SportsCoach V3 authentication system.
+This document contains all test accounts and credentials used for testing the Smarter Goalie authentication system.
 
 ## 🔐 Test Accounts Overview
 

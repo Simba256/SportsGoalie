@@ -20,7 +20,7 @@ import {
 } from '../utils/sport-helpers';
 
 /**
- * Service for managing sports, skills, and user progress in the SportsCoach application.
+ * Service for managing sports, skills, and user progress in the Smarter Goalie application.
  *
  * This service provides comprehensive functionality for:
  * - CRUD operations for sports and skills

@@ -7,7 +7,7 @@
 
 ## Overview
 
-The Project Assistant is an AI-powered chatbot with comprehensive knowledge of the SportsGoalie project. It provides instant answers about features, routes, progress, technical details, and architectural decisions by accessing all client documentation.
+The Project Assistant is an AI-powered chatbot with comprehensive knowledge of the Smarter Goalie project. It provides instant answers about features, routes, progress, technical details, and architectural decisions by accessing all client documentation.
 
 ## Key Features
 

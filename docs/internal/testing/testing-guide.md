@@ -1,4 +1,4 @@
-# Testing Strategy - SportsCoach V3
+# Testing Strategy - Smarter Goalie
 
 ## 🎯 Testing Philosophy
 
