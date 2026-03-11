@@ -40,7 +40,7 @@
 ### Block 2: Depth & Quality (Next) - Est. 21-36 hours
 | # | Task | Est | Status |
 |---|------|-----|--------|
-| 8 | Questionnaire Alignment (verify specs) | 3-5h | 🔲 |
+| 8 | Questionnaire Alignment (84 assessment + 20 intake) | 3-5h | 🔲 |
 | 9 | LMS Enhancements (content recommendations) | 5-8h | 🔲 |
 | 10 | Analytics Upgrades (trend views) | 5-8h | 🔲 |
 | 11 | Mobile Polish | 3-5h | 🔲 |

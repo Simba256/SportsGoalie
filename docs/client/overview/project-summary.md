@@ -14,7 +14,7 @@ Create a comprehensive digital sports coaching platform that combines structured
 
 ## Core Capabilities
 
-### 1. Multi-Role System (8 Roles)
+### 1. Multi-Role System (8 User Roles + Admin)
 - **Goalies:** Self-paced learning through 7 Pillars methodology
 - **Goalie Parents:** Monitor children's progress, scores, and coach feedback
 - **Coaches:** Team coaches with goalie oversight capabilities
