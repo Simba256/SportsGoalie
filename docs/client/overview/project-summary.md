@@ -15,14 +15,22 @@ Create a comprehensive digital sports coaching platform that combines structured
 ## Core Capabilities
 
 ### 1. Multi-Role System (8 User Roles + Admin)
+
+**Self-Registration (Landing Page):**
 - **Goalies:** Self-paced learning through 7 Pillars methodology
 - **Goalie Parents:** Monitor children's progress, scores, and coach feedback
+
+**Invitation Only:**
 - **Coaches:** Team coaches with goalie oversight capabilities
 - **Goalie Coaches:** Specialized goalie training, create curricula, track progress
+
+**Future Phases:**
 - **Team Managers:** Manage team rosters and goalie development
 - **Organizations:** Multi-team management and oversight
 - **Federations:** League-wide goalie development programs
 - **Camp Information:** Camp registration and training programs
+
+**Internal Assignment:**
 - **Admins:** Full system management, content creation, and oversight
 
 ### 2. Flexible Learning Pathways
@@ -140,7 +148,7 @@ Comprehensive content browser with search, filtering, and real-time data integra
 |---|------|--------|
 | 1 | Branding: SportsGoalie → Smarter Goalie | 🔲 Pending |
 | 2 | 7th Pillar: Add Lifestyle | 🔲 Pending |
-| 3 | Landing Page + 8-Role Selection | 🔲 Pending |
+| 3 | Landing Page + Role Selection (Goalie, Parent) | 🔲 Pending |
 | 4 | Video Database + Tagging System | 🔲 Pending |
 | 5 | Parent Dashboard + Child Linking | 🔲 Pending |
 | 6 | Dashboard Visualization + Integration | 🔲 Pending |

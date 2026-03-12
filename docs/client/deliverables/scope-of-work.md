@@ -34,17 +34,22 @@ Students must pass evaluations to unlock the next level.
 
 ### User Types (8 Roles)
 
-| User | What They Can Do |
-|------|------------------|
-| **Goalie** | Learn through lessons, take evaluations, track progress, upload videos, chart games/practices |
-| **Goalie Parent** | View everything for their children (scores, tests, videos, coach comments) - view only |
-| **Coach** | Team coach with goalie oversight capabilities |
-| **Goalie Coach** | Specialized goalie training, manage students, edit lessons, leave feedback, see all scores |
-| **Team Manager** | Manage team rosters and goalie development tracking |
-| **Organization** | Multi-team management and oversight |
-| **Federation** | League-wide goalie development programs |
-| **Camp Information** | Camp registration and training program management |
-| **Admin** | Full platform control, content management, analytics |
+| User | What They Can Do | Registration Method |
+|------|------------------|---------------------|
+| **Goalie** | Learn through lessons, take evaluations, track progress, upload videos, chart games/practices | Self-registration from landing page |
+| **Goalie Parent** | View everything for their children (scores, tests, videos, coach comments) - view only | Self-registration from landing page |
+| **Coach** | Team coach with goalie oversight capabilities | Invitation only |
+| **Goalie Coach** | Specialized goalie training, manage students, edit lessons, leave feedback, see all scores | Invitation only |
+| **Team Manager** | Manage team rosters and goalie development tracking | Future phase |
+| **Organization** | Multi-team management and oversight | Future phase |
+| **Federation** | League-wide goalie development programs | Future phase |
+| **Camp Information** | Camp registration and training program management | Future phase |
+| **Admin** | Full platform control, content management, analytics | Internal assignment only |
+
+**Registration Notes:**
+- **Landing Page Self-Registration:** Only Goalies and Parents can register directly from the landing page
+- **Invitation System:** Coaches receive email invitations from administrators
+- **Admin Access:** Assigned internally, never self-registered
 
 ---
 
@@ -88,7 +93,11 @@ We've organized the work into phases. Each phase builds on the previous one, del
 ### Phase 2: Core Platform (Weeks 1-6)
 
 **What Gets Built:**
-- 8 user roles (Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp)
+- 8 user roles with tiered registration:
+  - Self-registration: Goalie, Parent (from landing page)
+  - Invitation only: Coach, Goalie Coach
+  - Future phases: Team Manager, Org, Federation, Camp
+  - Internal only: Admin
 - Coach-student and parent-child account linking
 - Student registration with age verification (Canadian compliance)
 - Background survey and initial evaluation placement

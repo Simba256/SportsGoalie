@@ -233,7 +233,11 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 ### What's Been Built
 
 **Authentication & Roles**
-- Complete 8-role system (Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp, Admin)
+- Complete 8-role system with tiered registration:
+  - Self-registration from landing page: Goalie, Parent
+  - Invitation only: Coach, Goalie Coach
+  - Future phases: Team Manager, Org, Federation, Camp
+  - Internal assignment only: Admin
 - Coach invitation workflow
 - Student ID system (SG-XXXX-XXXX)
 - Role-based navigation and access control
@@ -285,7 +289,7 @@ Implemented comprehensive student assessment and intelligence-based onboarding.
 |---|------|--------|
 | 1 | Branding: SportsGoalie → Smarter Goalie | 🔲 Pending |
 | 2 | 7th Pillar: Add Lifestyle | 🔲 Pending |
-| 3 | Landing Page + 8-Role Selection | 🔲 Pending |
+| 3 | Landing Page + Role Selection (2 self-registration: Goalie, Parent) | 🔲 Pending |
 | 4 | Video Database + Tagging System | 🔲 Pending |
 | 5 | Parent Dashboard + Child Linking | 🔲 Pending |
 | 6 | Dashboard Visualization + Integration | 🔲 Pending |
