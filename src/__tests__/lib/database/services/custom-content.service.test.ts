@@ -100,7 +100,7 @@ const createMockQuerySnapshot = (docs: any[]) => ({
 });
 
 // Helper to create mock File
-const createMockFile = (name: string, size: number = 1024): File => {
+const createMockFile = (name: string): File => {
   const blob = new Blob(['test content'], { type: 'application/octet-stream' });
   return new File([blob], name, { type: 'application/octet-stream' });
 };
@@ -161,7 +161,7 @@ describe('CustomContentService', () => {
         title: 'Minimal Content',
         description: 'Minimal description',
         type: 'quiz' as const,
-        content: null,
+        content: '',
         pillarId: 'pillar_1',
       };
 

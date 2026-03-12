@@ -113,6 +113,9 @@ describe('CustomCurriculumService', () => {
             type: 'lesson' as const,
             contentId: 'content_1',
             pillarId: 'pillar_1',
+            levelId: 'level_1',
+            status: 'unlocked' as const,
+            order: 1,
           },
         ],
       };
@@ -296,6 +299,7 @@ describe('CustomCurriculumService', () => {
         type: 'lesson' as const,
         contentId: 'content_new',
         pillarId: 'pillar_1',
+        levelId: 'level_1',
       };
 
       const result = await CustomCurriculumService.addItem('curr_123', itemData, 'coach123');
@@ -312,6 +316,7 @@ describe('CustomCurriculumService', () => {
         type: 'lesson' as const,
         contentId: 'content_new',
         pillarId: 'pillar_1',
+        levelId: 'level_1',
       };
 
       const result = await CustomCurriculumService.addItem('curr_123', itemData, 'coach123');
@@ -329,6 +334,7 @@ describe('CustomCurriculumService', () => {
         type: 'lesson' as const,
         contentId: 'content_new',
         pillarId: 'pillar_1',
+        levelId: 'level_1',
       };
 
       const result = await CustomCurriculumService.addItem('curr_123', itemData, 'coach123');
