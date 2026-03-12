@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { profileUpdateSchema, type ProfileUpdateFormData } from '@/lib/validation/auth';
+import { ParentLinkManager } from '@/components/settings/ParentLinkManager';
 
 export default function ProfilePage() {
   const { user, updateUserProfile, resendEmailVerification } = useAuth();
@@ -254,6 +255,11 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Family Links - Only for students */}
+        {user.role === 'student' && (
+          <ParentLinkManager user={user} />
+        )}
 
         {/* Account Information */}
         <Card>

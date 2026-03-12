@@ -29,6 +29,16 @@ export interface User {
   onboardingCompleted?: boolean;
   onboardingCompletedAt?: Timestamp;
   initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
+
+  // Parent-Child Linking Fields (for students/goalies)
+  linkedParentIds?: string[];      // Array of parent user IDs linked to this goalie
+  parentLinkCode?: string;         // Code for parents to link (XXXX-XXXX format)
+  parentLinkCodeExpiry?: Timestamp; // Optional expiration for the link code
+
+  // Parent-Child Linking Fields (for parents)
+  linkedChildIds?: string[];       // Array of goalie user IDs this parent is linked to
+  parentOnboardingComplete?: boolean; // Whether parent has completed onboarding
+
   // Timestamps
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -895,3 +905,19 @@ export {
  * but represent the fixed 6 Ice Hockey Goalie learning pillars
  */
 export type Pillar = Sport;
+
+// Parent Link Types - Export from parent-link.ts
+export type {
+  ParentRelationship,
+  ParentLinkStatus,
+  LinkMethod,
+  ParentLink,
+  CreateParentLinkData,
+  ParentLinkCodeConfig,
+  ParentLinkCode,
+  LinkedChildSummary,
+  LinkedParentSummary,
+  PerceptionComparison,
+  ParentCrossReferenceView,
+  ParentLinkQueryOptions,
+} from './parent-link';
