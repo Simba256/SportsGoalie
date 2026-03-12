@@ -9,7 +9,7 @@
 **Current Phase:** Block 1 - Launch Critical (per Michael's Work Directive 2026-03-10)
 **Phase Start Date:** 2026-02-22
 **Target Completion:** End of March 2026 (Block 1+2), Early April 2026 (Launch Ready)
-**Overall Progress:** Phase 2.0-2.2 Complete, Block 1 In Progress (3/7 tasks)
+**Overall Progress:** Phase 2.0-2.2 Complete, Block 1 In Progress (4/7 tasks)
 
 ### SOW Compliance Requirements
 | Requirement | Frequency | Detail |
@@ -33,7 +33,7 @@
 | 2 | 7th Pillar: Add Lifestyle | 2h | ✅ |
 | 3 | Landing Page + 8-Role Selection | 5-8h | 🔲 |
 | 4 | Video Database + Tagging System | 8-12h | ✅ |
-| 5 | Parent Dashboard + Child Linking | 10-15h | 🔲 |
+| 5 | Parent Dashboard + Child Linking | 10-15h | ✅ |
 | 6 | Dashboard Visualization + Integration | 4-6h | 🔲 |
 | 7 | Production Email (Resend domain config) | 2-3h | 🔲 |
 
@@ -64,6 +64,10 @@
 ## 📅 Recent Sessions
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
+
+### 2026-03-12 - [Parent Dashboard + Child Linking](docs/sessions/2026-03/2026-03-12-parent-dashboard-child-linking.md)
+**Time:** 4h 30min | **Focus:** Feature - Parent-Child Account Linking | **Block:** 1.5
+Implemented complete parent-child account linking system. Created parent-link.ts with ParentLink, LinkedChildSummary, LinkedParentSummary, ParentCrossReferenceView types. Built ParentLinkService with generateParentLinkCode(), linkParentToChild(), getLinkedChildren(), getLinkedParents(), revokeLink() methods. Created ParentDashboard with stats cards and tabs, ChildProgressCard, LinkChildForm with XXXX-XXXX code validation, CrossReferenceDisplay for perception comparison. Added ParentLinkManager to goalie settings for code generation and parent management. Created 5 parent routes: dashboard, link-child, child/[childId], child/[childId]/assessment, onboarding. Added tooltip.tsx component. Build verified.
 
 ### 2026-03-12 - [Video Database + Tagging System](docs/sessions/2026-03/2026-03-12-video-tagging-system.md)
 **Time:** 2h 30min | **Focus:** Feature - Video Content Filtering | **Block:** 1.4
@@ -249,27 +253,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 52 hours | 🔄 In Progress |
-| **Total** | **~212 hours** | - |
+| Phase 2 | 56.5 hours | 🔄 In Progress |
+| **Total** | **~216.5 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 32.5h | 63% |
-| Documentation | 4.75h | 9% |
-| Debugging | 10h | 19% |
+| Development | 37h | 65% |
+| Documentation | 4.75h | 8% |
+| Debugging | 10h | 18% |
 | Security | 1.5h | 3% |
 | Refactor | 2h | 4% |
 | Testing | 1h | 2% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **52h** | **100%** |
+| **Total** | **56.5h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 25.5h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script, branding update, 7th pillar (Lifestyle) | 23 |
+| 2026-03-01 | 30h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script, branding update, 7th pillar (Lifestyle), video tagging system, parent dashboard + child linking | 25 |
 
 ---
 
@@ -300,7 +304,7 @@ Initial project analysis and progress tracking system implementation.
 - [x] Coach evaluation review with Q&A details
 - [x] Cross-reference engine for multi-role comparison
 
-#### Block 1 - Launch Critical (29% Complete) 🔄 ← CURRENT
+#### Block 1 - Launch Critical (57% Complete) 🔄 ← CURRENT
 > **Priority:** Work in order. Do not skip without written approval.
 
 - [x] **B1.1:** Branding update (SportsGoalie → Smarter Goalie) - 2-3h ✅
@@ -311,15 +315,15 @@ Initial project analysis and progress tracking system implementation.
   - 8 roles: Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp
   - Introduction video placement
   - Each selection routes to appropriate intake flow
-- [ ] **B1.4:** Video Database + Tagging System - 8-12h
+- [x] **B1.4:** Video Database + Tagging System - 8-12h ✅
   - Tagging schema: Pillar (1-7), System (7AMS/7PTS/4LAS/Box/General)
   - User Type, Level (Introduction/Development/Refinement)
   - Angle Marker (AM1-7), Arch Level (L1-L4)
   - Search and filter by any tag combination
-- [ ] **B1.5:** Parent Dashboard + Child Linking - 10-15h
+- [x] **B1.5:** Parent Dashboard + Child Linking - 10-15h ✅
   - View linked child's progress, scores, chart history, module completion
-  - Parent-child linking via Student ID (SG-XXXX-XXXX)
-  - Admin-controlled permissions
+  - Parent-child linking via link code (XXXX-XXXX format)
+  - Goalie-controlled permissions, parent cross-reference display
 - [ ] **B1.6:** Dashboard Visualization + Integration - 4-6h
   - Cross-reference results display
   - Connect scoring engine, gap analysis, charting to dashboards
@@ -659,6 +663,23 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-12 (Session: Parent Dashboard + Child Linking)
+- **Feature:** Created `src/types/parent-link.ts` with ParentLink, LinkedChildSummary, LinkedParentSummary, ParentCrossReferenceView types
+- **Feature:** Added parent/child linking fields to User interface (linkedParentIds, linkedChildIds, parentLinkCode, etc.)
+- **Feature:** Created ParentLinkService with full CRUD operations for parent-child linking
+- **Feature:** Implemented XXXX-XXXX format link codes with 7-day expiration
+- **Feature:** Created ParentDashboard with stats cards, linked children overview, tabs
+- **Feature:** Created ChildProgressCard with progress, quizzes, streak, assessment status
+- **Feature:** Created LinkChildForm with two-step code validation and relationship selection
+- **Feature:** Created CrossReferenceDisplay for parent-goalie perception comparison
+- **Feature:** Created ParentLinkManager for goalie settings (code generation, parent management)
+- **Routes:** Added `/parent`, `/parent/link-child`, `/parent/child/[childId]`, `/parent/child/[childId]/assessment`, `/parent/onboarding`
+- **UI:** Created tooltip.tsx Radix UI wrapper component
+- **Integration:** Added ParentLinkManager to profile page for students
+- **Database:** Uses parentLinks and parentLinkCodes collections
+- **Verification:** Build passes, 14 new files, 3 modified files
+- **Block 1.5:** Complete ✅
 
 ### 2026-03-12 (Session: Add 7th Pillar - Lifestyle)
 - **Feature:** Added 'lifestyle' to PillarSlug union type
@@ -1114,10 +1135,10 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-12
-**Last Session:** Add 7th Pillar: Lifestyle (Block 1.2)
-**Total Sessions This Phase:** 40
-**Current Phase Hours:** 52h
-**Next Session Focus:** Block 1.3 - Landing Page + 8-Role Selection
+**Last Session:** Parent Dashboard + Child Linking (Block 1.5)
+**Total Sessions This Phase:** 41
+**Current Phase Hours:** 56.5h
+**Next Session Focus:** Block 1.6 - Dashboard Visualization + Integration
 
 ---
 
