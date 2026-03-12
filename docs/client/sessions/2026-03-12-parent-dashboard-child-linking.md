@@ -1,98 +1,81 @@
 # Parent Dashboard + Child Linking
 
 **Date:** March 12, 2026
-**Type:** Feature - Parent-Child Account Linking
+**Type:** Feature Development
 **Time Investment:** 4.5 hours
-**Block:** B1.5 - Launch Critical
 
 ## Summary
 
-Implemented complete parent-child account linking system allowing parents to link to their goalie's account, view progress, and compare perceptions through cross-reference analysis. Includes link code generation, parent dashboard, child detail views, and goalie-side link management.
+Implemented parent-child account linking system with link code generation, parent dashboard, child detail views, cross-reference perception comparison, and goalie-side link management in settings.
 
 ## Goals
 
-- Create parent-child linking via secure codes
-- Build parent dashboard with linked children overview
-- Create child detail view with progress and stats
-- Implement cross-reference perception comparison
-- Add link management to goalie settings
-- Create parent onboarding flow
+- Create parent-link type definitions
+- Build ParentLinkService with full CRUD operations
+- Create ParentDashboard, ChildProgressCard, LinkChildForm components
+- Create CrossReferenceDisplay for perception comparison
+- Create ParentLinkManager for goalie settings
+- Create parent routes (dashboard, link-child, child detail, assessment, onboarding)
 
 ## Deliverables
 
 ### Completed
-- Complete type definitions for parent linking
-- ParentLinkService with full CRUD operations
-- Link code system (XXXX-XXXX format, 7-day expiry)
-- ParentDashboard with stats and linked children
-- ChildProgressCard for child summaries
-- LinkChildForm with two-step validation
-- CrossReferenceDisplay for perception comparison
-- ParentLinkManager for goalie settings
-- 5 new parent routes
-- Build verified passing
+- ✅ Created `parent-link.ts` with ParentLink, LinkedChildSummary, LinkedParentSummary types
+- ✅ Added parent/child link fields to User interface
+- ✅ Built ParentLinkService with link code generation, validation, CRUD operations
+- ✅ Created ParentDashboard with stats cards and linked children overview
+- ✅ Created ChildProgressCard with progress, quizzes, streak display
+- ✅ Created LinkChildForm with two-step code validation
+- ✅ Created CrossReferenceDisplay for parent-goalie perception comparison
+- ✅ Created ParentLinkManager for goalie settings (code generation, revoke access)
+- ✅ Created 5 parent routes
+- ✅ Added tooltip.tsx component (Radix UI wrapper)
 
-## Link Code System
+### Link Code System
+- Format: `XXXX-XXXX` (excludes 0, 1, O, I for clarity)
+- Expiry: 7 days default
+- Flow: Goalie generates → shares with parent → parent enters code → link created
 
-### How It Works
-1. Goalie generates code in Settings (Family Links section)
-2. Code format: `XXXX-XXXX` (e.g., `AB2C-DE3F`)
-3. Code expires after 7 days
-4. Parent enters code to link accounts
-5. Parent selects relationship (Parent/Guardian/Other)
-6. Link created, parent sees child in dashboard
+## Files Modified
+
+### Created (14 files)
+- `src/types/parent-link.ts` - Type definitions
+- `src/lib/database/services/parent-link.service.ts` - Link service
+- `src/components/parent/ParentDashboard.tsx`
+- `src/components/parent/ChildProgressCard.tsx`
+- `src/components/parent/LinkChildForm.tsx`
+- `src/components/parent/CrossReferenceDisplay.tsx`
+- `src/components/parent/index.ts`
+- `src/components/settings/ParentLinkManager.tsx`
+- `src/components/ui/tooltip.tsx`
+- `app/parent/page.tsx`
+- `app/parent/link-child/page.tsx`
+- `app/parent/child/[childId]/page.tsx`
+- `app/parent/child/[childId]/assessment/page.tsx`
+- `app/parent/onboarding/page.tsx`
+
+### Modified (3 files)
+- `src/types/index.ts` - Added parent link fields to User, exports
+- `src/lib/database/index.ts` - Exported ParentLinkService
+- `app/profile/page.tsx` - Added ParentLinkManager for students
+
+## Technical Notes
+
+### Database Collections
+- `parentLinks` - Link documents with parentId, childId, relationship, status
+- `parentLinkCodes` - Code documents with goalieId, expiresAt, used flag
 
 ### Security
-- Codes exclude confusing characters (0, 1, O, I)
-- Collision checking ensures unique codes
 - Goalies can revoke parent access anytime
+- Link codes expire after 7 days
 - Regenerating code invalidates old one
-
-## Key Features
-
-### For Parents
-- Dashboard showing all linked goalies
-- Progress metrics (completion %, quiz scores)
-- Activity timeline
-- Perception comparison with cross-reference display
-- Assessment status tracking
-
-### For Goalies
-- Generate/regenerate link codes
-- Copy code to clipboard for sharing
-- View linked parents
-- Revoke parent access with confirmation
-
-### Cross-Reference Display
-- Shows alignment between parent and goalie perceptions
-- Category-by-category breakdown
-- Alignment badges (Aligned/Minor Gap/Significant Gap)
-- Recommendations for addressing gaps
-
-## New Routes
-
-| Route | Purpose |
-|-------|---------|
-| `/parent` | Parent dashboard home |
-| `/parent/link-child` | Link a new goalie |
-| `/parent/child/[childId]` | Child detail view |
-| `/parent/child/[childId]/assessment` | Parent assessment |
-| `/parent/onboarding` | Parent welcome/setup |
-
-## Files Created
-
-**14 new files** including types, services, components, and routes.
 
 ## Testing & Validation
 
-- TypeScript compiles with zero errors
-- Next.js build succeeds
-- All new routes appear in build output
-- Components properly exported
+- [x] TypeScript compiles with zero errors
+- [x] Build succeeds
+- [x] All new routes appear in build output
 
 ## Progress Impact
 
-- **Block 1.5:** Complete
-- Parents can now link to and monitor their goalies
-- Cross-reference perception comparison enabled
-- Foundation for parent engagement features
+- Block 1.5 Parent Dashboard: Complete
