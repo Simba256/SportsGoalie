@@ -2,7 +2,7 @@
 
 **Date:** March 12, 2026
 **Type:** Testing / Bug Fix
-**Time Investment:** 1.5 hours
+**Time Investment:** (included in B1.5 total)
 
 ## Summary
 

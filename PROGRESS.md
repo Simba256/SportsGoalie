@@ -66,15 +66,15 @@
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
 ### 2026-03-12 - [Test Import Path Fixes](docs/sessions/2026-03/2026-03-12-test-import-path-fixes.md)
-**Time:** 1h 30min | **Focus:** Testing / Bug Fix - Import Path Resolution | **Block:** Testing
+**Time:** (included in B1.5) | **Focus:** Testing / Bug Fix - Import Path Resolution | **Block:** Testing
 Fixed incorrect import path aliases (@/src/* → @/*) in 8 source files causing 80 test failures. Updated sports-catalog.test.tsx and sports-detail.test.tsx for 7-pillar system UI. Simplified auth context tests to avoid Vitest act()+rejects incompatibility. Fixed type errors in service tests. Results: 347 tests passing (was 346), 11 test files still failing (pre-existing component mocking issues). TypeScript and build verified.
 
 ### 2026-03-12 - [Parent Dashboard + Child Linking](docs/sessions/2026-03/2026-03-12-parent-dashboard-child-linking.md)
-**Time:** 4h 30min | **Focus:** Feature - Parent-Child Account Linking | **Block:** 1.5
+**Time:** 6h 0min | **Focus:** Feature - Parent-Child Account Linking | **Block:** 1.5
 Implemented complete parent-child account linking system. Created parent-link.ts with ParentLink, LinkedChildSummary, LinkedParentSummary, ParentCrossReferenceView types. Built ParentLinkService with generateParentLinkCode(), linkParentToChild(), getLinkedChildren(), getLinkedParents(), revokeLink() methods. Created ParentDashboard with stats cards and tabs, ChildProgressCard, LinkChildForm with XXXX-XXXX code validation, CrossReferenceDisplay for perception comparison. Added ParentLinkManager to goalie settings for code generation and parent management. Created 5 parent routes: dashboard, link-child, child/[childId], child/[childId]/assessment, onboarding. Added tooltip.tsx component. Build verified.
 
 ### 2026-03-12 - [Video Database + Tagging System](docs/sessions/2026-03/2026-03-12-video-tagging-system.md)
-**Time:** 2h 30min | **Focus:** Feature - Video Content Filtering | **Block:** 1.4
+**Time:** 3h 0min | **Focus:** Feature - Video Content Filtering | **Block:** 1.4
 Implemented structured tagging system for video content filtering. Created video-tags.ts with PillarTag, SystemTag (7AMS/7PTS/4LAS/Box/General), UserTypeTag (goalie/parent/coach), AngleMarkerTag (AM1-AM7), ArchLevelTag (L1-L4). Added structuredTags and _tagIndex fields to VideoQuiz. Updated VideoQuizService with getVideoQuizzesByTags(), getTagFacets(), updateTagIndex() methods. Created VideoTagEditor and VideoFilterPanel components. Integrated into admin quiz create/edit pages (new Tags tab). Added filter panel and tag badges to admin quizzes list. Build verified.
 
 ### 2026-03-12 - [Add 7th Pillar: Lifestyle](docs/sessions/2026-03/2026-03-12-add-7th-pillar-lifestyle.md)
@@ -82,7 +82,7 @@ Implemented structured tagging system for video content filtering. Created video
 Added Lifestyle as the 7th pillar covering off-ice habits, nutrition, recovery, sleep, and life balance. Updated type definitions (PillarSlug, PILLARS array), utility files (PILLAR_IDS, pink color classes), seed data, migration script. Added Heart icon to UI components. Updated "6 pillars" → "7 pillars" text across pillars page, admin page, dashboard, and test files. Ran migration to create pillar_lifestyle in database. Build verified, pushed to remote.
 
 ### 2026-03-12 - [Branding Update: Smarter Goalie](docs/sessions/2026-03/2026-03-12-branding-update-smarter-goalie.md)
-**Time:** 2h 30min | **Focus:** Branding / Documentation | **Block:** 1.1
+**Time:** 1h 30min | **Focus:** Branding / Documentation | **Block:** 1.1
 Complete branding update across 42 files. Updated package.json name (sportscoach-v3 → smarter-goalie), all user-facing metadata, AI system prompts, README/CLAUDE.md/TESTING.md, Docker infrastructure, planning docs, technical architecture docs, client documentation, internal documentation, test files, and service comments. Build verified, pushed to remote.
 
 ### 2026-03-11 - Work Directive Integration
