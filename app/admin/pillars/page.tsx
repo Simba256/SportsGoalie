@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
 import {
   Edit,
   Eye,

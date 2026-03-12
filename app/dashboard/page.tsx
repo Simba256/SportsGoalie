@@ -35,12 +35,12 @@ import { Badge } from '@/components/ui/badge';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
-import { useEnrollment } from '@/src/hooks/useEnrollment';
+import { useEnrollment } from '@/hooks/useEnrollment';
 import { StatsCards } from '@/components/analytics/StatsCards';
-import { VideoUpload } from '@/src/components/dashboard/VideoUpload';
-import { CustomCurriculumDashboard } from '@/src/components/dashboard/CustomCurriculumDashboard';
+import { VideoUpload } from '@/components/dashboard/VideoUpload';
+import { CustomCurriculumDashboard } from '@/components/dashboard/CustomCurriculumDashboard';
 import { PILLARS } from '@/types';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
 
 // Icon map for pillar icons
 const PILLAR_ICONS: Record<string, React.ElementType> = {

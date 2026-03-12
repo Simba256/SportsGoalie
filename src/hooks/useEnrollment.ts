@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Sport, SportProgress } from '@/types';
-import { enrollmentService } from '@/src/lib/database/services/enrollment.service';
+import { enrollmentService } from '@/lib/database/services/enrollment.service';
 import { useAuth } from '@/lib/auth/context';
-import { logger } from '@/src/lib/utils/logger';
+import { logger } from '@/lib/utils/logger';
 
 interface EnrolledSport {
   sport: Sport;

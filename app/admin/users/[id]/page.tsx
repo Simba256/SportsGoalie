@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -51,13 +51,13 @@ import type {
   CourseProgressDetail,
   QuizAttemptDetail
 } from '@/lib/database/services/student-analytics.service';
-import { QuizPerformanceChart } from '@/src/components/admin/analytics/QuizPerformanceChart';
-import { ProgressOverTimeChart } from '@/src/components/admin/analytics/ProgressOverTimeChart';
-import { SkillPerformanceTable } from '@/src/components/admin/analytics/SkillPerformanceTable';
-import { ActivityTimeline } from '@/src/components/admin/analytics/ActivityTimeline';
-import { EngagementMetrics } from '@/src/components/admin/analytics/EngagementMetrics';
-import { CourseProgress } from '@/src/components/admin/analytics/CourseProgress';
-import { QuizAttemptHistory } from '@/src/components/admin/analytics/QuizAttemptHistory';
+import { QuizPerformanceChart } from '@/components/admin/analytics/QuizPerformanceChart';
+import { ProgressOverTimeChart } from '@/components/admin/analytics/ProgressOverTimeChart';
+import { SkillPerformanceTable } from '@/components/admin/analytics/SkillPerformanceTable';
+import { ActivityTimeline } from '@/components/admin/analytics/ActivityTimeline';
+import { EngagementMetrics } from '@/components/admin/analytics/EngagementMetrics';
+import { CourseProgress } from '@/components/admin/analytics/CourseProgress';
+import { QuizAttemptHistory } from '@/components/admin/analytics/QuizAttemptHistory';
 
 export default function AdminUserDetailsPage() {
   return (

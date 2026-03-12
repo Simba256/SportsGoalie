@@ -31,7 +31,7 @@ import {
   Dumbbell,
 } from 'lucide-react';
 import { PILLARS } from '@/types';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
 
 // Icon map for pillar icons
 const PILLAR_ICONS: Record<string, React.ElementType> = {

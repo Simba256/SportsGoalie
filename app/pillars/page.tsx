@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { LoadingState, LoadingCard } from '@/components/ui/loading';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/src/lib/utils/pillars';
+import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
 import Link from 'next/link';
 import {
   Brain,
