@@ -65,6 +65,10 @@
 
 > **Full session details:** See `docs/sessions/YYYY-MM/` for detailed session logs
 
+### 2026-03-12 - [Test Import Path Fixes](docs/sessions/2026-03/2026-03-12-test-import-path-fixes.md)
+**Time:** 1h 30min | **Focus:** Testing / Bug Fix - Import Path Resolution | **Block:** Testing
+Fixed incorrect import path aliases (@/src/* → @/*) in 8 source files causing 80 test failures. Updated sports-catalog.test.tsx and sports-detail.test.tsx for 7-pillar system UI. Simplified auth context tests to avoid Vitest act()+rejects incompatibility. Fixed type errors in service tests. Results: 347 tests passing (was 346), 11 test files still failing (pre-existing component mocking issues). TypeScript and build verified.
+
 ### 2026-03-12 - [Parent Dashboard + Child Linking](docs/sessions/2026-03/2026-03-12-parent-dashboard-child-linking.md)
 **Time:** 4h 30min | **Focus:** Feature - Parent-Child Account Linking | **Block:** 1.5
 Implemented complete parent-child account linking system. Created parent-link.ts with ParentLink, LinkedChildSummary, LinkedParentSummary, ParentCrossReferenceView types. Built ParentLinkService with generateParentLinkCode(), linkParentToChild(), getLinkedChildren(), getLinkedParents(), revokeLink() methods. Created ParentDashboard with stats cards and tabs, ChildProgressCard, LinkChildForm with XXXX-XXXX code validation, CrossReferenceDisplay for perception comparison. Added ParentLinkManager to goalie settings for code generation and parent management. Created 5 parent routes: dashboard, link-child, child/[childId], child/[childId]/assessment, onboarding. Added tooltip.tsx component. Build verified.
@@ -253,27 +257,27 @@ Initial project analysis and progress tracking system implementation.
 | Phase | Time Spent | Status |
 |-------|-----------|--------|
 | Phase 1 | ~160 hours (estimated) | ✅ Complete |
-| Phase 2 | 56.5 hours | 🔄 In Progress |
-| **Total** | **~216.5 hours** | - |
+| Phase 2 | 58 hours | 🔄 In Progress |
+| **Total** | **~218 hours** | - |
 
 ### By Category (Phase 2)
 | Category | Time Spent | Percentage |
 |----------|-----------|------------|
-| Development | 37h | 65% |
+| Development | 37h | 64% |
 | Documentation | 4.75h | 8% |
-| Debugging | 10h | 18% |
+| Debugging | 10h | 17% |
 | Security | 1.5h | 3% |
-| Refactor | 2h | 4% |
-| Testing | 1h | 2% |
+| Refactor | 2h | 3% |
+| Testing | 2.5h | 4% |
 | Version Control | 0.25h | <1% |
 | Code Review | 0h | 0% |
-| **Total** | **56.5h** | **100%** |
+| **Total** | **58h** | **100%** |
 
 ### Weekly Summary
 | Week Starting | Hours Worked | Main Focus | Sessions |
 |--------------|--------------|------------|----------|
 | 2026-02-17 | 26h | Multi-role system, student IDs, security, coach invitations, workflow types, curriculum builder, content browser, AI chatbot, session tracking, coach-student linking, dashboard separation, auth fixes, curriculum fixes, difficulty level renaming, data migration | 14 |
-| 2026-03-01 | 30h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script, branding update, 7th pillar (Lifestyle), video tagging system, parent dashboard + child linking | 25 |
+| 2026-03-01 | 31.5h | Coach custom content creation, student access fixes, video quiz full-page conversion, UI/UX improvements, video handling verification, security audit & fixes, dead code cleanup, TypeScript fixes, student onboarding evaluation system, Firestore rules, Playwright testing, coach UX improvements, codebase verification & bug fixes, onboarding redirect fix, workflow filter, 6-pillar conversion, route renaming, test file updates, navigation cleanup, Michael's Phase 2 scoring foundation, V2 onboarding UI fixes, email verification branding, V2 backward compatibility removal, login redirect fix, evaluation Q&A detail view, reset incomplete evaluations script, branding update, 7th pillar (Lifestyle), video tagging system, parent dashboard + child linking, test import path fixes | 26 |
 
 ---
 
@@ -663,6 +667,17 @@ Initial project analysis and progress tracking system implementation.
 ---
 
 ## 🔄 Recent Changes (Last 30 Days)
+
+### 2026-03-12 (Session: Test Import Path Fixes)
+- **Fix:** Corrected import path aliases in 8 source files (@/src/* → @/*)
+- **Fix:** Fixed app/pillars, app/dashboard, app/admin pages with wrong @/src/lib imports
+- **Fix:** Fixed src/hooks/useEnrollment.ts with wrong @/src/lib imports
+- **Testing:** Rewrote sports-catalog.test.tsx for 7-pillar system (was testing old "Sports Catalog" UI)
+- **Testing:** Rewrote sports-detail.test.tsx with correct service mocks
+- **Testing:** Simplified auth context tests to avoid Vitest act()+rejects incompatibility
+- **Testing:** Fixed type errors in custom-content.service.test.ts and custom-curriculum.service.test.ts
+- **Results:** 347 tests passing, 81 failing (11 test files with pre-existing mocking issues)
+- **Verification:** TypeScript compiles, build passes
 
 ### 2026-03-12 (Session: Parent Dashboard + Child Linking)
 - **Feature:** Created `src/types/parent-link.ts` with ParentLink, LinkedChildSummary, LinkedParentSummary, ParentCrossReferenceView types
@@ -1135,9 +1150,9 @@ Initial project analysis and progress tracking system implementation.
 ## 📞 Quick Reference
 
 **Last Updated:** 2026-03-12
-**Last Session:** Parent Dashboard + Child Linking (Block 1.5)
-**Total Sessions This Phase:** 41
-**Current Phase Hours:** 56.5h
+**Last Session:** Test Import Path Fixes
+**Total Sessions This Phase:** 42
+**Current Phase Hours:** 58h
 **Next Session Focus:** Block 1.6 - Dashboard Visualization + Integration
 
 ---
