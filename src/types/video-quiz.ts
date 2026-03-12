@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { Question } from './quiz';
 import { QuestionType, DifficultyLevel } from './index';
+import { VideoStructuredTags } from './video-tags';
 
 /**
  * Video-based quiz question with timestamp
@@ -47,6 +48,10 @@ export interface VideoQuiz {
   difficulty: DifficultyLevel;
   estimatedDuration: number; // estimated time to complete in minutes
   tags: string[];
+  /** Structured tags for advanced filtering (optional, new system) */
+  structuredTags?: VideoStructuredTags;
+  /** Flattened tag index for Firestore queries (auto-generated) */
+  _tagIndex?: string[];
   isActive: boolean;
   isPublished: boolean;
   status?: 'draft' | 'published' | 'archived'; // Quiz publication status

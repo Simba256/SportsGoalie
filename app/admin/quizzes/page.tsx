@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
-import { VideoQuiz } from '@/types';
+import { VideoQuiz, VideoTagFilter, TagFacetCounts, matchesFilter, countTags } from '@/types';
+import { PILLARS } from '@/types/onboarding';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { VideoFilterPanel } from '@/components/video';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,9 +47,12 @@ function AdminQuizzesPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [tagFilter, setTagFilter] = useState<VideoTagFilter>({});
+  const [tagFacets, setTagFacets] = useState<TagFacetCounts | undefined>();
 
   useEffect(() => {
     loadQuizzes();
+    loadTagFacets();
   }, []);
 
   const loadQuizzes = async () => {
@@ -78,6 +83,17 @@ function AdminQuizzesPageContent() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTagFacets = async () => {
+    try {
+      const result = await videoQuizService.getTagFacets();
+      if (result.success && result.data) {
+        setTagFacets(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading tag facets:', error);
     }
   };
 
@@ -152,7 +168,12 @@ function AdminQuizzesPageContent() {
       (statusFilter === 'inactive' && !quiz.isActive) ||
       (statusFilter === 'draft' && !quiz.isPublished);
 
-    return matchesSearch && matchesDifficulty && matchesStatus;
+    // Tag filter using structured tags
+    const matchesTags = quiz.structuredTags
+      ? matchesFilter(quiz.structuredTags, tagFilter)
+      : Object.keys(tagFilter).every(key => !tagFilter[key as keyof VideoTagFilter]?.length);
+
+    return matchesSearch && matchesDifficulty && matchesStatus && matchesTags;
   });
 
   const formatDuration = (seconds: number): string => {
@@ -220,6 +241,16 @@ function AdminQuizzesPageContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tag Filters */}
+      <VideoFilterPanel
+        filter={tagFilter}
+        onFilterChange={setTagFilter}
+        facets={tagFacets}
+        loading={loading}
+        className="mb-6"
+        defaultCollapsed={true}
+      />
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -340,6 +371,11 @@ function AdminQuizzesPageContent() {
                           ? 'Draft'
                           : 'Inactive'}
                       </Badge>
+                      {quiz.structuredTags && countTags(quiz.structuredTags) > 0 && (
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 text-xs">
+                          {countTags(quiz.structuredTags)} tags
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <DropdownMenu>
@@ -415,6 +451,27 @@ function AdminQuizzesPageContent() {
                     </span>
                   </div>
                 </div>
+
+                {/* Structured Tags Display */}
+                {quiz.structuredTags && (quiz.structuredTags.pillar || quiz.structuredTags.systems.length > 0) && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {quiz.structuredTags.pillar && (
+                      <Badge variant="outline" className="text-xs bg-primary/5">
+                        {PILLARS.find(p => p.slug === quiz.structuredTags!.pillar)?.shortName || quiz.structuredTags.pillar}
+                      </Badge>
+                    )}
+                    {quiz.structuredTags.systems.slice(0, 2).map((system) => (
+                      <Badge key={system} variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                        {system}
+                      </Badge>
+                    ))}
+                    {quiz.structuredTags.systems.length > 2 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{quiz.structuredTags.systems.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex gap-2 pt-2">
                   <Button

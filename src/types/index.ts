@@ -178,6 +178,43 @@ export type {
   DropOffPoint
 } from './video-quiz';
 
+// Video Tag Types - Structured tagging system for video content
+export type {
+  PillarTag,
+  SystemTag,
+  UserTypeTag,
+  AngleMarkerTag,
+  ArchLevelTag,
+  VideoStructuredTags,
+  VideoTagFilter,
+  TagFacetCounts,
+} from './video-tags';
+
+export {
+  SYSTEM_TAGS,
+  USER_TYPE_TAGS,
+  ANGLE_MARKER_TAGS,
+  ARCH_LEVEL_TAGS,
+  SYSTEM_TAG_METADATA,
+  USER_TYPE_TAG_METADATA,
+  ARCH_LEVEL_TAG_METADATA,
+  ANGLE_MARKER_TAG_METADATA,
+  TAG_METADATA,
+  createEmptyStructuredTags,
+  buildTagIndex,
+  parseTagIndex,
+  filterToTagIndex,
+  matchesFilter,
+  getSystemTagLabel,
+  getUserTypeTagLabel,
+  getArchLevelTagLabel,
+  getAngleMarkerTagLabel,
+  getSystemTagColorClass,
+  getArchLevelTagColorClass,
+  countTags,
+  countActiveFilters,
+} from './video-tags';
+
 
 export interface QuizQuestion {
   id: string;

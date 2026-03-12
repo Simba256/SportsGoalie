@@ -8,7 +8,21 @@ import {
   QueryOptions,
   WhereClause,
   Skill,
+  VideoTagFilter,
+  VideoStructuredTags,
+  TagFacetCounts,
+  buildTagIndex,
+  SYSTEM_TAGS,
+  USER_TYPE_TAGS,
+  ANGLE_MARKER_TAGS,
+  ARCH_LEVEL_TAGS,
+  PillarTag,
+  SystemTag,
+  UserTypeTag,
+  AngleMarkerTag,
+  ArchLevelTag,
 } from '@/types';
+import { PILLARS } from '@/types/onboarding';
 import { logger } from '../../utils/logger';
 import { Timestamp } from 'firebase/firestore';
 
@@ -165,8 +179,13 @@ export class VideoQuizService extends BaseDatabaseService {
 
       // Create the video quiz
       const now = Timestamp.now();
+
+      // Build tag index if structured tags are provided
+      const _tagIndex = quiz.structuredTags ? buildTagIndex(quiz.structuredTags) : [];
+
       const videoQuizData = {
         ...quiz,
+        _tagIndex,
         metadata,
         createdAt: now,
         updatedAt: now,
@@ -368,8 +387,12 @@ export class VideoQuizService extends BaseDatabaseService {
     });
 
     try {
+      // Build tag index if structured tags are being updated
+      const _tagIndex = updates.structuredTags ? buildTagIndex(updates.structuredTags) : undefined;
+
       const updateData = {
         ...updates,
+        ...(_tagIndex !== undefined && { _tagIndex }),
         updatedAt: Timestamp.now(),
       };
 
@@ -377,6 +400,7 @@ export class VideoQuizService extends BaseDatabaseService {
         collection: this.VIDEO_QUIZZES_COLLECTION,
         quizId,
         dataKeys: Object.keys(updateData),
+        hasStructuredTags: !!updates.structuredTags,
       });
 
       await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, updateData);
@@ -882,6 +906,261 @@ export class VideoQuizService extends BaseDatabaseService {
     } catch (error) {
       logger.error('Failed to update quiz metadata', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), quizId });
       // Don't throw - metadata update failure shouldn't block quiz completion
+    }
+  }
+
+  // ==========================================
+  // TAG-BASED QUERY METHODS
+  // ==========================================
+
+  /**
+   * Gets video quizzes filtered by structured tags.
+   * Uses _tagIndex field for efficient Firestore queries.
+   *
+   * Note: Due to Firestore limitations, we can only use one array-contains-any
+   * per query. For complex multi-category filters, we do client-side filtering.
+   */
+  async getVideoQuizzesByTags(
+    filter: VideoTagFilter,
+    options?: QueryOptions
+  ): Promise<ApiResponse<PaginatedResponse<VideoQuiz>>> {
+    logger.database('query', this.VIDEO_QUIZZES_COLLECTION, undefined, { filter });
+
+    try {
+      // Build query conditions
+      const whereConditions: WhereClause[] = [
+        { field: 'isActive', operator: '==', value: true },
+        { field: 'isPublished', operator: '==', value: true },
+        ...(options?.where || []),
+      ];
+
+      // Determine if we can use a single array-contains-any query
+      // Firestore only allows one array-contains-any per query
+      const tagValues: string[] = [];
+
+      // Prioritize: pick the most specific filter category to query on
+      if (filter.pillars?.length) {
+        filter.pillars.forEach(p => tagValues.push(`pillar:${p}`));
+      } else if (filter.systems?.length) {
+        filter.systems.forEach(s => tagValues.push(`system:${s}`));
+      } else if (filter.userTypes?.length) {
+        filter.userTypes.forEach(u => tagValues.push(`user:${u}`));
+      } else if (filter.angleMarkers?.length) {
+        filter.angleMarkers.forEach(m => tagValues.push(`am:${m}`));
+      } else if (filter.archLevels?.length) {
+        filter.archLevels.forEach(l => tagValues.push(`level:${l}`));
+      }
+
+      // If we have tag values, add array-contains-any query
+      if (tagValues.length > 0) {
+        whereConditions.push({
+          field: '_tagIndex',
+          operator: 'array-contains-any',
+          value: tagValues.slice(0, 10), // Firestore limit
+        });
+      }
+
+      const result = await this.query<VideoQuiz>(
+        this.VIDEO_QUIZZES_COLLECTION,
+        {
+          ...options,
+          where: whereConditions,
+        }
+      );
+
+      if (!result.success || !result.data) {
+        return result;
+      }
+
+      // Client-side filtering for additional categories not covered by query
+      let filteredItems = result.data.items;
+
+      // Apply remaining filters client-side
+      if (filter.pillars?.length && tagValues[0]?.startsWith('pillar:') === false) {
+        filteredItems = filteredItems.filter(quiz =>
+          quiz.structuredTags?.pillar && filter.pillars!.includes(quiz.structuredTags.pillar)
+        );
+      }
+
+      if (filter.systems?.length && !tagValues.some(t => t.startsWith('system:'))) {
+        filteredItems = filteredItems.filter(quiz =>
+          quiz.structuredTags?.systems.some(s => filter.systems!.includes(s))
+        );
+      }
+
+      if (filter.userTypes?.length && !tagValues.some(t => t.startsWith('user:'))) {
+        filteredItems = filteredItems.filter(quiz =>
+          quiz.structuredTags?.userTypes.some(u => filter.userTypes!.includes(u))
+        );
+      }
+
+      if (filter.angleMarkers?.length && !tagValues.some(t => t.startsWith('am:'))) {
+        filteredItems = filteredItems.filter(quiz =>
+          quiz.structuredTags?.angleMarkers.some(m => filter.angleMarkers!.includes(m))
+        );
+      }
+
+      if (filter.archLevels?.length && !tagValues.some(t => t.startsWith('level:'))) {
+        filteredItems = filteredItems.filter(quiz =>
+          quiz.structuredTags?.archLevel && filter.archLevels!.includes(quiz.structuredTags.archLevel)
+        );
+      }
+
+      return {
+        success: true,
+        data: {
+          ...result.data,
+          items: filteredItems,
+          total: filteredItems.length,
+        },
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to fetch video quizzes by tags', 'VideoQuizService', {
+        error: error instanceof Error ? error.message : String(error),
+        filter,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'VIDEO_QUIZZES_TAG_QUERY_FAILED',
+          message: 'Failed to fetch video quizzes by tags',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Gets facet counts for all tag categories.
+   * Useful for displaying filter options with counts in the UI.
+   */
+  async getTagFacets(): Promise<ApiResponse<TagFacetCounts>> {
+    logger.database('query', this.VIDEO_QUIZZES_COLLECTION, undefined, { facets: true });
+
+    try {
+      // Get all active, published quizzes
+      const result = await this.query<VideoQuiz>(
+        this.VIDEO_QUIZZES_COLLECTION,
+        {
+          where: [
+            { field: 'isActive', operator: '==', value: true },
+            { field: 'isPublished', operator: '==', value: true },
+          ],
+          limit: 1000, // Get all for accurate counts
+        }
+      );
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: result.error || { code: 'QUERY_FAILED', message: 'Failed to query quizzes' },
+          timestamp: new Date(),
+        };
+      }
+
+      // Initialize facet counts
+      const facets: TagFacetCounts = {
+        pillars: {} as Record<PillarTag, number>,
+        systems: {} as Record<SystemTag, number>,
+        userTypes: {} as Record<UserTypeTag, number>,
+        angleMarkers: {} as Record<AngleMarkerTag, number>,
+        archLevels: {} as Record<ArchLevelTag, number>,
+      };
+
+      // Initialize all possible values with 0
+      PILLARS.forEach(p => { facets.pillars[p.slug] = 0; });
+      SYSTEM_TAGS.forEach(s => { facets.systems[s] = 0; });
+      USER_TYPE_TAGS.forEach(u => { facets.userTypes[u] = 0; });
+      ANGLE_MARKER_TAGS.forEach(m => { facets.angleMarkers[m] = 0; });
+      ARCH_LEVEL_TAGS.forEach(l => { facets.archLevels[l] = 0; });
+
+      // Count occurrences
+      result.data.items.forEach(quiz => {
+        if (quiz.structuredTags) {
+          if (quiz.structuredTags.pillar) {
+            facets.pillars[quiz.structuredTags.pillar] = (facets.pillars[quiz.structuredTags.pillar] || 0) + 1;
+          }
+
+          quiz.structuredTags.systems.forEach(system => {
+            facets.systems[system] = (facets.systems[system] || 0) + 1;
+          });
+
+          quiz.structuredTags.userTypes.forEach(userType => {
+            facets.userTypes[userType] = (facets.userTypes[userType] || 0) + 1;
+          });
+
+          quiz.structuredTags.angleMarkers.forEach(marker => {
+            facets.angleMarkers[marker] = (facets.angleMarkers[marker] || 0) + 1;
+          });
+
+          if (quiz.structuredTags.archLevel) {
+            facets.archLevels[quiz.structuredTags.archLevel] = (facets.archLevels[quiz.structuredTags.archLevel] || 0) + 1;
+          }
+        }
+      });
+
+      return {
+        success: true,
+        data: facets,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to get tag facets', 'VideoQuizService', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'TAG_FACETS_FAILED',
+          message: 'Failed to get tag facets',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Updates the _tagIndex field for a video quiz.
+   * Call this when structured tags are modified.
+   */
+  async updateTagIndex(
+    quizId: string,
+    structuredTags: VideoStructuredTags
+  ): Promise<ApiResponse<void>> {
+    logger.database('update', this.VIDEO_QUIZZES_COLLECTION, quizId, { updateTagIndex: true });
+
+    try {
+      const _tagIndex = buildTagIndex(structuredTags);
+
+      await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, {
+        structuredTags,
+        _tagIndex,
+        updatedAt: Timestamp.now(),
+      });
+
+      logger.info('Tag index updated successfully', 'VideoQuizService', { quizId, tagCount: _tagIndex.length });
+
+      return {
+        success: true,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to update tag index', 'VideoQuizService', {
+        error: error instanceof Error ? error.message : String(error),
+        quizId,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'TAG_INDEX_UPDATE_FAILED',
+          message: 'Failed to update tag index',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
     }
   }
 }

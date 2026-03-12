@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { sportsService } from '@/lib/database/services/sports.service';
-import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings } from '@/types';
+import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings, VideoStructuredTags, createEmptyStructuredTags } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { VideoTagEditor } from '@/components/video';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,6 +53,7 @@ function EditVideoQuizContent() {
     isActive: false,
     isPublished: false,
     questions: [],
+    structuredTags: createEmptyStructuredTags(),
     settings: {
       allowPlaybackSpeedChange: true,
       playbackSpeeds: [0.5, 0.75, 1, 1.25, 1.5, 2],
@@ -94,6 +96,7 @@ function EditVideoQuizContent() {
           instructions: quiz.instructions || '',
           difficulty: quiz.difficulty,
           tags: quiz.tags || [],
+          structuredTags: quiz.structuredTags || createEmptyStructuredTags(),
           isActive: quiz.isActive,
           isPublished: quiz.isPublished,
           questions: quiz.questions,
@@ -157,6 +160,13 @@ function EditVideoQuizContent() {
     }));
   };
 
+  const handleStructuredTagsChange = (structuredTags: VideoStructuredTags) => {
+    setQuizData(prev => ({
+      ...prev,
+      structuredTags,
+    }));
+  };
+
   const handleSaveQuiz = async () => {
     // Validation
     if (!quizData.title || quizData.title.trim() === '') {
@@ -208,6 +218,7 @@ function EditVideoQuizContent() {
         instructions: quizData.instructions || '',
         difficulty: quizData.difficulty!,
         tags: quizData.tags || [],
+        structuredTags: quizData.structuredTags,
         isActive: quizData.isActive || false,
         isPublished: quizData.isPublished || false,
         questions: quizData.questions,
@@ -297,10 +308,11 @@ function EditVideoQuizContent() {
       </div>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="video">Video Setup</TabsTrigger>
           <TabsTrigger value="questions">Questions</TabsTrigger>
+          <TabsTrigger value="tags">Tags</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -489,6 +501,14 @@ function EditVideoQuizContent() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Tags Tab */}
+        <TabsContent value="tags" className="space-y-6">
+          <VideoTagEditor
+            value={quizData.structuredTags}
+            onChange={handleStructuredTagsChange}
+          />
         </TabsContent>
 
         {/* Settings Tab */}

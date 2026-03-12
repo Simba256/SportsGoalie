@@ -6,8 +6,9 @@ import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { sportsService } from '@/lib/database/services/sports.service';
-import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings } from '@/types';
+import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings, VideoStructuredTags, createEmptyStructuredTags } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { VideoTagEditor } from '@/components/video';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -50,6 +51,7 @@ function CreateVideoQuizContent() {
     isActive: false,
     isPublished: false,
     questions: [],
+    structuredTags: createEmptyStructuredTags(),
     settings: {
       allowPlaybackSpeedChange: true,
       playbackSpeeds: [0.5, 0.75, 1, 1.25, 1.5, 2],
@@ -129,6 +131,13 @@ function CreateVideoQuizContent() {
     }));
   };
 
+  const handleStructuredTagsChange = (structuredTags: VideoStructuredTags) => {
+    setQuizData(prev => ({
+      ...prev,
+      structuredTags,
+    }));
+  };
+
   const handleSaveQuiz = async () => {
     // Validation
     if (!quizData.title || quizData.title.trim() === '') {
@@ -188,6 +197,7 @@ function CreateVideoQuizContent() {
         instructions: quizData.instructions || '',
         difficulty: quizData.difficulty!,
         tags: quizData.tags || [],
+        structuredTags: quizData.structuredTags,
         category: 'Video Quiz', // Default category for video quizzes
         isActive: quizData.isActive || false,
         isPublished: quizData.isPublished || false,
@@ -280,10 +290,11 @@ function CreateVideoQuizContent() {
       </div>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="video">Video Setup</TabsTrigger>
           <TabsTrigger value="questions">Questions</TabsTrigger>
+          <TabsTrigger value="tags">Tags</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -478,6 +489,14 @@ function CreateVideoQuizContent() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Tags Tab */}
+        <TabsContent value="tags" className="space-y-6">
+          <VideoTagEditor
+            value={quizData.structuredTags}
+            onChange={handleStructuredTagsChange}
+          />
         </TabsContent>
 
         {/* Settings Tab */}
