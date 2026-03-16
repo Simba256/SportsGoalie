@@ -412,7 +412,7 @@ export default function Home() {
                 {
                   title: 'Session Charting',
                   desc: 'The most complete in-game tracking tool for goalies. Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.',
-                  image: '/goalie_feature_1.avif',
+                  image: '/goalie_feature_1.png',
                   badge: 'Flagship Feature',
                 },
                 {
