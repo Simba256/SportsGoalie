@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
-import { Footer } from '@/components/layout/footer';
-import { Header } from '@/components/layout/header';
+import { Footer7 } from '@/components/footer-7';
+import { Header7 } from '@/components/header-7';
 import { AuthProvider } from '@/lib/auth/context';
 import { Toaster } from '@/components/ui/sonner';
 import { Chatbot } from '@/components/ui/chatbot';
@@ -46,9 +46,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
-            <Header />
+            <Header7 />
             <main className="flex-1">{children}</main>
-            <Footer />
+            <Footer7 />
           </div>
           <Toaster />
           <Chatbot />
