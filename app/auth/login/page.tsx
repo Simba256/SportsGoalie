@@ -81,15 +81,26 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
+      let destination = '/dashboard';
+
       if (user.role === 'admin') {
-        router.push('/admin');
+        destination = '/admin';
       } else if (user.role === 'coach') {
-        router.push('/coach');
+        destination = '/coach';
+      } else if (user.role === 'parent') {
+        destination = '/parent';
       } else if (user.role === 'student' && !user.onboardingCompleted) {
-        router.push('/onboarding');
-      } else {
-        router.push('/dashboard');
+        destination = '/onboarding';
       }
+
+      console.log('[Auth Navigation] Redirecting after login', {
+        userId: user.id,
+        role: user.role,
+        onboardingCompleted: user.onboardingCompleted,
+        destination,
+      });
+
+      router.push(destination);
     }
   }, [user, loading, router]);
 
