@@ -1,7 +1,7 @@
 # Smarter Goalie — Developer Task Tracker
 
-**Report Date:** 2026-03-12
-**Developer:** Syed Basim Mehmood
+**Report Date:** 2026-03-19
+**Developers:** Syed Basim Mehmood + Hafsa (Hafsa-2625)
 **Work Directive:** Block 1 → Block 2 → Block 3 (do not skip without approval)
 
 ---
@@ -10,10 +10,10 @@
 
 | Block | Status | Tasks | Completed | Hours Logged |
 |-------|--------|-------|-----------|--------------|
-| Block 1 | 🔄 In Progress | 7 | 4 | 11.75h |
+| Block 1 | 🔄 6/7 Done | 7 | 6 | 11.75h (Basim) |
 | Block 2 | ⏸ Pending | 5 | 0 | 0h |
 | Block 3 | ⏸ Pending | 3 | 0 | 0h |
-| **Total** | | **15** | **4** | **11.75h** |
+| **Total** | | **15** | **6** | **11.75h** |
 
 ---
 
@@ -23,10 +23,10 @@
 |---|------|--------|--------|---------|------------|-------|
 | 1 | Branding: SportsGoalie → Smarter Goalie | ✅ Complete | 100% | 3h | 2.5h | Logo, headers, footers, meta tags, 42 files updated |
 | 2 | 7th Pillar: Add Lifestyle | ✅ Complete | 100% | 2h | 0.75h | Database, navigation, routes, Heart icon, pink theme |
-| 3 | Landing Page + Role Selection | ⏸ Inactive | 0% | 8h | — | 2 self-reg roles (Goalie, Parent); Coach=invite only; Admin=internal |
+| 3 | Landing Page + Role Selection | ✅ Complete | 100% | 8h | — | Hafsa: hero, role cards, goalie/parent transitions, testimonials, header/footer |
 | 4 | Video Database + Tagging System | ✅ Complete | 100% | 12h | 2.5h | Pillar/System/Level/AM/Arch tagging, filter panel, tag editor |
-| 5 | Parent Dashboard + Child Linking | ✅ Complete | 100% | 15h | 6h | Progress, scores, charts via SG-XXXX-XXXX link codes. Incl. 1.5h Block 1 testing |
-| 6 | Dashboard Visualization + Integration | ⏸ Inactive | 0% | 6h | — | Cross-reference display, scoring engine integration, analytics views |
+| 5 | Parent Dashboard + Child Linking | ✅ Complete | 100% | 15h | 6h | Basim: link codes, 5 routes (6h). Hafsa: expanded pages, sidebar, perception view |
+| 6 | Dashboard Visualization + Integration | ✅ Complete | 100% | 6h | — | Hafsa: student dashboard revamp, sidebar, layout shell, parent dashboard expansion |
 | 7 | Production Email (Resend) | ⏸ Inactive | 0% | 3h | — | Domain config, verification/invitation/notification emails |
 
 | | | | **Subtotal** | **49h** | **11.75h** | |
@@ -76,7 +76,22 @@
 
 ## Completed Work Log
 
-### 2026-03-12
+### 2026-03-18 (Hafsa)
+
+| Task | Deliverables |
+|------|--------------|
+| B1.6 Dashboard Visualization | Student dashboard rewrite, DashboardSidebar, LayoutShell, dashboard layout, useRecentQuizzes hook |
+| B1.5 Parent Expansion | Parent page expansion (+546 lines), goalies list page, perception page, profile page, ParentSidebar |
+| Auth & Layout | LayoutShell for authenticated pages, login/register flow updates, auth context updates, Firestore rules for parent role |
+| Onboarding Refresh | Updated all 7 onboarding components (welcome, intake, assessment, bridge, category intro, progress, complete) |
+
+### 2026-03-16 (Hafsa)
+
+| Task | Deliverables |
+|------|--------------|
+| B1.3 Landing Page | Hero section, ClubIntroSection slideshow, role selection cards, goalie/parent feature showcases, ScrollStack features, testimonials marquee, header-7, footer-7, 23 images |
+
+### 2026-03-12 (Basim)
 
 | Task | Hours | Deliverables |
 |------|-------|--------------|
@@ -107,4 +122,4 @@ All session details available at:
 
 ---
 
-*Last Updated: 2026-03-12*
+*Last Updated: 2026-03-19*
