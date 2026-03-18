@@ -103,6 +103,9 @@ client_data/
 scripts/
 docs/invoices/
 
+# Project tracker (local only)
+PROJECT_TRACKER.md
+
 # Allow important project documentation
 !PROGRESS.md
 !CLAUDE.md
