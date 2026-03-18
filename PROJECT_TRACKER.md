@@ -9,12 +9,13 @@ Ice hockey goalie training platform with 7-pillar methodology, multi-role system
 **Status**: Active
 
 ## In Progress
-- [ ] B1.3: Landing Page + Role Selection (Goalie, Parent self-registration) — landing page merged, needs role routing to registration
+- [ ] Parent profile & parent dashboard linking — Hafsa working on this
+- [ ] Student dashboard revamp — Hafsa completed initial version, will iterate with user feedback
 - [ ] B1.6: Dashboard Visualization + Integration — cross-reference display, scoring engine integration
 - [ ] B1.7: Production Email (Resend domain config) — code ready, needs domain purchase
 
 ## Recently Completed
-- [x] PR #4: Landing page merged with optimized images — (2026-03-18)
+- [x] B1.3: Landing page merged (PR #4) with optimized images — (2026-03-18)
 - [x] B1.1: Branding update (SportsGoalie → Smarter Goalie, 42 files) — (2026-03-12)
 - [x] B1.2: 7th Pillar Lifestyle added (Heart icon, pink theme) — (2026-03-12)
 - [x] B1.4: Video tagging system (Pillar/System/Level/AM/Arch tags) — (2026-03-12)
@@ -50,6 +51,7 @@ Ice hockey goalie training platform with 7-pillar methodology, multi-role system
 - Daily tracker (xlsx): `client_data/Phase2/SG_Basim_Daily_Tracker (1).xlsx` (gitignored)
 - Task tracker (markdown): `docs/client/progress/task-tracker.md`
 - Developer handoff: `docs/client/progress/developer-tasks.md`
-- Another developer (Hafsa) working on landing page branch
+- Developer Hafsa (Hafsa-2625): handles frontend/UI — landing page done, now working on parent dashboard linking and student dashboard revamp
+- Student dashboard will be iterated based on real user feedback once students onboard
 - Total Block 1 hours logged: 11.75h
 - Total Phase 2 hours: 58h+
