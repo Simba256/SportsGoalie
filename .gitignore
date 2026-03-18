@@ -102,7 +102,7 @@ storybook-static/
 client_data/
 scripts/
 docs/invoices/
-docs/client/sessions/
+docs/client/
 
 # Project tracker (local only)
 PROJECT_TRACKER.md
