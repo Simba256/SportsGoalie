@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   Users,
-  UserPlus,
   ClipboardCheck,
   LogOut,
   ChevronLeft,
@@ -25,7 +24,6 @@ interface ParentSidebarProps {
 const navItems = [
   { label: 'Dashboard', href: '/parent', icon: LayoutDashboard },
   { label: 'My Goalies', href: '/parent/goalies', icon: Users },
-  { label: 'Link Goalie', href: '/parent/link-child', icon: UserPlus },
   { label: 'Assessment', href: '/parent/onboarding', icon: ClipboardCheck },
   { label: 'Perception', href: '/parent/perception', icon: Eye },
   { label: 'Profile', href: '/parent/profile', icon: UserCircle },
@@ -116,7 +114,7 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;

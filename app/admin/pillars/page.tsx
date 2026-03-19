@@ -25,7 +25,6 @@ import {
   Grid3X3,
   Dumbbell,
   Heart,
-  Info,
 } from 'lucide-react';
 
 // Icon map for pillar icons
@@ -260,24 +259,6 @@ function AdminPillarsContent() {
           </p>
         </div>
       </div>
-
-      {/* Info Card - Pillars are fixed */}
-      <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-medium text-blue-900 dark:text-blue-100">
-                Fixed 7-Pillar Structure
-              </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                The platform uses 7 fixed pillars that align with the Ice Hockey Goalie training system.
-                You can edit pillar details and manage skills within each pillar, but cannot add or remove pillars.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Error Display */}
       {state.error && (

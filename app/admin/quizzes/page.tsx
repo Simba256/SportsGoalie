@@ -192,7 +192,7 @@ function AdminQuizzesPageContent() {
             Manage interactive video-based quizzes
           </p>
         </div>
-        <Button onClick={() => router.push('/admin/quizzes/create')} size="lg">
+        <Button onClick={() => router.push('/admin/quizzes/create')} size="lg" className="bg-red-600 hover:bg-red-700">
           <Plus className="mr-2 h-5 w-5" />
           Create Video Quiz
         </Button>
@@ -271,8 +271,8 @@ function AdminQuizzesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Target className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-red-50 rounded-lg">
+                <Target className="h-5 w-5 text-red-600" />
               </div>
               <div>
                 <p className="text-sm text-gray-600">Active</p>
@@ -303,8 +303,8 @@ function AdminQuizzesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-red-50 rounded-lg">
+                <Clock className="h-5 w-5 text-red-600" />
               </div>
               <div>
                 <p className="text-sm text-gray-600">Avg. Duration</p>
@@ -372,7 +372,7 @@ function AdminQuizzesPageContent() {
                           : 'Inactive'}
                       </Badge>
                       {quiz.structuredTags && countTags(quiz.structuredTags) > 0 && (
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 text-xs">
+                        <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
                           {countTags(quiz.structuredTags)} tags
                         </Badge>
                       )}
@@ -461,7 +461,7 @@ function AdminQuizzesPageContent() {
                       </Badge>
                     )}
                     {quiz.structuredTags.systems.slice(0, 2).map((system) => (
-                      <Badge key={system} variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                      <Badge key={system} variant="outline" className="text-xs bg-red-50 text-red-700">
                         {system}
                       </Badge>
                     ))}

@@ -7,13 +7,14 @@ import { Header7 } from '@/components/header-7';
 import { Footer7 } from '@/components/footer-7';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ParentSidebar } from '@/components/parent/ParentSidebar';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 /** Routes that render only their own content (no header/footer/sidebar) */
 const BARE_ROUTES = ['/auth'];
 /** Routes that get the public layout (header + footer, no sidebar) */
 const PUBLIC_ROUTES = ['/', '/onboarding'];
 /** Routes that have their own layout and should not get the sidebar */
-const EXCLUDED_ROUTES = ['/coach', '/admin'];
+const EXCLUDED_ROUTES = ['/coach'];
 
 function isPublicRoute(pathname: string) {
   if (pathname === '/') return true;
@@ -30,6 +31,10 @@ function isExcludedRoute(pathname: string) {
   return EXCLUDED_ROUTES.some((r) => pathname.startsWith(r));
 }
 
+function isAdminRoute(pathname: string) {
+  return pathname.startsWith('/admin');
+}
+
 function isParentRoute(pathname: string) {
   return pathname.startsWith('/parent');
 }
@@ -38,6 +43,26 @@ function isParentRoute(pathname: string) {
 function getPageTitle(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
   const first = segments[0];
+
+  if (first === 'admin') {
+    const adminTitles: Record<string, string> = {
+      admin: 'Dashboard',
+      analytics: 'Analytics',
+      users: 'Users',
+      coaches: 'Coaches',
+      pillars: 'Pillars',
+      quizzes: 'Quizzes',
+      'video-reviews': 'Video Reviews',
+      'form-templates': 'Form Templates',
+      messages: 'Messages',
+      moderation: 'Moderation',
+      charting: 'Charting',
+      settings: 'Settings',
+      'project-assistant': 'Project Assistant',
+    };
+    const second = segments[1];
+    return adminTitles[second] || 'Dashboard';
+  }
 
   if (first === 'parent') {
     const parentTitles: Record<string, string> = {
@@ -59,8 +84,7 @@ function getPageTitle(pathname: string): string {
     quizzes: 'Quizzes',
     quiz: 'Quiz',
     progress: 'Analytics',
-    achievements: 'Achievements',
-    goals: 'Goals',
+    goals: 'Goals & Achievements',
     messages: 'Messages',
     profile: 'Profile',
     charting: 'Charting',
@@ -101,6 +125,42 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Admin pages: admin sidebar layout
+  if (isAdminRoute(pathname)) {
+    const pageTitle = getPageTitle(pathname);
+
+    return (
+      <div className="min-h-screen bg-white">
+        <AdminSidebar
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+          }`}
+        >
+          {/* Top bar */}
+          <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors lg:hidden"
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="h-5 w-px bg-gray-200 lg:hidden" />
+            <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
+          </header>
+
+          {/* Page content */}
+          <main className="p-6">{children}</main>
+        </div>
+      </div>
+    );
+  }
+
   // Parent pages: parent sidebar layout
   if (isParentRoute(pathname)) {
     const pageTitle = getPageTitle(pathname);
@@ -121,12 +181,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/60 flex items-center px-6 gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors lg:hidden"
               aria-label="Toggle sidebar"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="h-5 w-px bg-gray-200" />
+            <div className="h-5 w-px bg-gray-200 lg:hidden" />
             <span className="text-sm text-gray-500 font-medium">{pageTitle}</span>
           </header>
 
@@ -156,12 +216,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/60 flex items-center px-6 gap-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors lg:hidden"
             aria-label="Toggle sidebar"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="h-5 w-px bg-gray-200" />
+          <div className="h-5 w-px bg-gray-200 lg:hidden" />
           <span className="text-sm text-gray-500 font-medium">{pageTitle}</span>
         </header>
 
