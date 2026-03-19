@@ -98,6 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(userData.onboardingCompleted !== undefined && { onboardingCompleted: userData.onboardingCompleted }),
           ...(userData.onboardingCompletedAt && { onboardingCompletedAt: userData.onboardingCompletedAt }),
           ...(userData.initialAssessmentLevel && { initialAssessmentLevel: userData.initialAssessmentLevel }),
+          // Include parent-child linking fields (for students/goalies)
+          ...(userData.linkedParentIds && { linkedParentIds: userData.linkedParentIds }),
+          ...(userData.parentLinkCode && { parentLinkCode: userData.parentLinkCode }),
+          ...(userData.parentLinkCodeExpiry && { parentLinkCodeExpiry: userData.parentLinkCodeExpiry }),
+          // Include parent-specific fields
+          ...(userData.linkedChildIds && { linkedChildIds: userData.linkedChildIds }),
+          ...(userData.parentOnboardingComplete !== undefined && { parentOnboardingComplete: userData.parentOnboardingComplete }),
         };
 
         // Store profile image if available

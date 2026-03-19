@@ -111,17 +111,21 @@ service cloud.firestore {
       allow read: if isOwnerOrAdmin(userId) ||
                      (isCoach() && resource.data.role == 'student') ||
                      (isAuthenticated() && resource.data.role == 'coach') ||
-                     (isParent() && resource.data.role == 'student');
+                     (isParent() && resource.data.role == 'student') ||
+                     (isStudent() && resource.data.role == 'parent');
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // Users can update their own profile (except role and email), admins can update any
+      // Parents can update a student's linkedParentIds field (needed during parent-child linking)
       allow update: if (isOwner(userId) &&
                        !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
                        !('email' in request.resource.data.diff(resource.data).affectedKeys())) ||
-                      isAdmin();
+                      isAdmin() ||
+                      (isParent() && resource.data.role == 'student' &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedParentIds', 'updatedAt']));
 
       // Only admins can delete users
       allow delete: if isAdmin();
