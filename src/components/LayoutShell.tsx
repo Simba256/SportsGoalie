@@ -106,7 +106,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     const pageTitle = getPageTitle(pathname);
 
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <ParentSidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -118,16 +118,16 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           }`}
         >
           {/* Top bar */}
-          <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/60 flex items-center px-6 gap-4">
+          <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors lg:hidden"
               aria-label="Toggle sidebar"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="h-5 w-px bg-gray-200" />
-            <span className="text-sm text-gray-500 font-medium">{pageTitle}</span>
+            <div className="h-5 w-px bg-gray-200 lg:hidden" />
+            <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
           </header>
 
           {/* Page content */}

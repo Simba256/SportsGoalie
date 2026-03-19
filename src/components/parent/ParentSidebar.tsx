@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   Users,
-  UserPlus,
   ClipboardCheck,
   LogOut,
   ChevronLeft,
@@ -25,7 +24,6 @@ interface ParentSidebarProps {
 const navItems = [
   { label: 'Dashboard', href: '/parent', icon: LayoutDashboard },
   { label: 'My Goalies', href: '/parent/goalies', icon: Users },
-  { label: 'Link Goalie', href: '/parent/link-child', icon: UserPlus },
   { label: 'Assessment', href: '/parent/onboarding', icon: ClipboardCheck },
   { label: 'Perception', href: '/parent/perception', icon: Eye },
   { label: 'Profile', href: '/parent/profile', icon: UserCircle },
