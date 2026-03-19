@@ -8,53 +8,36 @@ interface WelcomeScreenProps {
   onBegin: () => void;
 }
 
-/**
- * Category preview data
- */
 const CATEGORIES = [
-  { name: 'Feelings', icon: Heart, color: 'purple' },
-  { name: 'Knowledge', icon: Brain, color: 'blue' },
-  { name: 'Pre-Game', icon: Clock, color: 'cyan' },
-  { name: 'In-Game', icon: Target, color: 'red' },
-  { name: 'Post-Game', icon: MessageCircle, color: 'green' },
-  { name: 'Training', icon: Dumbbell, color: 'orange' },
-  { name: 'Learning', icon: BookOpen, color: 'indigo' },
+  { name: 'Feelings', icon: Heart, color: 'bg-purple-100 text-purple-600 border-purple-200' },
+  { name: 'Knowledge', icon: Brain, color: 'bg-blue-100 text-blue-600 border-blue-200' },
+  { name: 'Pre-Game', icon: Clock, color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
+  { name: 'In-Game', icon: Target, color: 'bg-red-100 text-red-600 border-red-200' },
+  { name: 'Post-Game', icon: MessageCircle, color: 'bg-green-100 text-green-600 border-green-200' },
+  { name: 'Training', icon: Dumbbell, color: 'bg-orange-100 text-orange-600 border-orange-200' },
+  { name: 'Learning', icon: BookOpen, color: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
 ];
 
-const COLOR_CLASSES: Record<string, string> = {
-  purple: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  cyan: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-  red: 'bg-red-500/20 text-red-300 border-red-500/30',
-  green: 'bg-green-500/20 text-green-300 border-green-500/30',
-  orange: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-  indigo: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-};
-
-/**
- * Welcome screen for the onboarding flow.
- * Introduces the 7-category assessment system.
- */
 export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full text-center">
-        {/* Logo/Icon */}
+        {/* Logo */}
         <div className="mb-8">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 shadow-lg shadow-blue-500/30">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500 shadow-lg shadow-red-500/20">
             <Shield className="w-12 h-12 text-white" />
           </div>
         </div>
 
         {/* Welcome text */}
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">
           Welcome, {studentName}!
         </h1>
 
-        <p className="text-lg sm:text-xl text-slate-300 mb-8 leading-relaxed">
-          Before we begin your goaltending journey, let's discover where you are today.
-          We'll start with a few quick questions about you, then explore{' '}
-          <span className="text-cyan-400 font-semibold">7 areas of your game</span>.
+        <p className="text-lg sm:text-xl text-gray-500 mb-8 leading-relaxed">
+          Before we begin your goaltending journey, let&apos;s discover where you are today.
+          We&apos;ll start with a few quick questions about you, then explore{' '}
+          <span className="text-red-500 font-semibold">7 areas of your game</span>.
         </p>
 
         {/* Category preview */}
@@ -62,36 +45,36 @@ export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
           {CATEGORIES.map(({ name, icon: Icon, color }) => (
             <div
               key={name}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${COLOR_CLASSES[color]}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${color}`}
             >
               <Icon className="w-4 h-4" />
-              <span className="text-sm">{name}</span>
+              <span className="text-sm font-medium">{name}</span>
             </div>
           ))}
         </div>
 
         {/* Info */}
-        <div className="bg-slate-800/50 rounded-xl p-6 mb-10 text-left">
-          <h3 className="font-semibold text-white mb-3">What to expect:</h3>
-          <ul className="space-y-2 text-slate-300">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-10 text-left">
+          <h3 className="font-semibold text-gray-900 mb-3">What to expect:</h3>
+          <ul className="space-y-2 text-gray-600">
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <span>Quick intake questions to learn about you</span>
             </li>
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <span>28 assessment questions across 7 categories</span>
             </li>
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <span>All multiple choice — no right or wrong answers</span>
             </li>
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <span>Your personalized Intelligence Profile at the end</span>
             </li>
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <span>Progress is saved automatically</span>
             </li>
           </ul>
@@ -101,13 +84,13 @@ export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
         <Button
           size="lg"
           onClick={onBegin}
-          className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105"
+          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-red-500/20 transition-all hover:scale-105"
         >
-          Let's Get Started
+          Let&apos;s Get Started
           <ChevronRight className="ml-2 w-5 h-5" />
         </Button>
 
-        <p className="mt-6 text-sm text-slate-500">
+        <p className="mt-6 text-sm text-gray-400">
           Answer honestly — this helps us personalize your learning path.
         </p>
       </div>

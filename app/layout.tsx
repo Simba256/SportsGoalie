@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
-import { Footer7 } from '@/components/footer-7';
-import { Header7 } from '@/components/header-7';
 import { AuthProvider } from '@/lib/auth/context';
 import { Toaster } from '@/components/ui/sonner';
 import { Chatbot } from '@/components/ui/chatbot';
+import { LayoutShell } from '@/components/LayoutShell';
 
 import './globals.css';
 
@@ -45,11 +44,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header7 />
-            <main className="flex-1">{children}</main>
-            <Footer7 />
-          </div>
+          <LayoutShell>{children}</LayoutShell>
           <Toaster />
           <Chatbot />
         </AuthProvider>

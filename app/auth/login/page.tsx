@@ -8,14 +8,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { loginSchema, type LoginFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
 
-// Component that uses useSearchParams - must be wrapped in Suspense
 function VerificationMessage() {
   const searchParams = useSearchParams();
   const [showMessage, setShowMessage] = useState(false);
@@ -30,13 +28,13 @@ function VerificationMessage() {
   if (!showMessage) return null;
 
   return (
-    <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
-      <div className="flex items-center gap-2 text-green-800">
+    <div className="mb-4 rounded-lg border border-green-300 bg-green-50 p-4">
+      <div className="flex items-center gap-2 text-green-700">
         <CheckCircle className="h-5 w-5" />
         <div>
-          <p className="font-medium">Registration Successful!</p>
-          <p className="text-sm">
-            We've sent a verification email to your inbox. Please verify your email before signing in.
+          <p className="font-medium text-green-800">Registration Successful!</p>
+          <p className="text-sm text-green-600">
+            We&apos;ve sent a verification email to your inbox. Please verify your email before signing in.
           </p>
         </div>
       </div>
@@ -66,11 +64,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       await login(data);
-
-      // The login function will update the user state
-      // Let the useEffect handle the redirect based on the updated user state
     } catch (error) {
-      // Handle AuthError properly
       if (isAuthError(error)) {
         setError('root', {
           message: error.userMessage,
@@ -85,57 +79,84 @@ export default function LoginPage() {
     }
   };
 
-  // Handle redirects for authenticated users
   useEffect(() => {
     if (!loading && user) {
-      // Redirect based on user role
+      let destination = '/dashboard';
+
       if (user.role === 'admin') {
-        router.push('/admin');
+        destination = '/admin';
       } else if (user.role === 'coach') {
-        router.push('/coach');
+        destination = '/coach';
+      } else if (user.role === 'parent') {
+        destination = '/parent';
       } else if (user.role === 'student' && !user.onboardingCompleted) {
-        // Students who haven't completed onboarding go to onboarding
-        router.push('/onboarding');
-      } else {
-        // Students (completed) and parents go to dashboard
-        router.push('/dashboard');
+        destination = '/onboarding';
       }
+
+      console.log('[Auth Navigation] Redirecting after login', {
+        userId: user.id,
+        role: user.role,
+        onboardingCompleted: user.onboardingCompleted,
+        destination,
+      });
+
+      router.push(destination);
     }
   }, [user, loading, router]);
 
-  // Show loading while checking auth state
   if (loading) {
     return (
-      <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Loading...</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>Enter your credentials to access your SmarterGoalie account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Email Verification Success Message */}
+    <div className="flex min-h-screen">
+      {/* Left — Blurred Image Panel */}
+      <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-sm scale-105"
+          style={{ backgroundImage: 'url("/login.avif")' }}
+        />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative z-10 text-center px-12">
+          <Link href="/">
+            <img src="/logo.png" alt="Smarter Goalie" className="h-12 mx-auto mb-8" />
+          </Link>
+          <h2 className="text-5xl font-bold text-white leading-tight mb-4">
+            Welcome Back,<br />Athlete.
+          </h2>
+          <p className="text-zinc-300 text-lg max-w-md mx-auto">
+            Pick up where you left off — your drills, progress, and goals are waiting.
+          </p>
+        </div>
+      </div>
+
+      {/* Right — Sign In Form */}
+      <div className="flex w-full lg:w-1/2 items-center justify-center bg-white px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-8 flex justify-center">
+            <Link href="/">
+              <img src="/logo.png" alt="Smarter Goalie" className="h-10" />
+            </Link>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h1>
+            <p className="text-gray-500">Enter your credentials to access your account</p>
+          </div>
+
           <Suspense fallback={null}>
             <VerificationMessage />
           </Suspense>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" data-testid="login-form">
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-gray-700">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -144,17 +165,18 @@ export default function LoginPage() {
                 aria-invalid={!!errors.email}
                 autoComplete="email"
                 data-testid="email-input"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
               />
-              {errors.email && <p className="text-sm text-destructive" data-testid="email-error">{errors.email.message}</p>}
+              {errors.email && <p className="text-sm text-red-500" data-testid="email-error">{errors.email.message}</p>}
             </div>
 
             {/* Password */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-700">Password</Label>
                 <Link
                   href="/auth/reset-password"
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-red-500 hover:text-red-600 transition-colors"
                   data-testid="forgot-password-link"
                 >
                   Forgot password?
@@ -169,25 +191,22 @@ export default function LoginPage() {
                   aria-invalid={!!errors.password}
                   autoComplete="current-password"
                   data-testid="password-input"
+                  className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-700"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   data-testid="toggle-password"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive" data-testid="password-error">{errors.password.message}</p>
+                <p className="text-sm text-red-500" data-testid="password-error">{errors.password.message}</p>
               )}
             </div>
 
@@ -197,19 +216,21 @@ export default function LoginPage() {
                 id="rememberMe"
                 type="checkbox"
                 {...register('rememberMe')}
-                className="h-4 w-4 text-primary"
+                className="h-4 w-4 rounded border-gray-300 bg-gray-50 text-red-500 focus:ring-red-500"
                 data-testid="remember-me-checkbox"
               />
-              <Label
-                htmlFor="rememberMe"
-                className="text-sm font-normal text-muted-foreground"
-              >
+              <Label htmlFor="rememberMe" className="text-sm font-normal text-gray-500">
                 Remember me for 30 days
               </Label>
             </div>
 
-            {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isLoading} data-testid="login-submit">
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25"
+              disabled={isLoading}
+              data-testid="login-submit"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -220,42 +241,40 @@ export default function LoginPage() {
               )}
             </Button>
 
-            {/* Error Message */}
+            {/* Error */}
             {errors.root && (
-              <div className="rounded-md bg-destructive/15 p-3" data-testid="login-error">
-                <p className="text-sm text-destructive">{errors.root.message}</p>
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3" data-testid="login-error">
+                <p className="text-sm text-red-600">{errors.root.message}</p>
               </div>
             )}
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
+              <span className="bg-white px-3 text-gray-400">Or</span>
             </div>
           </div>
 
           {/* Social Login Placeholder */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Social login coming soon...
-            </p>
+            <p className="text-sm text-gray-400">Social login coming soon...</p>
           </div>
 
           {/* Register Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/auth/register" className="text-primary hover:underline" data-testid="register-link">
-                Create account
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              Don&apos;t have an account?{' '}
+              <Link href="/auth/register" className="text-red-500 hover:text-red-600 font-medium transition-colors" data-testid="register-link">
+                Create an account
               </Link>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
