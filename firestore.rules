@@ -111,21 +111,17 @@ service cloud.firestore {
       allow read: if isOwnerOrAdmin(userId) ||
                      (isCoach() && resource.data.role == 'student') ||
                      (isAuthenticated() && resource.data.role == 'coach') ||
-                     (isParent() && resource.data.role == 'student') ||
-                     (isStudent() && resource.data.role == 'parent');
+                     (isParent() && resource.data.role == 'student');
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // Users can update their own profile (except role and email), admins can update any
-      // Parents can update a student's linkedParentIds field (needed during parent-child linking)
       allow update: if (isOwner(userId) &&
                        !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
                        !('email' in request.resource.data.diff(resource.data).affectedKeys())) ||
-                      isAdmin() ||
-                      (isParent() && resource.data.role == 'student' &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedParentIds', 'updatedAt']));
+                      isAdmin();
 
       // Only admins can delete users
       allow delete: if isAdmin();
@@ -734,13 +730,15 @@ service cloud.firestore {
       }
 
       // Helper to check if this is the user's own evaluation
-      // Works for both V1 and V2 document ID formats
+      // Works for V1, V2, and parent document ID formats
       function isOwnEvaluation() {
         return isAuthenticated() && (
           // V1 format: eval_{userId}
           evaluationId == 'eval_' + getUserId() ||
           // V2 format: eval_v2_{userId}
-          evaluationId == 'eval_v2_' + getUserId()
+          evaluationId == 'eval_v2_' + getUserId() ||
+          // Parent format: eval_parent_{userId}
+          evaluationId == 'eval_parent_' + getUserId()
         );
       }
 
