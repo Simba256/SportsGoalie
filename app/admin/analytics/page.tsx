@@ -140,13 +140,13 @@ function AnalyticsContent() {
   };
 
   const userRoleData = analytics ? [
-    { name: 'Students', value: analytics.users.studentCount, color: '#8884d8' },
-    { name: 'Admins', value: analytics.users.adminCount, color: '#82ca9d' },
+    { name: 'Students', value: analytics.users.studentCount, color: '#dc2626' },
+    { name: 'Admins', value: analytics.users.adminCount, color: '#18181b' },
   ] : [];
 
   const userStatusData = analytics ? [
-    { name: 'Active', value: analytics.users.active, color: '#82ca9d' },
-    { name: 'Inactive', value: analytics.users.inactive, color: '#ffc658' },
+    { name: 'Active', value: analytics.users.active, color: '#18181b' },
+    { name: 'Inactive', value: analytics.users.inactive, color: '#f87171' },
   ] : [];
 
   if (loading) {
@@ -297,7 +297,7 @@ function AnalyticsContent() {
                       <Line
                         type="monotone"
                         dataKey="activeUsers"
-                        stroke="#8884d8"
+                        stroke="#dc2626"
                         strokeWidth={2}
                         dot={{ r: 4 }}
                       />
@@ -320,7 +320,7 @@ function AnalyticsContent() {
                       <XAxis dataKey="date" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="quizAttempts" fill="#82ca9d" />
+                      <Bar dataKey="quizAttempts" fill="#18181b" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -377,7 +377,7 @@ function AnalyticsContent() {
                       <XAxis dataKey="sportName" angle={-45} textAnchor="end" height={80} />
                       <YAxis domain={[0, 5]} />
                       <Tooltip />
-                      <Bar dataKey="averageRating" fill="#ffc658" />
+                      <Bar dataKey="averageRating" fill="#f87171" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>

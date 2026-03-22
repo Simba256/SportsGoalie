@@ -747,14 +747,85 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
 ];
 
 /**
+ * Parent category definitions with metadata
+ * Based on Michael's parent questionnaire spec (03-parent-questionnaire-spec.md)
+ */
+export const PARENT_CATEGORIES: CategoryInfo[] = [
+  {
+    slug: 'goalie_state',
+    name: "Your Goalie's Current State",
+    shortName: 'Goalie State',
+    description: 'What the parent sees from the outside looking in',
+    icon: 'Eye',
+    color: 'purple',
+    weight: 10,
+  },
+  {
+    slug: 'understanding',
+    name: 'Your Understanding of the Position',
+    shortName: 'Understanding',
+    description: 'Knowledge of goaltending fundamentals',
+    icon: 'Brain',
+    color: 'blue',
+    weight: 30,
+  },
+  {
+    slug: 'pre_game',
+    name: 'Pre-Game',
+    shortName: 'Pre-Game',
+    description: 'Before they hit the ice',
+    icon: 'Clock',
+    color: 'cyan',
+    weight: 10,
+  },
+  {
+    slug: 'car_ride_home',
+    name: 'The Car Ride Home',
+    shortName: 'Car Ride Home',
+    description: 'Post-game communication',
+    icon: 'Car',
+    color: 'amber',
+    weight: 20,
+  },
+  {
+    slug: 'development_role',
+    name: 'Your Role in Their Development',
+    shortName: 'Development Role',
+    description: 'Active involvement in development',
+    icon: 'Users',
+    color: 'green',
+    weight: 15,
+  },
+  {
+    slug: 'expectations',
+    name: 'Your Expectations and Goals',
+    shortName: 'Expectations',
+    description: 'Goals for the platform',
+    icon: 'Target',
+    color: 'red',
+    weight: 10,
+  },
+  {
+    slug: 'preferences',
+    name: 'Communication and Preferences',
+    shortName: 'Preferences',
+    description: 'Platform engagement style',
+    icon: 'MessageCircle',
+    color: 'indigo',
+    weight: 5,
+  },
+];
+
+/**
  * Get category info by slug
  */
 export function getCategoryInfo(slug: string, role: QuestionnaireRole = 'goalie'): CategoryInfo | undefined {
-  // For now, return goalie categories - extend for parent/coach later
   if (role === 'goalie') {
     return GOALIE_CATEGORIES.find(c => c.slug === slug);
   }
-  // TODO: Add parent and coach category info
+  if (role === 'parent') {
+    return PARENT_CATEGORIES.find(c => c.slug === slug);
+  }
   return undefined;
 }
 

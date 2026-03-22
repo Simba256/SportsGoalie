@@ -214,11 +214,11 @@ function VideoReviewsContent() {
   const getStatusBadge = (status: StudentVideo['status']) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending Review</Badge>;
+        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Pending Review</Badge>;
       case 'reviewed':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Under Review</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Under Review</Badge>;
       case 'feedback_sent':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Feedback Sent</Badge>;
+        return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">Feedback Sent</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -227,11 +227,11 @@ function VideoReviewsContent() {
   const getStatusIcon = (status: StudentVideo['status']) => {
     switch (status) {
       case 'pending':
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+        return <AlertCircle className="h-4 w-4 text-amber-600" />;
       case 'reviewed':
-        return <Eye className="h-4 w-4 text-blue-600" />;
+        return <Eye className="h-4 w-4 text-red-600" />;
       case 'feedback_sent':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-gray-600" />;
       default:
         return null;
     }
@@ -241,7 +241,7 @@ function VideoReviewsContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading videos...</p>
         </div>
       </div>
@@ -347,7 +347,7 @@ function VideoReviewsContent() {
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
-                          className="w-full"
+                          className={`w-full ${video.status === 'pending' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                           onClick={() => handleReviewVideo(video)}
                           variant={video.status === 'pending' ? 'default' : 'outline'}
                         >
@@ -423,7 +423,7 @@ function VideoReviewsContent() {
                                   href={selectedVideo.videoUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded"
+                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
                                 >
                                   Open in New Tab
                                 </a>

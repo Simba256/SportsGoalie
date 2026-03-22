@@ -10,26 +10,22 @@ interface OnboardingContainerProps {
 
 /**
  * Full-screen immersive container for the onboarding flow.
- * Dark theme with ice-inspired styling.
+ * Clean light theme matching the dashboard.
  */
 export function OnboardingContainer({ children, className }: OnboardingContainerProps) {
   return (
     <div
       className={cn(
         'min-h-screen w-full',
-        'bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900',
-        'text-white',
+        'bg-gradient-to-br from-gray-50 via-white to-gray-50',
+        'text-gray-900',
         'overflow-hidden',
         className
       )}
     >
-      {/* Subtle ice/frost texture overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-10"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
+      {/* Subtle decorative blurs */}
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col">

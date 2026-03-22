@@ -9,14 +9,11 @@ interface CategoryIntroProps {
   categoryName: string;
   categoryDescription: string;
   questionCount: number;
-  categoryIndex: number; // 0-6
+  categoryIndex: number;
   totalCategories: number;
   onStart: () => void;
 }
 
-/**
- * Map category slugs to Lucide icons
- */
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   feelings: Heart,
   knowledge: Brain,
@@ -27,57 +24,58 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   learning: BookOpen,
 };
 
-/**
- * Map category slugs to gradient colors
- */
-const CATEGORY_COLORS: Record<string, { gradient: string; border: string; text: string; bg: string }> = {
+const CATEGORY_COLORS: Record<string, { gradient: string; border: string; text: string; bg: string; ring: string }> = {
   feelings: {
     gradient: 'from-purple-500 to-pink-500',
-    border: 'border-purple-500/30',
-    text: 'text-purple-400',
-    bg: 'bg-purple-500/20',
+    border: 'border-purple-200',
+    text: 'text-purple-600',
+    bg: 'bg-purple-100',
+    ring: 'ring-purple-300',
   },
   knowledge: {
     gradient: 'from-blue-500 to-indigo-500',
-    border: 'border-blue-500/30',
-    text: 'text-blue-400',
-    bg: 'bg-blue-500/20',
+    border: 'border-blue-200',
+    text: 'text-blue-600',
+    bg: 'bg-blue-100',
+    ring: 'ring-blue-300',
   },
   pre_game: {
     gradient: 'from-cyan-500 to-teal-500',
-    border: 'border-cyan-500/30',
-    text: 'text-cyan-400',
-    bg: 'bg-cyan-500/20',
+    border: 'border-cyan-200',
+    text: 'text-cyan-600',
+    bg: 'bg-cyan-100',
+    ring: 'ring-cyan-300',
   },
   in_game: {
     gradient: 'from-red-500 to-orange-500',
-    border: 'border-red-500/30',
-    text: 'text-red-400',
-    bg: 'bg-red-500/20',
+    border: 'border-red-200',
+    text: 'text-red-600',
+    bg: 'bg-red-100',
+    ring: 'ring-red-300',
   },
   post_game: {
     gradient: 'from-green-500 to-emerald-500',
-    border: 'border-green-500/30',
-    text: 'text-green-400',
-    bg: 'bg-green-500/20',
+    border: 'border-green-200',
+    text: 'text-green-600',
+    bg: 'bg-green-100',
+    ring: 'ring-green-300',
   },
   training: {
     gradient: 'from-orange-500 to-amber-500',
-    border: 'border-orange-500/30',
-    text: 'text-orange-400',
-    bg: 'bg-orange-500/20',
+    border: 'border-orange-200',
+    text: 'text-orange-600',
+    bg: 'bg-orange-100',
+    ring: 'ring-orange-300',
   },
   learning: {
     gradient: 'from-indigo-500 to-violet-500',
-    border: 'border-indigo-500/30',
-    text: 'text-indigo-400',
-    bg: 'bg-indigo-500/20',
+    border: 'border-indigo-200',
+    text: 'text-indigo-600',
+    bg: 'bg-indigo-100',
+    ring: 'ring-indigo-300',
   },
 };
 
-/**
- * Educational tooltips for each category
- */
 const CATEGORY_TOOLTIPS: Record<string, string> = {
   feelings: "Goaltending starts in your head before it ever reaches your body. How you feel about the position, how you handle pressure, how you bounce back — this is where development begins.",
   knowledge: "No wrong answers here. This helps Smarter Goalie know where to start with your learning.",
@@ -88,9 +86,6 @@ const CATEGORY_TOOLTIPS: Record<string, string> = {
   learning: "This helps us show you content in the way that works best for you.",
 };
 
-/**
- * Brief introduction screen before each assessment category.
- */
 export function CategoryIntro({
   categorySlug,
   categoryName,
@@ -104,14 +99,13 @@ export function CategoryIntro({
   const colors = CATEGORY_COLORS[categorySlug] || CATEGORY_COLORS.knowledge;
   const tooltip = CATEGORY_TOOLTIPS[categorySlug] || '';
 
-  // Get category info for weight
   const categoryInfo = GOALIE_CATEGORIES.find(c => c.slug === categorySlug);
   const weight = categoryInfo?.weight || 0;
 
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-xl w-full text-center">
-        {/* Progress indicator */}
+        {/* Progress dots */}
         <div className="mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
             {Array.from({ length: totalCategories }).map((_, i) => (
@@ -119,15 +113,15 @@ export function CategoryIntro({
                 key={i}
                 className={`w-3 h-3 rounded-full transition-colors ${
                   i === categoryIndex
-                    ? colors.bg + ' ring-2 ring-offset-2 ring-offset-slate-900 ' + colors.border.replace('border-', 'ring-')
+                    ? `${colors.bg} ring-2 ring-offset-2 ring-offset-white ${colors.ring}`
                     : i < categoryIndex
-                    ? 'bg-cyan-600'
-                    : 'bg-slate-700'
+                    ? 'bg-green-400'
+                    : 'bg-gray-200'
                 }`}
               />
             ))}
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-gray-400">
             Category {categoryIndex + 1} of {totalCategories}
           </p>
         </div>
@@ -140,7 +134,7 @@ export function CategoryIntro({
         </div>
 
         {/* Category name */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
           {categoryName}
         </h1>
 
@@ -150,21 +144,21 @@ export function CategoryIntro({
         </div>
 
         {/* Description */}
-        <p className="text-lg text-slate-300 mb-6">
+        <p className="text-lg text-gray-500 mb-6">
           {categoryDescription}
         </p>
 
         {/* Educational tooltip */}
         {tooltip && (
           <div className={`p-4 rounded-xl ${colors.bg} ${colors.border} border text-left mb-8`}>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-gray-600">
               {tooltip}
             </p>
           </div>
         )}
 
         {/* Question count */}
-        <p className="text-slate-400 mb-8">
+        <p className="text-gray-400 mb-8">
           {questionCount} question{questionCount !== 1 ? 's' : ''} in this category
         </p>
 

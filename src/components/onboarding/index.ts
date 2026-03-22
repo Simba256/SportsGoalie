@@ -10,3 +10,8 @@ export { AssessmentQuestionComponent as AssessmentQuestion } from './assessment-
 export { OnboardingProgress } from './onboarding-progress';
 export { IntelligenceProfileView } from './intelligence-profile-view';
 export { AssessmentComplete } from './assessment-complete';
+
+// Parent-specific Onboarding Components
+export { ParentWelcomeScreen } from './parent-welcome-screen';
+export { ParentBridgeMessage } from './parent-bridge-message';
+export { ParentAssessmentComplete } from './parent-assessment-complete';

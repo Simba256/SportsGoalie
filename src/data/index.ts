@@ -41,6 +41,7 @@ export {
   getParentQuestionsByCategory,
   getParentCategoryOrder,
   getParentTotalQuestionCount,
+  getQuestionsForParentCategory,
 } from './parent-assessment-questions';
 
 // Coach questionnaire data

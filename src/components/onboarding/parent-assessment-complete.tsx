@@ -3,15 +3,15 @@
 import { Button } from '@/components/ui/button';
 import { ChevronRight, CheckCircle, Sparkles } from 'lucide-react';
 
-interface AssessmentCompleteProps {
-  studentName?: string;
+interface ParentAssessmentCompleteProps {
+  parentName?: string;
   onContinue: () => void;
 }
 
-export function AssessmentComplete({
-  studentName = 'Goalie',
+export function ParentAssessmentComplete({
+  parentName = 'Parent',
   onContinue,
-}: AssessmentCompleteProps) {
+}: ParentAssessmentCompleteProps) {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-lg mx-auto text-center">
@@ -27,17 +27,17 @@ export function AssessmentComplete({
 
         {/* Title */}
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-          Great Job, {studentName}!
+          Thank You, {parentName}!
         </h1>
 
         {/* Message */}
         <p className="text-lg text-gray-500 mb-6 leading-relaxed">
-          You&apos;ve completed your initial assessment. Your coach will review your
-          responses and work with you to create a personalized training plan.
+          You&apos;ve completed your parent assessment. Your responses will be cross-referenced
+          with your goalie&apos;s self-assessment to provide valuable insights into their development.
         </p>
 
         <p className="text-gray-400 mb-8">
-          In the meantime, you can explore the pillars and start learning at your own pace.
+          Head to your dashboard to link your goalie and start tracking their progress.
         </p>
 
         {/* Continue button */}

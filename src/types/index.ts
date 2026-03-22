@@ -897,6 +897,7 @@ export {
   assessmentLevelToPacingLevel,
   pacingLevelToAssessmentLevel,
   GOALIE_CATEGORIES,
+  PARENT_CATEGORIES,
   getCategoryInfo,
 } from './onboarding';
 
