@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useParentOnboarding } from '@/hooks/useParentOnboarding';
 import {
   OnboardingContainer,
   WelcomeScreen,
@@ -14,29 +15,68 @@ import {
   AssessmentQuestion,
   OnboardingProgress,
   AssessmentComplete,
+  ParentWelcomeScreen,
+  ParentBridgeMessage,
+  ParentAssessmentComplete,
 } from '@/components/onboarding';
 
 /**
  * Main onboarding evaluation page.
+ * Supports both goalie (student) and parent flows.
  * Full-screen immersive flow with 7-category, 1.0-4.0 scoring system.
  */
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, refreshUser } = useAuth();
+
+  // Determine if this is a parent onboarding flow
+  const isParent = user?.role === 'parent' || searchParams.get('role') === 'parent';
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [authLoading, user, router]);
 
-  // Redirect if already completed onboarding
+  // Redirect if already completed onboarding (goalie)
   useEffect(() => {
-    if (!authLoading && user?.onboardingCompleted) {
+    if (!authLoading && user && !isParent && user.onboardingCompleted) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isParent, router]);
+
+  // Redirect if already completed onboarding (parent)
+  useEffect(() => {
+    if (!authLoading && user && isParent && user.parentOnboardingComplete) {
+      router.push('/parent');
+    }
+  }, [authLoading, user, isParent, router]);
+
+  // Goalie onboarding hook
+  const goalieOnboarding = useOnboarding({
+    userId: user?.id || null,
+    studentName: user?.displayName || 'Student',
+    enabled: !authLoading && !!user && !isParent && !user?.onboardingCompleted,
+    onRefreshUser: refreshUser,
+  });
+
+  // Parent onboarding hook
+  const parentOnboarding = useParentOnboarding({
+    userId: user?.id || null,
+    parentName: user?.displayName || 'Parent',
+    enabled: !authLoading && !!user && isParent && !user?.parentOnboardingComplete,
+    onRefreshUser: refreshUser,
+  });
+
+  // Pick the active hook based on role
+  const onboarding = isParent ? parentOnboarding : goalieOnboarding;
+  const hookEnabled = !authLoading && !!user && (
+    isParent
+      ? !user.parentOnboardingComplete
+      : !user.onboardingCompleted
+  );
 
   const {
     phase,
@@ -52,7 +92,6 @@ export default function OnboardingPage() {
     currentQuestion,
     categoryQuestions,
     totalIntakeScreens,
-    totalCategories,
     questionProgress,
     beginOnboarding,
     answerIntake,
@@ -61,17 +100,9 @@ export default function OnboardingPage() {
     startCategory,
     answerQuestion,
     goToDashboard,
-  } = useOnboarding({
-    userId: user?.id || null,
-    studentName: user?.displayName || 'Student',
-    enabled: !authLoading && !!user && !user.onboardingCompleted,
-    onRefreshUser: refreshUser,
-  });
+  } = onboarding;
 
-  // Determine if hook is actually enabled
-  const hookEnabled = !authLoading && !!user && !user.onboardingCompleted;
-
-  // Error state - check BEFORE loading to show errors properly
+  // Error state
   if (error) {
     return (
       <OnboardingContainer>
@@ -130,10 +161,17 @@ export default function OnboardingPage() {
       <div className="flex-1 flex flex-col">
         {/* Welcome Screen */}
         {phase === 'welcome' && user && (
-          <WelcomeScreen
-            studentName={user.displayName?.split(' ')[0] || 'Student'}
-            onBegin={beginOnboarding}
-          />
+          isParent ? (
+            <ParentWelcomeScreen
+              parentName={user.displayName?.split(' ')[0] || 'Parent'}
+              onBegin={beginOnboarding}
+            />
+          ) : (
+            <WelcomeScreen
+              studentName={user.displayName?.split(' ')[0] || 'Student'}
+              onBegin={beginOnboarding}
+            />
+          )
         )}
 
         {/* Intake Screen */}
@@ -151,14 +189,23 @@ export default function OnboardingPage() {
         )}
 
         {/* Bridge Message */}
-        {phase === 'bridge' && intakeData && user && (
-          <BridgeMessage
-            studentName={user.displayName?.split(' ')[0] || 'Student'}
-            ageRange={intakeData.ageRange}
-            experienceLevel={intakeData.experienceLevel}
-            primaryReasons={intakeData.primaryReasons}
-            onContinue={startCategory}
-          />
+        {phase === 'bridge' && user && (
+          isParent ? (
+            <ParentBridgeMessage
+              parentName={user.displayName?.split(' ')[0] || 'Parent'}
+              onContinue={startCategory}
+            />
+          ) : (
+            intakeData ? (
+              <BridgeMessage
+                studentName={user.displayName?.split(' ')[0] || 'Student'}
+                ageRange={intakeData.ageRange}
+                experienceLevel={intakeData.experienceLevel}
+                primaryReasons={intakeData.primaryReasons}
+                onContinue={startCategory}
+              />
+            ) : null
+          )
         )}
 
         {/* Category Introduction */}
@@ -169,7 +216,7 @@ export default function OnboardingPage() {
             categoryDescription={currentCategory.description}
             questionCount={categoryQuestions.length}
             categoryIndex={currentCategoryIndex}
-            totalCategories={totalCategories}
+            totalCategories={onboarding.totalCategories}
             onStart={startCategory}
           />
         )}
@@ -189,12 +236,19 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Assessment Complete - simple message for students (profile is for coaches/admins) */}
+        {/* Assessment Complete */}
         {phase === 'profile' && (
-          <AssessmentComplete
-            studentName={user?.displayName?.split(' ')[0]}
-            onContinue={goToDashboard}
-          />
+          isParent ? (
+            <ParentAssessmentComplete
+              parentName={user?.displayName?.split(' ')[0]}
+              onContinue={goToDashboard}
+            />
+          ) : (
+            <AssessmentComplete
+              studentName={user?.displayName?.split(' ')[0]}
+              onContinue={goToDashboard}
+            />
+          )
         )}
       </div>
     </OnboardingContainer>

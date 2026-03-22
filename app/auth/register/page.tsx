@@ -111,7 +111,7 @@ export default function RegisterPage() {
       });
 
       if (data.role === 'parent') {
-        router.push('/parent/onboarding');
+        router.push('/onboarding?role=parent');
       } else if (data.role === 'admin') {
         router.push('/admin');
       } else if (data.role === 'coach') {

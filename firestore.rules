@@ -730,13 +730,15 @@ service cloud.firestore {
       }
 
       // Helper to check if this is the user's own evaluation
-      // Works for both V1 and V2 document ID formats
+      // Works for V1, V2, and parent document ID formats
       function isOwnEvaluation() {
         return isAuthenticated() && (
           // V1 format: eval_{userId}
           evaluationId == 'eval_' + getUserId() ||
           // V2 format: eval_v2_{userId}
-          evaluationId == 'eval_v2_' + getUserId()
+          evaluationId == 'eval_v2_' + getUserId() ||
+          // Parent format: eval_parent_{userId}
+          evaluationId == 'eval_parent_' + getUserId()
         );
       }
 

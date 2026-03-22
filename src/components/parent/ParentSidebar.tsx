@@ -24,7 +24,7 @@ interface ParentSidebarProps {
 const navItems = [
   { label: 'Dashboard', href: '/parent', icon: LayoutDashboard },
   { label: 'My Goalies', href: '/parent/goalies', icon: Users },
-  { label: 'Assessment', href: '/parent/onboarding', icon: ClipboardCheck },
+  { label: 'Assessment', href: '/onboarding?role=parent', icon: ClipboardCheck },
   { label: 'Perception', href: '/parent/perception', icon: Eye },
   { label: 'Profile', href: '/parent/profile', icon: UserCircle },
 ];

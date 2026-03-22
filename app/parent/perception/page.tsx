@@ -62,7 +62,7 @@ export default function ParentPerceptionPage() {
           <p className="text-sm text-amber-700 max-w-md mx-auto mb-4">
             Complete your parent assessment first to unlock perception comparisons.
           </p>
-          <Link href="/parent/onboarding">
+          <Link href="/onboarding?role=parent">
             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
               Start Assessment
             </Button>

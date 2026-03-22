@@ -185,7 +185,7 @@ export default function ParentAssessmentPage() {
             </Alert>
 
             <Button className="w-full" asChild>
-              <Link href="/parent/onboarding">
+              <Link href="/onboarding?role=parent">
                 Start Assessment
               </Link>
             </Button>

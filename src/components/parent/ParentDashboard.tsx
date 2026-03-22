@@ -159,7 +159,7 @@ export function ParentDashboard({ user }: ParentDashboardProps) {
               self-assessment.
             </span>
             <Button size="sm" asChild className="ml-4">
-              <Link href="/parent/onboarding">Start Assessment</Link>
+              <Link href="/onboarding?role=parent">Start Assessment</Link>
             </Button>
           </AlertDescription>
         </Alert>
