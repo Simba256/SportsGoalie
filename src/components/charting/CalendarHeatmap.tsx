@@ -12,7 +12,6 @@ interface CalendarHeatmapProps {
 
 export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = [], onDayClick }: CalendarHeatmapProps) => {
   const today = startOfDay(new Date());
-  // Show 1 year back + 3 months forward (365 + 90 = 455 days)
   const yearStart = addDays(today, -365);
   const yearEnd = addDays(today, 90);
   const totalDays = 455;
@@ -25,46 +24,35 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
     return acc;
   }, {} as Record<string, Session[]>);
 
-  // Helper function to check if a legacy charting entry is fully complete
   const isLegacyEntryComplete = (entry: any): boolean => {
     if (!entry) return false;
-
-    // Required sections for a complete legacy entry
     const hasPreGame = !!entry.preGame;
     const hasGameOverview = !!entry.gameOverview;
     const hasPeriods = !!entry.period1 && !!entry.period2 && !!entry.period3;
     const hasPostGame = !!entry.postGame;
-
     return hasPreGame && hasGameOverview && hasPeriods && hasPostGame;
   };
 
-  // Helper function to check if a dynamic entry is complete
   const isDynamicEntryComplete = (entry: DynamicChartingEntry): boolean => {
     if (!entry) return false;
-    // Dynamic entries have an isComplete field
     return entry.isComplete === true;
   };
 
-  // Helper function to check if a dynamic entry is partial
   const isDynamicEntryPartial = (entry: DynamicChartingEntry): boolean => {
     if (!entry) return false;
-    // Partial if it exists but is not complete
     return entry.completionPercentage > 0 && !entry.isComplete;
   };
 
-  // Group legacy charting entries by session ID
   const legacyEntriesBySession = chartingEntries.reduce((acc, entry) => {
     acc[entry.sessionId] = entry;
     return acc;
   }, {} as Record<string, any>);
 
-  // Group dynamic charting entries by session ID
   const dynamicEntriesBySession = dynamicEntries.reduce((acc, entry) => {
     acc[entry.sessionId] = entry;
     return acc;
   }, {} as Record<string, DynamicChartingEntry>);
 
-  // Calculate completion level for a date
   const getCompletionLevel = (date: Date): number => {
     const dateKey = format(date, 'yyyy-MM-dd');
     const daySessions = sessionsByDate[dateKey];
@@ -75,7 +63,6 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
     let partiallyCompleteCount = 0;
 
     daySessions.forEach(session => {
-      // Check for dynamic entry first (new system)
       const dynamicEntry = dynamicEntriesBySession[session.id];
       if (dynamicEntry) {
         if (isDynamicEntryComplete(dynamicEntry)) {
@@ -83,10 +70,9 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
         } else if (isDynamicEntryPartial(dynamicEntry)) {
           partiallyCompleteCount++;
         }
-        return; // Skip legacy check if dynamic entry exists
+        return;
       }
 
-      // Fallback to legacy entry (old system)
       const legacyEntry = legacyEntriesBySession[session.id];
       if (legacyEntry) {
         if (isLegacyEntryComplete(legacyEntry)) {
@@ -99,33 +85,28 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
 
     const totalCount = daySessions.length;
 
-    // No entries at all
     if (fullyCompleteCount === 0 && partiallyCompleteCount === 0) {
       return 1; // Scheduled but not charted
     }
 
-    // All sessions fully complete
     if (fullyCompleteCount === totalCount) {
       return 3; // Complete
     }
 
-    // Some sessions have entries (partial or complete, but not all complete)
     return 2; // Partial
   };
 
-  // Get background color based on completion level
   const getBackgroundColor = (level: number): string => {
     switch (level) {
-      case 0: return 'bg-gray-100 hover:bg-gray-200'; // No session
-      case 1: return 'bg-blue-200 hover:bg-blue-300'; // Scheduled
-      case 2: return 'bg-blue-400 hover:bg-blue-500'; // Partial
-      case 3: return 'bg-blue-600 hover:bg-blue-700'; // Complete
-      default: return 'bg-gray-100';
+      case 0: return 'bg-muted/50 hover:bg-muted'; // No session
+      case 1: return 'bg-primary/20 hover:bg-primary/30'; // Scheduled
+      case 2: return 'bg-primary/50 hover:bg-primary/60'; // Partial
+      case 3: return 'bg-primary hover:bg-primary/90'; // Complete
+      default: return 'bg-muted/50';
     }
   };
 
-  // Build grid: weeks as columns, days (Sun-Sat) as rows
-  // Start from the first Sunday on or before Jan 1
+  // Build grid
   const firstDate = addDays(yearStart, -getDay(yearStart));
   const weeksNeeded = Math.ceil((totalDays + getDay(yearStart)) / 7);
 
@@ -138,7 +119,6 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
     }
   }
 
-  // Get month labels
   const monthLabels: { label: string; weekIndex: number }[] = [];
   let lastMonth = -1;
 
@@ -146,7 +126,6 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
     const date = addDays(firstDate, week * 7);
     const month = date.getMonth();
 
-    // Show label if within our date range and month changed
     if (month !== lastMonth && date >= yearStart && date <= yearEnd) {
       monthLabels.push({
         label: format(date, 'MMM'),
@@ -159,35 +138,35 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
   return (
     <div className="space-y-4">
       {/* Legend */}
-      <div className="flex items-center gap-4 text-sm text-gray-600">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span className="font-medium">Activity:</span>
         <div className="flex items-center gap-2">
-          <div className="w-3.5 h-3.5 bg-gray-100 border border-gray-300 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-muted/50 border border-border rounded-sm"></div>
           <span>None</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3.5 h-3.5 bg-blue-200 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-primary/20 rounded-sm"></div>
           <span>Scheduled</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3.5 h-3.5 bg-blue-400 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-primary/50 rounded-sm"></div>
           <span>Partial</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3.5 h-3.5 bg-blue-600 rounded"></div>
+          <div className="w-3.5 h-3.5 bg-primary rounded-sm"></div>
           <span>Complete</span>
         </div>
       </div>
 
-      {/* Heatmap Grid - Horizontal Layout */}
+      {/* Heatmap Grid */}
       <div className="overflow-x-auto pb-4">
         <div className="inline-flex flex-col gap-1 min-w-max">
-          {/* Month labels - positioned relative to weeks */}
+          {/* Month labels */}
           <div className="relative h-5 ml-10 mb-1">
             {monthLabels.map((month) => (
               <div
                 key={month.weekIndex}
-                className="absolute text-xs text-gray-500"
+                className="absolute text-xs text-muted-foreground font-medium"
                 style={{ left: `${month.weekIndex * 18}px` }}
               >
                 {month.label}
@@ -197,11 +176,11 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
 
           {/* Grid container with day labels */}
           <div className="flex gap-1">
-            {/* Day labels (Sun-Sat) */}
+            {/* Day labels */}
             <div className="flex flex-col gap-1 pr-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-                <div key={day} className="h-3.5 flex items-center text-xs text-gray-500">
-                  {idx % 2 === 1 ? day[0] : ''} {/* Only show Mon, Wed, Fri */}
+                <div key={day} className="h-3.5 flex items-center text-xs text-muted-foreground">
+                  {idx % 2 === 1 ? day[0] : ''}
                 </div>
               ))}
             </div>
@@ -215,7 +194,7 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
                     const isInRange = date >= yearStart && date <= yearEnd;
 
                     if (!isInRange) {
-                      return <div key={dayIndex} className="w-3.5 h-3.5" />; // Empty placeholder
+                      return <div key={dayIndex} className="w-3.5 h-3.5" />;
                     }
 
                     const level = getCompletionLevel(date);
@@ -230,7 +209,7 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
                         className={`
                           w-3.5 h-3.5 rounded-sm transition-all
                           ${getBackgroundColor(level)}
-                          ${isToday ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+                          ${isToday ? 'ring-2 ring-accent ring-offset-1 ring-offset-background' : ''}
                         `}
                         title={`${format(date, 'MMM d, yyyy')}: ${daySessions.length} session${daySessions.length !== 1 ? 's' : ''}`}
                       />
@@ -244,8 +223,8 @@ export const CalendarHeatmap = ({ sessions, chartingEntries, dynamicEntries = []
       </div>
 
       {/* Summary */}
-      <div className="text-sm text-gray-600">
-        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} • {sessions.length} sessions • 1 year past + 3 months future • Click any day for details</p>
+      <div className="text-sm text-muted-foreground">
+        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} &bull; {sessions.length} sessions &bull; 1 year past + 3 months future &bull; Click any day for details</p>
       </div>
     </div>
   );

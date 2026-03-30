@@ -1,5 +1,14 @@
-@import 'tailwindcss';
+@import '../node_modules/tailwindcss/index.css';
 @import 'tw-animate-css';
+
+/* Hide scrollbar but keep scrollable */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
 /* Background patterns */
 .bg-grid-pattern {
@@ -7,7 +16,6 @@
     linear-gradient(rgba(55, 181, 255, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(55, 181, 255, 0.1) 1px, transparent 1px);
 }
-
 
 @custom-variant dark (&:is(.dark *));
 
@@ -49,6 +57,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  @keyframes gradient-rotate {
+  from {
+    --gradient-angle:
+    0deg;
+    }
+  to {
+    --gradient-angle:
+    360deg;
+    }
+  }
 }
 
 :root {
@@ -147,7 +165,6 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -168,4 +185,44 @@
 
 .animate-marquee {
   animation: marquee var(--duration) linear infinite;
+}
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes gradient-rotate {
+  from {
+    --gradient-angle: 0deg;
+  }
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+
+.gradient-border-component {
+  -webkit-background-clip: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  -webkit-background-origin: padding-box, border-box;
+  background-origin: padding-box, border-box;
+}
+
+.gradient-border-auto {
+  animation: gradient-rotate var(--animation-duration, 5s) linear infinite;
+}
+
+.gradient-border-hover {
+  --gradient-angle: 0deg;
+}
+.gradient-border-hover:hover {
+  animation: gradient-rotate var(--animation-duration, 5s) linear infinite;
+}
+
+.gradient-border-stop-hover {
+  animation: gradient-rotate var(--animation-duration, 5s) linear infinite;
+}
+.gradient-border-stop-hover:hover {
+  animation-play-state: paused;
 }

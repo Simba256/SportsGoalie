@@ -42,6 +42,7 @@ export default function OnboardingPage() {
     phase,
     loading,
     error,
+    evaluation,
     currentIntakeScreen,
     intakeScreenQuestions,
     intakeResponses,
@@ -60,6 +61,7 @@ export default function OnboardingPage() {
     previousIntakeScreen,
     startCategory,
     answerQuestion,
+    previousQuestion,
     goToDashboard,
   } = useOnboarding({
     userId: user?.id || null,
@@ -70,6 +72,18 @@ export default function OnboardingPage() {
 
   // Determine if hook is actually enabled
   const hookEnabled = !authLoading && !!user && !user.onboardingCompleted;
+
+  const selectedOptionId =
+    currentQuestion && evaluation
+      ? (() => {
+          const response = evaluation.assessmentResponses.find(
+            (r) => r.questionId === currentQuestion.id
+          );
+          return typeof response?.value === 'string' ? response.value : null;
+        })()
+      : null;
+
+  const canGoBackInAssessment = currentCategoryIndex > 0 || currentQuestionIndex > 0;
 
   // Error state - check BEFORE loading to show errors properly
   if (error) {
@@ -184,7 +198,11 @@ export default function OnboardingPage() {
               categoryColor={currentCategory.color}
               questionNumber={currentQuestionIndex + 1}
               totalQuestionsInCategory={categoryQuestions.length}
+              initialSelectedOptionId={selectedOptionId}
               onAnswer={(optionId, score) => answerQuestion(currentQuestion.id, optionId, score)}
+              onBack={previousQuestion}
+              canGoBack={canGoBackInAssessment}
+              disabled={loading}
             />
           </div>
         )}

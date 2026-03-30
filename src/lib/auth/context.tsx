@@ -400,6 +400,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.profileImage !== undefined) {
         updatedUser.profileImage = data.profileImage;
       }
+      if (data.workflowType !== undefined) {
+        updatedUser.workflowType = data.workflowType;
+      }
+      if (data.assignedCoachId !== undefined) {
+        updatedUser.assignedCoachId = data.assignedCoachId;
+      }
 
       setUser(updatedUser);
     } catch {

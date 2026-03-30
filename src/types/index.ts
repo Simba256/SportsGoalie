@@ -794,6 +794,17 @@ export type {
   CohortAnalytics,
   SessionComparison,
   ChartingQueryOptions,
+  // V2 Charting Types
+  MindManagementStartTime,
+  V2PreGameData,
+  GoalEntry,
+  V2PeriodData,
+  V2PostGameData,
+  V2GameChartEntry,
+  PracticeIndexCategory,
+  PracticeIndexItem,
+  V2PracticeChartEntry,
+  MindVaultEntry,
 } from './charting';
 
 // Form Template Types - Export from form-template.ts

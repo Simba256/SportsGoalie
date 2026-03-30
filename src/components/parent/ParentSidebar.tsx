@@ -59,13 +59,11 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
         className={`fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out
           ${isOpen ? 'w-64' : 'w-0 lg:w-20'}
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          bg-white border-r border-gray-200 shadow-sm
         `}
-        style={{
-          background: 'linear-gradient(180deg, #0f0f13 0%, #1a1a24 100%)',
-        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {isOpen ? (
             <>
               <Link href="/" className="flex items-center gap-2">
@@ -74,13 +72,13 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
                   alt="Smarter Goalie"
                   className="h-8 w-auto"
                 />
-                <span className="text-white font-bold text-sm">
+                <span className="text-gray-900 font-bold text-sm">
                   SmarterGoalie
                 </span>
               </Link>
               <button
                 onClick={onToggle}
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
               >
                 <X className="h-5 w-5 lg:hidden" />
                 <ChevronLeft className="h-5 w-5 hidden lg:block" />
@@ -89,7 +87,7 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
           ) : (
             <button
               onClick={onToggle}
-              className="hidden lg:flex w-full items-center justify-center p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="hidden lg:flex w-full items-center justify-center p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -97,17 +95,17 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
         </div>
 
         {/* User Profile Section */}
-        <div className={`px-4 py-4 border-b border-white/10 ${!isOpen && 'lg:px-2 lg:py-3'}`}>
+        <div className={`px-4 py-4 border-b border-gray-200 ${!isOpen && 'lg:px-2 lg:py-3'}`}>
           <div className={`flex items-center ${isOpen ? 'gap-3' : 'lg:justify-center'}`}>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
               <User className="h-5 w-5 text-white" />
             </div>
             {isOpen && (
               <div className="overflow-hidden">
-                <p className="text-white text-sm font-semibold truncate">
+                <p className="text-gray-900 text-sm font-semibold truncate">
                   {user?.displayName || user?.email?.split('@')[0]}
                 </p>
-                <p className="text-white/50 text-xs truncate">Parent</p>
+                <p className="text-gray-500 text-xs truncate">Parent</p>
               </div>
             )}
           </div>
@@ -131,7 +129,7 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
                   ${
                     active
                       ? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
-                      : 'text-white/60 hover:text-white hover:bg-white/8'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }
                 `}
                 title={!isOpen ? item.label : undefined}
@@ -144,10 +142,10 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t border-white/10">
+        <div className="p-3 border-t border-gray-200">
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/8 transition-colors
+            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors
               ${!isOpen && 'lg:justify-center lg:px-2'}
             `}
             title={!isOpen ? 'Log out' : undefined}

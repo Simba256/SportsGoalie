@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Component as BackgroundComponent } from '@/components/ui/background-components';
 
 interface OnboardingContainerProps {
   children: ReactNode;
@@ -14,23 +15,15 @@ interface OnboardingContainerProps {
  */
 export function OnboardingContainer({ children, className }: OnboardingContainerProps) {
   return (
-    <div
+    <BackgroundComponent
       className={cn(
-        'min-h-screen w-full',
-        'bg-gradient-to-br from-gray-50 via-white to-gray-50',
-        'text-gray-900',
-        'overflow-hidden',
+        'text-gray-900 overflow-hidden pt-20',
         className
       )}
     >
-      {/* Subtle decorative blurs */}
-      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col">
         {children}
       </div>
-    </div>
+    </BackgroundComponent>
   );
 }

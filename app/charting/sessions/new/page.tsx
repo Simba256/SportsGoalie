@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup } from '@/components/ui/radio-group';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trophy, Dumbbell, MapPin, CalendarDays, Users, Tag } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 
 export default function NewSessionPage() {
@@ -18,7 +18,7 @@ export default function NewSessionPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: 'game' as 'game' | 'practice',
-    date: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm format
+    date: new Date().toISOString().slice(0, 16),
     opponent: '',
     location: '',
     tags: [] as string[],
@@ -58,7 +58,7 @@ export default function NewSessionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -66,68 +66,83 @@ export default function NewSessionPage() {
             variant="outline"
             size="icon"
             onClick={() => router.back()}
+            className="rounded-full border-border/50 hover:bg-muted"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">New Session</h1>
-            <p className="text-gray-600 mt-1">Create a new game or practice session</p>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">New Session</h1>
+            <p className="text-muted-foreground mt-1">Create a new game or practice session</p>
           </div>
         </div>
 
         {/* Form */}
-        <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="border-0 shadow-md overflow-hidden">
+          <form onSubmit={handleSubmit} className="space-y-8 p-6">
             {/* Session Type */}
-            <div className="space-y-2">
-              <Label>Session Type</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-foreground">Session Type</Label>
               <RadioGroup
                 value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value as 'game' | 'practice' })}
-                className="flex gap-4"
+                className="grid grid-cols-2 gap-4"
               >
                 <div
-                  className={`flex-1 border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+                  className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all ${
                     formData.type === 'game'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                      : 'border-border hover:border-primary/30 hover:bg-muted/50'
                   }`}
                   onClick={() => setFormData({ ...formData, type: 'game' })}
                 >
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      value="game"
-                      checked={formData.type === 'game'}
-                      onChange={() => setFormData({ ...formData, type: 'game' })}
-                      className="text-blue-600"
-                    />
-                    <div>
-                      <p className="font-medium">Game</p>
-                      <p className="text-sm text-gray-600">Competitive match</p>
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      formData.type === 'game' ? 'bg-primary/10' : 'bg-muted'
+                    }`}>
+                      <Trophy className={`w-5 h-5 ${formData.type === 'game' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="game"
+                          checked={formData.type === 'game'}
+                          onChange={() => setFormData({ ...formData, type: 'game' })}
+                          className="accent-[hsl(var(--primary))]"
+                        />
+                        <p className="font-semibold text-foreground">Game</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Competitive match</p>
                     </div>
                   </div>
                 </div>
 
                 <div
-                  className={`flex-1 border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+                  className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all ${
                     formData.type === 'practice'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                      : 'border-border hover:border-primary/30 hover:bg-muted/50'
                   }`}
                   onClick={() => setFormData({ ...formData, type: 'practice' })}
                 >
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      value="practice"
-                      checked={formData.type === 'practice'}
-                      onChange={() => setFormData({ ...formData, type: 'practice' })}
-                      className="text-blue-600"
-                    />
-                    <div>
-                      <p className="font-medium">Practice</p>
-                      <p className="text-sm text-gray-600">Training session</p>
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      formData.type === 'practice' ? 'bg-primary/10' : 'bg-muted'
+                    }`}>
+                      <Dumbbell className={`w-5 h-5 ${formData.type === 'practice' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="practice"
+                          checked={formData.type === 'practice'}
+                          onChange={() => setFormData({ ...formData, type: 'practice' })}
+                          className="accent-[hsl(var(--primary))]"
+                        />
+                        <p className="font-semibold text-foreground">Practice</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Training session</p>
                     </div>
                   </div>
                 </div>
@@ -136,81 +151,107 @@ export default function NewSessionPage() {
 
             {/* Date and Time */}
             <div className="space-y-2">
-              <Label htmlFor="date">Date & Time *</Label>
+              <Label htmlFor="date" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-primary" />
+                Date & Time <span className="text-accent">*</span>
+              </Label>
               <Input
                 id="date"
                 type="datetime-local"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
+                className="border-border focus-visible:ring-primary"
               />
             </div>
 
             {/* Opponent (only for games) */}
             {formData.type === 'game' && (
               <div className="space-y-2">
-                <Label htmlFor="opponent">Opponent</Label>
+                <Label htmlFor="opponent" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  Opponent
+                </Label>
                 <Input
                   id="opponent"
                   type="text"
                   placeholder="Enter opponent team name"
                   value={formData.opponent}
                   onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
+                  className="border-border focus-visible:ring-primary"
                 />
               </div>
             )}
 
             {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Location
+              </Label>
               <Input
                 id="location"
                 type="text"
                 placeholder="Enter arena or rink name"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="border-border focus-visible:ring-primary"
               />
             </div>
 
             {/* Tags */}
-            <div className="space-y-2">
-              <Label>Tags</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary" />
+                Tags
+              </Label>
               <div className="flex flex-wrap gap-2">
-                {['Home', 'Away', 'Tournament', 'League', 'Playoff'].map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => {
-                      const tags = formData.tags.includes(tag.toLowerCase())
-                        ? formData.tags.filter((t) => t !== tag.toLowerCase())
-                        : [...formData.tags, tag.toLowerCase()];
-                      setFormData({ ...formData, tags });
-                    }}
-                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                      formData.tags.includes(tag.toLowerCase())
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+                {['Home', 'Away', 'Tournament', 'League', 'Playoff'].map((tag) => {
+                  const isSelected = formData.tags.includes(tag.toLowerCase());
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        const tags = isSelected
+                          ? formData.tags.filter((t) => t !== tag.toLowerCase())
+                          : [...formData.tags, tag.toLowerCase()];
+                        setFormData({ ...formData, tags });
+                      }}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        isSelected
+                          ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
+                          : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
                 disabled={loading}
+                className="border-border/50 hover:bg-muted"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="gap-2">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/25"
+              >
                 {loading ? (
-                  <>Creating...</>
+                  <>
+                    <div className="w-4 h-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
+                    Creating...
+                  </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu } from 'lucide-react';
 import { Header7 } from '@/components/header-7';
 import { Footer7 } from '@/components/footer-7';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -11,7 +10,7 @@ import { ParentSidebar } from '@/components/parent/ParentSidebar';
 /** Routes that render only their own content (no header/footer/sidebar) */
 const BARE_ROUTES = ['/auth'];
 /** Routes that get the public layout (header + footer, no sidebar) */
-const PUBLIC_ROUTES = ['/', '/onboarding'];
+const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
 /** Routes that have their own layout and should not get the sidebar */
 const EXCLUDED_ROUTES = ['/coach', '/admin'];
 
@@ -76,7 +75,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   // Auth pages: no header/footer, just the page itself
   if (isBareRoute(pathname)) {
-    return <>{children}</>;
+    return (
+      <div className="min-h-screen flex flex-col bg-white">
+        <main className="flex-1">{children}</main>
+        <Footer7 />
+      </div>
+    );
   }
 
   // Public pages: landing, onboarding
@@ -119,19 +123,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         >
           {/* Top bar */}
           <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors lg:hidden"
-              aria-label="Toggle sidebar"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <div className="h-5 w-px bg-gray-200 lg:hidden" />
             <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
           </header>
 
           {/* Page content */}
           <main className="p-6">{children}</main>
+          <Footer7 />
         </div>
       </div>
     );
@@ -154,19 +151,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       >
         {/* Top bar */}
         <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/60 flex items-center px-6 gap-4">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="h-5 w-px bg-gray-200" />
           <span className="text-sm text-gray-500 font-medium">{pageTitle}</span>
         </header>
 
         {/* Page content */}
         <main className="p-6">{children}</main>
+        <Footer7 />
       </div>
     </div>
   );
