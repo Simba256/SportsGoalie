@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronDown } from 'lucide-react';
+import Grainient from '@/components/effects/Grainient';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -127,10 +128,37 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="relative min-h-screen overflow-hidden bg-slate-50">
+      <div className="pointer-events-none absolute inset-0">
+        <Grainient
+          color1="#37B5FF"
+          color2="#FF2A2A"
+          color3="#E5F2FF"
+          timeSpeed={0.2}
+          colorBalance={0}
+          warpStrength={1}
+          warpFrequency={5}
+          warpSpeed={2}
+          warpAmplitude={50}
+          blendAngle={10}
+          blendSoftness={0.08}
+          rotationAmount={420}
+          noiseScale={1.8}
+          grainAmount={0.05}
+          grainScale={2}
+          grainAnimated={false}
+          contrast={1.15}
+          gamma={1}
+          saturation={0.8}
+          centerX={0}
+          centerY={0}
+          zoom={1}
+        />
+      </div>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/80 via-white/72 to-white/84" />
 
       {/* Hero */}
-      <section className="relative pt-20 pb-12 px-6 overflow-hidden bg-slate-50">
+      <section className="relative pt-20 pb-12 px-6 overflow-hidden">
 
         <div className="max-w-6xl mx-auto relative z-10 text-center">
           <p className="inline-flex items-center gap-2 text-xs md:text-sm font-bold tracking-[0.18em] uppercase text-red-600 mb-6">
@@ -156,7 +184,7 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="py-12 px-6 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
+      <section className="relative z-10 py-12 px-6 overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
 
@@ -202,7 +230,7 @@ export default function PricingPage() {
       </section>
 
       {/* Founding and Post-Founding Plans */}
-      <section className="py-16 px-6 bg-gradient-to-b from-white to-slate-50">
+      <section className="relative z-10 py-16 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-3">Founding Plans</p>
@@ -211,7 +239,7 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-red-100 bg-gradient-to-br from-white to-red-50/30 overflow-hidden shadow-sm">
+          <div className="rounded-2xl border border-red-200 bg-white/95 backdrop-blur-sm overflow-hidden shadow-lg shadow-slate-900/5">
             <div className="overflow-x-auto">
               <table className="w-full text-left min-w-[820px]">
                 <thead className="bg-gradient-to-r from-slate-900 via-red-900 to-slate-900 text-white">
@@ -223,9 +251,9 @@ export default function PricingPage() {
                 </thead>
                 <tbody>
                   {comparisonRows.map((row) => (
-                    <tr key={row.offer} className="border-t border-slate-100 hover:bg-slate-50/70 transition-colors">
+                    <tr key={row.offer} className="border-t border-slate-200 bg-white/95 hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 text-sm font-semibold text-slate-900">{row.offer}</td>
-                      <td className="px-6 py-4 text-sm text-red-700 font-medium bg-red-50/40">{row.founding}</td>
+                      <td className="px-6 py-4 text-sm text-red-700 font-medium bg-red-50/75">{row.founding}</td>
                       <td className="px-6 py-4 text-sm text-slate-700">{row.postFounding}</td>
                     </tr>
                   ))}
@@ -237,9 +265,9 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 px-6 bg-gradient-to-b from-white to-blue-50/30">
+      <section className="relative z-10 py-12 px-6 md:py-14">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Frequently Asked Questions</h2>
           </div>
           <div className="space-y-4">
@@ -279,11 +307,7 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="relative py-20 px-6 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
-        <div className="absolute inset-0 opacity-60 [background-size:48px_48px] [background-image:linear-gradient(to_right,rgba(59,130,246,0.09)_1px,transparent_1px),linear-gradient(to_bottom,rgba(239,68,68,0.08)_1px,transparent_1px)]"></div>
-        <div className="absolute inset-0 [background-size:24px_24px] [background-image:radial-gradient(circle_at_center,rgba(30,41,59,0.05)_1px,transparent_1px)]"></div>
-        <div className="absolute -top-14 left-8 w-52 h-52 rounded-full bg-red-500/10 blur-3xl"></div>
-        <div className="absolute -bottom-16 right-8 w-60 h-60 rounded-full bg-blue-500/10 blur-3xl"></div>
+      <section className="relative z-10 pt-12 pb-16 px-6 overflow-hidden md:pt-14 md:pb-20">
 
         <div className="relative z-10 max-w-6xl mx-auto text-center">
           <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-4">Limited founding spots</p>
