@@ -17,6 +17,7 @@ import {
   MessageSquare,
   ClipboardList,
   UserCircle,
+  Shield,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
@@ -30,6 +31,7 @@ const navItems = [
   { label: 'Pillars', href: '/pillars', icon: BookOpen },
   { label: 'Quizzes', href: '/quizzes', icon: Trophy },
   { label: 'Charting', href: '/charting', icon: ClipboardList },
+  { label: 'Mind Vault', href: '/mind-vault', icon: Shield },
   { label: 'Analytics', href: '/progress', icon: BarChart3 },
   { label: 'Achievements', href: '/achievements', icon: Award },
   { label: 'Goals', href: '/goals', icon: Target },

@@ -78,6 +78,7 @@ function getPageTitle(pathname: string): string {
     messages: 'Messages',
     profile: 'Profile',
     charting: 'Charting',
+    'mind-vault': 'Mind Vault',
     learn: 'Learn',
   };
 
