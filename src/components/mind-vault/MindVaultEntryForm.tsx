@@ -39,7 +39,7 @@ export function MindVaultEntryForm({ onSubmit, placeholder }: Props) {
       <Button
         variant="outline"
         onClick={() => setIsOpen(true)}
-        className="w-full border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700"
+        className="w-full rounded-xl border-dashed border-blue-300 bg-white text-blue-700 transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800"
       >
         <Plus className="h-4 w-4 mr-2" />
         Add Entry
@@ -48,7 +48,7 @@ export function MindVaultEntryForm({ onSubmit, placeholder }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50/30 p-4 space-y-4">
+    <div className="space-y-4 rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50/60 to-white p-4 shadow-sm">
       <VoiceRecorder
         onTranscriptionComplete={handleTranscription}
         initialText={content}

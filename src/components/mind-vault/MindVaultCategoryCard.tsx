@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import {
   Heart, ShieldAlert, Mountain, Lightbulb, Quote,
-  Wrench, Anchor, Trophy, Users,
+  Wrench, Anchor, Trophy, Users, ArrowUpRight,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { MindVaultCategoryInfo, MindVaultCategorySummary } from '@/types/mind-vault';
@@ -14,15 +14,15 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = {
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
+  emerald: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
   red:     { bg: 'bg-red-50',     text: 'text-red-600',     border: 'border-red-200' },
-  amber:   { bg: 'bg-amber-50',   text: 'text-amber-600',   border: 'border-amber-200' },
-  yellow:  { bg: 'bg-yellow-50',  text: 'text-yellow-600',  border: 'border-yellow-200' },
-  purple:  { bg: 'bg-purple-50',  text: 'text-purple-600',  border: 'border-purple-200' },
+  amber:   { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
+  yellow:  { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
+  purple:  { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
   blue:    { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
-  indigo:  { bg: 'bg-indigo-50',  text: 'text-indigo-600',  border: 'border-indigo-200' },
-  cyan:    { bg: 'bg-cyan-50',    text: 'text-cyan-600',    border: 'border-cyan-200' },
-  pink:    { bg: 'bg-pink-50',    text: 'text-pink-600',    border: 'border-pink-200' },
+  indigo:  { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
+  cyan:    { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
+  pink:    { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200' },
 };
 
 interface Props {
@@ -45,16 +45,20 @@ export function MindVaultCategoryCard({ category, summary }: Props) {
 
   return (
     <Link href={href}>
-      <Card className={`group cursor-pointer border ${colors.border} hover:shadow-md transition-all duration-200`}>
+      <Card className={`group relative cursor-pointer overflow-hidden border ${colors.border} bg-white/95 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10`}>
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-blue-50/60 via-transparent to-red-50/40" />
         <CardContent className="p-5">
-          <div className="flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+          <div className="relative z-10 flex items-start gap-4">
+            <div className={`h-10 w-10 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0 border ${colors.border}`}>
               <Icon className={`h-5 w-5 ${colors.text}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm group-hover:text-gray-700 transition-colors">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold text-gray-900 transition-colors group-hover:text-slate-700">
                 {category.name}
-              </h3>
+                </h3>
+                <ArrowUpRight className="h-4 w-4 text-slate-300 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-blue-500" />
+              </div>
               <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
                 {category.description}
               </p>

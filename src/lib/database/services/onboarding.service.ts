@@ -21,6 +21,8 @@ import {
   extractPrimaryReasons,
 } from '@/data/goalie-intake-questions';
 import { generateGoalieIntelligenceProfile } from '@/lib/scoring/intelligence-profile';
+import { enrollmentService } from './enrollment.service';
+import { getAllPillarIds } from '@/lib/utils/pillars';
 
 /**
  * Service for managing student onboarding evaluations.
@@ -457,11 +459,33 @@ export class OnboardingService extends BaseDatabaseService {
         initialAssessmentLevel: pacingLevelToAssessmentLevel(intelligenceProfile.pacingLevel),
       });
 
+      // Auto-enroll student in all 7 pillars
+      const pillarIds = getAllPillarIds();
+      logger.info('Auto-enrolling student in pillars', 'OnboardingService', {
+        userId,
+        pillarCount: pillarIds.length,
+        pacingLevel: intelligenceProfile.pacingLevel,
+      });
+
+      for (const pillarId of pillarIds) {
+        try {
+          await enrollmentService.enrollInSport(userId, pillarId);
+        } catch (enrollError) {
+          // Log but don't fail the whole evaluation if one enrollment fails
+          logger.error('Failed to enroll in pillar', 'OnboardingService', {
+            userId,
+            pillarId,
+            error: enrollError,
+          });
+        }
+      }
+
       logger.info('Evaluation completed successfully', 'OnboardingService', {
         userId,
         pacingLevel: intelligenceProfile.pacingLevel,
         overallScore: intelligenceProfile.overallScore,
         duration,
+        pillarsEnrolled: pillarIds.length,
       });
 
       return {

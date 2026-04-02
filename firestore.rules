@@ -891,6 +891,15 @@ service cloud.firestore {
       allow read: if isParent();
     }
 
+    // Mind Vault entries — private to the goalie
+    match /mind_vault_entries/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.studentId);
+      allow update: if isOwnerOrAdmin(resource.data.studentId);
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections

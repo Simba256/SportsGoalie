@@ -29,7 +29,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatsCards } from '@/components/analytics/StatsCards';
 import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
-import { User, CustomCurriculum, CustomCurriculumItem } from '@/types';
+import { onboardingService } from '@/lib/database';
+import { User, CustomCurriculum, CustomCurriculumItem, IntelligenceProfile, getPacingLevelDisplayText } from '@/types';
+import { useEnrollment } from '@/hooks/useEnrollment';
+import { getPillarByDocId, getPillarColorClasses } from '@/lib/utils/pillars';
 import { toast } from 'sonner';
 
 interface CustomCurriculumDashboardProps {
@@ -49,6 +52,8 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   const [coach, setCoach] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [contentInfo, setContentInfo] = useState<Record<string, ContentInfo>>({});
+  const [profile, setProfile] = useState<IntelligenceProfile | null>(null);
+  const { enrolledSports } = useEnrollment();
 
   useEffect(() => {
     loadData();
@@ -128,6 +133,16 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
           }
         }
         setContentInfo(info);
+      }
+
+      // Load intelligence profile from evaluation
+      try {
+        const evalResult = await onboardingService.getEvaluation(user.id);
+        if (evalResult.success && evalResult.data?.intelligenceProfile) {
+          setProfile(evalResult.data.intelligenceProfile);
+        }
+      } catch (err) {
+        console.error('Failed to load intelligence profile:', err);
       }
 
       // Load coach info
@@ -298,6 +313,100 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
               </Link>
             </CardContent>
           </Card>
+        )}
+
+        {/* Assessment Profile & Level */}
+        {profile && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Your Assessment Profile
+              </CardTitle>
+              <CardDescription>
+                Based on your onboarding questionnaire
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6 mb-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {profile.overallScore.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Overall Score</div>
+                </div>
+                <div>
+                  <Badge className={`text-sm px-3 py-1 ${
+                    profile.pacingLevel === 'refinement' ? 'bg-green-500' :
+                    profile.pacingLevel === 'development' ? 'bg-blue-500' :
+                    'bg-amber-500'
+                  }`}>
+                    {getPacingLevelDisplayText(profile.pacingLevel)}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your content is set to this level across all pillars
+                  </p>
+                </div>
+              </div>
+              {/* Category scores */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t">
+                {profile.categoryScores.slice(0, 4).map((cat) => (
+                  <div key={cat.categorySlug} className="text-center">
+                    <div className="text-sm font-semibold">{cat.averageScore.toFixed(1)}</div>
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {cat.categorySlug.replace('_', ' ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {profile.identifiedGaps.length > 0 && (
+                <div className="mt-3 pt-3 border-t">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Focus areas:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {profile.identifiedGaps.map((gap) => (
+                      <Badge key={gap.categorySlug} variant="outline" className="text-xs">
+                        {gap.categorySlug.replace('_', ' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Pillar Progress */}
+        {enrolledSports.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-3">Your Pillars</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {enrolledSports.map((enrollment) => {
+                const pillarInfo = getPillarByDocId(enrollment.sport.id);
+                const colors = getPillarColorClasses(pillarInfo?.color || 'blue');
+                const pct = enrollment.progress.progressPercentage || 0;
+                return (
+                  <Link key={enrollment.sport.id} href={`/pillars/${enrollment.sport.id}`}>
+                    <Card className={`hover:shadow-md transition-shadow cursor-pointer border ${colors.border}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-8 h-8 rounded-lg ${colors.bgLight} flex items-center justify-center`}>
+                            <BookOpen className={`h-4 w-4 ${colors.text}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold truncate">
+                              {pillarInfo?.shortName || enrollment.sport.name}
+                            </h3>
+                          </div>
+                        </div>
+                        <Progress value={pct} className="h-1.5 mb-1" />
+                        <p className="text-xs text-muted-foreground">{pct}% complete</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Stats Cards */}

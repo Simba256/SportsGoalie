@@ -507,14 +507,19 @@ export default function PillarDetailPage() {
     return { icon: p.icon, color: 'blue' };
   };
 
+  // Only show skills at the goalie's assessed level (or all if no level yet)
+  const filteredSkills = userLevel
+    ? skills.filter(s => s.difficulty === userLevel)
+    : skills;
+
   const skillsByDifficulty: Record<DifficultyLevel, Skill[]> = {
-    introduction: skills.filter(s => s.difficulty === 'introduction'),
-    development: skills.filter(s => s.difficulty === 'development'),
-    refinement: skills.filter(s => s.difficulty === 'refinement'),
+    introduction: filteredSkills.filter(s => s.difficulty === 'introduction'),
+    development: filteredSkills.filter(s => s.difficulty === 'development'),
+    refinement: filteredSkills.filter(s => s.difficulty === 'refinement'),
   };
 
-  const completedTotal = skills.filter(s => skillProgress[s.id]?.isCompleted).length;
-  const progressPct = skills.length > 0 ? Math.round((completedTotal / skills.length) * 100) : 0;
+  const completedTotal = filteredSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+  const progressPct = filteredSkills.length > 0 ? Math.round((completedTotal / filteredSkills.length) * 100) : 0;
 
   // ── States ────────────────────────────────────────────────────────────────
   if (loading) {
@@ -549,9 +554,9 @@ export default function PillarDetailPage() {
   const IconComponent = PILLAR_ICONS[icon] || Target;
   const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
-  // Sort sections: user's level first, then others in order
+  // Show only the user's level section, or all if no level determined
   const orderedDifficulties = userLevel
-    ? [userLevel, ...DIFFICULTY_ORDER.filter(d => d !== userLevel)] as DifficultyLevel[]
+    ? [userLevel] as DifficultyLevel[]
     : DIFFICULTY_ORDER;
 
   return (
@@ -679,17 +684,17 @@ export default function PillarDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-black text-zinc-900">
-            Skills <span className="text-zinc-400 font-normal text-base">({skills.length})</span>
+            Skills <span className="text-zinc-400 font-normal text-base">({filteredSkills.length})</span>
           </h2>
           {userLevel && (
             <div className="flex items-center gap-2 text-xs text-zinc-500">
               <Star className="w-3.5 h-3.5 text-amber-400" />
-              <span>Your level section is shown first</span>
+              <span>Showing skills for your level: {userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span>
             </div>
           )}
         </div>
 
-        {skills.length === 0 ? (
+        {filteredSkills.length === 0 ? (
           <div className="bg-white rounded-2xl border border-zinc-200 p-12 text-center">
             <BookOpen className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
             <p className="font-semibold text-zinc-700">Skills coming soon</p>

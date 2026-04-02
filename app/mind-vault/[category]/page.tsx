@@ -84,24 +84,27 @@ export default function MindVaultCategoryPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="relative max-w-6xl mx-auto overflow-hidden rounded-3xl border border-blue-100/80 bg-gradient-to-b from-white via-blue-50/15 to-white p-5 shadow-[0_24px_60px_-40px_rgba(14,116,244,0.35)] sm:p-8">
+      <div className="pointer-events-none absolute -top-24 -right-20 h-52 w-52 rounded-full bg-blue-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-20 h-52 w-52 rounded-full bg-red-400/10 blur-3xl" />
+
       {/* Header */}
-      <div className="mb-6">
+      <div className="relative z-10 mb-6 rounded-2xl border border-blue-200/70 bg-white/90 p-5 backdrop-blur">
         <Button
           variant="ghost"
           size="sm"
-          className="mb-3 text-gray-500"
+          className="mb-3 rounded-full border border-blue-200 bg-blue-50 px-4 text-blue-700 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800"
           onClick={() => router.push('/mind-vault')}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Mind Vault
         </Button>
         <h1 className="text-2xl font-bold text-gray-900">{categoryInfo.name}</h1>
-        <p className="text-sm text-gray-500 mt-1">{categoryInfo.description}</p>
+        <p className="mt-1 text-sm text-slate-600">{categoryInfo.description}</p>
       </div>
 
       {/* Add Entry Form */}
-      <div className="mb-6">
+      <div className="relative z-10 mb-6">
         <MindVaultEntryForm
           onSubmit={handleAddEntry}
           placeholder={`What would you like to add to ${categoryInfo.shortName}?`}
@@ -110,18 +113,18 @@ export default function MindVaultCategoryPage() {
 
       {/* Entries List */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <div className="relative z-10 flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
         </div>
       ) : entries.length === 0 ? (
-        <div className="text-center py-16 rounded-xl border border-dashed border-gray-200">
-          <p className="text-gray-400 text-sm">No entries yet.</p>
-          <p className="text-gray-400 text-xs mt-1">
+        <div className="relative z-10 text-center rounded-2xl border border-dashed border-blue-200 bg-gradient-to-b from-blue-50/50 to-white py-16">
+          <p className="text-slate-500 text-sm">No entries yet.</p>
+          <p className="text-slate-500 text-xs mt-1">
             Tap &quot;Add Entry&quot; above to start building this part of your vault.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="relative z-10 space-y-3">
           {entries.map((entry) => (
             <MindVaultEntryCard
               key={entry.id}

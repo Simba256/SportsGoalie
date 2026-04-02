@@ -79,7 +79,19 @@ export class MindVaultService extends BaseDatabaseService {
    * Add a new entry to the Mind Vault
    */
   async addEntry(data: CreateMindVaultEntryData): Promise<ApiResponse<{ id: string }>> {
-    return this.create<MindVaultEntry>(this.COLLECTION, data);
+    console.log('[MindVaultService] addEntry called with:', { category: data.category, subcategory: data.subcategory });
+    try {
+      const result = await this.create<MindVaultEntry>(this.COLLECTION, data);
+      console.log('[MindVaultService] addEntry result:', { success: result.success, error: result.error });
+      return result;
+    } catch (error) {
+      console.error('[MindVaultService] addEntry error:', error);
+      return {
+        success: false,
+        error: { code: 'CREATE_ERROR', message: (error as Error).message },
+        timestamp: new Date(),
+      };
+    }
   }
 
   /**
