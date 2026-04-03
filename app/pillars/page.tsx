@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Sport, PILLARS } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { LoadingState, LoadingCard } from '@/components/ui/loading';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { GradientCard } from '@/components/ui/gradient-card';
+import { LoadingState } from '@/components/ui/loading';
 import Link from 'next/link';
 import {
   Brain,
@@ -17,20 +15,43 @@ import {
   Grid3X3,
   Dumbbell,
   Heart,
-  Users,
-  Sparkles,
+  RefreshCw,
   BookOpen,
 } from 'lucide-react';
 
-// Icon map for pillar icons
+// ─── Pillar colour → GradientCard config ─────────────────────────────────────
+const PILLAR_THEME: Record<
+  string,
+  {
+    gradient: 'red' | 'lightBlue' | 'darkBlue' | 'gray' | 'dark';
+    badgeColor: string;
+    numberColor: string;
+  }
+> = {
+  // Requested distribution: 2 red, 1 light blue, 2 dark blue, 1 grey, 1 black
+  purple: { gradient: 'dark', badgeColor: '#BFDBFE', numberColor: 'text-zinc-300' },
+  blue:   { gradient: 'darkBlue', badgeColor: '#93C5FD', numberColor: 'text-blue-300' },
+  green:  { gradient: 'lightBlue', badgeColor: '#7DD3FC', numberColor: 'text-sky-300' },
+  orange: { gradient: 'gray', badgeColor: '#9CA3AF', numberColor: 'text-gray-300' },
+  red:    { gradient: 'red',  badgeColor: '#F87171', numberColor: 'text-red-300' },
+  cyan:   { gradient: 'darkBlue', badgeColor: '#60A5FA', numberColor: 'text-blue-300' },
+  pink:   { gradient: 'red',  badgeColor: '#FB7185', numberColor: 'text-red-300' },
+};
+
+// Icon map
 const PILLAR_ICONS: Record<string, React.ElementType> = {
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
-  Heart,
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+};
+
+// Descriptions that match the client's documented content
+const PILLAR_DESCRIPTIONS: Record<string, string> = {
+  mindset:     'Build your mental fortress. Learn why your brain does what it does and how to redirect anxiety into performance energy.',
+  skating:     'Move with precision and purpose. Master edgework, lateral speed, and efficiency of movement in sync with the play.',
+  form:        'Perfect your physical foundation. Stance, paddle control, and body mechanics — the blueprint of every great save.',
+  positioning: 'See the ice geometrically. The 7 Angle-Mark System gives you a mathematical grid to always be in the right spot.',
+  seven_point: 'Own the danger zone. The 7 Point System addresses below-the-icing-line positioning — the most dangerous area on ice.',
+  training:    'Make every rep count. Chart your games, spot your patterns, and translate practice directly into game performance.',
+  lifestyle:   'Train the whole athlete. Off-ice habits, nutrition, recovery, and sleep are the foundation your on-ice game builds on.',
 };
 
 interface PillarsPageState {
@@ -48,207 +69,148 @@ export default function PillarsPage() {
 
   const loadPillars = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-
     try {
       const result = await sportsService.getAllSports({ limit: 10 });
-
       if (result.success && result.data) {
-        // Sort by order to ensure consistent display
-        const sortedPillars = result.data.items.sort((a, b) => a.order - b.order);
-        setState(prev => ({
-          ...prev,
-          pillars: sortedPillars,
+        setState({
+          pillars: result.data.items.sort((a, b) => a.order - b.order),
           loading: false,
-        }));
+          error: null,
+        });
       } else {
-        setState(prev => ({
-          ...prev,
-          error: result.error?.message || 'Failed to load pillars',
-          loading: false,
-        }));
+        setState({ pillars: [], loading: false, error: result.error?.message || 'Failed to load pillars' });
       }
     } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred',
-        loading: false,
-      }));
+      setState({ pillars: [], loading: false, error: 'An unexpected error occurred' });
     }
   };
 
-  useEffect(() => {
-    loadPillars();
-  }, []);
+  useEffect(() => { loadPillars(); }, []);
 
-  // Get pillar info from PILLARS constant for consistent display
   const getPillarDisplayInfo = (pillar: Sport) => {
     const slug = getPillarSlugFromDocId(pillar.id);
     if (slug) {
       const info = PILLARS.find(p => p.slug === slug);
-      if (info) {
-        return {
-          icon: info.icon,
-          color: info.color,
-          shortName: info.shortName,
-        };
-      }
+      if (info) return { icon: info.icon, color: info.color, slug };
     }
-    // Fallback to using Sport data
-    return {
-      icon: pillar.icon,
-      color: 'blue',
-      shortName: pillar.name.split(' ')[0],
-    };
+    return { icon: pillar.icon, color: 'blue', slug: null };
   };
 
+  // ─── Loading ──────────────────────────────────────────────────────────────
   if (state.loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Breadcrumb items={[{ label: 'Learning Pillars', current: true }]} className="mb-6" />
-        <LoadingState message="Loading learning pillars..." />
-        <LoadingCard count={6} className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <LoadingState message="Loading your pillars…" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Breadcrumb */}
-      <Breadcrumb items={[{ label: 'Learning Pillars', current: true }]} />
+    <div className="min-h-screen bg-white">
 
-      {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Ice Hockey Goalie Pillars
-              </h1>
-              <Sparkles className="w-6 h-6 text-blue-500" />
-            </div>
-            <p className="text-muted-foreground max-w-2xl">
-              Master the 7 fundamental pillars of goaltending. Each pillar builds upon the others to develop you into a complete goalie.
-            </p>
-          </div>
-          <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
-            7 pillars
-          </div>
+      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      <section className="pt-24 pb-12 px-6 bg-white">
+        <div className="max-w-5xl mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-zinc-900 leading-[1.05] tracking-tight mb-6">
+            The Architecture of a{' '}
+            <span className="text-blue-500">
+              Complete Goalie
+            </span>
+          </h1>
+          <p className="text-zinc-600 text-lg max-w-3xl mx-auto leading-relaxed">
+            Every pillar connects to every other. Master all seven and you master
+            the game — physically, mentally, and technically. Each one builds on the last.
+          </p>
         </div>
-      </div>
+      </section>
 
-      {/* Error State */}
+      {/* ── Error ───────────────────────────────────────────────────────────── */}
       {state.error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2 text-red-600">
-              <span className="font-medium">Error:</span>
-              <span>{state.error}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
+        <div className="max-w-2xl mx-auto px-6 py-12 text-center">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-8">
+            <p className="text-red-700 font-medium mb-4">{state.error}</p>
+            <button
               onClick={loadPillars}
-              className="mt-2"
+              className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-red-500 transition-colors"
             >
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Pillars Grid */}
-      {state.pillars.length === 0 && !state.loading ? (
-        <Card className="p-8">
-          <div className="text-center space-y-4">
-            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto" />
-            <h3 className="text-lg font-medium">No pillars found</h3>
-            <p className="text-muted-foreground">
-              Pillars are being set up. Please check back soon.
-            </p>
+              <RefreshCw className="w-4 h-4" /> Try Again
+            </button>
           </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {state.pillars.map((pillar) => {
-            const displayInfo = getPillarDisplayInfo(pillar);
-            const colorClasses = getPillarColorClasses(displayInfo.color);
-            const IconComponent = PILLAR_ICONS[displayInfo.icon] || Target;
-
-            return (
-              <Link key={pillar.id} href={`/pillars/${pillar.id}`}>
-                <Card className={`h-full hover:shadow-lg transition-all duration-300 cursor-pointer group border-2 ${colorClasses.border} hover:scale-[1.02]`}>
-                  {/* Colored Header */}
-                  <div className={`h-24 bg-gradient-to-br ${colorClasses.gradient} rounded-t-lg flex items-center justify-center relative overflow-hidden`}>
-                    <IconComponent className="w-12 h-12 text-white drop-shadow-lg" />
-                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {pillar.isFeatured && (
-                      <div className="absolute top-2 right-2 bg-white/90 text-xs px-2 py-1 rounded-full font-medium">
-                        Featured
-                      </div>
-                    )}
-                  </div>
-
-                  <CardHeader className="space-y-2 pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className={`text-lg group-hover:${colorClasses.text} transition-colors`}>
-                        {pillar.name}
-                      </CardTitle>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${colorClasses.bgLight} ${colorClasses.text}`}>
-                        Pillar {pillar.order}
-                      </span>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {pillar.description}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4 pt-0">
-                    <div className="flex items-center justify-center text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{pillar.skillsCount} skills</span>
-                      </div>
-                    </div>
-
-                    {pillar.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {pillar.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
         </div>
       )}
 
-      {/* Information Card */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 border-blue-200 dark:border-blue-800">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold text-lg">About the 7 Pillars</h3>
-              <p className="text-muted-foreground">
-                These 7 pillars form the foundation of comprehensive goaltender development.
-                Each pillar contains skills, drills, and assessments designed to help you
-                progress from beginner to advanced levels. Work through each pillar to
-                build a well-rounded skill set.
-              </p>
+      {/* ── Empty state ─────────────────────────────────────────────────────── */}
+      {!state.error && state.pillars.length === 0 && (
+        <div className="max-w-2xl mx-auto px-6 py-20 text-center">
+          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Pillars coming soon</h3>
+          <p className="text-gray-500">The curriculum is being built. Check back shortly.</p>
+        </div>
+      )}
+
+      {/* ── Pillar Cards ────────────────────────────────────────────────────── */}
+      {state.pillars.length > 0 && (
+        <section className="py-16 px-6 bg-white">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {state.pillars.map((pillar) => {
+                const { icon, color, slug } = getPillarDisplayInfo(pillar);
+                const theme = PILLAR_THEME[color] ?? PILLAR_THEME['blue'];
+                const IconComponent = PILLAR_ICONS[icon] ?? Target;
+                const description =
+                  (slug && PILLAR_DESCRIPTIONS[slug]) ?? pillar.description;
+
+                return (
+                  <Link key={pillar.id} href={`/pillars/${pillar.id}`} className="h-full block">
+                    <GradientCard
+                      gradient={theme.gradient}
+                      badgeText={`Pillar ${String(pillar.order).padStart(2, '0')}`}
+                      badgeColor={theme.badgeColor}
+                      title={pillar.name}
+                      description={description}
+                      ctaText="Explore Pillar"
+                      ctaHref={`/pillars/${pillar.id}`}
+                      className="h-full"
+                      decorativeElement={
+                        <IconComponent
+                          className="w-44 h-44"
+                          style={{ color: theme.badgeColor }}
+                          strokeWidth={1.2}
+                        />
+                      }
+                    />
+                  </Link>
+                );
+              })}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </section>
+      )}
+
+      {/* ── Bottom callout ──────────────────────────────────────────────────── */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="text-red-600 font-bold tracking-widest uppercase text-xs mb-3">
+            How It Works
+          </p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-zinc-900 mb-4">
+            Everything Connects
+          </h2>
+          <p className="text-zinc-600 max-w-2xl mx-auto text-base leading-relaxed mb-8">
+            Chart the game, train what matters, and build confidence for your next performance.
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-3 text-xs font-semibold text-zinc-700">
+            <span className="bg-zinc-100 px-4 py-2 rounded-full">Chart</span>
+            <span className="text-zinc-400">→</span>
+            <span className="bg-zinc-100 px-4 py-2 rounded-full">Learn</span>
+            <span className="text-zinc-400">→</span>
+            <span className="bg-zinc-100 px-4 py-2 rounded-full">Apply</span>
+            <span className="text-zinc-400">→</span>
+            <span className="bg-zinc-100 px-4 py-2 rounded-full">Perform Better</span>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

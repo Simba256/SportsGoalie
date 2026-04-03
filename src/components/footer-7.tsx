@@ -1,5 +1,6 @@
 import React from "react";
-import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaReddit } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 interface Footer7Props {
   logo?: {
@@ -29,10 +30,10 @@ const defaultSections = [
   {
     title: "Platform",
     links: [
-      { name: "Goalie Path", href: "#about" },
-      { name: "Parent View", href: "#about" },
-      { name: "Training Library", href: "#features" },
-      { name: "Features", href: "#" },
+      { name: "Goaltending: 7 Pillars", href: "#features" },
+      { name: "Test Your Knowledge", href: "#features" },
+      { name: "Performance Analytics", href: "#features" },
+      { name: "Dashboard Command Center", href: "#" },
     ],
   },
   {
@@ -45,21 +46,24 @@ const defaultSections = [
     ],
   },
   {
-    title: "Resources",
+    title: "Connect",
     links: [
+      { name: "info@smartergoalie.com", href: "mailto:info@smartergoalie.com" },
+      { name: "416", href: "tel:416" },
       { name: "Help Center", href: "#" },
-      { name: "Contact", href: "#" },
-      { name: "Coach Support", href: "#" },
       { name: "Privacy", href: "#" },
     ],
   },
 ];
 
 const defaultSocialLinks = [
-  { icon: <FaInstagram className="size-5" />, href: "#", label: "Instagram" },
-  { icon: <FaFacebook className="size-5" />, href: "#", label: "Facebook" },
-  { icon: <FaTwitter className="size-5" />, href: "#", label: "Twitter" },
   { icon: <FaLinkedin className="size-5" />, href: "#", label: "LinkedIn" },
+  { icon: <FaXTwitter className="size-5" />, href: "#", label: "X" },
+  { icon: <FaTiktok className="size-5" />, href: "#", label: "TikTok" },
+  { icon: <FaFacebook className="size-5" />, href: "#", label: "Facebook" },
+  { icon: <FaInstagram className="size-5" />, href: "#", label: "Instagram" },
+  { icon: <FaYoutube className="size-5" />, href: "#", label: "YouTube" },
+  { icon: <FaReddit className="size-5" />, href: "#", label: "Reddit" },
 ];
 
 const defaultLegalLinks = [
@@ -72,11 +76,11 @@ export const Footer7 = ({
     url: "#",
     src: "/logo.png",
     alt: "Smarter Goalie logo",
-    title: "Smarter Goalie",
+    title: "SMARTER-GOALIE",
   },
   sections = defaultSections,
   description =
-    "Smarter Goalie is the sports LMS helping goalkeepers and families build confidence through structured training, progress tracking, and expert coaching.",
+    "Train the Mind. Understand the mechanics. Think Smart - Play Smarter. Build 7 Pillars of Intelligent Goaltending through cognitive awareness, technical precision, and proven positional systems.",
   socialLinks = defaultSocialLinks,
   copyright = "© 2026 Smarter Goalie. All rights reserved.",
   legalLinks = defaultLegalLinks,

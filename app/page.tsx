@@ -1,19 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
 import ClubIntroSection from '@/components/ClubIntroSection/ClubIntroSection';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
+import { BackgroundGradient } from '@/components/ui/background-gradient';
 
 export default function Home() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<'goalie' | 'parent' | null>(null);
-  const [athletesCount, setAthletesCount] = useState(0);
-  const [coursesCount, setCoursesCount] = useState(0);
-  const [trustedCount, setTrustedCount] = useState(0);
-  const [hasAnimatedStats, setHasAnimatedStats] = useState(false);
-  const statsSectionRef = useRef<HTMLElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const testimonials = [
@@ -55,103 +51,50 @@ export default function Home() {
     },
   ];
 
-  useEffect(() => {
-    const sectionElement = statsSectionRef.current;
-    if (!sectionElement) return;
-
-    const animateValue = (
-      startValue: number,
-      endValue: number,
-      duration: number,
-      setValue: (value: number) => void
-    ) => {
-      const startTime = performance.now();
-
-      const update = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = 1 - Math.pow(1 - progress, 3);
-        const nextValue = Math.floor(startValue + (endValue - startValue) * easedProgress);
-        setValue(nextValue);
-
-        if (progress < 1) {
-          requestAnimationFrame(update);
-        }
-      };
-
-      requestAnimationFrame(update);
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && !hasAnimatedStats) {
-          animateValue(0, 10000, 1800, setAthletesCount);
-          animateValue(0, 500, 1800, setCoursesCount);
-          animateValue(0, 10000, 1800, setTrustedCount);
-          setHasAnimatedStats(true);
-        }
-      },
-      { threshold: 0.35 }
-    );
-
-    observer.observe(sectionElement);
-
-    return () => observer.disconnect();
-  }, [hasAnimatedStats]);
-
-  const formatStat = (value: number, asCompact = false) => {
-    if (asCompact) {
-      return `${Math.floor(value / 1000)}K+`;
-    }
-    return `${value.toLocaleString()}+`;
-  };
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image - Replace the background style with your actual image */}
-        <div 
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: 'url("/hero-section-icehockey.png")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
-          {/* Dark Overlay with gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70"></div>
-          {/* Color accent overlays */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-red-500/20 via-transparent to-blue-500/20"></div>
-        </div>
+      {/* Hero Section — full background image */}
+      <section
+        className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-end"
+        style={{ backgroundImage: "url('/hero-section-icehockey.png')" }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
 
-        {/* Content - Bottom Layout */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 max-w-7xl mx-auto px-8 pb-16">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-8">
-            {/* Left: Headline */}
-            <div className="animate-fadeInUp">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight text-white max-w-3xl">
-                TRAINING THE NEXT
-                <span className="block mt-1 text-white bg-clip-text text-transparent">
-                  GENERATION OF GOALIES
-                </span>
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-8 pb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-10">
+          {/* Heading */}
+          <div className="max-w-3xl">
+            <div className="mb-6">
+              <p className="text-sm md:text-base font-semibold text-red-300 uppercase tracking-widest mb-4">
+                Smarter Goalie Academy
+              </p>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] uppercase tracking-tight mb-6">
+                Where Mind Meets Body
               </h1>
             </div>
+            <p className="text-base md:text-lg text-white/85 max-w-2xl leading-relaxed">
+              The only platform built for goalies who think as much as they react. Master positioning systems, decision-making frameworks, and technical mastery.
+            </p>
+          </div>
 
-            {/* Right: Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 shrink-0">
-              <button
-                onClick={() => router.push('/auth/login')}
-                className="bg-red-600 text-white px-8 py-3 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-500/50 hover:scale-105 transition-all duration-300 font-semibold text-base whitespace-nowrap"
-              >
-                Start today
-              </button>
-              <button className="bg-white/10 backdrop-blur-md border-2 border-white/50 text-white px-8 py-3 hover:bg-white hover:text-gray-900 hover:border-white hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold text-base whitespace-nowrap">
-                Discover our approach
-              </button>
-            </div>
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 md:pb-2">
+            <button
+              onClick={() => router.push('/auth/login')}
+              className="bg-red-600 hover:bg-red-500 text-white font-semibold px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/30"
+            >
+              Start Your Journey
+            </button>
+            <button
+              onClick={() => {
+                const el = document.getElementById('features');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="border-2 border-white text-white font-semibold px-6 py-3 hover:bg-white hover:text-gray-900 transition-all duration-300"
+            >
+              See How It Works
+            </button>
           </div>
         </div>
       </section>
@@ -262,39 +205,7 @@ export default function Home() {
       {/* ── GENERAL (no role selected) ── */}
       {!selectedRole && (
         <>
-          <section
-            ref={statsSectionRef}
-            className="py-20 px-6 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden"
-          >
-            <div className="absolute top-16 left-8 w-64 h-64 bg-red-500/5 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-10 right-8 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl"></div>
-            <div className="max-w-6xl mx-auto relative z-10">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-                  Ready to level up your training?
-                </h2>
-                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                  Learn skills, take quizzes, and track progress — all in one clean dashboard.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="rounded-3xl p-8 text-center bg-white shadow-xl shadow-red-900/5 border border-red-200/40">
-                  <div className="text-5xl font-bold text-red-500 mb-2">{formatStat(athletesCount, true)}</div>
-                  <div className="text-gray-700 font-semibold">Athletes</div>
-                </div>
-                <div className="rounded-3xl p-8 text-center bg-white shadow-xl shadow-blue-900/5 border border-blue-200/40">
-                  <div className="text-5xl font-bold text-blue-500 mb-2">{formatStat(coursesCount)}</div>
-                  <div className="text-gray-700 font-semibold">Courses</div>
-                </div>
-                <div className="rounded-3xl p-8 text-center bg-zinc-900 shadow-xl shadow-black/20 border border-white/10">
-                  <div className="text-5xl font-bold text-white mb-2">{formatStat(trustedCount)}</div>
-                  <div className="text-zinc-300 font-semibold">Trusted by athletes</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section id="features" className="py-20 bg-gray-50">
+          <section id="features" className="pt-20 pb-0 bg-gray-50">
             <div className="max-w-7xl mx-auto px-6 mb-12">
               <div className="flex justify-between items-center">
                 <h2 className="text-4xl md:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
@@ -302,18 +213,19 @@ export default function Home() {
               </div>
             </div>
             <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="20%" scaleEndPosition="15%" baseScale={0.95}>
-              {/* 1 — AI-Powered Training */}
+              {/* 1 — The 7 Pillars of Intelligent Goaltending */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[500px]">
-                      <div className="h-full min-h-[500px] bg-cover bg-center" style={{ backgroundImage: 'url("/feature_1.png")' }}></div>
-                      <div className="p-12">
+                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
+                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_1.png")' }}></div>
+                      <div className="p-12 flex flex-col justify-center h-full">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">1/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">AI-POWERED TRAINING</h3>
-                        <p className="text-xl text-red-400 mb-6">Personalised to every athlete</p>
-                        <p className="text-zinc-300 leading-relaxed mb-8">Our algorithm adapts to each athlete&rsquo;s skill level and learning pace. Whether you follow the automated self-paced path or a coach-guided custom curriculum, every drill, lesson, and recommendation is tailored to help you improve faster.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
+                        <p className="text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
+                        <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
+                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -323,48 +235,50 @@ export default function Home() {
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[500px]">
-                      <div className="h-full min-h-[500px] bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
-                      <div className="p-12">
+                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
+                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
+                      <div className="p-12 flex flex-col justify-center h-full">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">2/5</span></div>
                         <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
                         <p className="text-xl text-red-400 mb-6">Structured lessons you can replay</p>
                         <p className="text-zinc-300 leading-relaxed mb-8">YouTube-integrated video lessons organised into structured modules covering technique, positioning, decision-making, and game sense. Track completion per lesson, pick up where you left off, and learn at your own pace.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
-              {/* 3 — Progress Analytics */}
+              {/* 3 — Performance Analytics & Gap Management */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[500px]">
-                      <div className="h-full min-h-[500px] bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
-                      <div className="p-12">
+                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
+                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
+                      <div className="p-12 flex flex-col justify-center h-full">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">3/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">PROGRESS ANALYTICS</h3>
-                        <p className="text-xl text-red-400 mb-6">See growth you can measure</p>
-                        <p className="text-zinc-300 leading-relaxed mb-8">Visual dashboards chart improvement across every skill and sport over time. Track completion rates, quiz scores, session stats, and streaks — all in one place so athletes and parents can see exactly how far they&rsquo;ve come.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
+                        <p className="text-xl text-red-400 mb-6">See what others miss</p>
+                        <p className="text-zinc-300 leading-relaxed mb-5">Chart every game and practice session. Our analytics reveal your consistency patterns, good vs. bad goal ratios, and pinpoint exactly which skills need work.</p>
+                        <p className="text-zinc-400 text-sm mb-6">Nothing is left to imagination — advance with confidence knowing precisely where you stand.</p>
+                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
-              {/* 4 — Interactive Quizzes */}
+              {/* 4 — Goaltending: A Chess Game */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[500px]">
-                      <div className="h-full min-h-[500px] bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
-                      <div className="p-12">
+                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
+                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
+                      <div className="p-12 flex flex-col justify-center h-full">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">4/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">INTERACTIVE QUIZZES</h3>
-                        <p className="text-xl text-red-400 mb-6">Reinforce what you learn</p>
-                        <p className="text-zinc-300 leading-relaxed mb-8">Multiple question types — multiple-choice, true/false, scenario-based — with instant feedback after every answer. Quizzes are tied directly to video lessons so athletes prove their understanding before moving on.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
+                        <p className="text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-5">Our video-questionnaire and quiz system assesses your decision-making from a goalie&rsquo;s point of view. We identify your knowledge gaps, then build your personalised &ldquo;UP YOUR GAME&rdquo; learning path.</p>
+                        <p className="text-zinc-400 text-sm mb-6">Outsmart the shooter before the puck leaves their stick.</p>
+                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -374,20 +288,98 @@ export default function Home() {
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[500px]">
-                      <div className="h-full min-h-[500px] bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
-                      <div className="p-12">
+                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
+                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
+                      <div className="p-12 flex flex-col justify-center h-full">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">5/5</span></div>
                         <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
                         <p className="text-xl text-red-400 mb-6">Our flagship goalie feature</p>
                         <p className="text-zinc-300 leading-relaxed mb-8">Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
             </ScrollStack>
+          </section>
+
+          {/* Scrolling Marquee */}
+          <section className="py-6 bg-gray-50 overflow-hidden border-y border-gray-100">
+            <div className="relative flex" style={{ '--duration': '30s', '--gap': '2rem' } as React.CSSProperties}>
+              <div className="flex shrink-0 animate-marquee items-center gap-8">
+                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                  <span key={i} className="flex items-center gap-8 whitespace-nowrap">
+                    <span className="text-xl md:text-2xl font-bold tracking-wide text-gray-800 hover:text-gray-900 transition-colors duration-300 cursor-default">{text}</span>
+                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+                  </span>
+                ))}
+              </div>
+              <div className="flex shrink-0 animate-marquee items-center gap-8" aria-hidden="true">
+                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                  <span key={i} className="flex items-center gap-8 whitespace-nowrap">
+                    <span className="text-xl md:text-2xl font-bold tracking-wide text-gray-800 hover:text-gray-900 transition-colors duration-300 cursor-default">{text}</span>
+                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* What's In YOUR Tool Box? */}
+          <section className="py-24 px-6 bg-white">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
+                What&rsquo;s In YOUR Tool Box?
+              </h2>
+              <p className="text-center text-gray-500 text-lg mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
+              <div className="grid md:grid-cols-3 gap-8 items-stretch">
+                {/* Card 1 — Positional Systems */}
+                <BackgroundGradient
+                  containerClassName="rounded-[22px] h-full"
+                  className="rounded-[18px] h-full"
+                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#b91c1c,transparent),radial-gradient(circle_farthest-side_at_100%_0,#ef4444,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#7f1d1d,transparent),radial-gradient(circle_farthest-side_at_0_0,#dc2626,#1c0505)]"
+                >
+                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-red-700 rounded-[18px] h-full">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-5 group-hover:bg-white/30 transition-colors duration-300">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">Positional Systems</h3>
+                    <p className="text-white/85 leading-relaxed mb-4">See the ice through the puck&rsquo;s eyes. Master net-crease positioning and the angle-mark system so you&rsquo;re always in the right spot before the shot.</p>
+                  </div>
+                </BackgroundGradient>
+
+                {/* Card 2 — Game IQ */}
+                <BackgroundGradient
+                  containerClassName="rounded-[22px] h-full"
+                  className="rounded-[18px] h-full"
+                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#374151,transparent),radial-gradient(circle_farthest-side_at_100%_0,#6b7280,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#111827,transparent),radial-gradient(circle_farthest-side_at_0_0,#4b5563,#030712)]"
+                >
+                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-black rounded-[18px] h-full">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5 group-hover:bg-white/20 transition-colors duration-300">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">Game IQ Assessments</h3>
+                    <p className="text-white/85 leading-relaxed mb-4">Think two passes ahead. Measure your hockey sense through video analysis and charting — then watch your decision speed climb game after game.</p>
+                  </div>
+                </BackgroundGradient>
+
+                {/* Card 3 — Performance Analytics */}
+                <BackgroundGradient
+                  containerClassName="rounded-[22px] h-full"
+                  className="rounded-[18px] h-full"
+                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#1d4ed8,transparent),radial-gradient(circle_farthest-side_at_100%_0,#3b82f6,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#1e3a8a,transparent),radial-gradient(circle_farthest-side_at_0_0,#2563eb,#030712)]"
+                >
+                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-blue-600 rounded-[18px] h-full">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-5 group-hover:bg-white/30 transition-colors duration-300">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">Performance Analytics</h3>
+                    <p className="text-white/85 leading-relaxed mb-4">Know what you don&rsquo;t know. Track your gaps, chart your growth, and build the self-awareness to coach yourself between sessions.</p>
+                  </div>
+                </BackgroundGradient>
+              </div>
+            </div>
           </section>
 
           <TestimonialsSection
@@ -464,6 +456,26 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Goalie CTA */}
+            <div className="mt-24 flex justify-center">
+              <div className="w-full max-w-2xl relative bg-gradient-to-br from-red-50 to-white border border-red-100 rounded-2xl p-8 md:p-10 text-center overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-red-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-red-50/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+                <div className="relative z-10">
+                  <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-3">Your journey starts here</p>
+                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ready to Play Smarter?</h3>
+                  <p className="text-gray-600 mb-8 leading-relaxed">Join the academy and get access to every drill, lesson, quiz, and analytics tool — built for goalies who want to level up.</p>
+                  <button
+                    onClick={() => router.push('/auth/register')}
+                    className="group bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
+                  >
+                    Register Now
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       )}
@@ -524,6 +536,26 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Parent CTA */}
+            <div className="mt-24 flex justify-center">
+              <div className="w-full max-w-2xl relative bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-8 md:p-10 text-center overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-50/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+                <div className="relative z-10">
+                  <p className="text-blue-500 font-semibold tracking-widest uppercase text-xs mb-3">Stay connected to their growth</p>
+                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Support Starts Here</h3>
+                  <p className="text-gray-600 mb-8 leading-relaxed">Create your parent account and link to your child&rsquo;s profile. Track progress, celebrate wins, and stay informed — all from one dashboard.</p>
+                  <button
+                    onClick={() => router.push('/auth/register')}
+                    className="group bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
+                  >
+                    Register Now
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="mt-24">

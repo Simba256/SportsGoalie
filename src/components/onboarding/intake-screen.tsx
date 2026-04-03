@@ -7,9 +7,9 @@ import { cn } from '@/lib/utils';
 import { Check, ChevronRight, ChevronLeft, Info, AlertTriangle } from 'lucide-react';
 
 interface IntakeScreenProps {
-  screen: number; // 0-based index (now represents question index)
-  totalScreens: number; // Total number of questions
-  questions: IntakeQuestion[]; // All questions for current batch (we'll show first one)
+  screen: number;
+  totalScreens: number;
+  questions: IntakeQuestion[];
   responses: Record<string, string | string[]>;
   onAnswer: (questionId: string, value: string | string[]) => void;
   onNext: () => void;
@@ -17,10 +17,6 @@ interface IntakeScreenProps {
   loading?: boolean;
 }
 
-/**
- * Intake screen component for Front Door questions.
- * Displays ONE question at a time with single/multi-select options.
- */
 export function IntakeScreen({
   screen,
   totalScreens,
@@ -31,10 +27,8 @@ export function IntakeScreen({
   onBack,
   loading = false,
 }: IntakeScreenProps) {
-  // Get the current question (first question in the array)
   const currentQuestion = questions[0];
 
-  // Check if current question is answered
   const canProceed = useMemo(() => {
     if (!currentQuestion) return false;
     if (!currentQuestion.isRequired) return true;
@@ -46,7 +40,6 @@ export function IntakeScreen({
     return true;
   }, [currentQuestion, responses]);
 
-  // Check if response triggers PIPEDA consent flow
   const requiresParentalConsent = useMemo(() => {
     if (!currentQuestion) return false;
     const response = responses[currentQuestion.id];
@@ -65,7 +58,7 @@ export function IntakeScreen({
 
   return (
     <div className="flex-1 flex flex-col p-6 max-w-2xl mx-auto w-full">
-      {/* Progress indicator */}
+      {/* Progress dots */}
       <div className="mb-8">
         <div className="flex items-center justify-center gap-2 mb-4">
           {Array.from({ length: totalScreens }).map((_, i) => (
@@ -74,15 +67,15 @@ export function IntakeScreen({
               className={cn(
                 'w-3 h-3 rounded-full transition-all duration-300',
                 i === screen
-                  ? 'bg-cyan-400 scale-125'
+                  ? 'bg-red-500 scale-125'
                   : i < screen
-                  ? 'bg-cyan-600'
-                  : 'bg-slate-700'
+                  ? 'bg-red-300'
+                  : 'bg-gray-200'
               )}
             />
           ))}
         </div>
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-gray-400">
           Question {screen + 1} of {totalScreens}
         </p>
       </div>
@@ -98,14 +91,14 @@ export function IntakeScreen({
 
       {/* PIPEDA notice */}
       {requiresParentalConsent && (
-        <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-amber-200 font-medium">
+            <p className="text-sm text-amber-800 font-medium">
               Parent/Guardian Consent Required
             </p>
-            <p className="text-sm text-slate-400 mt-1">
-              Since you're under 13, we'll need your parent or guardian to give permission before you can continue.
+            <p className="text-sm text-amber-600 mt-1">
+              Since you&apos;re under 13, we&apos;ll need your parent or guardian to give permission before you can continue.
             </p>
           </div>
         </div>
@@ -117,7 +110,7 @@ export function IntakeScreen({
           variant="ghost"
           onClick={onBack}
           disabled={screen === 0 || loading}
-          className="text-slate-400 hover:text-white"
+          className="text-gray-400 hover:text-gray-700"
         >
           <ChevronLeft className="w-4 h-4 mr-2" />
           Back
@@ -127,7 +120,7 @@ export function IntakeScreen({
           onClick={onNext}
           disabled={!canProceed || loading}
           className={cn(
-            'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400',
+            'bg-red-600 hover:bg-red-700',
             'text-white font-medium px-8 transition-all',
             (!canProceed || loading) && 'opacity-50 cursor-not-allowed'
           )}
@@ -187,26 +180,26 @@ function IntakeQuestionCard({ question, value, onChange }: IntakeQuestionCardPro
       {/* Question text */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {question.question}
           </h2>
           {question.tooltip && (
             <button
               onClick={() => setShowTooltip(!showTooltip)}
-              className="flex-shrink-0 p-1 text-slate-500 hover:text-cyan-400 transition-colors"
+              className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
             >
               <Info className="w-5 h-5" />
             </button>
           )}
         </div>
         {isMultiSelect && (
-          <p className="text-slate-400 text-sm">Select all that apply</p>
+          <p className="text-gray-400 text-sm">Select all that apply</p>
         )}
       </div>
 
       {/* Tooltip */}
       {showTooltip && question.tooltip && (
-        <div className="p-3 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-slate-300 text-center max-w-md mx-auto">
+        <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 text-center max-w-md mx-auto">
           {question.tooltip}
         </div>
       )}
@@ -215,7 +208,7 @@ function IntakeQuestionCard({ question, value, onChange }: IntakeQuestionCardPro
       <div className="grid gap-3">
         {question.options.map((option, index) => {
           const selected = isSelected(option.id);
-          const letter = String.fromCharCode(65 + index); // A, B, C, D...
+          const letter = String.fromCharCode(65 + index);
           return (
             <button
               key={option.id}
@@ -224,17 +217,17 @@ function IntakeQuestionCard({ question, value, onChange }: IntakeQuestionCardPro
                 'w-full p-4 rounded-xl border-2 text-left transition-all duration-200',
                 'flex items-center gap-4',
                 selected
-                  ? 'bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-cyan-400 text-white scale-[1.02]'
-                  : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500'
+                  ? 'bg-red-50 border-red-500 text-gray-900 scale-[1.02] shadow-md shadow-red-500/10'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
               )}
             >
-              {/* Letter badge indicator */}
+              {/* Letter badge */}
               <div
                 className={cn(
                   'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg transition-colors',
                   selected
-                    ? 'bg-gradient-to-br from-blue-500 to-cyan-400 text-white'
-                    : 'bg-slate-700 text-slate-400',
+                    ? 'bg-red-500 text-white'
+                    : 'bg-gray-100 text-gray-400',
                   isMultiSelect && 'rounded-md'
                 )}
               >
