@@ -17,12 +17,6 @@ import {
   Play,
   CheckCircle,
   Loader2,
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
   ChevronRight,
   Zap,
   TrendingUp,
@@ -30,10 +24,6 @@ import {
 } from 'lucide-react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const PILLAR_ICONS: Record<string, React.ElementType> = {
-  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell,
-};
 
 const HERO_THEME: Record<
   string,
@@ -541,12 +531,11 @@ export default function PillarDetailPage() {
     );
   }
 
-  const { icon, color } = getDisplayInfo(pillar);
+  const { color } = getDisplayInfo(pillar);
   const colorCls = getPillarColorClasses(color);
   const heroTheme = HERO_THEME[color] ?? HERO_THEME.blue;
   const pillarBadgeColor = PILLAR_BADGE_COLORS[color] ?? PILLAR_BADGE_COLORS.blue;
   const isDarkHero = heroTheme.gradient === 'dark' || heroTheme.gradient === 'darkBlue';
-  const IconComponent = PILLAR_ICONS[icon] || Target;
   const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
   // Sort sections: user's level first, then others in order

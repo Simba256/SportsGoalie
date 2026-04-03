@@ -9,7 +9,7 @@ import { Session, SessionStats, StreakData, DynamicChartingEntry } from '@/types
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, Clock, X, BarChart3, Target, Zap } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, X, BarChart3, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 
