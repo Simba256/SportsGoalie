@@ -587,6 +587,9 @@ export default function PillarDetailPage() {
                 >
                   Pillar {String(pillar.order).padStart(2, '0')}
                 </span>
+                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${isDarkHero ? 'bg-white/10 text-white' : 'bg-white/70 text-zinc-800'}`}>
+                  <IconComponent className="w-4 h-4" />
+                </span>
               </div>
 
               <h1 className={`text-3xl md:text-5xl font-black leading-[1.05] mb-4 max-w-2xl ${isDarkHero ? 'text-white' : 'text-zinc-900'}`}>
