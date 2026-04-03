@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import { AuthProvider } from '@/lib/auth/context';
@@ -44,7 +45,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <LayoutShell>{children}</LayoutShell>
+          <Suspense fallback={null}>
+            <LayoutShell>{children}</LayoutShell>
+          </Suspense>
           <Toaster />
           <Chatbot />
         </AuthProvider>

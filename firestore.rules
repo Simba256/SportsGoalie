@@ -785,7 +785,10 @@ service cloud.firestore {
       // Students can read their own curriculum, coaches can read their assigned students' curricula, admins can read all
       allow read: if isAuthenticated() && (
         resource.data.studentId == getUserId() ||  // Student reads own
-        resource.data.coachId == getUserId() ||    // Coach reads their student's
+        resource.data.coachId == getUserId() ||    // Coach reads their student's (direct curriculum link)
+        (isCoach() &&                               // Coach reads by current student assignment
+         exists(/databases/$(database)/documents/users/$(resource.data.studentId)) &&
+         get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.assignedCoachId == getUserId()) ||
         isAdmin()                                  // Admin reads all
       );
 
@@ -800,7 +803,10 @@ service cloud.firestore {
       // Coaches can update their students' curricula, admins can update any
       // Students can update their own curriculum (to mark items as complete)
       allow update: if isAuthenticated() && (
-        (isCoach() && resource.data.coachId == getUserId()) ||  // Coach updates their student's
+        (isCoach() && resource.data.coachId == getUserId()) ||  // Coach updates by curriculum link
+        (isCoach() &&                                            // Coach updates by student assignment
+        exists(/databases/$(database)/documents/users/$(resource.data.studentId)) &&
+        get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.assignedCoachId == getUserId()) ||
         isAdmin() ||                                             // Admin updates any
         (resource.data.studentId == getUserId() &&               // Student updates own curriculum
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt', 'lastModifiedBy']))

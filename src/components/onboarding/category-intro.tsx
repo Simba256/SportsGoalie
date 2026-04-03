@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { GoalieCategorySlug, GOALIE_CATEGORIES } from '@/types';
 import { ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen, CheckCircle } from 'lucide-react';
 

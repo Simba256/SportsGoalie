@@ -152,10 +152,10 @@ function VideoQuizPageContent() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-gray-600">Loading video quiz...</p>
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-red-600" />
+          <p className="mt-4 text-slate-600">Loading video quiz...</p>
         </div>
       </div>
     );
@@ -164,11 +164,11 @@ function VideoQuizPageContent() {
   // Error state
   if (error || !quiz || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="max-w-md">
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Card className="max-w-md border-red-100">
           <CardContent className="pt-6 text-center">
-            <p className="text-lg text-gray-700 mb-4">{error || 'Video quiz not found'}</p>
-            <Button onClick={() => router.push('/dashboard')}>
+            <p className="text-lg text-slate-700 mb-4">{error || 'Video quiz not found'}</p>
+            <Button onClick={() => router.push('/dashboard')} className="bg-red-600 hover:bg-red-700 text-white">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
@@ -179,20 +179,20 @@ function VideoQuizPageContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
         <Link
           href="/dashboard"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-4 transition-colors"
+          className="inline-flex items-center text-sm text-slate-600 hover:text-red-700 mb-4 transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </Link>
 
-        <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
+        <h1 className="text-3xl font-bold mb-2 text-slate-900">{quiz.title}</h1>
         {quiz.description && (
-          <p className="text-gray-600">{quiz.description}</p>
+          <p className="text-slate-600">{quiz.description}</p>
         )}
       </div>
 

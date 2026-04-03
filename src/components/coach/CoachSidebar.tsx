@@ -95,7 +95,7 @@ export function CoachSidebar({ isOpen, onToggle }: CoachSidebarProps) {
         {/* User Profile Section */}
         <div className={`px-4 py-4 border-b border-gray-200 ${!isOpen && 'lg:px-2 lg:py-3'}`}>
           <div className={`flex items-center ${isOpen ? 'gap-3' : 'lg:justify-center'}`}>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center flex-shrink-0">
               <User className="h-5 w-5 text-white" />
             </div>
             {isOpen && (
@@ -126,7 +126,7 @@ export function CoachSidebar({ isOpen, onToggle }: CoachSidebarProps) {
                   ${!isOpen && 'lg:justify-center lg:px-2'}
                   ${
                     active
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }
                 `}

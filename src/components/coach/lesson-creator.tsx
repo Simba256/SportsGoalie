@@ -33,12 +33,20 @@ import { customContentService } from '@/lib/database';
 import { toast } from 'sonner';
 import { CustomContentLibrary } from '@/types';
 
+interface StudentGapInfo {
+  categoryName: string;
+  categorySlug: string;
+  priority: 'high' | 'medium' | 'low';
+  suggestedContent: string[];
+}
+
 interface LessonCreatorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   coachId: string;
   onSave: (content: CustomContentLibrary) => void;
   editContent?: CustomContentLibrary;
+  studentGaps?: StudentGapInfo[];
 }
 
 export function LessonCreator({
@@ -47,6 +55,7 @@ export function LessonCreator({
   coachId,
   onSave,
   editContent,
+  studentGaps,
 }: LessonCreatorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [_videoDuration, setVideoDuration] = useState<number | undefined>();
@@ -74,6 +83,17 @@ export function LessonCreator({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!editContent;
+
+  const applyGapSuggestion = (gap: StudentGapInfo) => {
+    if (!title) setTitle(`${gap.categoryName} — Targeted Lesson`);
+    const newTags = [...tags];
+    if (!newTags.includes(gap.categorySlug)) newTags.push(gap.categorySlug);
+    if (!newTags.includes(gap.priority)) newTags.push(gap.priority + '-priority');
+    setTags(newTags);
+    if (gap.suggestedContent.length > 0 && learningObjectives.length === 0) {
+      setLearningObjectives(gap.suggestedContent.slice(0, 3));
+    }
+  };
 
   const handleVideoUploaded = (url: string, duration?: number) => {
     setVideoUrl(url);
@@ -226,16 +246,51 @@ export function LessonCreator({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border-zinc-200 bg-gradient-to-b from-white to-zinc-50/80 shadow-2xl shadow-zinc-300/40">
+        <DialogHeader className="relative flex-shrink-0 rounded-xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-5 py-4 text-white">
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-red-500/10 blur-2xl" />
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300">Curriculum</p>
+          <DialogTitle className="flex items-center gap-2 text-3xl leading-tight font-black tracking-tight text-white">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25">
+              <BookOpen className="h-5 w-5" />
+            </span>
             {isEditing ? 'Edit Lesson' : 'Create New Lesson'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-blue-100/80">
             Create a custom lesson with video content, learning objectives, and attachments.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Gap Suggestions Panel */}
+        {studentGaps && studentGaps.length > 0 && !isEditing && (
+          <div className="flex-shrink-0 rounded-lg border border-blue-200 bg-blue-50 p-3 mx-1">
+            <p className="text-xs font-semibold text-blue-800 mb-2">
+              Student needs help with:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {studentGaps.map((gap) => (
+                <button
+                  key={gap.categorySlug}
+                  type="button"
+                  onClick={() => applyGapSuggestion(gap)}
+                  className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                    gap.priority === 'high'
+                      ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                      : gap.priority === 'medium'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                      : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                  }`}
+                >
+                  {gap.categoryName}
+                  <span className="text-[9px] opacity-70">({gap.priority})</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-blue-600 mt-1.5">
+              Click a gap area to pre-fill lesson title, tags, and objectives.
+            </p>
+          </div>
+        )}
 
         <ScrollArea className="flex-1 pr-4">
           <form onSubmit={onSubmit} className="space-y-6">
@@ -473,12 +528,18 @@ export function LessonCreator({
         </ScrollArea>
 
         <DialogFooter className="flex-shrink-0 pt-4">
-          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+          >
             Cancel
           </Button>
           <Button
             onClick={onSubmit}
             disabled={isSubmitting || uploadingAttachments}
+            className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
           >
             {isSubmitting ? (
               <>

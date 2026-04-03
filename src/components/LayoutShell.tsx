@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Header7 } from '@/components/header-7';
 import { Footer7 } from '@/components/footer-7';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -70,6 +70,7 @@ function getPageTitle(pathname: string): string {
   const titles: Record<string, string> = {
     dashboard: 'Dashboard',
     pillars: 'Pillars',
+    lessons: 'Lessons',
     quizzes: 'Quizzes',
     quiz: 'Quiz',
     progress: 'Analytics',
@@ -87,7 +88,13 @@ function getPageTitle(pathname: string): string {
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Embedded mode (e.g. iframe dialogs): render only page content.
+  if (searchParams.get('embedded') === '1') {
+    return <>{children}</>;
+  }
 
   // Auth pages: no header/footer, just the page itself
   if (isBareRoute(pathname)) {
