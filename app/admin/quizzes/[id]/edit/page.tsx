@@ -280,7 +280,7 @@ function EditVideoQuizContent() {
             <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <p className="text-lg text-gray-700 mb-4">Video quiz not found</p>
             <Link href="/admin/quizzes">
-              <Button>
+              <Button className="bg-blue-600 text-white hover:bg-blue-700">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Quizzes
               </Button>
@@ -296,7 +296,7 @@ function EditVideoQuizContent() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Link href="/admin/quizzes">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Quizzes
           </Button>
@@ -308,12 +308,12 @@ function EditVideoQuizContent() {
       </div>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="video">Video Setup</TabsTrigger>
-          <TabsTrigger value="questions">Questions</TabsTrigger>
-          <TabsTrigger value="tags">Tags</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 rounded-xl bg-slate-100 p-1">
+          <TabsTrigger value="basic" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Basic Info</TabsTrigger>
+          <TabsTrigger value="video" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Video Setup</TabsTrigger>
+          <TabsTrigger value="questions" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Questions</TabsTrigger>
+          <TabsTrigger value="tags" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Tags</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Settings</TabsTrigger>
         </TabsList>
 
         {/* Basic Information Tab */}
@@ -550,9 +550,9 @@ function EditVideoQuizContent() {
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-8">
         <Link href="/admin/quizzes">
-          <Button variant="outline">Cancel</Button>
+          <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">Cancel</Button>
         </Link>
-        <Button onClick={handleSaveQuiz} disabled={saveLoading}>
+        <Button onClick={handleSaveQuiz} disabled={saveLoading} className="bg-red-600 text-white hover:bg-red-700">
           {saveLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

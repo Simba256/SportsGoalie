@@ -276,7 +276,7 @@ function CreateVideoQuizContent() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Link href="/admin/quizzes">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Quizzes
           </Button>
@@ -290,17 +290,17 @@ function CreateVideoQuizContent() {
       </div>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="video">Video Setup</TabsTrigger>
-          <TabsTrigger value="questions">Questions</TabsTrigger>
-          <TabsTrigger value="tags">Tags</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 rounded-xl bg-slate-100 p-1">
+          <TabsTrigger value="basic" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Basic Info</TabsTrigger>
+          <TabsTrigger value="video" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Video Setup</TabsTrigger>
+          <TabsTrigger value="questions" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Questions</TabsTrigger>
+          <TabsTrigger value="tags" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Tags</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Settings</TabsTrigger>
         </TabsList>
 
         {/* Basic Information Tab */}
         <TabsContent value="basic" className="space-y-6">
-          <Card>
+          <Card className="border-red-100 shadow-sm">
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
@@ -312,6 +312,7 @@ function CreateVideoQuizContent() {
                   value={quizData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Enter quiz title"
+                  className="border-slate-300 focus-visible:ring-red-200"
                 />
               </div>
 
@@ -323,6 +324,7 @@ function CreateVideoQuizContent() {
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Describe what this video quiz covers"
                   rows={3}
+                  className="border-slate-300 focus-visible:ring-red-200"
                 />
               </div>
 
@@ -334,6 +336,7 @@ function CreateVideoQuizContent() {
                   onChange={(e) => handleInputChange('instructions', e.target.value)}
                   placeholder="Instructions for quiz takers (optional)"
                   rows={3}
+                  className="border-slate-300 focus-visible:ring-red-200"
                 />
               </div>
 
@@ -344,7 +347,7 @@ function CreateVideoQuizContent() {
                     value={quizData.sportId || ''}
                     onValueChange={(value) => handleInputChange('sportId', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border-slate-300 focus:ring-red-200">
                       <SelectValue placeholder="Select a sport" />
                     </SelectTrigger>
                     <SelectContent>
@@ -365,7 +368,7 @@ function CreateVideoQuizContent() {
                     onValueChange={(value) => handleInputChange('skillId', value)}
                     disabled={!quizData.sportId}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border-slate-300 focus:ring-red-200">
                       <SelectValue placeholder="Select a skill" />
                     </SelectTrigger>
                     <SelectContent>
@@ -385,7 +388,7 @@ function CreateVideoQuizContent() {
                     value={quizData.difficulty}
                     onValueChange={(value) => handleInputChange('difficulty', value as DifficultyLevel)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border-slate-300 focus:ring-red-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -421,12 +424,12 @@ function CreateVideoQuizContent() {
 
         {/* Video Setup Tab */}
         <TabsContent value="video" className="space-y-6">
-          <Card>
+          <Card className="border-red-100 shadow-sm">
             <CardHeader>
               <CardTitle>Video Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert>
+              <Alert className="border-blue-200 bg-blue-50/60 text-blue-900">
                 <Video className="h-4 w-4" />
                 <AlertDescription>
                   Provide a video by entering a URL or uploading a file. Duration will be automatically detected when you create questions.
@@ -455,7 +458,7 @@ function CreateVideoQuizContent() {
                     }}
                     placeholder="Auto-detected or enter manually"
                     min="1"
-                    className="max-w-xs"
+                    className="max-w-xs border-slate-300 focus-visible:ring-red-200"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Duration is auto-detected for most videos. Override here if needed.
@@ -476,14 +479,14 @@ function CreateVideoQuizContent() {
               onChange={handleQuestionsChange}
             />
           ) : (
-            <Card>
+            <Card className="border-blue-100 shadow-sm">
               <CardContent className="pt-12 pb-12 text-center">
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Video Setup Required</h3>
                 <p className="text-gray-600 mb-4">
                   Please add a video URL or upload a video file in the Video Setup tab first
                 </p>
-                <Button variant="outline" onClick={() => document.getElementById('video-tab')?.click()}>
+                <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800" onClick={() => document.getElementById('video-tab')?.click()}>
                   Go to Video Setup
                 </Button>
               </CardContent>
@@ -501,7 +504,7 @@ function CreateVideoQuizContent() {
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-          <Card>
+          <Card className="border-red-100 shadow-sm">
             <CardHeader>
               <CardTitle>Quiz Settings</CardTitle>
             </CardHeader>
@@ -538,9 +541,9 @@ function CreateVideoQuizContent() {
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-8">
         <Link href="/admin/quizzes">
-          <Button variant="outline">Cancel</Button>
+          <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">Cancel</Button>
         </Link>
-        <Button onClick={handleSaveQuiz} disabled={saveLoading}>
+        <Button onClick={handleSaveQuiz} disabled={saveLoading} className="bg-red-600 text-white hover:bg-red-700">
           {saveLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

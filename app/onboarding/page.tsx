@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
@@ -25,7 +25,7 @@ import {
  * Supports both goalie (student) and parent flows.
  * Full-screen immersive flow with 7-category, 1.0-4.0 scoring system.
  */
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -252,5 +252,24 @@ export default function OnboardingPage() {
         )}
       </div>
     </OnboardingContainer>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <OnboardingContainer>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-red-500 mx-auto mb-4" />
+              <p className="text-gray-400">Loading your evaluation...</p>
+            </div>
+          </div>
+        </OnboardingContainer>
+      }
+    >
+      <OnboardingPageContent />
+    </Suspense>
   );
 }

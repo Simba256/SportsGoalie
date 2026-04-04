@@ -192,7 +192,11 @@ function AdminQuizzesPageContent() {
             Manage interactive video-based quizzes
           </p>
         </div>
-        <Button onClick={() => router.push('/admin/quizzes/create')} size="lg" className="bg-red-600 hover:bg-red-700">
+        <Button
+          onClick={() => router.push('/admin/quizzes/create')}
+          size="lg"
+          className="bg-gradient-to-r from-red-600 to-blue-600 text-white shadow-sm hover:from-red-700 hover:to-blue-700"
+        >
           <Plus className="mr-2 h-5 w-5" />
           Create Video Quiz
         </Button>
@@ -335,7 +339,10 @@ function AdminQuizzesPageContent() {
                 : 'Get started by creating your first video quiz'}
             </p>
             {!searchQuery && difficultyFilter === 'all' && statusFilter === 'all' && (
-              <Button onClick={() => router.push('/admin/quizzes/create')}>
+              <Button
+                onClick={() => router.push('/admin/quizzes/create')}
+                className="bg-gradient-to-r from-red-600 to-blue-600 text-white shadow-sm hover:from-red-700 hover:to-blue-700"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Video Quiz
               </Button>
@@ -384,11 +391,12 @@ function AdminQuizzesPageContent() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-44 rounded-xl border-red-100">
                       <DropdownMenuItem
                         onClick={() => router.push(`/quiz/video/${quiz.id}`)}
+                        className="cursor-pointer rounded-md text-blue-700 focus:bg-blue-50 focus:text-blue-800"
                       >
-                        <Eye className="mr-2 h-4 w-4" />
+                        <Eye className="mr-2 h-4 w-4 text-blue-600" />
                         Preview
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -399,8 +407,9 @@ function AdminQuizzesPageContent() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => router.push(`/admin/quizzes/${quiz.id}/edit`)}
+                        className="cursor-pointer rounded-md text-red-700 focus:bg-red-50 focus:text-red-800"
                       >
-                        <Edit className="mr-2 h-4 w-4" />
+                        <Edit className="mr-2 h-4 w-4 text-red-600" />
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleStatus(quiz)}>
@@ -477,7 +486,7 @@ function AdminQuizzesPageContent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
                     onClick={() => router.push(`/admin/quizzes/${quiz.id}/edit`)}
                   >
                     <Edit className="mr-2 h-3 w-3" />
@@ -486,7 +495,7 @@ function AdminQuizzesPageContent() {
                   <Button
                     variant="default"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
                     onClick={() => router.push(`/quiz/video/${quiz.id}`)}
                   >
                     <Eye className="mr-2 h-3 w-3" />

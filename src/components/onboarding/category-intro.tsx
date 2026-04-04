@@ -2,6 +2,7 @@
 
 import { GoalieCategorySlug, GOALIE_CATEGORIES } from '@/types';
 import { ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CategoryIntroProps {
   categorySlug: GoalieCategorySlug;

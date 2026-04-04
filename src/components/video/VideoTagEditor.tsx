@@ -175,7 +175,7 @@ export function VideoTagEditor({
 
   // Full card-based editor
   return (
-    <Card className={className}>
+    <Card className={cn('border-red-100 shadow-sm', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Tags className="h-5 w-5" />
@@ -194,7 +194,7 @@ export function VideoTagEditor({
             onValueChange={handlePillarChange}
             disabled={disabled}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-slate-300 focus:ring-red-200">
               <SelectValue placeholder="Select a pillar (optional)" />
             </SelectTrigger>
             <SelectContent>
@@ -266,8 +266,8 @@ export function VideoTagEditor({
                   className={cn(
                     'px-3 py-1.5 rounded-full border text-sm font-medium transition-all capitalize',
                     isSelected
-                      ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-indigo-300',
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300',
                     disabled && 'opacity-50 cursor-not-allowed'
                   )}
                   title={metadata.description}
@@ -334,7 +334,7 @@ export function VideoTagEditor({
             onValueChange={handleArchLevelChange}
             disabled={disabled}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-slate-300 focus:ring-red-200">
               <SelectValue placeholder="Select content level (optional)" />
             </SelectTrigger>
             <SelectContent>
@@ -370,7 +370,7 @@ export function VideoTagEditor({
                 </Badge>
               ))}
               {tags.userTypes.map((userType) => (
-                <Badge key={userType} variant="outline" className="bg-indigo-50 text-indigo-700 capitalize">
+                <Badge key={userType} variant="outline" className="bg-blue-50 text-blue-700 capitalize">
                   {userType}
                 </Badge>
               ))}
