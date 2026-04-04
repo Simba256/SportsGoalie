@@ -284,17 +284,20 @@ export function ContentBrowser({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[82vh] flex flex-col overflow-hidden border-zinc-200 bg-gradient-to-b from-white to-zinc-50/80 shadow-2xl shadow-zinc-300/40">
-        <DialogHeader className="relative flex-shrink-0 rounded-xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-5 py-4 text-white">
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-36 bg-red-500/10 blur-2xl" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300">Curriculum</p>
-          <DialogTitle className="text-4xl font-black tracking-tight text-white">Add Content to Curriculum</DialogTitle>
-          <DialogDescription className="text-blue-100/80">
-            Browse and select lessons or quizzes to add to the student's learning path
-          </DialogDescription>
+      <DialogContent showCloseButton={false} className="sm:max-w-5xl w-[95vw] max-h-[86vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
+        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
+            <DialogTitle className="text-2xl font-bold tracking-tight text-white">Add Content to Curriculum</DialogTitle>
+            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
+              Browse and select lessons or quizzes to add to the student&apos;s learning path
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-5 px-8 py-8">
           {/* Content Source Tabs */}
           <Tabs value={contentSource} onValueChange={(v) => {
             setContentSource(v as 'library' | 'custom');
@@ -526,11 +529,11 @@ export function ContentBrowser({
           </Tabs>
         </div>
 
-        <DialogFooter className="flex-shrink-0 border-t border-zinc-200 pt-4">
+        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
           >
             Cancel
           </Button>

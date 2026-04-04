@@ -16,9 +16,8 @@ import {
   Heart,
   ArrowRight,
   TrendingUp,
-  Clock,
-  CheckCircle2,
-  Sparkles,
+  Play,
+  ChevronRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -47,9 +46,6 @@ export default function DashboardPage() {
 function DashboardContent() {
   const router = useRouter();
   const { user } = useAuth();
-  const { userProgress, loading } = useProgress();
-  const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
-  const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(5);
 
   useEffect(() => {
     if (user?.role === 'student' && !user?.onboardingCompleted) {
@@ -57,15 +53,23 @@ function DashboardContent() {
     }
   }, [user, router]);
 
-  const isCustomWorkflow = user?.role === 'student' && user?.workflowType === 'custom';
-
   if (user?.role === 'student' && !user?.onboardingCompleted) {
     return <LoadingSpinner />;
   }
 
-  if (isCustomWorkflow && user) {
+  // Route custom workflow students to their dashboard without loading standard hooks
+  if (user?.role === 'student' && user?.workflowType === 'custom') {
     return <CustomCurriculumDashboard user={user} />;
   }
+
+  return <StandardDashboard />;
+}
+
+function StandardDashboard() {
+  const { user } = useAuth();
+  const { userProgress, loading } = useProgress();
+  const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
+  const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(5);
 
   if (loading || enrollmentsLoading) {
     return <LoadingSpinner />;
@@ -74,254 +78,238 @@ function DashboardContent() {
   const stats = userProgress?.overallStats;
   const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0];
 
-  // Compute overall progress across all enrolled pillars
   const totalSkills = enrolledSports.reduce((sum, e) => sum + e.progress.totalSkills, 0);
   const completedSkills = enrolledSports.reduce((sum, e) => sum + e.progress.completedSkills.length, 0);
   const overallPct = totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
 
-  // Greeting based on time of day
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  // Find next pillar to continue (most recently accessed, not completed)
+  const activePillar = enrolledSports.find(
+    (e) => e.progress.status === 'in_progress'
+  ) || enrolledSports[0];
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* ── Welcome Banner ── */}
-      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
-        {/* Decorative blobs */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+
+      {/* ── Welcome Banner ─────────────────────────────────────────── */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-blue-50 via-white to-red-50 border border-blue-100/60 p-6 md:p-8 overflow-hidden">
+        {/* Soft decorative shapes */}
+        <div className="absolute -top-10 -right-10 w-44 h-44 bg-blue-200/30 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-red-200/20 rounded-full blur-2xl" />
 
         <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-white/50 text-sm">{greeting}</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
-              {firstName}!
+            <p className="text-blue-500 text-sm font-semibold">{greeting}</p>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 mt-1">
+              Hello {firstName},
             </h1>
-            <p className="text-white/60 text-sm mt-2 max-w-md">
+            <p className="text-gray-500 text-sm mt-2 max-w-lg leading-relaxed">
               {stats?.quizzesCompleted
-                ? `You've completed ${stats.quizzesCompleted} quiz${stats.quizzesCompleted !== 1 ? 'zes' : ''} with an average score of ${Math.round(stats.averageQuizScore)}%. Keep it going!`
+                ? `You've learned ${overallPct}% of your course. Keep it up and improve your skills!`
                 : 'Start your goalie training journey by exploring pillars and taking quizzes.'}
             </p>
+            {activePillar && (
+              <Link href={`/pillars/${activePillar.sport.id}`}>
+                <button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25">
+                  Continue Learning
+                </button>
+              </Link>
+            )}
           </div>
-          {/* Overall progress ring */}
+
+          {/* Progress circle */}
           <div className="hidden md:flex flex-col items-center">
             <ProgressRing percentage={overallPct} size={110} />
-            <p className="text-white/40 text-xs mt-2 flex items-center gap-1">
-              <Sparkles className="h-3 w-3" />
-              Overall Progress
-            </p>
+            <p className="text-gray-400 text-xs mt-2">Overall Progress</p>
           </div>
         </div>
       </div>
 
-      {/* ── Stats Row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Quizzes Done"
-          value={stats?.quizzesCompleted || 0}
-          icon={<Trophy className="h-5 w-5" />}
-          color="red"
-        />
-        <StatCard
-          label="Skills Attempted"
-          value={stats?.skillsCompleted || 0}
-          icon={<BookOpen className="h-5 w-5" />}
-          color="blue"
-        />
-        <StatCard
-          label="Avg. Score"
-          value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'}
-          icon={<Target className="h-5 w-5" />}
-          color="green"
-        />
-        <StatCard
-          label="Day Streak"
-          value={stats?.currentStreak || 0}
-          icon={<Flame className="h-5 w-5" />}
-          color="orange"
-        />
-      </div>
-
-      {/* ── Main Grid: 2 cols ── */}
+      {/* ── Main Layout ────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-3 gap-6">
 
-        {/* LEFT: 2/3 — My Courses (enrolled pillars) */}
+        {/* LEFT 2/3 */}
         <div className="lg:col-span-2 space-y-6">
 
-          {/* My Courses / Enrolled Pillars */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-bold text-gray-900">My Courses</h2>
-              {enrolledSports.length > 0 && (
-                <Link href="/pillars" className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center gap-1">
-                  View all <ArrowRight className="h-3 w-3" />
-                </Link>
-              )}
+          {/* Your Pillars — table-style list */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-base font-bold text-gray-900">Your Pillars</h2>
+              <Link href="/pillars" className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
             </div>
 
             {enrollmentsError ? (
-              <p className="text-red-500 text-sm text-center py-6">{enrollmentsError}</p>
+              <p className="text-red-500 text-sm text-center py-8">{enrollmentsError}</p>
             ) : enrolledSports.length === 0 ? (
               <EmptyPillars />
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {enrolledSports.slice(0, 4).map(({ sport, progress }) => (
-                  <PillarCard key={sport.id} sport={sport} progress={progress} />
-                ))}
-              </div>
-            )}
+              <div className="divide-y divide-gray-50">
+                {enrolledSports.map(({ sport, progress }) => {
+                  const slug = getPillarSlugFromDocId(sport.id);
+                  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+                  const color = info?.color || 'blue';
+                  const colorClasses = getPillarColorClasses(color);
+                  const IconComponent = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+                  const pct = Math.round(progress.progressPercentage);
 
-            {enrolledSports.length > 4 && (
-              <div className="mt-4 text-center">
-                <Link href="/pillars">
-                  <Button variant="ghost" size="sm" className="text-xs text-gray-500">
-                    +{enrolledSports.length - 4} more pillars
-                  </Button>
-                </Link>
+                  return (
+                    <Link
+                      key={sport.id}
+                      href={`/pillars/${sport.id}`}
+                      className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/80 transition-colors group"
+                    >
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
+                        <IconComponent className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                          {info?.shortName || sport.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {progress.completedSkills.length}/{progress.totalSkills} skills
+                        </p>
+                      </div>
+                      <div className="w-24 hidden sm:block">
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${colorClasses.bg}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className={`text-sm font-bold w-12 text-right ${
+                        pct >= 80 ? 'text-green-600' : pct > 0 ? 'text-gray-900' : 'text-gray-300'
+                      }`}>
+                        {pct}%
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* Recent Quiz Scores */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-bold text-gray-900">Recent Grades</h2>
-              <Link href="/quizzes" className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center gap-1">
-                All quizzes <ArrowRight className="h-3 w-3" />
+          {/* Continue Learning — highlight next skill */}
+          {activePillar && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-gray-900">Continue Learning</h2>
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                  <Play className="h-3 w-3 mr-1" /> In Progress
+                </Badge>
+              </div>
+              <Link href={`/pillars/${activePillar.sport.id}`} className="block group">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-blue-50/80 to-white border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-300">
+                  {(() => {
+                    const slug = getPillarSlugFromDocId(activePillar.sport.id);
+                    const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+                    const colorClasses = getPillarColorClasses(info?.color || 'blue');
+                    const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+                    return (
+                      <>
+                        <div className={`h-14 w-14 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
+                          <Icon className="h-7 w-7 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                            {info?.name || activePillar.sport.name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {activePillar.progress.completedSkills.length} of {activePillar.progress.totalSkills} skills completed
+                          </p>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden max-w-xs">
+                            <div
+                              className={`h-full rounded-full ${colorClasses.bg}`}
+                              style={{ width: `${Math.round(activePillar.progress.progressPercentage)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                      </>
+                    );
+                  })()}
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT 1/3 */}
+        <div className="space-y-6">
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Quizzes" value={stats?.quizzesCompleted || 0} icon={<Trophy className="h-4 w-4" />} color="red" />
+            <StatCard label="Skills" value={stats?.skillsCompleted || 0} icon={<BookOpen className="h-4 w-4" />} color="blue" />
+            <StatCard label="Avg Score" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target className="h-4 w-4" />} color="green" />
+            <StatCard label="Streak" value={stats?.currentStreak || 0} icon={<Flame className="h-4 w-4" />} color="orange" />
+          </div>
+
+          {/* Recent Results */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">Recent Results</h3>
+              <Link href="/quizzes" className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+                View More <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
 
             {quizzesLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600" />
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
               </div>
             ) : recentQuizzes.length === 0 ? (
-              <div className="text-center py-8">
-                <Trophy className="mx-auto h-10 w-10 text-gray-200 mb-3" />
-                <p className="text-sm text-gray-400">No quiz results yet</p>
-                <Link href="/quizzes">
-                  <Button size="sm" className="mt-3 bg-red-600 hover:bg-red-700 text-white text-xs">
-                    Take a Quiz
-                  </Button>
-                </Link>
+              <div className="text-center py-8 px-4">
+                <Trophy className="mx-auto h-8 w-8 text-gray-200 mb-2" />
+                <p className="text-xs text-gray-400">No results yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {recentQuizzes.map((quiz) => {
+              <div className="divide-y divide-gray-50">
+                {recentQuizzes.slice(0, 5).map((quiz) => {
                   const pillarInfo = getPillarByDocId(quiz.sportId);
-                  const colorClasses = getPillarColorClasses(pillarInfo?.color || 'blue');
                   const pct = Math.round(quiz.percentage);
-
                   return (
-                    <div
-                      key={quiz.id}
-                      className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                    >
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient}`}>
-                        <Trophy className="h-4 w-4 text-white" />
-                      </div>
+                    <div key={quiz.id} className="flex items-center gap-3 px-5 py-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {pillarInfo?.name || 'Quiz'}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {quiz.score}/{quiz.maxScore} points
+                        <p className="text-xs font-medium text-gray-900 truncate">
+                          {pillarInfo?.shortName || 'Quiz'}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <span className={`text-lg font-bold ${
-                          pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-yellow-600' : 'text-red-500'
-                        }`}>
-                          {pct}%
-                        </span>
+                      <div className="w-20">
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
+                      <span className={`text-xs font-bold w-10 text-right ${
+                        pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-blue-600' : 'text-red-500'
+                      }`}>
+                        {pct}%
+                      </span>
                     </div>
                   );
                 })}
               </div>
             )}
           </div>
-        </div>
-
-        {/* RIGHT: 1/3 — Performance + Quick Actions */}
-        <div className="space-y-6">
-
-          {/* Overall Performance */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h3 className="text-base font-bold text-gray-900 mb-5">Performance</h3>
-
-            {/* Performance ring (mobile-visible version) */}
-            <div className="flex justify-center mb-5 md:hidden">
-              <ProgressRing percentage={overallPct} size={100} />
-            </div>
-
-            <div className="space-y-4">
-              <ProgressRow label="Pillars Completed" current={stats?.sportsCompleted || 0} total={6} />
-              <ProgressRow label="Skills Attempted" current={stats?.skillsCompleted || 0} total={Math.max(20, stats?.skillsCompleted || 0)} />
-              <ProgressRow label="Quiz Average" current={Math.round(stats?.averageQuizScore || 0)} total={100} suffix="%" />
-
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Time Spent Learning</span>
-                <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 text-gray-400" />
-                  {Math.round((stats?.totalTimeSpent || 0) / 60)}h
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">Longest Streak</span>
-                <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <Flame className="h-3.5 w-3.5 text-orange-500" />
-                  {stats?.longestStreak || 0} days
-                </span>
-              </div>
-            </div>
-
-            {overallPct > 0 && (
-              <div className="mt-5 p-3 bg-green-50 rounded-xl border border-green-100 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                <p className="text-xs text-green-700 font-medium">
-                  {overallPct >= 80
-                    ? 'Excellent Progress!'
-                    : overallPct >= 50
-                    ? 'Great work — keep pushing!'
-                    : 'Good start — keep going!'}
-                </p>
-              </div>
-            )}
-          </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <QuickActionLink
-                href="/pillars"
-                icon={<BookOpen className="h-4 w-4 text-blue-600" />}
-                bg="bg-blue-50"
-                label="Browse Pillars"
-                sub="Explore skills & lessons"
-              />
-              <QuickActionLink
-                href="/quizzes"
-                icon={<Trophy className="h-4 w-4 text-green-600" />}
-                bg="bg-green-50"
-                label="Take a Quiz"
-                sub="Test your knowledge"
-              />
-              <QuickActionLink
-                href="/progress"
-                icon={<TrendingUp className="h-4 w-4 text-purple-600" />}
-                bg="bg-purple-50"
-                label="Analytics"
-                sub="Detailed progress"
-              />
-              <QuickActionLink
-                href="/goals"
-                icon={<Target className="h-4 w-4 text-red-600" />}
-                bg="bg-red-50"
-                label="Set Goals"
-                sub="Track objectives"
-              />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Quick Actions</h3>
+            <div className="space-y-1.5">
+              <QuickActionLink href="/pillars" icon={<BookOpen className="h-4 w-4 text-blue-600" />} bg="bg-blue-50" label="Browse Pillars" />
+              <QuickActionLink href="/quizzes" icon={<Trophy className="h-4 w-4 text-green-600" />} bg="bg-green-50" label="Take a Quiz" />
+              <QuickActionLink href="/progress" icon={<TrendingUp className="h-4 w-4 text-purple-600" />} bg="bg-purple-50" label="Analytics" />
+              <QuickActionLink href="/charting" icon={<Target className="h-4 w-4 text-red-600" />} bg="bg-red-50" label="Charting" />
             </div>
           </div>
         </div>
@@ -335,14 +323,13 @@ function DashboardContent() {
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
     </div>
   );
 }
 
-/** SVG ring chart */
 function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: number }) {
-  const strokeWidth = 10;
+  const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -350,44 +337,29 @@ function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: n
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="url(#ring-gradient)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
+          cx={size / 2} cy={size / 2} r={radius} fill="none"
+          stroke="url(#ring-grad)" strokeWidth={strokeWidth} strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
           className="transition-all duration-1000 ease-out"
         />
         <defs>
-          <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#dc2626" />
-            <stop offset="100%" stopColor="#3b82f6" />
+          <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#ef4444" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-white">{percentage}</span>
-        <span className="text-[10px] text-white/50 uppercase tracking-wider">%</span>
+        <span className="text-2xl font-black text-gray-900">{percentage}</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-wider">%</span>
       </div>
     </div>
   );
 }
 
-function StatCard({
-  label, value, icon, color,
-}: {
+function StatCard({ label, value, icon, color }: {
   label: string; value: string | number; icon: React.ReactNode;
   color: 'red' | 'blue' | 'green' | 'orange';
 }) {
@@ -398,82 +370,28 @@ function StatCard({
     orange: 'bg-orange-50 text-orange-600',
   };
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</span>
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex items-center justify-between mb-2">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${colorMap[color]}`}>{icon}</div>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-xl font-black text-gray-900">{value}</p>
+      <p className="text-[11px] text-gray-400 mt-0.5">{label}</p>
     </div>
-  );
-}
-
-function PillarCard({ sport, progress }: { sport: { id: string; name: string; icon?: string; description?: string }; progress: { progressPercentage: number; completedSkills: string[]; totalSkills: number; status: string; lastAccessedAt?: { toDate: () => Date } } }) {
-  const slug = getPillarSlugFromDocId(sport.id);
-  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
-  const color = info?.color || 'blue';
-  const colorClasses = getPillarColorClasses(color);
-  const IconComponent = PILLAR_ICONS[info?.icon || 'Target'] || Target;
-  const pct = Math.round(progress.progressPercentage);
-
-  return (
-    <Link
-      href={`/pillars/${sport.id}`}
-      className="group block bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-200"
-    >
-      <div className="flex items-start gap-3 mb-3">
-        <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
-          <IconComponent className="h-5 w-5 text-white" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-gray-900 truncate group-hover:text-red-600 transition-colors">
-            {info?.shortName || sport.name}
-          </h4>
-          <Badge
-            variant="outline"
-            className={`text-[10px] mt-0.5 px-1.5 py-0 h-[18px] ${
-              progress.status === 'completed'
-                ? 'bg-green-50 text-green-600 border-green-200'
-                : progress.status === 'in_progress'
-                ? 'bg-blue-50 text-blue-600 border-blue-200'
-                : 'bg-gray-50 text-gray-500 border-gray-200'
-            }`}
-          >
-            {progress.status === 'completed' ? 'Done' : progress.status === 'in_progress' ? 'Active' : 'New'}
-          </Badge>
-        </div>
-        <span className="text-lg font-bold text-gray-900">{pct}%</span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${colorClasses.bg}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="flex items-center justify-between mt-2">
-        <span className="text-[11px] text-gray-400">{progress.completedSkills.length}/{progress.totalSkills} skills</span>
-        {progress.lastAccessedAt && (
-          <span className="text-[11px] text-gray-400">
-            Last: {progress.lastAccessedAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        )}
-      </div>
-    </Link>
   );
 }
 
 function EmptyPillars() {
   return (
-    <div className="text-center py-10">
-      <div className="h-14 w-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-        <BookOpen className="h-7 w-7 text-gray-300" />
+    <div className="text-center py-12 px-6">
+      <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-blue-50 flex items-center justify-center">
+        <BookOpen className="h-7 w-7 text-blue-400" />
       </div>
       <h3 className="text-sm font-semibold text-gray-900 mb-1">No courses yet</h3>
       <p className="text-xs text-gray-400 mb-4 max-w-xs mx-auto">
         Start your goaltending journey by exploring the fundamental pillars.
       </p>
       <Link href="/pillars">
-        <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs">
+        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-xl">
           Explore Pillars
         </Button>
       </Link>
@@ -481,32 +399,12 @@ function EmptyPillars() {
   );
 }
 
-function ProgressRow({ label, current, total, suffix = '' }: { label: string; current: number; total: number; suffix?: string }) {
-  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+function QuickActionLink({ href, icon, bg, label }: { href: string; icon: React.ReactNode; bg: string; label: string }) {
   return (
-    <div>
-      <div className="flex items-center justify-between text-xs mb-1.5">
-        <span className="text-gray-500">{label}</span>
-        <span className="font-semibold text-gray-900">{current}{suffix}/{total}{suffix}</span>
-      </div>
-      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-red-500 to-blue-500 transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function QuickActionLink({ href, icon, bg, label, sub }: { href: string; icon: React.ReactNode; bg: string; label: string; sub: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-      <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
-      <div>
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        <p className="text-[11px] text-gray-400">{sub}</p>
-      </div>
+    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
+      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{label}</span>
+      <ChevronRight className="h-3.5 w-3.5 text-gray-300 ml-auto group-hover:text-gray-500 transition-colors" />
     </Link>
   );
 }

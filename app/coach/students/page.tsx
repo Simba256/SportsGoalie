@@ -384,21 +384,26 @@ export default function CoachStudentsPage() {
 
       {/* Remove Student Confirmation Dialog */}
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Student from Roster</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl">
+          <AlertDialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Roster</p>
+              <AlertDialogTitle className="text-2xl font-bold tracking-tight text-white">Remove Student from Roster</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-300 mt-1.5 text-sm">
               Are you sure you want to remove{' '}
               <span className="font-semibold">{studentToRemove?.displayName}</span>{' '}
               from your roster? They will no longer appear in your student list, but their curriculum progress will be preserved.
-            </AlertDialogDescription>
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+            <AlertDialogCancel disabled={removing} className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveStudent}
               disabled={removing}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               {removing ? (
                 <>

@@ -145,18 +145,15 @@ const GradientCard = React.forwardRef<HTMLDivElement, GradientCardProps>(
             </div>
 
             {/* CTA */}
-            <a
-              href={ctaHref}
+            <div
               className={cn(
                 'group mt-6 inline-flex items-center gap-2 text-sm font-bold transition-all duration-200',
-                isDark
-                  ? 'text-white/90 hover:text-white'
-                  : 'text-gray-900 hover:text-gray-700'
+                isDark ? 'text-white/90' : 'text-gray-900'
               )}
             >
               {ctaText}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5" />
-            </a>
+            </div>
           </div>
         </div>
       </motion.div>

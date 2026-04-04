@@ -5,8 +5,6 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   BookOpen,
-  GraduationCap,
-  Trophy,
   BarChart3,
   Award,
   Target,
@@ -30,8 +28,6 @@ interface DashboardSidebarProps {
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Pillars', href: '/pillars', icon: BookOpen },
-  { label: 'Lessons', href: '/lessons', icon: GraduationCap },
-  { label: 'Quizzes', href: '/quizzes', icon: Trophy },
   { label: 'Charting', href: '/charting', icon: ClipboardList },
   { label: 'Mind Vault', href: '/mind-vault', icon: Shield },
   { label: 'Analytics', href: '/progress', icon: BarChart3 },

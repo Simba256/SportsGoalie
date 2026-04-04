@@ -30,6 +30,7 @@ import {
   X,
   Loader2,
   Save,
+  ArrowRight,
   Clock,
   Settings,
   PlayCircle,
@@ -243,21 +244,24 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
         onOpenChange(nextOpen);
       }
     }}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col overflow-hidden border-zinc-200 bg-gradient-to-b from-white to-zinc-50/80 shadow-2xl shadow-zinc-300/40">
-        <DialogHeader className="relative flex-shrink-0 rounded-xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-5 py-4 text-white">
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-36 bg-red-500/10 blur-2xl" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300">Curriculum</p>
-          <DialogTitle className="text-3xl font-black text-white flex items-center gap-2">
+      <DialogContent showCloseButton={false} className="sm:max-w-6xl w-[95vw] h-[90vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
+        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
+            <DialogTitle className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             <PlayCircle className="h-7 w-7" />
             Create Video Quiz
-          </DialogTitle>
-          <DialogDescription className="text-blue-100/80">
-            Create an interactive video quiz with questions at specific timestamps
-          </DialogDescription>
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
+              Create an interactive video quiz with questions at specific timestamps
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-2">
-          <div className="space-y-5 p-1">
+        <ScrollArea className="flex-1">
+          <div className="space-y-6 px-8 py-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
               <TabsList className="grid w-full grid-cols-4 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
                 <TabsTrigger value="info" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-800">
@@ -537,12 +541,12 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
           </div>
         </ScrollArea>
 
-        <DialogFooter className="flex-shrink-0 border-t border-zinc-200 pt-4">
+        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
           >
             Cancel
           </Button>
@@ -560,6 +564,7 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
               <>
                 <Save className="h-4 w-4 mr-2" />
                 Create Quiz
+                <ArrowRight className="h-4 w-4 ml-2" />
               </>
             )}
           </Button>

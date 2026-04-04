@@ -408,10 +408,14 @@ export default function CoachContentPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Content</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl">
+          <AlertDialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Content Library</p>
+              <AlertDialogTitle className="text-2xl font-bold tracking-tight text-white">Delete Content</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-300 mt-1.5 text-sm">
               Are you sure you want to delete "{deleteConfirm?.title}"? This action cannot be undone.
               {(deleteConfirm?.usageCount || 0) > 0 && (
                 <span className="block mt-2 text-amber-600">
@@ -419,11 +423,12 @@ export default function CoachContentPage() {
                   Deleting it may affect their curriculum.
                 </span>
               )}
-            </AlertDialogDescription>
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+            <AlertDialogCancel className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

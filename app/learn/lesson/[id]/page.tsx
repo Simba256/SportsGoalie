@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,42 +45,67 @@ function getYouTubeEmbedUrl(url: string): string {
 export default function CustomLessonPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const lessonId = params.id as string;
+  const pillarId = searchParams.get('pillarId');
+  const skillId = searchParams.get('skillId');
+
+  const backToSkillPage = !!pillarId && !!skillId;
 
   const [lesson, setLesson] = useState<CustomContentLibrary | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  const getBackHref = () => {
+    if (!backToSkillPage) {
+      return '/dashboard';
+    }
+
+    if (!isCompleted) {
+      return `/pillars/${pillarId}/skills/${skillId}`;
+    }
+
+    return `/pillars/${pillarId}/skills/${skillId}?completedContentId=${lessonId}&completedAt=${Date.now()}`;
+  };
+
   useEffect(() => {
     if (lessonId) {
       loadLesson();
     }
-  }, [lessonId]);
+  }, [lessonId, user?.id]);
 
   const loadLesson = async () => {
     try {
       setLoading(true);
-      console.log('📖 Loading lesson:', lessonId);
-      const result = await customContentService.getContent(lessonId);
-      console.log('📖 Lesson result:', result);
+
+      // Fetch lesson content and curriculum status in parallel
+      const [result, curriculumResult] = await Promise.all([
+        customContentService.getContent(lessonId),
+        user?.id
+          ? customCurriculumService.getStudentCurriculum(user.id).catch(() => null)
+          : Promise.resolve(null),
+      ]);
 
       if (result.success && result.data) {
         setLesson(result.data);
+
+        if (curriculumResult?.success && curriculumResult.data) {
+          const curriculumItem = curriculumResult.data.items.find(
+            item => item.contentId === lessonId && (item.type === 'custom_lesson' || item.type === 'lesson')
+          );
+          setIsCompleted(curriculumItem?.status === 'completed');
+        }
       } else if (result.success && !result.data) {
-        // Content doesn't exist in database
-        console.error('📖 Lesson not found in database:', lessonId);
         toast.error('Lesson not found - it may not have been saved correctly');
         router.back();
       } else {
-        // Permission or other error
-        console.error('📖 Error loading lesson:', result.error);
         toast.error(result.error?.message || 'Failed to load lesson');
         router.back();
       }
     } catch (error) {
-      console.error('📖 Exception loading lesson:', error);
+      console.error('Failed to load lesson:', error);
       toast.error('Failed to load lesson');
     } finally {
       setLoading(false);
@@ -147,9 +172,9 @@ export default function CustomLessonPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
       <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-700 hover:bg-white/80">
+        <Button variant="ghost" onClick={() => router.push(getBackHref())} className="mb-4 text-slate-700 hover:bg-white/80">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
+          {backToSkillPage ? 'Back to Skill' : 'Back to Dashboard'}
         </Button>
         <div className="flex items-start justify-between gap-4">
           <div>

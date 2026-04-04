@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
   X,
   Loader2,
   Save,
+  ArrowRight,
   Clock,
   Target,
   Tag,
@@ -29,9 +30,9 @@ import {
   Upload,
 } from 'lucide-react';
 import { VideoUploader } from './video-uploader';
-import { customContentService } from '@/lib/database';
+import { customContentService, sportsService } from '@/lib/database';
 import { toast } from 'sonner';
-import { CustomContentLibrary } from '@/types';
+import { CustomContentLibrary, Sport, Skill } from '@/types';
 
 interface StudentGapInfo {
   categoryName: string;
@@ -79,10 +80,50 @@ export function LessonCreator({
   const [newObjective, setNewObjective] = useState('');
   const [newTag, setNewTag] = useState('');
 
+  // Pillar & skill selection
+  const [pillars, setPillars] = useState<Sport[]>([]);
+  const [pillarSkills, setPillarSkills] = useState<Skill[]>([]);
+  const [selectedPillarId, setSelectedPillarId] = useState(editContent?.pillarId || '');
+  const [selectedSkillId, setSelectedSkillId] = useState('');
+  const [loadingPillars, setLoadingPillars] = useState(false);
+  const [loadingSkills, setLoadingSkills] = useState(false);
+
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!editContent;
+
+  // Load pillars when dialog opens
+  useEffect(() => {
+    if (!open) return;
+    const loadPillars = async () => {
+      setLoadingPillars(true);
+      try {
+        const result = await sportsService.getAllSports({ limit: 10 });
+        if (result.success && result.data) {
+          setPillars(result.data.items.sort((a, b) => a.order - b.order));
+        }
+      } catch { /* non-blocking */ }
+      finally { setLoadingPillars(false); }
+    };
+    loadPillars();
+  }, [open]);
+
+  // Load skills when pillar changes
+  useEffect(() => {
+    if (!selectedPillarId) { setPillarSkills([]); return; }
+    const loadSkills = async () => {
+      setLoadingSkills(true);
+      try {
+        const result = await sportsService.getSkillsBySport(selectedPillarId);
+        if (result.success && result.data) {
+          setPillarSkills(result.data.items.filter(s => s.isActive));
+        }
+      } catch { /* non-blocking */ }
+      finally { setLoadingSkills(false); }
+    };
+    loadSkills();
+  }, [selectedPillarId]);
 
   const applyGapSuggestion = (gap: StudentGapInfo) => {
     if (!title) setTitle(`${gap.categoryName} — Targeted Lesson`);
@@ -179,6 +220,9 @@ export function LessonCreator({
         learningObjectives,
         tags,
         isPublic,
+        pillarId: selectedPillarId || undefined,
+        // Use levelId to store linked skill ID for curriculum/skill-page association.
+        levelId: selectedSkillId || undefined,
       };
 
       let result;
@@ -246,24 +290,27 @@ export function LessonCreator({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border-zinc-200 bg-gradient-to-b from-white to-zinc-50/80 shadow-2xl shadow-zinc-300/40">
-        <DialogHeader className="relative flex-shrink-0 rounded-xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-5 py-4 text-white">
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-red-500/10 blur-2xl" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300">Curriculum</p>
-          <DialogTitle className="flex items-center gap-2 text-3xl leading-tight font-black tracking-tight text-white">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25">
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
+        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
+            <DialogTitle className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
               <BookOpen className="h-5 w-5" />
             </span>
             {isEditing ? 'Edit Lesson' : 'Create New Lesson'}
-          </DialogTitle>
-          <DialogDescription className="text-blue-100/80">
-            Create a custom lesson with video content, learning objectives, and attachments.
-          </DialogDescription>
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
+              Create a custom lesson with video content, learning objectives, and attachments.
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
         {/* Gap Suggestions Panel */}
         {studentGaps && studentGaps.length > 0 && !isEditing && (
-          <div className="flex-shrink-0 rounded-lg border border-blue-200 bg-blue-50 p-3 mx-1">
+          <div className="flex-shrink-0 rounded-lg border border-blue-200 bg-blue-50 p-4 mx-8 mt-6">
             <p className="text-xs font-semibold text-blue-800 mb-2">
               Student needs help with:
             </p>
@@ -292,8 +339,46 @@ export function LessonCreator({
           </div>
         )}
 
-        <ScrollArea className="flex-1 pr-4">
-          <form onSubmit={onSubmit} className="space-y-6">
+        <ScrollArea className="flex-1">
+          <form onSubmit={onSubmit} className="space-y-6 px-8 py-8">
+            {/* Pillar & Skill Association */}
+            <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+              <p className="text-xs font-semibold text-blue-800">Assign to Pillar & Skill</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-600">Pillar</Label>
+                  <select
+                    value={selectedPillarId}
+                    onChange={(e) => { setSelectedPillarId(e.target.value); setSelectedSkillId(''); }}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                    disabled={loadingPillars}
+                  >
+                    <option value="">Select a pillar...</option>
+                    {pillars.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-600">Skill (optional)</Label>
+                  <select
+                    value={selectedSkillId}
+                    onChange={(e) => setSelectedSkillId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                    disabled={!selectedPillarId || loadingSkills}
+                  >
+                    <option value="">Select a skill...</option>
+                    {pillarSkills.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p className="text-[10px] text-blue-600">
+                Linking to a pillar/skill ensures this content appears in the goalie&apos;s skill page.
+              </p>
+            </div>
+
             {/* Basic Info */}
             <div className="space-y-4">
               <div className="space-y-2">
@@ -527,19 +612,19 @@ export function LessonCreator({
           </form>
         </ScrollArea>
 
-        <DialogFooter className="flex-shrink-0 pt-4">
+        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
           >
             Cancel
           </Button>
           <Button
             onClick={onSubmit}
             disabled={isSubmitting || uploadingAttachments}
-            className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
+            className="bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
           >
             {isSubmitting ? (
               <>
@@ -550,6 +635,7 @@ export function LessonCreator({
               <>
                 <Save className="h-4 w-4 mr-2" />
                 {isEditing ? 'Update Lesson' : 'Create Lesson'}
+                <ArrowRight className="h-4 w-4 ml-2" />
               </>
             )}
           </Button>

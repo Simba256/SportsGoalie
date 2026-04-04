@@ -166,6 +166,7 @@ export default function StudentCurriculumPage() {
     type: 'lesson' | 'quiz' | 'custom_lesson' | 'custom_quiz';
     title: string;
     sportId: string;
+    skillId?: string;
     isCustom?: boolean;
   }) => {
     if (!curriculum || !coach?.id) return;
@@ -185,7 +186,8 @@ export default function StudentCurriculumPage() {
           type: itemType,
           contentId: content.id,
           pillarId: content.sportId || 'custom',
-          levelId: 'level-1', // Default level for now
+          // Store linked skill ID (when provided) so content can be shown on the skill page.
+          levelId: content.skillId || 'level-1',
           unlocked: false, // Start locked
         },
         coach.id
@@ -222,6 +224,7 @@ export default function StudentCurriculumPage() {
       type: content.type === 'lesson' ? 'custom_lesson' : 'custom_quiz',
       title: content.title,
       sportId: content.pillarId || 'custom',
+      skillId: content.levelId,
       isCustom: true,
     });
   };
