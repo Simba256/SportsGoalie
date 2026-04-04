@@ -179,21 +179,25 @@ function VideoQuizPageContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="max-w-7xl mx-auto space-y-6 px-4 py-6">
       {/* Header */}
-      <div className="mb-6">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-4 transition-colors"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Link>
+      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative">
+          <Link
+            href="/quizzes"
+            className="inline-flex items-center text-sm text-blue-100 hover:text-white mb-4 transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Quizzes
+          </Link>
 
-        <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
-        {quiz.description && (
-          <p className="text-gray-600">{quiz.description}</p>
-        )}
+          <h1 className="text-3xl font-black text-white mb-2">{quiz.title}</h1>
+          {quiz.description && (
+            <p className="text-blue-100/80">{quiz.description}</p>
+          )}
+        </div>
       </div>
 
       {/* Video Player */}

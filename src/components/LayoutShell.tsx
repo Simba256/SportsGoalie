@@ -81,6 +81,7 @@ function getPageTitle(pathname: string): string {
   const titles: Record<string, string> = {
     dashboard: 'Dashboard',
     pillars: 'Pillars',
+    lessons: 'Lessons',
     quizzes: 'Quizzes',
     quiz: 'Quiz',
     progress: 'Analytics',

@@ -29,15 +29,8 @@ import {
   Heart,
 } from 'lucide-react';
 
-// Icon map for pillar icons
 const PILLAR_ICONS: Record<string, React.ElementType> = {
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
-  Heart,
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 
 interface AdminPillarsState {
@@ -61,76 +54,42 @@ interface PillarFormData {
 }
 
 const defaultFormData: PillarFormData = {
-  name: '',
-  description: '',
-  color: '#3B82F6',
-  category: '',
-  difficulty: 'introduction',
-  imageUrl: '',
-  tags: [],
-  isActive: true,
-  isFeatured: false,
-  order: 0,
+  name: '', description: '', color: '#3B82F6', category: '',
+  difficulty: 'introduction', imageUrl: '', tags: [],
+  isActive: true, isFeatured: false, order: 0,
 };
 
 function AdminPillarsContent() {
   const [state, setState] = useState<AdminPillarsState>({
-    pillars: [],
-    loading: true,
-    error: null,
-    editingId: null,
+    pillars: [], loading: true, error: null, editingId: null,
   });
-
   const [formData, setFormData] = useState<PillarFormData>(defaultFormData);
   const [saving, setSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    loadPillars();
-  }, []);
+  useEffect(() => { loadPillars(); }, []);
 
   const loadPillars = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-
     try {
       const result = await sportsService.getAllSports({ limit: 100 });
       if (result.success && result.data) {
-        // Sort by order
-        const sortedPillars = result.data.items.sort((a, b) => a.order - b.order);
-        setState(prev => ({
-          ...prev,
-          pillars: sortedPillars,
-          loading: false,
-        }));
+        setState(prev => ({ ...prev, pillars: result.data!.items.sort((a, b) => a.order - b.order), loading: false }));
       } else {
-        setState(prev => ({
-          ...prev,
-          error: result.error?.message || 'Failed to load pillars',
-          loading: false,
-        }));
+        setState(prev => ({ ...prev, error: result.error?.message || 'Failed to load pillars', loading: false }));
       }
     } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred',
-        loading: false,
-      }));
+      setState(prev => ({ ...prev, error: 'An unexpected error occurred', loading: false }));
     }
   };
 
   const handleEdit = (pillar: Sport) => {
     setFormData({
-      name: pillar.name,
-      description: pillar.description,
-      color: pillar.color,
-      category: pillar.category,
-      difficulty: pillar.difficulty,
-      imageUrl: pillar.imageUrl || '',
-      tags: pillar.tags,
-      isActive: pillar.isActive,
-      isFeatured: pillar.isFeatured,
-      order: pillar.order,
+      name: pillar.name, description: pillar.description, color: pillar.color,
+      category: pillar.category, difficulty: pillar.difficulty,
+      imageUrl: pillar.imageUrl || '', tags: pillar.tags,
+      isActive: pillar.isActive, isFeatured: pillar.isFeatured, order: pillar.order,
     });
     setState(prev => ({ ...prev, editingId: pillar.id }));
   };
@@ -142,69 +101,29 @@ function AdminPillarsContent() {
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim()) {
-      setState(prev => ({ ...prev, error: 'Pillar name is required' }));
-      return;
-    }
-
+    if (!formData.name.trim()) { setState(prev => ({ ...prev, error: 'Pillar name is required' })); return; }
     setSaving(true);
-
     try {
       let imageUrl = formData.imageUrl;
       if (uploadedFiles.length > 0) {
         setUploading(true);
-        const uploadResult = await storageService.uploadFile(
-          uploadedFiles[0],
-          STORAGE_CONFIGS.SPORT_IMAGES
-        );
-
-        if (uploadResult.success && uploadResult.url) {
-          imageUrl = uploadResult.url;
-        } else {
-          setState(prev => ({
-            ...prev,
-            error: uploadResult.error || 'Failed to upload image',
-          }));
-          setUploading(false);
-          setSaving(false);
-          return;
-        }
+        const uploadResult = await storageService.uploadFile(uploadedFiles[0], STORAGE_CONFIGS.SPORT_IMAGES);
+        if (uploadResult.success && uploadResult.url) { imageUrl = uploadResult.url; }
+        else { setState(prev => ({ ...prev, error: uploadResult.error || 'Failed to upload image' })); setUploading(false); setSaving(false); return; }
         setUploading(false);
       }
-
-      const finalFormData = {
-        ...formData,
-        imageUrl,
-        icon: formData.tags[0] || 'Target', // Keep icon synced
-        estimatedTimeToComplete: 120,
-        createdBy: 'admin',
-      };
-
       if (state.editingId) {
-        const result = await sportsService.updateSport(state.editingId, finalFormData);
-
-        if (result.success) {
-          await loadPillars();
-          handleCancel();
-        } else {
-          setState(prev => ({
-            ...prev,
-            error: result.error?.message || 'Failed to save pillar',
-          }));
-        }
+        const result = await sportsService.updateSport(state.editingId, {
+          ...formData, imageUrl, icon: formData.tags[0] || 'Target', estimatedTimeToComplete: 120, createdBy: 'admin',
+        });
+        if (result.success) { await loadPillars(); handleCancel(); }
+        else { setState(prev => ({ ...prev, error: result.error?.message || 'Failed to save pillar' })); }
       }
     } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred while saving',
-      }));
-    } finally {
-      setSaving(false);
-      setUploading(false);
-    }
+      setState(prev => ({ ...prev, error: 'An unexpected error occurred while saving' }));
+    } finally { setSaving(false); setUploading(false); }
   };
 
-  // Get pillar display info
   const getPillarDisplayInfo = (pillar: Sport) => {
     const slug = getPillarSlugFromDocId(pillar.id);
     if (slug) {
@@ -229,7 +148,7 @@ function AdminPillarsContent() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
             <p className="text-muted-foreground">Loading pillars...</p>
           </div>
         </div>
@@ -267,151 +186,71 @@ function AdminPillarsContent() {
               <span className="font-medium">Error:</span>
               <span>{state.error}</span>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setState(prev => ({ ...prev, error: null }))}
-              className="mt-2"
-            >
-              Dismiss
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => setState(prev => ({ ...prev, error: null }))} className="mt-2">Dismiss</Button>
           </CardContent>
         </Card>
       )}
 
       {/* Edit Form */}
       {state.editingId && (
-        <Card>
+        <Card className="border-blue-200">
           <CardHeader>
             <CardTitle>Edit Pillar</CardTitle>
-            <CardDescription>
-              Update pillar information and settings
-            </CardDescription>
+            <CardDescription>Update pillar information and settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Pillar name"
-                />
+                <Input id="name" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  placeholder="e.g., Ice Hockey Goalie"
-                  disabled
-                />
+                <Input id="category" value={formData.category} disabled />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Default Difficulty</Label>
-                <select
-                  id="difficulty"
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value as DifficultyLevel }))}
-                  className="w-full border rounded px-3 py-2"
-                >
+                <select id="difficulty" value={formData.difficulty} onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value as DifficultyLevel }))} className="w-full border rounded px-3 py-2">
                   <option value="introduction">Introduction</option>
                   <option value="development">Development</option>
                   <option value="refinement">Refinement</option>
                 </select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="order">Display Order</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
-                  placeholder="1-6"
-                  disabled
-                />
+                <Input id="order" type="number" value={formData.order} disabled />
                 <p className="text-xs text-muted-foreground">Order is fixed for the 7 pillars</p>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Pillar description..."
-                className="w-full border rounded px-3 py-2 min-h-[100px]"
-              />
+              <textarea id="description" value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} className="w-full border rounded px-3 py-2 min-h-[100px]" />
             </div>
-
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                />
-                <p className="text-xs text-muted-foreground">
-                  You can enter a URL directly or upload an image below
-                </p>
+                <Input id="imageUrl" value={formData.imageUrl} onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))} placeholder="https://example.com/image.jpg" />
               </div>
-
               <div className="space-y-2">
                 <Label>Upload Pillar Image</Label>
-                <MediaUpload
-                  onUpload={setUploadedFiles}
-                  acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
-                  maxFiles={1}
-                  maxSizePerFile={10}
-                />
-                {uploadedFiles.length > 0 && (
-                  <p className="text-sm text-green-600">
-                    Image ready for upload: {uploadedFiles[0].name}
-                  </p>
-                )}
+                <MediaUpload onUpload={setUploadedFiles} acceptedTypes={['image/jpeg', 'image/png', 'image/webp']} maxFiles={1} maxSizePerFile={10} />
+                {uploadedFiles.length > 0 && <p className="text-sm text-green-600">Image ready: {uploadedFiles[0].name}</p>}
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                value={formData.tags.join(', ')}
-                onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value.split(', ').filter(Boolean) }))}
-                placeholder="ice-hockey, goalie, mindset"
-              />
+              <Input id="tags" value={formData.tags.join(', ')} onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value.split(', ').filter(Boolean) }))} />
             </div>
-
             <div className="flex items-center space-x-4">
               <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="rounded"
-                />
+                <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))} className="rounded" />
                 <span>Active</span>
               </label>
-
               <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.isFeatured}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
-                  className="rounded"
-                />
+                <input type="checkbox" checked={formData.isFeatured} onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))} className="rounded" />
                 <span>Featured</span>
               </label>
             </div>
-
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving || uploading} className="flex items-center gap-2">
                 <Save className="w-4 h-4" />

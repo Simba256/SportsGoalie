@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   BookOpen,
   Trophy,
+  FileText,
   BarChart3,
   Award,
   LogOut,
@@ -27,6 +28,7 @@ interface DashboardSidebarProps {
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Pillars', href: '/pillars', icon: BookOpen },
+  { label: 'Lessons', href: '/lessons', icon: FileText },
   { label: 'Quizzes', href: '/quizzes', icon: Trophy },
   { label: 'Charting', href: '/charting', icon: ClipboardList },
   { label: 'Analytics', href: '/progress', icon: BarChart3 },

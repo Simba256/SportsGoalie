@@ -155,29 +155,33 @@ function VideoQuizResultsContent() {
     );
   }
 
-  const scoreColor = progress.percentage >= 70 ? 'text-green-600' : 'text-amber-600';
+  const scoreColor = progress.percentage >= 70 ? 'text-blue-600' : 'text-red-600';
   const scoreIcon = progress.percentage >= 70 ? <Trophy className="h-6 w-6" /> : <Target className="h-6 w-6" />;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="max-w-5xl mx-auto space-y-6 px-4 py-6">
       {/* Header */}
-      <div className="mb-6">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-4 transition-colors"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Link>
+      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative">
+          <Link
+            href="/quizzes"
+            className="inline-flex items-center text-sm text-blue-100 hover:text-white mb-4 transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Quizzes
+          </Link>
 
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Quiz Results</h1>
-          <p className="text-gray-600">{quiz.title}</p>
+          <div>
+            <h1 className="text-3xl font-black text-white mb-2">Quiz Results</h1>
+            <p className="text-blue-100/80">{quiz.title}</p>
+          </div>
         </div>
       </div>
 
       {/* Main Score Card */}
-      <Card className="mb-6">
+      <Card className="border-zinc-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Your Score</span>
@@ -209,8 +213,8 @@ function VideoQuizResultsContent() {
       </Card>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-blue-200 bg-blue-50/40">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -219,12 +223,12 @@ function VideoQuizResultsContent() {
                   {progress.questionsAnswered.length} / {quiz.questions?.length || 0}
                 </p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
+              <CheckCircle2 className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-200 bg-red-50/40">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -242,7 +246,7 @@ function VideoQuizResultsContent() {
 
       {/* Question Review */}
       {progress.questionsAnswered.length > 0 && (
-        <Card className="mb-6">
+        <Card className="border-zinc-200 bg-white shadow-sm">
           <CardHeader>
             <CardTitle>Question Review</CardTitle>
           </CardHeader>
@@ -289,7 +293,7 @@ function VideoQuizResultsContent() {
       )}
 
       {/* Completion Info */}
-      <Card className="mb-6">
+      <Card className="border-zinc-200 bg-white shadow-sm">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
@@ -312,10 +316,11 @@ function VideoQuizResultsContent() {
       <div className="flex gap-4 justify-center">
         <Button
           variant="outline"
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/quizzes')}
+          className="border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100"
         >
           <Home className="mr-2 h-4 w-4" />
-          Back to Dashboard
+          Back to Quizzes
         </Button>
 
         {quiz.allowRetakes && (
@@ -329,7 +334,8 @@ function VideoQuizResultsContent() {
 
         <Button
           variant="default"
-          onClick={() => router.push(`/sports/${quiz.sportId}/skills/${quiz.skillId}`)}
+          className="bg-red-600 text-white hover:bg-red-700"
+          onClick={() => router.push('/lessons')}
         >
           Continue Learning
           <ChevronRight className="ml-2 h-4 w-4" />

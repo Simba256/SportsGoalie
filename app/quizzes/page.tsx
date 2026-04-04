@@ -137,13 +137,13 @@ function QuizzesPageContent() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
-        return 'bg-green-100 text-green-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'hard':
-        return 'bg-red-100 text-red-800';
+        return 'bg-zinc-200 text-zinc-800 border-zinc-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -165,17 +165,22 @@ function QuizzesPageContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="max-w-7xl mx-auto space-y-6 px-4 py-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Available Quizzes</h1>
-        <p className="text-gray-600">
-          Test your knowledge and track your progress with our interactive quizzes
-        </p>
+      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative">
+          <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">Quizzes</p>
+          <h1 className="text-2xl md:text-3xl font-black text-white mb-2">Available Quizzes</h1>
+          <p className="text-white/60 text-sm">
+            Test your knowledge and track your progress with interactive goalie quizzes.
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="mb-8 space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -183,14 +188,14 @@ function QuizzesPageContent() {
               placeholder="Search quizzes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 border-zinc-300 bg-white focus-visible:ring-blue-200"
             />
           </div>
         </div>
 
         <div className="flex gap-2">
           <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[150px] border-zinc-300 bg-white focus:ring-blue-200">
               <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent>
@@ -217,17 +222,17 @@ function QuizzesPageContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuizzes.map((quiz) => (
-            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+            <Card key={quiz.id} className="border-zinc-200 bg-white hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-0.5">
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
                   <Badge className={getDifficultyColor(quiz.difficulty)}>
                     {quiz.difficulty}
                   </Badge>
-                  <Badge variant="outline">Video Quiz</Badge>
+                  <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Video Quiz</Badge>
                 </div>
-                <CardTitle className="text-xl mb-2">{quiz.title}</CardTitle>
+                <CardTitle className="text-xl mb-2 text-zinc-900">{quiz.title}</CardTitle>
                 {quiz.description && (
-                  <p className="text-gray-600 text-sm line-clamp-2">{quiz.description}</p>
+                  <p className="text-zinc-600 text-sm line-clamp-2">{quiz.description}</p>
                 )}
               </CardHeader>
 
@@ -261,7 +266,7 @@ function QuizzesPageContent() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <Link href={`/quiz/video/${quiz.id}`} className="flex-1">
-                    <Button className="w-full">
+                    <Button className="w-full bg-red-600 text-white hover:bg-red-700">
                       Start Video Quiz
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>

@@ -144,29 +144,33 @@ export default function CustomLessonPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="max-w-5xl mx-auto space-y-6 px-4 py-6">
       {/* Header */}
-      <div className="mb-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary">
-                <BookOpen className="h-3 w-3 mr-1" />
-                Lesson
-              </Badge>
-              {lesson.estimatedTimeMinutes && (
-                <Badge variant="outline">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {lesson.estimatedTimeMinutes} min
+      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative">
+          <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-blue-100 hover:text-white hover:bg-white/10">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  <BookOpen className="h-3 w-3 mr-1" />
+                  Lesson
                 </Badge>
-              )}
+                {lesson.estimatedTimeMinutes && (
+                  <Badge variant="outline" className="border-zinc-300 text-zinc-200 bg-white/5">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {lesson.estimatedTimeMinutes} min
+                  </Badge>
+                )}
+              </div>
+              <h1 className="text-3xl font-black text-white mb-2">{lesson.title}</h1>
+              <p className="text-blue-100/80">{lesson.description}</p>
             </div>
-            <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
-            <p className="text-muted-foreground">{lesson.description}</p>
           </div>
         </div>
       </div>
@@ -200,7 +204,7 @@ export default function CustomLessonPage() {
 
       {/* Learning Objectives */}
       {lesson.learningObjectives && lesson.learningObjectives.length > 0 && (
-        <Card className="mb-6">
+        <Card className="border-blue-200 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -225,7 +229,7 @@ export default function CustomLessonPage() {
 
       {/* Lesson Content */}
       {lesson.content && (
-        <Card className="mb-6">
+        <Card className="border-zinc-200 bg-white shadow-sm">
           <CardHeader>
             <CardTitle>Lesson Content</CardTitle>
           </CardHeader>
@@ -254,7 +258,7 @@ export default function CustomLessonPage() {
 
       {/* Complete Button */}
       {user?.role === 'student' && (
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border-red-200 bg-red-50/40">
           <CardContent className="flex items-center justify-between py-6">
             <div>
               <h3 className="font-semibold">
@@ -270,6 +274,7 @@ export default function CustomLessonPage() {
               onClick={handleMarkComplete}
               disabled={completing || isCompleted}
               size="lg"
+              className={isCompleted ? 'bg-zinc-700 text-white' : 'bg-red-600 text-white hover:bg-red-700'}
             >
               {completing ? (
                 <>
