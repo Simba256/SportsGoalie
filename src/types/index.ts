@@ -794,6 +794,17 @@ export type {
   CohortAnalytics,
   SessionComparison,
   ChartingQueryOptions,
+  // V2 Charting Types
+  MindManagementStartTime,
+  V2PreGameData,
+  GoalEntry,
+  V2PeriodData,
+  V2PostGameData,
+  V2GameChartEntry,
+  PracticeIndexCategory,
+  PracticeIndexItem,
+  V2PracticeChartEntry,
+  MindVaultEntry,
 } from './charting';
 
 // Form Template Types - Export from form-template.ts
@@ -922,3 +933,28 @@ export type {
   ParentCrossReferenceView,
   ParentLinkQueryOptions,
 } from './parent-link';
+
+// Mind Vault Types - Export from mind-vault.ts
+export type {
+  MindVaultCategory,
+  AcceptanceSubCategory,
+  CannotAcceptSubCategory,
+  CreateMindVaultEntryData,
+  MindVaultCategoryInfo,
+  AcceptancePrompt,
+  AcceptanceSubCategoryInfo,
+  CannotAcceptSubCategoryInfo,
+  MindVaultCategorySummary,
+} from './mind-vault';
+
+// Re-export MindVaultEntry with a different name to avoid collision with charting.ts
+export type { MindVaultEntry as MindVaultFullEntry } from './mind-vault';
+
+export {
+  MIND_VAULT_CATEGORIES,
+  getMindVaultCategoryInfo,
+  ACCEPTANCE_SUBCATEGORIES,
+  CANNOT_ACCEPT_SUBCATEGORIES,
+  ACCEPTANCE_PROMPTS,
+  CANNOT_ACCEPT_PROMPTS,
+} from './mind-vault';

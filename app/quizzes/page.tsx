@@ -137,13 +137,13 @@ function QuizzesPageContent() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'medium':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'hard':
-        return 'bg-zinc-200 text-zinc-800 border-zinc-300';
+        return 'bg-red-100 text-red-700 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -158,44 +158,39 @@ function QuizzesPageContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full border-2 border-red-600 border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4 py-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-        <div className="relative">
-          <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">Quizzes</p>
-          <h1 className="text-2xl md:text-3xl font-black text-white mb-2">Available Quizzes</h1>
-          <p className="text-white/60 text-sm">
-            Test your knowledge and track your progress with interactive goalie quizzes.
-          </p>
-        </div>
+      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Available Quizzes</h1>
+        <p className="text-slate-600">
+          Test your knowledge and track your progress with our interactive quizzes
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4 space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
+      <div className="space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search quizzes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-zinc-300 bg-white focus-visible:ring-blue-200"
+              className="pl-10 border-red-100 focus-visible:ring-red-500"
             />
           </div>
         </div>
 
         <div className="flex gap-2">
           <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-            <SelectTrigger className="w-[150px] border-zinc-300 bg-white focus:ring-blue-200">
+            <SelectTrigger className="w-[150px] border-red-100 focus:ring-red-500">
               <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent>
@@ -210,10 +205,10 @@ function QuizzesPageContent() {
 
       {/* Quiz Grid */}
       {filteredQuizzes.length === 0 ? (
-        <div className="text-center py-12">
-          <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No quizzes found</h3>
-          <p className="text-gray-500">
+        <div className="text-center py-12 rounded-xl border border-slate-200 bg-white">
+          <BookOpen className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 mb-2">No quizzes found</h3>
+          <p className="text-slate-500">
             {searchTerm || selectedDifficulty !== 'all'
               ? 'Try adjusting your filters or search term.'
               : 'Check back later for new quizzes.'}
@@ -222,17 +217,17 @@ function QuizzesPageContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuizzes.map((quiz) => (
-            <Card key={quiz.id} className="border-zinc-200 bg-white hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-0.5">
+            <Card key={quiz.id} className="border-red-100 hover:border-red-300 hover:shadow-lg hover:shadow-red-100/40 transition-all">
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
-                  <Badge className={getDifficultyColor(quiz.difficulty)}>
+                  <Badge className={`border ${getDifficultyColor(quiz.difficulty)}`}>
                     {quiz.difficulty}
                   </Badge>
-                  <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Video Quiz</Badge>
+                  <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">Video Quiz</Badge>
                 </div>
-                <CardTitle className="text-xl mb-2 text-zinc-900">{quiz.title}</CardTitle>
+                <CardTitle className="text-xl mb-2 text-slate-900">{quiz.title}</CardTitle>
                 {quiz.description && (
-                  <p className="text-zinc-600 text-sm line-clamp-2">{quiz.description}</p>
+                  <p className="text-slate-600 text-sm line-clamp-2">{quiz.description}</p>
                 )}
               </CardHeader>
 
@@ -240,11 +235,11 @@ function QuizzesPageContent() {
                 {/* Quiz Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-gray-500" />
+                    <Target className="h-4 w-4 text-slate-500" />
                     <span>{quiz.questions?.length || 0} questions</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
+                    <Clock className="h-4 w-4 text-slate-500" />
                     <span>{formatDuration(quiz.estimatedDuration)}</span>
                   </div>
                 </div>
@@ -253,11 +248,11 @@ function QuizzesPageContent() {
                 {quiz.stats && quiz.stats.totalAttempts > 0 && (
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-gray-500" />
+                      <Users className="h-4 w-4 text-slate-500" />
                       <span>{quiz.stats.totalAttempts} attempts</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-gray-500" />
+                      <Star className="h-4 w-4 text-slate-500" />
                       <span>{quiz.stats.averageScore.toFixed(1)}% avg</span>
                     </div>
                   </div>
@@ -266,7 +261,7 @@ function QuizzesPageContent() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <Link href={`/quiz/video/${quiz.id}`} className="flex-1">
-                    <Button className="w-full bg-red-600 text-white hover:bg-red-700">
+                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
                       Start Video Quiz
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>

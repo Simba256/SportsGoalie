@@ -156,7 +156,7 @@ export default function RegisterPage() {
               <Label htmlFor="role" className="text-gray-700 text-sm">I am a...</Label>
               <Select
                 value={selectedRole}
-                onValueChange={(value) => setValue('role', value as 'student' | 'parent')}
+                onValueChange={(value) => setValue('role', value as 'student' | 'parent' | 'coach')}
               >
                 <SelectTrigger
                   id="role"
@@ -168,6 +168,7 @@ export default function RegisterPage() {
                 <SelectContent className="bg-white border-gray-200">
                   <SelectItem value="student" data-testid="role-student" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Student / Athlete</SelectItem>
                   <SelectItem value="parent" data-testid="role-parent" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Parent</SelectItem>
+                  <SelectItem value="coach" data-testid="role-coach" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Coach</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (

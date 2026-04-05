@@ -34,6 +34,8 @@ export interface ProfileUpdateData {
   firstName?: string;
   lastName?: string;
   profileImage?: string;
+  workflowType?: 'automated' | 'custom';
+  assignedCoachId?: string;
 }
 
 // Auth error types

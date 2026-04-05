@@ -17,7 +17,10 @@ import {
   CheckCircle,
   Edit,
   Trash2,
-  BarChart3
+  BarChart3,
+  Brain,
+  Timer,
+  MessageSquare,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { DynamicSessionAnalytics } from '@/components/charting/DynamicSessionAnalytics';
@@ -244,6 +247,98 @@ export default function SessionDetailPage() {
             </Button>
           </div>
         </div>
+
+        {/* V2 Game Chart Sections */}
+        {session.type === 'game' && (
+          <Card className="p-6 border-2 border-blue-100">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Game Chart</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4 ml-10">
+              Post-game self-assessment — chart from memory
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Pre-Game */}
+              <div
+                onClick={() => router.push(`/charting/sessions/${sessionId}/v2/pre-game`)}
+                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                  !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-400'
+                }`}
+              >
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame ? 'bg-blue-500' : 'bg-gray-100'
+                  }`}>
+                    <Timer className={`w-5 h-5 ${!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-gray-900">Pre-Game</p>
+                    <p className="text-xs text-gray-500">Mind management</p>
+                  </div>
+                  {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame && (
+                    <CheckCircle className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
+                  )}
+                </div>
+              </div>
+
+              {/* Periods */}
+              <div
+                onClick={() => router.push(`/charting/sessions/${sessionId}/v2/periods`)}
+                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                  !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-400'
+                }`}
+              >
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods ? 'bg-blue-500' : 'bg-gray-100'
+                  }`}>
+                    <BarChart3 className={`w-5 h-5 ${!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-gray-900">Periods</p>
+                    <p className="text-xs text-gray-500">P1 · P2 · P3 · OT</p>
+                  </div>
+                  {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods && (
+                    <CheckCircle className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
+                  )}
+                </div>
+              </div>
+
+              {/* Post-Game */}
+              <div
+                onClick={() => router.push(`/charting/sessions/${sessionId}/v2/post-game`)}
+                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                  !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-400'
+                }`}
+              >
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame ? 'bg-blue-500' : 'bg-gray-100'
+                  }`}>
+                    <MessageSquare className={`w-5 h-5 ${!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-gray-900">Post-Game</p>
+                    <p className="text-xs text-gray-500">Review & Mind Vault</p>
+                  </div>
+                  {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame && (
+                    <CheckCircle className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Charting Sections - Primary Action Area */}
         <Card className="p-6">

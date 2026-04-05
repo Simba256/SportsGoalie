@@ -56,6 +56,7 @@ export default function CreateVideoQuizPage() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
+  const embedded = searchParams.get('embedded') === '1';
   // Get returnTo URL from search params (for returning to curriculum page after creation)
   const returnTo = searchParams.get('returnTo') || '/coach/content';
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,6 +100,10 @@ export default function CreateVideoQuizPage() {
 
   const removeTag = (index: number) => {
     setTags(tags.filter((_, i) => i !== index));
+  };
+
+  const closeEmbedded = () => {
+    window.parent?.postMessage({ type: 'coach-quiz-close' }, window.location.origin);
   };
 
   const validate = (): boolean => {
@@ -211,8 +216,12 @@ export default function CreateVideoQuizPage() {
       const contentResult = await customContentService.createContent(user.id, contentData);
 
       if (contentResult.success && contentResult.data) {
-        toast.success('Quiz created successfully');
-        router.push(returnTo);
+        if (embedded) {
+          window.parent?.postMessage({ type: 'coach-quiz-created', contentId: contentResult.data.id }, window.location.origin);
+        } else {
+          toast.success('Quiz created successfully');
+          router.push(returnTo);
+        }
       } else {
         throw new Error(contentResult.error?.message || 'Failed to save quiz to library');
       }
@@ -233,23 +242,42 @@ export default function CreateVideoQuizPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className={`${embedded ? 'h-full' : 'min-h-screen'} flex flex-col bg-gradient-to-b from-zinc-50 via-white to-blue-50/30`}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-zinc-200">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href={returnTo}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {returnTo.includes('/curriculum') ? 'Back to Curriculum' : 'Back to Content Library'}
+          <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-4 py-3 shadow-md shadow-zinc-300/30">
+            {embedded ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeEmbedded}
+                className="h-9 w-9 p-0 text-blue-100 hover:text-white hover:bg-white/10"
+                aria-label="Close"
+                title="Close"
+              >
+                <ArrowLeft className="h-4 w-4" />
               </Button>
-            </Link>
+            ) : (
+              <Link href={returnTo}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 text-blue-100 hover:text-white hover:bg-white/10"
+                  aria-label={returnTo.includes('/curriculum') ? 'Back to Curriculum' : 'Back to Content Library'}
+                  title={returnTo.includes('/curriculum') ? 'Back to Curriculum' : 'Back to Content Library'}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
             <div className="flex-1">
-              <h1 className="text-2xl font-bold flex items-center gap-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300 mb-1">Curriculum</p>
+              <h1 className="text-2xl font-black text-white flex items-center gap-2">
                 <PlayCircle className="h-6 w-6" />
                 Create Video Quiz
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-blue-100/80">
                 Create an interactive video quiz with questions at specific timestamps
               </p>
             </div>
@@ -260,25 +288,25 @@ export default function CreateVideoQuizPage() {
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="info" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-4 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
+            <TabsTrigger value="info" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-800">
               <FileText className="h-4 w-4" />
               Quiz Info
             </TabsTrigger>
-            <TabsTrigger value="video" className="flex items-center gap-2">
+            <TabsTrigger value="video" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-800">
               <Video className="h-4 w-4" />
               Video
             </TabsTrigger>
-            <TabsTrigger value="questions" className="flex items-center gap-2">
+            <TabsTrigger value="questions" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-red-50 data-[state=active]:text-red-800">
               <HelpCircle className="h-4 w-4" />
               Questions
               {questions.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-800 border-blue-200">
                   {questions.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
+            <TabsTrigger value="settings" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-900">
               <Settings className="h-4 w-4" />
               Settings
             </TabsTrigger>
@@ -286,7 +314,7 @@ export default function CreateVideoQuizPage() {
 
           {/* Quiz Info Tab */}
           <TabsContent value="info" className="space-y-6">
-            <Card>
+            <Card className="border-zinc-200 bg-white shadow-sm">
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
               </CardHeader>
@@ -373,7 +401,7 @@ export default function CreateVideoQuizPage() {
             </Card>
 
             {/* Library Options */}
-            <Card>
+            <Card className="border-zinc-200 bg-white shadow-sm">
               <CardHeader>
                 <CardTitle>Library Options</CardTitle>
               </CardHeader>
@@ -409,7 +437,7 @@ export default function CreateVideoQuizPage() {
 
           {/* Video Tab */}
           <TabsContent value="video" className="space-y-6">
-            <Card>
+            <Card className="border-zinc-200 bg-white shadow-sm">
               <CardHeader>
                 <CardTitle>Quiz Video</CardTitle>
               </CardHeader>
@@ -437,7 +465,7 @@ export default function CreateVideoQuizPage() {
           {/* Questions Tab */}
           <TabsContent value="questions" className="space-y-6">
             {!videoUrl ? (
-              <Card>
+              <Card className="border-zinc-200 bg-white shadow-sm">
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <Video className="h-16 w-16 text-muted-foreground mb-4" />
                   <h3 className="text-xl font-semibold mb-2">Add a Video First</h3>
@@ -461,7 +489,7 @@ export default function CreateVideoQuizPage() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <Card>
+            <Card className="border-zinc-200 bg-white shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
@@ -590,7 +618,7 @@ export default function CreateVideoQuizPage() {
       </div>
 
       {/* Sticky Footer */}
-      <div className="sticky bottom-0 bg-background border-t">
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-zinc-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
@@ -601,14 +629,22 @@ export default function CreateVideoQuizPage() {
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => router.push(returnTo)}
+                onClick={() => {
+                  if (embedded) {
+                    closeEmbedded();
+                  } else {
+                    router.push(returnTo);
+                  }
+                }}
                 disabled={isSubmitting}
+                className="border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               >
                 Cancel
               </Button>
               <Button
                 onClick={onSubmit}
                 disabled={isSubmitting}
+                className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
               >
                 {isSubmitting ? (
                   <>

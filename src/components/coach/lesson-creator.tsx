@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
   X,
   Loader2,
   Save,
+  ArrowRight,
   Clock,
   Target,
   Tag,
@@ -29,9 +30,16 @@ import {
   Upload,
 } from 'lucide-react';
 import { VideoUploader } from './video-uploader';
-import { customContentService } from '@/lib/database';
+import { customContentService, sportsService } from '@/lib/database';
 import { toast } from 'sonner';
-import { CustomContentLibrary } from '@/types';
+import { CustomContentLibrary, Sport, Skill } from '@/types';
+
+interface StudentGapInfo {
+  categoryName: string;
+  categorySlug: string;
+  priority: 'high' | 'medium' | 'low';
+  suggestedContent: string[];
+}
 
 interface LessonCreatorProps {
   open: boolean;
@@ -39,6 +47,7 @@ interface LessonCreatorProps {
   coachId: string;
   onSave: (content: CustomContentLibrary) => void;
   editContent?: CustomContentLibrary;
+  studentGaps?: StudentGapInfo[];
 }
 
 export function LessonCreator({
@@ -47,6 +56,7 @@ export function LessonCreator({
   coachId,
   onSave,
   editContent,
+  studentGaps,
 }: LessonCreatorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [_videoDuration, setVideoDuration] = useState<number | undefined>();
@@ -70,10 +80,61 @@ export function LessonCreator({
   const [newObjective, setNewObjective] = useState('');
   const [newTag, setNewTag] = useState('');
 
+  // Pillar & skill selection
+  const [pillars, setPillars] = useState<Sport[]>([]);
+  const [pillarSkills, setPillarSkills] = useState<Skill[]>([]);
+  const [selectedPillarId, setSelectedPillarId] = useState(editContent?.pillarId || '');
+  const [selectedSkillId, setSelectedSkillId] = useState('');
+  const [loadingPillars, setLoadingPillars] = useState(false);
+  const [loadingSkills, setLoadingSkills] = useState(false);
+
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!editContent;
+
+  // Load pillars when dialog opens
+  useEffect(() => {
+    if (!open) return;
+    const loadPillars = async () => {
+      setLoadingPillars(true);
+      try {
+        const result = await sportsService.getAllSports({ limit: 10 });
+        if (result.success && result.data) {
+          setPillars(result.data.items.sort((a, b) => a.order - b.order));
+        }
+      } catch { /* non-blocking */ }
+      finally { setLoadingPillars(false); }
+    };
+    loadPillars();
+  }, [open]);
+
+  // Load skills when pillar changes
+  useEffect(() => {
+    if (!selectedPillarId) { setPillarSkills([]); return; }
+    const loadSkills = async () => {
+      setLoadingSkills(true);
+      try {
+        const result = await sportsService.getSkillsBySport(selectedPillarId);
+        if (result.success && result.data) {
+          setPillarSkills(result.data.items.filter(s => s.isActive));
+        }
+      } catch { /* non-blocking */ }
+      finally { setLoadingSkills(false); }
+    };
+    loadSkills();
+  }, [selectedPillarId]);
+
+  const applyGapSuggestion = (gap: StudentGapInfo) => {
+    if (!title) setTitle(`${gap.categoryName} — Targeted Lesson`);
+    const newTags = [...tags];
+    if (!newTags.includes(gap.categorySlug)) newTags.push(gap.categorySlug);
+    if (!newTags.includes(gap.priority)) newTags.push(gap.priority + '-priority');
+    setTags(newTags);
+    if (gap.suggestedContent.length > 0 && learningObjectives.length === 0) {
+      setLearningObjectives(gap.suggestedContent.slice(0, 3));
+    }
+  };
 
   const handleVideoUploaded = (url: string, duration?: number) => {
     setVideoUrl(url);
@@ -159,6 +220,9 @@ export function LessonCreator({
         learningObjectives,
         tags,
         isPublic,
+        pillarId: selectedPillarId || undefined,
+        // Use levelId to store linked skill ID for curriculum/skill-page association.
+        levelId: selectedSkillId || undefined,
       };
 
       let result;
@@ -226,19 +290,95 @@ export function LessonCreator({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
+        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
+            <DialogTitle className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
+              <BookOpen className="h-5 w-5" />
+            </span>
             {isEditing ? 'Edit Lesson' : 'Create New Lesson'}
-          </DialogTitle>
-          <DialogDescription>
-            Create a custom lesson with video content, learning objectives, and attachments.
-          </DialogDescription>
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
+              Create a custom lesson with video content, learning objectives, and attachments.
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <form onSubmit={onSubmit} className="space-y-6">
+        {/* Gap Suggestions Panel */}
+        {studentGaps && studentGaps.length > 0 && !isEditing && (
+          <div className="flex-shrink-0 rounded-lg border border-blue-200 bg-blue-50 p-4 mx-8 mt-6">
+            <p className="text-xs font-semibold text-blue-800 mb-2">
+              Student needs help with:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {studentGaps.map((gap) => (
+                <button
+                  key={gap.categorySlug}
+                  type="button"
+                  onClick={() => applyGapSuggestion(gap)}
+                  className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                    gap.priority === 'high'
+                      ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                      : gap.priority === 'medium'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                      : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                  }`}
+                >
+                  {gap.categoryName}
+                  <span className="text-[9px] opacity-70">({gap.priority})</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-blue-600 mt-1.5">
+              Click a gap area to pre-fill lesson title, tags, and objectives.
+            </p>
+          </div>
+        )}
+
+        <ScrollArea className="flex-1">
+          <form onSubmit={onSubmit} className="space-y-6 px-8 py-8">
+            {/* Pillar & Skill Association */}
+            <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+              <p className="text-xs font-semibold text-blue-800">Assign to Pillar & Skill</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-600">Pillar</Label>
+                  <select
+                    value={selectedPillarId}
+                    onChange={(e) => { setSelectedPillarId(e.target.value); setSelectedSkillId(''); }}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                    disabled={loadingPillars}
+                  >
+                    <option value="">Select a pillar...</option>
+                    {pillars.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-600">Skill (optional)</Label>
+                  <select
+                    value={selectedSkillId}
+                    onChange={(e) => setSelectedSkillId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                    disabled={!selectedPillarId || loadingSkills}
+                  >
+                    <option value="">Select a skill...</option>
+                    {pillarSkills.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p className="text-[10px] text-blue-600">
+                Linking to a pillar/skill ensures this content appears in the goalie&apos;s skill page.
+              </p>
+            </div>
+
             {/* Basic Info */}
             <div className="space-y-4">
               <div className="space-y-2">
@@ -472,13 +612,19 @@ export function LessonCreator({
           </form>
         </ScrollArea>
 
-        <DialogFooter className="flex-shrink-0 pt-4">
-          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
+          >
             Cancel
           </Button>
           <Button
             onClick={onSubmit}
             disabled={isSubmitting || uploadingAttachments}
+            className="bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
           >
             {isSubmitting ? (
               <>
@@ -489,6 +635,7 @@ export function LessonCreator({
               <>
                 <Save className="h-4 w-4 mr-2" />
                 {isEditing ? 'Update Lesson' : 'Create Lesson'}
+                <ArrowRight className="h-4 w-4 ml-2" />
               </>
             )}
           </Button>
