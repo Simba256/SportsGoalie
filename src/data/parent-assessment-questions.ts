@@ -537,3 +537,12 @@ export function getParentCategoryOrder(): ParentCategorySlug[] {
 export function getParentTotalQuestionCount(): number {
   return PARENT_ASSESSMENT_QUESTIONS.length;
 }
+
+/**
+ * Get questions for a specific parent category, sorted by order
+ */
+export function getQuestionsForParentCategory(categorySlug: ParentCategorySlug): AssessmentQuestion[] {
+  return PARENT_ASSESSMENT_QUESTIONS
+    .filter(q => q.categorySlug === categorySlug)
+    .sort((a, b) => a.order - b.order);
+}

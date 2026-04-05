@@ -18,13 +18,11 @@ import { User, AuthState, LoginCredentials, RegisterCredentials, ProfileUpdateDa
 import {
   createAuthErrorFromFirebase,
   createErrorContext,
-  EmailVerificationRequiredError,
   InvalidCoachCodeError,
   isAuthError,
 } from '@/lib/errors/auth-errors';
 import { userService } from '@/lib/database/services/user.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
-import { isRegistrationInProgress } from '@/lib/auth/auth-service';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -100,6 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(userData.onboardingCompleted !== undefined && { onboardingCompleted: userData.onboardingCompleted }),
           ...(userData.onboardingCompletedAt && { onboardingCompletedAt: userData.onboardingCompletedAt }),
           ...(userData.initialAssessmentLevel && { initialAssessmentLevel: userData.initialAssessmentLevel }),
+          // Include parent-child linking fields (for students/goalies)
+          ...(userData.linkedParentIds && { linkedParentIds: userData.linkedParentIds }),
+          ...(userData.parentLinkCode && { parentLinkCode: userData.parentLinkCode }),
+          ...(userData.parentLinkCodeExpiry && { parentLinkCodeExpiry: userData.parentLinkCodeExpiry }),
+          // Include parent-specific fields
+          ...(userData.linkedChildIds && { linkedChildIds: userData.linkedChildIds }),
+          ...(userData.parentOnboardingComplete !== undefined && { parentOnboardingComplete: userData.parentOnboardingComplete }),
         };
 
         // Store profile image if available
@@ -176,24 +181,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.email,
         credentials.password
       );
-
-      // Check if email is verified
-      // For invited coaches, we set emailVerified: true in Firestore (Firebase Auth won't have it)
-      if (!userCredential.user.emailVerified) {
-        // Check Firestore for coaches who were verified via invitation
-        const userDocRef = doc(db, 'users', userCredential.user.uid);
-        const userDoc = await getDoc(userDocRef);
-        const firestoreVerified = userDoc.exists() && userDoc.data()?.emailVerified === true;
-
-        if (!firestoreVerified) {
-          // Not verified in Firebase Auth or Firestore - block login
-          await firebaseSignOut(auth);
-          setLoading(false);
-          setUser(null);
-          throw new EmailVerificationRequiredError(context);
-        }
-        // Firestore says verified (invited coach) - allow login
-      }
 
       const user = await createUserFromFirebaseUser(userCredential.user);
       if (user) {
@@ -335,11 +322,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ Coach code registered:', coachCode);
       }
 
-      // Important: Log out the user immediately after registration
-      // They need to verify their email before logging in
-      await firebaseSignOut(auth);
-      setUser(null);
-      setLoading(false); // Reset loading state after successful registration
+      // Keep the user signed in so registration can immediately continue to onboarding.
+      setUser(newUser);
+      setLoading(false);
 
       // Return the user ID for flows that need it (e.g., coach invitation acceptance)
       return { userId: newUser.id };
@@ -415,6 +400,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.profileImage !== undefined) {
         updatedUser.profileImage = data.profileImage;
       }
+      if (data.workflowType !== undefined) {
+        updatedUser.workflowType = data.workflowType;
+      }
+      if (data.assignedCoachId !== undefined) {
+        updatedUser.assignedCoachId = data.assignedCoachId;
+      }
 
       setUser(updatedUser);
     } catch {
@@ -456,25 +447,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Check if email is verified before setting user
-        // Skip this check if we're currently registering a new user
-        // Check both the context's ref AND the auth-service's flag
-        if (!firebaseUser.emailVerified && !isRegisteringRef.current && !isRegistrationInProgress) {
-          // Check Firestore for coaches who were verified via invitation
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          const firestoreVerified = userDoc.exists() && userDoc.data()?.emailVerified === true;
-
-          if (!firestoreVerified) {
-            // Email not verified in Firebase Auth or Firestore, sign out immediately
-            await firebaseSignOut(auth);
-            setUser(null);
-            setLoading(false);
-            return;
-          }
-          // Firestore says verified (invited coach) - allow
-        }
-
         const user = await createUserFromFirebaseUser(firebaseUser);
         setUser(user);
       } else {

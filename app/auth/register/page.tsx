@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -53,7 +52,6 @@ export default function RegisterPage() {
   const selectedWorkflowType = watch('workflowType');
   const watchedCoachCode = watch('coachCode');
 
-  // Validate coach code when it changes
   const validateCoachCode = async (code: string) => {
     if (!code || code.trim().length === 0) {
       setCoachCodeStatus('idle');
@@ -62,8 +60,6 @@ export default function RegisterPage() {
     }
 
     const normalizedCode = normalizeCoachCode(code);
-
-    // Check format first
     const formatPattern = /^[A-Z]+-[A-Z0-9]{4}$/;
     if (!formatPattern.test(normalizedCode)) {
       setCoachCodeStatus('idle');
@@ -88,7 +84,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Debounce coach code validation
   useEffect(() => {
     if (selectedRole !== 'student' || selectedWorkflowType !== 'custom') {
       setCoachCodeStatus('idle');
@@ -110,31 +105,28 @@ export default function RegisterPage() {
       setIsLoading(true);
       await registerUser(data as RegisterFormData);
 
-      // Show success notification
       toast.success('Account created successfully!', {
-        description: 'Please check your email to verify your account before logging in.',
+        description: 'Your account is ready. Let\'s complete onboarding.',
         duration: 6000,
       });
 
-      // After successful registration, redirect to login with verification message
-      router.push('/auth/login?message=verify-email');
+      if (data.role === 'parent') {
+        router.push('/onboarding?role=parent');
+      } else if (data.role === 'admin') {
+        router.push('/admin');
+      } else if (data.role === 'coach') {
+        router.push('/coach');
+      } else {
+        router.push('/onboarding');
+      }
     } catch (error) {
-      // Handle AuthError properly
       if (isAuthError(error)) {
-        setError('root', {
-          message: error.userMessage,
-        });
-        toast.error('Registration failed', {
-          description: error.userMessage,
-        });
+        setError('root', { message: error.userMessage });
+        toast.error('Registration failed', { description: error.userMessage });
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-        setError('root', {
-          message: errorMessage,
-        });
-        toast.error('Registration failed', {
-          description: errorMessage,
-        });
+        setError('root', { message: errorMessage });
+        toast.error('Registration failed', { description: errorMessage });
       }
     } finally {
       setIsLoading(false);
@@ -142,77 +134,82 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
-          <CardDescription>
-            Enter your information below to create your SmarterGoalie account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="register-form">
+    <div className="flex min-h-screen">
+      {/* Left — Register Form */}
+      <div className="flex w-full lg:w-1/2 items-center justify-center bg-white px-6 py-6">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-4 flex justify-center">
+            <Link href="/">
+              <img src="/logo.png" alt="Smarter Goalie" className="h-10" />
+            </Link>
+          </div>
+
+          <div className="mb-5">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Create an Account</h1>
+            <p className="text-gray-500 text-sm">Enter your information to get started</p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" data-testid="register-form">
             {/* Role Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="role">I am a...</Label>
+            <div className="space-y-1">
+              <Label htmlFor="role" className="text-gray-700 text-sm">I am a...</Label>
               <Select
                 value={selectedRole}
-                onValueChange={(value) => setValue('role', value as 'student' | 'parent')}
+                onValueChange={(value) => setValue('role', value as 'student' | 'parent' | 'coach')}
               >
-                <SelectTrigger id="role" data-testid="role-select">
+                <SelectTrigger
+                  id="role"
+                  data-testid="role-select"
+                  className="bg-gray-50 border-gray-300 text-gray-900 focus:ring-red-500"
+                >
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student" data-testid="role-student">Student / Athlete</SelectItem>
-                  <SelectItem value="parent" data-testid="role-parent">Parent</SelectItem>
+                <SelectContent className="bg-white border-gray-200">
+                  <SelectItem value="student" data-testid="role-student" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Student / Athlete</SelectItem>
+                  <SelectItem value="parent" data-testid="role-parent" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Parent</SelectItem>
+                  <SelectItem value="coach" data-testid="role-coach" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Coach</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (
-                <p className="text-sm text-destructive" data-testid="role-error">{errors.role.message}</p>
+                <p className="text-xs text-red-500" data-testid="role-error">{errors.role.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Coaches are invited by administrators. Parents must have their child&apos;s Student ID to register.
-              </p>
             </div>
 
             {/* Workflow Type Selection (Students Only) */}
             {selectedRole === 'student' && (
-              <div className="space-y-2">
-                <Label>Learning Mode</Label>
+              <div className="space-y-1">
+                <Label className="text-gray-700 text-sm">Learning Mode</Label>
                 <RadioGroup
                   value={selectedWorkflowType}
                   onValueChange={(value) => setValue('workflowType', value as 'automated' | 'custom')}
-                  className="space-y-3"
+                  className="space-y-2"
                 >
-                  <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value="automated" id="automated" className="mt-1" />
+                  <div className="flex items-center space-x-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 hover:bg-gray-100 transition-colors">
+                    <RadioGroupItem value="automated" id="automated" className="border-gray-300 text-red-500" />
                     <Label htmlFor="automated" className="font-normal cursor-pointer flex-1">
-                      <div className="font-semibold text-base mb-1">Self-Paced (Automated)</div>
-                      <div className="text-sm text-muted-foreground">
-                        Progress automatically as you complete quizzes and evaluations. Perfect for independent learners.
-                      </div>
+                      <div className="font-semibold text-sm text-gray-900">Self-Paced (Automated)</div>
+                      <div className="text-xs text-gray-500">Progress automatically as you complete quizzes.</div>
                     </Label>
                   </div>
-                  <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value="custom" id="custom" className="mt-1" />
+                  <div className="flex items-center space-x-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 hover:bg-gray-100 transition-colors">
+                    <RadioGroupItem value="custom" id="custom" className="border-gray-300 text-red-500" />
                     <Label htmlFor="custom" className="font-normal cursor-pointer flex-1">
-                      <div className="font-semibold text-base mb-1">Coach-Guided (Custom)</div>
-                      <div className="text-sm text-muted-foreground">
-                        Work with a coach who customizes your learning journey and provides personalized guidance.
-                      </div>
+                      <div className="font-semibold text-sm text-gray-900">Coach-Guided (Custom)</div>
+                      <div className="text-xs text-gray-500">Work with a coach for personalized guidance.</div>
                     </Label>
                   </div>
                 </RadioGroup>
                 {errors.workflowType && (
-                  <p className="text-sm text-destructive">{errors.workflowType.message}</p>
+                  <p className="text-xs text-red-500">{errors.workflowType.message}</p>
                 )}
               </div>
             )}
 
             {/* Coach Code Input (Custom Workflow Students Only) */}
             {selectedRole === 'student' && selectedWorkflowType === 'custom' && (
-              <div className="space-y-2">
-                <Label htmlFor="coachCode">Coach Code</Label>
+              <div className="space-y-1">
+                <Label htmlFor="coachCode" className="text-gray-700 text-sm">Coach Code</Label>
                 <div className="relative">
                   <Input
                     id="coachCode"
@@ -220,7 +217,7 @@ export default function RegisterPage() {
                     {...register('coachCode')}
                     aria-invalid={!!errors.coachCode || coachCodeStatus === 'invalid'}
                     data-testid="coach-code-input"
-                    className={`uppercase ${
+                    className={`uppercase bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 ${
                       coachCodeStatus === 'valid'
                         ? 'border-green-500 focus-visible:ring-green-500'
                         : coachCodeStatus === 'invalid'
@@ -228,14 +225,13 @@ export default function RegisterPage() {
                         : ''
                     }`}
                     onChange={(e) => {
-                      // Convert to uppercase as user types
                       e.target.value = e.target.value.toUpperCase();
                       register('coachCode').onChange(e);
                     }}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     {coachCodeStatus === 'checking' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                     )}
                     {coachCodeStatus === 'valid' && (
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -251,39 +247,40 @@ export default function RegisterPage() {
                   </p>
                 )}
                 {coachCodeStatus === 'invalid' && (
-                  <p className="text-sm text-red-600" data-testid="coach-code-invalid">
+                  <p className="text-sm text-red-500" data-testid="coach-code-invalid">
                     Invalid coach code. Check with your coach.
                   </p>
                 )}
                 {errors.coachCode && (
-                  <p className="text-sm text-destructive" data-testid="coach-code-error">
+                  <p className="text-sm text-red-500" data-testid="coach-code-error">
                     {errors.coachCode.message}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-gray-400">
                   Get this code from your coach before registering.
                 </p>
               </div>
             )}
 
             {/* Display Name */}
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Full Name</Label>
+            <div className="space-y-1">
+              <Label htmlFor="displayName" className="text-gray-700 text-sm">Full Name</Label>
               <Input
                 id="displayName"
                 placeholder="Enter your full name"
                 {...register('displayName')}
                 aria-invalid={!!errors.displayName}
                 data-testid="display-name-input"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
               />
               {errors.displayName && (
-                <p className="text-sm text-destructive" data-testid="display-name-error">{errors.displayName.message}</p>
+                <p className="text-sm text-red-500" data-testid="display-name-error">{errors.displayName.message}</p>
               )}
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-gray-700 text-sm">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -291,13 +288,14 @@ export default function RegisterPage() {
                 {...register('email')}
                 aria-invalid={!!errors.email}
                 data-testid="email-input"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
               />
-              {errors.email && <p className="text-sm text-destructive" data-testid="email-error">{errors.email.message}</p>}
+              {errors.email && <p className="text-sm text-red-500" data-testid="email-error">{errors.email.message}</p>}
             </div>
 
             {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-gray-700 text-sm">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -306,31 +304,28 @@ export default function RegisterPage() {
                   {...register('password')}
                   aria-invalid={!!errors.password}
                   data-testid="password-input"
+                  className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-700"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   data-testid="toggle-password"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive" data-testid="password-error">{errors.password.message}</p>
+                <p className="text-sm text-red-500" data-testid="password-error">{errors.password.message}</p>
               )}
             </div>
 
             {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword" className="text-gray-700 text-sm">Confirm Password</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -339,56 +334,57 @@ export default function RegisterPage() {
                   {...register('confirmPassword')}
                   aria-invalid={!!errors.confirmPassword}
                   data-testid="confirm-password-input"
+                  className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-700"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   data-testid="toggle-confirm-password"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-destructive" data-testid="confirm-password-error">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-red-500" data-testid="confirm-password-error">{errors.confirmPassword.message}</p>
               )}
             </div>
 
-
             {/* Terms Agreement */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <label className="flex items-start space-x-2">
                 <input
                   type="checkbox"
                   {...register('agreeToTerms')}
-                  className="mt-1 h-4 w-4 text-primary"
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-50 text-red-500 focus:ring-red-500"
                   data-testid="agree-terms-checkbox"
                 />
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-gray-500">
                   I agree to the{' '}
-                  <Link href="/terms" className="text-primary hover:underline">
+                  <Link href="/terms" className="text-red-500 hover:text-red-600 transition-colors">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link href="/privacy" className="text-primary hover:underline">
+                  <Link href="/privacy" className="text-red-500 hover:text-red-600 transition-colors">
                     Privacy Policy
                   </Link>
                 </span>
               </label>
               {errors.agreeToTerms && (
-                <p className="text-sm text-destructive" data-testid="agree-terms-error">{errors.agreeToTerms.message}</p>
+                <p className="text-sm text-red-500" data-testid="agree-terms-error">{errors.agreeToTerms.message}</p>
               )}
             </div>
 
-            {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isLoading} data-testid="register-submit">
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25"
+              disabled={isLoading}
+              data-testid="register-submit"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -399,25 +395,45 @@ export default function RegisterPage() {
               )}
             </Button>
 
-            {/* Error Message */}
+            {/* Error */}
             {errors.root && (
-              <div className="rounded-md bg-destructive/15 p-3" data-testid="register-error">
-                <p className="text-sm text-destructive">{errors.root.message}</p>
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3" data-testid="register-error">
+                <p className="text-sm text-red-600">{errors.root.message}</p>
               </div>
             )}
           </form>
 
           {/* Login Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-500">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-primary hover:underline" data-testid="login-link">
+              <Link href="/auth/login" className="text-red-500 hover:text-red-600 font-medium transition-colors" data-testid="login-link">
                 Sign in
               </Link>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Right — Blurred Image Panel */}
+      <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-sm scale-105"
+          style={{ backgroundImage: 'url("/register.avif")' }}
+        />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative z-10 text-center px-12">
+          <Link href="/">
+            <img src="/logo.png" alt="Smarter Goalie" className="h-12 mx-auto mb-8" />
+          </Link>
+          <h2 className="text-5xl font-bold text-white leading-tight mb-4">
+            Start Your<br />Journey Today.
+          </h2>
+          <p className="text-zinc-300 text-lg max-w-md mx-auto">
+            Join thousands of athletes training smarter with personalized drills, progress tracking, and expert coaching.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

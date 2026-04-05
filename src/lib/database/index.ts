@@ -12,6 +12,7 @@ export { CustomCurriculumService, customCurriculumService } from './services/cus
 export { CustomContentService, customContentService } from './services/custom-content.service';
 export { OnboardingService, onboardingService } from './services/onboarding.service';
 export { ParentLinkService, parentLinkService } from './services/parent-link.service';
+export { MindVaultService, mindVaultService } from './services/mind-vault.service';
 
 // Utilities
 export { SeederService, seederService } from './seeding/seeder.service';
