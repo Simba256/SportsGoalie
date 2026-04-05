@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef } from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -23,6 +25,8 @@ export function ContentTypeSelector({
   onOpenChange,
   onSelect,
 }: ContentTypeSelectorProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const handleSelect = (type: ContentType) => {
     onSelect(type);
     onOpenChange(false);
@@ -31,7 +35,13 @@ export function ContentTypeSelector({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        ref={contentRef}
         showCloseButton={false}
+        tabIndex={-1}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          requestAnimationFrame(() => contentRef.current?.focus());
+        }}
         className="sm:max-w-2xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl"
       >
         {/* Header */}
@@ -57,14 +67,14 @@ export function ContentTypeSelector({
             {/* Lesson Card */}
             <button
               onClick={() => handleSelect('lesson')}
-              className="group relative flex flex-col text-left rounded-xl border-2 border-slate-200 bg-white p-6 transition-all duration-200 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="group relative flex flex-col text-left rounded-xl border-2 border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
             >
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/25">
                   <BookOpen className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 transition-colors">
                     Lesson
                   </h3>
                   <p className="text-sm text-slate-500">Video + Text Content</p>
@@ -77,12 +87,12 @@ export function ContentTypeSelector({
               </p>
 
               <div className="flex flex-wrap gap-2 mb-5">
-                <FeatureTag icon={<Video className="h-3 w-3" />} label="Video Upload" color="blue" />
-                <FeatureTag icon={<FileText className="h-3 w-3" />} label="Rich Text" color="blue" />
-                <FeatureTag icon={<Paperclip className="h-3 w-3" />} label="Attachments" color="blue" />
+                <FeatureTag icon={<Video className="h-3 w-3" />} label="Video Upload" />
+                <FeatureTag icon={<FileText className="h-3 w-3" />} label="Rich Text" />
+                <FeatureTag icon={<Paperclip className="h-3 w-3" />} label="Attachments" />
               </div>
 
-              <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 group-hover:text-slate-900 transition-colors">
                 Create Lesson
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </div>
@@ -91,14 +101,14 @@ export function ContentTypeSelector({
             {/* Quiz Card */}
             <button
               onClick={() => handleSelect('quiz')}
-              className="group relative flex flex-col text-left rounded-xl border-2 border-slate-200 bg-white p-6 transition-all duration-200 hover:border-red-400 hover:shadow-lg hover:shadow-red-100/60 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="group relative flex flex-col text-left rounded-xl border-2 border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
             >
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/25">
                   <PlayCircle className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-red-700 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 transition-colors">
                     Video Quiz
                   </h3>
                   <p className="text-sm text-slate-500">Interactive Assessment</p>
@@ -111,12 +121,12 @@ export function ContentTypeSelector({
               </p>
 
               <div className="flex flex-wrap gap-2 mb-5">
-                <FeatureTag icon={<Clock className="h-3 w-3" />} label="Timed Questions" color="red" />
-                <FeatureTag icon={<ListChecks className="h-3 w-3" />} label="Multiple Choice" color="red" />
-                <FeatureTag icon={<Award className="h-3 w-3" />} label="Auto-grading" color="red" />
+                <FeatureTag icon={<Clock className="h-3 w-3" />} label="Timed Questions" />
+                <FeatureTag icon={<ListChecks className="h-3 w-3" />} label="Multiple Choice" />
+                <FeatureTag icon={<Award className="h-3 w-3" />} label="Auto-grading" />
               </div>
 
-              <div className="flex items-center gap-2 text-sm font-semibold text-red-600 group-hover:text-red-700 transition-colors">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 group-hover:text-slate-900 transition-colors">
                 Create Quiz
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </div>
@@ -139,13 +149,9 @@ export function ContentTypeSelector({
   );
 }
 
-function FeatureTag({ icon, label, color }: { icon: React.ReactNode; label: string; color: 'blue' | 'red' }) {
-  const styles = {
-    blue: 'border-blue-200 bg-blue-50 text-blue-700',
-    red: 'border-red-200 bg-red-50 text-red-700',
-  };
+function FeatureTag({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${styles[color]}`}>
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700">
       {icon}
       {label}
     </span>

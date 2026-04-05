@@ -181,18 +181,20 @@ function VideoQuizPageContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 px-6 py-6 shadow-lg">
+        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-red-500/15 blur-3xl" />
         <Link
           href="/dashboard"
-          className="inline-flex items-center text-sm text-slate-600 hover:text-red-700 mb-4 transition-colors"
+          className="relative inline-flex items-center text-sm text-blue-100 hover:text-white mb-4 transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </Link>
 
-        <h1 className="text-3xl font-bold mb-2 text-slate-900">{quiz.title}</h1>
+        <h1 className="relative text-3xl font-bold mb-2 text-white">{quiz.title}</h1>
         {quiz.description && (
-          <p className="text-slate-600">{quiz.description}</p>
+          <p className="relative text-blue-100/90">{quiz.description}</p>
         )}
       </div>
 
