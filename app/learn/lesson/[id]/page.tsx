@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,42 +45,67 @@ function getYouTubeEmbedUrl(url: string): string {
 export default function CustomLessonPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const lessonId = params.id as string;
+  const pillarId = searchParams.get('pillarId');
+  const skillId = searchParams.get('skillId');
+
+  const backToSkillPage = !!pillarId && !!skillId;
 
   const [lesson, setLesson] = useState<CustomContentLibrary | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  const getBackHref = () => {
+    if (!backToSkillPage) {
+      return '/dashboard';
+    }
+
+    if (!isCompleted) {
+      return `/pillars/${pillarId}/skills/${skillId}`;
+    }
+
+    return `/pillars/${pillarId}/skills/${skillId}?completedContentId=${lessonId}&completedAt=${Date.now()}`;
+  };
+
   useEffect(() => {
     if (lessonId) {
       loadLesson();
     }
-  }, [lessonId]);
+  }, [lessonId, user?.id]);
 
   const loadLesson = async () => {
     try {
       setLoading(true);
-      console.log('📖 Loading lesson:', lessonId);
-      const result = await customContentService.getContent(lessonId);
-      console.log('📖 Lesson result:', result);
+
+      // Fetch lesson content and curriculum status in parallel
+      const [result, curriculumResult] = await Promise.all([
+        customContentService.getContent(lessonId),
+        user?.id
+          ? customCurriculumService.getStudentCurriculum(user.id).catch(() => null)
+          : Promise.resolve(null),
+      ]);
 
       if (result.success && result.data) {
         setLesson(result.data);
+
+        if (curriculumResult?.success && curriculumResult.data) {
+          const curriculumItem = curriculumResult.data.items.find(
+            item => item.contentId === lessonId && (item.type === 'custom_lesson' || item.type === 'lesson')
+          );
+          setIsCompleted(curriculumItem?.status === 'completed');
+        }
       } else if (result.success && !result.data) {
-        // Content doesn't exist in database
-        console.error('📖 Lesson not found in database:', lessonId);
         toast.error('Lesson not found - it may not have been saved correctly');
         router.back();
       } else {
-        // Permission or other error
-        console.error('📖 Error loading lesson:', result.error);
         toast.error(result.error?.message || 'Failed to load lesson');
         router.back();
       }
     } catch (error) {
-      console.error('📖 Exception loading lesson:', error);
+      console.error('Failed to load lesson:', error);
       toast.error('Failed to load lesson');
     } finally {
       setLoading(false);
@@ -133,8 +158,8 @@ export default function CustomLessonPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-red-600" />
       </div>
     );
   }
@@ -144,22 +169,24 @@ export default function CustomLessonPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 px-4 py-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
-      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-        <div className="relative">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-blue-100 hover:text-white hover:bg-white/10">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  <BookOpen className="h-3 w-3 mr-1" />
-                  Lesson
+      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
+        <Button variant="ghost" onClick={() => router.push(getBackHref())} className="mb-4 text-slate-700 hover:bg-white/80">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {backToSkillPage ? 'Back to Skill' : 'Back to Dashboard'}
+        </Button>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary">
+                <BookOpen className="h-3 w-3 mr-1" />
+                Lesson
+              </Badge>
+              {lesson.estimatedTimeMinutes && (
+                <Badge variant="outline">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {lesson.estimatedTimeMinutes} min
                 </Badge>
                 {lesson.estimatedTimeMinutes && (
                   <Badge variant="outline" className="border-zinc-300 text-zinc-200 bg-white/5">
@@ -171,13 +198,15 @@ export default function CustomLessonPage() {
               <h1 className="text-3xl font-black text-white mb-2">{lesson.title}</h1>
               <p className="text-blue-100/80">{lesson.description}</p>
             </div>
+            <h1 className="text-3xl font-bold mb-2 text-slate-900">{lesson.title}</h1>
+            <p className="text-slate-600">{lesson.description}</p>
           </div>
         </div>
       </div>
 
       {/* Video Section */}
       {lesson.videoUrl && (
-        <Card className="mb-6">
+        <Card className="border-red-100">
           <CardContent className="p-0">
             <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
               {isYouTubeUrl(lesson.videoUrl) ? (
@@ -204,7 +233,7 @@ export default function CustomLessonPage() {
 
       {/* Learning Objectives */}
       {lesson.learningObjectives && lesson.learningObjectives.length > 0 && (
-        <Card className="border-blue-200 bg-white shadow-sm">
+        <Card className="border-red-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -218,7 +247,7 @@ export default function CustomLessonPage() {
             <ul className="space-y-2">
               {lesson.learningObjectives.map((objective, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                   <span>{objective}</span>
                 </li>
               ))}
@@ -229,7 +258,7 @@ export default function CustomLessonPage() {
 
       {/* Lesson Content */}
       {lesson.content && (
-        <Card className="border-zinc-200 bg-white shadow-sm">
+        <Card className="border-red-100">
           <CardHeader>
             <CardTitle>Lesson Content</CardTitle>
           </CardHeader>
@@ -247,9 +276,9 @@ export default function CustomLessonPage() {
 
       {/* Tags */}
       {lesson.tags && lesson.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2">
           {lesson.tags.map((tag, index) => (
-            <Badge key={index} variant="outline">
+            <Badge key={index} variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
               {tag}
             </Badge>
           ))}
@@ -258,13 +287,13 @@ export default function CustomLessonPage() {
 
       {/* Complete Button */}
       {user?.role === 'student' && (
-        <Card className="border-red-200 bg-red-50/40">
+        <Card className="border-red-200 bg-red-50/50">
           <CardContent className="flex items-center justify-between py-6">
             <div>
               <h3 className="font-semibold">
                 {isCompleted ? 'Lesson Completed!' : 'Finished the lesson?'}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-600">
                 {isCompleted
                   ? 'Great job! You can review this lesson anytime.'
                   : 'Mark it as complete to track your progress'}
@@ -274,7 +303,7 @@ export default function CustomLessonPage() {
               onClick={handleMarkComplete}
               disabled={completing || isCompleted}
               size="lg"
-              className={isCompleted ? 'bg-zinc-700 text-white' : 'bg-red-600 text-white hover:bg-red-700'}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {completing ? (
                 <>

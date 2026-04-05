@@ -267,7 +267,7 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({
                 <Button
                   onClick={handleSubmit}
                   disabled={!isAnswerReady()}
-                  className="flex-1"
+                  className="flex-1 bg-red-600 text-white hover:bg-red-700 disabled:bg-slate-300 disabled:text-slate-500"
                   size="lg"
                 >
                   Continue
@@ -276,6 +276,7 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({
                   <Button
                     onClick={onSkip}
                     variant="outline"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-100"
                     size="lg"
                   >
                     Skip

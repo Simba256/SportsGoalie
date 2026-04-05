@@ -82,6 +82,7 @@ function OnboardingPageContent() {
     phase,
     loading,
     error,
+    evaluation,
     currentIntakeScreen,
     intakeScreenQuestions,
     intakeResponses,
@@ -99,10 +100,23 @@ function OnboardingPageContent() {
     previousIntakeScreen,
     startCategory,
     answerQuestion,
+    previousQuestion,
     goToDashboard,
   } = onboarding;
 
-  // Error state
+  const selectedOptionId =
+    currentQuestion && evaluation
+      ? (() => {
+          const response = evaluation.assessmentResponses.find(
+            (r) => r.questionId === currentQuestion.id
+          );
+          return typeof response?.value === 'string' ? response.value : null;
+        })()
+      : null;
+
+  const canGoBackInAssessment = currentCategoryIndex > 0 || currentQuestionIndex > 0;
+
+  // Error state - check BEFORE loading to show errors properly
   if (error) {
     return (
       <OnboardingContainer>
@@ -231,7 +245,11 @@ function OnboardingPageContent() {
               categoryColor={currentCategory.color}
               questionNumber={currentQuestionIndex + 1}
               totalQuestionsInCategory={categoryQuestions.length}
+              initialSelectedOptionId={selectedOptionId}
               onAnswer={(optionId, score) => answerQuestion(currentQuestion.id, optionId, score)}
+              onBack={previousQuestion}
+              canGoBack={canGoBackInAssessment}
+              disabled={loading}
             />
           </div>
         )}

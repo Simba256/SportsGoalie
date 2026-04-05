@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Shield, ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen } from 'lucide-react';
+import { ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen } from 'lucide-react';
 
 interface WelcomeScreenProps {
   studentName: string;
@@ -9,26 +9,19 @@ interface WelcomeScreenProps {
 }
 
 const CATEGORIES = [
-  { name: 'Feelings', icon: Heart, color: 'bg-purple-100 text-purple-600 border-purple-200' },
-  { name: 'Knowledge', icon: Brain, color: 'bg-blue-100 text-blue-600 border-blue-200' },
-  { name: 'Pre-Game', icon: Clock, color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
-  { name: 'In-Game', icon: Target, color: 'bg-red-100 text-red-600 border-red-200' },
-  { name: 'Post-Game', icon: MessageCircle, color: 'bg-green-100 text-green-600 border-green-200' },
-  { name: 'Training', icon: Dumbbell, color: 'bg-orange-100 text-orange-600 border-orange-200' },
-  { name: 'Learning', icon: BookOpen, color: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
+  { name: 'Feelings', icon: Heart, color: 'bg-zinc-100 text-zinc-700 border-zinc-200' },
+  { name: 'Knowledge', icon: Brain, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { name: 'Pre-Game', icon: Clock, color: 'bg-sky-100 text-sky-700 border-sky-200' },
+  { name: 'In-Game', icon: Target, color: 'bg-red-100 text-red-700 border-red-200' },
+  { name: 'Post-Game', icon: MessageCircle, color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { name: 'Training', icon: Dumbbell, color: 'bg-rose-100 text-rose-700 border-rose-200' },
+  { name: 'Learning', icon: BookOpen, color: 'bg-slate-100 text-slate-700 border-slate-200' },
 ];
 
 export function WelcomeScreen({ studentName, onBegin }: WelcomeScreenProps) {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full text-center">
-        {/* Logo */}
-        <div className="mb-8">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500 shadow-lg shadow-red-500/20">
-            <Shield className="w-12 h-12 text-white" />
-          </div>
-        </div>
-
         {/* Welcome text */}
         <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">
           Welcome, {studentName}!

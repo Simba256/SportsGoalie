@@ -19,6 +19,7 @@ import {
   UserPlus,
   Users,
   Check,
+  ArrowRight,
 } from 'lucide-react';
 import { userService } from '@/lib/database';
 import { User } from '@/types';
@@ -122,18 +123,25 @@ export function StudentSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Add Student to Roster
-          </DialogTitle>
-          <DialogDescription>
-            Search for students with custom workflow who haven't been assigned to a coach yet.
-          </DialogDescription>
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[86vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
+        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Roster</p>
+            <DialogTitle className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
+                <UserPlus className="h-5 w-5" />
+              </span>
+              Add Student to Roster
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
+              Search for students with custom workflow who have not been assigned to a coach yet.
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-5 px-8 py-8 flex-1 overflow-hidden">
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -146,7 +154,7 @@ export function StudentSearchDialog({
           </div>
 
           {/* Student List */}
-          <ScrollArea className="h-[300px] border rounded-lg">
+          <ScrollArea className="h-[320px] border-2 border-slate-200 rounded-xl bg-slate-50/40">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -166,10 +174,10 @@ export function StudentSearchDialog({
                   <button
                     key={student.id}
                     onClick={() => setSelectedStudent(student)}
-                    className={`w-full text-left p-3 rounded-lg border transition-all hover:bg-accent/50 ${
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:bg-blue-50/40 ${
                       selectedStudent?.id === student.id
-                        ? 'border-primary bg-accent shadow-sm'
-                        : 'border-transparent'
+                        ? 'border-blue-400 bg-blue-50 shadow-md shadow-blue-100/60'
+                        : 'border-slate-200 bg-white hover:border-blue-200'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -204,7 +212,7 @@ export function StudentSearchDialog({
 
           {/* Selected Student Summary */}
           {selectedStudent && (
-            <div className="bg-muted/50 rounded-lg p-4">
+              <div className="rounded-xl border-2 border-blue-200 bg-blue-50/50 p-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={selectedStudent.profileImage} alt={selectedStudent.displayName} />
@@ -226,13 +234,14 @@ export function StudentSearchDialog({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">
             Cancel
           </Button>
           <Button
             onClick={handleAddStudent}
             disabled={!selectedStudent || adding}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             {adding ? (
               <>
@@ -243,6 +252,7 @@ export function StudentSearchDialog({
               <>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add to Roster
+                <ArrowRight className="h-4 w-4 ml-2" />
               </>
             )}
           </Button>

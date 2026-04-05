@@ -98,6 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(userData.onboardingCompleted !== undefined && { onboardingCompleted: userData.onboardingCompleted }),
           ...(userData.onboardingCompletedAt && { onboardingCompletedAt: userData.onboardingCompletedAt }),
           ...(userData.initialAssessmentLevel && { initialAssessmentLevel: userData.initialAssessmentLevel }),
+          // Include parent-child linking fields (for students/goalies)
+          ...(userData.linkedParentIds && { linkedParentIds: userData.linkedParentIds }),
+          ...(userData.parentLinkCode && { parentLinkCode: userData.parentLinkCode }),
+          ...(userData.parentLinkCodeExpiry && { parentLinkCodeExpiry: userData.parentLinkCodeExpiry }),
+          // Include parent-specific fields
+          ...(userData.linkedChildIds && { linkedChildIds: userData.linkedChildIds }),
+          ...(userData.parentOnboardingComplete !== undefined && { parentOnboardingComplete: userData.parentOnboardingComplete }),
         };
 
         // Store profile image if available
@@ -392,6 +399,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       if (data.profileImage !== undefined) {
         updatedUser.profileImage = data.profileImage;
+      }
+      if (data.workflowType !== undefined) {
+        updatedUser.workflowType = data.workflowType;
+      }
+      if (data.assignedCoachId !== undefined) {
+        updatedUser.assignedCoachId = data.assignedCoachId;
       }
 
       setUser(updatedUser);

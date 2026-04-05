@@ -1,5 +1,6 @@
 import React from "react";
-import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaReddit } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 interface Footer7Props {
   logo?: {
@@ -29,10 +30,10 @@ const defaultSections = [
   {
     title: "Platform",
     links: [
-      { name: "Goalie Path", href: "#about" },
-      { name: "Parent View", href: "#about" },
-      { name: "Training Library", href: "#features" },
-      { name: "Features", href: "#" },
+      { name: "Goaltending: 7 Pillars", href: "#features" },
+      { name: "Test Your Knowledge", href: "#features" },
+      { name: "Performance Analytics", href: "#features" },
+      { name: "Dashboard Command Center", href: "#" },
     ],
   },
   {
@@ -45,21 +46,24 @@ const defaultSections = [
     ],
   },
   {
-    title: "Resources",
+    title: "Connect",
     links: [
+      { name: "info@smartergoalie.com", href: "mailto:info@smartergoalie.com" },
+      { name: "416", href: "tel:416" },
       { name: "Help Center", href: "#" },
-      { name: "Contact", href: "#" },
-      { name: "Coach Support", href: "#" },
       { name: "Privacy", href: "#" },
     ],
   },
 ];
 
 const defaultSocialLinks = [
-  { icon: <FaInstagram className="size-5" />, href: "#", label: "Instagram" },
-  { icon: <FaFacebook className="size-5" />, href: "#", label: "Facebook" },
-  { icon: <FaTwitter className="size-5" />, href: "#", label: "Twitter" },
   { icon: <FaLinkedin className="size-5" />, href: "#", label: "LinkedIn" },
+  { icon: <FaXTwitter className="size-5" />, href: "#", label: "X" },
+  { icon: <FaTiktok className="size-5" />, href: "#", label: "TikTok" },
+  { icon: <FaFacebook className="size-5" />, href: "#", label: "Facebook" },
+  { icon: <FaInstagram className="size-5" />, href: "#", label: "Instagram" },
+  { icon: <FaYoutube className="size-5" />, href: "#", label: "YouTube" },
+  { icon: <FaReddit className="size-5" />, href: "#", label: "Reddit" },
 ];
 
 const defaultLegalLinks = [
@@ -72,17 +76,17 @@ export const Footer7 = ({
     url: "#",
     src: "/logo.png",
     alt: "Smarter Goalie logo",
-    title: "Smarter Goalie",
+    title: "SMARTER-GOALIE",
   },
   sections = defaultSections,
   description =
-    "Smarter Goalie is the sports LMS helping goalkeepers and families build confidence through structured training, progress tracking, and expert coaching.",
+    "Train the Mind. Understand the mechanics. Think Smart - Play Smarter. Build 7 Pillars of Intelligent Goaltending through cognitive awareness, technical precision, and proven positional systems.",
   socialLinks = defaultSocialLinks,
   copyright = "© 2026 Smarter Goalie. All rights reserved.",
   legalLinks = defaultLegalLinks,
 }: Footer7Props) => {
   return (
-    <section className="py-20 px-6 bg-gradient-to-br from-zinc-950 via-zinc-900 to-blue-950 text-white">
+    <section className="py-12 px-6 bg-white text-slate-900 border-t border-slate-200">
       <div className="max-w-7xl mx-auto">
         <div className="flex w-full flex-col justify-between gap-10 lg:flex-row lg:items-start lg:text-left">
           <div className="flex w-full flex-col justify-between gap-6 lg:items-start">
@@ -102,16 +106,16 @@ export const Footer7 = ({
                   </div>
                 )}
               </a>
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-red-400 to-blue-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-semibold text-slate-900">
                 {logo.title}
               </h2>
             </div>
-            <p className="max-w-[70%] text-sm text-zinc-300">
+            <p className="max-w-[70%] text-sm text-slate-600">
               {description}
             </p>
-            <ul className="flex items-center space-x-6 text-zinc-300">
+            <ul className="flex items-center space-x-6 text-slate-500">
               {socialLinks.map((social, idx) => (
-                <li key={idx} className="font-medium hover:text-red-300 transition-colors">
+                <li key={idx} className="font-medium hover:text-red-600 transition-colors">
                   <a href={social.href} aria-label={social.label}>
                     {social.icon}
                   </a>
@@ -123,11 +127,11 @@ export const Footer7 = ({
             {sections.map((section, sectionIdx) => (
               <div key={sectionIdx}>
                 <h3 className="mb-4 font-bold">{section.title}</h3>
-                <ul className="space-y-3 text-sm text-zinc-300">
+                <ul className="space-y-3 text-sm text-slate-600">
                   {section.links.map((link, linkIdx) => (
                     <li
                       key={linkIdx}
-                      className="font-medium hover:text-blue-300 transition-colors"
+                      className="font-medium hover:text-blue-600 transition-colors"
                     >
                       <a href={link.href}>{link.name}</a>
                     </li>
@@ -137,11 +141,11 @@ export const Footer7 = ({
             ))}
           </div>
         </div>
-        <div className="mt-8 flex flex-col justify-between gap-4 border-t border-white/10 py-8 text-xs font-medium text-zinc-400 md:flex-row md:items-center md:text-left">
+        <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 py-5 text-xs font-medium text-slate-500 md:flex-row md:items-center md:text-left">
           <p className="order-2 lg:order-1">{copyright}</p>
           <ul className="order-1 flex flex-col gap-2 md:order-2 md:flex-row">
             {legalLinks.map((link, idx) => (
-              <li key={idx} className="hover:text-red-300 transition-colors">
+              <li key={idx} className="hover:text-red-600 transition-colors">
                 <a href={link.href}> {link.name}</a>
               </li>
             ))}

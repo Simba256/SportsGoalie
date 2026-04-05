@@ -191,56 +191,46 @@ export default function CoachContentPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Content Library</h1>
-          <p className="text-muted-foreground">
-            Create and manage your custom lessons and quizzes
-          </p>
+      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">Library</p>
+            <h1 className="text-2xl md:text-3xl font-black text-white">Content Library</h1>
+            <p className="text-white/50 text-sm mt-1">Create and manage your custom lessons and quizzes</p>
+          </div>
+          <button
+            onClick={() => setShowTypeSelector(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Content
+          </button>
         </div>
-        <Button onClick={() => setShowTypeSelector(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Content
-        </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-              <FolderOpen className="h-6 w-6 text-primary" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { label: 'Total Content', value: content.length, icon: <FolderOpen className="h-5 w-5" />, color: 'red' },
+          { label: 'Lessons', value: lessonCount, icon: <BookOpen className="h-5 w-5" />, color: 'blue' },
+          { label: 'Quizzes', value: quizCount, icon: <PlayCircle className="h-5 w-5" />, color: 'green' },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className={`h-11 w-11 rounded-xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-600`}>
+                {stat.icon}
+              </div>
+              <div>
+                <p className="text-2xl font-black text-gray-900">{stat.value}</p>
+                <p className="text-sm text-gray-500">{stat.label}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold">{content.length}</p>
-              <p className="text-sm text-muted-foreground">Total Content</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100">
-              <BookOpen className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{lessonCount}</p>
-              <p className="text-sm text-muted-foreground">Lessons</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-green-100">
-              <PlayCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{quizCount}</p>
-              <p className="text-sm text-muted-foreground">Quizzes</p>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
@@ -418,10 +408,14 @@ export default function CoachContentPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Content</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl">
+          <AlertDialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Content Library</p>
+              <AlertDialogTitle className="text-2xl font-bold tracking-tight text-white">Delete Content</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-300 mt-1.5 text-sm">
               Are you sure you want to delete "{deleteConfirm?.title}"? This action cannot be undone.
               {(deleteConfirm?.usageCount || 0) > 0 && (
                 <span className="block mt-2 text-amber-600">
@@ -429,11 +423,12 @@ export default function CoachContentPage() {
                   Deleting it may affect their curriculum.
                 </span>
               )}
-            </AlertDialogDescription>
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+            <AlertDialogCancel className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

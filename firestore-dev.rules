@@ -374,6 +374,34 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ==================== CUSTOM CURRICULUM SYSTEM ====================
+
+    // Custom Curriculum collection - Personalized learning paths
+    match /custom_curriculum/{curriculumId} {
+      // DEV: authenticated users can read curricula
+      allow read: if isAuthenticated();
+
+      // DEV: authenticated users can create/update curricula
+      allow create, update: if isAuthenticated() &&
+                              hasRequiredFields(['studentId', 'coachId', 'items']);
+
+      // DEV: admins can delete curricula
+      allow delete: if isAdmin();
+    }
+
+    // Custom Content Library collection - Coach-created reusable content
+    match /custom_content_library/{contentId} {
+      // DEV: anyone can read custom content
+      allow read: if true;
+
+      // DEV: authenticated users can create/update custom content
+      allow create, update: if isAuthenticated() &&
+                              hasRequiredFields(['createdBy', 'title', 'description', 'type']);
+
+      // DEV: admins can delete custom content
+      allow delete: if isAdmin();
+    }
+
     // Courses collection
     match /courses/{courseId} {
       // DEVELOPMENT: Anyone can read courses for testing

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera, Loader2, Mail, Shield, User, Copy, Check } from 'lucide-react';
+import { Camera, Loader2, Mail, Shield, User, Copy, Check, RefreshCw, Zap, Users } from 'lucide-react';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,20 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { profileUpdateSchema, type ProfileUpdateFormData } from '@/lib/validation/auth';
 import { ParentLinkManager } from '@/components/settings/ParentLinkManager';
+import { userService } from '@/lib/database/services/user.service';
+import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
+import type { WorkflowType } from '@/types/index';
 
 export default function ProfilePage() {
   const { user, updateUserProfile, resendEmailVerification } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [copiedStudentId, setCopiedStudentId] = useState(false);
+  const [isWorkflowSwitching, setIsWorkflowSwitching] = useState(false);
+  const [workflowError, setWorkflowError] = useState<string | null>(null);
+  const [workflowSuccess, setWorkflowSuccess] = useState<string | null>(null);
+  const [coachCode, setCoachCode] = useState('');
+  const [showCoachCodeInput, setShowCoachCodeInput] = useState(false);
 
   const {
     register,
@@ -66,6 +74,65 @@ export default function ProfilePage() {
       await navigator.clipboard.writeText(user.studentNumber);
       setCopiedStudentId(true);
       setTimeout(() => setCopiedStudentId(false), 2000);
+    }
+  };
+
+  const handleWorkflowSwitch = async (targetWorkflow: WorkflowType) => {
+    if (!user) return;
+
+    setWorkflowError(null);
+    setWorkflowSuccess(null);
+
+    // Switching to custom requires a coach code
+    if (targetWorkflow === 'custom') {
+      if (!showCoachCodeInput) {
+        setShowCoachCodeInput(true);
+        return;
+      }
+
+      if (!coachCode.trim()) {
+        setWorkflowError('Please enter a coach code to switch to coach-guided mode.');
+        return;
+      }
+
+      try {
+        setIsWorkflowSwitching(true);
+        const normalizedCode = normalizeCoachCode(coachCode.trim());
+        const coachResult = await userService.getCoachByCode(normalizedCode);
+
+        if (!coachResult.success || !coachResult.data) {
+          setWorkflowError('Invalid coach code. Please check with your coach and try again.');
+          return;
+        }
+
+        await updateUserProfile({
+          workflowType: 'custom',
+          assignedCoachId: coachResult.data.id,
+        });
+
+        setWorkflowSuccess(`Switched to Coach-Guided mode with ${coachResult.data.displayName}.`);
+        setShowCoachCodeInput(false);
+        setCoachCode('');
+      } catch {
+        setWorkflowError('Failed to switch workflow. Please try again.');
+      } finally {
+        setIsWorkflowSwitching(false);
+      }
+    } else {
+      // Switching to automated - remove coach assignment
+      try {
+        setIsWorkflowSwitching(true);
+        await updateUserProfile({
+          workflowType: 'automated',
+        });
+        setWorkflowSuccess('Switched to Self-Paced mode.');
+        setShowCoachCodeInput(false);
+        setCoachCode('');
+      } catch {
+        setWorkflowError('Failed to switch workflow. Please try again.');
+      } finally {
+        setIsWorkflowSwitching(false);
+      }
     }
   };
 
@@ -259,6 +326,139 @@ export default function ProfilePage() {
         {/* Family Links - Only for students */}
         {user.role === 'student' && (
           <ParentLinkManager user={user} />
+        )}
+
+        {/* Learning Mode - Only for students */}
+        {user.role === 'student' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <RefreshCw className="h-5 w-5" />
+                <span>Learning Mode</span>
+              </CardTitle>
+              <CardDescription>
+                Switch between self-paced and coach-guided learning workflows.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* Automated / Self-Paced Option */}
+                <button
+                  type="button"
+                  onClick={() => handleWorkflowSwitch('automated')}
+                  disabled={isWorkflowSwitching || user.workflowType === 'automated'}
+                  className={`relative rounded-lg border-2 p-4 text-left transition-all ${
+                    user.workflowType === 'automated'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-muted hover:border-primary/50'
+                  } ${isWorkflowSwitching ? 'opacity-50' : ''}`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <Zap className={`mt-0.5 h-5 w-5 ${
+                      user.workflowType === 'automated' ? 'text-primary' : 'text-muted-foreground'
+                    }`} />
+                    <div>
+                      <p className="font-semibold">Self-Paced</p>
+                      <p className="text-sm text-muted-foreground">
+                        Progress automatically through the curriculum at your own speed.
+                      </p>
+                    </div>
+                  </div>
+                  {user.workflowType === 'automated' && (
+                    <div className="absolute right-3 top-3">
+                      <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                        Active
+                      </span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Custom / Coach-Guided Option */}
+                <button
+                  type="button"
+                  onClick={() => handleWorkflowSwitch('custom')}
+                  disabled={isWorkflowSwitching || (user.workflowType === 'custom' && !showCoachCodeInput)}
+                  className={`relative rounded-lg border-2 p-4 text-left transition-all ${
+                    user.workflowType === 'custom'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-muted hover:border-primary/50'
+                  } ${isWorkflowSwitching ? 'opacity-50' : ''}`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <Users className={`mt-0.5 h-5 w-5 ${
+                      user.workflowType === 'custom' ? 'text-primary' : 'text-muted-foreground'
+                    }`} />
+                    <div>
+                      <p className="font-semibold">Coach-Guided</p>
+                      <p className="text-sm text-muted-foreground">
+                        Follow a personalized curriculum created by your coach.
+                      </p>
+                    </div>
+                  </div>
+                  {user.workflowType === 'custom' && (
+                    <div className="absolute right-3 top-3">
+                      <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                        Active
+                      </span>
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {/* Coach Code Input - shown when switching to custom */}
+              {showCoachCodeInput && user.workflowType !== 'custom' && (
+                <div className="space-y-2 rounded-lg border border-muted bg-muted/30 p-4">
+                  <Label htmlFor="coachCode">Coach Code</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enter the code provided by your coach to link your account.
+                  </p>
+                  <div className="flex space-x-2">
+                    <Input
+                      id="coachCode"
+                      placeholder="e.g. SMITH-7K3M"
+                      value={coachCode}
+                      onChange={(e) => setCoachCode(e.target.value.toUpperCase())}
+                      className="font-mono uppercase"
+                    />
+                    <Button
+                      onClick={() => handleWorkflowSwitch('custom')}
+                      disabled={isWorkflowSwitching || !coachCode.trim()}
+                    >
+                      {isWorkflowSwitching ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Confirm'
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setShowCoachCodeInput(false);
+                        setCoachCode('');
+                        setWorkflowError(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {workflowSuccess && (
+                <div className="rounded-md bg-green-50 p-3">
+                  <p className="text-sm text-green-700">{workflowSuccess}</p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {workflowError && (
+                <div className="rounded-md bg-destructive/15 p-3">
+                  <p className="text-sm text-destructive">{workflowError}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Account Information */}
