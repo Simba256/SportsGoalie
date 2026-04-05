@@ -188,7 +188,15 @@ export default function CustomLessonPage() {
                   <Clock className="h-3 w-3 mr-1" />
                   {lesson.estimatedTimeMinutes} min
                 </Badge>
-              )}
+                {lesson.estimatedTimeMinutes && (
+                  <Badge variant="outline" className="border-zinc-300 text-zinc-200 bg-white/5">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {lesson.estimatedTimeMinutes} min
+                  </Badge>
+                )}
+              </div>
+              <h1 className="text-3xl font-black text-white mb-2">{lesson.title}</h1>
+              <p className="text-blue-100/80">{lesson.description}</p>
             </div>
             <h1 className="text-3xl font-bold mb-2 text-slate-900">{lesson.title}</h1>
             <p className="text-slate-600">{lesson.description}</p>

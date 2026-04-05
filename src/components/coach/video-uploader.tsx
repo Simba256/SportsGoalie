@@ -433,12 +433,12 @@ export function VideoUploader({
   };
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <Card className={cn('overflow-hidden border-blue-100 shadow-sm', className)}>
       <CardContent className="p-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'upload' | 'url')}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="upload">Upload Video</TabsTrigger>
-            <TabsTrigger value="url">Video URL</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4 rounded-xl bg-slate-100 p-1">
+            <TabsTrigger value="upload" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Upload Video</TabsTrigger>
+            <TabsTrigger value="url" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Video URL</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -503,6 +503,7 @@ export function VideoUploader({
                     placeholder="YouTube, Vimeo, Google Drive, or direct video URL"
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
+                    className="border-slate-300 focus-visible:ring-red-200"
                   />
                   <p className="text-xs text-muted-foreground">
                     Paste a YouTube, Vimeo, Google Drive, or direct video URL
@@ -519,7 +520,7 @@ export function VideoUploader({
                 {errorMessage && (
                   <p className="text-sm text-destructive">{errorMessage}</p>
                 )}
-                <Button onClick={handleUrlSubmit} className="w-full">
+                <Button onClick={handleUrlSubmit} className="w-full bg-gradient-to-r from-red-600 to-blue-600 text-white hover:from-red-700 hover:to-blue-700">
                   Add Video URL
                 </Button>
               </div>

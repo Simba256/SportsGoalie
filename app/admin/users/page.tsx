@@ -106,8 +106,8 @@ function UsersManagementContent() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = !searchTerm ||
-      user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.displayName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (user.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -127,7 +127,7 @@ function UsersManagementContent() {
               Manage user accounts, roles, and permissions
             </p>
           </div>
-          <Button>
+          <Button className="bg-red-600 hover:bg-red-700">
             <UserPlus className="mr-2 h-4 w-4" />
             Add User
           </Button>
@@ -277,12 +277,12 @@ function UsersManagementContent() {
                       <Avatar>
                         <AvatarImage src={user.profileImage} />
                         <AvatarFallback>
-                          {user.displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {(user.displayName || user.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{user.displayName}</h4>
+                          <h4 className="font-medium">{user.displayName || user.email || 'Unknown'}</h4>
                           <Badge variant={getRoleBadgeVariant(user.role)}>
                             {user.role}
                           </Badge>
