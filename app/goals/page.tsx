@@ -120,28 +120,32 @@ function GoalsContent() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold flex items-center space-x-2">
-            <Target className="h-8 w-8" />
-            <span>Learning Goals</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Set personal learning objectives and track your progress towards achieving them.
-          </p>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+        <div className="relative flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Target className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Learning Goals</h1>
+            <p className="text-muted-foreground mt-1">
+              Set personal learning objectives and track your progress towards achieving them.
+            </p>
+          </div>
         </div>
-
-        {/* Goals List */}
-        <GoalsList
-          goals={goals}
-          onCreateGoal={handleCreateGoal}
-          onUpdateGoal={handleUpdateGoal}
-          onDeleteGoal={handleDeleteGoal}
-          loading={false}
-        />
       </div>
+
+      {/* Goals List */}
+      <GoalsList
+        goals={goals}
+        onCreateGoal={handleCreateGoal}
+        onUpdateGoal={handleUpdateGoal}
+        onDeleteGoal={handleDeleteGoal}
+        loading={false}
+      />
     </div>
   );
 }

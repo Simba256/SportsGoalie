@@ -166,23 +166,24 @@ export default function CoachStudentsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">My Students</p>
-            <h1 className="text-2xl md:text-3xl font-black text-white">Students</h1>
-            <p className="text-white/50 text-sm mt-1">View evaluations and manage curriculum for your students</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Students</h1>
+            <p className="text-white/60 text-sm mt-1">View evaluations and manage curriculum for your students</p>
           </div>
           {user?.role === 'coach' && workflowFilter === 'custom' && (
-            <button
+            <Button
               onClick={() => setSearchDialogOpen(true)}
-              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 flex items-center gap-2 shrink-0"
+              size="sm"
+              className="shrink-0"
             >
-              <UserPlus className="h-4 w-4" />
+              <UserPlus className="h-4 w-4 mr-2" />
               Add Student
-            </button>
+            </Button>
           )}
         </div>
       </div>

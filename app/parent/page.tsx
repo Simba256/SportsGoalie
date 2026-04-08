@@ -87,13 +87,13 @@ export default function ParentDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Welcome Banner */}
-      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
 
         <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-white/50 text-sm">{greeting}</p>
+            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">{greeting}</p>
             <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
               {firstName}!
             </h1>
@@ -174,9 +174,9 @@ export default function ParentDashboardPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* LEFT 2/3 — My Goalies */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-bold text-gray-900">My Goalies</h2>
+              <h2 className="text-base font-bold text-foreground">My Goalies</h2>
               {children.length > 0 && (
                 <Link href="/parent/goalies" className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center gap-1">
                   View all <ArrowRight className="h-3 w-3" />
@@ -197,8 +197,8 @@ export default function ParentDashboardPage() {
 
           {/* Activity Feed — shows recent goalie activity */}
           {children.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-5">Recent Activity</h2>
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-bold text-foreground mb-5">Recent Activity</h2>
               <div className="space-y-3">
                 {children
                   .filter(c => c.lastActiveAt)
@@ -207,7 +207,7 @@ export default function ParentDashboardPage() {
                   .map((child) => (
                     <div
                       key={`activity-${child.childId}`}
-                      className="flex items-center gap-4 p-3 rounded-xl bg-gray-50"
+                      className="flex items-center gap-4 p-3 rounded-xl bg-muted/50"
                     >
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-sm font-bold">
@@ -215,15 +215,15 @@ export default function ParentDashboardPage() {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {child.displayName}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {child.quizzesCompleted || 0} quizzes completed · {Math.round(child.progressPercentage || 0)}% progress
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {formatDate(child.lastActiveAt)}
                         </p>
                       </div>
@@ -232,7 +232,7 @@ export default function ParentDashboardPage() {
                 {children.filter(c => c.lastActiveAt).length === 0 && (
                   <div className="text-center py-6">
                     <Clock className="mx-auto h-8 w-8 text-gray-200 mb-2" />
-                    <p className="text-sm text-gray-400">No recent activity</p>
+                    <p className="text-sm text-muted-foreground">No recent activity</p>
                   </div>
                 )}
               </div>
@@ -244,8 +244,8 @@ export default function ParentDashboardPage() {
         <div className="space-y-6">
           {/* Overview Panel */}
           {children.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
-              <h3 className="text-base font-bold text-gray-900 mb-5">Overview</h3>
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h3 className="text-base font-bold text-foreground mb-5">Overview</h3>
 
               <div className="flex justify-center mb-5 md:hidden">
                 <ProgressRing percentage={avgProgress} size={100} />
@@ -269,16 +269,16 @@ export default function ParentDashboardPage() {
                   suffix="%"
                 />
 
-                <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Total Quizzes</span>
-                  <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                <div className="pt-3 border-t border-border flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Total Quizzes</span>
+                  <span className="text-sm font-bold text-foreground flex items-center gap-1">
                     <Trophy className="h-3.5 w-3.5 text-red-500" />
                     {totalQuizzes}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Best Streak</span>
-                  <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground">Best Streak</span>
+                  <span className="text-sm font-bold text-foreground flex items-center gap-1">
                     <Flame className="h-3.5 w-3.5 text-orange-500" />
                     {Math.max(...children.map(c => c.currentStreak || 0), 0)} days
                   </span>
@@ -301,8 +301,8 @@ export default function ParentDashboardPage() {
           )}
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h3 className="text-base font-bold text-foreground mb-4">Quick Actions</h3>
             <div className="space-y-2">
               <QuickActionLink
                 href="/parent/link-child"
@@ -401,12 +401,12 @@ function StatCard({
     orange: 'bg-orange-50 text-orange-600',
   };
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5">
+    <div className="bg-card rounded-2xl border border-border p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${colorMap[color]}`}>{icon}</div>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
     </div>
   );
 }
@@ -417,7 +417,7 @@ function GoalieRow({ child }: { child: LinkedChildSummary }) {
   return (
     <Link
       href={`/parent/child/${child.childId}`}
-      className="group flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-200"
+      className="group flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted border border-border hover:border-border hover:shadow-md transition-all duration-200"
     >
       <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
         <span className="text-white text-lg font-bold">
@@ -427,7 +427,7 @@ function GoalieRow({ child }: { child: LinkedChildSummary }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <h4 className="text-sm font-semibold text-gray-900 truncate group-hover:text-red-600 transition-colors">
+          <h4 className="text-sm font-semibold text-foreground truncate group-hover:text-red-600 transition-colors">
             {child.displayName}
           </h4>
           {child.pacingLevel && (
@@ -444,24 +444,24 @@ function GoalieRow({ child }: { child: LinkedChildSummary }) {
             <Clock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
           )}
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-blue-500 to-red-500 transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
         <div className="flex items-center gap-4 mt-1.5">
-          <span className="text-[11px] text-gray-400">{pct}% progress</span>
-          <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+          <span className="text-[11px] text-muted-foreground">{pct}% progress</span>
+          <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
             <Trophy className="h-3 w-3" /> {child.quizzesCompleted || 0} quizzes
           </span>
-          <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+          <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
             <Flame className="h-3 w-3" /> {child.currentStreak || 0} streak
           </span>
         </div>
       </div>
 
-      <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0" />
+      <ChevronRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors flex-shrink-0" />
     </Link>
   );
 }
@@ -469,15 +469,15 @@ function GoalieRow({ child }: { child: LinkedChildSummary }) {
 function EmptyGoalies() {
   return (
     <div className="text-center py-10">
-      <div className="h-14 w-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-        <Users className="h-7 w-7 text-gray-300" />
+      <div className="h-14 w-14 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+        <Users className="h-7 w-7 text-muted-foreground/60" />
       </div>
-      <h3 className="text-sm font-semibold text-gray-900 mb-1">No linked goalies</h3>
-      <p className="text-xs text-gray-400 mb-4 max-w-xs mx-auto">
+      <h3 className="text-sm font-semibold text-foreground mb-1">No linked goalies</h3>
+      <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
         Link your goalie's account to track their progress and support their development.
       </p>
       <Link href="/parent/link-child">
-        <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs">
+        <Button size="sm">
           <UserPlus className="h-4 w-4 mr-1" />
           Link Your Goalie
         </Button>
@@ -491,10 +491,10 @@ function ProgressRow({ label, current, total, suffix = '' }: { label: string; cu
   return (
     <div>
       <div className="flex items-center justify-between text-xs mb-1.5">
-        <span className="text-gray-500">{label}</span>
-        <span className="font-semibold text-gray-900">{current}{suffix}/{total}{suffix}</span>
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold text-foreground">{current}{suffix}/{total}{suffix}</span>
       </div>
-      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-blue-500 to-red-500 transition-all duration-500"
           style={{ width: `${pct}%` }}
@@ -506,11 +506,11 @@ function ProgressRow({ label, current, total, suffix = '' }: { label: string; cu
 
 function QuickActionLink({ href, icon, bg, label, sub }: { href: string; icon: React.ReactNode; bg: string; label: string; sub: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+    <Link href={href} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
       <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
       <div>
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        <p className="text-[11px] text-gray-400">{sub}</p>
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-[11px] text-muted-foreground">{sub}</p>
       </div>
     </Link>
   );

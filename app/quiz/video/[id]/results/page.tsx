@@ -161,7 +161,7 @@ function VideoQuizResultsContent() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
+      <div className="relative rounded-3xl border border-red-200/70 bg-gradient-to-r from-red-100/80 via-white to-blue-100/70 px-6 py-6 overflow-hidden shadow-xl shadow-red-200/30">
         <Link
           href="/dashboard"
           className="inline-flex items-center text-sm text-slate-600 hover:text-red-700 mb-4 transition-colors"

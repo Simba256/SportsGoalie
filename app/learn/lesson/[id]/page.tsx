@@ -171,7 +171,7 @@ export default function CustomLessonPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
+      <div className="relative rounded-3xl border border-red-200/70 bg-gradient-to-r from-red-100/80 via-white to-blue-100/70 px-6 py-6 overflow-hidden shadow-xl shadow-red-200/30">
         <Button variant="ghost" onClick={() => router.push(getBackHref())} className="mb-4 text-slate-700 hover:bg-white/80">
           <ArrowLeft className="h-4 w-4 mr-2" />
           {backToSkillPage ? 'Back to Skill' : 'Back to Dashboard'}

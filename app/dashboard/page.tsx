@@ -94,27 +94,27 @@ function StandardDashboard() {
     <div className="max-w-7xl mx-auto space-y-6">
 
       {/* ── Welcome Banner ─────────────────────────────────────────── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-blue-50 via-white to-red-50 border border-blue-100/60 p-6 md:p-8 overflow-hidden">
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
         {/* Soft decorative shapes */}
-        <div className="absolute -top-10 -right-10 w-44 h-44 bg-blue-200/30 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-red-200/20 rounded-full blur-2xl" />
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
 
         <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-blue-500 text-sm font-semibold">{greeting}</p>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 mt-1">
+            <p className="text-primary text-sm font-semibold">{greeting}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
               Hello {firstName},
             </h1>
-            <p className="text-gray-500 text-sm mt-2 max-w-lg leading-relaxed">
+            <p className="text-muted-foreground text-sm mt-2 max-w-lg leading-relaxed">
               {stats?.quizzesCompleted
                 ? `You've learned ${overallPct}% of your course. Keep it up and improve your skills!`
                 : 'Start your goalie training journey by exploring pillars and taking quizzes.'}
             </p>
             {activePillar && (
               <Link href={`/pillars/${activePillar.sport.id}`}>
-                <button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25">
+                <Button size="sm" className="mt-4">
                   Continue Learning
-                </button>
+                </Button>
               </Link>
             )}
           </div>
@@ -122,7 +122,7 @@ function StandardDashboard() {
           {/* Progress circle */}
           <div className="hidden md:flex flex-col items-center">
             <ProgressRing percentage={overallPct} size={110} />
-            <p className="text-gray-400 text-xs mt-2">Overall Progress</p>
+            <p className="text-muted-foreground text-xs mt-2">Overall Progress</p>
           </div>
         </div>
       </div>
@@ -134,10 +134,10 @@ function StandardDashboard() {
         <div className="lg:col-span-2 space-y-6">
 
           {/* Your Pillars — table-style list */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-bold text-gray-900">Your Pillars</h2>
-              <Link href="/pillars" className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+          <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h2 className="text-base font-bold text-foreground">Your Pillars</h2>
+              <Link href="/pillars" className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1">
                 View all <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -160,21 +160,21 @@ function StandardDashboard() {
                     <Link
                       key={sport.id}
                       href={`/pillars/${sport.id}`}
-                      className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/80 transition-colors group"
+                      className="flex items-center gap-4 px-6 py-4 hover:bg-muted/50/80 transition-colors group"
                     >
                       <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
                         <IconComponent className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                        <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                           {info?.shortName || sport.name}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {progress.completedSkills.length}/{progress.totalSkills} skills
                         </p>
                       </div>
                       <div className="w-24 hidden sm:block">
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${colorClasses.bg}`}
                             style={{ width: `${pct}%` }}
@@ -182,11 +182,11 @@ function StandardDashboard() {
                         </div>
                       </div>
                       <span className={`text-sm font-bold w-12 text-right ${
-                        pct >= 80 ? 'text-green-600' : pct > 0 ? 'text-gray-900' : 'text-gray-300'
+                        pct >= 80 ? 'text-green-600' : pct > 0 ? 'text-foreground' : 'text-muted-foreground/60'
                       }`}>
                         {pct}%
                       </span>
-                      <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
                     </Link>
                   );
                 })}
@@ -196,10 +196,10 @@ function StandardDashboard() {
 
           {/* Continue Learning — highlight next skill */}
           {activePillar && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-gray-900">Continue Learning</h2>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                <h2 className="text-base font-bold text-foreground">Continue Learning</h2>
+                <Badge variant="outline" className="text-xs bg-blue-50 text-primary border-blue-200">
                   <Play className="h-3 w-3 mr-1" /> In Progress
                 </Badge>
               </div>
@@ -216,20 +216,20 @@ function StandardDashboard() {
                           <Icon className="h-7 w-7 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          <p className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
                             {info?.name || activePillar.sport.name}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {activePillar.progress.completedSkills.length} of {activePillar.progress.totalSkills} skills completed
                           </p>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden max-w-xs">
+                          <div className="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden max-w-xs">
                             <div
                               className={`h-full rounded-full ${colorClasses.bg}`}
                               style={{ width: `${Math.round(activePillar.progress.progressPercentage)}%` }}
                             />
                           </div>
                         </div>
-                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </>
                     );
                   })()}
@@ -251,22 +251,22 @@ function StandardDashboard() {
           </div>
 
           {/* Recent Results */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-              <h3 className="text-sm font-bold text-gray-900">Recent Results</h3>
-              <Link href="/quizzes" className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+              <h3 className="text-sm font-bold text-foreground">Recent Results</h3>
+              <Link href="/quizzes" className="text-xs text-primary hover:text-blue-700 font-semibold flex items-center gap-1">
                 View More <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
 
             {quizzesLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
               </div>
             ) : recentQuizzes.length === 0 ? (
               <div className="text-center py-8 px-4">
                 <Trophy className="mx-auto h-8 w-8 text-gray-200 mb-2" />
-                <p className="text-xs text-gray-400">No results yet</p>
+                <p className="text-xs text-muted-foreground">No results yet</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -276,12 +276,12 @@ function StandardDashboard() {
                   return (
                     <div key={quiz.id} className="flex items-center gap-3 px-5 py-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-900 truncate">
+                        <p className="text-xs font-medium text-foreground truncate">
                           {pillarInfo?.shortName || 'Quiz'}
                         </p>
                       </div>
                       <div className="w-20">
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
                               pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : 'bg-red-500'
@@ -291,7 +291,7 @@ function StandardDashboard() {
                         </div>
                       </div>
                       <span className={`text-xs font-bold w-10 text-right ${
-                        pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-blue-600' : 'text-red-500'
+                        pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-primary' : 'text-red-500'
                       }`}>
                         {pct}%
                       </span>
@@ -303,10 +303,10 @@ function StandardDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">Quick Actions</h3>
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
+            <h3 className="text-sm font-bold text-foreground mb-3">Quick Actions</h3>
             <div className="space-y-1.5">
-              <QuickActionLink href="/pillars" icon={<BookOpen className="h-4 w-4 text-blue-600" />} bg="bg-blue-50" label="Browse Pillars" />
+              <QuickActionLink href="/pillars" icon={<BookOpen className="h-4 w-4 text-primary" />} bg="bg-blue-50" label="Browse Pillars" />
               <QuickActionLink href="/quizzes" icon={<Trophy className="h-4 w-4 text-green-600" />} bg="bg-green-50" label="Take a Quiz" />
               <QuickActionLink href="/progress" icon={<TrendingUp className="h-4 w-4 text-purple-600" />} bg="bg-purple-50" label="Analytics" />
               <QuickActionLink href="/charting" icon={<Target className="h-4 w-4 text-red-600" />} bg="bg-red-50" label="Charting" />
@@ -323,7 +323,7 @@ function StandardDashboard() {
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
     </div>
   );
 }
@@ -352,8 +352,8 @@ function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: n
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-gray-900">{percentage}</span>
-        <span className="text-[10px] text-gray-400 uppercase tracking-wider">%</span>
+        <span className="text-2xl font-black text-foreground">{percentage}</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">%</span>
       </div>
     </div>
   );
@@ -365,17 +365,17 @@ function StatCard({ label, value, icon, color }: {
 }) {
   const colorMap = {
     red: 'bg-red-50 text-red-600',
-    blue: 'bg-blue-50 text-blue-600',
+    blue: 'bg-blue-50 text-primary',
     green: 'bg-green-50 text-green-600',
     orange: 'bg-orange-50 text-orange-600',
   };
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+    <div className="bg-card rounded-xl border border-border shadow-sm p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${colorMap[color]}`}>{icon}</div>
       </div>
-      <p className="text-xl font-black text-gray-900">{value}</p>
-      <p className="text-[11px] text-gray-400 mt-0.5">{label}</p>
+      <p className="text-xl font-black text-foreground">{value}</p>
+      <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
     </div>
   );
 }
@@ -386,12 +386,12 @@ function EmptyPillars() {
       <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-blue-50 flex items-center justify-center">
         <BookOpen className="h-7 w-7 text-blue-400" />
       </div>
-      <h3 className="text-sm font-semibold text-gray-900 mb-1">No courses yet</h3>
-      <p className="text-xs text-gray-400 mb-4 max-w-xs mx-auto">
+      <h3 className="text-sm font-semibold text-foreground mb-1">No courses yet</h3>
+      <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
         Start your goaltending journey by exploring the fundamental pillars.
       </p>
       <Link href="/pillars">
-        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-xl">
+        <Button size="sm">
           Explore Pillars
         </Button>
       </Link>
@@ -401,10 +401,10 @@ function EmptyPillars() {
 
 function QuickActionLink({ href, icon, bg, label }: { href: string; icon: React.ReactNode; bg: string; label: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-colors group">
       <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
-      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{label}</span>
-      <ChevronRight className="h-3.5 w-3.5 text-gray-300 ml-auto group-hover:text-gray-500 transition-colors" />
+      <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground">{label}</span>
+      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 ml-auto group-hover:text-muted-foreground transition-colors" />
     </Link>
   );
 }

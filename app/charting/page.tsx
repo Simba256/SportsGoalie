@@ -111,7 +111,7 @@ export default function ChartingPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-4">
             <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
@@ -128,32 +128,35 @@ export default function ChartingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">Performance Charting</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance Charting</h1>
             <p className="text-muted-foreground mt-1">Track your goaltending progress and consistency</p>
           </div>
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={() => router.push('/charting/analytics')}
-              className="border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
+              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics & Trends
             </Button>
             <Button
               onClick={() => router.push('/charting/sessions/new')}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/25"
+              className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Session
             </Button>
           </div>
         </div>
+      </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -346,7 +349,6 @@ export default function ChartingPage() {
             </Card>
           </div>
         )}
-      </div>
     </div>
   );
 }

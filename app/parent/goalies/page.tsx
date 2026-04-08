@@ -46,7 +46,7 @@ export default function ParentGoaliesPage() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -54,33 +54,39 @@ export default function ParentGoaliesPage() {
   if (!user || user.role !== 'parent') return null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Goalies</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {children.length} goalie{children.length !== 1 ? 's' : ''} linked to your account
-          </p>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Banner */}
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">Parent</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">My Goalies</h1>
+            <p className="text-white/60 text-sm mt-1">
+              {children.length} goalie{children.length !== 1 ? 's' : ''} linked to your account
+            </p>
+          </div>
+          <Link href="/parent/link-child">
+            <Button size="sm">
+              <UserPlus className="h-4 w-4 mr-1" />
+              Link Goalie
+            </Button>
+          </Link>
         </div>
-        <Link href="/parent/link-child">
-          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs">
-            <UserPlus className="h-4 w-4 mr-1" />
-            Link Goalie
-          </Button>
-        </Link>
       </div>
 
       {children.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-          <div className="h-14 w-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-            <Users className="h-7 w-7 text-gray-300" />
+        <div className="bg-card rounded-2xl border border-border p-12 text-center">
+          <div className="h-14 w-14 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+            <Users className="h-7 w-7 text-muted-foreground/60" />
           </div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">No linked goalies yet</h3>
-          <p className="text-xs text-gray-400 mb-4 max-w-xs mx-auto">
+          <h3 className="text-sm font-semibold text-foreground mb-1">No linked goalies yet</h3>
+          <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
             Ask your goalie for their link code from their profile settings.
           </p>
           <Link href="/parent/link-child">
-            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs">
+            <Button size="sm">
               Link Your Goalie
             </Button>
           </Link>
@@ -93,7 +99,7 @@ export default function ParentGoaliesPage() {
               <Link
                 key={child.childId}
                 href={`/parent/child/${child.childId}`}
-                className="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200"
+                className="group flex items-center gap-4 p-5 rounded-2xl bg-card border border-border hover:border-border hover:shadow-md transition-all duration-200"
               >
                 <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-xl font-bold">
@@ -103,7 +109,7 @@ export default function ParentGoaliesPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-base font-semibold text-gray-900 truncate group-hover:text-red-600 transition-colors">
+                    <h4 className="text-base font-semibold text-foreground truncate group-hover:text-red-600 transition-colors">
                       {child.displayName}
                     </h4>
                     {child.pacingLevel && (
@@ -115,21 +121,21 @@ export default function ParentGoaliesPage() {
                       {child.relationship}
                     </Badge>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mb-2">
+                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mb-2">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-blue-500 to-red-500 transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
                   <div className="flex items-center gap-5">
-                    <span className="text-xs text-gray-400">{pct}% progress</span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">{pct}% progress</span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Trophy className="h-3 w-3" /> {child.quizzesCompleted || 0} quizzes
                     </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Flame className="h-3 w-3" /> {child.currentStreak || 0} streak
                     </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       {child.hasCompletedAssessment
                         ? <><CheckCircle2 className="h-3 w-3 text-green-500" /> Assessed</>
                         : <><Clock className="h-3 w-3 text-amber-500" /> Pending</>
@@ -138,7 +144,7 @@ export default function ParentGoaliesPage() {
                   </div>
                 </div>
 
-                <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors flex-shrink-0" />
               </Link>
             );
           })}

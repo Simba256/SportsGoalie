@@ -137,17 +137,22 @@ function LessonsPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Lessons and Quizzes</h1>
-        <p className="mt-2 text-slate-600">All coach-assigned learning items in one place.</p>
+      {/* Page Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+        <div className="relative">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Lessons and Quizzes</h1>
+          <p className="text-muted-foreground mt-1">All coach-assigned learning items in one place.</p>
+        </div>
       </div>
 
       {entries.length === 0 ? (
-        <Card className="border-slate-200">
+        <Card className="border-border">
           <CardContent className="py-10 text-center">
-            <FileText className="mx-auto h-10 w-10 text-slate-400" />
-            <p className="mt-3 text-slate-700 font-medium">No assigned items yet</p>
-            <p className="text-sm text-slate-500">Your coach will add lessons and quizzes here.</p>
+            <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+            <p className="mt-3 text-foreground font-medium">No assigned items yet</p>
+            <p className="text-sm text-muted-foreground">Your coach will add lessons and quizzes here.</p>
           </CardContent>
         </Card>
       ) : (
@@ -163,8 +168,8 @@ function LessonsPageContent() {
                 key={item.id}
                 className={`border transition-all ${
                   isLocked
-                    ? 'border-slate-200 bg-slate-50/80'
-                    : 'border-red-100 hover:border-red-300 hover:shadow-lg hover:shadow-red-100/40'
+                    ? 'border-border bg-muted/80'
+                    : 'border-border hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10'
                 }`}
               >
                 <CardHeader className="pb-3">
@@ -178,7 +183,7 @@ function LessonsPageContent() {
                         Completed
                       </Badge>
                     ) : isLocked ? (
-                      <Badge variant="outline" className="border-slate-300 text-slate-500">
+                      <Badge variant="outline" className="border-slate-300 text-muted-foreground">
                         <Lock className="h-3 w-3 mr-1" />
                         Locked
                       </Badge>
@@ -189,13 +194,13 @@ function LessonsPageContent() {
                       </Badge>
                     )}
                   </div>
-                  <CardTitle className="text-lg text-slate-900 line-clamp-2">{title}</CardTitle>
+                  <CardTitle className="text-lg text-foreground line-clamp-2">{title}</CardTitle>
                 </CardHeader>
 
                 <CardContent className="pt-0 space-y-4">
-                  {description && <p className="text-sm text-slate-600 line-clamp-3">{description}</p>}
+                  {description && <p className="text-sm text-muted-foreground line-clamp-3">{description}</p>}
 
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <BookOpen className="h-3.5 w-3.5" />
                       Step {item.order + 1}
@@ -214,7 +219,7 @@ function LessonsPageContent() {
                     </Button>
                   ) : (
                     <Link href={href}>
-                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                      <Button className="w-full">
                         {isCompleted ? 'Review' : isQuiz ? 'Start Quiz' : 'Start Lesson'}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>

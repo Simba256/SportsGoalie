@@ -130,7 +130,7 @@ export default function MessagesPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center py-8">
           <p className="text-muted-foreground">Please log in to view your messages</p>
         </div>
@@ -140,7 +140,7 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-center py-8">
           <div className="text-muted-foreground">Loading messages...</div>
         </div>
@@ -149,15 +149,23 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">Messages</h1>
-          <p className="text-muted-foreground">
-            Messages and feedback from your coaches
-          </p>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+        <div className="relative flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <MessageSquare className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Messages</h1>
+            <p className="text-muted-foreground mt-1">
+              Messages and feedback from your coaches
+            </p>
+          </div>
         </div>
+      </div>
 
         {/* Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -351,7 +359,6 @@ export default function MessagesPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }

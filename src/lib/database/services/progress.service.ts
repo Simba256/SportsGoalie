@@ -552,11 +552,10 @@ export class ProgressService extends BaseDatabaseService {
         return { success: true, data: cached, timestamp: new Date() };
       }
 
+      // Avoid composite-index dependency by sorting client-side.
       const q = query(
         collection(db, this.COLLECTIONS.ACHIEVEMENTS),
-        where('isActive', '==', true),
-        orderBy('rarity'),
-        orderBy('points', 'desc')
+        where('isActive', '==', true)
       );
 
       const querySnapshot = await getDocs(q);
@@ -565,11 +564,52 @@ export class ProgressService extends BaseDatabaseService {
         ...doc.data()
       } as Achievement));
 
+      const rarityOrder: Record<Achievement['rarity'], number> = {
+        common: 0,
+        uncommon: 1,
+        rare: 2,
+        epic: 3,
+        legendary: 4,
+      };
+
+      achievements.sort((a, b) => {
+        const rarityDiff = (rarityOrder[a.rarity] ?? 999) - (rarityOrder[b.rarity] ?? 999);
+        if (rarityDiff !== 0) return rarityDiff;
+        return (b.points ?? 0) - (a.points ?? 0);
+      });
+
       this.cache.set(cacheKey, achievements, 30 * 60 * 1000); // Cache for 30 minutes
 
       return { success: true, data: achievements, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to get available achievements', 'ProgressService', { error: error instanceof Error ? error.message : String(error) });
+      const errorCode =
+        typeof error === 'object' && error !== null && 'code' in error
+          ? String((error as { code?: unknown }).code)
+          : '';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : 'Unknown error';
+
+      // Achievements are non-critical for app flow; degrade gracefully for rules/index issues.
+      if (errorCode === 'permission-denied' || errorCode === 'failed-precondition') {
+        logger.warn('Unable to load available achievements; returning empty list', 'ProgressService', {
+          errorCode,
+          error: errorMessage,
+        });
+        return {
+          success: true,
+          data: [],
+          timestamp: new Date(),
+        };
+      }
+
+      logger.error('Failed to get available achievements', 'ProgressService', {
+        errorCode,
+        error: errorMessage,
+      });
       return {
         success: false,
         error: {
