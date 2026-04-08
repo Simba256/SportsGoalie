@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Header7 } from '@/components/header-7';
 import { Footer7 } from '@/components/footer-7';
@@ -9,40 +9,32 @@ import { ParentSidebar } from '@/components/parent/ParentSidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
-/** Routes that render only their own content (no header/footer/sidebar) */
 const BARE_ROUTES = ['/auth'];
-/** Routes that get the public layout (header + footer, no sidebar) */
 const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
-/** Routes that have their own layout and should not get the sidebar */
-const EXCLUDED_ROUTES = ['/coach'];
-const EXCLUDED_ROUTES = ['/admin'];
 
-function isPublicRoute(pathname: string) {
-  if (pathname === '/') return true;
-  return PUBLIC_ROUTES.some(
-    (r) => r !== '/' && pathname.startsWith(r)
-  );
+function isPublicRoute(pathname: string): boolean {
+  if (pathname === '/') {
+    return true;
+  }
+  return PUBLIC_ROUTES.some(route => route !== '/' && pathname.startsWith(route));
 }
 
-function isBareRoute(pathname: string) {
-  return BARE_ROUTES.some((r) => pathname.startsWith(r));
+function isBareRoute(pathname: string): boolean {
+  return BARE_ROUTES.some(route => pathname.startsWith(route));
 }
 
-function isExcludedRoute(pathname: string) {
-  return EXCLUDED_ROUTES.some((r) => pathname.startsWith(r));
-}
-
-function isAdminRoute(pathname: string) {
+function isAdminRoute(pathname: string): boolean {
   return pathname.startsWith('/admin');
-function isCoachRoute(pathname: string) {
+}
+
+function isCoachRoute(pathname: string): boolean {
   return pathname.startsWith('/coach');
 }
 
-function isParentRoute(pathname: string) {
+function isParentRoute(pathname: string): boolean {
   return pathname.startsWith('/parent');
 }
 
-/** Map pathname to a readable page title for the top bar */
 function getPageTitle(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
   const first = segments[0];
@@ -63,16 +55,16 @@ function getPageTitle(pathname: string): string {
       settings: 'Settings',
       'project-assistant': 'Project Assistant',
     };
-    const second = segments[1];
-    return adminTitles[second] || 'Dashboard';
+    return adminTitles[segments[1]] || 'Dashboard';
+  }
+
   if (first === 'coach') {
     const coachTitles: Record<string, string> = {
       coach: 'Dashboard',
       students: 'My Students',
       content: 'Content Library',
     };
-    const second = segments[1];
-    return coachTitles[second] || 'Dashboard';
+    return coachTitles[segments[1]] || 'Dashboard';
   }
 
   if (first === 'parent') {
@@ -85,11 +77,10 @@ function getPageTitle(pathname: string): string {
       profile: 'Profile',
       child: 'Goalie Details',
     };
-    const second = segments[1];
-    return parentTitles[second] || 'Dashboard';
+    return parentTitles[segments[1]] || 'Dashboard';
   }
 
-  const titles: Record<string, string> = {
+  const studentTitles: Record<string, string> = {
     dashboard: 'Dashboard',
     pillars: 'Pillars',
     lessons: 'Lessons',
@@ -104,20 +95,41 @@ function getPageTitle(pathname: string): string {
     learn: 'Learn',
   };
 
-  return titles[first] || 'Dashboard';
+  return studentTitles[first] || 'Dashboard';
 }
 
-export function LayoutShell({ children }: { children: React.ReactNode }) {
+function TopBar({
+  pageTitle,
+  onToggleSidebar,
+}: {
+  pageTitle: string;
+  onToggleSidebar: () => void;
+}) {
+  return (
+    <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
+      <button
+        onClick={onToggleSidebar}
+        className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+        aria-label="Toggle sidebar"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
+    </header>
+  );
+}
+
+export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Embedded mode (e.g. iframe dialogs): render only page content.
   if (searchParams.get('embedded') === '1') {
     return <>{children}</>;
   }
 
-  // Auth pages: no header/footer, just the page itself
   if (isBareRoute(pathname)) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
@@ -127,10 +139,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Public pages: landing, onboarding
   if (isPublicRoute(pathname)) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-white">
         <Header7 />
         <main className="flex-1">{children}</main>
         <Footer7 />
@@ -138,143 +149,55 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Coach, admin have their own layouts — just render children
-  if (isExcludedRoute(pathname)) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header7 />
-        <main className="flex-1">{children}</main>
-        <Footer7 />
-      </div>
-    );
-  }
-
-  // Admin pages: admin sidebar layout
-  if (isAdminRoute(pathname)) {
-    const pageTitle = getPageTitle(pathname);
-
-    return (
-      <div className="min-h-screen bg-white">
-        <AdminSidebar
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-
-        <div
-          className={`transition-all duration-300 ease-in-out ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-          }`}
-        >
-          {/* Top bar */}
-          <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors lg:hidden"
-              aria-label="Toggle sidebar"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <div className="h-5 w-px bg-gray-200 lg:hidden" />
-            <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
-          </header>
-
-          {/* Page content */}
-          <main className="p-6">{children}</main>
-        </div>
-      </div>
-    );
-  }
-
-  // Parent pages: parent sidebar layout
-  if (isParentRoute(pathname)) {
-  // Coach pages: coach sidebar layout
-  if (isCoachRoute(pathname)) {
-    const pageTitle = getPageTitle(pathname);
-
-    return (
-      <div className="min-h-screen bg-white">
-        <CoachSidebar
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-
-        <div
-          className={`transition-all duration-300 ease-in-out ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-          }`}
-        >
-          {/* Top bar */}
-          <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
-          </header>
-
-          {/* Page content */}
-          <main className="p-6">{children}</main>
-          <Footer7 />
-        </div>
-      </div>
-    );
-  }
-
-  // Parent pages: parent sidebar layout
-  if (isParentRoute(pathname)) {
-    const pageTitle = getPageTitle(pathname);
-
-    return (
-      <div className="min-h-screen bg-white">
-        <ParentSidebar
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-
-        <div
-          className={`transition-all duration-300 ease-in-out ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-          }`}
-        >
-          {/* Top bar */}
-          <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
-            <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
-          </header>
-
-          {/* Page content */}
-          <main className="p-6">{children}</main>
-          <Footer7 />
-        </div>
-      </div>
-    );
-  }
-
-  // All other authenticated student pages: sidebar layout
   const pageTitle = getPageTitle(pathname);
+
+  if (isAdminRoute(pathname)) {
+    return (
+      <div className="min-h-screen bg-white">
+        <AdminSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+          <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="p-6">{children}</main>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCoachRoute(pathname)) {
+    return (
+      <div className="min-h-screen bg-white">
+        <CoachSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+          <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="p-6">{children}</main>
+          <Footer7 />
+        </div>
+      </div>
+    );
+  }
+
+  if (isParentRoute(pathname)) {
+    return (
+      <div className="min-h-screen bg-white">
+        <ParentSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+          <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="p-6">{children}</main>
+          <Footer7 />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
+      <DashboardSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div
-        className={`transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-        }`}
-      >
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/60 flex items-center px-6 gap-4">
-          <span className="text-sm text-gray-500 font-medium">{pageTitle}</span>
-        </header>
-
-        {/* Page content */}
+      <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+        <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-6">{children}</main>
         <Footer7 />
       </div>

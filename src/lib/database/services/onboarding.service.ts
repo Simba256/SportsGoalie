@@ -22,7 +22,6 @@ import {
 } from '@/data/goalie-intake-questions';
 import { generateGoalieIntelligenceProfile, generateIntelligenceProfile } from '@/lib/scoring/intelligence-profile';
 import { PARENT_ASSESSMENT_QUESTIONS } from '@/data/parent-assessment-questions';
-import { generateGoalieIntelligenceProfile } from '@/lib/scoring/intelligence-profile';
 import { enrollmentService } from './enrollment.service';
 import { getAllPillarIds } from '@/lib/utils/pillars';
 
