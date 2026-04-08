@@ -8,10 +8,6 @@ interface AssessmentCompleteProps {
   onContinue: () => void;
 }
 
-/**
- * Simple completion screen for students after assessment.
- * Does NOT show scores or intelligence profile - that's for coaches/admins only.
- */
 export function AssessmentComplete({
   studentName = 'Goalie',
   onContinue,
@@ -21,26 +17,26 @@ export function AssessmentComplete({
       <div className="max-w-lg mx-auto text-center">
         {/* Success icon */}
         <div className="relative mb-8">
-          <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <div className="w-24 h-24 mx-auto rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/20">
             <CheckCircle className="w-12 h-12 text-white" />
           </div>
-          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center animate-bounce">
+          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center animate-bounce">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
           Great Job, {studentName}!
         </h1>
 
         {/* Message */}
-        <p className="text-lg text-slate-300 mb-6 leading-relaxed">
-          You've completed your initial assessment. Your coach will review your
+        <p className="text-lg text-gray-500 mb-6 leading-relaxed">
+          You&apos;ve completed your initial assessment. Your coach will review your
           responses and work with you to create a personalized training plan.
         </p>
 
-        <p className="text-slate-400 mb-8">
+        <p className="text-gray-400 mb-8">
           In the meantime, you can explore the pillars and start learning at your own pace.
         </p>
 
@@ -48,7 +44,7 @@ export function AssessmentComplete({
         <Button
           size="lg"
           onClick={onContinue}
-          className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105"
+          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-red-500/20 transition-all hover:scale-105"
         >
           Go to Dashboard
           <ChevronRight className="ml-2 w-5 h-5" />

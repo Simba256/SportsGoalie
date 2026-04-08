@@ -1,16 +1,42 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Settings, Users, BookOpen, Trophy, Target, RefreshCw, Video, FileText, UserPlus, Bot, GraduationCap } from 'lucide-react';
+import {
+  Users,
+  BookOpen,
+  Trophy,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  Video,
+  UserPlus,
+  BarChart3,
+  Activity,
+  RefreshCw,
+} from 'lucide-react';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
-import { analyticsService, PlatformAnalytics } from '@/lib/database/services/analytics.service';
+import {
+  analyticsService,
+  PlatformAnalytics,
+  UserEngagementData,
+  ContentPopularity,
+  SystemHealth,
+} from '@/lib/database/services/analytics.service';
 import { toast } from 'sonner';
-import { TokenDiagnostic } from '@/components/admin/token-diagnostic';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 export default function AdminDashboardPage() {
   return (
@@ -23,30 +49,32 @@ export default function AdminDashboardPage() {
 function AdminDashboardContent() {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
+  const [engagement, setEngagement] = useState<UserEngagementData[]>([]);
+  const [popularity, setPopularity] = useState<ContentPopularity[]>([]);
+  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = async (showRefreshToast = false) => {
+  const fetchAll = async (showToast = false) => {
     try {
-      if (showRefreshToast) setRefreshing(true);
+      if (showToast) setRefreshing(true);
 
-      const result = await analyticsService.getPlatformAnalytics();
+      const [analyticsRes, engagementRes, popularityRes, healthRes] =
+        await Promise.all([
+          analyticsService.getPlatformAnalytics(),
+          analyticsService.getUserEngagementData(14),
+          analyticsService.getContentPopularity(),
+          analyticsService.getSystemHealth(),
+        ]);
 
-      if (result.success && result.data) {
-        setAnalytics(result.data);
-        if (showRefreshToast) {
-          toast.success('Dashboard data refreshed');
-        }
-      } else {
-        if (showRefreshToast) {
-          toast.error('Failed to refresh dashboard data');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-      if (showRefreshToast) {
-        toast.error('Failed to refresh dashboard data');
-      }
+      if (analyticsRes.success && analyticsRes.data) setAnalytics(analyticsRes.data);
+      if (engagementRes.success && engagementRes.data) setEngagement(engagementRes.data);
+      if (popularityRes.success && popularityRes.data) setPopularity(popularityRes.data);
+      if (healthRes.success && healthRes.data) setHealth(healthRes.data);
+
+      if (showToast) toast.success('Dashboard refreshed');
+    } catch {
+      if (showToast) toast.error('Failed to refresh');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -54,328 +82,352 @@ function AdminDashboardContent() {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    fetchAll();
   }, []);
 
   const handleRefresh = () => {
     analyticsService.clearCache();
-    fetchAnalytics(true);
+    fetchAll(true);
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
-        {/* Token Diagnostic - Temporary for debugging */}
-        <TokenDiagnostic />
+  const firstName = (user?.displayName || user?.email || '').split(' ')[0].split('@')[0];
 
-        {/* Admin Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Admin Dashboard - Welcome, {user?.displayName || user?.email}!
-            </h1>
-            <p className="text-muted-foreground">
-              Manage the SmarterGoalie platform, users, and content.
+  const chartData = engagement.map((d) => ({
+    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    users: d.activeUsers,
+    quizzes: d.quizAttempts,
+    score: d.averageScore,
+  }));
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome back, {firstName}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Here&apos;s what&apos;s happening on your platform today.
+          </p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          title="Total Users"
+          value={analytics?.users.total ?? 0}
+          subtitle={`+${analytics?.users.newThisMonth ?? 0} this month`}
+          icon={<Users className="h-5 w-5" />}
+          trend={analytics?.users.newThisMonth ? 'up' : undefined}
+          loading={loading}
+        />
+        <KpiCard
+          title="Active Students"
+          value={analytics?.users.studentCount ?? 0}
+          subtitle={`${analytics?.engagement.activeUsersToday ?? 0} active today`}
+          icon={<Activity className="h-5 w-5" />}
+          loading={loading}
+        />
+        <KpiCard
+          title="Quiz Attempts"
+          value={analytics?.engagement.totalQuizAttempts ?? 0}
+          subtitle={`${analytics?.engagement.averageQuizScore ?? 0}% avg score`}
+          icon={<Trophy className="h-5 w-5" />}
+          trend={analytics?.engagement.averageQuizScore && analytics.engagement.averageQuizScore > 70 ? 'up' : 'down'}
+          loading={loading}
+        />
+        <KpiCard
+          title="Content Library"
+          value={analytics?.content.totalSports ?? 0}
+          subtitle={`${analytics?.content.totalSkills ?? 0} skills, ${analytics?.content.totalQuizzes ?? 0} quizzes`}
+          icon={<BookOpen className="h-5 w-5" />}
+          loading={loading}
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* User Activity Chart */}
+        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">User Activity (Last 14 Days)</h3>
+          {loading ? (
+            <div className="h-[260px] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+            </div>
+          ) : chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)',
+                    fontSize: '13px',
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="users"
+                  stroke="#dc2626"
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: '#dc2626' }}
+                  name="Active Users"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="quizzes"
+                  stroke="#18181b"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: '#18181b' }}
+                  strokeDasharray="5 5"
+                  name="Quiz Attempts"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[260px] flex items-center justify-center text-gray-400 text-sm">
+              No activity data yet
+            </div>
+          )}
+        </div>
+
+        {/* Popular Content */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-gray-900">Top Content</h3>
+            <Link href="/admin/analytics" className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors">
+              View all
+            </Link>
+          </div>
+          {loading ? (
+            <div className="h-[260px] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+            </div>
+          ) : popularity.length > 0 ? (
+            <div className="space-y-4">
+              {popularity.slice(0, 5).map((item, i) => (
+                <div key={item.sportId} className="flex items-center gap-3">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-lg bg-gray-100 text-xs font-bold text-gray-500">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{item.sportName}</p>
+                    <p className="text-xs text-gray-500">
+                      {item.views} views &middot; {item.completions} done
+                    </p>
+                  </div>
+                  <div className="text-xs font-semibold text-red-600">
+                    {item.averageRating.toFixed(1)} ★
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-[260px] flex items-center justify-center text-gray-400 text-sm">
+              No content data yet
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quiz Scores + Quick Actions */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Quiz Score Chart */}
+        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Quiz Scores (Last 14 Days)</h3>
+          {loading ? (
+            <div className="h-[220px] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+            </div>
+          ) : chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)',
+                    fontSize: '13px',
+                  }}
+                />
+                <Bar
+                  dataKey="score"
+                  fill="#dc2626"
+                  radius={[6, 6, 0, 0]}
+                  name="Avg Score %"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
+              No quiz data yet
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="space-y-2">
+            <QuickAction
+              href="/admin/quizzes/create"
+              icon={<Trophy className="h-4 w-4" />}
+              label="Create Quiz"
+            />
+            <QuickAction
+              href="/admin/pillars"
+              icon={<BookOpen className="h-4 w-4" />}
+              label="Manage Pillars"
+            />
+            <QuickAction
+              href="/admin/video-reviews"
+              icon={<Video className="h-4 w-4" />}
+              label="Review Videos"
+            />
+            <QuickAction
+              href="/admin/users"
+              icon={<Users className="h-4 w-4" />}
+              label="View Students"
+            />
+            <QuickAction
+              href="/admin/coaches"
+              icon={<UserPlus className="h-4 w-4" />}
+              label="Invite Coach"
+            />
+            <QuickAction
+              href="/admin/analytics"
+              icon={<BarChart3 className="h-4 w-4" />}
+              label="Full Analytics"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* System Health Bar */}
+      {health && (
+        <div className="rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-xl shadow-red-900/5">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2.5 w-2.5 rounded-full ${
+                  health.status === 'healthy'
+                    ? 'bg-green-500'
+                    : health.status === 'warning'
+                      ? 'bg-amber-500'
+                      : 'bg-red-500'
+                }`}
+              />
+              <span className="text-sm font-medium text-gray-900 capitalize">
+                System {health.status}
+              </span>
+            </div>
+            <HealthItem label="Uptime" value={`${health.uptime}%`} />
+            <HealthItem label="Response" value={`${health.responseTime}ms`} />
+            <HealthItem label="Error Rate" value={`${health.errorRate}%`} />
+            <HealthItem label="Database" value={health.services.database} />
+            <HealthItem label="Auth" value={health.services.auth} />
+            <HealthItem label="Storage" value={health.services.storage} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Sub-components ─── */
+
+function KpiCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  trend,
+  loading,
+}: {
+  title: string;
+  value: number;
+  subtitle: string;
+  icon: React.ReactNode;
+  trend?: 'up' | 'down';
+  loading: boolean;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-red-900/5 transition-all duration-300">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            {title}
+          </p>
+          <p className="text-2xl font-bold text-gray-900">
+            {loading ? (
+              <span className="inline-block h-7 w-16 rounded animate-pulse bg-gray-100" />
+            ) : (
+              value.toLocaleString()
+            )}
+          </p>
+          <div className="flex items-center gap-1.5">
+            {trend && !loading && (
+              trend === 'up' ? (
+                <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <TrendingDown className="h-3.5 w-3.5 text-red-400" />
+              )
+            )}
+            <p className="text-xs text-gray-500">
+              {loading ? '' : subtitle}
             </p>
           </div>
-          <Button variant="success" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh Data'}
-          </Button>
         </div>
-
-        {/* Admin Stats */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {loading ? '...' : analytics?.users.total || '0'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {loading ? 'Loading...' : `+${analytics?.users.newThisMonth || 0} this month`}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sports Available</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {loading ? '...' : analytics?.content.totalSports || '0'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {loading ? 'Loading...' : `${analytics?.content.totalSkills || 0} skills available`}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Quiz Attempts</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {loading ? '...' : analytics?.engagement.totalQuizAttempts || '0'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {loading ? 'Loading...' : `${analytics?.engagement.averageQuizScore || 0}% avg score`}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Platform Activity</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {loading ? '...' : `${analytics?.performance.systemUptime || 100}%`}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {loading ? 'Loading...' : 'System uptime'}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="p-2.5 rounded-xl bg-red-50">
+          <div className="text-red-600">{icon}</div>
         </div>
-
-        {/* Admin Actions */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content Management</CardTitle>
-              <CardDescription>
-                Manage sports, skills, and quiz content for the platform.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <BookOpen className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Manage Sports & Skills</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Add and edit sports categories and skills
-                  </p>
-                </div>
-                <Link href="/admin/pillars">
-                  <Button>Manage</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <Video className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Manage Video Quizzes</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Create and manage interactive video-based quizzes
-                  </p>
-                </div>
-                <Link href="/admin/quizzes">
-                  <Button>Manage</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Form Templates</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Create and manage dynamic charting form templates
-                  </p>
-                </div>
-                <Link href="/admin/form-templates">
-                  <Button>Manage</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Student Support</CardTitle>
-              <CardDescription>
-                Review student videos and provide personalized coaching.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
-                  <Video className="h-6 w-6 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Video Reviews</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Review student training videos and provide feedback
-                  </p>
-                </div>
-                <Link href="/admin/video-reviews">
-                  <Button>Review Videos</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">View All Users</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage user accounts and roles
-                  </p>
-                </div>
-                <Link href="/admin/users">
-                  <Button>Manage</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <UserPlus className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Coach Invitations</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Invite coaches and manage invitations
-                  </p>
-                </div>
-                <Link href="/admin/coaches">
-                  <Button>Manage</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <GraduationCap className="h-6 w-6 text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Custom Curriculum</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage custom workflow students and their curricula
-                  </p>
-                </div>
-                <Link href="/coach/students">
-                  <Button>Manage</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics & Reports</CardTitle>
-              <CardDescription>
-                View platform analytics and generate reports.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Platform Analytics</h3>
-                  <p className="text-sm text-muted-foreground">
-                    View user engagement and quiz performance
-                  </p>
-                </div>
-                <Link href="/admin/analytics">
-                  <Button>View Analytics</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Charting Analytics</h3>
-                  <p className="text-sm text-muted-foreground">
-                    View student charting data and performance metrics
-                  </p>
-                </div>
-                <Link href="/admin/charting">
-                  <Button>View Charting</Button>
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4 rounded-lg border p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Bot className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Project Assistant</h3>
-                  <p className="text-sm text-muted-foreground">
-                    AI chatbot with comprehensive project knowledge
-                  </p>
-                </div>
-                <Link href="/admin/project-assistant">
-                  <Button variant="default">Open Assistant</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-              <CardDescription>
-                Configure platform settings and preferences.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4 rounded-lg border p-4">
-                <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <Settings className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">Platform Settings</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Configure system-wide settings
-                  </p>
-                </div>
-                <Link href="/admin/settings">
-                  <Button>Configure</Button>
-                </Link>
-              </div>
-
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest admin activities and system events.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Authentication System Complete</h3>
-              <p className="text-muted-foreground mb-4">
-                Stage 2 authentication is fully implemented. Ready for Stage 3 content management.
-              </p>
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                ✅ Authentication System Active
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+    </div>
+  );
+}
+
+function QuickAction({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-red-200 hover:bg-red-50/50 transition-all duration-300 group"
+    >
+      <div className="text-gray-500 group-hover:text-red-600 transition-colors">{icon}</div>
+      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 flex-1 transition-colors">{label}</span>
+      <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-red-500 transition-colors" />
+    </Link>
+  );
+}
+
+function HealthItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-gray-400">{label}:</span>
+      <span className="text-xs font-medium text-gray-700 capitalize">{value}</span>
     </div>
   );
 }

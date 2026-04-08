@@ -59,6 +59,7 @@ interface ContentBrowserProps {
   onSelect: (content: ContentItem) => void;
   selectedSportId?: string;
   coachId?: string;
+  preSelectedSportId?: string;
 }
 
 export function ContentBrowser({
@@ -67,6 +68,7 @@ export function ContentBrowser({
   onSelect,
   selectedSportId,
   coachId,
+  preSelectedSportId,
 }: ContentBrowserProps) {
   const { user } = useAuth();
   const effectiveCoachId = coachId || user?.id;
@@ -82,6 +84,13 @@ export function ContentBrowser({
   const [contentSource, setContentSource] = useState<'library' | 'custom'>('library');
   const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
+
+  // Auto-select pillar when opened from intelligence sidebar
+  useEffect(() => {
+    if (open && preSelectedSportId) {
+      setSelectedSport(preSelectedSportId);
+    }
+  }, [open, preSelectedSportId]);
 
   // Load sports on mount
   useEffect(() => {
@@ -275,30 +284,35 @@ export function ContentBrowser({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Add Content to Curriculum</DialogTitle>
-          <DialogDescription>
-            Browse and select lessons or quizzes to add to the student's learning path
-          </DialogDescription>
+      <DialogContent showCloseButton={false} className="sm:max-w-5xl w-[95vw] max-h-[86vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
+        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
+            <DialogTitle className="text-2xl font-bold tracking-tight text-white">Add Content to Curriculum</DialogTitle>
+            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
+              Browse and select lessons or quizzes to add to the student&apos;s learning path
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-5 px-8 py-8">
           {/* Content Source Tabs */}
           <Tabs value={contentSource} onValueChange={(v) => {
             setContentSource(v as 'library' | 'custom');
             setSelectedItem(null);
           }}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="library" className="gap-2">
+            <TabsList className="grid w-full grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-100 p-1">
+              <TabsTrigger value="library" className="gap-2 rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
                 <FolderOpen className="h-4 w-4" />
                 Content Library
               </TabsTrigger>
-              <TabsTrigger value="custom" className="gap-2">
+              <TabsTrigger value="custom" className="gap-2 rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-sm">
                 <User className="h-4 w-4" />
                 My Content
                 {customContent.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 text-xs">
+                  <Badge variant="secondary" className="ml-1 text-xs bg-blue-100 text-blue-700 border border-blue-200">
                     {customContent.length}
                   </Badge>
                 )}
@@ -309,9 +323,9 @@ export function ContentBrowser({
           {/* Sport Selection (only for library) */}
           {contentSource === 'library' && (
             <div className="space-y-2">
-              <Label>Sport / Pillar</Label>
+              <Label className="text-zinc-700">Sport / Pillar</Label>
               <Select value={selectedSport} onValueChange={setSelectedSport}>
-                <SelectTrigger>
+                <SelectTrigger className="border-zinc-300 bg-white focus:ring-blue-200">
                   <SelectValue placeholder="Select a sport..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -336,21 +350,21 @@ export function ContentBrowser({
             setContentType(v as 'lesson' | 'quiz');
             setSelectedItem(null);
           }}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="lesson">
+            <TabsList className="grid w-full grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-100 p-1">
+              <TabsTrigger value="lesson" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Lessons
                 {contentSource === 'custom' && customLessonCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
+                  <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-700 border border-blue-200">
                     {customLessonCount}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="quiz">
+              <TabsTrigger value="quiz" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-sm">
                 <PlayCircle className="h-4 w-4 mr-2" />
                 Quizzes
                 {contentSource === 'custom' && customQuizCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
+                  <Badge variant="secondary" className="ml-2 text-xs bg-red-100 text-red-700 border border-red-200">
                     {customQuizCount}
                   </Badge>
                 )}
@@ -367,13 +381,13 @@ export function ContentBrowser({
                       placeholder="Search content..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
+                      className="pl-9 border-zinc-300 bg-white focus-visible:ring-blue-200"
                     />
                   </div>
                 </div>
                 {contentSource === 'library' && (
                   <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40 border-zinc-300 bg-white focus:ring-blue-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -387,7 +401,7 @@ export function ContentBrowser({
               </div>
 
               {/* Content List */}
-              <ScrollArea className="h-[250px] border rounded-lg">
+              <ScrollArea className="h-[250px] rounded-xl border border-zinc-200 bg-white">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -423,10 +437,10 @@ export function ContentBrowser({
                       <button
                         key={item.id}
                         onClick={() => setSelectedItem(item)}
-                        className={`w-full text-left p-4 rounded-lg border transition-all hover:bg-accent/50 ${
+                        className={`w-full text-left p-4 rounded-xl border transition-all hover:bg-zinc-50 ${
                           selectedItem?.id === item.id
-                            ? 'border-primary bg-accent shadow-sm'
-                            : 'border-border'
+                            ? 'border-blue-300 bg-blue-50/70 shadow-sm shadow-blue-100'
+                            : 'border-zinc-200'
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -444,12 +458,12 @@ export function ContentBrowser({
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-medium truncate">{item.title}</h4>
                               {item.isCustom && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-red-200 text-red-700 bg-red-50">
                                   Custom
                                 </Badge>
                               )}
                               {selectedItem?.id === item.id && (
-                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                                <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
@@ -457,7 +471,7 @@ export function ContentBrowser({
                             </p>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                               {!item.isCustom && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-zinc-300 text-zinc-700 bg-zinc-50">
                                   {item.difficulty}
                                 </Badge>
                               )}
@@ -466,7 +480,7 @@ export function ContentBrowser({
                                 <span>{item.estimatedTime} min</span>
                               </div>
                               {item.hasVideo && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border border-blue-200">
                                   Video
                                 </Badge>
                               )}
@@ -482,7 +496,7 @@ export function ContentBrowser({
 
               {/* Selection Summary */}
               {selectedItem && (
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
                   <div className="flex items-start gap-3">
                     <div
                       className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-xl"
@@ -498,7 +512,7 @@ export function ContentBrowser({
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold">{selectedItem.title}</h4>
                         {selectedItem.isCustom && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs border-red-200 text-red-700 bg-red-50">
                             Custom
                           </Badge>
                         )}
@@ -515,11 +529,19 @@ export function ContentBrowser({
           </Tabs>
         </div>
 
-        <DialogFooter className="flex-shrink-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSelect} disabled={!selectedItem}>
+          <Button
+            onClick={handleSelect}
+            disabled={!selectedItem}
+            className="bg-red-600 text-white hover:bg-red-700 disabled:bg-zinc-300 disabled:text-zinc-500"
+          >
             <Check className="h-4 w-4 mr-2" />
             Add to Curriculum
           </Button>

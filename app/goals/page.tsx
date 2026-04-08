@@ -1,9 +1,11 @@
 'use client';
 
-import { Target } from 'lucide-react';
+import { Target, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { GoalsList } from '@/components/goals/GoalsList';
+import { AchievementsList } from '@/components/achievements/AchievementsList';
+import { useAchievements } from '@/hooks/useProgress';
 
 // Sample goals data - in a real app, this would come from the database
 const sampleGoals = [
@@ -15,10 +17,10 @@ const sampleGoals = [
     targetValue: 5,
     currentValue: 3,
     unit: 'skills',
-    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
+    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     priority: 'high' as const,
     isCompleted: false,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
   },
   {
     id: '2',
@@ -31,7 +33,7 @@ const sampleGoals = [
     deadline: undefined,
     priority: 'medium' as const,
     isCompleted: false,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
   },
   {
     id: '3',
@@ -41,10 +43,10 @@ const sampleGoals = [
     targetValue: 90,
     currentValue: 75,
     unit: '%',
-    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 1 month from now
+    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     priority: 'medium' as const,
     isCompleted: false,
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
   },
   {
     id: '4',
@@ -57,7 +59,7 @@ const sampleGoals = [
     deadline: undefined,
     priority: 'low' as const,
     isCompleted: true,
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20 days ago
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
   },
   {
     id: '5',
@@ -67,17 +69,17 @@ const sampleGoals = [
     targetValue: 20,
     currentValue: 12,
     unit: 'hours',
-    deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+    deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
     priority: 'low' as const,
     isCompleted: false,
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
   },
 ];
 
-export default function GoalsPage() {
+export default function GoalsAndAchievementsPage() {
   return (
     <ProtectedRoute>
-      <GoalsContent />
+      <GoalsAndAchievementsContent />
     </ProtectedRoute>
   );
 }
@@ -96,8 +98,12 @@ interface Goal {
   createdAt: Date;
 }
 
-function GoalsContent() {
+type ActiveTab = 'goals' | 'achievements';
+
+function GoalsAndAchievementsContent() {
   const [goals, setGoals] = useState<Goal[]>(sampleGoals);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('goals');
+  const { achievements, userAchievements, loading: achievementsLoading, error: achievementsError } = useAchievements();
 
   const handleCreateGoal = (goalData: Omit<Goal, 'id' | 'createdAt'>) => {
     const newGoal: Goal = {
@@ -105,7 +111,6 @@ function GoalsContent() {
       id: Math.random().toString(36).substr(2, 9),
       createdAt: new Date(),
     };
-
     setGoals([newGoal, ...goals]);
   };
 
@@ -126,21 +131,69 @@ function GoalsContent() {
         <div>
           <h1 className="text-3xl font-bold flex items-center space-x-2">
             <Target className="h-8 w-8" />
-            <span>Learning Goals</span>
+            <span>Goals & Achievements</span>
           </h1>
           <p className="text-muted-foreground">
-            Set personal learning objectives and track your progress towards achieving them.
+            Set personal learning objectives and unlock achievements as you progress.
           </p>
         </div>
 
-        {/* Goals List */}
-        <GoalsList
-          goals={goals}
-          onCreateGoal={handleCreateGoal}
-          onUpdateGoal={handleUpdateGoal}
-          onDeleteGoal={handleDeleteGoal}
-          loading={false}
-        />
+        {/* Tab Switcher */}
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('goals')}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'goals'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Target className="h-4 w-4" />
+            Goals
+          </button>
+          <button
+            onClick={() => setActiveTab('achievements')}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'achievements'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Trophy className="h-4 w-4" />
+            Achievements
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'goals' ? (
+          <GoalsList
+            goals={goals}
+            onCreateGoal={handleCreateGoal}
+            onUpdateGoal={handleUpdateGoal}
+            onDeleteGoal={handleDeleteGoal}
+            loading={false}
+          />
+        ) : (
+          <>
+            {achievementsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : achievementsError ? (
+              <div className="text-center">
+                <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Unable to load achievements</h3>
+                <p className="text-muted-foreground">{achievementsError}</p>
+              </div>
+            ) : (
+              <AchievementsList
+                achievements={achievements}
+                userAchievements={userAchievements}
+                loading={achievementsLoading}
+              />
+            )}
+          </>
+        )}
       </div>
     </div>
   );

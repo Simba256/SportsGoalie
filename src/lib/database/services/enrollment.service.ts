@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { sportsService } from './sports.service';
 import { videoQuizService } from './video-quiz.service';
+import { VideoQuizProgress } from '@/types/video-quiz';
 
 /**
  * Service for managing sports enrollment and progress.
@@ -16,6 +17,34 @@ import { videoQuizService } from './video-quiz.service';
  */
 export class EnrollmentService extends BaseDatabaseService {
   private readonly SPORT_PROGRESS_COLLECTION = 'sport_progress';
+  private readonly DASHBOARD_ATTEMPTS_LIMIT = 200;
+
+  private getAttemptPercentage(attempt: VideoQuizProgress): number | null {
+    if (attempt.percentage !== undefined && attempt.percentage !== null) {
+      return attempt.percentage;
+    }
+
+    if (attempt.score !== undefined && attempt.score !== null && attempt.maxScore) {
+      return (attempt.score / attempt.maxScore) * 100;
+    }
+
+    return null;
+  }
+
+  private buildLatestAttemptBySkill(attempts: VideoQuizProgress[]): Map<string, VideoQuizProgress> {
+    const latestAttemptBySkill = new Map<string, VideoQuizProgress>();
+
+    // Attempts are queried in descending completion order, so first seen per skill is the latest.
+    for (const attempt of attempts) {
+      if (!attempt.skillId || latestAttemptBySkill.has(attempt.skillId)) {
+        continue;
+      }
+
+      latestAttemptBySkill.set(attempt.skillId, attempt);
+    }
+
+    return latestAttemptBySkill;
+  }
 
   /**
    * Enroll a user in a sport by creating SportProgress record
@@ -121,18 +150,48 @@ export class EnrollmentService extends BaseDatabaseService {
       };
     }
 
+    if (progressResult.data.items.length === 0) {
+      return {
+        success: true,
+        data: [],
+        timestamp: new Date(),
+      };
+    }
+
+    const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
+      completed: true,
+      limit: this.DASHBOARD_ATTEMPTS_LIMIT,
+    });
+    const attempts = attemptsResult.success ? attemptsResult.data?.items || [] : [];
+    const latestAttemptBySkill = this.buildLatestAttemptBySkill(attempts);
+
+    const sportDetails = await Promise.all(
+      progressResult.data.items.map(async (progress) => {
+        const sportResult = await sportsService.getSport(progress.sportId);
+        if (!sportResult.success || !sportResult.data) {
+          return null;
+        }
+
+        const skillsResult = await sportsService.getSkillsBySport(progress.sportId);
+        const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
+
+        return {
+          progress,
+          sport: sportResult.data,
+          skills,
+        };
+      })
+    );
+
     // Get sport details for each progress record and calculate live progress
     const enrolledSports: Array<{ sport: Sport; progress: SportProgress }> = [];
 
-    for (const progress of progressResult.data.items) {
-      const sportResult = await sportsService.getSport(progress.sportId);
-      if (!sportResult.success || !sportResult.data) continue;
+    for (const detail of sportDetails) {
+      if (!detail) {
+        continue;
+      }
 
-      const sport = sportResult.data;
-
-      // Get all skills for this sport
-      const skillsResult = await sportsService.getSkillsBySport(sport.id);
-      const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
+      const { progress, sport, skills } = detail;
       const totalSkills = skills.length;
 
       // Calculate progress based on actual quiz attempts for each skill
@@ -140,32 +199,17 @@ export class EnrollmentService extends BaseDatabaseService {
       let completedSkillsCount = 0;
       const completedSkillIds: string[] = [];
 
-      // Fetch quiz attempts for each skill and calculate average
       for (const skill of skills) {
-        const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
-          skillId: skill.id,
-          completed: true,
-          limit: 1, // Get only the latest completed attempt
-        });
+        const latestAttempt = latestAttemptBySkill.get(skill.id);
+        if (!latestAttempt) {
+          continue;
+        }
 
-        if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
-          const latestAttempt = attemptsResult.data.items[0];
-          // Use percentage field for accurate progress calculation (0-100 scale)
-          if (latestAttempt.percentage !== undefined && latestAttempt.percentage !== null) {
-            totalScore += latestAttempt.percentage;
-            completedSkillsCount++;
-            completedSkillIds.push(skill.id);
-
-            logger.debug(`Skill ${skill.id} has quiz percentage: ${latestAttempt.percentage}%`, 'EnrollmentService');
-          } else if (latestAttempt.score !== undefined && latestAttempt.score !== null && latestAttempt.maxScore) {
-            // Fallback: calculate percentage from score/maxScore if percentage is not available
-            const percentage = (latestAttempt.score / latestAttempt.maxScore) * 100;
-            totalScore += percentage;
-            completedSkillsCount++;
-            completedSkillIds.push(skill.id);
-
-            logger.debug(`Skill ${skill.id} calculated percentage: ${percentage}% (${latestAttempt.score}/${latestAttempt.maxScore})`, 'EnrollmentService');
-          }
+        const percentage = this.getAttemptPercentage(latestAttempt);
+        if (percentage !== null) {
+          totalScore += percentage;
+          completedSkillsCount++;
+          completedSkillIds.push(skill.id);
         }
       }
 
@@ -257,33 +301,30 @@ export class EnrollmentService extends BaseDatabaseService {
     const skills = skillsResult.success ? skillsResult.data?.items || [] : [];
     const totalSkills = skills.length;
 
+    const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
+      sportId,
+      completed: true,
+      limit: this.DASHBOARD_ATTEMPTS_LIMIT,
+    });
+    const attempts = attemptsResult.success ? attemptsResult.data?.items || [] : [];
+    const latestAttemptBySkill = this.buildLatestAttemptBySkill(attempts);
+
     // Calculate progress based on actual quiz attempts for each skill
     let totalScore = 0;
     let completedSkillsCount = 0;
     const completedSkillIds: string[] = [];
 
-    // Fetch quiz attempts for each skill and calculate average
     for (const skill of skills) {
-      const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
-        skillId: skill.id,
-        completed: true,
-        limit: 1, // Get only the latest completed attempt
-      });
+      const latestAttempt = latestAttemptBySkill.get(skill.id);
+      if (!latestAttempt) {
+        continue;
+      }
 
-      if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
-        const latestAttempt = attemptsResult.data.items[0];
-        // Use percentage field for accurate progress calculation (0-100 scale)
-        if (latestAttempt.percentage !== undefined && latestAttempt.percentage !== null) {
-          totalScore += latestAttempt.percentage;
-          completedSkillsCount++;
-          completedSkillIds.push(skill.id);
-        } else if (latestAttempt.score !== undefined && latestAttempt.score !== null && latestAttempt.maxScore) {
-          // Fallback: calculate percentage from score/maxScore if percentage is not available
-          const percentage = (latestAttempt.score / latestAttempt.maxScore) * 100;
-          totalScore += percentage;
-          completedSkillsCount++;
-          completedSkillIds.push(skill.id);
-        }
+      const percentage = this.getAttemptPercentage(latestAttempt);
+      if (percentage !== null) {
+        totalScore += percentage;
+        completedSkillsCount++;
+        completedSkillIds.push(skill.id);
       }
     }
 

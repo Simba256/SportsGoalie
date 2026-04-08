@@ -78,6 +78,7 @@ interface UseOnboardingReturn {
   completeIntake: () => Promise<void>;
   startCategory: () => void;
   answerQuestion: (questionId: string, optionId: string, score: IntelligenceScore) => Promise<void>;
+  previousQuestion: () => void;
   completeAssessment: () => Promise<void>;
   goToDashboard: () => void;
 }
@@ -399,6 +400,23 @@ export function useOnboarding({
     }
   }, [evaluation, currentQuestion, currentCategory, currentCategoryIndex, currentQuestionIndex, categoryQuestions.length, totalCategories]);
 
+  const previousQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+      return;
+    }
+
+    if (currentCategoryIndex > 0) {
+      const previousCategoryIndex = currentCategoryIndex - 1;
+      const previousCategorySlug = categoryOrder[previousCategoryIndex];
+      const previousCategoryQuestions = getQuestionsForCategory(previousCategorySlug);
+
+      setCurrentCategoryIndex(previousCategoryIndex);
+      setCurrentQuestionIndex(Math.max(previousCategoryQuestions.length - 1, 0));
+      return;
+    }
+  }, [currentQuestionIndex, currentCategoryIndex, categoryOrder]);
+
   const completeAssessmentInternal = async () => {
     if (!userId || !evaluation) return;
 
@@ -466,6 +484,7 @@ export function useOnboarding({
     completeIntake,
     startCategory,
     answerQuestion,
+    previousQuestion,
     completeAssessment,
     goToDashboard,
   };
