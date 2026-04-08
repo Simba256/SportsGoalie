@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ import {
   Clock,
 } from 'lucide-react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
 /**
  * Parent onboarding page — redirects to the main onboarding flow.
