@@ -14,8 +14,7 @@ const BARE_ROUTES = ['/auth'];
 /** Routes that get the public layout (header + footer, no sidebar) */
 const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
 /** Routes that have their own layout and should not get the sidebar */
-const EXCLUDED_ROUTES = ['/coach'];
-const EXCLUDED_ROUTES = ['/admin'];
+const EXCLUDED_ROUTES: string[] = [];
 
 function isPublicRoute(pathname: string) {
   if (pathname === '/') return true;
@@ -34,6 +33,8 @@ function isExcludedRoute(pathname: string) {
 
 function isAdminRoute(pathname: string) {
   return pathname.startsWith('/admin');
+}
+
 function isCoachRoute(pathname: string) {
   return pathname.startsWith('/coach');
 }
@@ -65,6 +66,8 @@ function getPageTitle(pathname: string): string {
     };
     const second = segments[1];
     return adminTitles[second] || 'Dashboard';
+  }
+
   if (first === 'coach') {
     const coachTitles: Record<string, string> = {
       coach: 'Dashboard',
@@ -172,7 +175,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors lg:hidden"
               aria-label="Toggle sidebar"
             >
-              <Menu className="h-5 w-5" />
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
             <div className="h-5 w-px bg-gray-200 lg:hidden" />
             <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
@@ -180,13 +185,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
           {/* Page content */}
           <main className="p-6">{children}</main>
+          <Footer7 />
         </div>
       </div>
     );
   }
 
-  // Parent pages: parent sidebar layout
-  if (isParentRoute(pathname)) {
   // Coach pages: coach sidebar layout
   if (isCoachRoute(pathname)) {
     const pageTitle = getPageTitle(pathname);

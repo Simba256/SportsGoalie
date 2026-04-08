@@ -77,6 +77,7 @@ interface UseParentOnboardingReturn {
   previousIntakeScreen: () => void;
   startCategory: () => void;
   answerQuestion: (questionId: string, optionId: string, score: IntelligenceScore) => Promise<void>;
+  previousQuestion: () => void;
   goToDashboard: () => void;
 }
 
@@ -382,6 +383,22 @@ export function useParentOnboarding({
     }
   }, [evaluation, currentQuestion, currentCategory, currentCategoryIndex, currentQuestionIndex, categoryQuestions.length, totalCategories]);
 
+  const previousQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+      return;
+    }
+
+    if (currentCategoryIndex > 0) {
+      const previousCategoryIndex = currentCategoryIndex - 1;
+      const previousCategorySlug = categoryOrder[previousCategoryIndex];
+      const previousCategoryQuestions = getQuestionsForParentCategory(previousCategorySlug);
+
+      setCurrentCategoryIndex(previousCategoryIndex);
+      setCurrentQuestionIndex(Math.max(previousCategoryQuestions.length - 1, 0));
+    }
+  }, [currentQuestionIndex, currentCategoryIndex, categoryOrder]);
+
   const completeAssessmentInternal = async () => {
     if (!userId || !evaluation) return;
 
@@ -435,6 +452,7 @@ export function useParentOnboarding({
     previousIntakeScreen,
     startCategory,
     answerQuestion,
+    previousQuestion,
     goToDashboard,
   };
 }
