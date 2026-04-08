@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +16,12 @@ import {
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+/**
+ * Parent onboarding page — redirects to the main onboarding flow.
+ * The assessment is now part of the immersive onboarding experience at /onboarding.
+ */
 export default function ParentOnboardingPage() {
+  const router = useRouter();
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -25,9 +32,10 @@ export default function ParentOnboardingPage() {
     );
   }
 
-  if (!user) {
-    redirect('/auth/login');
-  }
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
 
   if (user.role !== 'parent') {
     return (

@@ -20,6 +20,8 @@ import {
   extractGoalieCoachStatus,
   extractPrimaryReasons,
 } from '@/data/goalie-intake-questions';
+import { generateGoalieIntelligenceProfile, generateIntelligenceProfile } from '@/lib/scoring/intelligence-profile';
+import { PARENT_ASSESSMENT_QUESTIONS } from '@/data/parent-assessment-questions';
 import { generateGoalieIntelligenceProfile } from '@/lib/scoring/intelligence-profile';
 import { enrollmentService } from './enrollment.service';
 import { getAllPillarIds } from '@/lib/utils/pillars';
@@ -738,6 +740,231 @@ export class OnboardingService extends BaseDatabaseService {
           code: 'GET_EVALUATION_FAILED',
           message: 'Failed to retrieve evaluation',
         },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Create a new parent evaluation
+   */
+  async createParentEvaluation(userId: string): Promise<ApiResponse<OnboardingEvaluation>> {
+    logger.info('Creating parent onboarding evaluation', 'OnboardingService', { userId });
+
+    try {
+      const evaluationId = `eval_parent_${userId}`;
+
+      // Check if evaluation already exists
+      try {
+        const existingResult = await this.getById<OnboardingEvaluation>(
+          this.EVALUATIONS_COLLECTION,
+          evaluationId
+        );
+        if (existingResult.success && existingResult.data) {
+          return {
+            success: true,
+            data: existingResult.data,
+            timestamp: new Date(),
+          };
+        }
+      } catch {
+        // No existing evaluation, continue creating
+      }
+
+      const now = Timestamp.now();
+
+      const evaluationData: Omit<OnboardingEvaluation, 'id' | 'createdAt' | 'updatedAt'> = {
+        userId,
+        role: 'parent',
+        phase: 'intake',
+        currentCategoryIndex: 0,
+        currentQuestionIndex: 0,
+        assessmentResponses: [],
+        status: 'in_progress',
+      };
+
+      await this.createWithId<OnboardingEvaluation>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId,
+        evaluationData
+      );
+
+      const evaluation: OnboardingEvaluation = {
+        id: evaluationId,
+        ...evaluationData,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      return {
+        success: true,
+        data: evaluation,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to create parent evaluation', 'OnboardingService', { userId, error });
+      return {
+        success: false,
+        error: {
+          code: 'CREATE_PARENT_EVALUATION_FAILED',
+          message: 'Failed to create parent onboarding evaluation',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Get a parent's evaluation
+   */
+  async getParentEvaluation(userId: string): Promise<ApiResponse<OnboardingEvaluation | null>> {
+    const evaluationId = `eval_parent_${userId}`;
+
+    try {
+      const result = await this.getById<OnboardingEvaluation>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      return {
+        success: true,
+        data: result.data || null,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to get parent evaluation', 'OnboardingService', { userId, error });
+      return {
+        success: false,
+        error: {
+          code: 'GET_PARENT_EVALUATION_FAILED',
+          message: 'Failed to retrieve parent evaluation',
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Complete parent intake phase (simplified — no goalie-specific extraction)
+   */
+  async completeParentIntake(evaluationId: string): Promise<ApiResponse<IntakeData>> {
+    logger.info('Completing parent intake phase', 'OnboardingService', { evaluationId });
+
+    try {
+      const evalResult = await this.getById<OnboardingEvaluation>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      if (!evalResult.success || !evalResult.data) {
+        return {
+          success: false,
+          error: { code: 'EVALUATION_NOT_FOUND', message: 'Evaluation not found' },
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluation = evalResult.data;
+      const responses = evaluation.intakeData?.responses || [];
+      const completedAt = Timestamp.now();
+
+      const intakeData: IntakeData = {
+        userId: evaluation.userId,
+        role: 'parent',
+        responses,
+        completedAt,
+      };
+
+      await this.update<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        intakeData,
+        intakeCompletedAt: completedAt,
+        phase: 'bridge',
+        currentCategoryIndex: 0,
+        currentQuestionIndex: 0,
+      });
+
+      return {
+        success: true,
+        data: intakeData,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to complete parent intake', 'OnboardingService', { evaluationId, error });
+      return {
+        success: false,
+        error: { code: 'COMPLETE_PARENT_INTAKE_FAILED', message: 'Failed to complete parent intake' },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Complete parent evaluation and generate intelligence profile
+   */
+  async completeParentEvaluation(userId: string): Promise<ApiResponse<IntelligenceProfile>> {
+    logger.info('Completing parent evaluation', 'OnboardingService', { userId });
+
+    try {
+      const evaluationId = `eval_parent_${userId}`;
+      const evalResult = await this.getById<OnboardingEvaluation>(
+        this.EVALUATIONS_COLLECTION,
+        evaluationId
+      );
+
+      if (!evalResult.success || !evalResult.data) {
+        return {
+          success: false,
+          error: { code: 'EVALUATION_NOT_FOUND', message: 'Evaluation not found' },
+          timestamp: new Date(),
+        };
+      }
+
+      const evaluation = evalResult.data;
+
+      // Generate intelligence profile using parent questions and weights
+      const intelligenceProfile = generateIntelligenceProfile(
+        userId,
+        'parent',
+        evaluation.assessmentResponses,
+        PARENT_ASSESSMENT_QUESTIONS,
+      );
+
+      const completedAt = Timestamp.now();
+      const duration = evaluation.assessmentStartedAt
+        ? Math.round((completedAt.toMillis() - evaluation.assessmentStartedAt.toMillis()) / 1000)
+        : 0;
+
+      // Update evaluation
+      await this.update<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId, {
+        status: 'completed',
+        phase: 'completed',
+        completedAt,
+        duration,
+        intelligenceProfile,
+        pacingLevel: intelligenceProfile.pacingLevel,
+      });
+
+      // Update user document — mark parent onboarding complete
+      await this.update<User>(this.USERS_COLLECTION, userId, {
+        parentOnboardingComplete: true,
+      });
+
+      logger.info('Parent evaluation completed successfully', 'OnboardingService', {
+        userId,
+        overallScore: intelligenceProfile.overallScore,
+        duration,
+      });
+
+      return {
+        success: true,
+        data: intelligenceProfile,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to complete parent evaluation', 'OnboardingService', { userId, error });
+      return {
+        success: false,
+        error: { code: 'COMPLETE_PARENT_EVALUATION_FAILED', message: 'Failed to complete parent evaluation' },
         timestamp: new Date(),
       };
     }

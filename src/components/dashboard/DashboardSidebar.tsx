@@ -7,7 +7,6 @@ import {
   BookOpen,
   BarChart3,
   Award,
-  Target,
   LogOut,
   ChevronLeft,
   Menu,
@@ -31,8 +30,7 @@ const navItems = [
   { label: 'Charting', href: '/charting', icon: ClipboardList },
   { label: 'Mind Vault', href: '/mind-vault', icon: Shield },
   { label: 'Analytics', href: '/progress', icon: BarChart3 },
-  { label: 'Achievements', href: '/achievements', icon: Award },
-  { label: 'Goals', href: '/goals', icon: Target },
+  { label: 'Goals & Achievements', href: '/goals', icon: Award },
   { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Profile', href: '/profile', icon: UserCircle },
 ];
@@ -120,7 +118,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;

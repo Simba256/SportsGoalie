@@ -172,19 +172,40 @@ export class AnalyticsService extends BaseDatabaseService {
     logger.info('Fetching user engagement data', 'AnalyticsService', { days });
 
     try {
-      // Query all quiz attempts
-      const quizAttemptsResult = await this.query<any>('quiz_attempts', {
-        where: [{ field: 'isCompleted', operator: '==', value: true }],
-        limit: 10000
-      });
+      // Query quiz attempts and users in parallel
+      const [quizAttemptsResult, usersResult] = await Promise.all([
+        this.query<any>('quiz_attempts', {
+          where: [{ field: 'isCompleted', operator: '==', value: true }],
+          limit: 10000,
+        }),
+        this.query<any>('users', {
+          where: [{ field: 'isActive', operator: '==', value: true }],
+          limit: 10000,
+        }),
+      ]);
 
       const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+      const users = usersResult.success ? usersResult.data?.items || [] : [];
 
       // Group quiz attempts by date
       const attemptsByDate = new Map<string, any[]>();
       const usersByDate = new Map<string, Set<string>>();
 
-      quizAttempts.forEach(attempt => {
+      // Track active users by lastLoginAt
+      users.forEach((u: any) => {
+        if (u.lastLoginAt) {
+          const date = u.lastLoginAt.toDate
+            ? u.lastLoginAt.toDate()
+            : new Date(u.lastLoginAt);
+          const dateStr = date.toISOString().split('T')[0];
+          if (!usersByDate.has(dateStr)) {
+            usersByDate.set(dateStr, new Set());
+          }
+          usersByDate.get(dateStr)!.add(u.id);
+        }
+      });
+
+      quizAttempts.forEach((attempt: any) => {
         if (attempt.submittedAt) {
           const date = attempt.submittedAt.toDate
             ? attempt.submittedAt.toDate()
@@ -197,7 +218,7 @@ export class AnalyticsService extends BaseDatabaseService {
           }
           attemptsByDate.get(dateStr)!.push(attempt);
 
-          // Track unique users by date
+          // Also track quiz users as active
           if (!usersByDate.has(dateStr)) {
             usersByDate.set(dateStr, new Set());
           }

@@ -112,7 +112,7 @@ export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;

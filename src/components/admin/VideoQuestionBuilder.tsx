@@ -302,6 +302,7 @@ export function VideoQuestionBuilder({
                     ];
                     setNewQuestion({ ...newQuestion, options: newOptions });
                   }}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Option
@@ -467,7 +468,7 @@ export function VideoQuestionBuilder({
                     const newAnswers = [...(newQuestion.correctAnswers || ['']), ''];
                     setNewQuestion({ ...newQuestion, correctAnswers: newAnswers });
                   }}
-                  className="w-full"
+                  className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Alternative Answer
@@ -593,6 +594,7 @@ export function VideoQuestionBuilder({
                     size="icon"
                     onClick={handleSkipBackward}
                     title="Skip backward 5 seconds"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                   >
                     <SkipBack className="h-4 w-4" />
                   </Button>
@@ -601,7 +603,7 @@ export function VideoQuestionBuilder({
                     variant="default"
                     size="icon"
                     onClick={handlePlayPause}
-                    className="h-12 w-12"
+                    className="h-12 w-12 bg-red-600 text-white hover:bg-red-700"
                   >
                     {isPlaying ? (
                       <Pause className="h-6 w-6" />
@@ -615,6 +617,7 @@ export function VideoQuestionBuilder({
                     size="icon"
                     onClick={handleSkipForward}
                     title="Skip forward 5 seconds"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                   >
                     <SkipForward className="h-4 w-4" />
                   </Button>
@@ -624,7 +627,7 @@ export function VideoQuestionBuilder({
                       value={String(playbackRate)}
                       onValueChange={(value) => setPlaybackRate(parseFloat(value))}
                     >
-                      <SelectTrigger className="w-[100px]">
+                      <SelectTrigger className="w-[100px] border-slate-300 focus:ring-red-200">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -645,6 +648,7 @@ export function VideoQuestionBuilder({
                       size="icon"
                       onClick={handleToggleMute}
                       title={muted ? "Unmute" : "Mute"}
+                      className="text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                     >
                       {muted ? (
                         <VolumeX className="h-4 w-4" />
@@ -672,7 +676,7 @@ export function VideoQuestionBuilder({
                   onClick={handleAddQuestionAtCurrentTime}
                   variant="default"
                   size="lg"
-                  className="gap-2"
+                  className="gap-2 bg-gradient-to-r from-red-600 to-blue-600 text-white hover:from-red-700 hover:to-blue-700"
                 >
                   <Plus className="h-5 w-5" />
                   Add Question Here
@@ -828,7 +832,7 @@ export function VideoQuestionBuilder({
                   });
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-slate-300 focus:ring-red-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -856,7 +860,7 @@ export function VideoQuestionBuilder({
                     timestamp: parseInt(e.target.value),
                   })
                 }
-                className="w-full"
+                className="w-full border-slate-300 focus-visible:ring-red-200"
               />
               <p className="text-xs text-gray-500">
                 {formatTimestamp(newQuestion.timestamp || 0)}
@@ -876,7 +880,7 @@ export function VideoQuestionBuilder({
                     points: parseInt(e.target.value),
                   })
                 }
-                className="w-full"
+                className="w-full border-slate-300 focus-visible:ring-red-200"
               />
             </div>
           </div>
@@ -897,6 +901,7 @@ export function VideoQuestionBuilder({
                     : 'Enter your question'
                 }
                 rows={2}
+                className="border-slate-300 focus-visible:ring-red-200"
               />
             </div>
           )}
@@ -913,6 +918,7 @@ export function VideoQuestionBuilder({
               }
               placeholder="Provide an explanation for the answer"
               rows={2}
+              className="border-slate-300 focus-visible:ring-red-200"
             />
           </div>
 
@@ -926,7 +932,7 @@ export function VideoQuestionBuilder({
             <Label>Required Question</Label>
           </div>
 
-          <Button onClick={handleAddQuestion} className="w-full">
+          <Button onClick={handleAddQuestion} className="w-full bg-gradient-to-r from-red-600 to-blue-600 text-white hover:from-red-700 hover:to-blue-700">
             <Plus className="mr-2 h-4 w-4" />
             Add Question
           </Button>

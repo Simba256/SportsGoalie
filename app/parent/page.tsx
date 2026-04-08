@@ -126,7 +126,7 @@ export default function ParentDashboardPage() {
               <p className="text-xs text-amber-700">Compare your perceptions with your goalie's self-assessment.</p>
             </div>
           </div>
-          <Link href="/parent/onboarding">
+          <Link href="/onboarding?role=parent">
             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
               Start Assessment
             </Button>
@@ -312,7 +312,7 @@ export default function ParentDashboardPage() {
                 sub="Add your child's account"
               />
               <QuickActionLink
-                href="/parent/onboarding"
+                href="/onboarding?role=parent"
                 icon={<ClipboardCheck className="h-4 w-4 text-green-600" />}
                 bg="bg-green-50"
                 label="Parent Assessment"
