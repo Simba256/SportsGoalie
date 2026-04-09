@@ -400,7 +400,7 @@ function MessagesContent() {
                 </p>
                 {!searchQuery && filterType === 'all' && filterRead === 'all' && (
                   <Link href="/admin/users">
-                    <Button>
+                    <Button className="bg-red-600 hover:bg-red-700">
                       <User className="mr-2 h-4 w-4" />
                       Go to Users
                     </Button>

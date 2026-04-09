@@ -2,58 +2,369 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Sport, Skill, DifficultyLevel, PILLARS } from '@/types';
+import { Sport, Skill, DifficultyLevel, PILLARS, PacingLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
-import { useSportEnrollment } from '@/hooks/useEnrollment';
+import { onboardingService } from '@/lib/database';
 import { useAuth } from '@/lib/auth/context';
 import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
+import { LoadingState } from '@/components/ui/loading';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Users,
   BookOpen,
   Play,
   CheckCircle,
-  Star,
-  Trophy,
-  Heart,
   Loader2,
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
+  ChevronRight,
+  Zap,
+  TrendingUp,
+  Star,
 } from 'lucide-react';
 
-// Icon map for pillar icons
-const PILLAR_ICONS: Record<string, React.ElementType> = {
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const HERO_THEME: Record<
+  string,
+  {
+    gradient: 'red' | 'lightBlue' | 'darkBlue' | 'gray' | 'dark';
+    sectionBg: string;
+    glowBg: string;
+    secondaryGlowBg: string;
+    accent: string;
+    accentSoft: string;
+  }
+> = {
+  purple: {
+    gradient: 'dark',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#1b1f3a] to-[#111827]',
+    glowBg: 'bg-blue-500/30',
+    secondaryGlowBg: 'bg-red-400/18',
+    accent: 'text-blue-300',
+    accentSoft: 'bg-blue-400/20',
+  },
+  blue: {
+    gradient: 'darkBlue',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#0f233f] to-[#102847]',
+    glowBg: 'bg-blue-500/30',
+    secondaryGlowBg: 'bg-red-400/16',
+    accent: 'text-blue-300',
+    accentSoft: 'bg-blue-400/20',
+  },
+  cyan: {
+    gradient: 'darkBlue',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#0d2a3a] to-[#0a3448]',
+    glowBg: 'bg-sky-500/30',
+    secondaryGlowBg: 'bg-red-400/14',
+    accent: 'text-sky-300',
+    accentSoft: 'bg-sky-400/20',
+  },
+  green: {
+    gradient: 'lightBlue',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#12314a] to-[#1b3f63]',
+    glowBg: 'bg-blue-500/28',
+    secondaryGlowBg: 'bg-red-400/16',
+    accent: 'text-blue-300',
+    accentSoft: 'bg-blue-400/20',
+  },
+  orange: {
+    gradient: 'gray',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#2a2633] to-[#1f2433]',
+    glowBg: 'bg-red-500/24',
+    secondaryGlowBg: 'bg-blue-400/15',
+    accent: 'text-red-300',
+    accentSoft: 'bg-red-400/20',
+  },
+  red: {
+    gradient: 'red',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#331a2b] to-[#3a1a26]',
+    glowBg: 'bg-red-500/28',
+    secondaryGlowBg: 'bg-blue-500/16',
+    accent: 'text-red-300',
+    accentSoft: 'bg-red-400/20',
+  },
+  pink: {
+    gradient: 'red',
+    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#2d1b35] to-[#281d43]',
+    glowBg: 'bg-red-500/24',
+    secondaryGlowBg: 'bg-blue-500/18',
+    accent: 'text-rose-300',
+    accentSoft: 'bg-rose-400/20',
+  },
 };
 
-interface PillarDetailState {
-  pillar: Sport | null;
-  skills: Skill[];
-  loading: boolean;
-  skillsLoading: boolean;
-  error: string | null;
-}
+const LEVEL_CONFIG: Record<PacingLevel, {
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+  ring: string;
+  bar: string;
+  icon: React.ElementType;
+  tagline: string;
+  range: string;
+}> = {
+  introduction: {
+    label: 'Introduction',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    ring: 'ring-blue-400',
+    bar: 'bg-blue-500',
+    icon: BookOpen,
+    tagline: 'Building your foundation',
+    range: '1.0 – 2.2',
+  },
+  development: {
+    label: 'Development',
+    color: 'text-red-700',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
+    ring: 'ring-red-400',
+    bar: 'bg-red-500',
+    icon: TrendingUp,
+    tagline: 'Growing your skills',
+    range: '2.2 – 3.1',
+  },
+  refinement: {
+    label: 'Refinement',
+    color: 'text-red-700',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
+    ring: 'ring-red-400',
+    bar: 'bg-red-500',
+    icon: Zap,
+    tagline: 'Mastering your craft',
+    range: '3.1 – 4.0',
+  },
+};
+
+const DIFFICULTY_ORDER: DifficultyLevel[] = ['introduction', 'development', 'refinement'];
+
+const PILLAR_CARD_ACCENT: Record<string, string> = {
+  purple: '#2563eb',
+  blue: '#2563eb',
+  cyan: '#0ea5e9',
+  green: '#2563eb',
+  orange: '#dc2626',
+  red: '#dc2626',
+  pink: '#dc2626',
+};
+
 
 interface SkillProgress {
-  [skillId: string]: {
-    percentage: number;
-    isCompleted: boolean;
-  } | null;
+  [skillId: string]: { percentage: number; isCompleted: boolean } | null;
 }
+
+// ─── Score Bar ────────────────────────────────────────────────────────────────
+
+function ScoreBar({ score, level }: { score: number; level: PacingLevel }) {
+  const pct = Math.round(((score - 1.0) / 3.0) * 100);
+  const cfg = LEVEL_CONFIG[level];
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-xs text-slate-200">
+        <span>1.0</span>
+        <span className="font-bold text-white">{score.toFixed(1)} / 4.0</span>
+        <span>4.0</span>
+      </div>
+      <div className="h-2.5 w-full bg-zinc-200 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-700 ${cfg.bar}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Skill Card ───────────────────────────────────────────────────────────────
+
+function SkillCard({
+  skill,
+  pillarId,
+  isUserLevel,
+  progress,
+  accentColor,
+}: {
+  skill: Skill;
+  pillarId: string;
+  isUserLevel: boolean;
+  progress: { percentage: number; isCompleted: boolean } | null | undefined;
+  accentColor: string;
+}) {
+  const hasAttempt = progress !== undefined && progress !== null;
+  const isCompleted = hasAttempt && progress!.isCompleted;
+  const isInProgress = hasAttempt && !isCompleted;
+
+  const topBorderColor = isCompleted ? '#2563eb' : isInProgress ? '#dc2626' : accentColor;
+
+  return (
+    <Link href={`/pillars/${pillarId}/skills/${skill.id}`} className="block group h-full">
+      <div className="relative h-full rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 overflow-hidden flex flex-col">
+        {/* Colored top border accent */}
+        <div className="h-1 w-full" style={{ backgroundColor: topBorderColor }} />
+
+        <div className="p-5 flex flex-col flex-1">
+
+          {/* Top row: status badge */}
+          <div className="flex items-center justify-end mb-3">
+            {isCompleted ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+                <CheckCircle className="w-3 h-3" /> Completed
+              </span>
+            ) : isInProgress ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
+                <Play className="w-3 h-3" /> In Progress
+              </span>
+            ) : isUserLevel ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+                Start
+              </span>
+            ) : null}
+          </div>
+
+          {/* Title */}
+          <h4 className="font-bold text-base leading-snug text-foreground group-hover:text-blue-600 transition-colors">
+            {skill.name}
+          </h4>
+
+          {/* Description */}
+          {skill.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mt-2">
+              {skill.description}
+            </p>
+          )}
+
+          {/* Learning objectives */}
+          {skill.learningObjectives.length > 0 && (
+            <ul className="space-y-1.5 mt-3">
+              {skill.learningObjectives.slice(0, 2).map((obj, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 bg-slate-300" />
+                  <span className="line-clamp-1">{obj}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Spacer to push footer down */}
+          <div className="flex-1" />
+
+          {/* Progress bar (if attempted) */}
+          {hasAttempt && (
+            <div className="mt-4 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Progress</span>
+                <span className={`font-bold ${isCompleted ? 'text-blue-600' : 'text-red-600'}`}>
+                  {Math.round(progress!.percentage)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-blue-500' : 'bg-red-500'}`}
+                  style={{ width: `${progress!.percentage}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {skill.estimatedTimeToComplete > 0 && (
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                  {skill.estimatedTimeToComplete} min
+                </span>
+              )}
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+          </div>
+
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ─── Skills Group ─────────────────────────────────────────────────────────────
+
+function SkillsGroup({
+  difficulty,
+  skills,
+  pillarId,
+  userLevel,
+  skillProgress,
+  pillarColor,
+}: {
+  difficulty: DifficultyLevel;
+  skills: Skill[];
+  pillarId: string;
+  userLevel: PacingLevel | null;
+  skillProgress: SkillProgress;
+  pillarColor: string;
+}) {
+  const cfg = LEVEL_CONFIG[difficulty];
+  const Icon = cfg.icon;
+  const isUserLevel = userLevel === difficulty;
+  const completedCount = skills.filter(s => skillProgress[s.id]?.isCompleted).length;
+  const cardAccent = PILLAR_CARD_ACCENT[pillarColor] ?? '#2563eb';
+
+  if (skills.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* Section header bar */}
+      <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between ${
+        isUserLevel ? `${cfg.bg} ${cfg.border}` : 'bg-slate-50 border-slate-200'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+            isUserLevel ? `bg-white/80 ${cfg.border} border` : 'bg-white border border-slate-200'
+          }`}>
+            <Icon className={`w-4 h-4 ${isUserLevel ? cfg.color : 'text-slate-400'}`} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className={`font-bold text-sm ${isUserLevel ? cfg.color : 'text-foreground'}`}>
+                {cfg.label}
+              </h3>
+              {isUserLevel && (
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/80 ${cfg.color} ${cfg.border} border`}>
+                  Your Level
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">{cfg.tagline}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-semibold text-foreground">{skills.length} skills</p>
+          {completedCount > 0 && (
+            <p className="text-xs text-blue-600 font-medium">{completedCount} completed</p>
+          )}
+        </div>
+      </div>
+
+      {/* Skills grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {skills.map((skill) => (
+          <SkillCard
+            key={skill.id}
+            skill={skill}
+            pillarId={pillarId}
+            isUserLevel={isUserLevel}
+            progress={skillProgress[skill.id]}
+            accentColor={cardAccent}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PillarDetailPage() {
   const params = useParams();
@@ -61,499 +372,308 @@ export default function PillarDetailPage() {
   const pillarId = params.id as string;
   const { user } = useAuth();
 
-  const [state, setState] = useState<PillarDetailState>({
-    pillar: null,
-    skills: [],
-    loading: true,
-    skillsLoading: true,
-    error: null,
-  });
-
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'all'>('all');
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [pillar, setPillar] = useState<Sport | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [skillProgress, setSkillProgress] = useState<SkillProgress>({});
+  const [userLevel, setUserLevel] = useState<PacingLevel | null>(null);
+  const [userScore, setUserScore] = useState<number | null>(null);
+  const [levelLoading, setLevelLoading] = useState(false);
 
-  // Use enrollment hook for the pillar
-  const {
-    enrolled: _enrolled,
-    progress: _progress,
-    loading: _enrollmentLoading,
-    enroll: _enroll,
-    unenroll: _unenroll,
-  } = useSportEnrollment(pillarId);
-
-  // Get pillar display info
-  const getPillarDisplayInfo = (pillar: Sport) => {
-    const slug = getPillarSlugFromDocId(pillar.id);
-    if (slug) {
-      const info = PILLARS.find(p => p.slug === slug);
-      if (info) {
-        return {
-          icon: info.icon,
-          color: info.color,
-          shortName: info.shortName,
-        };
-      }
-    }
-    return {
-      icon: pillar.icon,
-      color: 'blue',
-      shortName: pillar.name.split(' ')[0],
-    };
-  };
-
+  // ── Load pillar + skills ──────────────────────────────────────────────────
   useEffect(() => {
     if (!pillarId) return;
-
-    const loadPillarData = async () => {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-
+    const load = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const [pillarResult, skillsResult] = await Promise.all([
           sportsService.getSport(pillarId),
           sportsService.getSkillsBySport(pillarId),
         ]);
-
         if (!pillarResult.success || !pillarResult.data) {
-          setState(prev => ({
-            ...prev,
-            error: pillarResult.error?.message || 'Pillar not found',
-            loading: false,
-            skillsLoading: false,
-          }));
-          return;
+          setError(pillarResult.error?.message || 'Pillar not found');
+        } else {
+          setPillar(pillarResult.data);
+          setSkills(skillsResult.data?.items || []);
         }
-
-        if (!skillsResult.success) {
-          setState(prev => ({
-            ...prev,
-            pillar: pillarResult.data ?? null,
-            error: skillsResult.error?.message || 'Failed to load skills',
-            loading: false,
-            skillsLoading: false,
-          }));
-          return;
-        }
-
-        setState(prev => ({
-          ...prev,
-          pillar: pillarResult.data ?? null,
-          skills: skillsResult.data?.items || [],
-          loading: false,
-          skillsLoading: false,
-        }));
-      } catch (error) {
-        setState(prev => ({
-          ...prev,
-          error: 'An unexpected error occurred',
-          loading: false,
-          skillsLoading: false,
-        }));
+      } catch {
+        setError('An unexpected error occurred');
+      } finally {
+        setLoading(false);
       }
     };
-
-    loadPillarData();
+    load();
   }, [pillarId]);
 
-  // Load quiz progress for each skill
+  // ── Load user level from evaluation ──────────────────────────────────────
   useEffect(() => {
-    if (!user || !state.skills.length) return;
+    if (!user) return;
+    const load = async () => {
+      setLevelLoading(true);
+      try {
+        const result = await onboardingService.getEvaluation(user.id);
+        if (result.success && result.data?.intelligenceProfile) {
+          setUserLevel(result.data.intelligenceProfile.pacingLevel);
+          setUserScore(result.data.intelligenceProfile.overallScore);
+        } else if (result.success && result.data?.pacingLevel) {
+          setUserLevel(result.data.pacingLevel);
+        }
+      } catch {
+        // non-blocking
+      } finally {
+        setLevelLoading(false);
+      }
+    };
+    load();
+  }, [user]);
 
-    const loadSkillProgress = async () => {
-      const progressMap: SkillProgress = {};
-
+  // ── Load skill progress ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user || !skills.length) return;
+    const load = async () => {
+      const map: SkillProgress = {};
       await Promise.all(
-        state.skills.map(async (skill) => {
+        skills.map(async (skill) => {
           try {
-            const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, {
+            const res = await videoQuizService.getUserVideoQuizAttempts(user.id, {
               skillId: skill.id,
               completed: true,
               limit: 1,
             });
-
-            if (attemptsResult.success && attemptsResult.data?.items && attemptsResult.data.items.length > 0) {
-              const latestAttempt = attemptsResult.data.items[0];
-              progressMap[skill.id] = {
-                percentage: latestAttempt.percentage,
-                isCompleted: latestAttempt.isCompleted,
-              };
+            if (res.success && res.data?.items?.length) {
+              const latest = res.data.items[0];
+              map[skill.id] = { percentage: latest.percentage, isCompleted: latest.isCompleted };
             } else {
-              progressMap[skill.id] = null;
+              map[skill.id] = null;
             }
-          } catch (error) {
-            console.error(`Failed to load progress for skill ${skill.id}:`, error);
-            progressMap[skill.id] = null;
+          } catch {
+            map[skill.id] = null;
           }
         })
       );
-
-      setSkillProgress(progressMap);
+      setSkillProgress(map);
     };
+    load();
+  }, [user, skills]);
 
-    loadSkillProgress();
-  }, [user, state.skills]);
-
-  const getDifficultyColor = (difficulty: DifficultyLevel) => {
-    switch (difficulty) {
-      case 'introduction':
-        return 'text-green-600 bg-green-100';
-      case 'development':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'refinement':
-        return 'text-red-600 bg-red-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const getDisplayInfo = (p: Sport) => {
+    const slug = getPillarSlugFromDocId(p.id);
+    if (slug) {
+      const info = PILLARS.find(x => x.slug === slug);
+      if (info) return { icon: info.icon, color: info.color };
     }
+    return { icon: p.icon, color: 'blue' };
   };
 
-  const handleToggleFavorite = async () => {
-    if (!user) {
-      toast.error("Please log in to save favorites.");
-      router.push('/auth/login');
-      return;
-    }
+  // Only show skills at the goalie's assessed level (or all if no level yet)
+  const filteredSkills = userLevel
+    ? skills.filter(s => s.difficulty === userLevel)
+    : skills;
 
-    setFavoriteLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setIsFavorited(!isFavorited);
-      toast.success(
-        isFavorited
-          ? `${state.pillar?.name} removed from favorites`
-          : `${state.pillar?.name} added to favorites`
-      );
-    } catch (error) {
-      toast.error("Failed to update favorites. Please try again.");
-    } finally {
-      setFavoriteLoading(false);
-    }
+  const skillsByDifficulty: Record<DifficultyLevel, Skill[]> = {
+    introduction: filteredSkills.filter(s => s.difficulty === 'introduction'),
+    development: filteredSkills.filter(s => s.difficulty === 'development'),
+    refinement: filteredSkills.filter(s => s.difficulty === 'refinement'),
   };
 
-  const filteredSkills = selectedDifficulty === 'all'
-    ? state.skills
-    : state.skills.filter(skill => skill.difficulty === selectedDifficulty);
+  const completedTotal = filteredSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+  const progressPct = filteredSkills.length > 0 ? Math.round((completedTotal / filteredSkills.length) * 100) : 0;
 
-  const skillsByDifficulty = {
-    introduction: state.skills.filter(skill => skill.difficulty === 'introduction'),
-    development: state.skills.filter(skill => skill.difficulty === 'development'),
-    refinement: state.skills.filter(skill => skill.difficulty === 'refinement'),
-  };
-
-  if (state.loading) {
+  // ── States ────────────────────────────────────────────────────────────────
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Loading pillar details...</p>
-          </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <LoadingState message="Loading pillar…" />
+      </div>
+    );
+  }
+
+  if (error || !pillar) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-md">
+          <p className="text-red-700 font-medium mb-4">{error || 'Pillar not found'}</p>
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-zinc-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Go Back
+          </button>
         </div>
       </div>
     );
   }
 
-  if (state.error || !state.pillar) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <div className="text-red-600 text-4xl">!</div>
-              <h3 className="text-lg font-medium text-red-900">
-                {state.error || 'Pillar not found'}
-              </h3>
-              <div className="flex gap-2 justify-center">
-                <Button variant="outline" onClick={() => router.back()}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Go Back
-                </Button>
-                <Button variant="outline" onClick={() => window.location.reload()}>
-                  Try Again
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const { color } = getDisplayInfo(pillar);
+  const colorCls = getPillarColorClasses(color);
+  const heroTheme = HERO_THEME[color] ?? HERO_THEME.blue;
+  const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
-  const { pillar } = state;
-  const displayInfo = getPillarDisplayInfo(pillar);
-  const colorClasses = getPillarColorClasses(displayInfo.color);
-  const IconComponent = PILLAR_ICONS[displayInfo.icon] || Target;
+  // Show only the user's level section, or all if no level determined
+  const orderedDifficulties = userLevel
+    ? [userLevel] as DifficultyLevel[]
+    : DIFFICULTY_ORDER;
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Back Button */}
-      <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Pillars
-      </Button>
+    <div className="min-h-screen bg-gray-50">
 
-      {/* Pillar Header */}
-      <div className="space-y-6">
-        {/* Gradient Header with Icon */}
-        <div className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${colorClasses.gradient} p-8 md:p-12`}>
-          <div className="absolute inset-0 bg-black/10" />
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <IconComponent className="w-10 h-10 md:w-12 md:h-12 text-white" />
-              </div>
-              <div className="text-white space-y-2">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl md:text-4xl font-bold">{pillar.name}</h1>
-                  {pillar.isFeatured && (
-                    <span className="bg-white/20 backdrop-blur-sm text-white text-sm px-3 py-1 rounded-full font-medium">
-                      Featured
-                    </span>
-                  )}
-                </div>
-                <p className="text-lg text-white/90 max-w-2xl">{pillar.description}</p>
-              </div>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleToggleFavorite}
-              disabled={favoriteLoading}
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-            >
-              {favoriteLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isFavorited ? (
-                <Heart className="w-4 h-4 fill-current text-red-500" />
-              ) : (
-                <Heart className="w-4 h-4" />
-              )}
-              <span className="ml-2 hidden md:inline">{isFavorited ? 'Favorited' : 'Favorite'}</span>
-            </Button>
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <section className="px-5 pt-4 md:px-6 md:pt-5">
+        <div className={`relative overflow-hidden rounded-2xl border border-slate-700/70 ${heroTheme.sectionBg} px-6 py-5 md:px-8 md:py-6 shadow-2xl shadow-slate-900/40`}>
+          <div className={`pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full blur-3xl ${heroTheme.glowBg}`} />
+          <div className={`pointer-events-none absolute right-10 top-6 h-56 w-56 rounded-full blur-3xl ${heroTheme.secondaryGlowBg}`} />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,255,255,0.04)_0%,transparent_28%,transparent_70%,rgba(255,255,255,0.06)_100%)]" />
+          <div className="pointer-events-none absolute right-[-5%] top-0 h-full w-[55%] opacity-35">
+            <svg viewBox="0 0 700 320" className="h-full w-full" preserveAspectRatio="none">
+              <g fill="none" stroke="rgba(226,232,240,0.65)" strokeWidth="1.6">
+                <path d="M20 300 C160 230, 220 80, 360 110 C500 140, 560 10, 700 40" />
+                <path d="M-10 270 C120 210, 210 60, 350 90 C500 120, 570 20, 710 55" />
+                <path d="M10 240 C140 180, 220 55, 360 80 C510 105, 590 25, 730 65" />
+                <path d="M20 210 C150 155, 230 45, 370 70 C520 95, 600 35, 740 80" />
+                <path d="M30 180 C165 130, 245 40, 390 65 C535 90, 620 40, 760 95" />
+              </g>
+            </svg>
           </div>
-        </div>
 
-        {/* Pillar Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={`${colorClasses.border} border-2`}>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <span className={`px-3 py-1 rounded ${colorClasses.bgLight} ${colorClasses.text} text-sm font-medium`}>
-                  Pillar {pillar.order}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">Pillar Number</p>
-            </CardContent>
-          </Card>
+          <button
+            onClick={() => router.push('/pillars')}
+            className="relative z-20 inline-flex items-center gap-1.5 text-sm font-medium text-slate-300 transition-colors hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4" /> All Pillars
+          </button>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <BookOpen className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xl font-semibold">{pillar.skillsCount}</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">Skills</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xl font-semibold">{pillar.metadata.totalEnrollments}</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">Students Enrolled</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Additional Info */}
-        {(pillar.metadata.averageRating > 0 || pillar.tags.length > 0) && (
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              {pillar.metadata.averageRating > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                    <span className="text-lg font-semibold">{pillar.metadata.averageRating.toFixed(1)}</span>
-                    <span className="text-muted-foreground">
-                      ({pillar.metadata.totalRatings} reviews)
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-muted-foreground">
-                    <Trophy className="w-4 h-4" />
-                    <span>{pillar.metadata.totalCompletions} completed</span>
-                  </div>
-                </div>
-              )}
-
-              {pillar.tags.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Tags</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {pillar.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Skills Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Skills ({state.skills.length})</h2>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground">Filter by difficulty:</span>
-            <select
-              value={selectedDifficulty}
-              onChange={(e) => setSelectedDifficulty(e.target.value as DifficultyLevel | 'all')}
-              className="text-sm border rounded px-2 py-1"
-            >
-              <option value="all">All Levels</option>
-              <option value="introduction">Introduction ({skillsByDifficulty.introduction.length})</option>
-              <option value="development">Development ({skillsByDifficulty.development.length})</option>
-              <option value="refinement">Refinement ({skillsByDifficulty.refinement.length})</option>
-            </select>
-          </div>
-        </div>
-
-        {state.skillsLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredSkills.length === 0 ? (
-          <Card className="p-8">
-            <div className="text-center space-y-4">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto" />
-              <h3 className="text-lg font-medium">No skills found</h3>
-              <p className="text-muted-foreground">
-                {selectedDifficulty === 'all'
-                  ? 'This pillar doesn\'t have any skills yet.'
-                  : `No ${selectedDifficulty} level skills available.`}
+          <div className="relative z-10 mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            {/* Left: pillar info */}
+            <div className="flex-1 pb-1 md:pb-2">
+              <h1 className="text-3xl md:text-5xl font-black leading-[1.05] mb-3 max-w-3xl text-white">
+                {pillar.name}
+              </h1>
+              <p className="text-base md:text-lg leading-relaxed max-w-2xl text-slate-300">
+                {pillar.description}
               </p>
+
+              {/* Skill count + progress */}
+              <div className="flex items-center gap-5 mt-4 text-sm">
+                <div className="flex items-center gap-1.5 text-slate-300">
+                  <BookOpen className="w-4 h-4" />
+                  <span>{skills.length} skills</span>
+                </div>
+                {user && completedTotal > 0 && (
+                  <div className={`flex items-center gap-1.5 ${heroTheme.accent}`}>
+                    <CheckCircle className="w-4 h-4" />
+                    <span>{completedTotal} completed</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Overall progress bar */}
+              {user && skills.length > 0 && (
+                <div className="mt-3 max-w-sm space-y-1.5">
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span>Your progress</span>
+                    <span className="font-semibold text-slate-200">{progressPct}%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full overflow-hidden bg-slate-700/70">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${colorCls.bg}`}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          </Card>
+
+            {/* Right: level panel */}
+            {user && (
+              <div className="lg:w-64 flex-shrink-0">
+                {levelLoading ? (
+                  <div className="rounded-2xl border border-white/20 bg-white/10 p-5 flex items-center justify-center gap-2 text-slate-300 text-sm backdrop-blur-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading your level…
+                  </div>
+                ) : userLevel && levelCfg ? (
+                  <div className="rounded-2xl border border-white/25 bg-white/12 p-5 space-y-3 backdrop-blur-md shadow-xl shadow-slate-900/40">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                        Your Level
+                      </p>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        {levelCfg.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300">{levelCfg.tagline}</p>
+                    {userScore !== null && (
+                      <ScoreBar score={userScore} level={userLevel} />
+                    )}
+                    <p className="text-xs text-slate-300">
+                      Score range: <span className="font-semibold text-white">{levelCfg.range}</span>
+                    </p>
+                    <div className="rounded-xl border border-white/20 bg-white/90 p-3 text-xs font-semibold text-slate-800">
+                      {skillsByDifficulty[userLevel].length} skills at your level —&nbsp;
+                      <span className="font-black">start here</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-white/20 bg-white/10 p-5 space-y-2 backdrop-blur-sm">
+                    <p className="text-slate-200 text-xs font-semibold uppercase tracking-wider">Your Level</p>
+                    <p className="text-slate-300 text-xs leading-relaxed">
+                      Complete your onboarding assessment to see your recommended level for this pillar.
+                    </p>
+                    <Link
+                      href="/onboarding"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-500 px-3 py-2 rounded-lg transition-colors mt-1"
+                    >
+                      Take Assessment <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Skills ────────────────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 py-10 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">
+            Skills <span className="text-muted-foreground font-normal text-base">({filteredSkills.length})</span>
+          </h2>
+          {userLevel && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Star className="w-3.5 h-3.5 text-amber-400" />
+              <span>Showing skills for your level: <span className="font-semibold text-foreground">{userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span></span>
+            </div>
+          )}
+        </div>
+
+        {filteredSkills.length === 0 ? (
+          <div className="bg-card rounded-2xl border border-border p-12 text-center">
+            <BookOpen className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="font-semibold text-foreground">Skills coming soon</p>
+            <p className="text-sm text-muted-foreground mt-1">Content for this pillar is being added.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSkills.map((skill, index) => (
-              <Link key={skill.id} href={`/pillars/${pillarId}/skills/${skill.id}`}>
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
-                  <CardHeader className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                          {skill.name}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="bg-muted px-2 py-1 rounded text-xs">
-                            Skill {index + 1}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${getDifficultyColor(skill.difficulty)}`}
-                          >
-                            {skill.difficulty}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {skill.description}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        {skill.hasVideo && (
-                          <div className="flex items-center gap-1">
-                            <Play className="w-4 h-4" />
-                            <span className="text-xs">Video</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {skill.learningObjectives.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium">Learning Objectives</h5>
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          {skill.learningObjectives.slice(0, 2).map((objective, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="text-primary text-xs mt-1">*</span>
-                              <span className="line-clamp-1">{objective}</span>
-                            </li>
-                          ))}
-                          {skill.learningObjectives.length > 2 && (
-                            <li className="text-xs text-muted-foreground italic">
-                              +{skill.learningObjectives.length - 2} more objectives
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-
-                    {skill.prerequisites.length > 0 && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>Prerequisites:</span>
-                        <span>{skill.prerequisites.length} skill{skill.prerequisites.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    )}
-
-                    {/* Progress Bar - Latest Quiz Score */}
-                    {user && skillProgress[skill.id] && (
-                      <div className="space-y-2 pt-3 border-t border-border/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">Latest Score</span>
-                          <div className="flex items-center space-x-1">
-                            <span className={`text-lg font-bold ${
-                              skillProgress[skill.id]!.isCompleted
-                                ? 'text-green-600'
-                                : 'text-amber-600'
-                            }`}>
-                              {Math.round(skillProgress[skill.id]!.percentage)}%
-                            </span>
-                            {skillProgress[skill.id]!.isCompleted && (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-500 ease-out ${
-                              skillProgress[skill.id]!.isCompleted
-                                ? 'bg-green-500'
-                                : 'bg-amber-500'
-                            }`}
-                            style={{ width: `${skillProgress[skill.id]!.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {user && skillProgress[skill.id] === null && (
-                      <div className="pt-3 border-t border-border/50">
-                        <div className="text-xs text-muted-foreground text-center">
-                          No quiz attempts yet
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
+          <div className="space-y-8">
+            {orderedDifficulties.map(difficulty => (
+              <SkillsGroup
+                key={difficulty}
+                difficulty={difficulty}
+                skills={skillsByDifficulty[difficulty]}
+                pillarId={pillarId}
+                userLevel={userLevel}
+                skillProgress={skillProgress}
+                pillarColor={color}
+              />
             ))}
           </div>
         )}
-      </div>
+      </section>
+
     </div>
   );
 }

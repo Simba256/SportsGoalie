@@ -401,3 +401,126 @@ export interface ChartingQueryOptions {
   orderBy?: 'date' | 'createdAt' | 'updatedAt';
   orderDirection?: 'asc' | 'desc';
 }
+
+// ─── V2 Charting Types (Confirmed Build Spec - March 2026) ──────────────────
+
+/** Pre-game mind management start time options */
+export type MindManagementStartTime =
+  | 'at_the_rink'
+  | '1_hour_before'
+  | '2_hours_before'
+  | '3_plus_hours_before'
+  | 'wake_up_thinking';
+
+/** V2 Pre-Game Section — completed before leaving for the rink */
+export interface V2PreGameData {
+  personalStartTime: MindManagementStartTime;
+  mentalStateRating: number; // 1-5
+  mentalStateVoiceNote?: string;
+  routineCompleted: boolean;
+  routineVoiceNote?: string; // captured if No
+  anxietyPresent: boolean;
+  anxietyVoiceNote?: string; // captured if Yes → feeds Mind Vault
+  targetStateAchieved: boolean;
+  targetStateVoiceNote?: string; // captured if No
+}
+
+/** Individual goal classification within a period */
+export interface GoalEntry {
+  goalNumber: number;
+  isGoodGoal: boolean;
+  voiceNote?: string; // captured if Bad Goal
+}
+
+/** V2 Per-Period Section — completed post-game from memory */
+export interface V2PeriodData {
+  mindControlRating: number; // 1-5 stars
+  mindControlVoiceNote?: string; // captured if 1-2
+  periodFactorRatio: number; // 1-5
+  goalsAgainst: number;
+  goals: GoalEntry[];
+  // Architecture placeholder for 8 additional factor ratio fields (PENDING)
+  factorRatios?: Record<string, number>;
+}
+
+/** V2 Post-Game Section — completed immediately after the game */
+export interface V2PostGameData {
+  overallFeeling: string; // voice transcription, raw/unfiltered
+  overallGameFactorRating: number; // 1-5
+  overallGameFactorVoiceNote?: string; // captured if 4-5
+  mindControlAverage: number; // auto-calculated from period data
+  goodGoalCount: number; // auto-calculated
+  badGoalCount: number; // auto-calculated
+  goodDecisionRate: number; // percentage, auto-calculated
+  gameRetentionRating: number; // 1-5
+  gameRetentionVoiceNote?: string;
+  mindVaultEntry: string; // voice transcription
+  factorRatioSummary: number; // auto-calculated average of period factor ratios
+}
+
+/** Complete V2 Game Chart Entry */
+export interface V2GameChartEntry {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  version: 'v2';
+  preGame?: V2PreGameData;
+  periods: {
+    period1?: V2PeriodData;
+    period2?: V2PeriodData;
+    period3?: V2PeriodData;
+    overtime?: V2PeriodData;
+  };
+  postGame?: V2PostGameData;
+  completedSections: ('preGame' | 'periods' | 'postGame')[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** Practice Index item priority categories */
+export type PracticeIndexCategory =
+  | 'immediate_development' // broke down in last game — highest priority
+  | 'refinement'            // growing but not yet owned
+  | 'maintenance';          // under control, keep sharp
+
+/** Auto-generated practice item from game chart data */
+export interface PracticeIndexItem {
+  id: string;
+  label: string;
+  description?: string;
+  category: PracticeIndexCategory;
+  sourceGameSessionId?: string;
+  sourceField?: string; // which game chart field generated this
+  priority: number; // 1 = highest
+}
+
+/** V2 Practice Chart Entry */
+export interface V2PracticeChartEntry {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  version: 'v2';
+  practiceIndex: PracticeIndexItem[]; // auto-generated from recent games
+  practiceValueRating: number; // 1-5
+  designatedTrainingReceived: boolean;
+  designatedTrainingDuration?: number; // minutes, in 5-min increments
+  indexItemsWorkedOn: string[]; // PracticeIndexItem IDs
+  videoCaptured: boolean;
+  videoUrl?: string;
+  improvementRatings: { itemId: string; rating: number }[]; // 1-5 per item
+  mindVaultEntry: string; // voice transcription
+  technicalEyeDevelopmentRating: number; // 1-5
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** Mind Vault entry stored from games and practices */
+export interface MindVaultEntry {
+  id: string;
+  studentId: string;
+  sessionId: string;
+  sessionType: SessionType;
+  source: 'pre_game_anxiety' | 'post_game' | 'practice';
+  content: string; // voice transcription
+  createdAt: Timestamp;
+}

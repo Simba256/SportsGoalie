@@ -55,9 +55,11 @@ import { generateCoachCode, normalizeCoachCode } from '../../utils/coach-code-ge
 export class UserService extends BaseDatabaseService {
   private readonly USERS_COLLECTION = 'users';
   private readonly USER_PROGRESS_COLLECTION = 'user_progress';
+  private readonly SPORT_PROGRESS_COLLECTION = 'sport_progress';
   private readonly USER_ACHIEVEMENTS_COLLECTION = 'user_achievements';
   private readonly NOTIFICATIONS_COLLECTION = 'notifications';
   private readonly COACH_CODES_COLLECTION = 'coach_codes';
+  private readonly PROGRESS_ATTEMPTS_LIMIT = 2000;
 
   // User CRUD operations
   /**
@@ -353,19 +355,20 @@ export class UserService extends BaseDatabaseService {
     // Calculate real stats from video quiz attempts
     try {
       const { videoQuizService } = await import('./video-quiz.service');
-      const { enrollmentService } = await import('./enrollment.service');
 
       // Get all user's video quiz attempts
       const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(userId, {
         completed: true,
-        limit: 10000
+        limit: this.PROGRESS_ATTEMPTS_LIMIT,
       });
 
-      // Get enrolled sports for skills/sports completed count
-      const enrolledSportsResult = await enrollmentService.getUserEnrolledSports(userId);
+      // Get enrollment records directly to avoid expensive nested per-skill aggregation.
+      const sportProgressResult = await this.query<SportProgress>(this.SPORT_PROGRESS_COLLECTION, {
+        where: [{ field: 'userId', operator: '==', value: userId }],
+      });
 
       const attempts = attemptsResult.success ? attemptsResult.data?.items || [] : [];
-      const enrolledSports = enrolledSportsResult.success ? enrolledSportsResult.data || [] : [];
+      const sportProgressItems = sportProgressResult.success ? sportProgressResult.data?.items || [] : [];
 
       // Calculate real stats
       const quizzesCompleted = attempts.length; // Total number of video quiz attempts
@@ -382,8 +385,8 @@ export class UserService extends BaseDatabaseService {
         }
       });
 
-      const completedSportsCount = enrolledSports.filter(
-        ({ progress }) => progress.status === 'completed'
+      const completedSportsCount = sportProgressItems.filter(
+        (progress) => progress.status === 'completed'
       ).length;
 
       // Calculate streak from quiz attempt dates

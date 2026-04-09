@@ -322,7 +322,7 @@ export default function ChildDetailPage() {
                     goalie's self-assessment.
                   </p>
                   <Button className="mt-4" asChild>
-                    <Link href="/parent/onboarding">Take Parent Assessment</Link>
+                    <Link href="/onboarding?role=parent">Take Parent Assessment</Link>
                   </Button>
                 </CardContent>
               </Card>

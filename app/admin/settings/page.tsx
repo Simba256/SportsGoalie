@@ -181,7 +181,7 @@ function SettingsContent() {
           </div>
           <div className="flex items-center space-x-2">
             {hasChanges && (
-              <Badge variant="outline" className="text-orange-600 border-orange-200">
+              <Badge variant="outline" className="text-red-600 border-red-200">
                 Unsaved Changes
               </Badge>
             )}
@@ -189,7 +189,7 @@ function SettingsContent() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Reset
             </Button>
-            <Button onClick={handleSaveSettings} disabled={loading || !hasChanges}>
+            <Button onClick={handleSaveSettings} disabled={loading || !hasChanges} className="bg-red-600 hover:bg-red-700">
               <Save className="mr-2 h-4 w-4" />
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>

@@ -40,7 +40,11 @@ interface ParentLinkManagerProps {
 export function ParentLinkManager({ user }: ParentLinkManagerProps) {
   const [linkCode, setLinkCode] = useState<string | null>(user.parentLinkCode || null);
   const [linkCodeExpiry, setLinkCodeExpiry] = useState<Date | null>(
-    user.parentLinkCodeExpiry ? user.parentLinkCodeExpiry.toDate() : null
+    user.parentLinkCodeExpiry
+      ? (typeof user.parentLinkCodeExpiry.toDate === 'function'
+          ? user.parentLinkCodeExpiry.toDate()
+          : new Date((user.parentLinkCodeExpiry as unknown as { seconds: number }).seconds * 1000))
+      : null
   );
   const [linkedParents, setLinkedParents] = useState<LinkedParentSummary[]>([]);
   const [loading, setLoading] = useState(true);

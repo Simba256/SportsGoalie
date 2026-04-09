@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Users, BookOpen, GraduationCap, TrendingUp, Key, Copy, Check, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/context';
 import { userService, customCurriculumService } from '@/lib/database';
@@ -129,164 +128,115 @@ export default function CoachDashboardPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {user?.role === 'admin' ? 'Curriculum Management' : 'Coach Dashboard'}
-        </h1>
-        <p className="text-muted-foreground">
-          Welcome back, {user?.displayName}! Here's an overview of {user?.role === 'admin' ? 'all custom workflow' : 'your'} students.
-        </p>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* ── Welcome Banner ── */}
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative">
+          <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">
+            {user?.role === 'admin' ? 'Curriculum Management' : 'Coach Dashboard'}
+          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Welcome back, {user?.displayName}!
+          </h1>
+          <p className="text-white/60 text-sm mt-1">
+            Here&apos;s an overview of {user?.role === 'admin' ? 'all custom workflow' : 'your'} students.
+          </p>
+        </div>
       </div>
 
-      {/* Coach Code Card (Coaches Only) */}
+      {/* Coach Code Card */}
       {user?.role === 'coach' && (
-        <Card className="mb-8 border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Key className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Your Coach Code</CardTitle>
-            </div>
-            <CardDescription>
-              Share this code with students to connect with them
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                {coachCode ? (
-                  <div className="flex items-center gap-3">
-                    <code className="text-2xl font-mono font-bold tracking-wider bg-background px-4 py-2 rounded-md border">
-                      {coachCode}
-                    </code>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleCopyCode}
-                      title="Copy coach code"
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleRegenerateCode}
-                      disabled={regenerating}
-                      title="Regenerate code (this will invalidate the old code)"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${regenerating ? 'animate-spin' : ''}`} />
-                    </Button>
-                  </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <Key className="h-5 w-5 text-red-600" />
+            <h2 className="text-lg font-bold text-foreground">Your Coach Code</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">Share this code with students to connect with them</p>
+          <div className="flex items-center gap-3">
+            {coachCode ? (
+              <>
+                <code className="text-2xl font-mono font-bold tracking-wider bg-gray-50 px-5 py-2.5 rounded-xl border border-border text-foreground">
+                  {coachCode}
+                </code>
+                <button
+                  onClick={handleCopyCode}
+                  className="h-10 w-10 rounded-xl border border-border bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  title="Copy coach code"
+                >
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                </button>
+                <button
+                  onClick={handleRegenerateCode}
+                  disabled={regenerating}
+                  className="h-10 w-10 rounded-xl border border-border bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  title="Regenerate code"
+                >
+                  <RefreshCw className={`h-4 w-4 text-muted-foreground ${regenerating ? 'animate-spin' : ''}`} />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleRegenerateCode}
+                disabled={regenerating}
+                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50"
+              >
+                {regenerating ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin inline" />Generating...</>
                 ) : (
-                  <div className="flex items-center gap-3">
-                    <p className="text-muted-foreground">
-                      No coach code generated yet.
-                    </p>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={handleRegenerateCode}
-                      disabled={regenerating}
-                    >
-                      {regenerating ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Key className="h-4 w-4 mr-2" />
-                          Generate Code
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <><Key className="h-4 w-4 mr-2 inline" />Generate Code</>
                 )}
-              </div>
-            </div>
-            {coachCode && (
-              <p className="text-xs text-muted-foreground mt-3">
-                Students enter this code when registering with &quot;Coach-Guided&quot; learning mode.
-              </p>
+              </button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+          {coachCode && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Students enter this code when registering with &quot;Coach-Guided&quot; learning mode.
+            </p>
+          )}
+        </div>
       )}
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Custom workflow students
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Curricula</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.studentsWithCurriculum}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Students with assigned curriculum
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Content Items</CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCurriculumItems}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all curricula
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Progress</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.averageProgress}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all students
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: 'Total Students', value: stats.totalStudents, sub: 'Custom workflow students', color: 'red', icon: <Users className="h-5 w-5" /> },
+          { label: 'Active Curricula', value: stats.studentsWithCurriculum, sub: 'With assigned curriculum', color: 'blue', icon: <BookOpen className="h-5 w-5" /> },
+          { label: 'Content Items', value: stats.totalCurriculumItems, sub: 'Across all curricula', color: 'green', icon: <GraduationCap className="h-5 w-5" /> },
+          { label: 'Avg. Progress', value: `${stats.averageProgress}%`, sub: 'Across all students', color: 'orange', icon: <TrendingUp className="h-5 w-5" /> },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-2xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
+              <div className={`h-9 w-9 rounded-xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-600`}>
+                {stat.icon}
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
+          </div>
+        ))}
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks to manage your students</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <Button asChild>
-            <Link href="/coach/students">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-base font-bold text-foreground mb-4">Quick Actions</h2>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/coach/students">
+            <Button size="sm">
               <Users className="h-4 w-4 mr-2" />
               View All Students
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+            </Button>
+          </Link>
+          <Link href="/coach/content">
+            <Button variant="outline" size="sm">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Content Library
+            </Button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

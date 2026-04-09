@@ -19,6 +19,7 @@ import {
   BarChart3,
   CheckCircle,
   Type,
+  Sparkles,
 } from 'lucide-react';
 import { startOfWeek, startOfMonth, subMonths, isAfter } from 'date-fns';
 
@@ -527,6 +528,13 @@ export default function ChartingAnalyticsPage() {
   const filteredSessions = getFilteredSessions();
   const filteredEntries = getFilteredEntries();
 
+  const getTimeButtonClass = (range: TimeRange) => {
+    if (timeRange === range) {
+      return 'bg-red-600 text-white hover:bg-red-700 border-red-600';
+    }
+    return 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800';
+  };
+
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'up':
@@ -540,65 +548,91 @@ export default function ChartingAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading analytics...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 rounded-full border-2 border-red-600 border-t-transparent animate-spin" />
+          <p className="text-slate-600 font-medium">Loading analytics...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/70 via-white to-red-50/70 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.push('/charting')}>
+        <div className="relative overflow-hidden rounded-3xl border border-red-100 bg-gradient-to-r from-red-50 via-white to-blue-50 px-6 py-6 md:px-8 md:py-7 shadow-lg shadow-red-100/40">
+          <div className="pointer-events-none absolute -top-14 -right-10 h-40 w-40 rounded-full bg-blue-300/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-red-300/20 blur-3xl" />
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                className="border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
+                onClick={() => router.push('/charting')}
+              >
               <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Performance Analytics</h1>
-              <p className="text-gray-600">Track your progress and trends over time</p>
+              </Button>
+              <div>
+                <Badge className="mb-2 bg-blue-100 text-blue-800 hover:bg-blue-100 border border-blue-200">
+                  <Sparkles className="w-3.5 h-3.5 mr-1" />
+                  Insight Center
+                </Badge>
+                <h1 className="text-3xl font-black text-slate-900">Performance Analytics</h1>
+                <p className="text-slate-600">Track trends, consistency, and growth with a clearer view of your game.</p>
+              </div>
+            </div>
+            <div className="hidden lg:block text-right">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Sessions in range</p>
+              <p className="text-2xl font-black text-slate-900">{filteredSessions.length}</p>
             </div>
           </div>
         </div>
 
         {/* Time Range Filter */}
-        <Card className="p-4">
-          <div className="flex items-center gap-4">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <span className="font-semibold text-gray-900">Time Period:</span>
-            <div className="flex gap-2">
+        <Card className="border-red-100 bg-white/95 shadow-sm p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 border border-red-100">
+              <Filter className="w-4 h-4 text-red-600" />
+              <span className="text-sm font-semibold text-red-700">Time Period</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <Button
-                variant={timeRange === 'week' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 onClick={() => setTimeRange('week')}
+                className={getTimeButtonClass('week')}
               >
                 This Week
               </Button>
               <Button
-                variant={timeRange === 'month' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 onClick={() => setTimeRange('month')}
+                className={getTimeButtonClass('month')}
               >
                 This Month
               </Button>
               <Button
-                variant={timeRange === '3months' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 onClick={() => setTimeRange('3months')}
+                className={getTimeButtonClass('3months')}
               >
                 Last 3 Months
               </Button>
               <Button
-                variant={timeRange === 'all' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 onClick={() => setTimeRange('all')}
+                className={getTimeButtonClass('all')}
               >
                 All Time
               </Button>
             </div>
-            <div className="ml-auto text-sm text-gray-600">
-              <Calendar className="w-4 h-4 inline mr-1" />
+            <div className="ml-auto text-sm text-slate-600 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
+              <Calendar className="w-4 h-4 inline mr-1 text-blue-600" />
               {filteredSessions.length} sessions analyzed
             </div>
           </div>
@@ -607,54 +641,54 @@ export default function ChartingAnalyticsPage() {
         {/* Dynamic Form Analytics */}
         {dynamicEntries.length > 0 && activeTemplate && (
           <div className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Dynamic Form Analytics</h2>
-              <p className="text-gray-600 mb-4">Data from active form template: {activeTemplate.name}</p>
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-red-50/70 px-5 py-4">
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">Dynamic Form Analytics</h2>
+              <p className="text-slate-600">Data from active form template: <span className="font-semibold text-blue-700">{activeTemplate.name}</span></p>
             </div>
 
             {/* Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-6">
+              <Card className="p-6 border-blue-100 shadow-sm bg-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Entries</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{dynamicEntries.length}</p>
+                    <p className="text-sm font-medium text-slate-600">Total Entries</p>
+                    <p className="text-3xl font-black text-slate-900 mt-2">{dynamicEntries.length}</p>
                   </div>
-                  <BarChart3 className="w-8 h-8 text-blue-500" />
+                  <BarChart3 className="w-8 h-8 text-blue-600" />
                 </div>
               </Card>
 
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Complete Entries</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                    <p className="text-sm font-medium text-slate-600">Complete Entries</p>
+                    <p className="text-3xl font-black text-slate-900 mt-2">
                       {dynamicEntries.filter(e => e.isComplete).length}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {Math.round((dynamicEntries.filter(e => e.isComplete).length / dynamicEntries.length) * 100)}% completion rate
                     </p>
                   </div>
-                  <CheckCircle className="w-8 h-8 text-green-500" />
+                  <CheckCircle className="w-8 h-8 text-red-600" />
                 </div>
               </Card>
 
-              <Card className="p-6">
+              <Card className="p-6 border-blue-100 shadow-sm bg-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Avg Completion</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                    <p className="text-sm font-medium text-slate-600">Avg Completion</p>
+                    <p className="text-3xl font-black text-slate-900 mt-2">
                       {Math.round(dynamicEntries.reduce((sum, e) => sum + e.completionPercentage, 0) / dynamicEntries.length)}%
                     </p>
                   </div>
-                  <Type className="w-8 h-8 text-purple-500" />
+                  <Type className="w-8 h-8 text-blue-600" />
                 </div>
               </Card>
             </div>
 
             {/* Field-by-Field Stats */}
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Field Statistics</h3>
+            <Card className="p-6 border-red-100 shadow-sm bg-white">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Field Statistics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeTemplate.sections.map(section =>
                   section.fields
@@ -710,11 +744,11 @@ export default function ChartingAnalyticsPage() {
                       }
 
                       return (
-                        <Card key={`${section.id}-${field.id}`} className="p-4 bg-gray-50">
-                          <p className="text-xs text-gray-500 mb-1">{section.title}</p>
-                          <p className="text-sm font-semibold text-gray-900 mb-2">{field.label}</p>
+                        <Card key={`${section.id}-${field.id}`} className="p-4 bg-gradient-to-br from-blue-50/70 to-red-50/60 border border-blue-100">
+                          <p className="text-xs text-slate-500 mb-1">{section.title}</p>
+                          <p className="text-sm font-semibold text-slate-900 mb-2">{field.label}</p>
                           <p className="text-2xl font-bold text-blue-600">{displayValue}</p>
-                          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+                          <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
                         </Card>
                       );
                     })
@@ -726,26 +760,26 @@ export default function ChartingAnalyticsPage() {
 
         {/* Legacy Analytics Header */}
         {filteredEntries.length > 0 && (
-          <div className="pt-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Legacy Analytics</h2>
-            <p className="text-gray-600 mb-4">Historical data from hardcoded forms</p>
+          <div className="pt-4 rounded-2xl border border-red-100 bg-white/90 px-5 py-4">
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">Legacy Analytics</h2>
+            <p className="text-slate-600">Historical data from hardcoded forms</p>
           </div>
         )}
 
         {filteredEntries.length === 0 ? (
-          <Card className="p-12 text-center">
-            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Data Available</h3>
-            <p className="text-gray-600 mb-4">
+          <Card className="p-12 text-center border-red-100 shadow-sm bg-white">
+            <BarChart3 className="w-16 h-16 text-blue-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No Data Available</h3>
+            <p className="text-slate-600 mb-4">
               No charting data found for the selected time period.
             </p>
-            <Button onClick={() => router.push('/charting')}>Go to Sessions</Button>
+            <Button onClick={() => router.push('/charting')} className="bg-red-600 hover:bg-red-700 text-white">Go to Sessions</Button>
           </Card>
         ) : (
           <>
             {/* Goals Performance */}
             {goalsStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Goals Performance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -790,7 +824,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Challenge & Consistency */}
             {challengeStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Challenge Level & Consistency</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
@@ -820,7 +854,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Mind-Set Performance */}
             {focusStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Mind-Set Performance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-teal-50 border border-teal-200 rounded-lg p-6">
@@ -870,7 +904,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Positional Performance */}
             {positionalStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Positional Performance</h2>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
                   <p className="text-sm font-semibold text-gray-900 mb-3">Strong Positioning</p>
@@ -893,7 +927,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Decision Making & Body Language */}
             {(decisionMakingStats || bodyLanguageStats) && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Decision Making & Body Language</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {decisionMakingStats && (
@@ -938,7 +972,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Rebound Control */}
             {reboundControlStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Rebound Control</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-violet-50 border border-violet-200 rounded-lg p-6">
@@ -979,7 +1013,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Freezing Puck */}
             {freezingPuckStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Freezing Puck</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
@@ -1020,7 +1054,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Team Play (Period 3 only) */}
             {teamPlayStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Team Play (Period 3)</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-sky-50 border border-sky-200 rounded-lg p-6">
@@ -1061,7 +1095,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Pre-Game Preparation */}
             {preGameStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Pre-Game Preparation Adherence</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
@@ -1089,7 +1123,7 @@ export default function ChartingAnalyticsPage() {
 
             {/* Post-Game Review */}
             {postGameStats && (
-              <Card className="p-6">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Post-Game Review Completion</h2>
                 <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
                   <p className="text-sm font-semibold text-gray-900 mb-3">Review Completion Rate</p>
@@ -1111,7 +1145,7 @@ export default function ChartingAnalyticsPage() {
             )}
 
             {/* Session Timeline */}
-            <Card className="p-6">
+            <Card className="p-6 border-red-100 shadow-sm bg-white">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Sessions</h2>
               <div className="space-y-3">
                 {filteredSessions.slice(0, 10).map((session) => {

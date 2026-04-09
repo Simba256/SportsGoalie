@@ -129,10 +129,10 @@ function VideoQuizResultsContent() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-gray-600">Loading quiz results...</p>
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-red-600" />
+          <p className="mt-4 text-slate-600">Loading quiz results...</p>
         </div>
       </div>
     );
@@ -141,11 +141,11 @@ function VideoQuizResultsContent() {
   // Error state
   if (error || !quiz || !progress) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="max-w-md">
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Card className="max-w-md border-red-100">
           <CardContent className="pt-6 text-center">
-            <p className="text-lg text-gray-700 mb-4">{error || 'Results not found'}</p>
-            <Button onClick={() => router.push('/dashboard')}>
+            <p className="text-lg text-slate-700 mb-4">{error || 'Results not found'}</p>
+            <Button onClick={() => router.push('/dashboard')} className="bg-red-600 hover:bg-red-700 text-white">
               <Home className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
@@ -155,29 +155,29 @@ function VideoQuizResultsContent() {
     );
   }
 
-  const scoreColor = progress.percentage >= 70 ? 'text-green-600' : 'text-amber-600';
+  const scoreColor = progress.percentage >= 70 ? 'text-blue-600' : 'text-red-600';
   const scoreIcon = progress.percentage >= 70 ? <Trophy className="h-6 w-6" /> : <Target className="h-6 w-6" />;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="relative rounded-3xl border border-red-200/70 bg-gradient-to-r from-red-100/80 via-white to-blue-100/70 px-6 py-6 overflow-hidden shadow-xl shadow-red-200/30">
         <Link
           href="/dashboard"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-4 transition-colors"
+          className="inline-flex items-center text-sm text-slate-600 hover:text-red-700 mb-4 transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </Link>
 
         <div>
-          <h1 className="text-3xl font-bold mb-2">Quiz Results</h1>
-          <p className="text-gray-600">{quiz.title}</p>
+          <h1 className="text-3xl font-bold mb-2 text-slate-900">Quiz Results</h1>
+          <p className="text-slate-600">{quiz.title}</p>
         </div>
       </div>
 
       {/* Main Score Card */}
-      <Card className="mb-6">
+      <Card className="border-red-100">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Your Score</span>
@@ -192,16 +192,16 @@ function VideoQuizResultsContent() {
             <Progress value={progress.percentage} className="mb-4" />
             <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
               <div className="text-center">
-                <div className="text-2xl font-semibold text-gray-900">
+                <div className="text-2xl font-semibold text-slate-900">
                   {progress.score}
                 </div>
-                <div className="text-gray-600">Points Earned</div>
+                <div className="text-slate-600">Points Earned</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-semibold text-gray-900">
+                <div className="text-2xl font-semibold text-slate-900">
                   {progress.maxScore}
                 </div>
-                <div className="text-gray-600">Total Points</div>
+                <div className="text-slate-600">Total Points</div>
               </div>
             </div>
           </div>
@@ -209,26 +209,26 @@ function VideoQuizResultsContent() {
       </Card>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-red-100">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Questions Answered</p>
+                <p className="text-sm text-slate-600 mb-1">Questions Answered</p>
                 <p className="text-2xl font-semibold">
                   {progress.questionsAnswered.length} / {quiz.questions?.length || 0}
                 </p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
+              <CheckCircle2 className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-100">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Time Spent</p>
+                <p className="text-sm text-slate-600 mb-1">Time Spent</p>
                 <p className="text-2xl font-semibold">
                   {formatTime(progress.totalTimeSpent)}
                 </p>
@@ -242,7 +242,7 @@ function VideoQuizResultsContent() {
 
       {/* Question Review */}
       {progress.questionsAnswered.length > 0 && (
-        <Card className="mb-6">
+        <Card className="border-red-100">
           <CardHeader>
             <CardTitle>Question Review</CardTitle>
           </CardHeader>
@@ -255,7 +255,7 @@ function VideoQuizResultsContent() {
                 return (
                   <div
                     key={answer.questionId}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0">
@@ -267,7 +267,7 @@ function VideoQuizResultsContent() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">Question {index + 1}</p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-slate-600">
                           At {Math.floor(answer.timestamp / 60)}:{String(Math.floor(answer.timestamp % 60)).padStart(2, '0')}
                         </p>
                       </div>
@@ -276,7 +276,7 @@ function VideoQuizResultsContent() {
                       <p className="font-semibold text-sm">
                         {answer.pointsEarned} / {question.points} pts
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-slate-600">
                         {formatTime(answer.timeToAnswer)} to answer
                       </p>
                     </div>
@@ -289,17 +289,17 @@ function VideoQuizResultsContent() {
       )}
 
       {/* Completion Info */}
-      <Card className="mb-6">
+      <Card className="border-red-100">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Started:</span>
+              <span className="text-slate-600">Started:</span>
               <span className="ml-2 font-medium">
                 {formatDate(progress.startedAt)}
               </span>
             </div>
             <div>
-              <span className="text-gray-600">Completed:</span>
+              <span className="text-slate-600">Completed:</span>
               <span className="ml-2 font-medium">
                 {formatDate(progress.completedAt)}
               </span>
@@ -309,18 +309,20 @@ function VideoQuizResultsContent() {
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-4 justify-center">
+      <div className="flex flex-wrap gap-4 justify-center">
         <Button
           variant="outline"
           onClick={() => router.push('/dashboard')}
+          className="border-red-200 text-red-700 hover:bg-red-50"
         >
           <Home className="mr-2 h-4 w-4" />
-          Back to Dashboard
+          Back to Quizzes
         </Button>
 
         {quiz.allowRetakes && (
           <Button
             onClick={() => router.push(`/quiz/video/${quizId}`)}
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             <RotateCcw className="mr-2 h-4 w-4" />
             Retake Quiz
@@ -330,6 +332,7 @@ function VideoQuizResultsContent() {
         <Button
           variant="default"
           onClick={() => router.push(`/sports/${quiz.sportId}/skills/${quiz.skillId}`)}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           Continue Learning
           <ChevronRight className="ml-2 h-4 w-4" />

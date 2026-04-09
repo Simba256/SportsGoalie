@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { customCurriculumService } from '@/lib/database';
+import { customContentService } from '@/lib/database/services/custom-content.service';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -36,12 +37,23 @@ interface SkillDetailState {
   quizzesLoading: boolean;
 }
 
+interface LinkedCustomItem {
+  id: string;
+  type: 'custom_lesson' | 'custom_quiz';
+  title: string;
+  description?: string;
+  status: 'locked' | 'unlocked' | 'in_progress' | 'completed';
+}
+
 export default function SkillDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const sportId = params.id as string;
   const skillId = params.skillId as string;
+  const completedContentId = searchParams.get('completedContentId');
+  const completedAt = searchParams.get('completedAt');
 
   const [state, setState] = useState<SkillDetailState>({
     sport: null,
@@ -58,6 +70,7 @@ export default function SkillDetailPage() {
   const [isMarkedComplete, setIsMarkedComplete] = useState(false);
   const [isInCurriculum, setIsInCurriculum] = useState(false);
   const [curriculumLoading, setCurriculumLoading] = useState(true);
+  const [linkedCustomItems, setLinkedCustomItems] = useState<LinkedCustomItem[]>([]);
 
   // Check if user is a custom workflow student
   const isCustomWorkflow = user?.workflowType === 'custom';
@@ -79,6 +92,33 @@ export default function SkillDetailPage() {
           const item = result.data.items.find(i => i.contentId === skillId);
           console.log('📚 Skill page - Found item for skillId', skillId, ':', item);
 
+          // Load coach-assigned custom content linked to this skill or this pillar.
+          // Match by exact skill (levelId === skillId) OR by pillar with no specific skill assigned.
+          const linkedItems = result.data.items.filter(
+            i =>
+              (i.type === 'custom_lesson' || i.type === 'custom_quiz') &&
+              i.pillarId === sportId &&
+              (i.levelId === skillId || !i.levelId || i.levelId === 'level-1') &&
+              !!i.contentId
+          );
+
+          const linkedContent = await Promise.all(
+            linkedItems.map(async (curriculumItem) => {
+              if (!curriculumItem.contentId) return null;
+              const contentResult = await customContentService.getContent(curriculumItem.contentId);
+              if (!contentResult.success || !contentResult.data) return null;
+              return {
+                id: curriculumItem.contentId,
+                type: curriculumItem.type,
+                title: contentResult.data.title,
+                description: contentResult.data.description,
+                status: curriculumItem.contentId === completedContentId ? 'completed' : curriculumItem.status,
+              } as LinkedCustomItem;
+            })
+          );
+
+          setLinkedCustomItems(linkedContent.filter((v): v is LinkedCustomItem => v !== null));
+
           if (item) {
             setIsInCurriculum(true);
             setIsMarkedComplete(item.status === 'completed');
@@ -91,13 +131,14 @@ export default function SkillDetailPage() {
       } catch (error) {
         console.error('Failed to check curriculum:', error);
         setIsInCurriculum(false);
+        setLinkedCustomItems([]);
       } finally {
         setCurriculumLoading(false);
       }
     };
 
     checkCurriculum();
-  }, [isCustomWorkflow, user?.id, skillId]);
+  }, [isCustomWorkflow, user?.id, sportId, skillId, completedContentId, completedAt]);
 
   useEffect(() => {
     if (!sportId || !skillId) return;
@@ -320,15 +361,15 @@ export default function SkillDetailPage() {
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href="/pillars" className="hover:text-primary">Pillars</Link>
+        <Link href="/pillars" className="hover:text-blue-700">Pillars</Link>
         <span>/</span>
-        <Link href={`/pillars/${sportId}`} className="hover:text-primary">{sport.name}</Link>
+        <Link href={`/pillars/${sportId}`} className="hover:text-blue-700">{sport.name}</Link>
         <span>/</span>
         <span className="text-foreground">{skill.name}</span>
       </nav>
 
       {/* Back Button */}
-      <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+      <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-700 hover:bg-blue-50 hover:text-blue-700">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to {sport.name}
       </Button>
@@ -351,11 +392,11 @@ export default function SkillDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800">
               <Bookmark className="w-4 h-4 mr-2" />
               Save
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800">
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </Button>
@@ -453,7 +494,7 @@ export default function SkillDetailPage() {
                 onClick={() => setActiveTab(id as typeof activeTab)}
                 className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === id
-                    ? 'border-primary text-primary'
+                    ? 'border-blue-600 text-blue-700'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -582,13 +623,57 @@ export default function SkillDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <Button onClick={handleTakeQuiz}>
+                      <Button onClick={handleTakeQuiz} className="bg-red-600 hover:bg-red-700 text-white">
                         Take Quiz
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
               ) : null}
+
+              {/* Coach-assigned custom content linked to this skill */}
+              {!curriculumLoading && linkedCustomItems.length > 0 && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="text-blue-900">Assigned For This Skill</CardTitle>
+                    <CardDescription className="text-blue-700">
+                      Extra lesson and quiz content your coach linked to this skill.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {linkedCustomItems.map((item) => {
+                      const isLesson = item.type === 'custom_lesson';
+                      const isLocked = item.status === 'locked';
+                      const isCompleted = item.status === 'completed';
+                      const href = isLesson
+                        ? `/learn/lesson/${item.id}?pillarId=${sportId}&skillId=${skillId}`
+                        : `/quiz/video/${item.id}`;
+                      return (
+                        <div key={item.id} className="flex items-center justify-between rounded-lg border border-blue-100 bg-white p-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm text-gray-900">{item.title}</p>
+                              {isCompleted ? (
+                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                                  Completed
+                                </span>
+                              ) : null}
+                            </div>
+                            {item.description ? (
+                              <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                            ) : null}
+                          </div>
+                          <Button asChild size="sm" disabled={isLocked} className="bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500">
+                            <Link href={href}>
+                              {isLesson ? (isCompleted ? 'Review Lesson' : 'Start Lesson') : 'Take Quiz'}
+                            </Link>
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Mark Complete Section - For custom workflow students with this skill in their curriculum */}
               {isCustomWorkflow && !state.hasQuizzes && !state.quizzesLoading && !curriculumLoading && isInCurriculum && (
@@ -612,7 +697,7 @@ export default function SkillDetailPage() {
                         <Button
                           onClick={handleMarkComplete}
                           disabled={isMarkingComplete}
-                          className="bg-amber-600 hover:bg-amber-700"
+                          className="bg-red-600 hover:bg-red-700 text-white"
                         >
                           {isMarkingComplete ? (
                             <>

@@ -32,6 +32,13 @@ service cloud.firestore {
       return isOwner(userId) || isAdmin();
     }
 
+    // Check if user is a parent
+    function isParent() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'parent' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'parent');
+    }
+
     // Check if user is a coach
     function isCoach() {
       return isAuthenticated() &&
@@ -100,9 +107,11 @@ service cloud.firestore {
       // Users can read their own profile, admins can read all
       // Coaches can read all student profiles (needed to browse and add students to roster)
       // Students can read their assigned coach's profile
+      // Parents can read student profiles (needed to view linked children)
       allow read: if isOwnerOrAdmin(userId) ||
                      (isCoach() && resource.data.role == 'student') ||
-                     (isAuthenticated() && resource.data.role == 'coach');
+                     (isAuthenticated() && resource.data.role == 'coach') ||
+                     (isParent() && resource.data.role == 'student');
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
@@ -721,13 +730,15 @@ service cloud.firestore {
       }
 
       // Helper to check if this is the user's own evaluation
-      // Works for both V1 and V2 document ID formats
+      // Works for V1, V2, and parent document ID formats
       function isOwnEvaluation() {
         return isAuthenticated() && (
           // V1 format: eval_{userId}
           evaluationId == 'eval_' + getUserId() ||
           // V2 format: eval_v2_{userId}
-          evaluationId == 'eval_v2_' + getUserId()
+          evaluationId == 'eval_v2_' + getUserId() ||
+          // Parent format: eval_parent_{userId}
+          evaluationId == 'eval_parent_' + getUserId()
         );
       }
 
@@ -774,7 +785,10 @@ service cloud.firestore {
       // Students can read their own curriculum, coaches can read their assigned students' curricula, admins can read all
       allow read: if isAuthenticated() && (
         resource.data.studentId == getUserId() ||  // Student reads own
-        resource.data.coachId == getUserId() ||    // Coach reads their student's
+        resource.data.coachId == getUserId() ||    // Coach reads their student's (direct curriculum link)
+        (isCoach() &&                               // Coach reads by current student assignment
+         exists(/databases/$(database)/documents/users/$(resource.data.studentId)) &&
+         get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.assignedCoachId == getUserId()) ||
         isAdmin()                                  // Admin reads all
       );
 
@@ -789,7 +803,10 @@ service cloud.firestore {
       // Coaches can update their students' curricula, admins can update any
       // Students can update their own curriculum (to mark items as complete)
       allow update: if isAuthenticated() && (
-        (isCoach() && resource.data.coachId == getUserId()) ||  // Coach updates their student's
+        (isCoach() && resource.data.coachId == getUserId()) ||  // Coach updates by curriculum link
+        (isCoach() &&                                            // Coach updates by student assignment
+        exists(/databases/$(database)/documents/users/$(resource.data.studentId)) &&
+        get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.assignedCoachId == getUserId()) ||
         isAdmin() ||                                             // Admin updates any
         (resource.data.studentId == getUserId() &&               // Student updates own curriculum
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt', 'lastModifiedBy']))
@@ -832,6 +849,61 @@ service cloud.firestore {
         (isCoach() && resource.data.createdBy == getUserId()) ||
         isAdmin()
       );
+    }
+
+    // ==================== PARENT LINKING SYSTEM ====================
+
+    // Parent Link Codes collection - Lookup table for XXXX-XXXX codes
+    match /parentLinkCodes/{codeId} {
+      // Any authenticated user can read codes (needed for validation during linking)
+      allow read: if isAuthenticated();
+
+      // Authenticated users can create/update/delete codes (service validates roles)
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // Parent Links collection - Active parent-child relationships
+    match /parentLinks/{linkId} {
+      // Parents can read their own links, children can read links to them, admins can read all
+      allow read: if isAuthenticated() && (
+        resource.data.parentId == getUserId() ||
+        resource.data.childId == getUserId() ||
+        isAdmin()
+      );
+
+      // Allow list queries filtered by parentId or childId
+      allow list: if isAuthenticated();
+
+      // Authenticated users can create links (service validates roles and codes)
+      allow create: if isAuthenticated();
+
+      // Parent or child in the link can update (e.g., revoke), admins can update any
+      allow update: if isAuthenticated() && (
+        resource.data.parentId == getUserId() ||
+        resource.data.childId == getUserId() ||
+        isAdmin()
+      );
+
+      // Only admins can hard-delete links
+      allow delete: if isAdmin();
+    }
+
+    // Allow parents to read their linked children's progress data
+    match /user_progress/{userId} {
+      allow read: if isParent();
+    }
+
+    match /sport_progress/{progressId} {
+      allow read: if isParent();
+    }
+
+    // Mind Vault entries — private to the goalie
+    match /mind_vault_entries/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       isOwner(request.resource.data.studentId);
+      allow update: if isOwnerOrAdmin(resource.data.studentId);
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
     }
 
     // Catch-all rule for any other collections

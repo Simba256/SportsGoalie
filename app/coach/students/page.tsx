@@ -57,12 +57,19 @@ export default function CoachStudentsPage() {
     try {
       setLoading(true);
 
-      // Get ALL students (both custom and automated)
+      // Get students — admins see all, coaches see only their assigned students
       const studentsResult = await userService.getAllUsers({ role: 'student' });
 
       if (!studentsResult.success || !studentsResult.data) {
         toast.error('Failed to load students');
         return;
+      }
+
+      // Filter to only students assigned to this coach (admins see all)
+      if (user?.role === 'coach') {
+        studentsResult.data.items = studentsResult.data.items.filter(
+          (s) => s.assignedCoachId === user.id
+        );
       }
 
       // Load curriculum and evaluation data for each student
@@ -157,20 +164,28 @@ export default function CoachStudentsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Students</h1>
-          <p className="text-muted-foreground">
-            View evaluations and manage curriculum for your students
-          </p>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">My Students</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Students</h1>
+            <p className="text-white/60 text-sm mt-1">View evaluations and manage curriculum for your students</p>
+          </div>
+          {user?.role === 'coach' && workflowFilter === 'custom' && (
+            <Button
+              onClick={() => setSearchDialogOpen(true)}
+              size="sm"
+              className="shrink-0"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Student
+            </Button>
+          )}
         </div>
-        {user?.role === 'coach' && workflowFilter === 'custom' && (
-          <Button onClick={() => setSearchDialogOpen(true)} className="shrink-0">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Student
-          </Button>
-        )}
       </div>
 
       {/* Workflow Filter Tabs */}
@@ -222,12 +237,13 @@ export default function CoachStudentsPage() {
             const hasCompletedEvaluation = evalStatus === 'completed' || evalStatus === 'reviewed';
 
             return (
-              <Card key={student.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+              <Card key={student.id} className="group relative overflow-hidden border-zinc-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/50">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-black to-red-600 opacity-80" />
+                <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{student.displayName}</CardTitle>
-                      <CardDescription className="mt-1">
+                      <CardTitle className="text-lg font-bold text-zinc-900">{student.displayName}</CardTitle>
+                      <CardDescription className="mt-1 text-zinc-500">
                         {student.email}
                       </CardDescription>
                     </div>
@@ -236,7 +252,7 @@ export default function CoachStudentsPage() {
                       <Badge
                         variant="secondary"
                         className={isCustomWorkflow
-                          ? 'bg-purple-100 text-purple-700 border-purple-200'
+                          ? 'bg-red-50 text-red-700 border-red-200'
                           : 'bg-blue-100 text-blue-700 border-blue-200'}
                       >
                         {isCustomWorkflow ? (
@@ -255,7 +271,7 @@ export default function CoachStudentsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="h-8 w-8 text-zinc-500 hover:text-red-600 hover:bg-red-50"
                           onClick={() => openRemoveDialog(student)}
                           title="Remove from roster"
                         >
@@ -265,7 +281,7 @@ export default function CoachStudentsPage() {
                     </div>
                   </div>
                   {student.studentNumber && (
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-xs text-zinc-500 mt-2 tracking-wide uppercase">
                       ID: {student.studentNumber}
                     </p>
                   )}
@@ -292,23 +308,23 @@ export default function CoachStudentsPage() {
                   {/* Curriculum Progress - Only for custom workflow */}
                   {isCustomWorkflow && (
                     hasCurriculum && curriculumProgress ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Curriculum Progress</span>
-                          <span className="font-semibold">{curriculumProgress.progressPercentage}%</span>
+                          <span className="text-zinc-500">Curriculum Progress</span>
+                          <span className="font-semibold text-zinc-900">{curriculumProgress.progressPercentage}%</span>
                         </div>
-                        <div className="w-full bg-secondary rounded-full h-2">
+                        <div className="w-full bg-zinc-200 rounded-full h-2">
                           <div
-                            className="bg-primary rounded-full h-2 transition-all"
+                            className="bg-gradient-to-r from-blue-600 to-red-500 rounded-full h-2 transition-all"
                             style={{ width: `${curriculumProgress.progressPercentage}%` }}
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-zinc-500">
                           {curriculumProgress.completedItems} of {curriculumProgress.totalItems} items completed
                         </p>
                       </div>
                     ) : (
-                      <div className="text-sm text-muted-foreground py-2">
+                      <div className="text-sm text-zinc-500 py-2 rounded-xl border border-dashed border-zinc-200 px-3">
                         <p>No curriculum created yet</p>
                       </div>
                     )
@@ -316,18 +332,18 @@ export default function CoachStudentsPage() {
 
                   {/* Evaluation Summary */}
                   {evaluation?.intelligenceProfile?.pacingLevel && (
-                    <div className="flex items-center justify-between text-sm py-2 border-t">
-                      <span className="text-muted-foreground">Pacing Level</span>
+                    <div className="flex items-center justify-between text-sm py-2 border-t border-zinc-100">
+                      <span className="text-zinc-500">Pacing Level</span>
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 capitalize">
                         {evaluation.intelligenceProfile.pacingLevel}
                       </Badge>
                     </div>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-1">
                     {/* View Evaluation - Available for all students with completed evaluation */}
                     {hasCompletedEvaluation && (
-                      <Button asChild variant="outline" size="sm">
+                      <Button asChild size="sm" className="border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 hover:border-blue-300">
                         <Link href={`/coach/students/${student.id}/evaluation`}>
                           <ClipboardCheck className="h-4 w-4 mr-2" />
                           View Evaluation
@@ -336,7 +352,13 @@ export default function CoachStudentsPage() {
                     )}
                     {/* Manage Curriculum - Only for custom workflow students */}
                     {isCustomWorkflow && (
-                      <Button asChild className="flex-1" variant={hasCurriculum ? "default" : "outline"}>
+                      <Button
+                        asChild
+                        className={hasCurriculum
+                          ? 'flex-1 bg-red-600 text-white hover:bg-red-700 shadow-sm shadow-red-200/60'
+                          : 'flex-1 border border-red-200 bg-white text-red-700 hover:bg-red-50'}
+                        variant={hasCurriculum ? 'default' : 'outline'}
+                      >
                         <Link href={`/coach/students/${student.id}/curriculum`}>
                           <BookOpen className="h-4 w-4 mr-2" />
                           {hasCurriculum ? 'Manage Curriculum' : 'Create Curriculum'}
@@ -363,21 +385,26 @@ export default function CoachStudentsPage() {
 
       {/* Remove Student Confirmation Dialog */}
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Student from Roster</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl">
+          <AlertDialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Roster</p>
+              <AlertDialogTitle className="text-2xl font-bold tracking-tight text-white">Remove Student from Roster</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-300 mt-1.5 text-sm">
               Are you sure you want to remove{' '}
               <span className="font-semibold">{studentToRemove?.displayName}</span>{' '}
               from your roster? They will no longer appear in your student list, but their curriculum progress will be preserved.
-            </AlertDialogDescription>
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
+            <AlertDialogCancel disabled={removing} className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveStudent}
               disabled={removing}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               {removing ? (
                 <>

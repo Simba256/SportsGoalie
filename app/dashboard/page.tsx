@@ -2,55 +2,37 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
-  BarChart,
+  Trophy,
   BookOpen,
   Target,
-  Trophy,
-  Award,
   Flame,
-  Play,
-  CheckCircle,
-  Clock,
-  Users,
   Brain,
   Footprints,
   Shapes,
   Grid3X3,
   Dumbbell,
   Heart,
+  ArrowRight,
+  TrendingUp,
+  Play,
+  ChevronRight,
 } from 'lucide-react';
-import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
 import { useEnrollment } from '@/hooks/useEnrollment';
-import { StatsCards } from '@/components/analytics/StatsCards';
-import { VideoUpload } from '@/components/dashboard/VideoUpload';
+import { useRecentQuizzes } from '@/hooks/useRecentQuizzes';
 import { CustomCurriculumDashboard } from '@/components/dashboard/CustomCurriculumDashboard';
 import { PILLARS } from '@/types';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarColorClasses, getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
 
-// Icon map for pillar icons
 const PILLAR_ICONS: Record<string, React.ElementType> = {
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
-  Heart,
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 
 export default function DashboardPage() {
@@ -64,589 +46,365 @@ export default function DashboardPage() {
 function DashboardContent() {
   const router = useRouter();
   const { user } = useAuth();
-  const { userProgress, loading } = useProgress();
-  const {
-    enrolledSports,
-    loading: enrollmentsLoading,
-    error: enrollmentsError,
-  } = useEnrollment();
 
-  // Redirect students who haven't completed onboarding
   useEffect(() => {
     if (user?.role === 'student' && !user?.onboardingCompleted) {
       router.push('/onboarding');
     }
   }, [user, router]);
 
-  // Check if user is a custom workflow student
-  const isCustomWorkflow = user?.role === 'student' && user?.workflowType === 'custom';
-
-  // Don't render dashboard if student needs onboarding
   if (user?.role === 'student' && !user?.onboardingCompleted) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Show custom curriculum dashboard for custom workflow students
-  if (isCustomWorkflow && user) {
+  // Route custom workflow students to their dashboard without loading standard hooks
+  if (user?.role === 'student' && user?.workflowType === 'custom') {
     return <CustomCurriculumDashboard user={user} />;
   }
 
+  return <StandardDashboard />;
+}
+
+function StandardDashboard() {
+  const { user } = useAuth();
+  const { userProgress, loading } = useProgress();
+  const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
+  const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(5);
+
   if (loading || enrollmentsLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   const stats = userProgress?.overallStats;
+  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0];
 
-  const statsCards = [
-    {
-      title: 'Quiz Attempts',
-      value: stats?.quizzesCompleted || 0,
-      description: stats?.quizzesCompleted
-        ? 'Keep up the great work!'
-        : 'Start your first quiz!',
-      trend: stats?.quizzesCompleted ? ('up' as const) : ('neutral' as const),
-      trendValue: '',
-      icon: <Trophy className="h-4 w-4" />,
-    },
-    {
-      title: 'Skills Attempted',
-      value: stats?.skillsCompleted || 0,
-      description: stats?.skillsCompleted
-        ? 'Skills attempted'
-        : 'Explore pillar skills',
-      trend: stats?.skillsCompleted ? ('up' as const) : ('neutral' as const),
-      trendValue: '',
-      icon: <BookOpen className="h-4 w-4" />,
-    },
-    {
-      title: 'Average Score',
-      value: stats?.averageQuizScore
-        ? `${Math.round(stats.averageQuizScore)}%`
-        : '-',
-      description: stats?.averageQuizScore
-        ? 'Great performance!'
-        : 'Complete quizzes to see progress',
-      trend:
-        stats?.averageQuizScore && stats.averageQuizScore > 75
-          ? ('up' as const)
-          : ('neutral' as const),
-      trendValue: '',
-      icon: <Target className="h-4 w-4" />,
-    },
-    {
-      title: 'Current Streak',
-      value: `${stats?.currentStreak || 0} days`,
-      description: stats?.currentStreak
-        ? 'Keep the momentum!'
-        : 'Start your learning streak',
-      trend:
-        stats?.currentStreak && stats.currentStreak > 3
-          ? ('up' as const)
-          : ('neutral' as const),
-      trendValue: '',
-      icon: <Flame className="h-4 w-4" />,
-    },
-  ];
+  const totalSkills = enrolledSports.reduce((sum, e) => sum + e.progress.totalSkills, 0);
+  const completedSkills = enrolledSports.reduce((sum, e) => sum + e.progress.completedSkills.length, 0);
+  const overallPct = totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
 
-  // Get pillar display info
-  const getPillarDisplayInfo = (sport: { id: string; icon?: string; name: string }) => {
-    const slug = getPillarSlugFromDocId(sport.id);
-    if (slug) {
-      const info = PILLARS.find(p => p.slug === slug);
-      if (info) {
-        return {
-          icon: info.icon,
-          color: info.color,
-          shortName: info.shortName,
-        };
-      }
-    }
-    return {
-      icon: sport.icon || 'Target',
-      color: 'blue',
-      shortName: sport.name.split(' ')[0],
-    };
-  };
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Find next pillar to continue (most recently accessed, not completed)
+  const activePillar = enrolledSports.find(
+    (e) => e.progress.status === 'in_progress'
+  ) || enrolledSports[0];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
+    <div className="max-w-7xl mx-auto space-y-6">
+
+      {/* ── Welcome Banner ─────────────────────────────────────────── */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
+        {/* Soft decorative shapes */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+
+        <div className="relative flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">
-              Welcome back, {user?.displayName || user?.email?.split('@')[0]}!
+            <p className="text-primary text-sm font-semibold">{greeting}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
+              Hello {firstName},
             </h1>
-            <p className="text-muted-foreground">
-              Continue your goalie training journey and track your progress across all 7 pillars.
+            <p className="text-muted-foreground text-sm mt-2 max-w-lg leading-relaxed">
+              {stats?.quizzesCompleted
+                ? `You've learned ${overallPct}% of your course. Keep it up and improve your skills!`
+                : 'Start your goalie training journey by exploring pillars and taking quizzes.'}
             </p>
-          </div>
-        </div>
-
-        <StatsCards stats={statsCards} />
-
-        <VideoUpload />
-
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center space-x-2">
-                <Trophy className="h-6 w-6 text-primary" />
-                <span>Your Pillar Progress</span>
-              </h2>
-              <p className="text-muted-foreground mt-1">
-                Track your progress across all 6 goaltending pillars and continue
-                your learning journey.
-              </p>
-            </div>
-            {enrolledSports.length > 0 && (
-              <Link href="/pillars">
-                <Button variant="outline">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  View All Pillars
+            {activePillar && (
+              <Link href={`/pillars/${activePillar.sport.id}`}>
+                <Button size="sm" className="mt-4">
+                  Continue Learning
                 </Button>
               </Link>
             )}
           </div>
 
-          {enrollmentsError ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="text-destructive text-sm">
-                    {enrollmentsError}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : enrolledSports.length === 0 ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-16">
-                <div className="text-center max-w-md">
-                  <div className="h-24 w-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
-                    <Users className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3">
-                    No Pillars Enrolled Yet
-                  </h3>
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Start your goaltending journey by exploring the 6 fundamental
-                    pillars. Each pillar contains essential skills to master.
-                  </p>
-                  <Link href="/pillars">
-                    <Button className="bg-primary hover:bg-primary/90">
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      Explore Learning Pillars
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {enrolledSports.map(({ sport, progress }) => {
-                const displayInfo = getPillarDisplayInfo(sport);
-                const colorClasses = getPillarColorClasses(displayInfo.color);
-                const IconComponent = PILLAR_ICONS[displayInfo.icon] || Target;
+          {/* Progress circle */}
+          <div className="hidden md:flex flex-col items-center">
+            <ProgressRing percentage={overallPct} size={110} />
+            <p className="text-muted-foreground text-xs mt-2">Overall Progress</p>
+          </div>
+        </div>
+      </div>
 
-                const getStatusColor = (status: string) => {
-                  switch (status) {
-                    case 'completed':
-                      return {
-                        badge: 'bg-green-100 text-green-700 border-green-200',
-                        progress: 'bg-green-500',
-                        card: 'border-green-200 bg-green-50/30',
-                      };
-                    case 'in_progress':
-                      return {
-                        badge: `${colorClasses.bgLight} ${colorClasses.text} ${colorClasses.border}`,
-                        progress: colorClasses.bg,
-                        card: `${colorClasses.border} bg-opacity-5`,
-                      };
-                    default:
-                      return {
-                        badge: 'bg-gray-100 text-gray-700 border-gray-200',
-                        progress: 'bg-gray-400',
-                        card: 'border-gray-200',
-                      };
-                  }
-                };
+      {/* ── Main Layout ────────────────────────────────────────────── */}
+      <div className="grid lg:grid-cols-3 gap-6">
 
-                const getStatusIcon = (status: string) => {
-                  switch (status) {
-                    case 'completed':
-                      return <CheckCircle className="h-4 w-4" />;
-                    case 'in_progress':
-                      return <Play className="h-4 w-4" />;
-                    default:
-                      return <Clock className="h-4 w-4" />;
-                  }
-                };
+        {/* LEFT 2/3 */}
+        <div className="lg:col-span-2 space-y-6">
 
-                const getStatusText = (status: string) => {
-                  switch (status) {
-                    case 'completed':
-                      return 'Completed';
-                    case 'in_progress':
-                      return 'In Progress';
-                    default:
-                      return 'Not Started';
-                  }
-                };
+          {/* Your Pillars — table-style list */}
+          <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h2 className="text-base font-bold text-foreground">Your Pillars</h2>
+              <Link href="/pillars" className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1">
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
 
-                const statusColors = getStatusColor(progress.status);
-                const progressPercentage = Math.round(progress.progressPercentage);
+            {enrollmentsError ? (
+              <p className="text-red-500 text-sm text-center py-8">{enrollmentsError}</p>
+            ) : enrolledSports.length === 0 ? (
+              <EmptyPillars />
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {enrolledSports.map(({ sport, progress }) => {
+                  const slug = getPillarSlugFromDocId(sport.id);
+                  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+                  const color = info?.color || 'blue';
+                  const colorClasses = getPillarColorClasses(color);
+                  const IconComponent = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+                  const pct = Math.round(progress.progressPercentage);
 
-                return (
-                  <Card
-                    key={sport.id}
-                    className={`group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${statusColors.card}`}
-                  >
-                    <Link href={`/pillars/${sport.id}`} className="block">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center ring-2 ring-background shadow-sm bg-gradient-to-br ${colorClasses.gradient}`}>
-                              <IconComponent className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
-                                {sport.name}
-                              </h3>
-                              <Badge
-                                variant="outline"
-                                className={`text-xs font-medium mt-1 ${statusColors.badge}`}
-                              >
-                                {getStatusIcon(progress.status)}
-                                <span className="ml-1">
-                                  {getStatusText(progress.status)}
-                                </span>
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed">
-                          {sport.description}
+                  return (
+                    <Link
+                      key={sport.id}
+                      href={`/pillars/${sport.id}`}
+                      className="flex items-center gap-4 px-6 py-4 hover:bg-muted/50/80 transition-colors group"
+                    >
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
+                        <IconComponent className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                          {info?.shortName || sport.name}
                         </p>
-
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-muted-foreground">
-                                Progress
-                              </span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-2xl font-bold text-foreground">
-                                  {progressPercentage}%
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  ({progress.completedSkills.length}/
-                                  {progress.totalSkills})
-                                </span>
-                              </div>
-                            </div>
-                            <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                              <div
-                                className={`h-full transition-all duration-500 ease-out ${statusColors.progress}`}
-                                style={{ width: `${progressPercentage}%` }}
-                              />
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {progress.completedSkills.length} of{' '}
-                              {progress.totalSkills} skills completed
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
-                            <div className="text-center">
-                              <div className="text-lg font-semibold text-foreground">
-                                {Math.round(progress.timeSpent / 60)}h
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                Time Spent
-                              </div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-lg font-semibold text-foreground">
-                                {progress.streak?.current || 0}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                Day Streak
-                              </div>
-                            </div>
-                          </div>
-
-                          {progress.lastAccessedAt && (
-                            <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border/50">
-                              Last accessed:{' '}
-                              {new Date(
-                                progress.lastAccessedAt.toDate()
-                              ).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </div>
-                          )}
-
-                          <Button
-                            className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                            variant={
-                              progress.status === 'completed'
-                                ? 'outline'
-                                : 'default'
-                            }
-                          >
-                            {progress.status === 'completed' ? (
-                              <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Review & Practice
-                              </>
-                            ) : progress.status === 'in_progress' ? (
-                              <>
-                                <Play className="mr-2 h-4 w-4" />
-                                Continue Learning
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="mr-2 h-4 w-4" />
-                                Start Learning
-                              </>
-                            )}
-                          </Button>
+                        <p className="text-xs text-muted-foreground">
+                          {progress.completedSkills.length}/{progress.totalSkills} skills
+                        </p>
+                      </div>
+                      <div className="w-24 hidden sm:block">
+                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${colorClasses.bg}`}
+                            style={{ width: `${pct}%` }}
+                          />
                         </div>
-                      </CardContent>
+                      </div>
+                      <span className={`text-sm font-bold w-12 text-right ${
+                        pct >= 80 ? 'text-green-600' : pct > 0 ? 'text-foreground' : 'text-muted-foreground/60'
+                      }`}>
+                        {pct}%
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
                     </Link>
-                  </Card>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Continue Learning — highlight next skill */}
+          {activePillar && (
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-foreground">Continue Learning</h2>
+                <Badge variant="outline" className="text-xs bg-blue-50 text-primary border-blue-200">
+                  <Play className="h-3 w-3 mr-1" /> In Progress
+                </Badge>
+              </div>
+              <Link href={`/pillars/${activePillar.sport.id}`} className="block group">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-blue-50/80 to-white border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-300">
+                  {(() => {
+                    const slug = getPillarSlugFromDocId(activePillar.sport.id);
+                    const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+                    const colorClasses = getPillarColorClasses(info?.color || 'blue');
+                    const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+                    return (
+                      <>
+                        <div className={`h-14 w-14 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
+                          <Icon className="h-7 w-7 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                            {info?.name || activePillar.sport.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {activePillar.progress.completedSkills.length} of {activePillar.progress.totalSkills} skills completed
+                          </p>
+                          <div className="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden max-w-xs">
+                            <div
+                              className={`h-full rounded-full ${colorClasses.bg}`}
+                              style={{ width: `${Math.round(activePillar.progress.progressPercentage)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </>
+                    );
+                  })()}
+                </div>
+              </Link>
             </div>
           )}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Start Learning</CardTitle>
-              <CardDescription>
-                Explore the 6 goaltending pillars and begin your training.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Link href="/pillars">
-                <div className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">Browse Pillars</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Discover skills across all 7 pillars
-                    </p>
-                  </div>
-                </div>
+        {/* RIGHT 1/3 */}
+        <div className="space-y-6">
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Quizzes" value={stats?.quizzesCompleted || 0} icon={<Trophy className="h-4 w-4" />} color="red" />
+            <StatCard label="Skills" value={stats?.skillsCompleted || 0} icon={<BookOpen className="h-4 w-4" />} color="blue" />
+            <StatCard label="Avg Score" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target className="h-4 w-4" />} color="green" />
+            <StatCard label="Streak" value={stats?.currentStreak || 0} icon={<Flame className="h-4 w-4" />} color="orange" />
+          </div>
+
+          {/* Recent Results */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+              <h3 className="text-sm font-bold text-foreground">Recent Results</h3>
+              <Link href="/quizzes" className="text-xs text-primary hover:text-blue-700 font-semibold flex items-center gap-1">
+                View More <ArrowRight className="h-3 w-3" />
               </Link>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Your Knowledge</CardTitle>
-              <CardDescription>
-                Take quizzes to test your understanding and track progress.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Link href="/quizzes">
-                <div className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer">
-                  <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">Take Quiz</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Challenge yourself with interactive quizzes
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Overall Progress</CardTitle>
-              <CardDescription>
-                Your journey across all pillars and skills.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Pillars Completed</span>
-                  <span className="font-medium">
-                    {stats?.sportsCompleted || 0}/6
-                  </span>
-                </div>
-                <Progress
-                  value={((stats?.sportsCompleted || 0) / 6) * 100}
-                  className="h-2"
-                />
-
-                <div className="flex items-center justify-between text-sm">
-                  <span>Skills Attempted</span>
-                  <span className="font-medium">{stats?.skillsCompleted || 0}</span>
-                </div>
-                <Progress
-                  value={Math.min(
-                    ((stats?.skillsCompleted || 0) / 20) * 100,
-                    100
-                  )}
-                  className="h-2"
-                />
-
-                <div className="flex items-center justify-between text-sm">
-                  <span>Time Spent Learning</span>
-                  <span className="font-medium">
-                    {Math.round((stats?.totalTimeSpent || 0) / 60)}h
-                  </span>
-                </div>
+            {quizzesLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Your latest learning progress and achievements.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats && (stats.quizzesCompleted > 0 || stats.skillsCompleted > 0) ? (
-                <div className="space-y-4">
-                  {stats.quizzesCompleted > 0 && (
-                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
-                      <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
-                        <Trophy className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Quizzes Attempted</p>
-                        <p className="text-xs text-muted-foreground">
-                          You've attempted {stats.quizzesCompleted} quiz
-                          {stats.quizzesCompleted !== 1 ? 'zes' : ''}
+            ) : recentQuizzes.length === 0 ? (
+              <div className="text-center py-8 px-4">
+                <Trophy className="mx-auto h-8 w-8 text-gray-200 mb-2" />
+                <p className="text-xs text-muted-foreground">No results yet</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {recentQuizzes.slice(0, 5).map((quiz) => {
+                  const pillarInfo = getPillarByDocId(quiz.sportId);
+                  const pct = Math.round(quiz.percentage);
+                  return (
+                    <div key={quiz.id} className="flex items-center gap-3 px-5 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">
+                          {pillarInfo?.shortName || 'Quiz'}
                         </p>
                       </div>
+                      <div className="w-20">
+                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className={`text-xs font-bold w-10 text-right ${
+                        pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-primary' : 'text-red-500'
+                      }`}>
+                        {pct}%
+                      </span>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-                  {stats.skillsCompleted > 0 && (
-                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <BookOpen className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Skills Attempted</p>
-                        <p className="text-xs text-muted-foreground">
-                          {stats.skillsCompleted} unique skill
-                          {stats.skillsCompleted !== 1 ? 's' : ''} attempted
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {stats.currentStreak > 0 && (
-                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
-                      <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                        <Flame className="h-4 w-4 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Learning Streak</p>
-                        <p className="text-xs text-muted-foreground">
-                          {stats.currentStreak} day
-                          {stats.currentStreak !== 1 ? 's' : ''} in a row
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No activity yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Start learning pillar skills and taking quizzes to see your
-                    progress here.
-                  </p>
-                  <Link href="/pillars">
-                    <Button>Get Started</Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Jump to different sections of your learning journey.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href="/progress" className="block">
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  <BarChart className="h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">View Analytics</p>
-                    <p className="text-xs text-muted-foreground">
-                      Detailed progress tracking
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/achievements" className="block">
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  <Award className="h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Achievements</p>
-                    <p className="text-xs text-muted-foreground">
-                      Unlock badges and milestones
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/goals" className="block">
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  <Target className="h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Set Goals</p>
-                    <p className="text-xs text-muted-foreground">
-                      Track learning objectives
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
+          {/* Quick Actions */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
+            <h3 className="text-sm font-bold text-foreground mb-3">Quick Actions</h3>
+            <div className="space-y-1.5">
+              <QuickActionLink href="/pillars" icon={<BookOpen className="h-4 w-4 text-primary" />} bg="bg-blue-50" label="Browse Pillars" />
+              <QuickActionLink href="/quizzes" icon={<Trophy className="h-4 w-4 text-green-600" />} bg="bg-green-50" label="Take a Quiz" />
+              <QuickActionLink href="/progress" icon={<TrendingUp className="h-4 w-4 text-purple-600" />} bg="bg-purple-50" label="Analytics" />
+              <QuickActionLink href="/charting" icon={<Target className="h-4 w-4 text-red-600" />} bg="bg-red-50" label="Charting" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+/* ──────────────────── Sub-components ──────────────────── */
+
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    </div>
+  );
+}
+
+function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: number }) {
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2} cy={size / 2} r={radius} fill="none"
+          stroke="url(#ring-grad)" strokeWidth={strokeWidth} strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          className="transition-all duration-1000 ease-out"
+        />
+        <defs>
+          <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#ef4444" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-black text-foreground">{percentage}</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">%</span>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, color }: {
+  label: string; value: string | number; icon: React.ReactNode;
+  color: 'red' | 'blue' | 'green' | 'orange';
+}) {
+  const colorMap = {
+    red: 'bg-red-50 text-red-600',
+    blue: 'bg-blue-50 text-primary',
+    green: 'bg-green-50 text-green-600',
+    orange: 'bg-orange-50 text-orange-600',
+  };
+  return (
+    <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${colorMap[color]}`}>{icon}</div>
+      </div>
+      <p className="text-xl font-black text-foreground">{value}</p>
+      <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+function EmptyPillars() {
+  return (
+    <div className="text-center py-12 px-6">
+      <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-blue-50 flex items-center justify-center">
+        <BookOpen className="h-7 w-7 text-blue-400" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground mb-1">No courses yet</h3>
+      <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
+        Start your goaltending journey by exploring the fundamental pillars.
+      </p>
+      <Link href="/pillars">
+        <Button size="sm">
+          Explore Pillars
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function QuickActionLink({ href, icon, bg, label }: { href: string; icon: React.ReactNode; bg: string; label: string }) {
+  return (
+    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-colors group">
+      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
+      <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground">{label}</span>
+      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 ml-auto group-hover:text-muted-foreground transition-colors" />
+    </Link>
   );
 }

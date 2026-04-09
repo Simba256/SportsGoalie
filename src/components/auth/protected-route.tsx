@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
@@ -39,6 +39,11 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -56,7 +61,7 @@ export function ProtectedRoute({
     }
   }, [loading, isAuthenticated, user, requiredRole, router, redirectTo]);
 
-  if (loading) {
+  if (!isHydrated || loading) {
     return (
       fallback || (
         <div className="flex min-h-screen items-center justify-center">

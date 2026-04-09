@@ -18,13 +18,19 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
+import { userService, sportsService, videoQuizService, customContentService, onboardingService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
-import { User, CustomCurriculum, CustomCurriculumItem, CustomContentLibrary } from '@/types';
+import { User, CustomCurriculum, CustomCurriculumItem, CustomContentLibrary, GapAnalysis } from '@/types';
 import { toast } from 'sonner';
 import { ContentBrowser } from '@/components/coach/content-browser';
 import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
 import { LessonCreator } from '@/components/coach/lesson-creator';
+import { QuizCreator } from '@/components/coach/quiz-creator';
+import { StudentIntelligenceSidebar } from '@/components/coach/StudentIntelligenceSidebar';
+import { StudentChartingSummary } from '@/components/coach/StudentChartingSummary';
+import { CurriculumTemplatePicker } from '@/components/coach/CurriculumTemplatePicker';
+import { getApplicableTemplates, type CurriculumTemplate as CurrTemplate } from '@/lib/utils/curriculum-templates';
+import type { PacingLevel } from '@/types/onboarding';
 
 export default function StudentCurriculumPage() {
   const params = useParams();
@@ -41,6 +47,11 @@ export default function StudentCurriculumPage() {
   // Quick create states
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showLessonCreator, setShowLessonCreator] = useState(false);
+  const [showQuizCreator, setShowQuizCreator] = useState(false);
+  const [preSelectedPillarId, setPreSelectedPillarId] = useState<string | undefined>();
+  const [studentGaps, setStudentGaps] = useState<GapAnalysis[]>([]);
+  const [pacingLevel, setPacingLevel] = useState<PacingLevel | undefined>();
+  const [applicableTemplates, setApplicableTemplates] = useState<CurrTemplate[]>([]);
 
   useEffect(() => {
     if (studentId && coach?.id) {
@@ -103,6 +114,20 @@ export default function StudentCurriculumPage() {
         }
         setContentTitles(titles);
       }
+
+      // Load intelligence profile for gaps, pacing level, and templates
+      try {
+        const evalResult = await onboardingService.getEvaluation(studentId);
+        if (evalResult.success && evalResult.data?.intelligenceProfile) {
+          const profile = evalResult.data.intelligenceProfile;
+          setStudentGaps(profile.identifiedGaps || []);
+          setPacingLevel(profile.pacingLevel);
+          const gapSlugs = (profile.identifiedGaps || []).map((g: GapAnalysis) => g.categorySlug);
+          setApplicableTemplates(getApplicableTemplates(profile.pacingLevel, gapSlugs));
+        }
+      } catch {
+        // Non-blocking — gaps are optional context
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
       toast.error('Failed to load curriculum data');
@@ -141,6 +166,7 @@ export default function StudentCurriculumPage() {
     type: 'lesson' | 'quiz' | 'custom_lesson' | 'custom_quiz';
     title: string;
     sportId: string;
+    skillId?: string;
     isCustom?: boolean;
   }) => {
     if (!curriculum || !coach?.id) return;
@@ -160,7 +186,8 @@ export default function StudentCurriculumPage() {
           type: itemType,
           contentId: content.id,
           pillarId: content.sportId || 'custom',
-          levelId: 'level-1', // Default level for now
+          // Store linked skill ID (when provided) so content can be shown on the skill page.
+          levelId: content.skillId || 'level-1',
           unlocked: false, // Start locked
         },
         coach.id
@@ -186,9 +213,7 @@ export default function StudentCurriculumPage() {
     if (type === 'lesson') {
       setShowLessonCreator(true);
     } else {
-      // Navigate to full-page quiz creator with returnTo for context preservation
-      const returnTo = `/coach/students/${studentId}/curriculum`;
-      router.push(`/coach/content/quiz/create?returnTo=${encodeURIComponent(returnTo)}`);
+      setShowQuizCreator(true);
     }
   };
 
@@ -199,6 +224,7 @@ export default function StudentCurriculumPage() {
       type: content.type === 'lesson' ? 'custom_lesson' : 'custom_quiz',
       title: content.title,
       sportId: content.pillarId || 'custom',
+      skillId: content.levelId,
       isCustom: true,
     });
   };
@@ -259,6 +285,50 @@ export default function StudentCurriculumPage() {
     }
   };
 
+  const handleSelectTemplate = async (template: CurrTemplate) => {
+    if (!coach?.id) return;
+
+    // First create the curriculum
+    try {
+      const result = await customCurriculumService.createCurriculum(
+        { studentId, coachId: coach.id, items: [] },
+        coach.id
+      );
+      if (!result.success || !result.data) {
+        toast.error('Failed to create curriculum');
+        return;
+      }
+      const newCurriculum = result.data;
+
+      // Add template items
+      for (const item of template.items) {
+        await customCurriculumService.addItem(
+          newCurriculum.id,
+          {
+            type: 'lesson',
+            pillarId: item.pillarId,
+            levelId: pacingLevel || 'introduction',
+            unlocked: false,
+            notes: item.rationale,
+          },
+          coach.id
+        );
+      }
+
+      toast.success(`Created curriculum from "${template.name}" with ${template.items.length} items`);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to apply template:', error);
+      toast.error('Failed to create curriculum from template');
+    }
+  };
+
+  const handleAddContentForPillar = (pillarId: string, pillarName: string) => {
+    setPreSelectedPillarId(pillarId);
+    setShowContentBrowser(true);
+    toast.info(`Showing content for: ${pillarName}`);
+  };
+
   const getItemIcon = (item: CustomCurriculumItem) => {
     if (item.status === 'completed') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
     if (item.status === 'in_progress') return <PlayCircle className="h-5 w-5 text-blue-500" />;
@@ -309,57 +379,60 @@ export default function StudentCurriculumPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{student.displayName}'s Curriculum</h1>
-            <p className="text-muted-foreground">
-              Manage personalized learning path for {student.displayName}
-            </p>
-          </div>
+      <div className="relative bg-gradient-to-r from-[#0f0f13] via-[#1a1a2e] to-[#16213e] rounded-2xl p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="relative">
+          <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">Curriculum</p>
+          <h1 className="text-2xl md:text-3xl font-black text-white">{student.displayName}&apos;s Learning Path</h1>
+          <p className="text-white/50 text-sm mt-1">Manage personalized curriculum for {student.displayName}</p>
         </div>
       </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main content area (2/3) */}
+        <div className="lg:col-span-2">
 
       {/* Create curriculum if doesn't exist */}
       {!curriculum ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Curriculum Created</h3>
-            <p className="text-muted-foreground text-center max-w-md mb-6">
-              Create a personalized curriculum for {student.displayName} to start assigning content and tracking progress.
-            </p>
-            <Button onClick={createCurriculum}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Curriculum
-            </Button>
+          <CardContent className="py-10">
+            <div className="text-center mb-8">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-xl font-semibold mb-2">Create {student.displayName}&apos;s Curriculum</h3>
+              <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                Start with a recommended template based on the student&apos;s assessment, or build from scratch.
+              </p>
+            </div>
+            <CurriculumTemplatePicker
+              templates={applicableTemplates}
+              onSelectTemplate={handleSelectTemplate}
+              onStartFromScratch={createCurriculum}
+            />
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
           {/* Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Curriculum Actions</CardTitle>
-              <CardDescription>Manage content and student access</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Button onClick={() => setShowContentBrowser(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+          <div className="rounded-2xl border border-gray-200 bg-white p-5">
+            <h2 className="text-base font-bold text-gray-900 mb-3">Curriculum Actions</h2>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => setShowContentBrowser(true)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 flex items-center gap-2">
+                <Plus className="h-4 w-4" />
                 Add Content
-              </Button>
-              <Button variant="secondary" onClick={() => setShowTypeSelector(true)}>
-                <Sparkles className="h-4 w-4 mr-2" />
+              </button>
+              <button onClick={() => setShowTypeSelector(true)} className="border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
                 Create Custom Content
-              </Button>
-              <Button variant="outline" onClick={unlockAllItems} disabled={curriculum.items.length === 0}>
-                <Unlock className="h-4 w-4 mr-2" />
+              </button>
+              <button onClick={unlockAllItems} disabled={curriculum.items.length === 0} className="border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 disabled:opacity-50">
+                <Unlock className="h-4 w-4" />
                 Unlock All
-              </Button>
-            </CardContent>
-          </Card>
+              </button>
+            </div>
+          </div>
 
           {/* Curriculum Items */}
           <Card>
@@ -399,7 +472,7 @@ export default function StudentCurriculumPage() {
                     .map((item, index) => (
                       <div
                         key={item.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-zinc-50 transition-colors"
                       >
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-medium">
                           {index + 1}
@@ -445,12 +518,30 @@ export default function StudentCurriculumPage() {
         </div>
       )}
 
+        </div>{/* end main column */}
+
+        {/* Intelligence Sidebar (1/3) */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-24 space-y-4">
+            <StudentIntelligenceSidebar
+              studentId={studentId}
+              onAddContentForPillar={handleAddContentForPillar}
+            />
+            <StudentChartingSummary studentId={studentId} />
+          </div>
+        </div>
+      </div>{/* end grid */}
+
       {/* Content Browser */}
       <ContentBrowser
         open={showContentBrowser}
-        onOpenChange={setShowContentBrowser}
+        onOpenChange={(open) => {
+          setShowContentBrowser(open);
+          if (!open) setPreSelectedPillarId(undefined);
+        }}
         onSelect={handleContentSelect}
         coachId={coach?.id}
+        preSelectedSportId={preSelectedPillarId}
       />
 
       {/* Content Type Selector */}
@@ -465,6 +556,22 @@ export default function StudentCurriculumPage() {
         <LessonCreator
           open={showLessonCreator}
           onOpenChange={setShowLessonCreator}
+          coachId={coach.id}
+          onSave={handleContentCreated}
+          studentGaps={studentGaps.map((g) => ({
+            categoryName: g.categoryName,
+            categorySlug: g.categorySlug,
+            priority: g.priority,
+            suggestedContent: g.suggestedContent,
+          }))}
+        />
+      )}
+
+      {/* Quiz Creator (native modal) */}
+      {coach?.id && (
+        <QuizCreator
+          open={showQuizCreator}
+          onOpenChange={setShowQuizCreator}
           coachId={coach.id}
           onSave={handleContentCreated}
         />
