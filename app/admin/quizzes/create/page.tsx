@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
@@ -262,11 +263,8 @@ function CreateVideoQuizContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
+      <div className="min-h-screen p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

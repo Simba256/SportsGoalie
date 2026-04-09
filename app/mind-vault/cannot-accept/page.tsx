@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronDown, ShieldAlert, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ShieldAlert } from 'lucide-react';
+import { SkeletonListPage } from '@/components/ui/skeletons';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
@@ -101,8 +102,8 @@ export default function CannotAcceptListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      <div className="py-4">
+        <SkeletonListPage cols={2} count={4} />
       </div>
     );
   }

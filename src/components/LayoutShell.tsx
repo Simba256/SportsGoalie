@@ -8,6 +8,7 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ParentSidebar } from '@/components/parent/ParentSidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
+import { useAuth } from '@/lib/auth/context';
 
 const BARE_ROUTES = ['/auth'];
 const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
@@ -124,6 +125,7 @@ function TopBar({
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { loading: authLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (searchParams.get('embedded') === '1') {
@@ -172,7 +174,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
           <main className="p-6">{children}</main>
-          <Footer7 />
+          {!authLoading && <Footer7 />}
         </div>
       </div>
     );
@@ -186,7 +188,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
           <main className="p-6">{children}</main>
-          <Footer7 />
+          {!authLoading && <Footer7 />}
         </div>
       </div>
     );
@@ -199,7 +201,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-6">{children}</main>
-        <Footer7 />
+        {!authLoading && <Footer7 />}
       </div>
     </div>
   );

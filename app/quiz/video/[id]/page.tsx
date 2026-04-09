@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
@@ -13,7 +14,7 @@ import { ProgressService } from '@/lib/database/services/progress.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 function VideoQuizPageContent() {
@@ -152,11 +153,8 @@ function VideoQuizPageContent() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-red-600" />
-          <p className="mt-4 text-slate-600">Loading video quiz...</p>
-        </div>
+      <div className="min-h-[60vh] p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

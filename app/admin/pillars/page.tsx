@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Sport, DifficultyLevel, PILLARS } from '@/types';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
@@ -146,12 +147,7 @@ function AdminPillarsContent() {
   if (state.loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-            <p className="text-muted-foreground">Loading pillars...</p>
-          </div>
-        </div>
+        <SkeletonDarkPage />
       </div>
     );
   }

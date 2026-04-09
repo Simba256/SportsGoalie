@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useParentOnboarding } from '@/hooks/useParentOnboarding';
@@ -145,11 +145,8 @@ function OnboardingPageContent() {
   if (authLoading || (hookEnabled && (loading || phase === 'loading'))) {
     return (
       <OnboardingContainer>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-red-500 mx-auto mb-4" />
-            <p className="text-gray-400">Loading your evaluation...</p>
-          </div>
+        <div className="flex-1 p-6">
+          <SkeletonContentPage />
         </div>
       </OnboardingContainer>
     );
@@ -278,11 +275,8 @@ export default function OnboardingPage() {
     <Suspense
       fallback={
         <OnboardingContainer>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-red-500 mx-auto mb-4" />
-              <p className="text-gray-400">Loading your evaluation...</p>
-            </div>
+          <div className="flex-1 p-6">
+            <SkeletonContentPage />
           </div>
         </OnboardingContainer>
       }

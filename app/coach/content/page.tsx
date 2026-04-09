@@ -25,7 +25,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Loader2,
   Plus,
   Search,
   BookOpen,
@@ -45,6 +44,7 @@ import { CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
 import { LessonCreator } from '@/components/coach/lesson-creator';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 
 export default function CoachContentPage() {
   const router = useRouter();
@@ -183,11 +183,7 @@ export default function CoachContentPage() {
   const quizCount = content.filter((c) => c.type === 'quiz').length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SkeletonDarkPage />;
   }
 
   return (

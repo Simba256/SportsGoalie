@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Sport, PILLARS } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
-import { LoadingState } from '@/components/ui/loading';
+import { SkeletonPillarsPage } from '@/components/ui/skeletons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -150,11 +150,7 @@ export default function PillarsPage() {
 
   // ─── Loading ──────────────────────────────────────────────────────────────
   if (state.loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingState message="Loading your pillars…" />
-      </div>
-    );
+    return <SkeletonPillarsPage />;
   }
 
   return (

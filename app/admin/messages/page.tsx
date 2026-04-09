@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import {
   MessageSquare,
   Mail,
@@ -165,9 +166,7 @@ function MessagesContent() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading messages...</div>
-        </div>
+        <SkeletonDarkPage />
       </div>
     );
   }

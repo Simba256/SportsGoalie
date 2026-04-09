@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { SkeletonListPage } from '@/components/ui/skeletons';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
@@ -113,8 +114,8 @@ export default function MindVaultCategoryPage() {
 
       {/* Entries List */}
       {loading ? (
-        <div className="relative z-10 flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <div className="relative z-10 py-4">
+          <SkeletonListPage cols={2} count={4} />
         </div>
       ) : entries.length === 0 ? (
         <div className="relative z-10 text-center rounded-2xl border border-dashed border-blue-200 bg-gradient-to-b from-blue-50/50 to-white py-16">

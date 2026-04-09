@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog } from 'lucide-react';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { userService, onboardingService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
@@ -156,11 +157,7 @@ export default function CoachStudentsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SkeletonDarkPage />;
   }
 
   return (

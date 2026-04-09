@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session, V2PreGameData, MindManagementStartTime } from '@/types';
@@ -141,8 +142,8 @@ export default function V2PreGamePage() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

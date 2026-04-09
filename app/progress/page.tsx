@@ -38,6 +38,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
 
 export default function ProgressPage() {
@@ -52,19 +53,7 @@ function ProgressContent() {
   const { data, loading, error } = useAnalytics();
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="relative w-12 h-12 mx-auto mb-3">
-              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            </div>
-            <p className="text-muted-foreground text-sm">Loading your analytics...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <SkeletonAnalytics />;
   }
 
   if (error || !data) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { CoachInvitation } from '@/types/auth';
 import { coachInvitationService } from '@/lib/services/coach-invitation.service';
 import { InvitationForm } from './components/InvitationForm';
@@ -10,7 +11,6 @@ import { InvitationList } from './components/InvitationList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 
 /**
  * Admin Coach Invitations Management Page
@@ -102,8 +102,8 @@ export default function CoachInvitationsPage() {
 
   if (authLoading || (user?.role !== 'admin')) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen p-6">
+        <SkeletonDarkPage />
       </div>
     );
   }

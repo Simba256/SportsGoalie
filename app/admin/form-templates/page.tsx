@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
 import { initializeDefaultTemplates, checkDefaultTemplatesExist } from '@/lib/templates/init-templates';
 import { FormTemplate } from '@/types';
@@ -109,8 +110,8 @@ export default function FormTemplatesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-[400px] p-6">
+        <SkeletonDarkPage />
       </div>
     );
   }

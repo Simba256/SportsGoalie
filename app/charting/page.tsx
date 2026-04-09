@@ -9,7 +9,8 @@ import { Session, SessionStats, StreakData, DynamicChartingEntry } from '@/types
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, X, BarChart3, Target } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, X, BarChart3, Target, ArrowRight } from 'lucide-react';
+import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 
@@ -111,14 +112,10 @@ export default function ChartingPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4">
-            <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-          </div>
-          <p className="text-muted-foreground font-medium">Loading your charting data...</p>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <SkeletonBannerLight />
+        <SkeletonStatCards count={4} />
+        <SkeletonChart />
       </div>
     );
   }
@@ -130,61 +127,70 @@ export default function ChartingPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance Charting</h1>
-            <p className="text-muted-foreground mt-1">Track your goaltending progress and consistency</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/charting/analytics')}
-              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics & Trends
-            </Button>
-            <Button
-              onClick={() => router.push('/charting/sessions/new')}
-              className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Session
-            </Button>
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 rounded-b-none overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1515703407324-5f753afd8be8?auto=format&fit=crop&w=1920&q=80')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/65 to-slate-900/85" />
+        <div className="relative z-10 px-6 py-7 md:px-8 md:py-9">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
+                Chart Every Ice Session,
+                <span className="block text-red-600">Own the Crease.</span>
+              </h1>
+              <p className="mt-3 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">
+                Build consistency with structured tracking, daily momentum, and clear analytics from your game and practice sessions.
+              </p>
+          
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 lg:pb-1">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/charting/analytics')}
+                className="border-blue-300/60 bg-blue-500/15 text-blue-100 hover:bg-blue-500/25 hover:text-white"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics & Trends
+              </Button>
+              <Button
+                onClick={() => router.push('/charting/sessions/new')}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Session
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Total Sessions */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10"></div>
+          <Card className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 hover:border-blue-300">
             <div className="relative p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
+                  <p className="inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] bg-blue-100 text-blue-700 border-blue-200">Total Sessions</p>
                   <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
                     {stats?.totalSessions || 0}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </div>
           </Card>
 
           {/* Charted */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-green-500/10"></div>
+          <Card className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 hover:border-blue-300">
             <div className="relative p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Charted</p>
+                  <p className="inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] bg-blue-100 text-blue-700 border-blue-200">Charted</p>
                   <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
                     {chartingStats.chartedSessions}
                     <span className="text-lg text-muted-foreground font-normal ml-1">/ {chartingStats.totalSessions}</span>
@@ -195,26 +201,25 @@ export default function ChartingPage() {
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-green-500 rounded-full transition-all duration-500"
+                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
                         style={{ width: `${chartingStats.completionRate}%` }}
                       />
                     </div>
                   </div>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center ml-4">
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center ml-4">
+                  <CheckCircle2 className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </div>
           </Card>
 
           {/* Current Streak */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-accent/10"></div>
+          <Card className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 hover:border-blue-300">
             <div className="relative p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+                  <p className="inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] bg-blue-100 text-blue-700 border-blue-200">Current Streak</p>
                   <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
                     {streak?.currentStreak || 0}
                   </p>
@@ -224,26 +229,25 @@ export default function ChartingPage() {
                     </p>
                   )}
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-accent" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Flame className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </div>
           </Card>
 
           {/* This Month */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
+          <Card className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 hover:border-blue-300">
             <div className="relative p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Month</p>
+                  <p className="inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] bg-blue-100 text-blue-700 border-blue-200">This Month</p>
                   <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
                     {stats?.thisMonthSessions || 0}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </div>
@@ -251,12 +255,12 @@ export default function ChartingPage() {
         </div>
 
         {/* Calendar Heatmap */}
-        <Card className="border-0 shadow-md overflow-hidden">
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
           <div className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">Activity Calendar</h2>
+              <h2 className="text-xl font-bold text-blue-700">Activity Calendar</h2>
               {(streak?.longestStreak ?? 0) > 0 && (
-                <div className="flex items-center gap-1.5 text-sm text-accent font-medium bg-accent/10 px-3 py-1 rounded-full">
+                <div className="flex items-center gap-1.5 text-sm text-blue-700 font-medium bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
                   <Target className="w-4 h-4" />
                   Longest streak: {streak?.longestStreak} days
                 </div>
@@ -267,6 +271,7 @@ export default function ChartingPage() {
               sessions={sessions}
               chartingEntries={chartingEntries}
               dynamicEntries={dynamicEntries}
+              colorScheme="blue"
               onDayClick={handleDayClick}
             />
           </div>
@@ -306,7 +311,7 @@ export default function ChartingPage() {
                     {selectedDaySessions.map((session) => (
                       <Card
                         key={session.id}
-                        className="p-4 border border-border/50 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group"
+                        className="p-4 border border-slate-200/80 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
                         onClick={() => router.push(`/charting/sessions/${session.id}`)}
                       >
                         <div className="flex items-center justify-between">
@@ -336,9 +341,9 @@ export default function ChartingPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity border-primary/30 text-primary hover:bg-primary/5"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity border-blue-200 text-blue-700 hover:bg-blue-50"
                           >
-                            View
+                            View <ArrowRight className="w-3.5 h-3.5 ml-1" />
                           </Button>
                         </div>
                       </Card>

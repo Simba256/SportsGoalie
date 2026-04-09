@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminRoute } from '@/components/auth/protected-route';
@@ -239,11 +240,8 @@ function VideoReviewsContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading videos...</p>
-        </div>
+      <div className="min-h-[400px] p-6">
+        <SkeletonDarkPage />
       </div>
     );
   }

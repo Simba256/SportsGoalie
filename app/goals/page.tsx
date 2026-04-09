@@ -2,6 +2,7 @@
 
 import { Target, Trophy } from 'lucide-react';
 import { useState } from 'react';
+import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { GoalsList } from '@/components/goals/GoalsList';
 import { AchievementsList } from '@/components/achievements/AchievementsList';
@@ -176,9 +177,7 @@ function GoalsAndAchievementsContent() {
         ) : (
           <>
             {achievementsLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <SkeletonCardGrid count={6} cols={3} />
             ) : achievementsError ? (
               <div className="text-center">
                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />

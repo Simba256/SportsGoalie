@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import {
   Users,
   Activity,
@@ -152,9 +153,7 @@ function AnalyticsContent() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading analytics...</div>
-        </div>
+        <SkeletonAnalytics />
       </div>
     );
   }

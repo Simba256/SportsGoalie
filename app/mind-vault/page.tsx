@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Shield, Loader2, Sparkles } from 'lucide-react';
+import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 import { MindVaultCategoryCard } from '@/components/mind-vault/MindVaultCategoryCard';
@@ -41,75 +41,73 @@ export default function MindVaultPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-
-        <div className="relative flex items-start gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Shield className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Mind Vault</h1>
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
-                <Sparkles className="h-3 w-3" />
-                Mindset Engine
-              </span>
+      <section
+        className="relative -mx-4 -mt-4 overflow-hidden rounded-b-none bg-cover bg-center bg-no-repeat md:-mx-6 md:-mt-6"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=80')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/65 to-slate-900/85" />
+        <div className="relative z-10 px-6 py-7 md:px-8 md:py-9">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl font-black leading-tight tracking-tight text-white md:text-4xl">
+                Build the Mental Game,
+                <span className="block text-red-500">One Entry at a Time.</span>
+              </h1>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/80 md:text-base">
+                Build your mental armor with entries that keep you grounded, focused, and resilient.
+              </p>
             </div>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-sm leading-relaxed sm:text-base">
-              Build your mental armor with entries that keep you grounded, focused, and resilient.
-            </p>
           </div>
         </div>
+      </section>
 
-        <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Total Entries</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
-              {loading ? '--' : totalEntries}
-            </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Total Entries</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">
+            {loading ? '--' : totalEntries}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-red-700">Core List Entries</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">
+            {loading ? '--' : coreEntries}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="font-semibold uppercase tracking-wider text-slate-500">Momentum</span>
+            <span className="font-bold text-slate-900">{loading ? '--' : `${momentum}%`}</span>
           </div>
-          <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">Core List Entries</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
-              {loading ? '--' : coreEntries}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card px-4 py-3">
-            <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-semibold uppercase tracking-wider text-muted-foreground">Momentum</span>
-              <span className="font-bold text-primary">{loading ? '--' : `${momentum}%`}</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-                style={{ width: `${loading ? 8 : Math.max(momentum, 8)}%` }}
-              />
-            </div>
+          <div className="h-2 rounded-full bg-slate-200">
+            <div
+              className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-red-500 transition-all duration-500"
+              style={{ width: `${loading ? 8 : Math.max(momentum, 8)}%` }}
+            />
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+      <div className="rounded-2xl border border-red-100/80 bg-gradient-to-r from-red-50/70 via-white to-blue-50/70 p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wider text-red-700">
           Expandable Index
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-sm leading-relaxed text-slate-600">
           Start with the core lists, then keep adding entries as new challenges appear. The vault
           expands over time and becomes your personal mental armor.
         </p>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <div className="space-y-6">
+          <SkeletonCardGrid count={2} cols={2} />
+          <SkeletonCardGrid count={4} cols={3} />
         </div>
       ) : (
         <>
           {/* Featured: Acceptance & Cannot Accept */}
           <div className="mb-6">
-            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
+            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-red-700">
               Core Lists
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -127,7 +125,7 @@ export default function MindVaultPage() {
 
           {/* Other Categories */}
           <div>
-            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700">
               All Categories
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

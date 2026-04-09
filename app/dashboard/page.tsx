@@ -22,6 +22,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SkeletonDashboard } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
@@ -54,7 +55,7 @@ function DashboardContent() {
   }, [user, router]);
 
   if (user?.role === 'student' && !user?.onboardingCompleted) {
-    return <LoadingSpinner />;
+    return <SkeletonDashboard />;
   }
 
   // Route custom workflow students to their dashboard without loading standard hooks
@@ -72,7 +73,7 @@ function StandardDashboard() {
   const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(5);
 
   if (loading || enrollmentsLoading) {
-    return <LoadingSpinner />;
+    return <SkeletonDashboard />;
   }
 
   const stats = userProgress?.overallStats;
@@ -260,8 +261,14 @@ function StandardDashboard() {
             </div>
 
             {quizzesLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+              <div className="divide-y divide-border/50">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-5 py-3">
+                    <div className="flex-1"><div className="h-3 w-24 rounded bg-muted animate-pulse" /></div>
+                    <div className="h-1.5 w-20 rounded-full bg-muted animate-pulse" />
+                    <div className="h-3 w-8 rounded bg-muted animate-pulse" />
+                  </div>
+                ))}
               </div>
             ) : recentQuizzes.length === 0 ? (
               <div className="text-center py-8 px-4">
@@ -320,13 +327,6 @@ function StandardDashboard() {
 
 /* ──────────────────── Sub-components ──────────────────── */
 
-function LoadingSpinner() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-    </div>
-  );
-}
 
 function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: number }) {
   const strokeWidth = 8;

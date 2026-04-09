@@ -12,8 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CrossReferenceDisplay } from '@/components/parent';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import {
-  Loader2,
   AlertCircle,
   ChevronLeft,
   TrendingUp,
@@ -89,11 +89,7 @@ export default function ChildDetailPage() {
   }, [user, childId]);
 
   if (authLoading || loading) {
-    return (
-      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <SkeletonDarkPage />;
   }
 
   if (!user) {

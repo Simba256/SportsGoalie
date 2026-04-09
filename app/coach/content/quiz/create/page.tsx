@@ -38,6 +38,7 @@ import { customContentService } from '@/lib/database';
 import { videoQuizService } from '@/lib/database';
 import { toast } from 'sonner';
 import { VideoQuizQuestion, VideoQuizSettings } from '@/types';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 
 const defaultSettings: VideoQuizSettings = {
   allowPlaybackSpeedChange: true,
@@ -234,11 +235,7 @@ export default function CreateVideoQuizPage() {
   };
 
   if (authLoading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   return (
