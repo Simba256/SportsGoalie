@@ -153,6 +153,7 @@ function VideoQuizResultsContent() {
   }
 
   const scoreColor = progress.percentage >= 70 ? 'text-blue-600' : 'text-red-600';
+  const scoreColor = progress.percentage >= 70 ? 'text-blue-600' : 'text-red-600';
   const scoreIcon = progress.percentage >= 70 ? <Trophy className="h-6 w-6" /> : <Target className="h-6 w-6" />;
 
   return (
@@ -216,6 +217,7 @@ function VideoQuizResultsContent() {
                   {progress.questionsAnswered.length} / {quiz.questions?.length || 0}
                 </p>
               </div>
+              <CheckCircle2 className="h-8 w-8 text-blue-500" />
               <CheckCircle2 className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
@@ -313,6 +315,7 @@ function VideoQuizResultsContent() {
           className="border-red-200 text-red-700 hover:bg-red-50"
         >
           <Home className="mr-2 h-4 w-4" />
+          Back to Quizzes
           Back to Quizzes
         </Button>
 

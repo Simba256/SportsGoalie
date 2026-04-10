@@ -262,7 +262,7 @@ function QuizzesPageContent() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <Link href={`/quiz/video/${quiz.id}`} className="flex-1">
-                    <Button className="w-full">
+                    <Button className="w-full bg-red-600 text-white hover:bg-red-700">
                       Start Video Quiz
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>

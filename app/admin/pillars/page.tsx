@@ -129,13 +129,7 @@ function AdminPillarsContent() {
     const slug = getPillarSlugFromDocId(pillar.id);
     if (slug) {
       const info = PILLARS.find(p => p.slug === slug);
-      if (info) {
-        return {
-          icon: info.icon,
-          color: info.color,
-          shortName: info.shortName,
-        };
-      }
+      if (info) return { icon: info.icon, color: info.color, shortName: info.shortName };
     }
     return {
       icon: pillar.icon,
