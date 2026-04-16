@@ -3,7 +3,6 @@
 import { Trophy, Star, Clock, Target, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Achievement, UserAchievement } from '@/types';
 
 interface AchievementCardProps {
@@ -31,17 +30,17 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
       case 'common':
-        return 'bg-gray-100 text-gray-800 ring-gray-500/10';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
       case 'uncommon':
-        return 'bg-green-50 text-green-700 ring-green-600/20';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'rare':
-        return 'bg-blue-50 text-blue-700 ring-blue-600/20';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'epic':
-        return 'bg-purple-50 text-purple-700 ring-purple-600/20';
+        return 'bg-red-50 text-red-700 border-red-200';
       case 'legendary':
-        return 'bg-yellow-50 text-yellow-800 ring-yellow-600/20';
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 ring-gray-500/10';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -49,18 +48,18 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
   const progress = userAchievement?.progress || 0;
 
   return (
-    <Card className={`transition-all hover:shadow-md ${
-      isCompleted ? 'ring-2 ring-green-500/20 bg-green-50/30' :
-      isLocked ? 'opacity-50' : ''
+    <Card className={`rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+      isCompleted ? 'border-blue-200 bg-blue-50/30 hover:shadow-blue-100/50' :
+      isLocked ? 'opacity-60 border-slate-200 bg-slate-50' : 'border-slate-200 bg-white hover:shadow-slate-200/60'
     }`}>
       <CardContent className="p-6">
         <div className="flex items-start space-x-4">
           {/* Achievement Icon */}
           <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
             isCompleted
-              ? 'bg-green-100 text-green-600'
+              ? 'bg-blue-100 text-blue-600'
               : isLocked
-              ? 'bg-gray-100 text-gray-400'
+              ? 'bg-slate-100 text-slate-400'
               : 'bg-blue-100 text-blue-600'
           }`}>
             {getAchievementIcon(achievement.type)}
@@ -74,25 +73,30 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
               </h3>
               <div className="flex items-center space-x-2">
                 {isCompleted && (
-                  <Badge variant="default" className="bg-green-100 text-green-800">
+                  <Badge variant="default" className="bg-blue-100 text-blue-800 border border-blue-200">
                     Completed
                   </Badge>
                 )}
-                <Badge className={`text-xs ${getRarityColor(achievement.rarity)}`}>
+                <Badge className={`text-xs border ${getRarityColor(achievement.rarity)}`}>
                   {achievement.rarity}
                 </Badge>
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-600">
               {isLocked && achievement.isSecret ? 'Hidden achievement' : achievement.description}
             </p>
 
             {/* Progress Bar for Progressive Achievements */}
             {!isCompleted && progress > 0 && (
               <div className="space-y-1">
-                <Progress value={progress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
+                <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-red-600 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
                   {progress}% complete
                 </p>
               </div>

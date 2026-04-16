@@ -154,36 +154,36 @@ export default function PillarsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="bg-gray-50">
 
       {/* ══════════════════ HERO BANNER ══════════════════ */}
       <section
-        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 rounded-b-none overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[500px] flex items-center justify-center text-center px-4 overflow-hidden bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1514511719-9f5849dc16d0?w=1920&q=80&auto=format&fit=crop')" }}
       >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-gray-100" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-10 md:py-14">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-[1.1] tracking-tight max-w-4xl">
-            The Architecture of a{' '}
-            <span className="text-red-500">Complete Goalie</span>
+        <div className="relative z-10 max-w-3xl mx-auto -mt-12 md:-mt-16">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            The Architecture of
+            <br />
+            a Complete Goalie
           </h1>
 
-          <p className="mt-4 text-sm md:text-base text-white/80 max-w-2xl leading-relaxed">
-            Every pillar connects to every other.{' '}
-            <span className="font-semibold text-white">
-              Master all seven and you master the game —
-              physically, mentally, and technically.
-            </span>{' '}
+          <p className="text-base md:text-lg text-gray-200 leading-relaxed font-light px-4">
+            Every pillar connects to every other. Master all seven and you
+            master the game - physically, mentally, and technically.
+            <br className="hidden md:block" />
             Each one builds on the last.
           </p>
-
-          {/* Accent divider */}
-          <div className="mt-4 h-1 w-14 rounded-full bg-blue-500" />
         </div>
       </section>
+
+      <main className="relative z-20 max-w-6xl mx-auto px-4 pb-24 -mt-24">
 
       {/* ══════════════════ ERROR STATE ══════════════════ */}
       {state.error && (
@@ -208,8 +208,8 @@ export default function PillarsPage() {
 
       {/* ══════════════════ PILLAR CARDS ══════════════════ */}
       {state.pillars.length > 0 && (
-        <section className="max-w-7xl mx-auto px-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {state.pillars.map((pillar) => {
               const { icon, color, slug } = getPillarDisplayInfo(pillar);
               const theme = PILLAR_THEME[color] ?? PILLAR_THEME['blue'];
@@ -219,50 +219,28 @@ export default function PillarsPage() {
 
               return (
                 <Link key={pillar.id} href={`/pillars/${pillar.id}`} className="group h-full block">
-                  <article className={`relative h-full min-h-[340px] rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 ${theme.borderHover}`}>
-                    {/* Top row: Icon + Badge + Arrow */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        {/* Colored icon circle */}
-                        <div className={`flex h-11 w-11 items-center justify-center rounded-full ${theme.iconBg}`}>
-                          <IconComponent className={`h-5 w-5 ${theme.iconText}`} strokeWidth={2} />
-                        </div>
-
-                        {/* Badge */}
-                        <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] ${theme.badgeClass}`}>
-                          Pillar {String(pillar.order).padStart(2, '0')}
-                        </span>
+                  <article className={`bg-white rounded-2xl p-8 border border-gray-100 flex flex-col transition-transform duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${theme.borderHover}`}>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-10 h-10 flex items-center justify-center text-blue-600">
+                        <IconComponent className="w-8 h-8" />
                       </div>
-
-                      {/* Arrow */}
-                      <div className="h-8 w-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-all duration-300 group-hover:border-slate-300 group-hover:text-slate-600 group-hover:bg-slate-50">
-                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      </div>
+                      <span className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${theme.badgeClass}`}>
+                        Pillar {String(pillar.order).padStart(2, '0')}
+                      </span>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-lg font-bold text-foreground leading-snug mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
                       {pillar.name}
                     </h3>
 
-                    {/* Description */}
-                    <p className="text-sm leading-relaxed text-muted-foreground mb-6 line-clamp-4">
+                    <p className="text-gray-600 mb-8 flex-grow leading-relaxed line-clamp-4">
                       {description}
                     </p>
 
-                    {/* Bottom row: Dots + CTA */}
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex gap-1.5">
-                        <span className={`h-2.5 w-2.5 rounded-full ${theme.dotColors[0]}`} />
-                        <span className={`h-2.5 w-2.5 rounded-full ${theme.dotColors[1]}`} />
-                        <span className={`h-2.5 w-2.5 rounded-full ${theme.dotColors[2]}`} />
-                      </div>
-
-                      <span className={`inline-flex items-center gap-1 text-sm font-semibold transition-colors ${theme.ctaClass}`}>
-                        Explore Pillar
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      </span>
-                    </div>
+                    <span className={`inline-flex items-center text-base font-semibold transition-colors ${theme.ctaClass}`}>
+                      Explore Pillar
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </span>
                   </article>
                 </Link>
               );
@@ -271,29 +249,7 @@ export default function PillarsPage() {
         </section>
       )}
 
-      {/* ══════════════════ BOTTOM CALLOUT ══════════════════ */}
-      <section className="max-w-7xl mx-auto rounded-2xl border border-border/60 bg-card p-6 md:p-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-accent font-bold tracking-widest uppercase text-xs mb-3">
-            How It Works
-          </p>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-            Everything Connects
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm leading-relaxed mb-6">
-            Chart the game, train what matters, and build confidence for your next performance.
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-3 text-xs font-semibold text-foreground/80">
-            <span className="bg-muted px-4 py-2 rounded-full">Chart</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="bg-muted px-4 py-2 rounded-full">Learn</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="bg-muted px-4 py-2 rounded-full">Apply</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="bg-muted px-4 py-2 rounded-full">Perform Better</span>
-          </div>
-        </div>
-      </section>
+      </main>
 
     </div>
   );

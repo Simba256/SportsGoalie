@@ -153,7 +153,6 @@ function VideoQuizResultsContent() {
   }
 
   const scoreColor = progress.percentage >= 70 ? 'text-blue-600' : 'text-red-600';
-  const scoreColor = progress.percentage >= 70 ? 'text-blue-600' : 'text-red-600';
   const scoreIcon = progress.percentage >= 70 ? <Trophy className="h-6 w-6" /> : <Target className="h-6 w-6" />;
 
   return (

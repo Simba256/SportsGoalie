@@ -1,6 +1,6 @@
 'use client';
 
-import { Target, Trophy } from 'lucide-react';
+import { BookOpen, CheckCircle2, Flame, Target, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -106,6 +106,13 @@ function GoalsAndAchievementsContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('goals');
   const { achievements, userAchievements, loading: achievementsLoading, error: achievementsError } = useAchievements();
 
+  const completedGoalsCount = goals.filter(goal => goal.isCompleted).length;
+  const activeGoalsCount = goals.length - completedGoalsCount;
+  const goalCompletionRate = goals.length > 0
+    ? Math.round((completedGoalsCount / goals.length) * 100)
+    : 0;
+  const unlockedAchievements = userAchievements.filter(a => a.isCompleted).length;
+
   const handleCreateGoal = (goalData: Omit<Goal, 'id' | 'createdAt'>) => {
     const newGoal: Goal = {
       ...goalData,
@@ -126,74 +133,137 @@ function GoalsAndAchievementsContent() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold flex items-center space-x-2">
-            <Target className="h-8 w-8" />
-            <span>Goals & Achievements</span>
+    <div className="bg-gray-50">
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[340px] md:h-[390px] flex flex-col justify-center px-6 md:px-10 overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/goals-achieve.png')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#090f2b]/90 via-[#0f1f4a]/82 to-[#18214f]/70" />
+        <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
+
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <h1 className="text-3xl md:text-5xl font-bold leading-tight text-white">
+            Build Clear Goals,
+            <span className="block text-red-500">Earn Every Milestone.</span>
           </h1>
-          <p className="text-muted-foreground">
-            Set personal learning objectives and unlock achievements as you progress.
+          <p className="mt-3 max-w-2xl text-sm md:text-base font-medium text-white/85 leading-relaxed">
+            Stay consistent with focused learning objectives and track the achievements you unlock along the way.
           </p>
         </div>
+      </section>
 
-        {/* Tab Switcher */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('goals')}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'goals'
-                ? 'border-red-600 text-red-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Target className="h-4 w-4" />
-            Goals
-          </button>
-          <button
-            onClick={() => setActiveTab('achievements')}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'achievements'
-                ? 'border-red-600 text-red-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Trophy className="h-4 w-4" />
-            Achievements
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'goals' ? (
-          <GoalsList
-            goals={goals}
-            onCreateGoal={handleCreateGoal}
-            onUpdateGoal={handleUpdateGoal}
-            onDeleteGoal={handleDeleteGoal}
-            loading={false}
-          />
-        ) : (
-          <>
-            {achievementsLoading ? (
-              <SkeletonCardGrid count={6} cols={3} />
-            ) : achievementsError ? (
-              <div className="text-center">
-                <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Unable to load achievements</h3>
-                <p className="text-muted-foreground">{achievementsError}</p>
+      <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 pb-10 space-y-6 md:space-y-7">
+        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 md:gap-7">
+          <div className="rounded-2xl bg-blue-50 border border-blue-100 shadow-sm h-[150px] md:h-[165px]">
+            <div className="relative p-5 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700">Total Goals</p>
+                <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-blue-600" />
+                </div>
               </div>
-            ) : (
-              <AchievementsList
-                achievements={achievements}
-                userAchievements={userAchievements}
-                loading={achievementsLoading}
-              />
-            )}
-          </>
-        )}
-      </div>
+              <p className="text-5xl font-extrabold text-slate-900 tabular-nums tracking-tight">{goals.length}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-red-50 border border-red-100 shadow-sm h-[150px] md:h-[165px]">
+            <div className="relative p-5 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-red-700">Active Goals</p>
+                <div className="w-9 h-9 rounded-lg bg-red-100/70 flex items-center justify-center">
+                  <Flame className="h-5 w-5 text-red-600" />
+                </div>
+              </div>
+              <p className="text-5xl font-extrabold text-slate-900 tabular-nums tracking-tight">{activeGoalsCount}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm h-[150px] md:h-[165px]">
+            <div className="relative p-5 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Completion Rate</p>
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-5xl font-extrabold text-slate-900 tabular-nums tracking-tight">{goalCompletionRate}%</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm h-[150px] md:h-[165px]">
+            <div className="relative p-5 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Unlocked Achievements</p>
+                <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                  <Trophy className="h-5 w-5 text-red-600" />
+                </div>
+              </div>
+              <p className="text-5xl font-extrabold text-slate-900 tabular-nums tracking-tight">{unlockedAchievements}</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-red-100/80 bg-gradient-to-r from-red-50/70 via-white to-blue-50/70 p-2">
+          <div className="inline-flex w-full flex-wrap gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 p-1.5 sm:w-auto">
+            <button
+              onClick={() => setActiveTab('goals')}
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                activeTab === 'goals'
+                  ? 'bg-red-600 text-white shadow-sm hover:bg-red-700'
+                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <Target className="h-4 w-4" />
+              Goals
+            </button>
+            <button
+              onClick={() => setActiveTab('achievements')}
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                activeTab === 'achievements'
+                  ? 'bg-red-600 text-white shadow-sm hover:bg-red-700'
+                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <Trophy className="h-4 w-4" />
+              Achievements
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6">
+          {activeTab === 'goals' ? (
+            <GoalsList
+              goals={goals}
+              onCreateGoal={handleCreateGoal}
+              onUpdateGoal={handleUpdateGoal}
+              onDeleteGoal={handleDeleteGoal}
+              loading={false}
+            />
+          ) : (
+            <>
+              {achievementsLoading ? (
+                <SkeletonCardGrid count={6} cols={3} />
+              ) : achievementsError ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+                  <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Unable to load achievements</h3>
+                  <p className="text-muted-foreground">{achievementsError}</p>
+                </div>
+              ) : (
+                <AchievementsList
+                  achievements={achievements}
+                  userAchievements={userAchievements}
+                  loading={achievementsLoading}
+                />
+              )}
+            </>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

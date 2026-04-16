@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { videoQuizService } from '@/lib/database';
-import { useEnrollment } from '@/hooks/useEnrollment';
 import { VideoQuizProgress } from '@/types/video-quiz';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
@@ -85,7 +84,6 @@ function dateStr(d: Date): string {
 
 export function useAnalytics() {
   const { user } = useAuth();
-  const { enrolledSports } = useEnrollment();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +110,7 @@ export function useAnalytics() {
         }
 
         const attempts = result.data.items;
-        const analytics = aggregateAnalytics(attempts, enrolledSports);
+        const analytics = aggregateAnalytics(attempts);
         setData(analytics);
         setError(null);
       } catch {
@@ -123,14 +121,13 @@ export function useAnalytics() {
     };
 
     load();
-  }, [user?.id, enrolledSports]);
+  }, [user?.id]);
 
   return { data, loading, error };
 }
 
 function aggregateAnalytics(
-  attempts: VideoQuizProgress[],
-  enrolledSports: Array<{ sport: { id: string; name: string } }>
+  attempts: VideoQuizProgress[]
 ): AnalyticsData {
   const totalQuizzes = attempts.length;
 
@@ -234,30 +231,30 @@ function aggregateAnalytics(
   const pillarMap = new Map<string, { attempts: number; totalScore: number; timeSpent: number; bestScore: number }>();
 
   for (const a of attempts) {
-    const sportId = a.sportId;
-    if (!sportId) continue;
-    const existing = pillarMap.get(sportId) || { attempts: 0, totalScore: 0, timeSpent: 0, bestScore: 0 };
+    const slug = a.sportId ? getPillarSlugFromDocId(a.sportId) : null;
+    // Ignore custom/non-pillar quizzes like coach-custom in pillar analytics.
+    if (!slug) continue;
+
+    const existing = pillarMap.get(slug) || { attempts: 0, totalScore: 0, timeSpent: 0, bestScore: 0 };
     existing.attempts++;
     existing.totalScore += a.percentage || 0;
     existing.timeSpent += Math.round((a.timeSpent || a.totalTimeSpent || 0) / 60);
     existing.bestScore = Math.max(existing.bestScore, a.percentage || 0);
-    pillarMap.set(sportId, existing);
+    pillarMap.set(slug, existing);
   }
 
-  const pillarBreakdown: PillarBreakdown[] = Array.from(pillarMap.entries()).map(([sportId, v]) => {
-    const slug = getPillarSlugFromDocId(sportId);
-    const pillarInfo = slug ? PILLARS.find(p => p.slug === slug) : null;
-    const enrolledSport = enrolledSports.find(e => e.sport.id === sportId);
-    const name = pillarInfo?.shortName || enrolledSport?.sport.name || sportId;
+  // Always render all 7 official pillars in a stable order.
+  const pillarBreakdown: PillarBreakdown[] = PILLARS.map((pillar) => {
+    const v = pillarMap.get(pillar.slug) || { attempts: 0, totalScore: 0, timeSpent: 0, bestScore: 0 };
 
     return {
-      pillarName: name,
-      pillarId: sportId,
+      pillarName: pillar.shortName,
+      pillarId: pillar.slug,
       attempts: v.attempts,
-      avgScore: Math.round(v.totalScore / v.attempts),
+      avgScore: v.attempts > 0 ? Math.round(v.totalScore / v.attempts) : 0,
       timeSpent: v.timeSpent,
       bestScore: Math.round(v.bestScore),
-      color: PILLAR_COLORS[slug || ''] || '#6b7280',
+      color: PILLAR_COLORS[pillar.slug] || '#6b7280',
     };
   });
 

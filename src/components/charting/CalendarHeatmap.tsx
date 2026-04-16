@@ -106,10 +106,10 @@ export const CalendarHeatmap = ({
   const getBackgroundColor = (level: number): string => {
     if (colorScheme === 'blue') {
       switch (level) {
-        case 0: return 'bg-blue-50 hover:bg-blue-100 border border-blue-100';
+        case 0: return 'bg-slate-50 hover:bg-slate-100 border border-slate-200';
         case 1: return 'bg-blue-200 hover:bg-blue-300';
         case 2: return 'bg-blue-400 hover:bg-blue-500';
-        case 3: return 'bg-blue-700 hover:bg-blue-800';
+        case 3: return 'bg-blue-600 hover:bg-blue-700';
         default: return 'bg-blue-50';
       }
     }
@@ -140,9 +140,9 @@ export const CalendarHeatmap = ({
   let lastMonth = -1;
 
   const textToneClass = colorScheme === 'blue' ? 'text-black' : 'text-muted-foreground';
-  const summaryToneClass = colorScheme === 'blue' ? 'text-black' : 'text-muted-foreground';
+  const summaryToneClass = colorScheme === 'blue' ? 'text-slate-500' : 'text-muted-foreground';
   const todayRingClass = colorScheme === 'blue'
-    ? 'ring-2 ring-blue-700 ring-offset-1 ring-offset-background'
+    ? 'ring-2 ring-blue-700 ring-offset-1 ring-offset-white'
     : 'ring-2 ring-accent ring-offset-1 ring-offset-background';
 
   for (let week = 0; week < weeksNeeded; week++) {
@@ -159,30 +159,30 @@ export const CalendarHeatmap = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Legend */}
-      <div className={`flex items-center gap-4 text-sm ${textToneClass}`}>
+      <div className={`flex flex-wrap items-center gap-4 text-sm ${textToneClass}`}>
         <span className="font-medium">Activity:</span>
         <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-sm ${colorScheme === 'blue' ? 'bg-blue-50 border border-blue-200' : 'bg-muted/50 border border-border'}`}></div>
+          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-slate-50 border border-slate-200' : 'bg-muted/50 border border-border'}`}></div>
           <span>None</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-sm ${colorScheme === 'blue' ? 'bg-blue-200' : 'bg-primary/20'}`}></div>
+          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-blue-200' : 'bg-primary/20'}`}></div>
           <span>Scheduled</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-sm ${colorScheme === 'blue' ? 'bg-blue-400' : 'bg-primary/50'}`}></div>
+          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-blue-400' : 'bg-primary/50'}`}></div>
           <span>Partial</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-sm ${colorScheme === 'blue' ? 'bg-blue-700' : 'bg-primary'}`}></div>
+          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-blue-600' : 'bg-primary'}`}></div>
           <span>Complete</span>
         </div>
       </div>
 
       {/* Heatmap Grid */}
-      <div className="overflow-x-auto pb-4">
+      <div className="overflow-x-auto pb-2">
         <div className="inline-flex flex-col gap-1 min-w-max">
           {/* Month labels */}
           <div className="relative h-5 ml-10 mb-1">
@@ -198,20 +198,20 @@ export const CalendarHeatmap = ({
           </div>
 
           {/* Grid container with day labels */}
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {/* Day labels */}
-            <div className="flex flex-col gap-1 pr-2">
+            <div className="flex flex-col gap-[6px] pr-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-                <div key={day} className={`h-3.5 flex items-center text-xs ${textToneClass}`}>
+                <div key={day} className={`h-3.5 flex items-center text-xs text-slate-400`}>
                   {idx % 2 === 1 ? day[0] : ''}
                 </div>
               ))}
             </div>
 
             {/* Weeks (columns) */}
-            <div className="flex gap-1">
+            <div className="flex gap-[6px]">
               {grid[0].map((_, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
+                <div key={weekIndex} className="flex flex-col gap-[6px]">
                   {grid.map((row, dayIndex) => {
                     const date = row[weekIndex];
                     const isInRange = date >= yearStart && date <= yearEnd;
@@ -230,7 +230,7 @@ export const CalendarHeatmap = ({
                         key={dayIndex}
                         onClick={() => onDayClick(date, daySessions)}
                         className={`
-                          w-3.5 h-3.5 rounded-sm transition-all
+                          w-3.5 h-3.5 rounded-full transition-all
                           ${getBackgroundColor(level)}
                           ${isToday ? todayRingClass : ''}
                         `}
@@ -246,8 +246,8 @@ export const CalendarHeatmap = ({
       </div>
 
       {/* Summary */}
-      <div className={`text-sm ${summaryToneClass}`}>
-        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} &bull; {sessions.length} sessions &bull; 1 year past + 3 months future &bull; Click any day for details</p>
+      <div className={`text-sm pt-3 border-t border-slate-100 ${summaryToneClass}`}>
+        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} &bull; {sessions.length} sessions &bull; 1 year past &bull; Click any day for details</p>
       </div>
     </div>
   );

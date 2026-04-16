@@ -45,7 +45,7 @@ export default function AcceptanceListPage() {
 
   const handleAcceptPrompt = async (text: string, subcategory: string) => {
     if (!user?.id) {
-      console.error('[MindVault] No user ID available');
+      console.warn('[MindVault] No user ID available');
       return;
     }
     console.log('[MindVault] Adding acceptance entry:', { subcategory, text: text.substring(0, 40) });
@@ -63,10 +63,17 @@ export default function AcceptanceListPage() {
         const reload = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
         if (reload.success && reload.data) setEntries(reload.data);
       } else {
-        console.error('[MindVault] addEntry failed:', result.error);
+        console.warn('[MindVault] addEntry failed:', {
+          code: result.error?.code || 'UNKNOWN_ERROR',
+          message: result.error?.message || result.message || 'Failed to add entry',
+          details: result.error?.details,
+        });
       }
     } catch (error) {
-      console.error('[MindVault] addEntry threw:', error);
+      console.warn('[MindVault] addEntry threw:', {
+        message: error instanceof Error ? error.message : String(error),
+        error,
+      });
     }
   };
 
@@ -82,6 +89,12 @@ export default function AcceptanceListPage() {
     if (result.success) {
       const reload = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
       if (reload.success && reload.data) setEntries(reload.data);
+    } else {
+      console.warn('[MindVault] custom addEntry failed:', {
+        code: result.error?.code || 'UNKNOWN_ERROR',
+        message: result.error?.message || result.message || 'Failed to add entry',
+        details: result.error?.details,
+      });
     }
   };
 

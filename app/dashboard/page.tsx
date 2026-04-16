@@ -92,42 +92,53 @@ function StandardDashboard() {
   ) || enrolledSports[0];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="bg-gray-50">
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[340px] md:h-[390px] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/goalie-dashboard.png')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
 
-      {/* ── Welcome Banner ─────────────────────────────────────────── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        {/* Soft decorative shapes */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <h1 className="text-white text-3xl md:text-5xl font-bold bg-white/10 border border-white/25 backdrop-blur-sm px-6 py-2 rounded-xl inline-block shadow-lg mb-2">
+            {greeting}, {firstName}
+          </h1>
+          <p className="text-white text-sm md:text-base font-medium drop-shadow-md max-w-2xl px-4">
+            {stats?.quizzesCompleted
+              ? `You've learned ${overallPct}% of your course. Keep it up and improve your skills!`
+              : 'Start your goalie training journey by exploring pillars and taking quizzes.'}
+          </p>
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <p className="text-primary text-sm font-semibold">{greeting}</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
-              Hello {firstName},
-            </h1>
-            <p className="text-muted-foreground text-sm mt-2 max-w-lg leading-relaxed">
-              {stats?.quizzesCompleted
-                ? `You've learned ${overallPct}% of your course. Keep it up and improve your skills!`
-                : 'Start your goalie training journey by exploring pillars and taking quizzes.'}
-            </p>
+          <div className="mt-4 w-full max-w-lg rounded-full bg-white/35 h-2.5 overflow-hidden">
+            <div className="h-full rounded-full bg-blue-600" style={{ width: `${overallPct}%` }} />
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 px-2">
+            <div className="flex items-center gap-3 rounded-full border border-white/30 bg-white/20 px-4 py-2 backdrop-blur-md shadow-sm">
+              <ProgressRing percentage={overallPct} size={48} />
+              <div className="text-left">
+                <p className="text-[11px] font-medium text-white/80">Overall Progress</p>
+                <p className="text-sm font-bold text-white">{overallPct}%</p>
+              </div>
+            </div>
+
             {activePillar && (
               <Link href={`/pillars/${activePillar.sport.id}`}>
-                <Button size="sm" className="mt-4">
+                <button className="flex items-center gap-1 rounded-full border border-white/35 bg-white/90 px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-white">
+                  <Play className="h-3.5 w-3.5" />
                   Continue Learning
-                </Button>
+                </button>
               </Link>
             )}
           </div>
-
-          {/* Progress circle */}
-          <div className="hidden md:flex flex-col items-center">
-            <ProgressRing percentage={overallPct} size={110} />
-            <p className="text-muted-foreground text-xs mt-2">Overall Progress</p>
-          </div>
         </div>
-      </div>
+      </section>
 
+      <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-8">
       {/* ── Main Layout ────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-3 gap-6">
 
@@ -321,6 +332,7 @@ function StandardDashboard() {
           </div>
         </div>
       </div>
+      </main>
     </div>
   );
 }
