@@ -58,26 +58,34 @@ export default function NewSessionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Header */}
+      <section className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[250px] md:h-[290px] flex items-start justify-center px-4 pt-10 md:pt-12 overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/goalie.avif')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+
+        <div className="relative z-10 w-full max-w-3xl mx-auto">
           <Button
             variant="outline"
             size="icon"
             onClick={() => router.back()}
-            className="rounded-full border-border/50 hover:bg-muted"
+            className="absolute left-1 md:-left-20 lg:-left-28 xl:-left-36 top-0 rounded-full border-white/35 bg-white/80 hover:bg-white backdrop-blur-sm text-slate-700"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">New Session</h1>
-            <p className="text-muted-foreground mt-1">Create a new game or practice session</p>
+
+          <div className="mt-3 text-center">
+            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">New Session</h1>
+            <p className="text-white/85 mt-2 text-sm md:text-base">Create a new game or practice session</p>
           </div>
         </div>
+      </section>
 
+      <main className="relative z-20 max-w-3xl mx-auto px-4 md:px-6 -mt-16 md:-mt-20 pb-10">
         {/* Form */}
-        <Card className="border-0 shadow-md overflow-hidden">
+        <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <form onSubmit={handleSubmit} className="space-y-8 p-6">
             {/* Session Type */}
             <div className="space-y-3">
@@ -263,7 +271,7 @@ export default function NewSessionPage() {
             </div>
           </form>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,5 +1,10 @@
 import { cn } from '@/lib/utils';
 
+const SKELETON_CHART_BAR_HEIGHTS = [
+  66, 74, 58, 42, 81, 63, 36, 55, 47, 39,
+  43, 34, 86, 61, 75, 38, 57, 60, 54, 62,
+];
+
 /* ── Base Skeleton Pulse ─────────────────────────────────────────────────── */
 
 function Bone({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -140,7 +145,7 @@ export function SkeletonChart() {
             <div key={i} className="flex-1 flex flex-col justify-end">
               <Bone
                 className="w-full rounded-t"
-                style={{ height: `${30 + Math.random() * 60}%` }}
+                style={{ height: `${SKELETON_CHART_BAR_HEIGHTS[i % SKELETON_CHART_BAR_HEIGHTS.length]}%` }}
               />
             </div>
           ))}

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
-import { Session, SessionStats, StreakData, DynamicChartingEntry } from '@/types';
+import { Session, SessionStats, DynamicChartingEntry, ChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,28 +14,152 @@ import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/compone
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (value && typeof value === 'object' && 'toDate' in value) {
+    const candidate = value as { toDate?: () => Date };
+    if (typeof candidate.toDate === 'function') {
+      return candidate.toDate();
+    }
+  }
+
+  return null;
+};
+
+const toDateKey = (value: unknown): string | null => {
+  const date = toDate(value);
+  return date ? format(date, 'yyyy-MM-dd') : null;
+};
+
+const calculateSessionStats = (sessions: Session[]): SessionStats => {
+  const completedSessions = sessions.filter((session) => session.status === 'completed');
+  const gameSessions = sessions.filter((session) => session.type === 'game');
+  const practiceSessions = sessions.filter((session) => session.type === 'practice');
+
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * DAY_MS);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const thisWeekSessions = sessions.filter((session) => {
+    const date = toDate(session.date);
+    return date ? date >= oneWeekAgo : false;
+  }).length;
+
+  const thisMonthSessions = sessions.filter((session) => {
+    const date = toDate(session.date);
+    return date ? date >= monthStart : false;
+  }).length;
+
+  return {
+    totalSessions: sessions.length,
+    completedSessions: completedSessions.length,
+    gameSessions: gameSessions.length,
+    practiceSessions: practiceSessions.length,
+    completionRate: sessions.length > 0 ? (completedSessions.length / sessions.length) * 100 : 0,
+    averageSessionsPerWeek: thisWeekSessions,
+    averageSessionsPerMonth: thisMonthSessions,
+    thisWeekSessions,
+    thisMonthSessions,
+  };
+};
+
+const calculateCurrentStreak = (
+  sessions: Session[],
+  chartingEntries: ChartingEntry[],
+  dynamicEntries: DynamicChartingEntry[]
+): number => {
+  const activityDateKeys = new Set<string>();
+
+  sessions
+    .filter((session) => session.status === 'completed')
+    .forEach((session) => {
+      const key = toDateKey(session.date);
+      if (key) activityDateKeys.add(key);
+    });
+
+  chartingEntries.forEach((entry) => {
+    const key = toDateKey(entry.submittedAt);
+    if (key) activityDateKeys.add(key);
+  });
+
+  dynamicEntries.forEach((entry) => {
+    const key = toDateKey(entry.submittedAt);
+    if (key) activityDateKeys.add(key);
+  });
+
+  const streakDates = Array.from(activityDateKeys).sort((a, b) => b.localeCompare(a));
+  if (streakDates.length === 0) {
+    return 0;
+  }
+
+  const today = toDateKey(new Date());
+  const yesterday = toDateKey(new Date(Date.now() - DAY_MS));
+  if (!today || !yesterday) {
+    return 0;
+  }
+
+  if (streakDates[0] !== today && streakDates[0] !== yesterday) {
+    return 0;
+  }
+
+  let streak = 1;
+  for (let i = 1; i < streakDates.length; i++) {
+    const previous = new Date(`${streakDates[i - 1]}T00:00:00`);
+    const current = new Date(`${streakDates[i]}T00:00:00`);
+    const diffDays = Math.round((previous.getTime() - current.getTime()) / DAY_MS);
+
+    if (diffDays === 1) {
+      streak += 1;
+      continue;
+    }
+
+    if (diffDays > 1) {
+      break;
+    }
+  }
+
+  return streak;
+};
+
 export default function ChartingPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [chartingEntries, setChartingEntries] = useState<any[]>([]);
+  const [chartingEntries, setChartingEntries] = useState<ChartingEntry[]>([]);
   const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
-  const [stats, setStats] = useState<SessionStats | null>(null);
-  const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Calculate charting completion stats
-  const chartingStats = {
-    totalSessions: sessions.length,
-    chartedSessions: sessions.filter(session => {
-      const hasDynamicEntry = dynamicEntries.some(e => e.sessionId === session.id);
-      const hasLegacyEntry = chartingEntries.some(e => e.sessionId === session.id);
-      return hasDynamicEntry || hasLegacyEntry;
-    }).length,
-    get completionRate() {
-      return this.totalSessions > 0 ? Math.round((this.chartedSessions / this.totalSessions) * 100) : 0;
-    }
-  };
+  const stats = useMemo<SessionStats>(() => calculateSessionStats(sessions), [sessions]);
+
+  const currentStreak = useMemo(
+    () => calculateCurrentStreak(sessions, chartingEntries, dynamicEntries),
+    [sessions, chartingEntries, dynamicEntries]
+  );
+
+  const chartedSessionIds = useMemo(() => {
+    const ids = new Set<string>();
+    chartingEntries.forEach((entry) => ids.add(entry.sessionId));
+    dynamicEntries.forEach((entry) => ids.add(entry.sessionId));
+    return ids;
+  }, [chartingEntries, dynamicEntries]);
+
+  const chartingStats = useMemo(() => {
+    const totalSessions = sessions.length;
+    const chartedSessions = sessions.reduce((count, session) => {
+      return count + (chartedSessionIds.has(session.id) ? 1 : 0);
+    }, 0);
+
+    return {
+      totalSessions,
+      chartedSessions,
+      completionRate: totalSessions > 0 ? Math.round((chartedSessions / totalSessions) * 100) : 0,
+    };
+  }, [sessions, chartedSessionIds]);
 
   // Selected day modal state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -59,20 +183,14 @@ export default function ChartingPage() {
     try {
       setLoading(true);
 
-      const [sessionsResult, analyticsResult, entriesResult, dynamicEntriesResult] = await Promise.all([
+      const [sessionsResult, entriesResult, dynamicEntriesResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
-        chartingService.getStudentAnalytics(user.id),
         chartingService.getChartingEntriesByStudent(user.id),
         dynamicChartingService.getDynamicEntriesByStudent(user.id),
       ]);
 
       if (sessionsResult.success && sessionsResult.data) {
         setSessions(sessionsResult.data);
-      }
-
-      if (analyticsResult.success && analyticsResult.data) {
-        setStats(analyticsResult.data.sessionStats);
-        setStreak(analyticsResult.data.streak);
       }
 
       if (entriesResult.success && entriesResult.data) {
@@ -162,7 +280,7 @@ export default function ChartingPage() {
               </div>
             </div>
             <p className="text-5xl md:text-6xl font-extrabold text-slate-900 tabular-nums tracking-tight">
-              {stats?.totalSessions || 0}
+              {stats.totalSessions}
             </p>
           </div>
         </Card>
@@ -216,7 +334,7 @@ export default function ChartingPage() {
               </div>
             </div>
             <p className="text-[40px] font-extrabold text-slate-900 leading-none tracking-tight">
-              {streak?.currentStreak || 0}
+              {currentStreak}
               <span className="text-[28px] align-baseline ml-1">Days</span>
             </p>
           </div>
@@ -228,7 +346,7 @@ export default function ChartingPage() {
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">This Month</p>
                 <p className="text-5xl font-extrabold text-slate-900 mt-1 tracking-tight">
-                  {stats?.thisMonthSessions || 0}
+                  {stats.thisMonthSessions || 0}
                 </p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
