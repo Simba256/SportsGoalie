@@ -5,8 +5,9 @@ import { ApiResponse } from '@/types';
 import { VideoQuizProgress } from '@/types/video-quiz';
 import { logger } from '../../utils/logger';
 
-// Type alias for backwards compatibility
-type QuizAttempt = VideoQuizProgress;
+// Loose alias — video_quiz_progress documents carry fields (passed, quizId, raw timestamps)
+// that VideoQuizProgress's strict type doesn't model, and callers need flexible access.
+type QuizAttempt = VideoQuizProgress & Record<string, any>;
 
 export interface StudentAnalytics {
   userId: string;
@@ -141,14 +142,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     try {
       // Only fetch video quiz attempts and related data
       // Note: Changed from 'quiz_attempts' to 'video_quiz_progress' to match video quiz system
-      const quizAttempts = await this.query<any>('video_quiz_progress', {
-        where: [
-          { field: 'userId', operator: '==', value: userId },
-          { field: 'status', operator: '==', value: 'submitted' }
-        ]
-      });
-
-      const quizzes = quizAttempts.data?.items || [];
+      const quizzes = await this.getSubmittedVideoQuizAttempts(userId);
 
       // Get unique sport and skill IDs from quiz attempts
       const sportIds = new Set<string>();
@@ -167,7 +161,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       // Track active days from quiz attempts
       quizzes.forEach(quiz => {
         // VideoQuizProgress uses 'completedAt' instead of 'submittedAt'
-        const dateField = quiz.completedAt || quiz.submittedAt;
+        const dateField: any = quiz.completedAt || quiz.submittedAt;
         if (dateField) {
           const date = dateField.toDate ? dateField.toDate() : new Date(dateField);
           activeDaysSet.add(date.toISOString().split('T')[0]);
@@ -177,7 +171,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       // Find last active date
       const lastActiveDate = quizzes.length > 0
         ? new Date(Math.max(...quizzes.map(q => {
-            const dateField = q.completedAt || q.submittedAt;
+            const dateField: any = q.completedAt || q.submittedAt;
             const date = dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
             return date.getTime();
           })))
@@ -283,14 +277,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Use video_quiz_progress collection for video quiz data
-      const attemptsResult = await this.query<any>('video_quiz_progress', {
-        where: [
-          { field: 'userId', operator: '==', value: userId },
-          { field: 'status', operator: '==', value: 'submitted' }
-        ]
-      });
-
-      const attempts = attemptsResult.data?.items || [];
+      const attempts = await this.getSubmittedVideoQuizAttempts(userId);
 
       // Group attempts by quiz (VideoQuizProgress uses 'videoQuizId')
       const quizMap = new Map<string, any[]>();
@@ -379,21 +366,14 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Use video_quiz_progress collection
-      const quizAttemptsResult = await this.query<any>('video_quiz_progress', {
-        where: [
-          { field: 'userId', operator: '==', value: userId },
-          { field: 'status', operator: '==', value: 'submitted' }
-        ]
-      });
-
-      const quizAttempts = quizAttemptsResult.data?.items || [];
+      const quizAttempts = await this.getSubmittedVideoQuizAttempts(userId);
 
       // Track skills passed over time
       const skillsPassedByDate = new Map<string, Set<string>>();
 
       quizAttempts.forEach(attempt => {
         if (attempt.passed && attempt.skillId) {
-          const dateField = attempt.completedAt || attempt.submittedAt;
+          const dateField: any = attempt.completedAt || attempt.submittedAt;
           if (dateField) {
             const date = dateField.toDate ? dateField.toDate() : new Date(dateField);
             const dateStr = date.toISOString().split('T')[0];
@@ -419,7 +399,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         // Quizzes taken on this day
         const dayQuizzes = quizAttempts.filter(q => {
-          const dateField = q.completedAt || q.submittedAt;
+          const dateField: any = q.completedAt || q.submittedAt;
           const attemptDate = dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
           return attemptDate.toISOString().split('T')[0] === dateStr;
         });
@@ -472,14 +452,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Get all video quiz attempts
-      const quizAttemptsResult = await this.query<any>('video_quiz_progress', {
-        where: [
-          { field: 'userId', operator: '==', value: userId },
-          { field: 'status', operator: '==', value: 'submitted' }
-        ]
-      });
-
-      const attempts = quizAttemptsResult.data?.items || [];
+      const attempts = await this.getSubmittedVideoQuizAttempts(userId);
 
       // Group attempts by skillId
       const skillPerformanceMap = new Map<string, {
@@ -567,14 +540,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
     try {
       // Get all video quiz attempts to determine which sports the user is enrolled in
-      const quizAttemptsResult = await this.query<any>('video_quiz_progress', {
-        where: [
-          { field: 'userId', operator: '==', value: userId },
-          { field: 'status', operator: '==', value: 'submitted' }
-        ]
-      });
-
-      const attempts = quizAttemptsResult.data?.items || [];
+      const attempts = await this.getSubmittedVideoQuizAttempts(userId);
 
       // Group attempts by sportId
       const sportAttempts = new Map<string, QuizAttempt[]>();
@@ -749,16 +715,10 @@ export class StudentAnalyticsService extends BaseDatabaseService {
     logger.info('Fetching quiz attempt history', 'StudentAnalyticsService', { userId, limit });
 
     try {
-      const attemptsResult = await this.query<any>('video_quiz_progress', {
-        where: [
-          { field: 'userId', operator: '==', value: userId },
-          { field: 'status', operator: '==', value: 'submitted' }
-        ],
-        orderBy: [{ field: 'completedAt', direction: 'desc' }],
-        limit
+      const attempts = await this.getSubmittedVideoQuizAttempts(userId, {
+        limit,
+        sortByCompletedAtDesc: true,
       });
-
-      const attempts = attemptsResult.data?.items || [];
       const attemptDetails: QuizAttemptDetail[] = [];
 
       for (const attempt of attempts) {
@@ -769,14 +729,17 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           attempt.sportId ? sportsService.getSport(attempt.sportId) : null
         ]);
 
-        const startTime = attempt.startedAt?.toDate ?
-          attempt.startedAt.toDate() :
-          new Date(attempt.startedAt || 0);
-        const endTime = attempt.completedAt?.toDate ?
-          attempt.completedAt.toDate() :
-          attempt.submittedAt?.toDate ?
-            attempt.submittedAt.toDate() :
-            new Date(attempt.completedAt || attempt.submittedAt || 0);
+        const startedAt: any = attempt.startedAt;
+        const completedAt: any = attempt.completedAt;
+        const submittedAt: any = attempt.submittedAt;
+        const startTime = startedAt?.toDate ?
+          startedAt.toDate() :
+          new Date(startedAt || 0);
+        const endTime = completedAt?.toDate ?
+          completedAt.toDate() :
+          submittedAt?.toDate ?
+            submittedAt.toDate() :
+            new Date(completedAt || submittedAt || 0);
 
         // Better fallback for quiz title - use sport/skill names if available
         const quizTitle = quiz.data?.title ||
@@ -821,6 +784,96 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   }
 
   // Private helper methods
+
+  private async getSubmittedVideoQuizAttempts(
+    userId: string,
+    options: { limit?: number; sortByCompletedAtDesc?: boolean } = {}
+  ): Promise<QuizAttempt[]> {
+    const { limit, sortByCompletedAtDesc = false } = options;
+
+    try {
+      const result = await this.query<any>('video_quiz_progress', {
+        where: [
+          { field: 'userId', operator: '==', value: userId },
+          { field: 'status', operator: '==', value: 'submitted' },
+        ],
+        ...(sortByCompletedAtDesc
+          ? { orderBy: [{ field: 'completedAt', direction: 'desc' as const }] }
+          : {}),
+        ...(limit ? { limit } : {}),
+      });
+
+      return (result.data?.items || []) as QuizAttempt[];
+    } catch (error) {
+      if (!this.isMissingIndexError(error)) {
+        throw error;
+      }
+
+      logger.warn(
+        'Missing Firestore index for video_quiz_progress query. Falling back to user-only query and client-side filtering.',
+        'StudentAnalyticsService',
+        { userId, limit, sortByCompletedAtDesc }
+      );
+
+      const fallbackLimit = limit
+        ? Math.min(Math.max(limit * 4, limit), 500)
+        : 500;
+
+      const fallbackResult = await this.query<any>('video_quiz_progress', {
+        where: [{ field: 'userId', operator: '==', value: userId }],
+        limit: fallbackLimit,
+      });
+
+      const filteredAttempts = ((fallbackResult.data?.items || []) as QuizAttempt[])
+        .filter((attempt) => (attempt as { status?: string }).status === 'submitted');
+
+      if (sortByCompletedAtDesc) {
+        filteredAttempts.sort((a, b) => {
+          const dateA = this.getAttemptDate(a).getTime();
+          const dateB = this.getAttemptDate(b).getTime();
+          return dateB - dateA;
+        });
+      }
+
+      return limit ? filteredAttempts.slice(0, limit) : filteredAttempts;
+    }
+  }
+
+  private isMissingIndexError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error || '');
+    return message.toLowerCase().includes('requires an index');
+  }
+
+  private getAttemptDate(attempt: QuizAttempt): Date {
+    const completedAt = (attempt as { completedAt?: { toDate?: () => Date } | Date | string | number }).completedAt;
+    const submittedAt = attempt.submittedAt as { toDate?: () => Date } | Date | string | number | undefined;
+
+    if (completedAt && typeof completedAt === 'object' && 'toDate' in completedAt && typeof completedAt.toDate === 'function') {
+      return completedAt.toDate();
+    }
+
+    if (completedAt instanceof Date) {
+      return completedAt;
+    }
+
+    if (completedAt) {
+      return new Date(completedAt as string | number);
+    }
+
+    if (submittedAt && typeof submittedAt === 'object' && 'toDate' in submittedAt && typeof submittedAt.toDate === 'function') {
+      return submittedAt.toDate();
+    }
+
+    if (submittedAt instanceof Date) {
+      return submittedAt;
+    }
+
+    if (submittedAt) {
+      return new Date(submittedAt as string | number);
+    }
+
+    return new Date(0);
+  }
 
   private calculateCurrentStreak(quizAttempts: QuizAttempt[]): number {
     if (quizAttempts.length === 0) return 0;

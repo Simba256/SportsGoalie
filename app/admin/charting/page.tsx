@@ -80,6 +80,11 @@ function AdminChartingContent() {
         setAllEntries(entriesResult.data);
         setFilteredEntries(entriesResult.data);
 
+        const firstStudentId = entriesResult.data[0]?.studentId;
+        if (firstStudentId) {
+          setEntriesTabStudent(firstStudentId);
+        }
+
         // Load user data for all unique students
         const uniqueStudentIds = Array.from(new Set(entriesResult.data.map((e) => e.studentId)));
         const userMap = new Map<string, User>();
@@ -549,7 +554,7 @@ function AdminChartingContent() {
   const getTrendIcon = (trend: string) => {
     if (trend === 'up') return <TrendingUp className="w-5 h-5 text-green-600" />;
     if (trend === 'down') return <TrendingDown className="w-5 h-5 text-red-600" />;
-    return <Minus className="w-5 h-5 text-gray-600" />;
+    return <Minus className="w-5 h-5 text-muted-foreground" />;
   };
 
   if (loading) {
@@ -566,8 +571,8 @@ function AdminChartingContent() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Charting Analytics (Admin)</h1>
-            <p className="text-gray-600">Comprehensive charting statistics and student performance data</p>
+            <h1 className="text-3xl font-bold text-foreground">Charting Analytics (Admin)</h1>
+            <p className="text-muted-foreground">Comprehensive charting statistics and student performance data</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={loadData}>
@@ -585,7 +590,7 @@ function AdminChartingContent() {
         <Card className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Student</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">Student</label>
               <Select value={selectedStudent} onValueChange={setSelectedStudent}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Students" />
@@ -602,7 +607,7 @@ function AdminChartingContent() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Time Period</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">Time Period</label>
               <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -617,9 +622,9 @@ function AdminChartingContent() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Search</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by opponent, location, or comments..."
                   value={searchQuery}
@@ -632,12 +637,12 @@ function AdminChartingContent() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="entries" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
             <TabsTrigger value="entries">All Entries</TabsTrigger>
-          </TabsList>
+          
+            <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
+          </TabsList>  
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
@@ -645,20 +650,20 @@ function AdminChartingContent() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-600">Total Sessions</p>
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <p className="text-sm text-muted-foreground">Total Sessions</p>
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{totalSessions}</p>
-                <p className="text-sm text-gray-500 mt-1">{filteredEntries.length} charting entries</p>
+                <p className="text-3xl font-bold text-foreground">{totalSessions}</p>
+                <p className="text-sm text-muted-foreground mt-1">{filteredEntries.length} charting entries</p>
               </Card>
 
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-600">Completion Rate</p>
-                  <Activity className="w-4 h-4 text-gray-400" />
+                  <p className="text-sm text-muted-foreground">Completion Rate</p>
+                  <Activity className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{completionRate.toFixed(1)}%</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-3xl font-bold text-foreground">{completionRate.toFixed(1)}%</p>
+                <p className="text-sm text-muted-foreground mt-1">
                   {completeEntries} complete entries
                 </p>
               </Card>
@@ -667,25 +672,25 @@ function AdminChartingContent() {
                 <>
                   <Card className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Avg Goals/Game</p>
-                      <Target className="w-4 h-4 text-gray-400" />
+                      <p className="text-sm text-muted-foreground">Avg Goals/Game</p>
+                      <Target className="w-4 h-4 text-muted-foreground" />
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className="text-3xl font-bold text-foreground">
                       <span className="text-green-600">{goalsStats.avgGoodGoals}</span> /{' '}
                       <span className="text-red-600">{goalsStats.avgBadGoals}</span>
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">Good / Bad</p>
+                    <p className="text-sm text-muted-foreground mt-1">Good / Bad</p>
                   </Card>
 
                   <Card className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Improvement</p>
+                      <p className="text-sm text-muted-foreground">Improvement</p>
                       {getTrendIcon(goalsStats.trend)}
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className="text-3xl font-bold text-foreground">
                       {goalsStats.improvement}%
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">Bad goals reduction</p>
+                    <p className="text-sm text-muted-foreground mt-1">Bad goals reduction</p>
                   </Card>
                 </>
               )}
@@ -694,27 +699,27 @@ function AdminChartingContent() {
             {/* Goals Performance */}
             {goalsStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Goals Performance</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Goals Performance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Avg Good Goals/Game</p>
+                      <p className="text-sm text-muted-foreground">Avg Good Goals/Game</p>
                     </div>
                     <p className="text-3xl font-bold text-green-700">
                       {goalsStats.avgGoodGoals}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Across {goalsStats.totalGames} games
                     </p>
                   </div>
 
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Avg Bad Goals/Game</p>
+                      <p className="text-sm text-muted-foreground">Avg Bad Goals/Game</p>
                       {getTrendIcon(goalsStats.trend)}
                     </div>
                     <p className="text-3xl font-bold text-red-700">{goalsStats.avgBadGoals}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {goalsStats.trend === 'up' && '📈 Improving! '}
                       {goalsStats.trend === 'down' && '📉 Needs attention '}
                       {goalsStats.improvement}% vs earlier period
@@ -722,11 +727,11 @@ function AdminChartingContent() {
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-2">Good/Bad Ratio</p>
+                    <p className="text-sm text-muted-foreground mb-2">Good/Bad Ratio</p>
                     <p className="text-3xl font-bold text-blue-700">
                       {(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals)
                         ? '✓ More good than bad'
                         : '⚠ Work on reducing bad goals'}
@@ -739,14 +744,14 @@ function AdminChartingContent() {
             {/* Challenge & Consistency */}
             {challengeStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Challenge Level & Consistency</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Challenge Level & Consistency</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-2">Average Challenge Rating</p>
+                    <p className="text-sm text-muted-foreground mb-2">Average Challenge Rating</p>
                     <p className="text-3xl font-bold text-indigo-700">
                       {challengeStats.avgChallenge}<span className="text-base">/10</span>
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {parseFloat(challengeStats.avgChallenge) < 4 && 'Easier games'}
                       {parseFloat(challengeStats.avgChallenge) >= 4 && parseFloat(challengeStats.avgChallenge) < 7 && 'Moderate difficulty'}
                       {parseFloat(challengeStats.avgChallenge) >= 7 && 'High difficulty games'}
@@ -754,11 +759,11 @@ function AdminChartingContent() {
                   </div>
 
                   <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-2">Challenge Consistency</p>
+                    <p className="text-sm text-muted-foreground mb-2">Challenge Consistency</p>
                     <p className="text-3xl font-bold text-purple-700">
                       {challengeStats.consistency}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       σ = {challengeStats.stdDev} (standard deviation)
                     </p>
                   </div>
@@ -769,24 +774,24 @@ function AdminChartingContent() {
             {/* Mind-Set Performance */}
             {focusStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Mind-Set Performance</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Mind-Set Performance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-teal-50 border border-teal-200 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-semibold text-gray-900">Focus Consistency</p>
+                      <p className="text-sm font-semibold text-foreground">Focus Consistency</p>
                       {getTrendIcon(focusStats.trend)}
                     </div>
                     <div className="flex items-end gap-2 mb-2">
                       <p className="text-4xl font-bold text-teal-700">{focusStats.percentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                      <p className="text-sm text-muted-foreground mb-1">consistent</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
                         className="bg-teal-600 h-3 rounded-full transition-all"
                         style={{ width: `${focusStats.percentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {focusStats.consistentCount} consistent / {focusStats.inconsistentCount} inconsistent periods
                     </p>
                   </div>
@@ -794,20 +799,20 @@ function AdminChartingContent() {
                   {skatingStats && (
                     <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-gray-900">Skating In Sync</p>
+                        <p className="text-sm font-semibold text-foreground">Skating In Sync</p>
                         {getTrendIcon(skatingStats.trend)}
                       </div>
                       <div className="flex items-end gap-2 mb-2">
                         <p className="text-4xl font-bold text-cyan-700">{skatingStats.percentage}%</p>
-                        <p className="text-sm text-gray-600 mb-1">in sync</p>
+                        <p className="text-sm text-muted-foreground mb-1">in sync</p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div className="w-full bg-muted rounded-full h-3 mb-2">
                         <div
                           className="bg-cyan-600 h-3 rounded-full transition-all"
                           style={{ width: `${skatingStats.percentage}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {skatingStats.inSyncCount} in sync / {skatingStats.notInSyncCount} not in sync periods
                       </p>
                     </div>
@@ -819,20 +824,20 @@ function AdminChartingContent() {
             {/* Positional Performance */}
             {positionalStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Positional Performance</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Positional Performance</h2>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                  <p className="text-sm font-semibold text-gray-900 mb-3">Strong Positioning</p>
+                  <p className="text-sm font-semibold text-foreground mb-3">Strong Positioning</p>
                   <div className="flex items-end gap-2 mb-2">
                     <p className="text-4xl font-bold text-amber-700">{positionalStats.percentage}%</p>
-                    <p className="text-sm text-gray-600 mb-1">good/strong</p>
+                    <p className="text-sm text-muted-foreground mb-1">good/strong</p>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                  <div className="w-full bg-muted rounded-full h-3 mb-2">
                     <div
                       className="bg-amber-600 h-3 rounded-full transition-all"
                       style={{ width: `${positionalStats.percentage}%` }}
                     ></div>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {positionalStats.goodCount} good/strong / {positionalStats.needsWorkCount} needs work periods
                   </p>
                 </div>
@@ -842,45 +847,45 @@ function AdminChartingContent() {
             {/* Pre-Game Preparation */}
             {preGameStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Pre-Game Preparation</h2>
-                <p className="text-sm text-gray-600 mb-4">Adherence rates across {preGameStats.total} sessions</p>
+                <h2 className="text-xl font-bold text-foreground mb-4">Pre-Game Preparation</h2>
+                <p className="text-sm text-muted-foreground mb-4">Adherence rates across {preGameStats.total} sessions</p>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Equipment Ready</p>
+                      <p className="text-sm font-medium text-foreground">Equipment Ready</p>
                       <Badge>{preGameStats.equipment}%</Badge>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${preGameStats.equipment}%` }} />
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Mental Prep</p>
+                      <p className="text-sm font-medium text-foreground">Mental Prep</p>
                       <Badge>{preGameStats.mental}%</Badge>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${preGameStats.mental}%` }} />
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Warm-Up</p>
+                      <p className="text-sm font-medium text-foreground">Warm-Up</p>
                       <Badge>{preGameStats.warmup}%</Badge>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${preGameStats.warmup}%` }} />
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Physical</p>
+                      <p className="text-sm font-medium text-foreground">Physical</p>
                       <Badge>{preGameStats.physical}%</Badge>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-green-600 h-2 rounded-full" style={{ width: `${preGameStats.physical}%` }} />
                     </div>
                   </div>
@@ -891,12 +896,12 @@ function AdminChartingContent() {
             {/* Post-Game Review */}
             {postGameStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Post-Game Review</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Post-Game Review</h2>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Review Completion Rate</p>
-                    <p className="text-3xl font-bold text-gray-900">{postGameStats.completionRate}%</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground mb-1">Review Completion Rate</p>
+                    <p className="text-3xl font-bold text-foreground">{postGameStats.completionRate}%</p>
+                    <p className="text-sm text-muted-foreground mt-1">
                       {postGameStats.completed} of {postGameStats.total} sessions reviewed
                     </p>
                   </div>
@@ -931,40 +936,40 @@ function AdminChartingContent() {
             {/* Decision Making & Body Language */}
             {(decisionMaking || bodyLanguage) && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Decision Making & Body Language</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Decision Making & Body Language</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {decisionMaking && (
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">Decision Making - Strong</p>
+                      <p className="text-sm font-semibold text-foreground mb-3">Decision Making - Strong</p>
                       <div className="flex items-end gap-2 mb-2">
                         <p className="text-4xl font-bold text-emerald-700">{decisionMaking.strongPercentage}%</p>
-                        <p className="text-sm text-gray-600 mb-1">strong</p>
+                        <p className="text-sm text-muted-foreground mb-1">strong</p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div className="w-full bg-muted rounded-full h-3 mb-2">
                         <div
                           className="bg-emerald-600 h-3 rounded-full transition-all"
                           style={{ width: `${decisionMaking.strongPercentage}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {decisionMaking.strongCount} strong / {decisionMaking.improvingCount} improving / {decisionMaking.needsWorkCount} needs work
                       </p>
                     </div>
                   )}
                   {bodyLanguage && (
                     <div className="bg-lime-50 border border-lime-200 rounded-lg p-6">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">Body Language</p>
+                      <p className="text-sm font-semibold text-foreground mb-3">Body Language</p>
                       <div className="flex items-end gap-2 mb-2">
                         <p className="text-4xl font-bold text-lime-700">{bodyLanguage.consistentPercentage}%</p>
-                        <p className="text-sm text-gray-600 mb-1">consistent</p>
+                        <p className="text-sm text-muted-foreground mb-1">consistent</p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                      <div className="w-full bg-muted rounded-full h-3 mb-2">
                         <div
                           className="bg-lime-600 h-3 rounded-full transition-all"
                           style={{ width: `${bodyLanguage.consistentPercentage}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {bodyLanguage.consistentCount} consistent / {bodyLanguage.inconsistentCount} inconsistent
                       </p>
                     </div>
@@ -976,37 +981,37 @@ function AdminChartingContent() {
             {/* Rebound Control */}
             {reboundControl && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Rebound Control</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Rebound Control</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-violet-50 border border-violet-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
+                    <p className="text-sm font-semibold text-foreground mb-3">Quality</p>
                     <div className="flex items-end gap-2 mb-2">
                       <p className="text-4xl font-bold text-violet-700">{reboundControl.qualityGood}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
+                      <p className="text-sm text-muted-foreground mb-1">good</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
                         className="bg-violet-600 h-3 rounded-full transition-all"
                         style={{ width: `${reboundControl.qualityGood}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {reboundControl.goodCount} good / {reboundControl.totalQuality} total
                     </p>
                   </div>
                   <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
+                    <p className="text-sm font-semibold text-foreground mb-3">Consistency</p>
                     <div className="flex items-end gap-2 mb-2">
                       <p className="text-4xl font-bold text-fuchsia-700">{reboundControl.consistencyPercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                      <p className="text-sm text-muted-foreground mb-1">consistent</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
                         className="bg-fuchsia-600 h-3 rounded-full transition-all"
                         style={{ width: `${reboundControl.consistencyPercentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {reboundControl.consistentCount} consistent / {reboundControl.totalConsistency} total
                     </p>
                   </div>
@@ -1017,37 +1022,37 @@ function AdminChartingContent() {
             {/* Freezing Puck */}
             {freezingPuck && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Freezing Puck</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Freezing Puck</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
+                    <p className="text-sm font-semibold text-foreground mb-3">Quality</p>
                     <div className="flex items-end gap-2 mb-2">
                       <p className="text-4xl font-bold text-pink-700">{freezingPuck.qualityGood}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
+                      <p className="text-sm text-muted-foreground mb-1">good</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
                         className="bg-pink-600 h-3 rounded-full transition-all"
                         style={{ width: `${freezingPuck.qualityGood}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {freezingPuck.goodCount} good / {freezingPuck.totalQuality} total
                     </p>
                   </div>
                   <div className="bg-rose-50 border border-rose-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
+                    <p className="text-sm font-semibold text-foreground mb-3">Consistency</p>
                     <div className="flex items-end gap-2 mb-2">
                       <p className="text-4xl font-bold text-rose-700">{freezingPuck.consistencyPercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">consistent</p>
+                      <p className="text-sm text-muted-foreground mb-1">consistent</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
                         className="bg-rose-600 h-3 rounded-full transition-all"
                         style={{ width: `${freezingPuck.consistencyPercentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {freezingPuck.consistentCount} consistent / {freezingPuck.totalConsistency} total
                     </p>
                   </div>
@@ -1058,37 +1063,37 @@ function AdminChartingContent() {
             {/* Team Play (Period 3 only) */}
             {teamPlayStats && (
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Team Play (Period 3)</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">Team Play (Period 3)</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-sky-50 border border-sky-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Defense</p>
+                    <p className="text-sm font-semibold text-foreground mb-3">Setting Up Defense</p>
                     <div className="flex items-end gap-2 mb-2">
                       <p className="text-4xl font-bold text-sky-700">{teamPlayStats.defensePercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
+                      <p className="text-sm text-muted-foreground mb-1">good</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
                         className="bg-sky-600 h-3 rounded-full transition-all"
                         style={{ width: `${teamPlayStats.defensePercentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {teamPlayStats.defenseGoodCount} good / {teamPlayStats.defenseImprovingCount} improving / {teamPlayStats.defensePoorCount} poor
                     </p>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Forwards</p>
+                  <div className="bg-secondary/40 border border-border rounded-lg p-6">
+                    <p className="text-sm font-semibold text-foreground mb-3">Setting Up Forwards</p>
                     <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-slate-700">{teamPlayStats.forwardsPercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
+                      <p className="text-4xl font-bold text-foreground">{teamPlayStats.forwardsPercentage}%</p>
+                      <p className="text-sm text-muted-foreground mb-1">good</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="w-full bg-muted rounded-full h-3 mb-2">
                       <div
-                        className="bg-slate-600 h-3 rounded-full transition-all"
+                        className="bg-primary h-3 rounded-full transition-all"
                         style={{ width: `${teamPlayStats.forwardsPercentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {teamPlayStats.forwardsGoodCount} good / {teamPlayStats.forwardsImprovingCount} improving / {teamPlayStats.forwardsPoorCount} poor
                     </p>
                   </div>
@@ -1101,7 +1106,7 @@ function AdminChartingContent() {
           <TabsContent value="entries" className="space-y-6">
             {/* Step 1: Select Student */}
             <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Select Student</h2>
+              <h2 className="text-xl font-bold text-foreground mb-4">Select Student</h2>
               <div className="max-w-md">
                 <Select value={entriesTabStudent} onValueChange={setEntriesTabStudent}>
                   <SelectTrigger>
@@ -1123,7 +1128,7 @@ function AdminChartingContent() {
               <>
                 {/* Calendar Heatmap */}
                 <Card className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  <h2 className="text-xl font-bold text-foreground mb-4">
                     Session Calendar - {getStudentName(entriesTabStudent)}
                   </h2>
                   <CalendarHeatmap
@@ -1136,7 +1141,7 @@ function AdminChartingContent() {
                 {/* Sessions for Selected Date */}
                 {selectedDate && selectedDateSessions.length > 0 && (
                   <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-xl font-bold text-foreground mb-4">
                       Sessions on {format(selectedDate, 'MMMM d, yyyy')}
                     </h2>
                     <div className="space-y-3">
@@ -1147,11 +1152,11 @@ function AdminChartingContent() {
                         return (
                           <div
                             key={session.id}
-                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
+                            className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/40 hover:shadow-sm transition-all"
                           >
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-semibold text-gray-900">
+                                <h3 className="font-semibold text-foreground">
                                   {session.type === 'game' ? '🥅' : '🏒'}{' '}
                                   {session.opponent || 'Practice Session'}
                                 </h3>
@@ -1166,7 +1171,7 @@ function AdminChartingContent() {
                                   <Badge variant="outline">Admin Entry</Badge>
                                 )}
                               </div>
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 {session.location && <span>📍 {session.location}</span>}
                                 {entry && (
                                   <span>
@@ -1214,9 +1219,9 @@ function AdminChartingContent() {
                 {/* Empty state when date selected but no sessions */}
                 {selectedDate && selectedDateSessions.length === 0 && (
                   <Card className="p-12 text-center">
-                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Sessions</h3>
-                    <p className="text-gray-600">
+                    <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">No Sessions</h3>
+                    <p className="text-muted-foreground">
                       No sessions found for {format(selectedDate, 'MMMM d, yyyy')}
                     </p>
                   </Card>
@@ -1225,9 +1230,9 @@ function AdminChartingContent() {
                 {/* Helper text when no date selected */}
                 {!selectedDate && (
                   <Card className="p-12 text-center">
-                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a Date</h3>
-                    <p className="text-gray-600">
+                    <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">Select a Date</h3>
+                    <p className="text-muted-foreground">
                       Click on a day in the calendar above to view sessions for that date
                     </p>
                   </Card>
@@ -1238,9 +1243,9 @@ function AdminChartingContent() {
             {/* Empty state when no student selected */}
             {!entriesTabStudent && (
               <Card className="p-12 text-center">
-                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Started</h3>
-                <p className="text-gray-600 mb-4">
+                <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">Get Started</h3>
+                <p className="text-muted-foreground mb-4">
                   Select a student above to view their charting calendar and sessions
                 </p>
               </Card>

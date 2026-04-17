@@ -336,7 +336,7 @@ function AdminSkillsContent() {
       case 'refinement':
         return 'text-red-600 bg-red-100';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -657,7 +657,7 @@ function AdminSkillsContent() {
                     ) : null}
 
                     {!skill.isActive && (
-                      <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      <div className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full font-medium">
                         Inactive
                       </div>
                     )}

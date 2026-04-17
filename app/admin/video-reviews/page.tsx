@@ -219,7 +219,7 @@ function VideoReviewsContent() {
       case 'reviewed':
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Under Review</Badge>;
       case 'feedback_sent':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">Feedback Sent</Badge>;
+        return <Badge variant="outline">Feedback Sent</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -232,7 +232,7 @@ function VideoReviewsContent() {
       case 'reviewed':
         return <Eye className="h-4 w-4 text-red-600" />;
       case 'feedback_sent':
-        return <CheckCircle className="h-4 w-4 text-gray-600" />;
+        return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
       default:
         return null;
     }
@@ -252,8 +252,8 @@ function VideoReviewsContent() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Video Reviews</h1>
-            <p className="text-gray-600 mt-2">Review student training videos and provide personalized feedback</p>
+            <h1 className="text-3xl font-bold text-foreground">Video Reviews</h1>
+            <p className="text-muted-foreground mt-2">Review student training videos and provide personalized feedback</p>
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="flex items-center space-x-1">
@@ -266,7 +266,7 @@ function VideoReviewsContent() {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
             <Input
               placeholder="Search by student name, file name, or sport..."
               value={searchTerm}
@@ -290,9 +290,9 @@ function VideoReviewsContent() {
         {/* Videos Grid */}
         {filteredVideos.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No videos found</h3>
-            <p className="mt-1 text-gray-500">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-lg font-medium text-foreground">No videos found</h3>
+            <p className="mt-1 text-muted-foreground">
               {searchTerm || filterStatus !== 'all'
                 ? 'Try adjusting your search or filters'
                 : 'Students haven\'t uploaded any videos yet'
@@ -316,27 +316,27 @@ function VideoReviewsContent() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Sport:</span>
+                      <span className="text-muted-foreground">Sport:</span>
                       <span className="font-medium">{video.sport || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Size:</span>
+                      <span className="text-muted-foreground">Size:</span>
                       <span>{formatFileSize(video.fileSize)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Uploaded:</span>
+                      <span className="text-muted-foreground">Uploaded:</span>
                       <span>{formatFirestoreDate(video.uploadedAt)}</span>
                     </div>
                   </div>
 
                   {video.description && (
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-700">{video.description}</p>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-foreground">{video.description}</p>
                     </div>
                   )}
 
                   {video.status === 'feedback_sent' && video.reviewedAt && (
-                    <div className="text-xs text-gray-500 text-center pt-2 border-t">
+                    <div className="text-xs text-muted-foreground text-center pt-2 border-t">
                       Reviewed on {formatFirestoreDate(video.reviewedAt)}
                     </div>
                   )}
@@ -345,7 +345,7 @@ function VideoReviewsContent() {
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
-                          className={`w-full ${video.status === 'pending' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                          className="w-full"
                           onClick={() => handleReviewVideo(video)}
                           variant={video.status === 'pending' ? 'default' : 'outline'}
                         >
@@ -421,7 +421,7 @@ function VideoReviewsContent() {
                                   href={selectedVideo.videoUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+                                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded"
                                 >
                                   Open in New Tab
                                 </a>
@@ -442,7 +442,7 @@ function VideoReviewsContent() {
                         {video.description && (
                           <div>
                             <Label className="text-base font-medium">Student's Description</Label>
-                            <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                            <div className="mt-2 p-3 bg-muted rounded-lg">
                               <p className="text-sm">{video.description}</p>
                             </div>
                           </div>

@@ -356,7 +356,7 @@ function AdminPillarsContent() {
               (displayInfo.slug && PILLAR_DESCRIPTIONS[displayInfo.slug]) || pillar.description;
 
             return (
-              <Card key={pillar.id} className={`group rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 ${theme.borderHover}`}>
+              <Card key={pillar.id} className={`group rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${theme.borderHover}`}>
                 <CardHeader className="space-y-2 pb-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">

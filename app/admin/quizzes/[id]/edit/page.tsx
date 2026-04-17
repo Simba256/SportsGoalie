@@ -275,8 +275,8 @@ function EditVideoQuizContent() {
       <div className="flex items-center justify-center min-h-screen">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-lg text-gray-700 mb-4">Video quiz not found</p>
+            <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-lg text-foreground mb-4">Video quiz not found</p>
             <Link href="/admin/quizzes">
               <Button className="bg-blue-600 text-white hover:bg-blue-700">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -301,17 +301,17 @@ function EditVideoQuizContent() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold">Edit Video Quiz</h1>
-          <p className="text-gray-600 mt-1">{originalQuiz.title}</p>
+          <p className="text-muted-foreground mt-1">{originalQuiz.title}</p>
         </div>
       </div>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 rounded-xl bg-slate-100 p-1">
-          <TabsTrigger value="basic" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Basic Info</TabsTrigger>
-          <TabsTrigger value="video" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Video Setup</TabsTrigger>
-          <TabsTrigger value="questions" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Questions</TabsTrigger>
-          <TabsTrigger value="tags" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Tags</TabsTrigger>
-          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 rounded-xl bg-muted p-1">
+          <TabsTrigger value="basic" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Basic Info</TabsTrigger>
+          <TabsTrigger value="video" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Video Setup</TabsTrigger>
+          <TabsTrigger value="questions" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Questions</TabsTrigger>
+          <TabsTrigger value="tags" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tags</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Settings</TabsTrigger>
         </TabsList>
 
         {/* Basic Information Tab */}
@@ -371,7 +371,7 @@ function EditVideoQuizContent() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">Required</p>
+                  <p className="text-xs text-muted-foreground mt-1">Required</p>
                 </div>
 
                 <div>
@@ -392,7 +392,7 @@ function EditVideoQuizContent() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">Required</p>
+                  <p className="text-xs text-muted-foreground mt-1">Required</p>
                 </div>
 
                 <div>
@@ -471,7 +471,7 @@ function EditVideoQuizContent() {
                   min="1"
                   className="max-w-xs"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Duration is auto-detected for most videos. Override here if needed.
                 </p>
               </div>
@@ -491,9 +491,9 @@ function EditVideoQuizContent() {
           ) : (
             <Card>
               <CardContent className="pt-12 pb-12 text-center">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Video Not Validated</h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Please validate your video in the Video Setup tab before editing questions
                 </p>
               </CardContent>
@@ -548,9 +548,9 @@ function EditVideoQuizContent() {
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-8">
         <Link href="/admin/quizzes">
-          <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">Cancel</Button>
+          <Button variant="outline">Cancel</Button>
         </Link>
-        <Button onClick={handleSaveQuiz} disabled={saveLoading} className="bg-red-600 text-white hover:bg-red-700">
+        <Button onClick={handleSaveQuiz} disabled={saveLoading}>
           {saveLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

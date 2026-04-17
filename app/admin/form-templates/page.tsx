@@ -131,7 +131,7 @@ export default function FormTemplatesPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button asChild className="bg-red-600 hover:bg-red-700">
+          <Button asChild>
             <Link href="/admin/form-templates/new">
               <Plus className="h-4 w-4 mr-2" />
               Create Template
@@ -142,14 +142,14 @@ export default function FormTemplatesPage() {
 
       {/* Initialization Card */}
       {!templatesExist.hockeyGoalie && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-accent/30 bg-accent/5">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-accent mt-0.5" />
                 <div>
-                  <CardTitle className="text-red-900">Initialize Default Templates</CardTitle>
-                  <CardDescription className="text-red-700">
+                  <CardTitle className="text-foreground">Initialize Default Templates</CardTitle>
+                  <CardDescription>
                     No default templates found. Click below to create the default Hockey Goalie
                     Performance Tracker template.
                   </CardDescription>

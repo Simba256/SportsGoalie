@@ -63,15 +63,15 @@ function EntryDetailContent() {
     if (!field) return null;
 
     return (
-      <div className="py-3 border-b border-gray-200 last:border-0">
+      <div className="py-3 border-b border-border last:border-0">
         <div className="flex items-center justify-between mb-1">
-          <span className="font-medium text-gray-900">{label}</span>
+          <span className="font-medium text-foreground">{label}</span>
           <Badge variant={field.value ? 'default' : 'secondary'}>
             {field.value ? 'Yes' : 'No'}
           </Badge>
         </div>
         {field.comments && (
-          <p className="text-sm text-gray-600 mt-2">📝 {field.comments}</p>
+          <p className="text-sm text-muted-foreground mt-2">📝 {field.comments}</p>
         )}
       </div>
     );
@@ -81,9 +81,9 @@ function EntryDetailContent() {
     const selected = Object.entries(options).find(([_, value]) => value?.value);
 
     return (
-      <div className="py-3 border-b border-gray-200 last:border-0">
+      <div className="py-3 border-b border-border last:border-0">
         <div className="flex items-center justify-between mb-1">
-          <span className="font-medium text-gray-900">{label}</span>
+          <span className="font-medium text-foreground">{label}</span>
           {selected && (
             <Badge>
               {selected[0].replace(/([A-Z])/g, ' $1').trim()}
@@ -91,7 +91,7 @@ function EntryDetailContent() {
           )}
         </div>
         {selected && selected[1]?.comments && (
-          <p className="text-sm text-gray-600 mt-2">📝 {selected[1].comments}</p>
+          <p className="text-sm text-muted-foreground mt-2">📝 {selected[1].comments}</p>
         )}
       </div>
     );
@@ -99,7 +99,7 @@ function EntryDetailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-background p-6">
         <SkeletonDetailPage />
       </div>
     );
@@ -107,14 +107,14 @@ function EntryDetailContent() {
 
   if (!entry || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <p>Entry not found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -122,10 +122,10 @@ function EntryDetailContent() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               Charting Entry Details (Admin)
             </h1>
-            <p className="text-gray-600">Complete charting data for this session</p>
+            <p className="text-muted-foreground">Complete charting data for this session</p>
           </div>
           <Badge variant={entry.submitterRole === 'admin' ? 'default' : 'secondary'}>
             {entry.submitterRole === 'admin' ? 'Admin Entry' : 'Student Entry'}
@@ -134,12 +134,12 @@ function EntryDetailContent() {
 
         {/* Session Info */}
         <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Session Information</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">Session Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
+              <Calendar className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Date</p>
+                <p className="text-sm text-muted-foreground">Date</p>
                 <p className="font-medium">
                   {session.date.toDate().toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -152,9 +152,9 @@ function EntryDetailContent() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-gray-400" />
+              <Clock className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Time</p>
+                <p className="text-sm text-muted-foreground">Time</p>
                 <p className="font-medium">
                   {session.date.toDate().toLocaleTimeString('en-US', {
                     hour: '2-digit',
@@ -165,9 +165,9 @@ function EntryDetailContent() {
             </div>
 
             <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-gray-400" />
+              <User className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Type & Opponent</p>
+                <p className="text-sm text-muted-foreground">Type & Opponent</p>
                 <p className="font-medium">
                   {session.type === 'game' ? '🥅' : '🏒'} {session.opponent || 'Practice Session'}
                 </p>
@@ -176,9 +176,9 @@ function EntryDetailContent() {
 
             {session.location && (
               <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
+                <MapPin className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-gray-600">Location</p>
+                  <p className="text-sm text-muted-foreground">Location</p>
                   <p className="font-medium">{session.location}</p>
                 </div>
               </div>
@@ -186,8 +186,8 @@ function EntryDetailContent() {
           </div>
 
           {entry.submittedAt && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
                 Submitted on{' '}
                 {entry.submittedAt.toDate().toLocaleDateString('en-US', {
                   year: 'numeric',
@@ -204,16 +204,16 @@ function EntryDetailContent() {
         {/* Game Overview */}
         {entry.gameOverview && (
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Game Overview</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">Game Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">Good Goals</p>
+                <p className="text-sm text-muted-foreground mb-2">Good Goals</p>
                 <p className="text-4xl font-bold text-green-700 mb-2">
                   {(entry.gameOverview.goodGoals.period1 || 0) +
                     (entry.gameOverview.goodGoals.period2 || 0) +
                     (entry.gameOverview.goodGoals.period3 || 0)}
                 </p>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   <div>P1: {entry.gameOverview.goodGoals.period1 || 0}</div>
                   <div>P2: {entry.gameOverview.goodGoals.period2 || 0}</div>
                   <div>P3: {entry.gameOverview.goodGoals.period3 || 0}</div>
@@ -221,13 +221,13 @@ function EntryDetailContent() {
               </div>
 
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">Bad Goals</p>
+                <p className="text-sm text-muted-foreground mb-2">Bad Goals</p>
                 <p className="text-4xl font-bold text-red-700 mb-2">
                   {(entry.gameOverview.badGoals.period1 || 0) +
                     (entry.gameOverview.badGoals.period2 || 0) +
                     (entry.gameOverview.badGoals.period3 || 0)}
                 </p>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   <div>P1: {entry.gameOverview.badGoals.period1 || 0}</div>
                   <div>P2: {entry.gameOverview.badGoals.period2 || 0}</div>
                   <div>P3: {entry.gameOverview.badGoals.period3 || 0}</div>
@@ -235,7 +235,7 @@ function EntryDetailContent() {
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">Challenge Rating</p>
+                <p className="text-sm text-muted-foreground mb-2">Challenge Rating</p>
                 <p className="text-4xl font-bold text-blue-700 mb-2">
                   {(
                     ((entry.gameOverview.degreeOfChallenge.period1 || 0) +
@@ -244,7 +244,7 @@ function EntryDetailContent() {
                   ).toFixed(1)}
                   <span className="text-lg">/10</span>
                 </p>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   <div>P1: {entry.gameOverview.degreeOfChallenge.period1 || 0}/10</div>
                   <div>P2: {entry.gameOverview.degreeOfChallenge.period2 || 0}/10</div>
                   <div>P3: {entry.gameOverview.degreeOfChallenge.period3 || 0}/10</div>
@@ -257,29 +257,29 @@ function EntryDetailContent() {
         {/* Pre-Game */}
         {entry.preGame && (
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Pre-Game Checklist</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">Pre-Game Checklist</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Game Readiness</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Game Readiness</h3>
                 {renderYesNoField('Well Rested', entry.preGame.gameReadiness.wellRested)}
                 {renderYesNoField('Fueled for Game', entry.preGame.gameReadiness.fueledForGame)}
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Mind-Set</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Mind-Set</h3>
                 {renderYesNoField('Mind Cleared', entry.preGame.mindSet.mindCleared)}
                 {renderYesNoField('Mental Imagery', entry.preGame.mindSet.mentalImagery)}
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Pre-Game Routine</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Pre-Game Routine</h3>
                 {renderYesNoField('Ball Exercises', entry.preGame.preGameRoutine.ballExercises)}
                 {renderYesNoField('Stretching', entry.preGame.preGameRoutine.stretching)}
                 {renderYesNoField('Other', entry.preGame.preGameRoutine.other)}
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Warm-Up</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Warm-Up</h3>
                 {renderYesNoField('Looked Engaged', entry.preGame.warmUp.lookedEngaged)}
                 {renderYesNoField('Lacked Focus', entry.preGame.warmUp.lackedFocus)}
                 {renderYesNoField('Team Warm-Up Needs Adjustment', entry.preGame.warmUp.teamWarmUpNeedsAdjustment)}
@@ -297,10 +297,10 @@ function EntryDetailContent() {
 
           return (
             <Card key={periodKey} className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Period {periodNum}</h2>
+              <h2 className="text-xl font-bold text-foreground mb-4">Period {periodNum}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Mind-Set</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Mind-Set</h3>
                   {renderRadioField('Focus', {
                     focusConsistent: periodData.mindSet.focusConsistent,
                     focusInconsistent: periodData.mindSet.focusInconsistent,
@@ -317,7 +317,7 @@ function EntryDetailContent() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Skating</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Skating</h3>
                   {renderRadioField('Skating Performance', {
                     inSyncWithPuck: periodData.skating.inSyncWithPuck,
                     improving: periodData.skating.improving,
@@ -327,7 +327,7 @@ function EntryDetailContent() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Positional - Above Icing</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Positional - Above Icing</h3>
                   {renderRadioField('Performance Level', {
                     poor: periodData.positionalAboveIcing.poor,
                     improving: periodData.positionalAboveIcing.improving,
@@ -336,7 +336,7 @@ function EntryDetailContent() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Positional - Below Icing</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Positional - Below Icing</h3>
                   {renderRadioField('Performance Level', {
                     poor: periodData.positionalBelowIcing.poor,
                     improving: periodData.positionalBelowIcing.improving,
@@ -346,7 +346,7 @@ function EntryDetailContent() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Rebound Control</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Rebound Control</h3>
                   {renderRadioField('Quality', {
                     poor: periodData.reboundControl.poor,
                     improving: periodData.reboundControl.improving,
@@ -359,7 +359,7 @@ function EntryDetailContent() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Freezing Puck</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Freezing Puck</h3>
                   {renderRadioField('Quality', {
                     poor: periodData.freezingPuck.poor,
                     improving: periodData.freezingPuck.improving,
@@ -373,7 +373,7 @@ function EntryDetailContent() {
 
                 {periodNum === 3 && periodData.teamPlay && (
                   <div className="md:col-span-2">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Team Play (Period 3)</h3>
+                    <h3 className="text-lg font-semibold text-foreground mb-3">Team Play (Period 3)</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         {renderRadioField('Setting Up Defense', {
@@ -400,11 +400,11 @@ function EntryDetailContent() {
         {/* Overtime & Shootout */}
         {(entry.overtime || entry.shootout) && (
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Overtime & Shootout</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">Overtime & Shootout</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {entry.overtime && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Overtime</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Overtime</h3>
                   {renderRadioField('Mind-Set Focus', {
                     good: entry.overtime.mindSetFocus.good,
                     needsWork: entry.overtime.mindSetFocus.needsWork,
@@ -422,26 +422,26 @@ function EntryDetailContent() {
 
               {entry.shootout && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Shootout</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Shootout</h3>
                   <div className="space-y-3">
-                    <div className="py-3 border-b border-gray-200">
-                      <span className="font-medium text-gray-900">Result</span>
+                    <div className="py-3 border-b border-border">
+                      <span className="font-medium text-foreground">Result</span>
                       <p className="text-2xl font-bold mt-1">
                         <Badge variant={entry.shootout.result === 'won' ? 'default' : 'secondary'}>
                           {entry.shootout.result?.toUpperCase()}
                         </Badge>
                       </p>
                     </div>
-                    <div className="py-3 border-b border-gray-200">
-                      <span className="font-medium text-gray-900">Shots Saved</span>
+                    <div className="py-3 border-b border-border">
+                      <span className="font-medium text-foreground">Shots Saved</span>
                       <p className="text-2xl font-bold mt-1">{entry.shootout.shotsSaved || 0}</p>
                     </div>
-                    <div className="py-3 border-b border-gray-200">
-                      <span className="font-medium text-gray-900">Shots Scored</span>
+                    <div className="py-3 border-b border-border">
+                      <span className="font-medium text-foreground">Shots Scored</span>
                       <p className="text-2xl font-bold mt-1">{entry.shootout.shotsScored || 0}</p>
                     </div>
                     <div className="py-3">
-                      <span className="font-medium text-gray-900">Save Percentage</span>
+                      <span className="font-medium text-foreground">Save Percentage</span>
                       <p className="text-2xl font-bold mt-1">
                         {entry.shootout.shotsSaved && (entry.shootout.shotsSaved + entry.shootout.shotsScored) > 0
                           ? ((entry.shootout.shotsSaved / (entry.shootout.shotsSaved + entry.shootout.shotsScored)) * 100).toFixed(1)
@@ -458,7 +458,7 @@ function EntryDetailContent() {
         {/* Post-Game */}
         {entry.postGame && (
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Post-Game Review</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">Post-Game Review</h2>
             {renderYesNoField('Review Completed', entry.postGame.reviewCompleted)}
             {renderYesNoField('Review Not Completed', entry.postGame.reviewNotCompleted)}
           </Card>
@@ -467,9 +467,9 @@ function EntryDetailContent() {
         {/* Additional Comments */}
         {entry.additionalComments && (
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Additional Comments</h2>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <p className="text-gray-700 whitespace-pre-wrap">{entry.additionalComments}</p>
+            <h2 className="text-xl font-bold text-foreground mb-4">Additional Comments</h2>
+            <div className="bg-muted border border-border rounded-lg p-4">
+              <p className="text-foreground whitespace-pre-wrap">{entry.additionalComments}</p>
             </div>
           </Card>
         )}

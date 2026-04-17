@@ -155,7 +155,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
 
   if (isAdminRoute(pathname)) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="goalie-app min-h-screen bg-gray-50">
         <AdminSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>

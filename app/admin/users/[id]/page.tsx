@@ -18,6 +18,10 @@ import {
   Save,
   X,
   MessageSquare,
+  Activity,
+  PlayCircle,
+  CheckCircle2,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -39,7 +43,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { userService } from '@/lib/database/services/user.service';
 import { messageService } from '@/lib/database/services/message.service';
-import { User as UserType, UserRole, UserProgress, Notification, Message } from '@/types';
+import { chartingService } from '@/lib/database/services/charting.service';
+import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
+import { User as UserType, UserRole, UserProgress, Notification, Message, Session as ChartingSession, ChartingEntry } from '@/types';
+import { DynamicChartingEntry } from '@/types/form-template';
 import { MessageComposer } from '@/components/messages/MessageComposer';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
@@ -91,6 +98,13 @@ function UserDetailsContent() {
   const [courseProgress, setCourseProgress] = useState<CourseProgressDetail[]>([]);
   const [quizAttemptHistory, setQuizAttemptHistory] = useState<QuizAttemptDetail[]>([]);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  // Charting state
+  const [chartingSessions, setChartingSessions] = useState<ChartingSession[]>([]);
+  const [chartingEntries, setChartingEntries] = useState<ChartingEntry[]>([]);
+  const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
+  const [loadingCharting, setLoadingCharting] = useState(false);
+  const [chartingLoaded, setChartingLoaded] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -188,6 +202,35 @@ function UserDetailsContent() {
       toast.error('Failed to load analytics data');
     } finally {
       setLoadingAnalytics(false);
+    }
+  };
+
+  const fetchCharting = async () => {
+    if (chartingLoaded) return;
+    try {
+      setLoadingCharting(true);
+
+      const [sessionsResult, entriesResult, dynamicResult] = await Promise.all([
+        chartingService.getSessionsByStudent(userId, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
+        chartingService.getChartingEntriesByStudent(userId),
+        dynamicChartingService.getDynamicEntriesByStudent(userId),
+      ]);
+
+      if (sessionsResult.success && sessionsResult.data) {
+        setChartingSessions(sessionsResult.data);
+      }
+      if (entriesResult.success && entriesResult.data) {
+        setChartingEntries(entriesResult.data);
+      }
+      if (dynamicResult.success && dynamicResult.data) {
+        setDynamicEntries(dynamicResult.data);
+      }
+      setChartingLoaded(true);
+    } catch (error) {
+      console.error('Error fetching charting data:', error);
+      toast.error('Failed to load charting data');
+    } finally {
+      setLoadingCharting(false);
     }
   };
 
@@ -357,6 +400,7 @@ function UserDetailsContent() {
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="analytics" onClick={fetchAnalytics}>Analytics</TabsTrigger>
             <TabsTrigger value="progress" onClick={fetchAnalytics}>Progress</TabsTrigger>
+            <TabsTrigger value="charting" onClick={fetchCharting}>Charting</TabsTrigger>
             <TabsTrigger value="messages" onClick={fetchMessages}>Messages</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -645,6 +689,165 @@ function UserDetailsContent() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Charting Tab */}
+          <TabsContent value="charting">
+            {loadingCharting ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-muted-foreground">Loading charting data...</div>
+              </div>
+            ) : (() => {
+              const totalSessions = chartingSessions.length;
+              const completed = chartingSessions.filter((s) => s.status === 'completed').length;
+              const inProgress = chartingSessions.filter(
+                (s) => s.status === 'in-progress' || s.status === 'pre-game'
+              ).length;
+              const scheduled = chartingSessions.filter((s) => s.status === 'scheduled').length;
+              const games = chartingSessions.filter((s) => s.type === 'game').length;
+              const practices = chartingSessions.filter((s) => s.type === 'practice').length;
+              const totalEntries = chartingEntries.length + dynamicEntries.length;
+
+              const recentSessions = [...chartingSessions].slice(0, 15);
+
+              const formatSessionDate = (ts: ChartingSession['date']) => {
+                try {
+                  const d = (ts as { toDate?: () => Date })?.toDate?.() ?? new Date(ts as unknown as string | number);
+                  return d.toLocaleDateString();
+                } catch {
+                  return '—';
+                }
+              };
+
+              const getStatusVariant = (status: ChartingSession['status']) => {
+                switch (status) {
+                  case 'completed':
+                    return 'default';
+                  case 'in-progress':
+                  case 'pre-game':
+                    return 'secondary';
+                  case 'scheduled':
+                    return 'outline';
+                  default:
+                    return 'outline';
+                }
+              };
+
+              return (
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{totalSessions}</div>
+                        <p className="text-xs text-muted-foreground">
+                          {games} games · {practices} practices
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{completed}</div>
+                        <p className="text-xs text-muted-foreground">Fully charted</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                        <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{inProgress}</div>
+                        <p className="text-xs text-muted-foreground">
+                          {scheduled} scheduled
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Charting Entries</CardTitle>
+                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{totalEntries}</div>
+                        <p className="text-xs text-muted-foreground">
+                          {chartingEntries.length} legacy · {dynamicEntries.length} dynamic
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Sessions</CardTitle>
+                      <CardDescription>
+                        Most recent charting sessions started or completed by this goalie
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {recentSessions.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Activity className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-muted-foreground">No charting sessions yet</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {recentSessions.map((session) => (
+                            <Link
+                              key={session.id}
+                              href={`/admin/charting?session=${session.id}`}
+                              className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground shrink-0">
+                                  {session.type === 'game' ? (
+                                    <Trophy className="h-4 w-4" />
+                                  ) : (
+                                    <Target className="h-4 w-4" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium capitalize">{session.type}</span>
+                                    {session.opponent && (
+                                      <span className="text-sm text-muted-foreground truncate">
+                                        vs {session.opponent}
+                                      </span>
+                                    )}
+                                    {session.result && (
+                                      <Badge variant="outline" className="text-xs capitalize">
+                                        {session.result}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {formatSessionDate(session.date)}
+                                    {session.location ? ` · ${session.location}` : ''}
+                                  </div>
+                                </div>
+                              </div>
+                              <Badge variant={getStatusVariant(session.status)} className="capitalize shrink-0">
+                                {session.status.replace('-', ' ')}
+                              </Badge>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           {/* Messages Tab */}

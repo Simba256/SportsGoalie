@@ -188,7 +188,7 @@ function AdminQuizzesPageContent() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Video Quizzes</h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Manage interactive video-based quizzes
           </p>
         </div>
@@ -208,7 +208,7 @@ function AdminQuizzesPageContent() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search quizzes..."
                 value={searchQuery}
@@ -265,7 +265,7 @@ function AdminQuizzesPageContent() {
                 <Video className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Quizzes</p>
+                <p className="text-sm text-muted-foreground">Total Quizzes</p>
                 <p className="text-2xl font-bold">{quizzes.length}</p>
               </div>
             </div>
@@ -279,7 +279,7 @@ function AdminQuizzesPageContent() {
                 <Target className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-sm text-muted-foreground">Active</p>
                 <p className="text-2xl font-bold">
                   {quizzes.filter((q) => q.isActive && q.isPublished).length}
                 </p>
@@ -291,11 +291,11 @@ function AdminQuizzesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Users className="h-5 w-5 text-gray-600" />
+              <div className="p-2 bg-muted rounded-lg">
+                <Users className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Completions</p>
+                <p className="text-sm text-muted-foreground">Total Completions</p>
                 <p className="text-2xl font-bold">
                   {quizzes.reduce((sum, q) => sum + (q.metadata?.totalCompletions || 0), 0)}
                 </p>
@@ -311,7 +311,7 @@ function AdminQuizzesPageContent() {
                 <Clock className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Avg. Duration</p>
+                <p className="text-sm text-muted-foreground">Avg. Duration</p>
                 <p className="text-2xl font-bold">
                   {Math.round(
                     quizzes.reduce((sum, q) => sum + q.videoDuration, 0) / (quizzes.length || 1) / 60
@@ -331,9 +331,9 @@ function AdminQuizzesPageContent() {
       ) : filteredQuizzes.length === 0 ? (
         <Card>
           <CardContent className="pt-12 pb-12 text-center">
-            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Video className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No video quizzes found</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               {searchQuery || difficultyFilter !== 'all' || statusFilter !== 'all'
                 ? 'Try adjusting your filters'
                 : 'Get started by creating your first video quiz'}
@@ -429,33 +429,33 @@ function AdminQuizzesPageContent() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {quiz.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
                     {quiz.description}
                   </p>
                 )}
 
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Video className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
                       {formatDuration(quiz.videoDuration)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
                       {quiz.questions.length} questions
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
                       {quiz.metadata?.totalCompletions || 0} completions
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
                       {quiz.metadata?.averageScore?.toFixed(0) || 0}% avg
                     </span>
                   </div>

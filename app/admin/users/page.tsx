@@ -26,6 +26,8 @@ import {
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { userService } from '@/lib/database/services/user.service';
+import { studentAnalyticsService } from '@/lib/database/services/student-analytics.service';
+import { chartingService } from '@/lib/database/services/charting.service';
 import { User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -40,9 +42,101 @@ export default function AdminUsersPage() {
 function UsersManagementContent() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [userProgressMap, setUserProgressMap] = useState<Record<string, {
+    skillsAttempted: number;
+    skillsCompleted: number;
+    quizzesTaken: number;
+    averageQuizScore: number;
+    totalTimeMinutes: number;
+    lastActiveDate: Date | null;
+    sessionsTotal: number;
+    sessionsCompleted: number;
+    sessionsInProgress: number;
+  } | null>>({});
+  const [progressLoading, setProgressLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+
+  const fetchGoalieProgress = async (items: User[]) => {
+    const goalieUsers = items.filter((item) => item.role === 'student');
+
+    if (goalieUsers.length === 0) {
+      setUserProgressMap({});
+      return;
+    }
+
+    setProgressLoading(true);
+
+    try {
+      const entries = await Promise.all(
+        goalieUsers.map(async (goalie) => {
+          try {
+            const [analyticsResult, sessionsResult] = await Promise.all([
+              studentAnalyticsService.getStudentAnalytics(goalie.id),
+              chartingService.getSessionsByStudent(goalie.id, { limit: 500 }),
+            ]);
+
+            const sessions = sessionsResult.success && sessionsResult.data ? sessionsResult.data : [];
+            const sessionsTotal = sessions.length;
+            const sessionsCompleted = sessions.filter((s) => s.status === 'completed').length;
+            const sessionsInProgress = sessions.filter(
+              (s) => s.status === 'in-progress' || s.status === 'pre-game'
+            ).length;
+
+            if (analyticsResult.success && analyticsResult.data) {
+              const { overview, performance, progress } = analyticsResult.data;
+              const noQuizData = overview.totalQuizzesTaken === 0 && overview.totalSkillsStarted === 0;
+
+              if (noQuizData && sessionsTotal === 0) {
+                return [goalie.id, null] as const;
+              }
+
+              return [
+                goalie.id,
+                {
+                  skillsAttempted: overview.totalSkillsStarted,
+                  skillsCompleted: progress.skillsCompleted,
+                  quizzesTaken: overview.totalQuizzesTaken,
+                  averageQuizScore: performance.averageQuizScore,
+                  totalTimeMinutes: overview.totalTimeSpent,
+                  lastActiveDate: overview.lastActiveDate,
+                  sessionsTotal,
+                  sessionsCompleted,
+                  sessionsInProgress,
+                },
+              ] as const;
+            }
+
+            if (sessionsTotal > 0) {
+              return [
+                goalie.id,
+                {
+                  skillsAttempted: 0,
+                  skillsCompleted: 0,
+                  quizzesTaken: 0,
+                  averageQuizScore: 0,
+                  totalTimeMinutes: 0,
+                  lastActiveDate: null,
+                  sessionsTotal,
+                  sessionsCompleted,
+                  sessionsInProgress,
+                },
+              ] as const;
+            }
+
+            return [goalie.id, null] as const;
+          } catch {
+            return [goalie.id, null] as const;
+          }
+        })
+      );
+
+      setUserProgressMap(Object.fromEntries(entries));
+    } finally {
+      setProgressLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -55,6 +149,7 @@ function UsersManagementContent() {
 
       if (result.success && result.data) {
         setUsers(result.data.items);
+        await fetchGoalieProgress(result.data.items);
       } else {
         toast.error('Failed to load users');
       }
@@ -127,7 +222,7 @@ function UsersManagementContent() {
               Manage user accounts, roles, and permissions
             </p>
           </div>
-          <Button className="bg-red-600 hover:bg-red-700">
+          <Button>
             <UserPlus className="mr-2 h-4 w-4" />
             Add User
           </Button>
@@ -298,6 +393,51 @@ function UsersManagementContent() {
                             </span>
                           )}
                         </div>
+                        {user.role === 'student' && (() => {
+                          const progress = userProgressMap[user.id];
+                          if (progressLoading && !progress) {
+                            return (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Progress: Loading...
+                              </div>
+                            );
+                          }
+                          if (!progress) {
+                            return (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Progress: No activity yet
+                              </div>
+                            );
+                          }
+                          const hours = progress.totalTimeMinutes > 0
+                            ? `${(progress.totalTimeMinutes / 60).toFixed(1)}h`
+                            : '0h';
+                          return (
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                              <Badge variant="secondary">
+                                {progress.skillsCompleted}/{progress.skillsAttempted} skills passed
+                              </Badge>
+                              <Badge variant="secondary">
+                                {progress.quizzesTaken} quiz{progress.quizzesTaken === 1 ? '' : 'zes'}
+                              </Badge>
+                              <Badge variant="secondary">
+                                {progress.averageQuizScore}% avg
+                              </Badge>
+                              {progress.sessionsTotal > 0 && (
+                                <Badge variant="secondary">
+                                  {progress.sessionsCompleted}/{progress.sessionsTotal} sessions
+                                  {progress.sessionsInProgress > 0 ? ` (${progress.sessionsInProgress} active)` : ''}
+                                </Badge>
+                              )}
+                              <Badge variant="outline">{hours} total</Badge>
+                              {progress.lastActiveDate && (
+                                <Badge variant="outline">
+                                  Active {progress.lastActiveDate.toLocaleDateString()}
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 

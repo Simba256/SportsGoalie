@@ -44,7 +44,7 @@ export function InvitationList({
   const getStatusBadge = (status: CoachInvitation['status']) => {
     const variants: Record<CoachInvitation['status'], { variant: 'default' | 'secondary' | 'destructive'; icon: typeof Clock; label: string; className?: string }> = {
       pending: { variant: 'default', icon: Clock, label: 'Pending' },
-      accepted: { variant: 'default', icon: CheckCircle, label: 'Accepted', className: 'bg-red-600 hover:bg-red-700' },
+      accepted: { variant: 'default', icon: CheckCircle, label: 'Accepted' },
       expired: { variant: 'secondary', icon: XCircle, label: 'Expired' },
       revoked: { variant: 'destructive', icon: Ban, label: 'Revoked' },
     };

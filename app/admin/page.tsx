@@ -104,17 +104,17 @@ function AdminDashboardContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             Welcome back, {firstName}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Here&apos;s what&apos;s happening on your platform today.
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-all duration-300 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -158,11 +158,11 @@ function AdminDashboardContent() {
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* User Activity Chart */}
-        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
-          <h3 className="text-base font-semibold text-gray-900 mb-4">User Activity (Last 14 Days)</h3>
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-base font-semibold text-foreground mb-4">User Activity (Last 14 Days)</h3>
           {loading ? (
             <div className="h-[260px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
@@ -181,9 +181,9 @@ function AdminDashboardContent() {
                 <Line
                   type="monotone"
                   dataKey="users"
-                  stroke="#dc2626"
+                  stroke="#37b5ff"
                   strokeWidth={2.5}
-                  dot={{ r: 3, fill: '#dc2626' }}
+                  dot={{ r: 3, fill: '#37b5ff' }}
                   name="Active Users"
                 />
                 <Line
@@ -198,45 +198,45 @@ function AdminDashboardContent() {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[260px] flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">
               No activity data yet
             </div>
           )}
         </div>
 
         {/* Popular Content */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Top Content</h3>
-            <Link href="/admin/analytics" className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors">
+            <h3 className="text-base font-semibold text-foreground">Top Content</h3>
+            <Link href="/admin/analytics" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
               View all
             </Link>
           </div>
           {loading ? (
             <div className="h-[260px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : popularity.length > 0 ? (
             <div className="space-y-4">
               {popularity.slice(0, 5).map((item, i) => (
                 <div key={item.sportId} className="flex items-center gap-3">
-                  <span className="flex items-center justify-center h-7 w-7 rounded-lg bg-gray-100 text-xs font-bold text-gray-500">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-lg bg-muted text-xs font-bold text-muted-foreground">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.sportName}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-foreground truncate">{item.sportName}</p>
+                    <p className="text-xs text-muted-foreground">
                       {item.views} views &middot; {item.completions} done
                     </p>
                   </div>
-                  <div className="text-xs font-semibold text-red-600">
+                  <div className="text-xs font-semibold text-primary">
                     {item.averageRating.toFixed(1)} ★
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="h-[260px] flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">
               No content data yet
             </div>
           )}
@@ -246,11 +246,11 @@ function AdminDashboardContent() {
       {/* Quiz Scores + Quick Actions */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Quiz Score Chart */}
-        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
-          <h3 className="text-base font-semibold text-gray-900 mb-4">Quiz Scores (Last 14 Days)</h3>
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-base font-semibold text-foreground mb-4">Quiz Scores (Last 14 Days)</h3>
           {loading ? (
             <div className="h-[220px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
@@ -268,22 +268,22 @@ function AdminDashboardContent() {
                 />
                 <Bar
                   dataKey="score"
-                  fill="#dc2626"
+                  fill="#37b5ff"
                   radius={[6, 6, 0, 0]}
                   name="Avg Score %"
                 />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
               No quiz data yet
             </div>
           )}
         </div>
 
         {/* Quick Actions */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-red-900/5">
-          <h3 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-base font-semibold text-foreground mb-4">Quick Actions</h3>
           <div className="space-y-2">
             <QuickAction
               href="/admin/quizzes/create"
@@ -321,19 +321,19 @@ function AdminDashboardContent() {
 
       {/* System Health Bar */}
       {health && (
-        <div className="rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-xl shadow-red-900/5">
+        <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
             <div className="flex items-center gap-2">
               <div
                 className={`h-2.5 w-2.5 rounded-full ${
                   health.status === 'healthy'
-                    ? 'bg-green-500'
+                    ? 'bg-emerald-500'
                     : health.status === 'warning'
                       ? 'bg-amber-500'
-                      : 'bg-red-500'
+                      : 'bg-destructive'
                 }`}
               />
-              <span className="text-sm font-medium text-gray-900 capitalize">
+              <span className="text-sm font-medium text-foreground capitalize">
                 System {health.status}
               </span>
             </div>
@@ -368,15 +368,15 @@ function KpiCard({
   loading: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-red-900/5 transition-all duration-300">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-300">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {title}
           </p>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-foreground">
             {loading ? (
-              <span className="inline-block h-7 w-16 rounded animate-pulse bg-gray-100" />
+              <span className="inline-block h-7 w-16 rounded animate-pulse bg-muted" />
             ) : (
               value.toLocaleString()
             )}
@@ -384,18 +384,18 @@ function KpiCard({
           <div className="flex items-center gap-1.5">
             {trend && !loading && (
               trend === 'up' ? (
-                <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
               ) : (
-                <TrendingDown className="h-3.5 w-3.5 text-red-400" />
+                <TrendingDown className="h-3.5 w-3.5 text-destructive" />
               )
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {loading ? '' : subtitle}
             </p>
           </div>
         </div>
-        <div className="p-2.5 rounded-xl bg-red-50">
-          <div className="text-red-600">{icon}</div>
+        <div className="p-2.5 rounded-xl bg-primary/10">
+          <div className="text-primary">{icon}</div>
         </div>
       </div>
     </div>
@@ -414,11 +414,11 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-red-200 hover:bg-red-50/50 transition-all duration-300 group"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-300 group"
     >
-      <div className="text-gray-500 group-hover:text-red-600 transition-colors">{icon}</div>
-      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 flex-1 transition-colors">{label}</span>
-      <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-red-500 transition-colors" />
+      <div className="text-muted-foreground group-hover:text-primary transition-colors">{icon}</div>
+      <span className="text-sm font-medium text-foreground flex-1 transition-colors">{label}</span>
+      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
     </Link>
   );
 }
@@ -426,8 +426,8 @@ function QuickAction({
 function HealthItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-400">{label}:</span>
-      <span className="text-xs font-medium text-gray-700 capitalize">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}:</span>
+      <span className="text-xs font-medium text-foreground capitalize">{value}</span>
     </div>
   );
 }

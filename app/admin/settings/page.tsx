@@ -189,7 +189,7 @@ function SettingsContent() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Reset
             </Button>
-            <Button onClick={handleSaveSettings} disabled={loading || !hasChanges} className="bg-red-600 hover:bg-red-700">
+            <Button onClick={handleSaveSettings} disabled={loading || !hasChanges}>
               <Save className="mr-2 h-4 w-4" />
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>
