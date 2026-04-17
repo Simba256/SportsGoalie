@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import {
-  Loader2,
   AlertCircle,
   ClipboardCheck,
   CheckCircle2,
@@ -12,6 +11,7 @@ import {
   Users,
   Clock,
 } from 'lucide-react';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import Link from 'next/link';
 
 /**
@@ -23,11 +23,7 @@ export default function ParentOnboardingPage() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
     if (!user) {

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronDown, ShieldAlert, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ShieldAlert } from 'lucide-react';
+import { SkeletonListPage } from '@/components/ui/skeletons';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
@@ -44,7 +45,7 @@ export default function CannotAcceptListPage() {
 
   const handleAcceptPrompt = async (text: string, subcategory: string) => {
     if (!user?.id) {
-      console.error('[MindVault] No user ID available');
+      console.warn('[MindVault] No user ID available');
       return;
     }
     console.log('[MindVault] Adding cannot-accept entry:', { subcategory, text: text.substring(0, 40) });
@@ -62,10 +63,17 @@ export default function CannotAcceptListPage() {
         const reload = await mindVaultService.getEntriesByCategory(user.id, 'cannot_accept');
         if (reload.success && reload.data) setEntries(reload.data);
       } else {
-        console.error('[MindVault] addEntry failed:', result.error);
+        console.warn('[MindVault] addEntry failed:', {
+          code: result.error?.code || 'UNKNOWN_ERROR',
+          message: result.error?.message || result.message || 'Failed to add entry',
+          details: result.error?.details,
+        });
       }
     } catch (error) {
-      console.error('[MindVault] addEntry threw:', error);
+      console.warn('[MindVault] addEntry threw:', {
+        message: error instanceof Error ? error.message : String(error),
+        error,
+      });
     }
   };
 
@@ -81,6 +89,12 @@ export default function CannotAcceptListPage() {
     if (result.success) {
       const reload = await mindVaultService.getEntriesByCategory(user.id, 'cannot_accept');
       if (reload.success && reload.data) setEntries(reload.data);
+    } else {
+      console.warn('[MindVault] custom addEntry failed:', {
+        code: result.error?.code || 'UNKNOWN_ERROR',
+        message: result.error?.message || result.message || 'Failed to add entry',
+        details: result.error?.details,
+      });
     }
   };
 
@@ -101,8 +115,8 @@ export default function CannotAcceptListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      <div className="py-4">
+        <SkeletonListPage cols={2} count={4} />
       </div>
     );
   }

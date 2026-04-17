@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, Users, ClipboardCheck, ArrowRight, Loader2 } from 'lucide-react';
+import { Eye, Users, ClipboardCheck, ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/context';
 import { parentLinkService } from '@/lib/database';
 import { LinkedChildSummary } from '@/types';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 
 export default function ParentPerceptionPage() {
   const router = useRouter();
@@ -35,11 +36,7 @@ export default function ParentPerceptionPage() {
   }, [user]);
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-      </div>
-    );
+    return <SkeletonDarkPage />;
   }
 
   if (!user || user.role !== 'parent') return null;

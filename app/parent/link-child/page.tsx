@@ -5,7 +5,8 @@ import { LinkChildForm } from '@/components/parent';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle, ChevronLeft, HelpCircle } from 'lucide-react';
+import { AlertCircle, ChevronLeft, HelpCircle } from 'lucide-react';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,11 +16,7 @@ export default function LinkChildPage() {
   const router = useRouter();
 
   if (loading) {
-    return (
-      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   if (!user) {

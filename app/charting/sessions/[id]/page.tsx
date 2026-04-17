@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams, usePathname, useSearchParams } from 'next/navigation';
 import { chartingService, formTemplateService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
@@ -170,8 +171,8 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading session...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

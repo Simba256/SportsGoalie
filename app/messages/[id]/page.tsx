@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { SkeletonDetailPage } from '@/components/ui/skeletons';
 import {
   ArrowLeft,
   MessageSquare,
@@ -116,9 +117,7 @@ export default function MessageDetailPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading message...</div>
-        </div>
+        <SkeletonDetailPage />
       </div>
     );
   }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { BookOpen, Lock, Clock, CheckCircle2, ArrowRight, Target, FileText } from 'lucide-react';
+import { SkeletonListPage } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { customCurriculumService, customContentService, sportsService } from '@/lib/database';
@@ -128,11 +129,7 @@ function LessonsPageContent() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="h-10 w-10 rounded-full border-2 border-red-600 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <SkeletonListPage cols={3} count={6} />;
   }
 
   return (

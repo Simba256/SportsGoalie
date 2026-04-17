@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -158,8 +159,8 @@ export default function CustomLessonPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-red-600" />
+      <div className="min-h-[60vh] p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

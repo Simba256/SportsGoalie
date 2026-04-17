@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Shield, Loader2, Sparkles } from 'lucide-react';
+import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 import { MindVaultCategoryCard } from '@/components/mind-vault/MindVaultCategoryCard';
+import { Brain, ListChecks, Flame } from 'lucide-react';
 import {
   MIND_VAULT_CATEGORIES,
   type MindVaultCategorySummary,
@@ -37,113 +38,122 @@ export default function MindVaultPage() {
     (getSummary('acceptance')?.entryCount || 0) +
     (getSummary('cannot_accept')?.entryCount || 0);
   const momentum = Math.round((activeCategories / MIND_VAULT_CATEGORIES.length) * 100) || 0;
+  const safeMomentum = loading ? 0 : Math.max(momentum, 6);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-
-        <div className="relative flex items-start gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Shield className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Mind Vault</h1>
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
-                <Sparkles className="h-3 w-3" />
-                Mindset Engine
-              </span>
-            </div>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-sm leading-relaxed sm:text-base">
-              Build your mental armor with entries that keep you grounded, focused, and resilient.
-            </p>
-          </div>
+    <div className="bg-gray-50">
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[340px] md:h-[390px] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/mind-vault.png')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/85 via-slate-900/75 to-red-900/65" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
+        <div className="relative z-10 text-center flex flex-col items-center">
+          <h1 className="text-white text-3xl md:text-5xl font-bold bg-white/10 border border-white/25 backdrop-blur-sm px-6 py-2 rounded-xl inline-block shadow-lg mb-2">
+            Build the Mental Game
+          </h1>
+          <p className="text-white text-sm md:text-base font-medium drop-shadow-md">
+            Your personal mental armor, expanded one entry at a time.
+          </p>
         </div>
+      </section>
 
-        <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Total Entries</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
-              {loading ? '--' : totalEntries}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">Core List Entries</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
-              {loading ? '--' : coreEntries}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card px-4 py-3">
-            <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-semibold uppercase tracking-wider text-muted-foreground">Momentum</span>
-              <span className="font-bold text-primary">{loading ? '--' : `${momentum}%`}</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-                style={{ width: `${loading ? 8 : Math.max(momentum, 8)}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Expandable Index
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Start with the core lists, then keep adding entries as new challenges appear. The vault
-          expands over time and becomes your personal mental armor.
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-        </div>
-      ) : (
-        <>
-          {/* Featured: Acceptance & Cannot Accept */}
-          <div className="mb-6">
-            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
-              Core Lists
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {MIND_VAULT_CATEGORIES.filter(
-                (c) => c.slug === 'acceptance' || c.slug === 'cannot_accept'
-              ).map((cat) => (
-                <MindVaultCategoryCard
-                  key={cat.slug}
-                  category={cat}
-                  summary={getSummary(cat.slug)}
-                />
-              ))}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20 pb-12">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-7 mb-10">
+          <div className="rounded-2xl bg-blue-50 border border-blue-100 shadow-sm h-[190px] md:h-[200px]">
+            <div className="relative p-6 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">Total Entries</p>
+                <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-5xl md:text-6xl font-extrabold text-slate-900 tabular-nums tracking-tight">
+                {loading ? '--' : totalEntries}
+              </p>
             </div>
           </div>
 
-          {/* Other Categories */}
-          <div>
-            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-              All Categories
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {MIND_VAULT_CATEGORIES.filter(
-                (c) => c.slug !== 'acceptance' && c.slug !== 'cannot_accept'
-              ).map((cat) => (
-                <MindVaultCategoryCard
-                  key={cat.slug}
-                  category={cat}
-                  summary={getSummary(cat.slug)}
-                />
-              ))}
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm h-[190px] md:h-[200px]">
+            <div className="relative p-6 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">Core List Entries</p>
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <ListChecks className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-5xl md:text-6xl font-extrabold text-slate-900 tabular-nums tracking-tight">
+                {loading ? '--' : coreEntries}
+              </p>
             </div>
           </div>
-        </>
-      )}
+
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm h-[190px] md:h-[200px]">
+            <div className="relative p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Momentum</p>
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Flame className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-[30px] font-extrabold text-slate-900 mt-1 leading-none tracking-tight">
+                {loading ? '--' : `${momentum}%`}
+              </p>
+              <div className="mt-auto">
+                <div className="w-full bg-slate-200 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${safeMomentum}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 text-center font-medium">Keep your streak alive!</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {loading ? (
+          <div className="space-y-6">
+            <SkeletonCardGrid count={2} cols={2} />
+            <SkeletonCardGrid count={4} cols={2} />
+          </div>
+        ) : (
+          <>
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Core Lists</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {MIND_VAULT_CATEGORIES.filter(
+                  (c) => c.slug === 'acceptance' || c.slug === 'cannot_accept'
+                ).map((cat) => (
+                  <MindVaultCategoryCard
+                    key={cat.slug}
+                    category={cat}
+                    summary={getSummary(cat.slug)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">All Categories</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {MIND_VAULT_CATEGORIES.filter(
+                  (c) => c.slug !== 'acceptance' && c.slug !== 'cannot_accept'
+                ).map((cat) => (
+                  <MindVaultCategoryCard
+                    key={cat.slug}
+                    category={cat}
+                    summary={getSummary(cat.slug)}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+      </main>
     </div>
   );
 }

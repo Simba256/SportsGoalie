@@ -22,7 +22,6 @@ import {
   Dumbbell,
   Heart,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { onboardingService } from '@/lib/database';
@@ -198,301 +197,272 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  const orderedItems = curriculum
+    ? [...curriculum.items].sort((a, b) => a.order - b.order)
+    : [];
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="bg-gray-50">
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[340px] md:h-[390px] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/goalie-dashboard.png')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
 
-      {/* ── Welcome Banner ─────────────────────────────────────────── */}
-      <div className="relative rounded-3xl border border-blue-200/70 bg-gradient-to-br from-blue-100 via-sky-50 to-red-100 p-6 md:p-8 overflow-hidden shadow-xl shadow-blue-200/30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(59,130,246,0.25),transparent_45%),radial-gradient(circle_at_86%_14%,rgba(239,68,68,0.2),transparent_40%),radial-gradient(circle_at_62%_88%,rgba(14,165,233,0.15),transparent_42%)]" />
-        <div className="absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_90%)]">
-          <div className="h-full w-full bg-[linear-gradient(to_right,rgba(59,130,246,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(239,68,68,0.1)_1px,transparent_1px)] bg-[size:34px_34px]" />
-        </div>
-        <div className="absolute -top-14 -right-10 w-52 h-52 bg-blue-300/35 rounded-full blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-red-300/30 rounded-full blur-3xl" />
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <h1 className="text-white text-3xl md:text-5xl font-bold bg-white/10 border border-white/25 backdrop-blur-sm px-6 py-2 rounded-xl inline-block shadow-lg mb-2">
+            {greeting}, {firstName}
+          </h1>
+          <p className="text-white text-sm md:text-base font-medium drop-shadow-md max-w-2xl px-4">
+            {totalItems > 0
+              ? `You have completed ${completedItems} of ${totalItems} items, with ${unlockedItems} ready to learn.`
+              : 'Your coach will assign learning materials soon. Check back or message your coach.'}
+          </p>
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <p className="text-blue-700 text-sm font-bold tracking-wide">{greeting}</p>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Hello {firstName},</h1>
-            <p className="text-slate-600 text-sm mt-2 max-w-lg leading-relaxed">
-              {totalItems > 0
-                ? `You've completed ${completedItems} of ${totalItems} items in your curriculum. ${unlockedItems > 0 ? `${unlockedItems} items ready to learn!` : 'Keep it up!'}`
-                : 'Your coach will assign learning materials soon. Check back or message your coach.'}
-            </p>
-            {nextItem && getContentLink(nextItem) && (
-              <Link href={getContentLink(nextItem)!}>
-                <button className="mt-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/35">
-                  Continue Learning
-                </button>
-              </Link>
-            )}
+          <div className="mt-4 w-full max-w-lg rounded-full bg-white/35 h-2.5 overflow-hidden">
+            <div className="h-full rounded-full bg-blue-600" style={{ width: `${progressPct}%` }} />
           </div>
 
-          {/* Progress ring */}
-          <div className="hidden md:flex flex-col items-center">
-            <ProgressRing percentage={progressPct} size={110} />
-            <p className="text-blue-800/65 text-xs mt-2 font-medium">Curriculum Progress</p>
-          </div>
-        </div>
-
-        {/* Coach chip */}
-        {coach && (
-          <div className="relative mt-4 flex items-center gap-3 bg-white/75 backdrop-blur-md rounded-xl border border-blue-200/70 px-4 py-2.5 w-fit shadow-sm shadow-blue-200/40">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
-              {coach.displayName.charAt(0)}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 px-2">
+            <div className="flex items-center gap-3 rounded-full border border-white/30 bg-white/20 px-4 py-2 backdrop-blur-md shadow-sm">
+              <ProgressRing percentage={progressPct} size={48} />
+              <div className="text-left">
+                <p className="text-[11px] font-medium text-white/80">Curriculum Progress</p>
+                <p className="text-sm font-bold text-white">{progressPct}%</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-slate-500">Your Coach</p>
-              <p className="text-sm font-semibold text-slate-900">{coach.displayName}</p>
-            </div>
-            <Link href="/messages" className="ml-3">
-              <button className="text-xs text-blue-700 hover:text-blue-800 font-semibold flex items-center gap-1">
-                <MessageSquare className="h-3 w-3" /> Message
-              </button>
-            </Link>
-          </div>
-        )}
-      </div>
 
-      {/* ── Main Layout ────────────────────────────────────────────── */}
-      <div className="grid lg:grid-cols-3 gap-6">
-
-        {/* LEFT 2/3 */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-
-          {/* Pillar Progress — table rows */}
-          <div className="order-2">
-            {enrolledSports.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                  <h2 className="text-base font-bold text-gray-900">Your Pillars</h2>
-                  <Link href="/pillars" className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
-                    View all <ArrowRight className="h-3 w-3" />
-                  </Link>
+            {coach && (
+              <div className="flex items-center gap-3 rounded-full border border-white/35 bg-white/25 px-4 py-2 backdrop-blur-md shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-700 text-xs font-bold text-white">
+                  {coach.displayName.charAt(0)}
                 </div>
-                <div className="divide-y divide-gray-50">
-                  {enrolledSports.map(({ sport, progress }) => {
-                    const slug = getPillarSlugFromDocId(sport.id);
-                    const info = slug ? PILLARS.find(p => p.slug === slug) : null;
-                    const colorClasses = getPillarColorClasses(info?.color || 'blue');
-                    const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
-                    const pct = Math.round(progress.progressPercentage);
-                    return (
-                      <Link key={sport.id} href={`/pillars/${sport.id}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/80 transition-colors group">
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
-                          <Icon className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{info?.shortName || sport.name}</p>
-                          <p className="text-xs text-gray-400">{progress.completedSkills.length}/{progress.totalSkills} skills</p>
-                        </div>
-                        <div className="w-24 hidden sm:block">
-                          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                            <div className={`h-full rounded-full ${colorClasses.bg}`} style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                        <span className={`text-sm font-bold w-12 text-right ${pct >= 80 ? 'text-green-600' : pct > 0 ? 'text-gray-900' : 'text-gray-300'}`}>{pct}%</span>
-                        <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
-                      </Link>
-                    );
-                  })}
+                <div className="text-left">
+                  <p className="text-xs font-medium text-white/75">Your Coach</p>
+                  <p className="text-sm font-semibold text-white">{coach.displayName}</p>
                 </div>
+                <Link href="/messages" className="ml-1">
+                  <button className="flex items-center gap-1 rounded-full border border-white/35 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-white">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Message
+                  </button>
+                </Link>
               </div>
             )}
           </div>
+        </div>
+      </section>
 
-          {/* Learning Path — curriculum items */}
-          <div className="order-1">
-            {curriculum && curriculum.items.length > 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="text-base font-bold text-gray-900">Your Learning Path</h2>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                  {totalItems} items
-                </Badge>
+      <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {curriculum && curriculum.items.length > 0 ? (
+            <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 p-6">
+                <h2 className="text-xl font-bold text-slate-800">Learning Path</h2>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">{totalItems} items</span>
               </div>
 
-              {/* Continue Learning highlight */}
               {nextItem && (
-                <div className="px-6 py-4 bg-gradient-to-r from-blue-50/80 to-white border-b border-blue-100">
-                  <Link href={getContentLink(nextItem) || '#'} className="flex items-center gap-4 group">
-                    <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <div className="border-b border-slate-100 p-4">
+                  <Link href={getContentLink(nextItem) || '#'} className="flex items-center gap-4 rounded-2xl border border-blue-100 bg-slate-50 p-4 transition hover:bg-slate-100">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
                       {nextItem.type === 'lesson' || nextItem.type === 'custom_lesson'
-                        ? <BookOpen className="h-6 w-6 text-blue-600" />
-                        : <PlayCircle className="h-6 w-6 text-blue-600" />}
+                        ? <BookOpen className="h-6 w-6" />
+                        : <PlayCircle className="h-6 w-6" />}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-blue-500 font-semibold mb-0.5">Continue Learning</p>
-                      <p className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-bold text-slate-800">
                         {contentInfo[nextItem.contentId || nextItem.id]?.title || 'Next Item'}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">
-                        {contentInfo[nextItem.contentId || nextItem.id]?.description || ''}
+                      </h3>
+                      <p className="truncate text-xs text-slate-500">
+                        {contentInfo[nextItem.contentId || nextItem.id]?.description || 'Ready to continue your goalie development.'}
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    <div className="text-slate-400">
+                      <ChevronRight className="h-5 w-5" />
+                    </div>
                   </Link>
                 </div>
               )}
 
-              {/* Item list */}
-              <div className="divide-y divide-gray-50">
-                {[...curriculum.items]
-                  .sort((a, b) => {
-                    const order: Record<string, number> = { completed: 0, in_progress: 1, unlocked: 2, locked: 3 };
-                    const diff = (order[a.status] ?? 3) - (order[b.status] ?? 3);
-                    return diff !== 0 ? diff : a.order - b.order;
-                  })
-                  .map((item, index) => {
-                    const info = contentInfo[item.contentId || item.id];
-                    const link = getContentLink(item);
-                    const isLocked = item.status === 'locked';
-                    const isDone = item.status === 'completed';
+              <div className="p-4 space-y-2">
+                {orderedItems.map((item, index) => {
+                  const info = contentInfo[item.contentId || item.id];
+                  const link = getContentLink(item);
+                  const isLocked = item.status === 'locked';
+                  const isDone = item.status === 'completed';
 
-                    return (
-                      <div key={item.id} className={`flex items-center gap-4 px-6 py-3.5 ${isLocked ? 'opacity-50' : 'hover:bg-gray-50/80'} transition-colors`}>
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                          isDone ? 'bg-green-100 text-green-600' : isLocked ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-600'
+                  return (
+                    <div key={item.id} className="flex items-center justify-between rounded-xl border border-transparent p-3 pb-4 transition hover:bg-slate-50 hover:border-slate-100">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                          isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-200 text-slate-500' : 'bg-blue-500 text-white'
                         }`}>
-                          {isDone ? <CheckCircle2 className="h-4 w-4" /> : isLocked ? <Lock className="h-3.5 w-3.5" /> : index + 1}
+                          {isDone ? <CheckCircle2 className="h-4 w-4" /> : isLocked ? <Lock className="h-3.5 w-3.5" /> : <span className="text-[10px] font-semibold">{index + 1}</span>}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${isDone ? 'text-green-700' : 'text-gray-900'}`}>
-                            {info?.title || item.customContent?.title || 'Learning Item'}
-                          </p>
-                          {info?.sportName && (
-                            <p className="text-[11px] text-gray-400">{info.sportName}</p>
-                          )}
+                        <div className="min-w-0">
+                          <h4 className="truncate font-semibold text-slate-800">{info?.title || item.customContent?.title || 'Learning Item'}</h4>
+                          <p className="text-xs text-slate-500">{info?.sportName || 'Custom Content'}</p>
                         </div>
-                        <Badge variant="outline" className={`text-[10px] ${
-                          isDone ? 'bg-green-50 text-green-600 border-green-200' :
-                          item.status === 'unlocked' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                          item.status === 'in_progress' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                          'bg-gray-50 text-gray-400 border-gray-200'
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-md border px-2 py-1 text-xs font-semibold ${
+                          isDone
+                            ? 'border-green-200 bg-green-100 text-green-700'
+                            : item.status === 'unlocked'
+                              ? 'border-blue-200 bg-blue-100 text-blue-700'
+                              : item.status === 'in_progress'
+                                ? 'border-amber-200 bg-amber-100 text-amber-700'
+                                : 'border-slate-200 bg-slate-100 text-slate-500'
                         }`}>
                           {isDone ? 'Done' : item.status === 'unlocked' ? 'Available' : item.status === 'in_progress' ? 'Active' : 'Locked'}
-                        </Badge>
+                        </span>
                         {link && !isLocked && (
                           <Link href={link}>
-                            <button className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                              isDone ? 'text-gray-500 hover:bg-gray-100' : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                            }`}>
+                            <button className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
                               {isDone ? 'Review' : (item.type === 'lesson' || item.type === 'custom_lesson') ? 'Start' : 'Quiz'}
                             </button>
                           </Link>
                         )}
                       </div>
-                    );
-                  })}
+                    </div>
+                  );
+                })}
               </div>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-              <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-blue-50 flex items-center justify-center">
+            </section>
+          ) : (
+            <section className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
                 <BookOpen className="h-7 w-7 text-blue-400" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">No Curriculum Assigned Yet</h3>
-              <p className="text-xs text-gray-400 mb-4 max-w-xs mx-auto">
-                Your coach hasn&apos;t assigned any learning materials yet. Check back soon!
+              <h3 className="mb-1 text-sm font-semibold text-slate-900">No Curriculum Assigned Yet</h3>
+              <p className="mx-auto mb-4 max-w-xs text-xs text-slate-500">
+                Your coach has not assigned any learning materials yet. Check back soon.
               </p>
               {coach && (
                 <Link href="/messages">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25">
-                    <UserIcon className="h-4 w-4 mr-2 inline" /> Message Coach
+                  <button className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    <UserIcon className="mr-2 inline h-4 w-4" /> Message Coach
                   </button>
                 </Link>
               )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT 1/3 */}
-        <div className="space-y-6">
-
-          {/* Mind Vault Entry */}
-          <Link href="/mind-vault" className="group block">
-            <div className="relative overflow-hidden rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50 via-white to-red-50 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-200/35">
-              <div className="pointer-events-none absolute -top-10 -right-8 h-28 w-28 rounded-full bg-blue-200/40 blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-red-200/30 blur-2xl" />
-              <div className="relative flex items-start gap-4">
-                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/30">
-                  <Brain className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold tracking-[0.12em] uppercase text-blue-600">Mental Training</p>
-                  <h3 className="text-lg font-black text-gray-900 mt-1">Open Mind Vault</h3>
-                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                    Capture your thoughts after practice or games so your mental patterns are tracked from day one.
-                  </p>
-                  <div className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 group-hover:text-blue-800 transition-colors">
-                    Enter Mind Vault
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Assessment Profile */}
-          {profile && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-gray-100">
-                <h3 className="text-sm font-bold text-gray-900">Assessment Profile</h3>
-              </div>
-              <div className="px-5 py-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xl font-black text-gray-900">{profile.overallScore.toFixed(1)}</span>
-                    <span className="text-xs text-gray-400 ml-1">/ 4.0</span>
-                  </div>
-                  <Badge className={`text-xs ${
-                    profile.pacingLevel === 'refinement' ? 'bg-green-500' :
-                    profile.pacingLevel === 'development' ? 'bg-blue-500' : 'bg-amber-500'
-                  }`}>
-                    {getPacingLevelDisplayText(profile.pacingLevel)}
-                  </Badge>
-                </div>
-                {/* Category mini bars */}
-                <div className="space-y-1.5">
-                  {profile.categoryScores.slice(0, 4).map((cat) => (
-                    <div key={cat.categorySlug} className="flex items-center gap-2">
-                      <span className="text-[10px] text-gray-400 w-14 truncate capitalize">{cat.categorySlug.replace('_', ' ')}</span>
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${cat.averageScore >= 3.0 ? 'bg-green-500' : cat.averageScore >= 2.0 ? 'bg-blue-500' : 'bg-red-400'}`} style={{ width: `${((cat.averageScore - 1) / 3) * 100}%` }} />
-                      </div>
-                      <span className="text-[10px] font-medium text-gray-500 w-5 text-right">{cat.averageScore.toFixed(1)}</span>
-                    </div>
-                  ))}
-                </div>
-                {profile.identifiedGaps.length > 0 && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="text-[10px] text-gray-400 mb-1">Focus areas:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {profile.identifiedGaps.map((gap) => (
-                        <span key={gap.categorySlug} className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-100 capitalize">
-                          {gap.categorySlug.replace('_', ' ')}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            </section>
           )}
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">Quick Actions</h3>
-            <div className="space-y-1.5">
-              <QuickAction href="/pillars" icon={<BookOpen className="h-4 w-4 text-blue-600" />} bg="bg-blue-50" label="Browse Pillars" />
-              <QuickAction href="/progress" icon={<TrendingUp className="h-4 w-4 text-purple-600" />} bg="bg-purple-50" label="Analytics" />
-              <QuickAction href="/achievements" icon={<Trophy className="h-4 w-4 text-green-600" />} bg="bg-green-50" label="Achievements" />
-              {coach && <QuickAction href="/messages" icon={<MessageSquare className="h-4 w-4 text-red-600" />} bg="bg-red-50" label="Message Coach" />}
+          {enrolledSports.length > 0 && (
+            <section className="overflow-hidden rounded-3xl border border-blue-100/80 bg-gradient-to-br from-blue-50/70 via-white to-red-50/60 shadow-sm">
+              <div className="flex items-center justify-between border-b border-blue-100/80 p-6">
+                <h2 className="text-xl font-bold text-slate-800">Your Pillars</h2>
+                <Link href="/pillars" className="flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-red-600 transition-colors">
+                  View all
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="space-y-2 p-4">
+                {enrolledSports.map(({ sport, progress }) => {
+                  const slug = getPillarSlugFromDocId(sport.id);
+                  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+                  const colorClasses = getPillarColorClasses(info?.color || 'blue');
+                  const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+                  const pct = Math.round(progress.progressPercentage);
+
+                  return (
+                    <Link key={sport.id} href={`/pillars/${sport.id}`} className="flex items-center justify-between rounded-2xl border border-transparent p-3 transition hover:border-blue-100 hover:bg-gradient-to-r hover:from-blue-50/70 hover:to-red-50/40">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm ring-1 ring-blue-200">
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-800">{info?.shortName || sport.name}</h4>
+                          <p className="text-xs text-slate-500">{progress.completedSkills.length}/{progress.totalSkills} skills</p>
+                        </div>
+                      </div>
+                      <div className="flex w-1/3 items-center gap-4">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200/80">
+                          <div className={`h-full ${colorClasses.bg}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-sm font-medium text-slate-600">{pct}%</span>
+                        <ChevronRight className="h-5 w-5 text-blue-400" />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
+            <div className="absolute right-0 top-0 p-4 opacity-10">
+              <Brain className="h-32 w-32 text-blue-600" />
             </div>
-          </div>
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-md">
+                  <Brain className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Mental Training</p>
+                  <h3 className="text-lg font-bold text-slate-800">Open Mind Vault</h3>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-slate-600">
+                Capture your thoughts after practice or games so your mental patterns are tracked from day one.
+              </p>
+              <Link href="/mind-vault" className="inline-flex items-center font-semibold text-blue-700 transition hover:text-blue-800">
+                Enter Mind Vault
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </section>
+
+          {profile && (
+            <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <h2 className="mb-6 border-b border-slate-100 pb-4 text-lg font-bold text-slate-800">Assessment Profile</h2>
+              <div className="mb-6 flex items-end justify-between">
+                <div>
+                  <span className="text-4xl font-bold text-slate-800">{profile.overallScore.toFixed(1)}</span>
+                  <span className="text-sm font-medium text-slate-500"> / 4.0</span>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold text-white ${
+                  profile.pacingLevel === 'refinement' ? 'bg-green-500' :
+                  profile.pacingLevel === 'development' ? 'bg-blue-500' : 'bg-red-500'
+                }`}>
+                  {getPacingLevelDisplayText(profile.pacingLevel)}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {profile.categoryScores.slice(0, 4).map((cat) => (
+                  <div key={cat.categorySlug} className="flex items-center text-sm">
+                    <span className="w-24 capitalize text-slate-600">{cat.categorySlug.replace('_', ' ')}</span>
+                    <div className="mx-3 h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full bg-blue-500" style={{ width: `${((cat.averageScore - 1) / 3) * 100}%` }} />
+                    </div>
+                    <span className="w-8 text-right font-semibold text-slate-700">{cat.averageScore.toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-bold text-slate-800">Quick Actions</h2>
+            <div className="space-y-2">
+              <QuickAction href="/pillars" icon={<BookOpen className="h-5 w-5 text-blue-600" />} bg="bg-blue-50" label="Browse Pillars" />
+              <QuickAction href="/progress" icon={<TrendingUp className="h-5 w-5 text-red-600" />} bg="bg-red-50" label="Analytics" />
+              <QuickAction href="/achievements" icon={<Trophy className="h-5 w-5 text-blue-600" />} bg="bg-blue-50" label="Achievements" />
+              {coach && <QuickAction href="/messages" icon={<MessageSquare className="h-5 w-5 text-red-600" />} bg="bg-red-50" label="Message Coach" />}
+            </div>
+          </section>
         </div>
       </div>
+      </main>
     </div>
   );
 }
@@ -500,20 +470,16 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
 /* ── Sub-components ──────────────────────────────── */
 
 function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: number }) {
-  const sw = 8;
-  const r = (size - sw) / 2;
-  const c = 2 * Math.PI * r;
-  const offset = c - (percentage / 100) * c;
+  const clamped = Math.max(0, Math.min(100, percentage));
+  const compact = size < 72;
+  const ringStyle = {
+    background: `conic-gradient(#2563eb ${clamped}%, #e2e8f0 0)`,
+  };
+
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={sw} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="url(#cring)" strokeWidth={sw} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset} className="transition-all duration-1000 ease-out" />
-        <defs><linearGradient id="cring" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#ef4444" /></linearGradient></defs>
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-gray-900">{percentage}</span>
-        <span className="text-[10px] text-gray-400 uppercase tracking-wider">%</span>
+    <div className="relative flex items-center justify-center rounded-full shadow-inner" style={{ width: size, height: size, ...ringStyle }}>
+      <div className="absolute flex items-center justify-center rounded-full bg-white/90 backdrop-blur-md" style={{ width: size - 16, height: size - 16 }}>
+        <span className={`${compact ? 'text-xs' : 'text-2xl'} font-bold text-slate-800`}>{clamped}%</span>
       </div>
     </div>
   );
@@ -521,10 +487,10 @@ function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: n
 
 function QuickAction({ href, icon, bg, label }: { href: string; icon: React.ReactNode; bg: string; label: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
+    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-blue-100 hover:bg-white/80 transition-colors group">
+      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg} border border-blue-100/60`}>{icon}</div>
       <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{label}</span>
-      <ChevronRight className="h-3.5 w-3.5 text-gray-300 ml-auto group-hover:text-gray-500 transition-colors" />
+      <ChevronRight className="h-3.5 w-3.5 text-blue-400 ml-auto group-hover:text-red-500 transition-colors" />
     </Link>
   );
 }

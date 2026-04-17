@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { CoachInvitation } from '@/types/auth';
 import { coachInvitationService } from '@/lib/services/coach-invitation.service';
 import { useAuth } from '@/lib/auth/context';
@@ -148,13 +149,8 @@ function AcceptInviteContent() {
   // Loading state
   if (validating) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-accent/20">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Validating invitation...</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 p-6">
+        <SkeletonContentPage />
       </div>
     );
   }
@@ -365,8 +361,8 @@ export default function AcceptInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="min-h-screen p-6">
+          <SkeletonContentPage />
         </div>
       }
     >

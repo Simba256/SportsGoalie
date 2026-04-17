@@ -39,6 +39,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { userService, onboardingService } from '@/lib/database';
 import {
   User,
@@ -244,11 +245,7 @@ export default function CoachEvaluationPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   if (!student) {

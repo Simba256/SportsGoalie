@@ -19,6 +19,26 @@ import type { ApiResponse } from '@/types';
 export class MindVaultService extends BaseDatabaseService {
   private readonly COLLECTION = 'mind_vault_entries';
 
+  private normalizeError(error: unknown, fallbackCode: string): { code: string; message: string; details?: unknown } {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code?: unknown }).code || fallbackCode)
+        : fallbackCode;
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+        ? error
+        : 'Unknown error';
+
+    return {
+      code,
+      message,
+      details: error,
+    };
+  }
+
   /**
    * Get all entries for a student
    */
@@ -83,12 +103,31 @@ export class MindVaultService extends BaseDatabaseService {
     try {
       const result = await this.create<MindVaultEntry>(this.COLLECTION, data);
       console.log('[MindVaultService] addEntry result:', { success: result.success, error: result.error });
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: {
+            code: result.error?.code || 'CREATE_ERROR',
+            message: result.error?.message || result.message || 'Failed to add entry',
+            details: result.error?.details,
+          },
+          message: result.error?.message || result.message || 'Failed to add entry',
+          timestamp: new Date(),
+        };
+      }
+
       return result;
     } catch (error) {
-      console.error('[MindVaultService] addEntry error:', error);
+      const normalizedError = this.normalizeError(error, 'CREATE_ERROR');
+      console.warn(
+        `[MindVaultService] addEntry failed (code=${normalizedError.code}): ${normalizedError.message}`,
+        normalizedError.details
+      );
       return {
         success: false,
-        error: { code: 'CREATE_ERROR', message: (error as Error).message },
+        error: normalizedError,
+        message: normalizedError.message,
         timestamp: new Date(),
       };
     }

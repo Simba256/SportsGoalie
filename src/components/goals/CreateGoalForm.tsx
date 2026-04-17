@@ -123,29 +123,29 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5">
       {/* Goal Type Selection */}
       <div className="space-y-3">
-        <Label>Goal Type</Label>
-        <div className="grid gap-3">
+        <Label className="text-slate-800">Goal Type</Label>
+        <div className="grid gap-2 sm:grid-cols-2">
           {goalTypes.map((type) => (
             <Card
               key={type.value}
               className={`cursor-pointer transition-all ${
                 selectedType === type.value
-                  ? 'ring-2 ring-primary bg-primary/5'
-                  : 'hover:bg-muted/50'
+                  ? 'border-red-200 bg-red-50/60 ring-2 ring-red-200'
+                  : 'border-slate-200 bg-white hover:bg-slate-50'
               }`}
               onClick={() => handleTypeChange(type.value)}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-3">
                 <div className="flex items-start space-x-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedType === type.value ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
                     {type.icon}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">{type.label}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <h4 className="font-medium text-sm text-slate-900">{type.label}</h4>
+                    <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">
                       {type.description}
                     </p>
                   </div>
@@ -162,10 +162,11 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
       {/* Goal Details */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Goal Title</Label>
+          <Label htmlFor="title" className="text-slate-800">Goal Title</Label>
           <Input
             id="title"
             placeholder="e.g., Complete 5 basketball skills this month"
+            className="border-slate-200 focus-visible:ring-red-500/30 focus-visible:border-red-300"
             {...register('title')}
           />
           {errors.title && (
@@ -174,11 +175,12 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description" className="text-slate-800">Description</Label>
           <Textarea
             id="description"
             placeholder="Describe what you want to achieve and why it's important to you..."
             rows={3}
+            className="border-slate-200 focus-visible:ring-red-500/30 focus-visible:border-red-300"
             {...register('description')}
           />
           {errors.description && (
@@ -186,14 +188,15 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="targetValue">Target Value</Label>
+            <Label htmlFor="targetValue" className="text-slate-800">Target Value</Label>
             <Input
               id="targetValue"
               type="number"
               min="1"
               placeholder="10"
+              className="border-slate-200 focus-visible:ring-red-500/30 focus-visible:border-red-300"
               {...register('targetValue', { valueAsNumber: true })}
             />
             {errors.targetValue && (
@@ -202,10 +205,11 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="unit">Unit</Label>
+            <Label htmlFor="unit" className="text-slate-800">Unit</Label>
             <Input
               id="unit"
               placeholder="skills"
+              className="border-slate-200 focus-visible:ring-red-500/30 focus-visible:border-red-300"
               {...register('unit')}
             />
             {errors.unit && (
@@ -215,12 +219,12 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="priority">Priority</Label>
+          <Label htmlFor="priority" className="text-slate-800">Priority</Label>
           <Select
             onValueChange={(value) => setValue('priority', value as any)}
             defaultValue="medium"
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-slate-200 focus:ring-red-500/30 focus:border-red-300">
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
             <SelectContent>
@@ -235,11 +239,12 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deadline">Deadline (Optional)</Label>
+          <Label htmlFor="deadline" className="text-slate-800">Deadline (Optional)</Label>
           <Input
             id="deadline"
             type="date"
             min={new Date().toISOString().split('T')[0]}
+            className="border-slate-200 focus-visible:ring-red-500/30 focus-visible:border-red-300"
             {...register('deadline')}
           />
           {errors.deadline && (
@@ -249,7 +254,7 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
       </div>
 
       {/* Submit Button */}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full bg-red-600 text-white hover:bg-red-700" disabled={isSubmitting}>
         {isSubmitting ? 'Creating Goal...' : 'Create Goal'}
       </Button>
     </form>

@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth/context';
 import { parentLinkService } from '@/lib/database';
 import { LinkedChildSummary } from '@/types';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 
 export default function ParentDashboardPage() {
   const router = useRouter();
@@ -64,11 +65,7 @@ export default function ParentDashboardPage() {
   }, [user]);
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
-      </div>
-    );
+    return <SkeletonDarkPage />;
   }
 
   if (!user || user.role !== 'parent') return null;

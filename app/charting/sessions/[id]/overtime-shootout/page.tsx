@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session, ChartingEntry, OvertimeData, ShootoutData } from '@/types';
@@ -204,8 +205,8 @@ export default function OvertimeShootoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

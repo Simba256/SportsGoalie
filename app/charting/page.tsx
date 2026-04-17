@@ -1,40 +1,165 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
-import { Session, SessionStats, StreakData, DynamicChartingEntry } from '@/types';
+import { Session, SessionStats, DynamicChartingEntry, ChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, X, BarChart3, Target } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, X, ArrowRight } from 'lucide-react';
+import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (value && typeof value === 'object' && 'toDate' in value) {
+    const candidate = value as { toDate?: () => Date };
+    if (typeof candidate.toDate === 'function') {
+      return candidate.toDate();
+    }
+  }
+
+  return null;
+};
+
+const toDateKey = (value: unknown): string | null => {
+  const date = toDate(value);
+  return date ? format(date, 'yyyy-MM-dd') : null;
+};
+
+const calculateSessionStats = (sessions: Session[]): SessionStats => {
+  const completedSessions = sessions.filter((session) => session.status === 'completed');
+  const gameSessions = sessions.filter((session) => session.type === 'game');
+  const practiceSessions = sessions.filter((session) => session.type === 'practice');
+
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * DAY_MS);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const thisWeekSessions = sessions.filter((session) => {
+    const date = toDate(session.date);
+    return date ? date >= oneWeekAgo : false;
+  }).length;
+
+  const thisMonthSessions = sessions.filter((session) => {
+    const date = toDate(session.date);
+    return date ? date >= monthStart : false;
+  }).length;
+
+  return {
+    totalSessions: sessions.length,
+    completedSessions: completedSessions.length,
+    gameSessions: gameSessions.length,
+    practiceSessions: practiceSessions.length,
+    completionRate: sessions.length > 0 ? (completedSessions.length / sessions.length) * 100 : 0,
+    averageSessionsPerWeek: thisWeekSessions,
+    averageSessionsPerMonth: thisMonthSessions,
+    thisWeekSessions,
+    thisMonthSessions,
+  };
+};
+
+const calculateCurrentStreak = (
+  sessions: Session[],
+  chartingEntries: ChartingEntry[],
+  dynamicEntries: DynamicChartingEntry[]
+): number => {
+  const activityDateKeys = new Set<string>();
+
+  sessions
+    .filter((session) => session.status === 'completed')
+    .forEach((session) => {
+      const key = toDateKey(session.date);
+      if (key) activityDateKeys.add(key);
+    });
+
+  chartingEntries.forEach((entry) => {
+    const key = toDateKey(entry.submittedAt);
+    if (key) activityDateKeys.add(key);
+  });
+
+  dynamicEntries.forEach((entry) => {
+    const key = toDateKey(entry.submittedAt);
+    if (key) activityDateKeys.add(key);
+  });
+
+  const streakDates = Array.from(activityDateKeys).sort((a, b) => b.localeCompare(a));
+  if (streakDates.length === 0) {
+    return 0;
+  }
+
+  const today = toDateKey(new Date());
+  const yesterday = toDateKey(new Date(Date.now() - DAY_MS));
+  if (!today || !yesterday) {
+    return 0;
+  }
+
+  if (streakDates[0] !== today && streakDates[0] !== yesterday) {
+    return 0;
+  }
+
+  let streak = 1;
+  for (let i = 1; i < streakDates.length; i++) {
+    const previous = new Date(`${streakDates[i - 1]}T00:00:00`);
+    const current = new Date(`${streakDates[i]}T00:00:00`);
+    const diffDays = Math.round((previous.getTime() - current.getTime()) / DAY_MS);
+
+    if (diffDays === 1) {
+      streak += 1;
+      continue;
+    }
+
+    if (diffDays > 1) {
+      break;
+    }
+  }
+
+  return streak;
+};
 
 export default function ChartingPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [chartingEntries, setChartingEntries] = useState<any[]>([]);
+  const [chartingEntries, setChartingEntries] = useState<ChartingEntry[]>([]);
   const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
-  const [stats, setStats] = useState<SessionStats | null>(null);
-  const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Calculate charting completion stats
-  const chartingStats = {
-    totalSessions: sessions.length,
-    chartedSessions: sessions.filter(session => {
-      const hasDynamicEntry = dynamicEntries.some(e => e.sessionId === session.id);
-      const hasLegacyEntry = chartingEntries.some(e => e.sessionId === session.id);
-      return hasDynamicEntry || hasLegacyEntry;
-    }).length,
-    get completionRate() {
-      return this.totalSessions > 0 ? Math.round((this.chartedSessions / this.totalSessions) * 100) : 0;
-    }
-  };
+  const stats = useMemo<SessionStats>(() => calculateSessionStats(sessions), [sessions]);
+
+  const currentStreak = useMemo(
+    () => calculateCurrentStreak(sessions, chartingEntries, dynamicEntries),
+    [sessions, chartingEntries, dynamicEntries]
+  );
+
+  const chartedSessionIds = useMemo(() => {
+    const ids = new Set<string>();
+    chartingEntries.forEach((entry) => ids.add(entry.sessionId));
+    dynamicEntries.forEach((entry) => ids.add(entry.sessionId));
+    return ids;
+  }, [chartingEntries, dynamicEntries]);
+
+  const chartingStats = useMemo(() => {
+    const totalSessions = sessions.length;
+    const chartedSessions = sessions.reduce((count, session) => {
+      return count + (chartedSessionIds.has(session.id) ? 1 : 0);
+    }, 0);
+
+    return {
+      totalSessions,
+      chartedSessions,
+      completionRate: totalSessions > 0 ? Math.round((chartedSessions / totalSessions) * 100) : 0,
+    };
+  }, [sessions, chartedSessionIds]);
 
   // Selected day modal state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -58,20 +183,14 @@ export default function ChartingPage() {
     try {
       setLoading(true);
 
-      const [sessionsResult, analyticsResult, entriesResult, dynamicEntriesResult] = await Promise.all([
+      const [sessionsResult, entriesResult, dynamicEntriesResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
-        chartingService.getStudentAnalytics(user.id),
         chartingService.getChartingEntriesByStudent(user.id),
         dynamicChartingService.getDynamicEntriesByStudent(user.id),
       ]);
 
       if (sessionsResult.success && sessionsResult.data) {
         setSessions(sessionsResult.data);
-      }
-
-      if (analyticsResult.success && analyticsResult.data) {
-        setStats(analyticsResult.data.sessionStats);
-        setStreak(analyticsResult.data.streak);
       }
 
       if (entriesResult.success && entriesResult.data) {
@@ -111,14 +230,10 @@ export default function ChartingPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4">
-            <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-          </div>
-          <p className="text-muted-foreground font-medium">Loading your charting data...</p>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <SkeletonBannerLight />
+        <SkeletonStatCards count={4} />
+        <SkeletonChart />
       </div>
     );
   }
@@ -127,228 +242,242 @@ export default function ChartingPage() {
     return null;
   }
 
+  const sparklinePath = 'M5,40 L20,25 L40,35 L60,15 L80,25 L95,5';
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance Charting</h1>
-            <p className="text-muted-foreground mt-1">Track your goaltending progress and consistency</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/charting/analytics')}
-              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics & Trends
-            </Button>
-            <Button
-              onClick={() => router.push('/charting/sessions/new')}
-              className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Session
-            </Button>
-          </div>
+    <div className="bg-gray-50">
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[430px] md:h-[450px] flex items-start justify-center text-center px-4 pt-16 md:pt-20 overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/goalie.avif')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-gray-100" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
+        <div className="relative z-10 max-w-4xl w-full mx-auto flex flex-col items-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
+            Chart Every
+            <br />
+            Ice Session
+          </h1>
+
+          <p className="mt-5 max-w-3xl text-base md:text-lg text-gray-200 leading-relaxed font-light px-4">
+            Build consistency with structured tracking, daily momentum, and clear analytics from your game and practice sessions.
+          </p>
+
         </div>
-      </div>
+      </section>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Sessions */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
-                  <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
-                    {stats?.totalSessions || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-primary" />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Charted */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-green-500/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Charted</p>
-                  <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
-                    {chartingStats.chartedSessions}
-                    <span className="text-lg text-muted-foreground font-normal ml-1">/ {chartingStats.totalSessions}</span>
-                  </p>
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-muted-foreground">{chartingStats.completionRate}% complete</span>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-green-500 rounded-full transition-all duration-500"
-                        style={{ width: `${chartingStats.completionRate}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center ml-4">
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Current Streak */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-accent/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                  <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
-                    {streak?.currentStreak || 0}
-                  </p>
-                  {(streak?.longestStreak ?? 0) > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Best: {streak?.longestStreak} days
-                    </p>
-                  )}
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-accent" />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* This Month */}
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                  <p className="text-4xl font-bold text-foreground mt-2 tabular-nums">
-                    {stats?.thisMonthSessions || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-primary" />
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Calendar Heatmap */}
-        <Card className="border-0 shadow-md overflow-hidden">
-          <div className="p-6 space-y-4">
+      <main className="relative z-20 max-w-6xl mx-auto px-4 pb-6 -mt-24 space-y-6 md:space-y-7">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 md:gap-7">
+        <Card className="rounded-2xl bg-blue-50 border-blue-100 shadow-sm h-[190px] md:h-[200px]">
+          <div className="relative p-6 h-full flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">Activity Calendar</h2>
-              {(streak?.longestStreak ?? 0) > 0 && (
-                <div className="flex items-center gap-1.5 text-sm text-accent font-medium bg-accent/10 px-3 py-1 rounded-full">
-                  <Target className="w-4 h-4" />
-                  Longest streak: {streak?.longestStreak} days
-                </div>
-              )}
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">Total Sessions</p>
+              <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
-
-            <CalendarHeatmap
-              sessions={sessions}
-              chartingEntries={chartingEntries}
-              dynamicEntries={dynamicEntries}
-              onDayClick={handleDayClick}
-            />
+            <p className="text-5xl md:text-6xl font-extrabold text-slate-900 tabular-nums tracking-tight">
+              {stats.totalSessions}
+            </p>
           </div>
         </Card>
 
-        {/* Day Detail Modal */}
-        {selectedDate && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={closeModal}>
-            <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto border-0 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6 space-y-4">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold text-foreground">
-                      {format(selectedDate, 'MMMM d, yyyy')}
-                    </h3>
-                    <p className="text-muted-foreground mt-1">
-                      {selectedDaySessions.length} session{selectedDaySessions.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  <Button variant="outline" size="icon" onClick={closeModal} className="rounded-full">
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {/* Sessions List */}
-                {selectedDaySessions.length === 0 ? (
-                  <div className="text-center py-10">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Calendar className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-foreground font-medium">No sessions on this day</p>
-                    <p className="text-sm text-muted-foreground mt-1">Tap &quot;New Session&quot; to create one</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {selectedDaySessions.map((session) => (
-                      <Card
-                        key={session.id}
-                        className="p-4 border border-border/50 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group"
-                        onClick={() => router.push(`/charting/sessions/${session.id}`)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-foreground">
-                                {session.type === 'game' ? 'Game' : 'Practice'}
-                                {session.opponent && ` vs ${session.opponent}`}
-                              </h4>
-                              <Badge variant={getStatusBadgeVariant(session.status)}>
-                                {session.status}
-                              </Badge>
-                            </div>
-                            {session.location && (
-                              <p className="text-sm text-muted-foreground mt-1">{session.location}</p>
-                            )}
-                            {session.tags && session.tags.length > 0 && (
-                              <div className="flex gap-1 mt-2">
-                                {session.tags.map((tag) => (
-                                  <Badge key={tag} variant="outline" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity border-primary/30 text-primary hover:bg-primary/5"
-                          >
-                            View
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+        <Card className="rounded-2xl bg-white border-slate-200 shadow-sm h-[190px] md:h-[200px]">
+          <div className="relative p-6 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Charted</p>
+                <p className="text-[30px] font-extrabold text-slate-900 mt-1 tabular-nums tracking-tight leading-none">
+                  {chartingStats.chartedSessions}/{chartingStats.totalSessions}
+                </p>
               </div>
-            </Card>
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center ml-4">
+                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+
+            <div className="mt-auto self-center relative w-20 h-20">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+                <path
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  className="text-slate-100"
+                  strokeWidth="4.5"
+                />
+                <path
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  className="text-blue-500"
+                  strokeWidth="4.5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${chartingStats.completionRate}, 100`}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-700">
+                {chartingStats.completionRate}%
+              </div>
+            </div>
           </div>
-        )}
+        </Card>
+
+        <Card className="rounded-2xl bg-white border-slate-200 shadow-sm h-[190px] md:h-[200px]">
+          <div className="relative p-6 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">Current Streak</p>
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Flame className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+            <p className="text-[40px] font-extrabold text-slate-900 leading-none tracking-tight">
+              {currentStreak}
+              <span className="text-[28px] align-baseline ml-1">Days</span>
+            </p>
+          </div>
+        </Card>
+
+        <Card className="rounded-2xl bg-blue-50 border-blue-100 shadow-sm h-[190px] md:h-[200px] overflow-hidden">
+          <div className="relative p-6 h-full flex flex-col">
+            <div className="flex items-center justify-between z-10">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">This Month</p>
+                <p className="text-5xl font-extrabold text-slate-900 mt-1 tracking-tight">
+                  {stats.thisMonthSessions || 0}
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+
+            <div className="absolute bottom-4 left-0 right-0 h-20 px-2 opacity-80">
+              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 50" aria-hidden="true">
+                <path
+                  d={sparklinePath}
+                  fill="none"
+                  stroke="#4299E1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                />
+              </svg>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="rounded-2xl bg-white border-slate-200 shadow-sm h-[190px] md:h-[200px]">
+          <div className="relative p-6 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Quick Action</p>
+              
+            </div>
+
+            <div className="flex-1 flex items-center">
+              <Button
+                onClick={() => router.push('/charting/sessions/new')}
+                className="w-full h-11 bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Session
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="p-6 md:p-8 space-y-4">
+          <h2 className="text-[22px] font-bold text-slate-800 tracking-tight">Activity Calendar</h2>
+
+          <CalendarHeatmap
+            sessions={sessions}
+            chartingEntries={chartingEntries}
+            dynamicEntries={dynamicEntries}
+            colorScheme="blue"
+            onDayClick={handleDayClick}
+          />
+        </div>
+      </Card>
+      </main>
+
+      {selectedDate && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={closeModal}>
+          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto border-0 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground">
+                    {format(selectedDate, 'MMMM d, yyyy')}
+                  </h3>
+                  <p className="text-muted-foreground mt-1">
+                    {selectedDaySessions.length} session{selectedDaySessions.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <Button variant="outline" size="icon" onClick={closeModal} className="rounded-full">
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {selectedDaySessions.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-foreground font-medium">No sessions on this day</p>
+                  <p className="text-sm text-muted-foreground mt-1">Tap &quot;New Session&quot; to create one</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedDaySessions.map((session) => (
+                    <Card
+                      key={session.id}
+                      className="p-4 border border-slate-200/80 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                      onClick={() => router.push(`/charting/sessions/${session.id}`)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-foreground">
+                              {session.type === 'game' ? 'Game' : 'Practice'}
+                              {session.opponent && ` vs ${session.opponent}`}
+                            </h4>
+                            <Badge variant={getStatusBadgeVariant(session.status)}>
+                              {session.status}
+                            </Badge>
+                          </div>
+                          {session.location && (
+                            <p className="text-sm text-muted-foreground mt-1">{session.location}</p>
+                          )}
+                          {session.tags && session.tags.length > 0 && (
+                            <div className="flex gap-1 mt-2">
+                              {session.tags.map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity border-blue-200 text-blue-700 hover:bg-blue-50"
+                        >
+                          View <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

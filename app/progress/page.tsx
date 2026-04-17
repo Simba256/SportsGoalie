@@ -38,6 +38,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
 
 export default function ProgressPage() {
@@ -52,19 +53,7 @@ function ProgressContent() {
   const { data, loading, error } = useAnalytics();
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="relative w-12 h-12 mx-auto mb-3">
-              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            </div>
-            <p className="text-muted-foreground text-sm">Loading your analytics...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <SkeletonAnalytics />;
   }
 
   if (error || !data) {
@@ -104,30 +93,62 @@ function ProgressContent() {
   }));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
 
       {/* ══════════ HERO BANNER ══════════ */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-[#1a1a3e] to-slate-900 p-8 md:p-10">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-red-500/8 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative flex items-center gap-4">
-          <div className="hidden sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-            <TrendingUp className="h-7 w-7 text-blue-400" />
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[360px] md:h-[420px] flex items-start justify-center text-center px-4 pt-16 md:pt-20 overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1515703407324-5f753afd8be8?auto=format&fit=crop&w=1920&q=80')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-gray-100" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
+        <div className="relative z-10 max-w-3xl text-white">
+          <div className="mx-auto mb-4 hidden sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+            <TrendingUp className="h-7 w-7 text-blue-300" />
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">Progress Analytics</h1>
-            <p className="text-white/60 mt-1 text-sm md:text-base">Track your learning journey with detailed analytics and insights.</p>
-          </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">Progress Analytics</h1>
+          <p className="text-white/80 mt-3 text-sm md:text-base">Track your learning journey with detailed analytics and insights.</p>
         </div>
-      </div>
+      </section>
 
+      <div className="relative z-20 max-w-7xl mx-auto px-0 -mt-20 space-y-6">
       {/* ══════════ STAT CARDS ══════════ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" emoji="🕐" gradient="from-blue-500/8 to-blue-500/3" />
-        <BigStatCard label="Quiz Attempts" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} emoji="🏆" gradient="from-red-500/8 to-red-500/3" />
-        <BigStatCard label="Avg Score" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} emoji="🎯" gradient="from-blue-500/8 to-blue-500/3" />
-        <BigStatCard label="Current Streak" value={`${data.currentStreak} days`} sub={`Best: ${data.longestStreak} days`} emoji="🔥" gradient="from-red-500/8 to-red-500/3" />
+        <BigStatCard
+          label="Learning Time"
+          value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`}
+          sub="Total time invested"
+          emoji="🕐"
+          cardClassName="bg-blue-50 border-blue-100"
+          iconWrapClassName="bg-blue-100/80"
+        />
+        <BigStatCard
+          label="Quiz Attempts"
+          value={data.totalQuizzes}
+          sub={`${data.uniqueSkills} unique`}
+          emoji="🏆"
+          cardClassName="bg-red-50 border-red-100"
+          iconWrapClassName="bg-red-100/80"
+        />
+        <BigStatCard
+          label="Avg Score"
+          value={`${data.avgScore}%`}
+          sub={`Best: ${data.bestScore}%`}
+          emoji="🎯"
+          cardClassName="bg-white border-slate-200"
+          iconWrapClassName="bg-blue-50"
+        />
+        <BigStatCard
+          label="Current Streak"
+          value={`${data.currentStreak} days`}
+          sub={`Best: ${data.longestStreak} days`}
+          emoji="🔥"
+          cardClassName="bg-white border-slate-200"
+          iconWrapClassName="bg-red-50"
+        />
       </div>
 
       {/* ══════════ TABS ══════════ */}
@@ -577,6 +598,7 @@ function ProgressContent() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
@@ -585,18 +607,27 @@ function ProgressContent() {
    SUB-COMPONENTS
    ══════════════════════════════════════════════════════════ */
 
-function BigStatCard({ label, value, sub, emoji, gradient }: {
-  label: string; value: string | number; sub: string; emoji: string; gradient: string;
+function BigStatCard({ label, value, sub, emoji, cardClassName, iconWrapClassName }: {
+  label: string;
+  value: string | number;
+  sub: string;
+  emoji: string;
+  cardClassName: string;
+  iconWrapClassName: string;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br ${gradient} bg-card p-5 shadow-sm`}>
-      <div className="flex items-start justify-between">
-        <div className="relative z-10">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-3xl md:text-4xl font-bold text-foreground mt-1 tracking-tight">{value}</p>
-          <p className="text-xs text-muted-foreground mt-1">{sub}</p>
+    <div className={`rounded-2xl border shadow-sm h-[150px] md:h-[165px] ${cardClassName}`}>
+      <div className="relative p-5 h-full flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">{label}</p>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconWrapClassName}`}>
+            <span className="text-3xl md:text-4xl leading-none" aria-hidden="true">{emoji}</span>
+          </div>
         </div>
-        <span className="text-5xl md:text-6xl opacity-80 select-none leading-none -mt-1" aria-hidden="true">{emoji}</span>
+        <div>
+          <p className="text-5xl font-extrabold text-slate-900 tabular-nums tracking-tight">{value}</p>
+          <p className="text-xs text-slate-500 mt-1">{sub}</p>
+        </div>
       </div>
     </div>
   );

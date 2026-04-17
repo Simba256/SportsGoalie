@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, Mail, Shield, Calendar } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 
 export default function ParentProfilePage() {
   const router = useRouter();
@@ -16,11 +17,7 @@ export default function ParentProfilePage() {
   }, [user, loading, router]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   if (!user || user.role !== 'parent') return null;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { chartingService, userService } from '@/lib/database';
 import { ChartingEntry, Session, User } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -553,8 +554,8 @@ function AdminChartingContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading admin charting analytics...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonDarkPage />
       </div>
     );
   }

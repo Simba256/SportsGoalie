@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { SkeletonDetailPage } from '@/components/ui/skeletons';
 import { chartingService } from '@/lib/database';
 import { ChartingEntry, Session } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -98,8 +99,8 @@ function EntryDetailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading entry details...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonDetailPage />
       </div>
     );
   }

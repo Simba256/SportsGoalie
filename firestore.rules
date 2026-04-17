@@ -107,10 +107,14 @@ service cloud.firestore {
       // Users can read their own profile, admins can read all
       // Coaches can read all student profiles (needed to browse and add students to roster)
       // Students can read their assigned coach's profile
+      // Students can read only their linked parent profiles (for Family Links UI)
       // Parents can read student profiles (needed to view linked children)
       allow read: if isOwnerOrAdmin(userId) ||
                      (isCoach() && resource.data.role == 'student') ||
                      (isAuthenticated() && resource.data.role == 'coach') ||
+                     (isAuthenticated() &&
+                      resource.data.role == 'parent' &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('linkedParentIds', []).hasAny([userId])) ||
                      (isParent() && resource.data.role == 'student');
 
       // Users can create their own profile during registration
@@ -118,10 +122,14 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // Users can update their own profile (except role and email), admins can update any
+      // Parents can update a student's linkedParentIds (needed for parent-child linking)
       allow update: if (isOwner(userId) &&
                        !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
                        !('email' in request.resource.data.diff(resource.data).affectedKeys())) ||
-                      isAdmin();
+                      isAdmin() ||
+                      (isParent() &&
+                       resource.data.role == 'student' &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedParentIds', 'updatedAt']));
 
       // Only admins can delete users
       allow delete: if isAdmin();

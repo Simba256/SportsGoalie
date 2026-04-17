@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
 import { FormTemplate } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -45,8 +46,8 @@ export default function TemplateDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-[400px] p-6">
+        <SkeletonContentPage />
       </div>
     );
   }

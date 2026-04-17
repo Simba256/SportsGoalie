@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-const navItems = ['Features', 'About', 'Pricing'];
+const navItems = ['Features', 'About', 'Pricing', 'Login'];
 
 export const Header7 = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const isPricingPage = pathname === '/pricing';
+  const isLandingPage = pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,7 +28,11 @@ export const Header7 = () => {
           : 'bg-transparent py-6'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+      <div
+        className={`flex justify-between items-center ${
+          isLandingPage ? 'w-full px-6 md:px-8 lg:px-10' : 'max-w-7xl mx-auto px-6'
+        }`}
+      >
         <button
           type="button"
           onClick={() => router.push('/')}
@@ -48,6 +53,8 @@ export const Header7 = () => {
               onClick={() => {
                 if (label === 'Pricing') {
                   router.push('/pricing');
+                } else if (label === 'Login') {
+                  router.push('/auth/login');
                 } else {
                   // Hash scroll for Features and About
                   const element = document.getElementById(label.toLowerCase());
@@ -57,7 +64,9 @@ export const Header7 = () => {
                 }
               }}
               className={`transition-colors duration-500 font-medium text-[15px] tracking-wide cursor-pointer ${
-                isScrolled
+                label === 'Login'
+                  ? 'bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-md transition-all duration-300'
+                  : isScrolled
                   ? 'text-gray-800 hover:text-gray-900'
                   : isPricingPage
                   ? 'text-gray-800 hover:text-gray-900'

@@ -8,7 +8,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   runTransaction,
   increment,
   Timestamp,
@@ -511,23 +510,36 @@ export class ProgressService extends BaseDatabaseService {
 
       const q = query(
         collection(db, this.COLLECTIONS.USER_ACHIEVEMENTS),
-        where('userId', '==', userId),
-        orderBy('unlockedAt', 'desc')
+        where('userId', '==', userId)
       );
 
       const querySnapshot = await getDocs(q);
-      const achievements: UserAchievement[] = querySnapshot.docs.map(doc =>
-        doc.data() as UserAchievement
-      );
+      const achievements: UserAchievement[] = querySnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        } as UserAchievement))
+        .sort((a, b) => {
+          const aTime = a.unlockedAt?.toMillis?.() || 0;
+          const bTime = b.unlockedAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
 
       this.cache.set(cacheKey, achievements);
 
       logger.info('Retrieved user achievements', 'ProgressService', { userId, count: achievements.length });
       return { success: true, data: achievements, timestamp: new Date() };
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (typeof error === 'object' && error !== null && 'message' in error)
+          ? String((error as { message?: unknown }).message)
+          : String(error);
+
       logger.error('Failed to get user achievements', 'ProgressService', {
         userId,
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
       });
       return {
         success: false,

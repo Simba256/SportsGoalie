@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Loader2,
   AlertCircle,
   ChevronLeft,
   ClipboardCheck,
   CheckCircle2,
 } from 'lucide-react';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import { redirect, useParams } from 'next/navigation';
 
@@ -64,11 +64,7 @@ export default function ParentAssessmentPage() {
   }, [user, childId]);
 
   if (authLoading || loading) {
-    return (
-      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   if (!user) {

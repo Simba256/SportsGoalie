@@ -7,7 +7,7 @@ import { protectApiRoute, createAuthErrorResponse } from '@/lib/auth/server-vali
  * This runs on the Edge Runtime for optimal performance
  */
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for public routes and static assets

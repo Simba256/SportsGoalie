@@ -58,26 +58,34 @@ export default function NewSessionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Header */}
+      <section className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[250px] md:h-[290px] flex items-start justify-center px-4 pt-10 md:pt-12 overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/goalie.avif')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+
+        <div className="relative z-10 w-full max-w-3xl mx-auto">
           <Button
             variant="outline"
             size="icon"
             onClick={() => router.back()}
-            className="rounded-full border-border/50 hover:bg-muted"
+            className="absolute left-1 md:-left-20 lg:-left-28 xl:-left-36 top-0 rounded-full border-white/35 bg-white/80 hover:bg-white backdrop-blur-sm text-slate-700"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">New Session</h1>
-            <p className="text-muted-foreground mt-1">Create a new game or practice session</p>
+
+          <div className="mt-3 text-center">
+            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">New Session</h1>
+            <p className="text-white/85 mt-2 text-sm md:text-base">Create a new game or practice session</p>
           </div>
         </div>
+      </section>
 
+      <main className="relative z-20 max-w-3xl mx-auto px-4 md:px-6 -mt-16 md:-mt-20 pb-10">
         {/* Form */}
-        <Card className="border-0 shadow-md overflow-hidden">
+        <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <form onSubmit={handleSubmit} className="space-y-8 p-6">
             {/* Session Type */}
             <div className="space-y-3">
@@ -90,16 +98,16 @@ export default function NewSessionPage() {
                 <div
                   className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all ${
                     formData.type === 'game'
-                      ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
-                      : 'border-border hover:border-primary/30 hover:bg-muted/50'
+                      ? 'border-blue-300 bg-blue-50 shadow-md shadow-blue-500/10'
+                      : 'border-border hover:border-blue-200 hover:bg-muted/50'
                   }`}
                   onClick={() => setFormData({ ...formData, type: 'game' })}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      formData.type === 'game' ? 'bg-primary/10' : 'bg-muted'
+                      formData.type === 'game' ? 'bg-blue-100' : 'bg-muted'
                     }`}>
-                      <Trophy className={`w-5 h-5 ${formData.type === 'game' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <Trophy className={`w-5 h-5 ${formData.type === 'game' ? 'text-blue-600' : 'text-muted-foreground'}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -108,7 +116,7 @@ export default function NewSessionPage() {
                           value="game"
                           checked={formData.type === 'game'}
                           onChange={() => setFormData({ ...formData, type: 'game' })}
-                          className="accent-[hsl(var(--primary))]"
+                          className="accent-blue-600"
                         />
                         <p className="font-semibold text-foreground">Game</p>
                       </div>
@@ -120,16 +128,16 @@ export default function NewSessionPage() {
                 <div
                   className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all ${
                     formData.type === 'practice'
-                      ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
-                      : 'border-border hover:border-primary/30 hover:bg-muted/50'
+                      ? 'border-blue-300 bg-blue-50 shadow-md shadow-blue-500/10'
+                      : 'border-border hover:border-blue-200 hover:bg-muted/50'
                   }`}
                   onClick={() => setFormData({ ...formData, type: 'practice' })}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      formData.type === 'practice' ? 'bg-primary/10' : 'bg-muted'
+                      formData.type === 'practice' ? 'bg-blue-100' : 'bg-muted'
                     }`}>
-                      <Dumbbell className={`w-5 h-5 ${formData.type === 'practice' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <Dumbbell className={`w-5 h-5 ${formData.type === 'practice' ? 'text-blue-600' : 'text-muted-foreground'}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -138,7 +146,7 @@ export default function NewSessionPage() {
                           value="practice"
                           checked={formData.type === 'practice'}
                           onChange={() => setFormData({ ...formData, type: 'practice' })}
-                          className="accent-[hsl(var(--primary))]"
+                          className="accent-blue-600"
                         />
                         <p className="font-semibold text-foreground">Practice</p>
                       </div>
@@ -149,27 +157,44 @@ export default function NewSessionPage() {
               </RadioGroup>
             </div>
 
-            {/* Date and Time */}
-            <div className="space-y-2">
-              <Label htmlFor="date" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-primary" />
-                Date & Time <span className="text-accent">*</span>
-              </Label>
-              <Input
-                id="date"
-                type="datetime-local"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-                className="border-border focus-visible:ring-primary"
-              />
+            {/* Date and Time + Location */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="date" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-blue-600" />
+                  Date & Time <span className="text-accent">*</span>
+                </Label>
+                <Input
+                  id="date"
+                  type="datetime-local"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  required
+                  className="h-10 border-border focus-visible:ring-blue-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="location" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  Location
+                </Label>
+                <Input
+                  id="location"
+                  type="text"
+                  placeholder="Enter arena or rink name"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="h-10 border-border focus-visible:ring-blue-500"
+                />
+              </div>
             </div>
 
             {/* Opponent (only for games) */}
             {formData.type === 'game' && (
               <div className="space-y-2">
                 <Label htmlFor="opponent" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
+                  <Users className="w-4 h-4 text-blue-600" />
                   Opponent
                 </Label>
                 <Input
@@ -178,31 +203,15 @@ export default function NewSessionPage() {
                   placeholder="Enter opponent team name"
                   value={formData.opponent}
                   onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                  className="border-border focus-visible:ring-primary"
+                  className="border-border focus-visible:ring-blue-500"
                 />
               </div>
             )}
 
-            {/* Location */}
-            <div className="space-y-2">
-              <Label htmlFor="location" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                Location
-              </Label>
-              <Input
-                id="location"
-                type="text"
-                placeholder="Enter arena or rink name"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="border-border focus-visible:ring-primary"
-              />
-            </div>
-
             {/* Tags */}
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Tag className="w-4 h-4 text-primary" />
+                <Tag className="w-4 h-4 text-blue-600" />
                 Tags
               </Label>
               <div className="flex flex-wrap gap-2">
@@ -220,8 +229,8 @@ export default function NewSessionPage() {
                       }}
                       className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                         isSelected
-                          ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
-                          : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                          : 'bg-muted text-muted-foreground hover:bg-blue-50 hover:text-blue-600'
                       }`}
                     >
                       {tag}
@@ -245,11 +254,11 @@ export default function NewSessionPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/25"
+                className="gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/25"
               >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
+                    <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     Creating...
                   </>
                 ) : (
@@ -262,7 +271,7 @@ export default function NewSessionPage() {
             </div>
           </form>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

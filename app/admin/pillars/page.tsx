@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Sport, DifficultyLevel, PILLARS } from '@/types';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
@@ -10,16 +11,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
 import Link from 'next/link';
 import {
   Edit,
   Eye,
   Save,
   X,
-  Users,
   Sparkles,
   BookOpen,
+  ArrowRight,
+  RefreshCw,
   Brain,
   Footprints,
   Shapes,
@@ -31,6 +33,77 @@ import {
 
 const PILLAR_ICONS: Record<string, React.ElementType> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+};
+
+const PILLAR_THEME: Record<
+  string,
+  {
+    badgeClass: string;
+    iconBg: string;
+    iconText: string;
+    ctaClass: string;
+    borderHover: string;
+  }
+> = {
+  purple: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+  blue: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+  green: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+  orange: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+  red: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+  cyan: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+  pink: {
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    ctaClass: 'text-blue-600 group-hover:text-blue-700',
+    borderHover: 'hover:border-blue-300',
+  },
+};
+
+const PILLAR_DESCRIPTIONS: Record<string, string> = {
+  mindset: 'Build your mental fortress. Learn why your brain does what it does and how to redirect anxiety into performance energy.',
+  skating: 'Build your goalie dream on skill skating, as a skill. Learn a vision to pair with skating reason project.',
+  form: 'Build your goalie structure. Skating is creativity, form and as structure, repetition, structure, assignments.',
+  positioning: 'Build your goalie mask for anxiety position paths and the scan team of the most positional systems.',
+  seven_point: 'Build your mentalframes. Learn your positioning as strong unlock to form 7 Point System below icing line.',
+  training: 'Build your game/practice/off-ice, vision my different weighting off-ice.',
+  lifestyle: 'Build your lifestyle habits to support confidence, focus, and consistent performance in and out of the crease.',
 };
 
 interface AdminPillarsState {
@@ -128,65 +201,63 @@ function AdminPillarsContent() {
     const slug = getPillarSlugFromDocId(pillar.id);
     if (slug) {
       const info = PILLARS.find(p => p.slug === slug);
-      if (info) {
-        return {
-          icon: info.icon,
-          color: info.color,
-          shortName: info.shortName,
-        };
-      }
+      if (info) return { icon: info.icon, color: info.color, shortName: info.shortName, slug };
     }
     return {
       icon: pillar.icon,
       color: 'blue',
       shortName: pillar.name.split(' ')[0],
+      slug: null,
     };
   };
 
   if (state.loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-            <p className="text-muted-foreground">Loading pillars...</p>
-          </div>
-        </div>
+        <SkeletonDarkPage />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header — matches goalie side */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Pillar Management
-              </h1>
-              <Sparkles className="w-6 h-6 text-blue-500" />
-            </div>
-            <p className="text-muted-foreground max-w-2xl">
-              Manage the 7 Ice Hockey Goalie pillars, their content, and skills.
+    <div className="space-y-8">
+      {/* Hero Banner */}
+      <section
+        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 rounded-b-none overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1514511719-9f5849dc16d0?w=1920&q=80&auto=format&fit=crop')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/65 to-slate-900/85" />
+        <div className="relative z-10 px-6 py-10 md:px-8 md:py-14">
+          <div className="max-w-3xl text-center mx-auto">
+            <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight tracking-tight">
+              The Architecture of
+              <span className="block">a Complete Goalie</span>
+            </h1>
+            <p className="mt-3 text-sm md:text-base text-white/80 leading-relaxed">
+              Every pillar connects to every other. Master all seven and you master the game - physically, mentally, and technically.
+              Each one builds on the last.
             </p>
-          </div>
-          <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
-            {state.pillars.length} pillars
+            <div className="mt-4 inline-flex items-center rounded-full border border-blue-300/50 bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-100">
+              {state.pillars.length} pillars
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Error Display */}
       {state.error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="mx-auto max-w-2xl border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2 text-red-600">
               <span className="font-medium">Error:</span>
               <span>{state.error}</span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setState(prev => ({ ...prev, error: null }))} className="mt-2">Dismiss</Button>
+            <div className="mt-3 flex gap-2">
+              <Button variant="outline" size="sm" onClick={loadPillars}>
+                <RefreshCw className="w-4 h-4 mr-1" /> Try Again
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setState(prev => ({ ...prev, error: null }))}>Dismiss</Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -267,7 +338,7 @@ function AdminPillarsContent() {
 
       {/* Pillars Grid — same 3-col layout as goalie side */}
       {state.pillars.length === 0 ? (
-        <Card className="p-8">
+        <Card className="p-8 mx-auto max-w-2xl">
           <div className="text-center space-y-4">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto" />
             <h3 className="text-lg font-medium">No pillars found</h3>
@@ -275,51 +346,43 @@ function AdminPillarsContent() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <section className="max-w-5xl mx-auto px-4 md:px-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {state.pillars.map((pillar) => {
             const displayInfo = getPillarDisplayInfo(pillar);
-            const colorClasses = getPillarColorClasses(displayInfo.color);
+            const theme = PILLAR_THEME[displayInfo.color] ?? PILLAR_THEME.blue;
             const IconComponent = PILLAR_ICONS[displayInfo.icon] || Target;
+            const description =
+              (displayInfo.slug && PILLAR_DESCRIPTIONS[displayInfo.slug]) || pillar.description;
 
             return (
-              <Card key={pillar.id} className={`h-full hover:shadow-lg transition-all duration-300 group border-2 ${colorClasses.border} hover:scale-[1.02] overflow-hidden`}>
-                {/* Gradient Header */}
-                <div className={`h-24 bg-gradient-to-br ${colorClasses.gradient} rounded-t-lg flex items-center justify-center relative overflow-hidden`}>
-                  <IconComponent className="w-12 h-12 text-white drop-shadow-lg" />
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  {!pillar.isActive && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">Inactive</div>
-                  )}
-                  {pillar.isFeatured && (
-                    <div className="absolute top-2 right-2 bg-white/90 text-xs px-2 py-1 rounded-full font-medium">Featured</div>
-                  )}
-                </div>
-
-                <CardHeader className="space-y-2 pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{pillar.name}</CardTitle>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${colorClasses.bgLight} ${colorClasses.text}`}>
-                      Pillar {pillar.order}
-                    </span>
+              <Card key={pillar.id} className={`group rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 ${theme.borderHover}`}>
+                <CardHeader className="space-y-2 pb-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${theme.iconBg}`}>
+                        <IconComponent className={`h-5 w-5 ${theme.iconText}`} />
+                      </div>
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${theme.badgeClass}`}>
+                        Pillar {String(pillar.order).padStart(2, '0')}
+                      </span>
+                    </div>
+                    {!pillar.isActive && (
+                      <span className="rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-700">Inactive</span>
+                    )}
                   </div>
-                  <CardDescription className="line-clamp-2">{pillar.description}</CardDescription>
+                  <CardTitle className="text-xl leading-snug">{pillar.name}</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed line-clamp-4">{description}</CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-4 pt-0">
-                  <div className="flex items-center justify-center text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      <span>{pillar.skillsCount} skills</span>
-                    </div>
-                  </div>
-
-                  {pillar.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {pillar.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">{tag}</span>
-                      ))}
-                    </div>
-                  )}
+                  <button
+                    onClick={() => window.open(`/pillars/${pillar.id}`, '_blank')}
+                    className={`inline-flex items-center gap-1 text-sm font-semibold transition-colors ${theme.ctaClass}`}
+                  >
+                    Explore Pillar
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </button>
 
                   {/* Admin Actions */}
                   <div className="flex items-center gap-2 pt-3 border-t">
@@ -342,6 +405,7 @@ function AdminPillarsContent() {
             );
           })}
         </div>
+        </section>
       )}
 
       {/* Info Card — same as goalie side */}

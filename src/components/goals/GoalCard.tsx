@@ -3,7 +3,6 @@
 import { Calendar, Target, Clock, CheckCircle, Circle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 
 interface Goal {
@@ -33,13 +32,13 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-50 text-red-700 ring-red-600/20';
+        return 'bg-red-50 text-red-700 border-red-200';
       case 'medium':
-        return 'bg-yellow-50 text-yellow-800 ring-yellow-600/20';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'low':
-        return 'bg-green-50 text-green-700 ring-green-600/20';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
       default:
-        return 'bg-gray-50 text-gray-700 ring-gray-600/20';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -88,9 +87,9 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
   };
 
   return (
-    <Card className={`transition-all hover:shadow-md ${
-      goal.isCompleted ? 'ring-2 ring-green-500/20 bg-green-50/30' :
-      isOverdue ? 'ring-2 ring-red-500/20 bg-red-50/30' : ''
+    <Card className={`rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+      goal.isCompleted ? 'border-blue-200 bg-blue-50/30 hover:shadow-blue-100/50' :
+      isOverdue ? 'border-red-200 bg-red-50/30 hover:shadow-red-100/50' : 'border-slate-200 bg-white hover:shadow-slate-200/60'
     }`}>
       <CardContent className="p-6">
         <div className="space-y-4">
@@ -99,7 +98,7 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
             <div className="flex items-start space-x-3">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                 goal.isCompleted
-                  ? 'bg-green-100 text-green-600'
+                  ? 'bg-blue-100 text-blue-600'
                   : 'bg-blue-100 text-blue-600'
               }`}>
                 {getTypeIcon(goal.type)}
@@ -111,11 +110,11 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
             </div>
             <div className="flex items-center space-x-2">
               {goal.isCompleted && (
-                <Badge variant="default" className="bg-green-100 text-green-800">
+                <Badge variant="default" className="bg-blue-100 text-blue-800 border border-blue-200">
                   Completed
                 </Badge>
               )}
-              <Badge className={getPriorityColor(goal.priority)}>
+              <Badge className={`border ${getPriorityColor(goal.priority)}`}>
                 {goal.priority}
               </Badge>
             </div>
@@ -129,7 +128,12 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
                 {goal.currentValue} / {goal.targetValue} {goal.unit}
               </span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-600 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{Math.round(progress)}% complete</span>
               {goal.deadline && !goal.isCompleted && (
@@ -145,7 +149,7 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
             <div className="flex items-center justify-between pt-2">
               <div className="flex space-x-2">
                 {progress >= 100 && (
-                  <Button size="sm" onClick={handleMarkComplete}>
+                  <Button size="sm" onClick={handleMarkComplete} className="bg-red-600 text-white hover:bg-red-700">
                     Mark Complete
                   </Button>
                 )}
@@ -155,7 +159,7 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => onDelete(goal.id)}
-                  className="text-muted-foreground hover:text-red-600"
+                  className="text-slate-500 hover:bg-red-50 hover:text-red-600"
                 >
                   Delete
                 </Button>
@@ -165,7 +169,7 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
 
           {/* Completion info */}
           {goal.isCompleted && (
-            <div className="flex items-center space-x-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
+            <div className="flex items-center space-x-2 text-sm text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-100">
               <CheckCircle className="h-4 w-4" />
               <span>Goal completed! Great work!</span>
             </div>

@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonBannerLight, SkeletonStatCards, SkeletonList } from '@/components/ui/skeletons';
 import { messageService } from '@/lib/database/services/message.service';
 import { Message, MessageType } from '@/types/message';
 import { toast } from 'sonner';
@@ -141,9 +142,9 @@ export default function MessagesPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading messages...</div>
-        </div>
+        <SkeletonBannerLight />
+        <SkeletonStatCards count={4} />
+        <SkeletonList count={5} />
       </div>
     );
   }

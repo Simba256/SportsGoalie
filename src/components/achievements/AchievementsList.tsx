@@ -49,11 +49,11 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
   const totalPoints = completedAchievements.reduce((sum, achievement) => sum + achievement.points, 0);
 
   const rarityColors = {
-    common: 'bg-gray-100 text-gray-800',
-    uncommon: 'bg-green-50 text-green-700',
-    rare: 'bg-blue-50 text-blue-700',
-    epic: 'bg-purple-50 text-purple-700',
-    legendary: 'bg-yellow-50 text-yellow-800'
+    common: 'bg-slate-100 text-slate-700',
+    uncommon: 'bg-blue-50 text-blue-700',
+    rare: 'bg-blue-100 text-blue-800',
+    epic: 'bg-red-50 text-red-700',
+    legendary: 'bg-red-100 text-red-800'
   };
 
   const typeIcons = {
@@ -66,10 +66,10 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
 
   if (loading) {
     return (
-      <Card>
+      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <CardContent className="p-6">
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-200 border-t-red-600" />
           </div>
         </CardContent>
       </Card>
@@ -79,63 +79,64 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
   return (
     <div className="space-y-6">
       {/* Achievement Stats */}
-      <Card>
+      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Trophy className="h-5 w-5" />
+          <CardTitle className="flex items-center space-x-2 text-slate-900">
+            <Trophy className="h-5 w-5 text-red-600" />
             <span>Achievement Progress</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-600">
             Track your learning milestones and accomplishments
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{totalCompleted}</div>
-              <div className="text-sm text-muted-foreground">Completed</div>
+            <div className="rounded-xl border border-red-100 bg-red-50/60 p-3 text-center">
+              <div className="text-2xl font-bold text-red-700">{totalCompleted}</div>
+              <div className="text-sm text-slate-600">Completed</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{totalPoints}</div>
-              <div className="text-sm text-muted-foreground">Points Earned</div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
+              <div className="text-2xl font-bold text-blue-700">{totalPoints}</div>
+              <div className="text-sm text-slate-600">Points Earned</div>
             </div>
-            <div className="text-center">
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
               <div className="text-2xl font-bold text-blue-600">{inProgressAchievements.length}</div>
-              <div className="text-sm text-muted-foreground">In Progress</div>
+              <div className="text-sm text-slate-600">In Progress</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">{achievements.length}</div>
-              <div className="text-sm text-muted-foreground">Total Available</div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
+              <div className="text-2xl font-bold text-slate-700">{achievements.length}</div>
+              <div className="text-sm text-slate-600">Total Available</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Filters */}
-      <Card>
+      <Card className="rounded-2xl border border-red-100/80 bg-gradient-to-r from-red-50/70 via-white to-blue-50/70 shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filters:</span>
+            <div className="inline-flex items-center space-x-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+              <Filter className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-semibold text-red-700">Filters</span>
             </div>
 
             {/* Rarity Filter */}
-            <div className="flex flex-wrap gap-1">
+            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1.5">
               <Button
-                variant={filterRarity === 'all' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setFilterRarity('all')}
+                className={filterRarity === 'all' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
               >
                 All Rarities
               </Button>
               {Object.entries(rarityColors).map(([rarity, _colorClass]) => (
                 <Button
                   key={rarity}
-                  variant={filterRarity === rarity ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFilterRarity(rarity)}
-                  className="capitalize"
+                  className={`capitalize ${filterRarity === rarity ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}`}
                 >
                   {rarity}
                 </Button>
@@ -143,21 +144,22 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
             </div>
 
             {/* Type Filter */}
-            <div className="flex flex-wrap gap-1">
+            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1.5">
               <Button
-                variant={filterType === 'all' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setFilterType('all')}
+                className={filterType === 'all' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
               >
                 All Types
               </Button>
               {Object.entries(typeIcons).map(([type, icon]) => (
                 <Button
                   key={type}
-                  variant={filterType === type ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFilterType(type)}
-                  className="capitalize"
+                  className={`capitalize ${filterType === type ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}`}
                 >
                   <span className="mr-1">{icon}</span>
                   {type}
@@ -170,7 +172,7 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
 
       {/* Achievement Tabs */}
       <Tabs defaultValue="completed" className="space-y-4">
-        <TabsList>
+        <TabsList className="border border-slate-200 bg-white p-1">
           <TabsTrigger value="completed">
             Completed ({completedAchievements.length})
           </TabsTrigger>
@@ -194,9 +196,9 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6 text-center">
-                <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Trophy className="mx-auto h-12 w-12 text-blue-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No completed achievements yet</h3>
                 <p className="text-muted-foreground">
                   Start learning and taking quizzes to unlock your first achievement!
@@ -218,9 +220,9 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6 text-center">
-                <Target className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Target className="mx-auto h-12 w-12 text-blue-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No achievements in progress</h3>
                 <p className="text-muted-foreground">
                   Continue your learning journey to make progress on achievements.
@@ -242,9 +244,9 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6 text-center">
-                <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Star className="mx-auto h-12 w-12 text-blue-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">All achievements unlocked!</h3>
                 <p className="text-muted-foreground">
                   You've made progress on all available achievements. Great work!

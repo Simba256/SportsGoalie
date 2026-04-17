@@ -8,7 +8,7 @@ import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { onboardingService } from '@/lib/database';
 import { useAuth } from '@/lib/auth/context';
 import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
-import { LoadingState } from '@/components/ui/loading';
+import { SkeletonPillarDetail } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -484,11 +484,7 @@ export default function PillarDetailPage() {
 
   // ── States ────────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <LoadingState message="Loading pillar…" />
-      </div>
-    );
+    return <SkeletonPillarDetail />;
   }
 
   if (error || !pillar) {

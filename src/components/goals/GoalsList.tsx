@@ -68,10 +68,10 @@ export function GoalsList({
 
   if (loading) {
     return (
-      <Card>
+      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <CardContent className="p-6">
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-200 border-t-red-600" />
           </div>
         </CardContent>
       </Card>
@@ -81,29 +81,29 @@ export function GoalsList({
   return (
     <div className="space-y-6">
       {/* Goals Stats */}
-      <Card>
+      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center space-x-2">
-                <Target className="h-5 w-5" />
+              <CardTitle className="flex items-center space-x-2 text-slate-900">
+                <Target className="h-5 w-5 text-red-600" />
                 <span>Learning Goals</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-slate-600">
                 Set and track your learning objectives
               </CardDescription>
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-red-600 text-white hover:bg-red-700">
                   <Plus className="h-4 w-4 mr-2" />
                   New Goal
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto border border-red-100 bg-white">
                 <DialogHeader>
-                  <DialogTitle>Create New Goal</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-slate-900">Create New Goal</DialogTitle>
+                  <DialogDescription className="text-slate-600">
                     Set a new learning goal to track your progress
                   </DialogDescription>
                 </DialogHeader>
@@ -114,60 +114,64 @@ export function GoalsList({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{totalGoals}</div>
-              <div className="text-sm text-muted-foreground">Total Goals</div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
+              <div className="text-2xl font-bold text-blue-700">{totalGoals}</div>
+              <div className="text-sm text-slate-600">Total Goals</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{completedCount}</div>
-              <div className="text-sm text-muted-foreground">Completed</div>
+            <div className="rounded-xl border border-red-100 bg-red-50/60 p-3 text-center">
+              <div className="text-2xl font-bold text-red-700">{completedCount}</div>
+              <div className="text-sm text-slate-600">Completed</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{activeCount}</div>
-              <div className="text-sm text-muted-foreground">Active</div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
+              <div className="text-2xl font-bold text-blue-700">{activeCount}</div>
+              <div className="text-sm text-slate-600">Active</div>
             </div>
-            <div className="text-center">
+            <div className="rounded-xl border border-red-100 bg-red-50/60 p-3 text-center">
               <div className="text-2xl font-bold text-red-600">{overdueCount}</div>
-              <div className="text-sm text-muted-foreground">Overdue</div>
+              <div className="text-sm text-slate-600">Overdue</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Filters */}
-      <Card>
+      <Card className="rounded-2xl border border-red-100/80 bg-gradient-to-r from-red-50/70 via-white to-blue-50/70 shadow-sm">
         <CardContent className="p-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Priority:</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+              <Filter className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-semibold text-red-700">Priority</span>
             </div>
-            <div className="flex space-x-2">
+            <div className="inline-flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5">
               <Button
-                variant={filterPriority === 'all' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setFilterPriority('all')}
+                className={filterPriority === 'all' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
               >
                 All
               </Button>
               <Button
-                variant={filterPriority === 'high' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setFilterPriority('high')}
+                className={filterPriority === 'high' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
               >
                 High
               </Button>
               <Button
-                variant={filterPriority === 'medium' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setFilterPriority('medium')}
+                className={filterPriority === 'medium' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
               >
                 Medium
               </Button>
               <Button
-                variant={filterPriority === 'low' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setFilterPriority('low')}
+                className={filterPriority === 'low' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
               >
                 Low
               </Button>
@@ -178,7 +182,7 @@ export function GoalsList({
 
       {/* Goals Tabs */}
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
+        <TabsList className="border border-slate-200 bg-white p-1">
           <TabsTrigger value="active">
             Active ({activeCount})
           </TabsTrigger>
@@ -205,24 +209,24 @@ export function GoalsList({
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6 text-center">
-                <Target className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Target className="mx-auto h-12 w-12 text-blue-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No active goals</h3>
                 <p className="text-muted-foreground mb-4">
                   Create your first learning goal to start tracking your progress.
                 </p>
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>
+                    <Button className="bg-red-600 text-white hover:bg-red-700">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Goal
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md">
+                  <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto border border-red-100 bg-white">
                     <DialogHeader>
-                      <DialogTitle>Create New Goal</DialogTitle>
-                      <DialogDescription>
+                      <DialogTitle className="text-slate-900">Create New Goal</DialogTitle>
+                      <DialogDescription className="text-slate-600">
                         Set a new learning goal to track your progress
                       </DialogDescription>
                     </DialogHeader>
@@ -247,9 +251,9 @@ export function GoalsList({
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6 text-center">
-                <Target className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Target className="mx-auto h-12 w-12 text-blue-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No completed goals yet</h3>
                 <p className="text-muted-foreground">
                   Complete your active goals to see them here.

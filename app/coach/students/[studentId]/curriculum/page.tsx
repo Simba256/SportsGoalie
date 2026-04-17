@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2,
   Plus,
   Lock,
   Unlock,
@@ -23,6 +22,7 @@ import { customCurriculumService } from '@/lib/database';
 import { User, CustomCurriculum, CustomCurriculumItem, CustomContentLibrary, GapAnalysis } from '@/types';
 import { toast } from 'sonner';
 import { ContentBrowser } from '@/components/coach/content-browser';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
 import { LessonCreator } from '@/components/coach/lesson-creator';
 import { QuizCreator } from '@/components/coach/quiz-creator';
@@ -367,11 +367,7 @@ export default function StudentCurriculumPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   if (!student) {

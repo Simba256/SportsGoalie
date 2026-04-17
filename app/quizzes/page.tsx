@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SkeletonListPage } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { VideoQuiz } from '@/types/video-quiz';
@@ -157,11 +158,7 @@ function QuizzesPageContent() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="h-10 w-10 rounded-full border-2 border-red-600 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <SkeletonListPage cols={3} count={6} />;
   }
 
   return (
@@ -265,7 +262,7 @@ function QuizzesPageContent() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <Link href={`/quiz/video/${quiz.id}`} className="flex-1">
-                    <Button className="w-full">
+                    <Button className="w-full bg-red-600 text-white hover:bg-red-700">
                       Start Video Quiz
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>

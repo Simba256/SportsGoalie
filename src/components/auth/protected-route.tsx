@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/context';
 import { UserRole } from '@/types';
+import {
+  SkeletonContentPage,
+  SkeletonDashboard,
+  SkeletonDarkPage,
+} from '@/components/ui/skeletons';
 
 /**
  * Get the default redirect path for a user based on their role
@@ -61,17 +65,26 @@ export function ProtectedRoute({
     }
   }, [loading, isAuthenticated, user, requiredRole, router, redirectTo]);
 
+  const renderDefaultFallback = () => {
+    // When role is known, show a role-appropriate page skeleton.
+    if (user?.role === 'student') {
+      return <SkeletonDashboard />;
+    }
+
+    if (user?.role === 'admin' || user?.role === 'coach' || user?.role === 'parent') {
+      return <SkeletonDarkPage />;
+    }
+
+    // Before role resolution, use a neutral skeleton shell.
+    return <SkeletonContentPage />;
+  };
+
   if (!isHydrated || loading) {
-    return (
-      fallback || (
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-            <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      )
-    );
+    if (fallback) {
+      return <>{fallback}</>;
+    }
+
+    return renderDefaultFallback();
   }
 
   if (!isAuthenticated) {
