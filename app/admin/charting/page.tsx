@@ -1,33 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
-import { chartingService, userService } from '@/lib/database';
-import { ChartingEntry, Session, User } from '@/types';
+import { chartingService, dynamicChartingService, userService } from '@/lib/database';
+import { ChartingEntry, DynamicChartingEntry, Session, User } from '@/types';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
+import { ChartingPerformanceSection } from '@/components/admin/charting/ChartingPerformanceSection';
 import {
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Calendar,
-  Download,
   Eye,
   Search,
   RefreshCw,
   Target,
   Activity,
+  Users,
+  ArrowRight,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { startOfWeek, startOfMonth, subMonths, isAfter, format } from 'date-fns';
+import { startOfWeek, startOfMonth, subMonths, isAfter, format, startOfDay } from 'date-fns';
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
 
@@ -41,19 +39,24 @@ export default function AdminChartingPage() {
 
 function AdminChartingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const deepLinkedSessionId = searchParams.get('session');
   const [loading, setLoading] = useState(true);
   const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [allEntries, setAllEntries] = useState<ChartingEntry[]>([]);
+  const [allDynamicEntries, setAllDynamicEntries] = useState<DynamicChartingEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<ChartingEntry[]>([]);
+  const [filteredDynamicEntries, setFilteredDynamicEntries] = useState<DynamicChartingEntry[]>([]);
   const [users, setUsers] = useState<Map<string, User>>(new Map());
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<string>('all');
 
-  // For All Entries tab
-  const [entriesTabStudent, setEntriesTabStudent] = useState<string>('');
+  // Calendar day click → show sessions for that date
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDateSessions, setSelectedDateSessions] = useState<Session[]>([]);
+  const [focusedSessionId, setFocusedSessionId] = useState<string | null>(null);
+  const [hasAppliedDeepLink, setHasAppliedDeepLink] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -61,15 +64,40 @@ function AdminChartingContent() {
 
   useEffect(() => {
     applyFilters();
-  }, [timeRange, searchQuery, selectedStudent, allEntries]);
+  }, [timeRange, searchQuery, selectedStudent, allEntries, allDynamicEntries, allSessions]);
+
+  useEffect(() => {
+    if (loading || hasAppliedDeepLink || !deepLinkedSessionId) return;
+
+    const targetSession = allSessions.find((session) => session.id === deepLinkedSessionId);
+    if (!targetSession) {
+      setHasAppliedDeepLink(true);
+      return;
+    }
+
+    const targetDate = targetSession.date?.toDate?.();
+    if (!targetDate) {
+      setHasAppliedDeepLink(true);
+      return;
+    }
+
+    // Force visibility for historical sessions and scope to the selected goalie.
+    setTimeRange('all');
+    setSelectedStudent(targetSession.studentId);
+    setSelectedDate(startOfDay(targetDate));
+    setSelectedDateSessions([targetSession]);
+    setFocusedSessionId(targetSession.id);
+    setHasAppliedDeepLink(true);
+  }, [loading, hasAppliedDeepLink, deepLinkedSessionId, allSessions]);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      const [sessionsResult, entriesResult] = await Promise.all([
+      const [sessionsResult, entriesResult, dynamicResult] = await Promise.all([
         chartingService.getAllSessions({ limit: 1000 }),
         chartingService.getAllChartingEntries({ limit: 1000 }),
+        dynamicChartingService.getAllDynamicEntries({ limit: 1000 }),
       ]);
 
       if (sessionsResult.success && sessionsResult.data) {
@@ -79,27 +107,31 @@ function AdminChartingContent() {
       if (entriesResult.success && entriesResult.data) {
         setAllEntries(entriesResult.data);
         setFilteredEntries(entriesResult.data);
-
-        const firstStudentId = entriesResult.data[0]?.studentId;
-        if (firstStudentId) {
-          setEntriesTabStudent(firstStudentId);
-        }
-
-        // Load user data for all unique students
-        const uniqueStudentIds = Array.from(new Set(entriesResult.data.map((e) => e.studentId)));
-        const userMap = new Map<string, User>();
-
-        await Promise.all(
-          uniqueStudentIds.map(async (studentId) => {
-            const userResult = await userService.getUser(studentId);
-            if (userResult.success && userResult.data) {
-              userMap.set(studentId, userResult.data);
-            }
-          })
-        );
-
-        setUsers(userMap);
       }
+
+      if (dynamicResult.success && dynamicResult.data) {
+        setAllDynamicEntries(dynamicResult.data);
+        setFilteredDynamicEntries(dynamicResult.data);
+      }
+
+      // Load user data for all unique students from both legacy and dynamic entries
+      const uniqueStudentIds = Array.from(
+        new Set([
+          ...(entriesResult.data || []).map((e) => e.studentId),
+          ...(dynamicResult.data || []).map((e) => e.studentId),
+        ])
+      );
+
+      const userMap = new Map<string, User>();
+      await Promise.all(
+        uniqueStudentIds.map(async (studentId) => {
+          const userResult = await userService.getUser(studentId);
+          if (userResult.success && userResult.data) {
+            userMap.set(studentId, userResult.data);
+          }
+        })
+      );
+      setUsers(userMap);
     } catch (error) {
       console.error('Failed to load data:', error);
       toast.error('Failed to load charting data');
@@ -110,10 +142,12 @@ function AdminChartingContent() {
 
   const applyFilters = () => {
     let filtered = [...allEntries];
+    let filteredDynamic = [...allDynamicEntries];
 
     // Student filter
     if (selectedStudent !== 'all') {
       filtered = filtered.filter((entry) => entry.studentId === selectedStudent);
+      filteredDynamic = filteredDynamic.filter((entry) => entry.studentId === selectedStudent);
     }
 
     // Time filter
@@ -139,6 +173,11 @@ function AdminChartingContent() {
         const entryDate = entry.submittedAt?.toDate?.() ?? new Date();
         return isAfter(entryDate, startDate);
       });
+
+      filteredDynamic = filteredDynamic.filter((entry) => {
+        const entryDate = entry.submittedAt?.toDate?.() ?? new Date();
+        return isAfter(entryDate, startDate);
+      });
     }
 
     // Search filter
@@ -152,13 +191,28 @@ function AdminChartingContent() {
           entry.additionalComments?.toLowerCase().includes(query)
         );
       });
+
+      filteredDynamic = filteredDynamic.filter((entry) => {
+        const session = allSessions.find((s) => s.id === entry.sessionId);
+        return (
+          session?.opponent?.toLowerCase().includes(query) ||
+          session?.location?.toLowerCase().includes(query) ||
+          entry.additionalComments?.toLowerCase().includes(query)
+        );
+      });
     }
 
     setFilteredEntries(filtered);
+    setFilteredDynamicEntries(filteredDynamic);
   };
 
   // Get unique students
-  const uniqueStudents = Array.from(new Set(allEntries.map((e) => e.studentId)));
+  const uniqueStudents = Array.from(
+    new Set([
+      ...allEntries.map((e) => e.studentId),
+      ...allDynamicEntries.map((e) => e.studentId),
+    ])
+  );
 
   // Helper to get student display name
   const getStudentName = (studentId: string): string => {
@@ -169,16 +223,54 @@ function AdminChartingContent() {
     return `Student ${studentId.slice(-6)}`;
   };
 
-  // Get sessions and entries for selected student in entries tab
-  const getEntriesTabData = () => {
-    if (!entriesTabStudent) {
-      return { sessions: [], entries: [] };
+  const isLegacyEntryComplete = (entry: ChartingEntry | undefined) => {
+    if (!entry) return false;
+    return !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
+  };
+
+  const getDynamicEntryTimestamp = (entry: DynamicChartingEntry) =>
+    entry.submittedAt?.toDate?.()?.getTime() || 0;
+
+  const getBestDynamicEntryForSession = (
+    dynamicEntries: DynamicChartingEntry[]
+  ): DynamicChartingEntry | undefined => {
+    if (dynamicEntries.length === 0) return undefined;
+
+    const completeEntries = dynamicEntries.filter((entry) => entry.isComplete);
+    if (completeEntries.length > 0) {
+      return [...completeEntries].sort(
+        (a, b) => getDynamicEntryTimestamp(b) - getDynamicEntryTimestamp(a)
+      )[0];
     }
 
-    const studentSessions = allSessions.filter((s) => s.studentId === entriesTabStudent);
-    const studentEntries = allEntries.filter((e) => e.studentId === entriesTabStudent);
+    return [...dynamicEntries].sort((a, b) => {
+      if (b.completionPercentage !== a.completionPercentage) {
+        return b.completionPercentage - a.completionPercentage;
+      }
+      return getDynamicEntryTimestamp(b) - getDynamicEntryTimestamp(a);
+    })[0];
+  };
 
-    return { sessions: studentSessions, entries: studentEntries };
+  const getSessionChartingStatus = (
+    legacyEntry?: ChartingEntry,
+    dynamicEntry?: DynamicChartingEntry
+  ): 'complete' | 'partial' | 'not_charted' => {
+    const legacyStatus: 'complete' | 'partial' | 'not_charted' = legacyEntry
+      ? isLegacyEntryComplete(legacyEntry)
+        ? 'complete'
+        : 'partial'
+      : 'not_charted';
+
+    const dynamicStatus: 'complete' | 'partial' | 'not_charted' = dynamicEntry
+      ? dynamicEntry.isComplete
+        ? 'complete'
+        : dynamicEntry.completionPercentage > 0
+        ? 'partial'
+        : 'not_charted'
+      : 'not_charted';
+
+    const rank = { not_charted: 0, partial: 1, complete: 2 } as const;
+    return rank[dynamicStatus] >= rank[legacyStatus] ? dynamicStatus : legacyStatus;
   };
 
   // Handle day click on heatmap
@@ -187,932 +279,75 @@ function AdminChartingContent() {
     setSelectedDateSessions(sessions);
   };
 
-  // Calculate comprehensive stats
-  const calculateGoalsStats = () => {
-    const withOverview = filteredEntries.filter((e) => e.gameOverview);
-    if (withOverview.length === 0) return null;
 
-    const totalGoodGoals = withOverview.reduce((sum, e) => {
-      return sum + (e.gameOverview?.goodGoals.period1 || 0) + (e.gameOverview?.goodGoals.period2 || 0) + (e.gameOverview?.goodGoals.period3 || 0);
-    }, 0);
+  const filteredSessionIds = new Set([
+    ...filteredEntries.map((e) => e.sessionId),
+    ...filteredDynamicEntries.map((e) => e.sessionId),
+  ]);
 
-    const totalBadGoals = withOverview.reduce((sum, e) => {
-      return sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0);
-    }, 0);
+  const legacyEntryBySession = new Map(filteredEntries.map((entry) => [entry.sessionId, entry]));
+  const dynamicEntriesBySession = filteredDynamicEntries.reduce((acc, entry) => {
+    const existing = acc.get(entry.sessionId) || [];
+    existing.push(entry);
+    acc.set(entry.sessionId, existing);
+    return acc;
+  }, new Map<string, DynamicChartingEntry[]>());
 
-    const avgGoodGoals = totalGoodGoals / withOverview.length;
-    const avgBadGoals = totalBadGoals / withOverview.length;
-
-    // Calculate trend
-    const midPoint = Math.floor(withOverview.length / 2);
-    const firstHalf = withOverview.slice(0, midPoint);
-    const secondHalf = withOverview.slice(midPoint);
-
-    const firstHalfBadGoals =
-      firstHalf.reduce((sum, e) => sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0) /
-      (firstHalf.length || 1);
-    const secondHalfBadGoals =
-      secondHalf.reduce((sum, e) => sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0) /
-      (secondHalf.length || 1);
-
-    const improvement = ((firstHalfBadGoals - secondHalfBadGoals) / (firstHalfBadGoals || 1)) * 100;
-
-    return {
-      avgGoodGoals: avgGoodGoals.toFixed(1),
-      avgBadGoals: avgBadGoals.toFixed(1),
-      totalGames: withOverview.length,
-      improvement: improvement.toFixed(0),
-      trend: improvement > 5 ? 'up' : improvement < -5 ? 'down' : 'stable',
-    };
-  };
-
-  const calculateChallengeStats = () => {
-    const withOverview = filteredEntries.filter((e) => e.gameOverview);
-    if (withOverview.length === 0) return null;
-
-    const avgChallenge =
-      withOverview.reduce((sum, e) => {
-        return (
-          sum +
-          ((e.gameOverview?.degreeOfChallenge.period1 || 0) +
-            (e.gameOverview?.degreeOfChallenge.period2 || 0) +
-            (e.gameOverview?.degreeOfChallenge.period3 || 0)) /
-            3
-        );
-      }, 0) / withOverview.length;
-
-    // Calculate consistency (standard deviation)
-    const challenges = withOverview.map(
-      (e) =>
-        ((e.gameOverview?.degreeOfChallenge.period1 || 0) +
-          (e.gameOverview?.degreeOfChallenge.period2 || 0) +
-          (e.gameOverview?.degreeOfChallenge.period3 || 0)) /
-        3
+  const totalSessions = filteredSessionIds.size;
+  const completeEntries = Array.from(filteredSessionIds).filter((sessionId) => {
+    const status = getSessionChartingStatus(
+      legacyEntryBySession.get(sessionId),
+      getBestDynamicEntryForSession(dynamicEntriesBySession.get(sessionId) || [])
     );
+    return status === 'complete';
+  }).length;
+  const completionRate = totalSessions > 0 ? (completeEntries / totalSessions) * 100 : 0;
 
-    const variance =
-      challenges.reduce((sum, c) => sum + Math.pow(c - avgChallenge, 2), 0) /
-      challenges.length;
-    const stdDev = Math.sqrt(variance);
-
-    return {
-      avgChallenge: avgChallenge.toFixed(1),
-      consistency: stdDev < 1 ? 'High' : stdDev < 2 ? 'Medium' : 'Low',
-      stdDev: stdDev.toFixed(1),
-    };
-  };
-
-  const calculateFocusConsistency = () => {
-    const periods = [
-      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
-    ];
-
-    if (periods.length === 0) return null;
-
-    const consistentCount = periods.filter(
-      (p: any) => p?.mindSet?.focusConsistent?.value
-    ).length;
-    const inconsistentCount = periods.filter(
-      (p: any) => p?.mindSet?.focusInconsistent?.value
-    ).length;
-
-    const total = consistentCount + inconsistentCount;
-    const percentage = total > 0 ? (consistentCount / total) * 100 : 0;
-
-    // Calculate trend
-    const midPoint = Math.floor(periods.length / 2);
-    const firstHalf = periods.slice(0, midPoint);
-    const secondHalf = periods.slice(midPoint);
-
-    const firstHalfConsistent =
-      firstHalf.filter((p: any) => p?.mindSet?.focusConsistent?.value).length /
-      (firstHalf.length || 1);
-    const secondHalfConsistent =
-      secondHalf.filter((p: any) => p?.mindSet?.focusConsistent?.value).length /
-      (secondHalf.length || 1);
-
-    const trend =
-      secondHalfConsistent > firstHalfConsistent + 0.1
-        ? 'up'
-        : secondHalfConsistent < firstHalfConsistent - 0.1
-        ? 'down'
-        : 'stable';
-
-    return {
-      percentage: percentage.toFixed(0),
-      consistentCount,
-      inconsistentCount,
-      trend,
-    };
-  };
-
-  const calculateSkatingPerformance = () => {
-    const periods = [
-      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
-    ];
-
-    if (periods.length === 0) return null;
-
-    const inSyncCount = periods.filter((p: any) => p?.skating?.inSync?.value).length;
-    const notInSyncCount = periods.filter(
-      (p: any) => p?.skating?.notInSync?.value
-    ).length;
-
-    const total = inSyncCount + notInSyncCount;
-    const percentage = total > 0 ? (inSyncCount / total) * 100 : 0;
-
-    // Calculate trend
-    const midPoint = Math.floor(periods.length / 2);
-    const firstHalf = periods.slice(0, midPoint);
-    const secondHalf = periods.slice(midPoint);
-
-    const firstHalfInSync =
-      firstHalf.filter((p: any) => p?.skating?.inSync?.value).length /
-      (firstHalf.length || 1);
-    const secondHalfInSync =
-      secondHalf.filter((p: any) => p?.skating?.inSync?.value).length /
-      (secondHalf.length || 1);
-
-    const trend =
-      secondHalfInSync > firstHalfInSync + 0.1
-        ? 'up'
-        : secondHalfInSync < firstHalfInSync - 0.1
-        ? 'down'
-        : 'stable';
-
-    return {
-      percentage: percentage.toFixed(0),
-      inSyncCount,
-      notInSyncCount,
-      trend,
-    };
-  };
-
-  const calculatePositionalPerformance = () => {
-    const periods = [
-      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
-    ];
-
-    if (periods.length === 0) return null;
-
-    const goodCount = periods.filter(
-      (p: any) =>
-        p?.positionalAboveIcing?.good?.value || p?.positionalBelowIcing?.good?.value || p?.positionalBelowIcing?.strong?.value
-    ).length;
-
-    const needsWorkCount = periods.filter(
-      (p: any) =>
-        p?.positionalAboveIcing?.poor?.value ||
-        p?.positionalAboveIcing?.improving?.value ||
-        p?.positionalBelowIcing?.poor?.value ||
-        p?.positionalBelowIcing?.improving?.value
-    ).length;
-
-    const total = goodCount + needsWorkCount;
-    const percentage = total > 0 ? (goodCount / total) * 100 : 0;
-
-    return {
-      percentage: percentage.toFixed(0),
-      goodCount,
-      needsWorkCount,
-    };
-  };
-
-  const calculateTeamPlay = () => {
-    const period3s = filteredEntries.map((e) => e.period3).filter(Boolean);
-
-    if (period3s.length === 0) return null;
-
-    const defenseGoodCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpDefense?.good?.value
-    ).length;
-    const defenseImprovingCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpDefense?.improving?.value
-    ).length;
-    const defensePoorCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpDefense?.poor?.value
-    ).length;
-
-    const forwardsGoodCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpForwards?.good?.value
-    ).length;
-    const forwardsImprovingCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpForwards?.improving?.value
-    ).length;
-    const forwardsPoorCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpForwards?.poor?.value
-    ).length;
-
-    const defenseTotal = defenseGoodCount + defenseImprovingCount + defensePoorCount;
-    const forwardsTotal = forwardsGoodCount + forwardsImprovingCount + forwardsPoorCount;
-
-    const defensePercentage = defenseTotal > 0 ? (defenseGoodCount / defenseTotal) * 100 : 0;
-    const forwardsPercentage = forwardsTotal > 0 ? (forwardsGoodCount / forwardsTotal) * 100 : 0;
-
-    return {
-      defensePercentage: defensePercentage.toFixed(0),
-      forwardsPercentage: forwardsPercentage.toFixed(0),
-      defenseGoodCount,
-      defenseImprovingCount,
-      defensePoorCount,
-      forwardsGoodCount,
-      forwardsImprovingCount,
-      forwardsPoorCount,
-    };
-  };
-
-  const calculateDecisionMaking = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
-    if (periods.length === 0) return null;
-
-    const strongCount = periods.filter((p: any) => p?.mindSet?.decisionMakingStrong?.value).length;
-    const improvingCount = periods.filter((p: any) => p?.mindSet?.decisionMakingImproving?.value).length;
-    const needsWorkCount = periods.filter((p: any) => p?.mindSet?.decisionMakingNeedsWork?.value).length;
-    const total = strongCount + improvingCount + needsWorkCount;
-
-    return {
-      strongPercentage: total > 0 ? ((strongCount / total) * 100).toFixed(0) : '0',
-      improvingPercentage: total > 0 ? ((improvingCount / total) * 100).toFixed(0) : '0',
-      needsWorkPercentage: total > 0 ? ((needsWorkCount / total) * 100).toFixed(0) : '0',
-      strongCount,
-      improvingCount,
-      needsWorkCount,
-      total,
-    };
-  };
-
-  const calculateBodyLanguage = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
-    if (periods.length === 0) return null;
-
-    const consistentCount = periods.filter((p: any) => p?.mindSet?.bodyLanguageConsistent?.value).length;
-    const inconsistentCount = periods.filter((p: any) => p?.mindSet?.bodyLanguageInconsistent?.value).length;
-    const total = consistentCount + inconsistentCount;
-
-    return {
-      consistentPercentage: total > 0 ? ((consistentCount / total) * 100).toFixed(0) : '0',
-      inconsistentPercentage: total > 0 ? ((inconsistentCount / total) * 100).toFixed(0) : '0',
-      consistentCount,
-      inconsistentCount,
-      total,
-    };
-  };
-
-  const calculateReboundControl = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
-    if (periods.length === 0) return null;
-
-    const poorCount = periods.filter((p: any) => p?.reboundControl?.poor?.value).length;
-    const improvingCount = periods.filter((p: any) => p?.reboundControl?.improving?.value).length;
-    const goodCount = periods.filter((p: any) => p?.reboundControl?.good?.value).length;
-    const qualityTotal = poorCount + improvingCount + goodCount;
-
-    const consistentCount = periods.filter((p: any) => p?.reboundControl?.consistent?.value).length;
-    const inconsistentCount = periods.filter((p: any) => p?.reboundControl?.inconsistent?.value).length;
-    const consistencyTotal = consistentCount + inconsistentCount;
-
-    return {
-      qualityGood: qualityTotal > 0 ? ((goodCount / qualityTotal) * 100).toFixed(0) : '0',
-      consistencyPercentage: consistencyTotal > 0 ? ((consistentCount / consistencyTotal) * 100).toFixed(0) : '0',
-      goodCount,
-      consistentCount,
-      totalQuality: qualityTotal,
-      totalConsistency: consistencyTotal,
-    };
-  };
-
-  const calculateFreezingPuck = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
-    if (periods.length === 0) return null;
-
-    const poorCount = periods.filter((p: any) => p?.freezingPuck?.poor?.value).length;
-    const improvingCount = periods.filter((p: any) => p?.freezingPuck?.improving?.value).length;
-    const goodCount = periods.filter((p: any) => p?.freezingPuck?.good?.value).length;
-    const qualityTotal = poorCount + improvingCount + goodCount;
-
-    const consistentCount = periods.filter((p: any) => p?.freezingPuck?.consistent?.value).length;
-    const inconsistentCount = periods.filter((p: any) => p?.freezingPuck?.inconsistent?.value).length;
-    const consistencyTotal = consistentCount + inconsistentCount;
-
-    return {
-      qualityGood: qualityTotal > 0 ? ((goodCount / qualityTotal) * 100).toFixed(0) : '0',
-      consistencyPercentage: consistencyTotal > 0 ? ((consistentCount / consistencyTotal) * 100).toFixed(0) : '0',
-      goodCount,
-      consistentCount,
-      totalQuality: qualityTotal,
-      totalConsistency: consistencyTotal,
-    };
-  };
-
-  const calculatePreGameStats = () => {
-    const preGames = filteredEntries.filter((e) => e.preGame).map((e) => e.preGame!);
-    if (preGames.length === 0) return null;
-
-    const equipmentReady = preGames.filter((p) => p.gameReadiness?.wellRested?.value && p.gameReadiness?.fueledForGame?.value).length;
-    const mentalPrep = preGames.filter((p) => p.mindSet?.mindCleared?.value && p.mindSet?.mentalImagery?.value).length;
-    const warmup = preGames.filter((p) => p.warmUp?.lookedEngaged?.value && !p.warmUp?.lackedFocus?.value).length;
-    const physical = preGames.filter((p) => p.preGameRoutine?.ballExercises?.value && p.preGameRoutine?.stretching?.value).length;
-
-    return {
-      equipment: ((equipmentReady / preGames.length) * 100).toFixed(0),
-      mental: ((mentalPrep / preGames.length) * 100).toFixed(0),
-      warmup: ((warmup / preGames.length) * 100).toFixed(0),
-      physical: ((physical / preGames.length) * 100).toFixed(0),
-      total: preGames.length,
-    };
-  };
-
-  const calculatePostGameStats = () => {
-    const postGames = filteredEntries.filter((e) => e.postGame);
-    if (postGames.length === 0) return null;
-
-    const completed = postGames.filter((e) => e.postGame?.reviewCompleted?.value).length;
-    return {
-      completionRate: ((completed / postGames.length) * 100).toFixed(0),
-      completed,
-      total: postGames.length,
-    };
-  };
-
-  const goalsStats = calculateGoalsStats();
-  const challengeStats = calculateChallengeStats();
-  const focusStats = calculateFocusConsistency();
-  const skatingStats = calculateSkatingPerformance();
-  const positionalStats = calculatePositionalPerformance();
-  const teamPlayStats = calculateTeamPlay();
-  const decisionMaking = calculateDecisionMaking();
-  const bodyLanguage = calculateBodyLanguage();
-  const reboundControl = calculateReboundControl();
-  const freezingPuck = calculateFreezingPuck();
-  const preGameStats = calculatePreGameStats();
-  const postGameStats = calculatePostGameStats();
-
-  const totalSessions = new Set(filteredEntries.map((e) => e.sessionId)).size;
-  const completeEntries = filteredEntries.filter((e) => e.preGame && e.gameOverview && e.period1 && e.period2 && e.period3 && e.postGame).length;
-  const completionRate = filteredEntries.length > 0 ? (completeEntries / filteredEntries.length) * 100 : 0;
-
-  const getTrendIcon = (trend: string) => {
-    if (trend === 'up') return <TrendingUp className="w-5 h-5 text-green-600" />;
-    if (trend === 'down') return <TrendingDown className="w-5 h-5 text-red-600" />;
-    return <Minus className="w-5 h-5 text-muted-foreground" />;
-  };
+  // Calendar data: when a specific student is filtered, show their sessions only; otherwise aggregate all.
+  const calendarStudentId = selectedStudent !== 'all' ? selectedStudent : '';
+  const calendarSessions = calendarStudentId
+    ? allSessions.filter((session) => session.studentId === calendarStudentId)
+    : [];
+  const calendarEntries = calendarStudentId
+    ? allEntries.filter((entry) => entry.studentId === calendarStudentId)
+    : [];
+  const calendarDynamicEntries = calendarStudentId
+    ? allDynamicEntries.filter((entry) => entry.studentId === calendarStudentId)
+    : [];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-background p-4 md:p-6">
         <SkeletonDarkPage />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Charting Analytics (Admin)</h1>
-            <p className="text-muted-foreground">Comprehensive charting statistics and student performance data</p>
+    <div className="min-h-screen bg-background pb-10">
+      <div className="mx-auto max-w-7xl px-4 pt-4 md:px-6">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-[oklch(0.55_0.18_238)] px-5 py-8 text-primary-foreground shadow-xl sm:px-6 sm:py-10 md:px-10 md:py-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_42%),radial-gradient(circle_at_85%_25%,rgba(255,255,255,0.14),transparent_38%)]" />
+          <div className="relative z-10">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground/80">Performance Module</span>
+            <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">Charting Analytics</h1>
+            <p className="mt-2 max-w-2xl text-sm text-primary-foreground/85 md:text-base">
+              Overall goalie performance and session statistics across all charting activity.
+            </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={loadData}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export Data
-            </Button>
-          </div>
-        </div>
+        </section>
 
-        {/* Filters */}
-        <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Student</label>
-              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Students" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Students ({uniqueStudents.length})</SelectItem>
-                  {uniqueStudents.map((studentId) => (
-                    <SelectItem key={studentId} value={studentId}>
-                      {getStudentName(studentId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Time Period</label>
-              <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Last Week</SelectItem>
-                  <SelectItem value="month">Last Month</SelectItem>
-                  <SelectItem value="3months">Last 3 Months</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-foreground mb-2 block">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by opponent, location, or comments..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Tabs */}
-        <Tabs defaultValue="entries" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="entries">All Entries</TabsTrigger>
-          
-            <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
-          </TabsList>  
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Total Sessions</p>
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-foreground">{totalSessions}</p>
-                <p className="text-sm text-muted-foreground mt-1">{filteredEntries.length} charting entries</p>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Completion Rate</p>
-                  <Activity className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-foreground">{completionRate.toFixed(1)}%</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {completeEntries} complete entries
-                </p>
-              </Card>
-
-              {goalsStats && (
-                <>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-muted-foreground">Avg Goals/Game</p>
-                      <Target className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <p className="text-3xl font-bold text-foreground">
-                      <span className="text-green-600">{goalsStats.avgGoodGoals}</span> /{' '}
-                      <span className="text-red-600">{goalsStats.avgBadGoals}</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">Good / Bad</p>
-                  </Card>
-
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-muted-foreground">Improvement</p>
-                      {getTrendIcon(goalsStats.trend)}
-                    </div>
-                    <p className="text-3xl font-bold text-foreground">
-                      {goalsStats.improvement}%
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">Bad goals reduction</p>
-                  </Card>
-                </>
-              )}
-            </div>
-
-            {/* Goals Performance */}
-            {goalsStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Goals Performance</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-muted-foreground">Avg Good Goals/Game</p>
-                    </div>
-                    <p className="text-3xl font-bold text-green-700">
-                      {goalsStats.avgGoodGoals}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Across {goalsStats.totalGames} games
-                    </p>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-muted-foreground">Avg Bad Goals/Game</p>
-                      {getTrendIcon(goalsStats.trend)}
-                    </div>
-                    <p className="text-3xl font-bold text-red-700">{goalsStats.avgBadGoals}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {goalsStats.trend === 'up' && '📈 Improving! '}
-                      {goalsStats.trend === 'down' && '📉 Needs attention '}
-                      {goalsStats.improvement}% vs earlier period
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground mb-2">Good/Bad Ratio</p>
-                    <p className="text-3xl font-bold text-blue-700">
-                      {(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals)
-                        ? '✓ More good than bad'
-                        : '⚠ Work on reducing bad goals'}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Challenge & Consistency */}
-            {challengeStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Challenge Level & Consistency</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground mb-2">Average Challenge Rating</p>
-                    <p className="text-3xl font-bold text-indigo-700">
-                      {challengeStats.avgChallenge}<span className="text-base">/10</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {parseFloat(challengeStats.avgChallenge) < 4 && 'Easier games'}
-                      {parseFloat(challengeStats.avgChallenge) >= 4 && parseFloat(challengeStats.avgChallenge) < 7 && 'Moderate difficulty'}
-                      {parseFloat(challengeStats.avgChallenge) >= 7 && 'High difficulty games'}
-                    </p>
-                  </div>
-
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground mb-2">Challenge Consistency</p>
-                    <p className="text-3xl font-bold text-purple-700">
-                      {challengeStats.consistency}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      σ = {challengeStats.stdDev} (standard deviation)
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Mind-Set Performance */}
-            {focusStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Mind-Set Performance</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-semibold text-foreground">Focus Consistency</p>
-                      {getTrendIcon(focusStats.trend)}
-                    </div>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-teal-700">{focusStats.percentage}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">consistent</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-teal-600 h-3 rounded-full transition-all"
-                        style={{ width: `${focusStats.percentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {focusStats.consistentCount} consistent / {focusStats.inconsistentCount} inconsistent periods
-                    </p>
-                  </div>
-
-                  {skatingStats && (
-                    <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-foreground">Skating In Sync</p>
-                        {getTrendIcon(skatingStats.trend)}
-                      </div>
-                      <div className="flex items-end gap-2 mb-2">
-                        <p className="text-4xl font-bold text-cyan-700">{skatingStats.percentage}%</p>
-                        <p className="text-sm text-muted-foreground mb-1">in sync</p>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-3 mb-2">
-                        <div
-                          className="bg-cyan-600 h-3 rounded-full transition-all"
-                          style={{ width: `${skatingStats.percentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {skatingStats.inSyncCount} in sync / {skatingStats.notInSyncCount} not in sync periods
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Positional Performance */}
-            {positionalStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Positional Performance</h2>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                  <p className="text-sm font-semibold text-foreground mb-3">Strong Positioning</p>
-                  <div className="flex items-end gap-2 mb-2">
-                    <p className="text-4xl font-bold text-amber-700">{positionalStats.percentage}%</p>
-                    <p className="text-sm text-muted-foreground mb-1">good/strong</p>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-3 mb-2">
-                    <div
-                      className="bg-amber-600 h-3 rounded-full transition-all"
-                      style={{ width: `${positionalStats.percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {positionalStats.goodCount} good/strong / {positionalStats.needsWorkCount} needs work periods
-                  </p>
-                </div>
-              </Card>
-            )}
-
-            {/* Pre-Game Preparation */}
-            {preGameStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Pre-Game Preparation</h2>
-                <p className="text-sm text-muted-foreground mb-4">Adherence rates across {preGameStats.total} sessions</p>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-foreground">Equipment Ready</p>
-                      <Badge>{preGameStats.equipment}%</Badge>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${preGameStats.equipment}%` }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-foreground">Mental Prep</p>
-                      <Badge>{preGameStats.mental}%</Badge>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${preGameStats.mental}%` }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-foreground">Warm-Up</p>
-                      <Badge>{preGameStats.warmup}%</Badge>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${preGameStats.warmup}%` }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-foreground">Physical</p>
-                      <Badge>{preGameStats.physical}%</Badge>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{ width: `${preGameStats.physical}%` }} />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Post-Game Review */}
-            {postGameStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Post-Game Review</h2>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Review Completion Rate</p>
-                    <p className="text-3xl font-bold text-foreground">{postGameStats.completionRate}%</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {postGameStats.completed} of {postGameStats.total} sessions reviewed
-                    </p>
-                  </div>
-                  <div className="w-32 h-32">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="#e5e7eb"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="#3b82f6"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${(parseFloat(postGameStats.completionRate) / 100) * 352} 352`}
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Performance Metrics Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            {/* Decision Making & Body Language */}
-            {(decisionMaking || bodyLanguage) && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Decision Making & Body Language</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {decisionMaking && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
-                      <p className="text-sm font-semibold text-foreground mb-3">Decision Making - Strong</p>
-                      <div className="flex items-end gap-2 mb-2">
-                        <p className="text-4xl font-bold text-emerald-700">{decisionMaking.strongPercentage}%</p>
-                        <p className="text-sm text-muted-foreground mb-1">strong</p>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-3 mb-2">
-                        <div
-                          className="bg-emerald-600 h-3 rounded-full transition-all"
-                          style={{ width: `${decisionMaking.strongPercentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {decisionMaking.strongCount} strong / {decisionMaking.improvingCount} improving / {decisionMaking.needsWorkCount} needs work
-                      </p>
-                    </div>
-                  )}
-                  {bodyLanguage && (
-                    <div className="bg-lime-50 border border-lime-200 rounded-lg p-6">
-                      <p className="text-sm font-semibold text-foreground mb-3">Body Language</p>
-                      <div className="flex items-end gap-2 mb-2">
-                        <p className="text-4xl font-bold text-lime-700">{bodyLanguage.consistentPercentage}%</p>
-                        <p className="text-sm text-muted-foreground mb-1">consistent</p>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-3 mb-2">
-                        <div
-                          className="bg-lime-600 h-3 rounded-full transition-all"
-                          style={{ width: `${bodyLanguage.consistentPercentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {bodyLanguage.consistentCount} consistent / {bodyLanguage.inconsistentCount} inconsistent
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Rebound Control */}
-            {reboundControl && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Rebound Control</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-violet-50 border border-violet-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-foreground mb-3">Quality</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-violet-700">{reboundControl.qualityGood}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-violet-600 h-3 rounded-full transition-all"
-                        style={{ width: `${reboundControl.qualityGood}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {reboundControl.goodCount} good / {reboundControl.totalQuality} total
-                    </p>
-                  </div>
-                  <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-foreground mb-3">Consistency</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-fuchsia-700">{reboundControl.consistencyPercentage}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">consistent</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-fuchsia-600 h-3 rounded-full transition-all"
-                        style={{ width: `${reboundControl.consistencyPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {reboundControl.consistentCount} consistent / {reboundControl.totalConsistency} total
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Freezing Puck */}
-            {freezingPuck && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Freezing Puck</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-foreground mb-3">Quality</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-pink-700">{freezingPuck.qualityGood}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-pink-600 h-3 rounded-full transition-all"
-                        style={{ width: `${freezingPuck.qualityGood}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {freezingPuck.goodCount} good / {freezingPuck.totalQuality} total
-                    </p>
-                  </div>
-                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-foreground mb-3">Consistency</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-rose-700">{freezingPuck.consistencyPercentage}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">consistent</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-rose-600 h-3 rounded-full transition-all"
-                        style={{ width: `${freezingPuck.consistencyPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {freezingPuck.consistentCount} consistent / {freezingPuck.totalConsistency} total
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Team Play (Period 3 only) */}
-            {teamPlayStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-foreground mb-4">Team Play (Period 3)</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-sky-50 border border-sky-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-foreground mb-3">Setting Up Defense</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-sky-700">{teamPlayStats.defensePercentage}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-sky-600 h-3 rounded-full transition-all"
-                        style={{ width: `${teamPlayStats.defensePercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {teamPlayStats.defenseGoodCount} good / {teamPlayStats.defenseImprovingCount} improving / {teamPlayStats.defensePoorCount} poor
-                    </p>
-                  </div>
-                  <div className="bg-secondary/40 border border-border rounded-lg p-6">
-                    <p className="text-sm font-semibold text-foreground mb-3">Setting Up Forwards</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-foreground">{teamPlayStats.forwardsPercentage}%</p>
-                      <p className="text-sm text-muted-foreground mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 mb-2">
-                      <div
-                        className="bg-primary h-3 rounded-full transition-all"
-                        style={{ width: `${teamPlayStats.forwardsPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {teamPlayStats.forwardsGoodCount} good / {teamPlayStats.forwardsImprovingCount} improving / {teamPlayStats.forwardsPoorCount} poor
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* All Entries Tab */}
-          <TabsContent value="entries" className="space-y-6">
-            {/* Step 1: Select Student */}
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-foreground mb-4">Select Student</h2>
-              <div className="max-w-md">
-                <Select value={entriesTabStudent} onValueChange={setEntriesTabStudent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a student to view their sessions..." />
+        <div className="-mt-10 space-y-6">
+          <Card className="border-border bg-card/95 p-5 shadow-lg backdrop-blur">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Student</label>
+                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                  <SelectTrigger className="h-11 bg-muted/40">
+                    <SelectValue placeholder="All Students" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All Students ({uniqueStudents.length})</SelectItem>
                     {uniqueStudents.map((studentId) => (
                       <SelectItem key={studentId} value={studentId}>
                         {getStudentName(studentId)}
@@ -1121,137 +356,241 @@ function AdminChartingContent() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Time Period</label>
+                <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+                  <SelectTrigger className="h-11 bg-muted/40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="week">Last Week</SelectItem>
+                    <SelectItem value="month">Last Month</SelectItem>
+                    <SelectItem value="3months">Last 3 Months</SelectItem>
+                    <SelectItem value="all">All Time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="sm:col-span-2 md:col-span-2">
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Search Sessions</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by drill name, location, or comments..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-11 bg-muted/40 pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Card className="border-border bg-card p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="rounded-xl bg-primary/10 p-2 text-primary">
+                  <Calendar className="h-4 w-4" />
+                </div>
+                <span className="text-xs font-semibold text-emerald-600">{uniqueStudents.length > 0 ? '+active' : 'no data'}</span>
+              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Total Sessions</p>
+              <p className="mt-2 text-3xl font-extrabold text-foreground">{totalSessions}</p>
             </Card>
 
-            {/* Step 2: Show Calendar and Sessions */}
-            {entriesTabStudent && (
-              <>
-                {/* Calendar Heatmap */}
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold text-foreground mb-4">
-                    Session Calendar - {getStudentName(entriesTabStudent)}
-                  </h2>
+            <Card className="border-border bg-card p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="rounded-xl bg-accent/10 p-2 text-accent">
+                  <Target className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Overall Completion</p>
+              <p className="mt-2 text-3xl font-extrabold text-foreground">{completionRate.toFixed(1)}%</p>
+            </Card>
+
+            <Card className="border-border bg-card p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="rounded-xl bg-muted p-2 text-foreground">
+                  <Activity className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Completed Sessions</p>
+              <p className="mt-2 text-3xl font-extrabold text-foreground">{completeEntries}</p>
+            </Card>
+
+            <Card className="border-border bg-card p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                  <Users className="h-4 w-4" />
+                </div>
+                <span className="text-xs font-semibold text-emerald-600">Goalies</span>
+              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Active Goalies</p>
+              <p className="mt-2 text-3xl font-extrabold text-foreground">{uniqueStudents.length}</p>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2 border-border bg-card p-4 shadow-sm sm:p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Session Activity Calendar</h2>
+                  <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                    {selectedStudent === 'all'
+                      ? `All goalies · ${allSessions.length} total sessions`
+                      : `${getStudentName(selectedStudent)} · ${calendarSessions.length} sessions`}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={loadData}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Refresh</span>
+                  </Button>
+                </div>
+              </div>
+
+              {(selectedStudent === 'all' ? allSessions.length > 0 : calendarStudentId) ? (
+                <div className="overflow-x-auto">
                   <CalendarHeatmap
-                    sessions={getEntriesTabData().sessions}
-                    chartingEntries={getEntriesTabData().entries}
+                    sessions={selectedStudent === 'all' ? allSessions : calendarSessions}
+                    chartingEntries={selectedStudent === 'all' ? allEntries : calendarEntries}
+                    dynamicEntries={selectedStudent === 'all' ? allDynamicEntries : calendarDynamicEntries}
                     onDayClick={handleDayClick}
+                    colorScheme="blue"
                   />
-                </Card>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No charting data available yet.</p>
+              )}
+            </Card>
 
-                {/* Sessions for Selected Date */}
-                {selectedDate && selectedDateSessions.length > 0 && (
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-foreground mb-4">
-                      Sessions on {format(selectedDate, 'MMMM d, yyyy')}
-                    </h2>
-                    <div className="space-y-3">
-                      {selectedDateSessions.map((session) => {
-                        const entry = allEntries.find((e) => e.sessionId === session.id);
-                        const isComplete = entry && !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
+            <Card className="flex flex-col justify-between gap-4 border-border bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-sm">
+              <div className="space-y-3">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Browse Individual Goalies</h2>
+                <p className="text-sm text-muted-foreground">
+                  View a specific goalie's charting history, sessions, and performance progression.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+                    {uniqueStudents.length} goalie{uniqueStudents.length === 1 ? '' : 's'}
+                  </span>
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+                    {completeEntries + allSessions.filter((s) => s.status !== 'completed').length} sessions tracked
+                  </span>
+                </div>
+              </div>
 
-                        return (
-                          <div
-                            key={session.id}
-                            className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/40 hover:shadow-sm transition-all"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-semibold text-foreground">
-                                  {session.type === 'game' ? '🥅' : '🏒'}{' '}
-                                  {session.opponent || 'Practice Session'}
-                                </h3>
-                                {entry ? (
-                                  <Badge variant={isComplete ? 'default' : 'secondary'}>
-                                    {isComplete ? 'Complete' : 'Partial'}
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline">Not Charted</Badge>
-                                )}
-                                {entry?.submitterRole === 'admin' && (
-                                  <Badge variant="outline">Admin Entry</Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                {session.location && <span>📍 {session.location}</span>}
-                                {entry && (
-                                  <span>
-                                    Submitted{' '}
-                                    {entry.submittedAt?.toDate
-                                      ? entry.submittedAt.toDate().toLocaleDateString()
-                                      : 'Unknown'}
-                                  </span>
-                                )}
-                              </div>
-                              {entry?.gameOverview && (
-                                <div className="flex items-center gap-4 text-sm mt-2">
-                                  <span className="text-green-600">
-                                    ✅ Good Goals:{' '}
-                                    {(entry.gameOverview.goodGoals.period1 || 0) +
-                                      (entry.gameOverview.goodGoals.period2 || 0) +
-                                      (entry.gameOverview.goodGoals.period3 || 0)}
-                                  </span>
-                                  <span className="text-red-600">
-                                    ❌ Bad Goals:{' '}
-                                    {(entry.gameOverview.badGoals.period1 || 0) +
-                                      (entry.gameOverview.badGoals.period2 || 0) +
-                                      (entry.gameOverview.badGoals.period3 || 0)}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            {entry && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </Button>
+              <Button asChild className="w-full">
+                <Link href="/admin/charting/goalies">
+                  View All Goalies
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </Card>
+          </div>
+
+          {/* Sessions for selected date (from calendar click) */}
+          {selectedDate && (
+            <Card className="border-border bg-card p-4 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className="text-lg font-bold text-foreground sm:text-xl">
+                  Sessions on {format(selectedDate, 'MMMM d, yyyy')}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedDate(null);
+                    setSelectedDateSessions([]);
+                    setFocusedSessionId(null);
+                  }}
+                >
+                  Clear
+                </Button>
+              </div>
+              {focusedSessionId && (
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Showing details for selected session.
+                </p>
+              )}
+              {selectedDateSessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No sessions on this day.</p>
+              ) : (
+                <div className="space-y-3">
+                  {selectedDateSessions.map((session) => {
+                    const entry = allEntries.find((e) => e.sessionId === session.id);
+                    const dynamicEntriesForSession = allDynamicEntries.filter((e) => e.sessionId === session.id);
+                    const dynamicEntry = getBestDynamicEntryForSession(dynamicEntriesForSession);
+                    const status = getSessionChartingStatus(entry, dynamicEntry);
+                    const isComplete = status === 'complete';
+                    const isPartial = status === 'partial';
+
+                    return (
+                      <div
+                        key={session.id}
+                        className={`flex flex-col gap-3 rounded-lg border p-4 transition-all sm:flex-row sm:items-center sm:justify-between ${
+                          focusedSessionId === session.id
+                            ? 'border-primary/50 bg-primary/5 shadow-sm'
+                            : 'border-border hover:border-primary/40 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-foreground">
+                              {session.type === 'game' ? '🥅' : '🏒'}{' '}
+                              {session.opponent || 'Practice Session'}
+                            </h3>
+                            {(entry || dynamicEntry) ? (
+                              <Badge variant={isComplete ? 'default' : 'secondary'}>
+                                {isComplete ? 'Complete' : isPartial ? 'Partial' : 'Not Charted'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">Not Charted</Badge>
+                            )}
+                            <Badge variant="outline" className="text-xs">
+                              {getStudentName(session.studentId)}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            {session.location && <span>📍 {session.location}</span>}
+                            {(entry || dynamicEntry) && (
+                              <span>
+                                Submitted{' '}
+                                {(entry?.submittedAt?.toDate
+                                  ? entry.submittedAt.toDate()
+                                  : dynamicEntry?.submittedAt?.toDate
+                                  ? dynamicEntry.submittedAt.toDate()
+                                  : null)?.toLocaleDateString() || 'Unknown'}
+                              </span>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
-                )}
+                        </div>
+                        {entry && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
+                            className="shrink-0"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          )}
 
-                {/* Empty state when date selected but no sessions */}
-                {selectedDate && selectedDateSessions.length === 0 && (
-                  <Card className="p-12 text-center">
-                    <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-foreground mb-2">No Sessions</h3>
-                    <p className="text-muted-foreground">
-                      No sessions found for {format(selectedDate, 'MMMM d, yyyy')}
-                    </p>
-                  </Card>
-                )}
-
-                {/* Helper text when no date selected */}
-                {!selectedDate && (
-                  <Card className="p-12 text-center">
-                    <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-foreground mb-2">Select a Date</h3>
-                    <p className="text-muted-foreground">
-                      Click on a day in the calendar above to view sessions for that date
-                    </p>
-                  </Card>
-                )}
-              </>
-            )}
-
-            {/* Empty state when no student selected */}
-            {!entriesTabStudent && (
-              <Card className="p-12 text-center">
-                <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">Get Started</h3>
-                <p className="text-muted-foreground mb-4">
-                  Select a student above to view their charting calendar and sessions
-                </p>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+          {/* Aggregate performance metrics (legacy charting entries) */}
+          <ChartingPerformanceSection entries={filteredEntries} />
+        </div>
       </div>
     </div>
   );

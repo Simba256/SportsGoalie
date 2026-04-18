@@ -294,12 +294,19 @@ export class UserService extends BaseDatabaseService {
     // Client-side search filtering (in production, use proper search engine)
     if (result.success && result.data && options.searchTerm) {
       const searchTerm = options.searchTerm.toLowerCase();
-      const filteredItems = result.data.items.filter(user =>
-        user.displayName.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm) ||
-        (user.profile?.firstName?.toLowerCase().includes(searchTerm)) ||
-        (user.profile?.lastName?.toLowerCase().includes(searchTerm))
-      );
+      const filteredItems = result.data.items.filter((user) => {
+        const displayName = (user.displayName || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const firstName = (user.profile?.firstName || '').toLowerCase();
+        const lastName = (user.profile?.lastName || '').toLowerCase();
+
+        return (
+          displayName.includes(searchTerm) ||
+          email.includes(searchTerm) ||
+          firstName.includes(searchTerm) ||
+          lastName.includes(searchTerm)
+        );
+      });
 
       result.data.items = filteredItems;
       result.data.total = filteredItems.length;

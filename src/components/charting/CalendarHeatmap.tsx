@@ -50,15 +50,41 @@ export const CalendarHeatmap = ({
     return entry.completionPercentage > 0 && !entry.isComplete;
   };
 
+  const getDynamicEntryTimestamp = (entry: DynamicChartingEntry) =>
+    entry.submittedAt?.toDate?.()?.getTime() || 0;
+
+  const getBestDynamicEntryForSession = (
+    entries: DynamicChartingEntry[]
+  ): DynamicChartingEntry | undefined => {
+    if (entries.length === 0) return undefined;
+
+    const completeEntries = entries.filter((entry) => entry.isComplete);
+    if (completeEntries.length > 0) {
+      return [...completeEntries].sort(
+        (a, b) => getDynamicEntryTimestamp(b) - getDynamicEntryTimestamp(a)
+      )[0];
+    }
+
+    return [...entries].sort((a, b) => {
+      if (b.completionPercentage !== a.completionPercentage) {
+        return b.completionPercentage - a.completionPercentage;
+      }
+      return getDynamicEntryTimestamp(b) - getDynamicEntryTimestamp(a);
+    })[0];
+  };
+
   const legacyEntriesBySession = chartingEntries.reduce((acc, entry) => {
     acc[entry.sessionId] = entry;
     return acc;
   }, {} as Record<string, any>);
 
   const dynamicEntriesBySession = dynamicEntries.reduce((acc, entry) => {
-    acc[entry.sessionId] = entry;
+    if (!acc[entry.sessionId]) {
+      acc[entry.sessionId] = [];
+    }
+    acc[entry.sessionId].push(entry);
     return acc;
-  }, {} as Record<string, DynamicChartingEntry>);
+  }, {} as Record<string, DynamicChartingEntry[]>);
 
   const getCompletionLevel = (date: Date): number => {
     const dateKey = format(date, 'yyyy-MM-dd');
@@ -70,23 +96,30 @@ export const CalendarHeatmap = ({
     let partiallyCompleteCount = 0;
 
     daySessions.forEach(session => {
-      const dynamicEntry = dynamicEntriesBySession[session.id];
-      if (dynamicEntry) {
-        if (isDynamicEntryComplete(dynamicEntry)) {
-          fullyCompleteCount++;
-        } else if (isDynamicEntryPartial(dynamicEntry)) {
-          partiallyCompleteCount++;
-        }
-        return;
-      }
-
+      const dynamicEntry = getBestDynamicEntryForSession(dynamicEntriesBySession[session.id] || []);
       const legacyEntry = legacyEntriesBySession[session.id];
-      if (legacyEntry) {
-        if (isLegacyEntryComplete(legacyEntry)) {
-          fullyCompleteCount++;
-        } else {
-          partiallyCompleteCount++;
-        }
+
+      const dynamicStatus = dynamicEntry
+        ? isDynamicEntryComplete(dynamicEntry)
+          ? 'complete'
+          : isDynamicEntryPartial(dynamicEntry)
+          ? 'partial'
+          : 'not_charted'
+        : 'not_charted';
+
+      const legacyStatus = legacyEntry
+        ? isLegacyEntryComplete(legacyEntry)
+          ? 'complete'
+          : 'partial'
+        : 'not_charted';
+
+      const rank = { not_charted: 0, partial: 1, complete: 2 } as const;
+      const effectiveStatus = rank[dynamicStatus] >= rank[legacyStatus] ? dynamicStatus : legacyStatus;
+
+      if (effectiveStatus === 'complete') {
+        fullyCompleteCount++;
+      } else if (effectiveStatus === 'partial') {
+        partiallyCompleteCount++;
       }
     });
 

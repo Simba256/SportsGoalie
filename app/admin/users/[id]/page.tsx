@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { SkeletonDetailPage } from '@/components/ui/skeletons';
 import {
   ArrowLeft,
@@ -66,6 +66,8 @@ import { ActivityTimeline } from '@/components/admin/analytics/ActivityTimeline'
 import { EngagementMetrics } from '@/components/admin/analytics/EngagementMetrics';
 import { CourseProgress } from '@/components/admin/analytics/CourseProgress';
 import { QuizAttemptHistory } from '@/components/admin/analytics/QuizAttemptHistory';
+import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
+import { ChartingPerformanceSection } from '@/components/admin/charting/ChartingPerformanceSection';
 
 export default function AdminUserDetailsPage() {
   return (
@@ -77,8 +79,10 @@ export default function AdminUserDetailsPage() {
 
 function UserDetailsContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user: currentUser } = useAuth();
   const userId = params.id as string;
+  const initialTab = searchParams?.get('tab') || 'profile';
 
   const [user, setUser] = useState<UserType | null>(null);
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
@@ -240,6 +244,15 @@ function UserDetailsContent() {
     }
   }, [userId]);
 
+  // When deep-linking to a tab that lazy-loads data, trigger the fetch on mount.
+  useEffect(() => {
+    if (!userId) return;
+    if (initialTab === 'charting') fetchCharting();
+    if (initialTab === 'analytics' || initialTab === 'progress') fetchAnalytics();
+    if (initialTab === 'messages') fetchMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, initialTab]);
+
   const handleSaveChanges = async () => {
     if (!editedUser) return;
 
@@ -310,21 +323,29 @@ function UserDetailsContent() {
     }
   };
 
+  const themedCard = 'border-red-100/80 shadow-sm bg-white';
+  const themedSubCard = 'border-red-100/70 bg-red-50/30';
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 rounded-2xl border border-red-100 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/admin/users">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Users
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Back to users"
+                title="Back to users"
+                className="text-slate-700 hover:bg-red-50 hover:text-red-700"
+              >
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold">User Profile</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">User Profile</h1>
+              <p className="text-slate-600">
                 Manage {user.displayName}'s account and settings
               </p>
             </div>
@@ -334,6 +355,7 @@ function UserDetailsContent() {
               <Button
                 variant="outline"
                 onClick={() => setShowMessageComposer(true)}
+                className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
               >
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Send Message
@@ -341,17 +363,21 @@ function UserDetailsContent() {
             )}
             {isEditing ? (
               <>
-                <Button variant="outline" onClick={handleCancelEdit}>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                >
                   <X className="mr-2 h-4 w-4" />
                   Cancel
                 </Button>
-                <Button onClick={handleSaveChanges}>
+                <Button onClick={handleSaveChanges} className="bg-red-600 text-white hover:bg-red-700">
                   <Save className="mr-2 h-4 w-4" />
                   Save Changes
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)}>
+              <Button onClick={() => setIsEditing(true)} className="bg-red-600 text-white hover:bg-red-700">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit User
               </Button>
@@ -360,24 +386,24 @@ function UserDetailsContent() {
         </div>
 
         {/* User Overview */}
-        <Card>
+        <Card className={themedCard}>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-6">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={user.profileImage} />
-                <AvatarFallback className="text-lg">
+                <AvatarFallback className="bg-red-100 text-lg text-red-700">
                   {user.displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
-                  <h2 className="text-2xl font-bold">{user.displayName}</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">{user.displayName}</h2>
                   <Badge variant={getRoleBadgeVariant(user.role)}>
                     {user.role}
                   </Badge>
                 </div>
-                <p className="text-muted-foreground mb-2">{user.email}</p>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <p className="mb-2 text-slate-600">{user.email}</p>
+                <div className="flex items-center space-x-4 text-sm text-slate-600">
                   <div className="flex items-center">
                     <Calendar className="mr-1 h-4 w-4" />
                     Joined {(user.createdAt instanceof Date ? user.createdAt : user.createdAt?.toDate?.() ?? new Date()).toLocaleDateString()}
@@ -395,24 +421,24 @@ function UserDetailsContent() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="analytics" onClick={fetchAnalytics}>Analytics</TabsTrigger>
-            <TabsTrigger value="progress" onClick={fetchAnalytics}>Progress</TabsTrigger>
-            <TabsTrigger value="charting" onClick={fetchCharting}>Charting</TabsTrigger>
-            <TabsTrigger value="messages" onClick={fetchMessages}>Messages</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+        <Tabs defaultValue={initialTab} className="space-y-6">
+          <TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-red-100 bg-white p-2 shadow-sm">
+            <TabsTrigger value="profile" className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Profile</TabsTrigger>
+            <TabsTrigger value="analytics" onClick={fetchAnalytics} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Analytics</TabsTrigger>
+            <TabsTrigger value="progress" onClick={fetchAnalytics} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Progress</TabsTrigger>
+            <TabsTrigger value="charting" onClick={fetchCharting} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Charting</TabsTrigger>
+            <TabsTrigger value="messages" onClick={fetchMessages} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Messages</TabsTrigger>
+            <TabsTrigger value="notifications" className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Notifications</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Settings</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
           <TabsContent value="profile">
             <div className="grid gap-6 md:grid-cols-2">
-              <Card>
+              <Card className={themedCard}>
                 <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-slate-900">Basic Information</CardTitle>
+                  <CardDescription className="text-slate-600">
                     User's basic profile information and contact details
                   </CardDescription>
                 </CardHeader>
@@ -426,7 +452,7 @@ function UserDetailsContent() {
                         onChange={(e) => setEditedUser(prev => prev ? {...prev, displayName: e.target.value} : null)}
                       />
                     ) : (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 rounded-md border border-red-100 bg-red-50/40 px-3 py-2">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span>{user.displayName}</span>
                       </div>
@@ -435,11 +461,11 @@ function UserDetailsContent() {
 
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email Address</Label>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center space-x-2 rounded-md border border-red-100 bg-red-50/40 px-3 py-2">
+                      <Mail className="h-4 w-4 text-slate-500" />
                       <span>{user.email}</span>
                       {user.emailVerified && (
-                        <Badge variant="outline" className="text-xs">Verified</Badge>
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700">Verified</Badge>
                       )}
                     </div>
                   </div>
@@ -456,7 +482,7 @@ function UserDetailsContent() {
                         } : null)}
                       />
                     ) : (
-                      <span>{user.profile?.firstName || 'Not provided'}</span>
+                      <span className="rounded-md border border-red-100 bg-red-50/40 px-3 py-2 text-sm text-slate-700">{user.profile?.firstName || 'Not provided'}</span>
                     )}
                   </div>
 
@@ -472,16 +498,16 @@ function UserDetailsContent() {
                         } : null)}
                       />
                     ) : (
-                      <span>{user.profile?.lastName || 'Not provided'}</span>
+                      <span className="rounded-md border border-red-100 bg-red-50/40 px-3 py-2 text-sm text-slate-700">{user.profile?.lastName || 'Not provided'}</span>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className={themedCard}>
                 <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-slate-900">Account Settings</CardTitle>
+                  <CardDescription className="text-slate-600">
                     User role, status, and account configuration
                   </CardDescription>
                 </CardHeader>
@@ -502,7 +528,7 @@ function UserDetailsContent() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 rounded-md border border-red-100 bg-red-50/40 px-3 py-2">
                         <Shield className="h-4 w-4 text-muted-foreground" />
                         <Badge variant={getRoleBadgeVariant(user.role)}>
                           {user.role}
@@ -514,7 +540,7 @@ function UserDetailsContent() {
 
                   <div className="grid gap-2">
                     <Label>Date of Birth</Label>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 rounded-md border border-red-100 bg-red-50/40 px-3 py-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span>
                         {user.profile?.dateOfBirth
@@ -527,7 +553,7 @@ function UserDetailsContent() {
 
                   <div className="grid gap-2">
                     <Label>Country</Label>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 rounded-md border border-red-100 bg-red-50/40 px-3 py-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span>{user.profile?.location?.country || 'Not provided'}</span>
                     </div>
@@ -545,6 +571,17 @@ function UserDetailsContent() {
               </div>
             ) : (
               <div className="space-y-6">
+                <Card className={themedSubCard}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-red-700">Analytics Snapshot</p>
+                        <p className="text-sm text-slate-600">Performance and engagement details for this goalie are grouped below.</p>
+                      </div>
+                      <Badge className="bg-red-600 text-white hover:bg-red-600">Live</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
                 {/* Engagement Metrics */}
                 {analytics && (
                   <EngagementMetrics
@@ -589,10 +626,10 @@ function UserDetailsContent() {
           {/* Progress Tab */}
           <TabsContent value="progress">
             <div className="grid gap-6 md:grid-cols-2">
-              <Card>
+              <Card className={themedCard}>
                 <CardHeader>
-                  <CardTitle>Overall Statistics</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-slate-900">Overall Statistics</CardTitle>
+                  <CardDescription className="text-slate-600">
                     User's learning progress and achievements
                   </CardDescription>
                 </CardHeader>
@@ -600,13 +637,13 @@ function UserDetailsContent() {
                   {userProgress ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center">
+                        <div className="rounded-xl border border-red-100 bg-red-50/40 p-4 text-center">
                           <div className="text-2xl font-bold text-primary">
                             {userProgress.overallStats.skillsCompleted}
                           </div>
                           <p className="text-sm text-muted-foreground">Skills Attempted</p>
                         </div>
-                        <div className="text-center">
+                        <div className="rounded-xl border border-red-100 bg-red-50/40 p-4 text-center">
                           <div className="text-2xl font-bold text-primary">
                             {userProgress.overallStats.quizzesCompleted}
                           </div>
@@ -643,10 +680,10 @@ function UserDetailsContent() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className={themedCard}>
                 <CardHeader>
-                  <CardTitle>Video Quiz Performance</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-slate-900">Video Quiz Performance</CardTitle>
+                  <CardDescription className="text-slate-600">
                     Performance metrics from video quizzes
                   </CardDescription>
                 </CardHeader>
@@ -736,10 +773,10 @@ function UserDetailsContent() {
               return (
                 <div className="space-y-6">
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
+                    <Card className={themedCard}>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <Activity className="h-4 w-4 text-red-600" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">{totalSessions}</div>
@@ -749,10 +786,10 @@ function UserDetailsContent() {
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className={themedCard}>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Completed</CardTitle>
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        <CheckCircle2 className="h-4 w-4 text-red-600" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">{completed}</div>
@@ -760,10 +797,10 @@ function UserDetailsContent() {
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className={themedCard}>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-                        <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                        <PlayCircle className="h-4 w-4 text-red-600" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">{inProgress}</div>
@@ -773,10 +810,10 @@ function UserDetailsContent() {
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className={themedCard}>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Charting Entries</CardTitle>
-                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                        <ClipboardList className="h-4 w-4 text-red-600" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">{totalEntries}</div>
@@ -787,10 +824,32 @@ function UserDetailsContent() {
                     </Card>
                   </div>
 
-                  <Card>
+                  {chartingSessions.length > 0 && (
+                    <Card className={themedCard}>
+                      <CardHeader>
+                        <CardTitle className="text-slate-900">Session Activity Calendar</CardTitle>
+                        <CardDescription className="text-slate-600">
+                          Daily charting activity for this goalie
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <CalendarHeatmap
+                            sessions={chartingSessions}
+                            chartingEntries={chartingEntries}
+                            dynamicEntries={dynamicEntries}
+                            onDayClick={() => { /* no-op here */ }}
+                            colorScheme="default"
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Card className={themedCard}>
                     <CardHeader>
-                      <CardTitle>Recent Sessions</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-slate-900">Recent Sessions</CardTitle>
+                      <CardDescription className="text-slate-600">
                         Most recent charting sessions started or completed by this goalie
                       </CardDescription>
                     </CardHeader>
@@ -805,11 +864,11 @@ function UserDetailsContent() {
                           {recentSessions.map((session) => (
                             <Link
                               key={session.id}
-                              href={`/admin/charting?session=${session.id}`}
-                              className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                              href={`/admin/users/${userId}/sessions/${session.id}`}
+                              className="flex items-center justify-between rounded-lg border border-red-100 p-3 transition-colors hover:bg-red-50/60"
                             >
                               <div className="flex items-center gap-3 min-w-0">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground shrink-0">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
                                   {session.type === 'game' ? (
                                     <Trophy className="h-4 w-4" />
                                   ) : (
@@ -845,6 +904,20 @@ function UserDetailsContent() {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* Full performance metrics for this goalie (same view as /admin/charting) */}
+                  {chartingEntries.length > 0 && (
+                    <div>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-foreground">Performance Metrics</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Computed from {chartingEntries.length} charting{' '}
+                          {chartingEntries.length === 1 ? 'entry' : 'entries'} submitted by this goalie
+                        </p>
+                      </div>
+                      <ChartingPerformanceSection entries={chartingEntries} />
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -852,10 +925,10 @@ function UserDetailsContent() {
 
           {/* Messages Tab */}
           <TabsContent value="messages">
-            <Card>
+            <Card className={themedCard}>
               <CardHeader>
-                <CardTitle>Messages</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-slate-900">Messages</CardTitle>
+                <CardDescription className="text-slate-600">
                   Messages sent to this student
                 </CardDescription>
               </CardHeader>
@@ -869,19 +942,21 @@ function UserDetailsContent() {
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`p-4 border rounded-lg ${
-                          message.isRead ? 'bg-muted/50' : 'bg-background'
+                        className={`rounded-lg border p-4 ${
+                          message.isRead
+                            ? 'border-slate-200 bg-slate-50/70'
+                            : 'border-red-200 bg-red-50/50'
                         }`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
                               <h4 className="font-medium">{message.subject}</h4>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="border-slate-300 text-xs text-slate-700">
                                 {message.type.replace('_', ' ')}
                               </Badge>
                               {!message.isRead && (
-                                <Badge variant="default" className="text-xs">
+                                <Badge variant="default" className="bg-red-600 text-xs text-white hover:bg-red-600">
                                   Unread
                                 </Badge>
                               )}
@@ -911,9 +986,9 @@ function UserDetailsContent() {
                     <p className="text-muted-foreground">No messages sent yet</p>
                     {currentUser && (
                       <Button
-                        className="mt-4"
                         variant="outline"
                         onClick={() => setShowMessageComposer(true)}
+                        className="mt-4 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
                       >
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Send First Message
@@ -927,10 +1002,10 @@ function UserDetailsContent() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
-            <Card>
+            <Card className={themedCard}>
               <CardHeader>
-                <CardTitle>Recent Notifications</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-slate-900">Recent Notifications</CardTitle>
+                <CardDescription className="text-slate-600">
                   User's recent notifications and alerts
                 </CardDescription>
               </CardHeader>
@@ -940,19 +1015,21 @@ function UserDetailsContent() {
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 border rounded-lg ${
-                          notification.isRead ? 'bg-muted/50' : 'bg-background'
+                        className={`rounded-lg border p-4 ${
+                          notification.isRead
+                            ? 'border-slate-200 bg-slate-50/70'
+                            : 'border-red-200 bg-red-50/50'
                         }`}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
                               <h4 className="font-medium">{notification.title}</h4>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="border-slate-300 text-xs text-slate-700">
                                 {notification.type}
                               </Badge>
                               {!notification.isRead && (
-                                <Badge variant="default" className="text-xs">
+                                <Badge variant="default" className="bg-red-600 text-xs text-white hover:bg-red-600">
                                   New
                                 </Badge>
                               )}
@@ -980,16 +1057,16 @@ function UserDetailsContent() {
 
           {/* Settings Tab */}
           <TabsContent value="settings">
-            <Card>
+            <Card className={themedCard}>
               <CardHeader>
-                <CardTitle>User Preferences</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-slate-900">User Preferences</CardTitle>
+                <CardDescription className="text-slate-600">
                   User's application preferences and settings
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50/40 p-4">
                     <div>
                       <h4 className="font-medium">Email Notifications</h4>
                       <p className="text-sm text-muted-foreground">
@@ -1002,38 +1079,38 @@ function UserDetailsContent() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50/40 p-4">
                     <div>
                       <h4 className="font-medium">Theme</h4>
                       <p className="text-sm text-muted-foreground">
                         Application theme preference
                       </p>
                     </div>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="border-red-200 text-red-700">
                       {user.preferences?.theme || 'Light'}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50/40 p-4">
                     <div>
                       <h4 className="font-medium">Language</h4>
                       <p className="text-sm text-muted-foreground">
                         Preferred language
                       </p>
                     </div>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="border-red-200 text-red-700">
                       {user.preferences?.language || 'English'}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50/40 p-4">
                     <div>
                       <h4 className="font-medium">Timezone</h4>
                       <p className="text-sm text-muted-foreground">
                         User's timezone
                       </p>
                     </div>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="border-red-200 text-red-700">
                       {user.preferences?.timezone || 'UTC'}
                     </Badge>
                   </div>
