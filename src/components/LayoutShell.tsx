@@ -36,6 +36,10 @@ function isParentRoute(pathname: string): boolean {
   return pathname.startsWith('/parent');
 }
 
+function shouldShowFooter(pathname: string): boolean {
+  return pathname === '/' || pathname === '/auth/login' || pathname === '/auth/register';
+}
+
 function getPageTitle(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
   const first = segments[0];
@@ -127,6 +131,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const { loading: authLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const showFooter = shouldShowFooter(pathname);
 
   if (searchParams.get('embedded') === '1') {
     return <>{children}</>;
@@ -136,7 +141,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
         <main className="flex-1">{children}</main>
-        <Footer7 />
+        {showFooter && <Footer7 />}
       </div>
     );
   }
@@ -146,7 +151,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex flex-col bg-white">
         <Header7 />
         <main className="flex-1">{children}</main>
-        <Footer7 />
+        {showFooter && <Footer7 />}
       </div>
     );
   }
@@ -174,7 +179,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
           <main className="p-6">{children}</main>
-          {!authLoading && <Footer7 />}
+          {!authLoading && showFooter && <Footer7 />}
         </div>
       </div>
     );
@@ -188,7 +193,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
           <main className="p-6">{children}</main>
-          {!authLoading && <Footer7 />}
+          {!authLoading && showFooter && <Footer7 />}
         </div>
       </div>
     );
@@ -201,7 +206,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-6">{children}</main>
-        {!authLoading && <Footer7 />}
+        {!authLoading && showFooter && <Footer7 />}
       </div>
     </div>
   );
