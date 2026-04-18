@@ -24,6 +24,8 @@ import {
   ApiResponse,
   StreakInfo,
   VideoProgress,
+  DifficultyLevel,
+  Lesson,
 } from '@/types';
 import { logger } from '@/lib/utils/logger';
 import { withRetry } from '@/lib/database/utils/error-recovery';
@@ -426,6 +428,304 @@ export class ProgressService extends BaseDatabaseService {
     }
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Level-based unlocking (per-pillar)
+  //
+  // A goalie's starting level per pillar is seeded from their onboarding
+  // `pacingLevel`. After they pass enough skills at their current level
+  // (LEVEL_ADVANCE_THRESHOLD), the next level automatically unlocks for that
+  // pillar. Unlock is one-way: levels never re-lock.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /** Fraction of current-level skills (passed) required to unlock the next level. */
+  private static readonly LEVEL_ADVANCE_THRESHOLD = 0.7;
+
+  /** Ordered tiers. A goalie unlocks them left-to-right. */
+  private static readonly LEVEL_ORDER: DifficultyLevel[] = [
+    'introduction',
+    'development',
+    'refinement',
+  ];
+
+  private static nextLevel(level: DifficultyLevel): DifficultyLevel | null {
+    const idx = this.LEVEL_ORDER.indexOf(level);
+    if (idx < 0) return null;
+    return this.LEVEL_ORDER[idx + 1] ?? null;
+  }
+
+  private static unlockedUpTo(level: DifficultyLevel): DifficultyLevel[] {
+    const idx = this.LEVEL_ORDER.indexOf(level);
+    if (idx < 0) return ['introduction'];
+    return this.LEVEL_ORDER.slice(0, idx + 1);
+  }
+
+  /**
+   * Read (or initialize) the goalie's current level for a pillar. If the
+   * sport_progress record is missing currentLevel, seed it from the
+   * onboarding pacingLevel (fall back to 'introduction'). Returns the
+   * resolved currentLevel + unlockedLevels without mutating state unless
+   * a seed is needed.
+   */
+  static async getOrBootstrapPillarLevel(
+    userId: string,
+    sportId: string
+  ): Promise<ApiResponse<{ currentLevel: DifficultyLevel; unlockedLevels: DifficultyLevel[] }>> {
+    try {
+      const existing = await this.getSportProgress(userId, sportId);
+
+      if (existing.success && existing.data?.currentLevel) {
+        const currentLevel = existing.data.currentLevel;
+        const unlockedLevels =
+          existing.data.unlockedLevels && existing.data.unlockedLevels.length > 0
+            ? existing.data.unlockedLevels
+            : this.unlockedUpTo(currentLevel);
+        return {
+          success: true,
+          data: { currentLevel, unlockedLevels },
+          timestamp: new Date(),
+        };
+      }
+
+      // Seed from onboarding pacingLevel
+      let seedLevel: DifficultyLevel = 'introduction';
+      try {
+        const { onboardingService } = await import('./onboarding.service');
+        const evalResult = await onboardingService.getEvaluation(userId);
+        const pacing = evalResult.success ? evalResult.data?.pacingLevel : undefined;
+        if (pacing === 'introduction' || pacing === 'development' || pacing === 'refinement') {
+          seedLevel = pacing;
+        }
+      } catch (err) {
+        logger.warn('Failed to read onboarding evaluation for level bootstrap', 'ProgressService', {
+          userId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      const unlockedLevels = this.unlockedUpTo(seedLevel);
+      await this.updateSportProgress(userId, sportId, {
+        currentLevel: seedLevel,
+        unlockedLevels,
+      });
+
+      logger.info('Bootstrapped pillar level', 'ProgressService', {
+        userId,
+        sportId,
+        seedLevel,
+      });
+
+      return {
+        success: true,
+        data: { currentLevel: seedLevel, unlockedLevels },
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to bootstrap pillar level', 'ProgressService', {
+        userId,
+        sportId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'PILLAR_LEVEL_BOOTSTRAP_ERROR',
+          message: 'Failed to resolve pillar level',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * After a goalie passes a skill in a pillar, check whether they've met the
+   * threshold to unlock the next tier. Returns the updated level info and
+   * whether an advancement actually occurred so callers can surface a toast.
+   */
+  static async checkAndAdvancePillarLevel(
+    userId: string,
+    sportId: string
+  ): Promise<
+    ApiResponse<{
+      currentLevel: DifficultyLevel;
+      unlockedLevels: DifficultyLevel[];
+      advanced: boolean;
+      newlyUnlocked?: DifficultyLevel;
+    }>
+  > {
+    try {
+      // Resolve current level (seed on first call).
+      const bootstrap = await this.getOrBootstrapPillarLevel(userId, sportId);
+      if (!bootstrap.success || !bootstrap.data) {
+        return {
+          success: false,
+          error: bootstrap.error,
+          timestamp: new Date(),
+        };
+      }
+
+      const { currentLevel, unlockedLevels } = bootstrap.data;
+      const next = this.nextLevel(currentLevel);
+      if (!next) {
+        // Already at top tier
+        return {
+          success: true,
+          data: { currentLevel, unlockedLevels, advanced: false },
+          timestamp: new Date(),
+        };
+      }
+
+      // Fetch all skills at the current level for this pillar.
+      const { sportsService } = await import('./sports.service');
+      const skillsResult = await sportsService.getSkillsByDifficulty(sportId, currentLevel);
+      const skills = skillsResult.success ? skillsResult.data?.items ?? [] : [];
+
+      if (skills.length === 0) {
+        // No skills at this level — advancement is trivially unlocked.
+        const newUnlocked = this.unlockedUpTo(next);
+        await this.updateSportProgress(userId, sportId, {
+          currentLevel: next,
+          unlockedLevels: newUnlocked,
+        });
+        return {
+          success: true,
+          data: {
+            currentLevel: next,
+            unlockedLevels: newUnlocked,
+            advanced: true,
+            newlyUnlocked: next,
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      // Count how many current-level skills the goalie has completed.
+      const completionResults = await Promise.all(
+        skills.map((s) => this.getSkillProgress(userId, s.id))
+      );
+      const passedCount = completionResults.filter(
+        (r) => r.success && r.data?.status === 'completed'
+      ).length;
+
+      const ratio = passedCount / skills.length;
+      if (ratio < this.LEVEL_ADVANCE_THRESHOLD) {
+        return {
+          success: true,
+          data: { currentLevel, unlockedLevels, advanced: false },
+          timestamp: new Date(),
+        };
+      }
+
+      const newUnlocked = this.unlockedUpTo(next);
+      await this.updateSportProgress(userId, sportId, {
+        currentLevel: next,
+        unlockedLevels: newUnlocked,
+      });
+
+      logger.info('Pillar level advanced', 'ProgressService', {
+        userId,
+        sportId,
+        from: currentLevel,
+        to: next,
+        passedCount,
+        totalAtLevel: skills.length,
+      });
+
+      return {
+        success: true,
+        data: {
+          currentLevel: next,
+          unlockedLevels: newUnlocked,
+          advanced: true,
+          newlyUnlocked: next,
+        },
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.error('Failed to check/advance pillar level', 'ProgressService', {
+        userId,
+        sportId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'PILLAR_LEVEL_ADVANCE_ERROR',
+          message: 'Failed to evaluate pillar level advancement',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Record a lesson attempt by the goalie. If the lesson-progress record does
+   * not exist it is created (via lessonService); this method then rolls up
+   * to skill_progress + overall stats.
+   *
+   * - `viewed` alone bumps the skill to 'in_progress' (if it was not_started).
+   * - `completed=true` stamps the lesson as complete in lesson_progress and
+   *   still leaves the skill at 'in_progress' (only a passing quiz moves the
+   *   skill to 'completed' for level-advancement purposes).
+   */
+  static async recordLessonAttempt(
+    userId: string,
+    lesson: Lesson,
+    options: { completed?: boolean; timeSpentSeconds?: number } = {}
+  ): Promise<ApiResponse<void>> {
+    const { completed = false, timeSpentSeconds = 0 } = options;
+    try {
+      const { lessonService } = await import('./lesson.service');
+
+      if (completed) {
+        await lessonService.markLessonComplete(userId, lesson, timeSpentSeconds);
+      } else {
+        await lessonService.markLessonViewed(userId, lesson);
+      }
+
+      // Roll up to skill_progress: if the skill is not yet completed by a
+      // quiz, mark it as in_progress and accumulate lesson time.
+      const currentSkill = await this.getSkillProgress(userId, lesson.skillId);
+      const currentStatus = currentSkill.data?.status ?? 'not_started';
+      const nextStatus = currentStatus === 'completed' ? 'completed' : 'in_progress';
+      const addedMinutes = Math.round(Math.max(0, timeSpentSeconds) / 60);
+
+      await this.updateSkillProgress(userId, lesson.skillId, lesson.sportId, {
+        status: nextStatus,
+        timeSpent: (currentSkill.data?.timeSpent || 0) + addedMinutes,
+      });
+
+      // Ensure the pillar has a bootstrapped level so the progress view is
+      // coherent immediately after the goalie first engages with content.
+      await this.getOrBootstrapPillarLevel(userId, lesson.sportId);
+
+      // Bump overall time if we actually spent real seconds.
+      if (addedMinutes > 0) {
+        await this.updateOverallStats(userId, {
+          totalTimeSpent: increment(addedMinutes),
+        });
+      }
+
+      return { success: true, timestamp: new Date() };
+    } catch (error) {
+      logger.error('Failed to record lesson attempt', 'ProgressService', {
+        userId,
+        lessonId: lesson.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: {
+          code: 'LESSON_ATTEMPT_ERROR',
+          message: 'Failed to record lesson attempt',
+          details: error,
+        },
+        timestamp: new Date(),
+      };
+    }
+  }
+
   /**
    * Record quiz completion and update progress
    */
@@ -437,7 +737,7 @@ export class ProgressService extends BaseDatabaseService {
     score: number,
     timeSpent: number,
     passed: boolean
-  ): Promise<ApiResponse<void>> {
+  ): Promise<ApiResponse<{ levelAdvanced: boolean; newlyUnlockedLevel?: DifficultyLevel }>> {
     try {
       return await withRetry(async () => {
         await runTransaction(db, async (_transaction) => {
@@ -476,8 +776,32 @@ export class ProgressService extends BaseDatabaseService {
           await this.checkQuizAchievements(userId, score, passed);
         });
 
-        logger.info('Recorded quiz completion', 'ProgressService', { userId, quizId, score, passed });
-        return { success: true, timestamp: new Date() };
+        // Run level-advance check on a pass. Failures here should not fail the
+        // quiz submission itself — we treat them as best-effort.
+        let levelAdvanced = false;
+        let newlyUnlockedLevel: DifficultyLevel | undefined;
+        if (passed) {
+          try {
+            const advance = await this.checkAndAdvancePillarLevel(userId, sportId);
+            if (advance.success && advance.data?.advanced) {
+              levelAdvanced = true;
+              newlyUnlockedLevel = advance.data.newlyUnlocked;
+            }
+          } catch (advanceErr) {
+            logger.warn('Level-advance check failed after quiz pass', 'ProgressService', {
+              userId,
+              sportId,
+              error: advanceErr instanceof Error ? advanceErr.message : String(advanceErr),
+            });
+          }
+        }
+
+        logger.info('Recorded quiz completion', 'ProgressService', { userId, quizId, score, passed, levelAdvanced });
+        return {
+          success: true,
+          data: { levelAdvanced, newlyUnlockedLevel },
+          timestamp: new Date(),
+        };
       });
     } catch (error) {
       logger.error('Failed to record quiz completion', 'ProgressService', {

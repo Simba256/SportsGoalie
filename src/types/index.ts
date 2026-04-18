@@ -170,6 +170,50 @@ export interface SkillMetadata {
   difficulty: DifficultyLevel;
 }
 
+// Lesson Types
+// A Lesson is an admin-authored unit of study attached to a Skill. A single
+// Skill can have many Lessons (and many Quizzes). Lessons are visibility-
+// gated by the goalie's unlocked levels for the parent pillar — they are
+// surfaced via sportsService/lessonService and tracked via lesson_progress.
+export type LessonStatus = 'draft' | 'published';
+
+export interface Lesson {
+  id: string;
+  skillId: string;
+  sportId: string; // denormalized pillar doc ID for per-pillar queries
+  title: string;
+  description?: string;
+  content: string; // rich HTML body
+  estimatedTimeMinutes: number;
+  order: number;
+  isActive: boolean;
+  status: LessonStatus;
+  tags?: string[];
+  media?: {
+    images?: string[];
+    videos?: string[];
+    resources?: ExternalResource[];
+  };
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Per-user-per-lesson progress record. `viewedAt` is set on first open,
+// `completedAt` is set when the goalie marks the lesson as complete (either
+// explicitly via a "Mark as read" button or implicitly on scroll-to-bottom).
+export interface LessonProgress {
+  id: string; // convention: `${userId}_${lessonId}`
+  userId: string;
+  lessonId: string;
+  skillId: string;
+  sportId: string;
+  timeSpentSeconds: number;
+  viewedAt: Timestamp;
+  completedAt?: Timestamp;
+  lastAccessedAt: Timestamp;
+}
+
 // Quiz Types - Import comprehensive Quiz interface from quiz.ts to avoid duplication
 export type { Quiz, QuizSettings, Question, QuizMetadata, QuizAnswer } from './quiz';
 
@@ -269,6 +313,14 @@ export interface SportProgress {
   startedAt: Timestamp;
   completedAt?: Timestamp;
   lastAccessedAt: Timestamp;
+
+  // Level-based unlocking (per-pillar). `currentLevel` is the highest tier the
+  // goalie has unlocked for this pillar; `unlockedLevels` is the full set of
+  // tiers currently accessible. Both are seeded from the goalie's onboarding
+  // pacingLevel on first access and advance automatically when the goalie has
+  // passed enough skills at their current level (see ProgressService).
+  currentLevel?: DifficultyLevel;
+  unlockedLevels?: DifficultyLevel[];
 }
 
 export interface SkillProgress {
