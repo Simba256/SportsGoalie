@@ -3,6 +3,7 @@ import { userService } from './user.service';
 import { sportsService } from './sports.service';
 import { ApiResponse } from '@/types';
 import { logger } from '../../utils/logger';
+import { getAllPillarsWithIds } from '@/lib/utils/pillars';
 
 export interface PlatformAnalytics {
   users: {
@@ -172,8 +173,12 @@ export class AnalyticsService extends BaseDatabaseService {
     logger.info('Fetching user engagement data', 'AnalyticsService', { days });
 
     try {
-      // Query quiz attempts and users in parallel
-      const [quizAttemptsResult, usersResult] = await Promise.all([
+      // Query quiz attempts (new + legacy) and users in parallel
+      const [videoQuizAttemptsResult, legacyQuizAttemptsResult, usersResult] = await Promise.all([
+        this.query<any>('video_quiz_progress', {
+          where: [{ field: 'status', operator: '==', value: 'submitted' }],
+          limit: 10000,
+        }),
         this.query<any>('quiz_attempts', {
           where: [{ field: 'isCompleted', operator: '==', value: true }],
           limit: 10000,
@@ -184,7 +189,13 @@ export class AnalyticsService extends BaseDatabaseService {
         }),
       ]);
 
-      const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+      const videoQuizAttempts = videoQuizAttemptsResult.success
+        ? videoQuizAttemptsResult.data?.items || []
+        : [];
+      const legacyQuizAttempts = legacyQuizAttemptsResult.success
+        ? legacyQuizAttemptsResult.data?.items || []
+        : [];
+      const quizAttempts = [...videoQuizAttempts, ...legacyQuizAttempts];
       const users = usersResult.success ? usersResult.data?.items || [] : [];
 
       // Group quiz attempts by date
@@ -206,10 +217,9 @@ export class AnalyticsService extends BaseDatabaseService {
       });
 
       quizAttempts.forEach((attempt: any) => {
-        if (attempt.submittedAt) {
-          const date = attempt.submittedAt.toDate
-            ? attempt.submittedAt.toDate()
-            : new Date(attempt.submittedAt);
+        const attemptDate = this.getQuizAttemptDate(attempt);
+        if (attemptDate) {
+          const date = attemptDate;
           const dateStr = date.toISOString().split('T')[0];
 
           // Group attempts by date
@@ -222,7 +232,10 @@ export class AnalyticsService extends BaseDatabaseService {
           if (!usersByDate.has(dateStr)) {
             usersByDate.set(dateStr, new Set());
           }
-          usersByDate.get(dateStr)!.add(attempt.userId);
+          const attemptUserId = attempt.userId || attempt.studentId;
+          if (attemptUserId) {
+            usersByDate.get(dateStr)!.add(attemptUserId);
+          }
         }
       });
 
@@ -272,29 +285,35 @@ export class AnalyticsService extends BaseDatabaseService {
    */
   async getContentPopularity(): Promise<ApiResponse<ContentPopularity[]>> {
     try {
-      const sportsResult = await sportsService.getAllSports();
+      // Firestore max query limit is 10,000; for pillar analytics we only need
+      // the 7 pillar sport documents and their metadata.
+      const sportsResult = await sportsService.getAllSports({ limit: 1000 });
 
-      if (!sportsResult.success || !sportsResult.data) {
+      const pillarItems = getAllPillarsWithIds();
+      const sportsItems = sportsResult.success ? sportsResult.data?.items || [] : [];
+
+      const sportById = new Map<string, any>();
+      sportsItems.forEach((sport: any) => {
+        sportById.set(sport.id, sport);
+      });
+
+      // Build popularity from fixed goalie pillars so all 7 always appear.
+      const popularityData: ContentPopularity[] = pillarItems.map((pillar) => {
+        const pillarSport = sportById.get(pillar.docId);
+        const views = pillarSport?.metadata?.totalEnrollments || 0;
+        const completions = pillarSport?.metadata?.totalCompletions || 0;
+        const averageRating = pillarSport?.metadata?.averageRating || 0;
+
         return {
-          success: false,
-          error: {
-            code: 'SPORTS_FETCH_FAILED',
-            message: 'Failed to fetch sports data',
-          },
-          timestamp: new Date(),
+          sportId: pillar.docId,
+          sportName: pillar.name,
+          views,
+          completions,
+          averageRating,
         };
-      }
+      });
 
-      // Use real metadata from sports or return zero values for new data
-      const popularityData: ContentPopularity[] = sportsResult.data.items.map(sport => ({
-        sportId: sport.id,
-        sportName: sport.name,
-        views: sport.metadata?.totalEnrollments || 0,
-        completions: sport.metadata?.totalCompletions || 0,
-        averageRating: sport.metadata?.averageRating || 0,
-      }));
-
-      // Sort by views descending
+      // Sort by views descending while keeping all pillars in the dataset.
       popularityData.sort((a, b) => b.views - a.views);
 
       return {
@@ -407,10 +426,14 @@ export class AnalyticsService extends BaseDatabaseService {
   }
 
   private async getEngagementAnalytics() {
-    // Query real engagement data from sport_progress and quiz_attempts collections
+    // Query real engagement data from sport_progress and quiz attempt collections
     try {
-      const [progressResult, quizAttemptsResult] = await Promise.all([
+      const [progressResult, videoQuizAttemptsResult, legacyQuizAttemptsResult] = await Promise.all([
         this.query<any>('sport_progress', {}),
+        this.query<any>('video_quiz_progress', {
+          where: [{ field: 'status', operator: '==', value: 'submitted' }],
+          limit: 10000
+        }),
         this.query<any>('quiz_attempts', {
           where: [{ field: 'isCompleted', operator: '==', value: true }],
           limit: 10000
@@ -418,7 +441,13 @@ export class AnalyticsService extends BaseDatabaseService {
       ]);
 
       const progressData = progressResult.success ? progressResult.data?.items || [] : [];
-      const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+      const videoQuizAttempts = videoQuizAttemptsResult.success
+        ? videoQuizAttemptsResult.data?.items || []
+        : [];
+      const legacyQuizAttempts = legacyQuizAttemptsResult.success
+        ? legacyQuizAttemptsResult.data?.items || []
+        : [];
+      const quizAttempts = [...videoQuizAttempts, ...legacyQuizAttempts];
 
       // Calculate total quiz attempts and average score
       const totalQuizAttempts = quizAttempts.length;
@@ -461,6 +490,18 @@ export class AnalyticsService extends BaseDatabaseService {
         }
       };
     }
+  }
+
+  private getQuizAttemptDate(attempt: any): Date | null {
+    const rawDate = attempt?.completedAt || attempt?.submittedAt;
+    if (!rawDate) return null;
+
+    if (typeof rawDate?.toDate === 'function') {
+      return rawDate.toDate();
+    }
+
+    const parsed = new Date(rawDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   // System health check methods

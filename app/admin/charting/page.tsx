@@ -484,7 +484,10 @@ function AdminChartingContent() {
                 </div>
               </div>
 
-              <Button asChild className="w-full">
+              <Button
+                asChild
+                className="w-full bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500"
+              >
                 <Link href="/admin/charting/goalies">
                   View All Goalies
                   <ArrowRight className="ml-2 h-4 w-4" />

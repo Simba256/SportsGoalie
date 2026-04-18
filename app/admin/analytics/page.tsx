@@ -39,8 +39,10 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { format } from 'date-fns';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { analyticsService, PlatformAnalytics, UserEngagementData, ContentPopularity, SystemHealth } from '@/lib/database/services/analytics.service';
+import { getAllPillarsWithIds } from '@/lib/utils/pillars';
 import { toast } from 'sonner';
 
 export default function AdminAnalyticsPage() {
@@ -59,6 +61,31 @@ function AnalyticsContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState('30');
+
+  const contentPerformanceData: ContentPopularity[] =
+    contentPopularity.length > 0
+      ? contentPopularity
+      : getAllPillarsWithIds().map((pillar) => ({
+          sportId: pillar.docId,
+          sportName: pillar.name,
+          views: 0,
+          completions: 0,
+          averageRating: 0,
+        }));
+
+  const xAxisInterval = Math.max(0, Math.floor(engagementData.length / 7) - 1);
+
+  const formatXAxisDate = (value: string) => {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return format(parsed, 'MMM d');
+  };
+
+  const formatTooltipDate = (value: string) => {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return format(parsed, 'MMM d, yyyy');
+  };
 
   const fetchAnalytics = async (showRefreshToast = false) => {
     try {
@@ -288,11 +315,16 @@ function AnalyticsContent() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={engagementData}>
+                    <LineChart data={engagementData} margin={{ top: 8, right: 12, left: 0, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={formatXAxisDate}
+                        interval={xAxisInterval}
+                        minTickGap={24}
+                      />
                       <YAxis />
-                      <Tooltip />
+                      <Tooltip labelFormatter={(value) => formatTooltipDate(String(value))} />
                       <Line
                         type="monotone"
                         dataKey="activeUsers"
@@ -314,11 +346,16 @@ function AnalyticsContent() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={engagementData}>
+                    <BarChart data={engagementData} margin={{ top: 8, right: 12, left: 0, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={formatXAxisDate}
+                        interval={xAxisInterval}
+                        minTickGap={24}
+                      />
                       <YAxis />
-                      <Tooltip />
+                      <Tooltip labelFormatter={(value) => formatTooltipDate(String(value))} />
                       <Bar dataKey="quizAttempts" fill="#18181b" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -332,14 +369,14 @@ function AnalyticsContent() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Popular Sports</CardTitle>
+                  <CardTitle>Popular Pillars</CardTitle>
                   <CardDescription>
-                    Most viewed sports content
+                    Most viewed goalie pillar content
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {contentPopularity.slice(0, 5).map((item, index) => (
+                    {contentPerformanceData.map((item, index) => (
                       <div key={item.sportId} className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-xs font-medium">
@@ -364,14 +401,14 @@ function AnalyticsContent() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Content Ratings</CardTitle>
+                  <CardTitle>Pillar Ratings</CardTitle>
                   <CardDescription>
-                    Average user ratings by sport
+                    Average user ratings by pillar
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={contentPopularity.slice(0, 6)}>
+                    <BarChart data={contentPerformanceData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="sportName" angle={-45} textAnchor="end" height={80} />
                       <YAxis domain={[0, 5]} />
