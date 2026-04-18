@@ -6,6 +6,7 @@ import { Sport, Skill, DifficultyLevel, PILLARS, PacingLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { onboardingService } from '@/lib/database';
+import { ProgressService } from '@/lib/database/services/progress.service';
 import { useAuth } from '@/lib/auth/context';
 import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
 import { SkeletonPillarDetail } from '@/components/ui/skeletons';
@@ -20,6 +21,7 @@ import {
   Zap,
   TrendingUp,
   Star,
+  Lock,
 } from 'lucide-react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -184,12 +186,14 @@ function SkillCard({
   skill,
   pillarId,
   isUserLevel,
+  isLocked,
   progress,
   accentColor,
 }: {
   skill: Skill;
   pillarId: string;
   isUserLevel: boolean;
+  isLocked?: boolean;
   progress: { percentage: number; isCompleted: boolean } | null | undefined;
   accentColor: string;
 }) {
@@ -197,7 +201,52 @@ function SkillCard({
   const isCompleted = hasAttempt && progress!.isCompleted;
   const isInProgress = hasAttempt && !isCompleted;
 
-  const topBorderColor = isCompleted ? '#2563eb' : isInProgress ? '#dc2626' : accentColor;
+  const topBorderColor = isLocked
+    ? '#cbd5e1'
+    : isCompleted
+    ? '#2563eb'
+    : isInProgress
+    ? '#dc2626'
+    : accentColor;
+
+  // Locked card: not clickable, greyed out, lock icon
+  if (isLocked) {
+    return (
+      <div
+        className="relative h-full rounded-2xl border border-slate-200/80 bg-slate-50 shadow-sm overflow-hidden flex flex-col opacity-70"
+        aria-disabled="true"
+        title="Complete the current level to unlock this skill"
+      >
+        <div className="h-1 w-full" style={{ backgroundColor: topBorderColor }} />
+        <div className="p-5 flex flex-col flex-1">
+          <div className="flex items-center justify-end mb-3">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">
+              <Lock className="w-3 h-3" /> Locked
+            </span>
+          </div>
+          <h4 className="font-bold text-base leading-snug text-slate-500">{skill.name}</h4>
+          {skill.description && (
+            <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 mt-2">{skill.description}</p>
+          )}
+          <div className="flex-1" />
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              {skill.estimatedTimeToComplete > 0 && (
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+                  {skill.estimatedTimeToComplete} min
+                </span>
+              )}
+            </div>
+            <Lock className="w-4 h-4 text-slate-300" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Link href={`/pillars/${pillarId}/skills/${skill.id}`} className="block group h-full">
@@ -295,6 +344,8 @@ function SkillsGroup({
   skills,
   pillarId,
   userLevel,
+  isLocked,
+  unlockHint,
   skillProgress,
   pillarColor,
 }: {
@@ -302,12 +353,14 @@ function SkillsGroup({
   skills: Skill[];
   pillarId: string;
   userLevel: PacingLevel | null;
+  isLocked?: boolean;
+  unlockHint?: string;
   skillProgress: SkillProgress;
   pillarColor: string;
 }) {
   const cfg = LEVEL_CONFIG[difficulty];
   const Icon = cfg.icon;
-  const isUserLevel = userLevel === difficulty;
+  const isUserLevel = !isLocked && userLevel === difficulty;
   const completedCount = skills.filter(s => skillProgress[s.id]?.isCompleted).length;
   const cardAccent = PILLAR_CARD_ACCENT[pillarColor] ?? '#2563eb';
 
@@ -316,32 +369,54 @@ function SkillsGroup({
   return (
     <div className="space-y-4">
       {/* Section header bar */}
-      <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between ${
-        isUserLevel ? `${cfg.bg} ${cfg.border}` : 'bg-slate-50 border-slate-200'
+      <div className={`rounded-2xl border px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${
+        isLocked
+          ? 'bg-slate-100 border-slate-200'
+          : isUserLevel
+          ? `${cfg.bg} ${cfg.border}`
+          : 'bg-slate-50 border-slate-200'
       }`}>
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-            isUserLevel ? `bg-white/80 ${cfg.border} border` : 'bg-white border border-slate-200'
+            isLocked
+              ? 'bg-slate-200 border border-slate-300'
+              : isUserLevel
+              ? `bg-white/80 ${cfg.border} border`
+              : 'bg-white border border-slate-200'
           }`}>
-            <Icon className={`w-4 h-4 ${isUserLevel ? cfg.color : 'text-slate-400'}`} />
+            {isLocked ? (
+              <Lock className="w-4 h-4 text-slate-400" />
+            ) : (
+              <Icon className={`w-4 h-4 ${isUserLevel ? cfg.color : 'text-slate-400'}`} />
+            )}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-sm ${isUserLevel ? cfg.color : 'text-foreground'}`}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className={`font-bold text-sm ${
+                isLocked ? 'text-slate-500' : isUserLevel ? cfg.color : 'text-foreground'
+              }`}>
                 {cfg.label}
               </h3>
-              {isUserLevel && (
+              {isLocked ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 border border-slate-300">
+                  Locked
+                </span>
+              ) : isUserLevel ? (
                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/80 ${cfg.color} ${cfg.border} border`}>
                   Your Level
                 </span>
-              )}
+              ) : null}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">{cfg.tagline}</p>
+            <p className={`text-xs mt-0.5 ${isLocked ? 'text-slate-500' : 'text-muted-foreground'}`}>
+              {isLocked && unlockHint ? unlockHint : cfg.tagline}
+            </p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold text-foreground">{skills.length} skills</p>
-          {completedCount > 0 && (
+          <p className={`text-sm font-semibold ${isLocked ? 'text-slate-500' : 'text-foreground'}`}>
+            {skills.length} skills
+          </p>
+          {!isLocked && completedCount > 0 && (
             <p className="text-xs text-blue-600 font-medium">{completedCount} completed</p>
           )}
         </div>
@@ -355,6 +430,7 @@ function SkillsGroup({
             skill={skill}
             pillarId={pillarId}
             isUserLevel={isUserLevel}
+            isLocked={isLocked}
             progress={skillProgress[skill.id]}
             accentColor={cardAccent}
           />
@@ -380,6 +456,9 @@ export default function PillarDetailPage() {
   const [userLevel, setUserLevel] = useState<PacingLevel | null>(null);
   const [userScore, setUserScore] = useState<number | null>(null);
   const [levelLoading, setLevelLoading] = useState(false);
+  // Per-pillar level unlocking (sport_progress)
+  const [currentLevel, setCurrentLevel] = useState<DifficultyLevel | null>(null);
+  const [unlockedLevels, setUnlockedLevels] = useState<DifficultyLevel[]>([]);
 
   // ── Load pillar + skills ──────────────────────────────────────────────────
   useEffect(() => {
@@ -429,6 +508,23 @@ export default function PillarDetailPage() {
     load();
   }, [user]);
 
+  // ── Load per-pillar current level + unlocked levels ──────────────────────
+  useEffect(() => {
+    if (!user || !pillarId) return;
+    const load = async () => {
+      try {
+        const result = await ProgressService.getOrBootstrapPillarLevel(user.id, pillarId);
+        if (result.success && result.data) {
+          setCurrentLevel(result.data.currentLevel);
+          setUnlockedLevels(result.data.unlockedLevels);
+        }
+      } catch {
+        // non-blocking
+      }
+    };
+    load();
+  }, [user, pillarId]);
+
   // ── Load skill progress ───────────────────────────────────────────────────
   useEffect(() => {
     if (!user || !skills.length) return;
@@ -468,19 +564,18 @@ export default function PillarDetailPage() {
     return { icon: p.icon, color: 'blue' };
   };
 
-  // Only show skills at the goalie's assessed level (or all if no level yet)
-  const filteredSkills = userLevel
-    ? skills.filter(s => s.difficulty === userLevel)
-    : skills;
-
+  // Show all skills; locked groups render visibly but with a grey/locked treatment.
   const skillsByDifficulty: Record<DifficultyLevel, Skill[]> = {
-    introduction: filteredSkills.filter(s => s.difficulty === 'introduction'),
-    development: filteredSkills.filter(s => s.difficulty === 'development'),
-    refinement: filteredSkills.filter(s => s.difficulty === 'refinement'),
+    introduction: skills.filter(s => s.difficulty === 'introduction'),
+    development: skills.filter(s => s.difficulty === 'development'),
+    refinement: skills.filter(s => s.difficulty === 'refinement'),
   };
 
-  const completedTotal = filteredSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
-  const progressPct = filteredSkills.length > 0 ? Math.round((completedTotal / filteredSkills.length) * 100) : 0;
+  // Only count completed skills at unlocked levels for the header progress bar.
+  const unlockedSet = new Set(unlockedLevels);
+  const unlockedSkills = skills.filter(s => unlockedSet.has(s.difficulty));
+  const completedTotal = unlockedSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+  const progressPct = unlockedSkills.length > 0 ? Math.round((completedTotal / unlockedSkills.length) * 100) : 0;
 
   // ── States ────────────────────────────────────────────────────────────────
   if (loading) {
@@ -508,10 +603,28 @@ export default function PillarDetailPage() {
   const heroTheme = HERO_THEME[color] ?? HERO_THEME.blue;
   const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
-  // Show only the user's level section, or all if no level determined
-  const orderedDifficulties = userLevel
-    ? [userLevel] as DifficultyLevel[]
-    : DIFFICULTY_ORDER;
+  // Render all three sections, marking locked ones as locked.
+  const orderedDifficulties = DIFFICULTY_ORDER;
+
+  const buildUnlockHint = (difficulty: DifficultyLevel): string => {
+    if (difficulty === 'development') {
+      const introSkills = skillsByDifficulty.introduction;
+      const passed = introSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+      const needed = Math.max(1, Math.ceil(introSkills.length * 0.7));
+      return introSkills.length === 0
+        ? 'Locked — complete Introduction skills first.'
+        : `Pass ${Math.max(0, needed - passed)} more Introduction skill${needed - passed === 1 ? '' : 's'} to unlock.`;
+    }
+    if (difficulty === 'refinement') {
+      const devSkills = skillsByDifficulty.development;
+      const passed = devSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+      const needed = Math.max(1, Math.ceil(devSkills.length * 0.7));
+      return devSkills.length === 0
+        ? 'Locked — unlock Development first.'
+        : `Pass ${Math.max(0, needed - passed)} more Development skill${needed - passed === 1 ? '' : 's'} to unlock.`;
+    }
+    return 'Locked.';
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -608,7 +721,7 @@ export default function PillarDetailPage() {
                       Score range: <span className="font-semibold text-white">{levelCfg.range}</span>
                     </p>
                     <div className="rounded-xl border border-white/20 bg-white/90 p-3 text-xs font-semibold text-slate-800">
-                      {skillsByDifficulty[userLevel].length} skills at your level —&nbsp;
+                      {skillsByDifficulty[currentLevel ?? userLevel].length} skills at your pillar level —&nbsp;
                       <span className="font-black">start here</span>
                     </div>
                   </div>
@@ -637,17 +750,22 @@ export default function PillarDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Skills <span className="text-muted-foreground font-normal text-base">({filteredSkills.length})</span>
+            Skills <span className="text-muted-foreground font-normal text-base">({skills.length})</span>
           </h2>
-          {userLevel && (
+          {currentLevel && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Star className="w-3.5 h-3.5 text-amber-400" />
-              <span>Showing skills for your level: <span className="font-semibold text-foreground">{userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span></span>
+              <span>
+                Your level in this pillar:{' '}
+                <span className="font-semibold text-foreground capitalize">{currentLevel}</span>
+                <span className="mx-1">·</span>
+                {unlockedLevels.length} of 3 unlocked
+              </span>
             </div>
           )}
         </div>
 
-        {filteredSkills.length === 0 ? (
+        {skills.length === 0 ? (
           <div className="bg-card rounded-2xl border border-border p-12 text-center">
             <BookOpen className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
             <p className="font-semibold text-foreground">Skills coming soon</p>
@@ -655,17 +773,22 @@ export default function PillarDetailPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {orderedDifficulties.map(difficulty => (
-              <SkillsGroup
-                key={difficulty}
-                difficulty={difficulty}
-                skills={skillsByDifficulty[difficulty]}
-                pillarId={pillarId}
-                userLevel={userLevel}
-                skillProgress={skillProgress}
-                pillarColor={color}
-              />
-            ))}
+            {orderedDifficulties.map(difficulty => {
+              const isLocked = unlockedLevels.length > 0 && !unlockedSet.has(difficulty);
+              return (
+                <SkillsGroup
+                  key={difficulty}
+                  difficulty={difficulty}
+                  skills={skillsByDifficulty[difficulty]}
+                  pillarId={pillarId}
+                  userLevel={currentLevel ?? userLevel}
+                  isLocked={isLocked}
+                  unlockHint={isLocked ? buildUnlockHint(difficulty) : undefined}
+                  skillProgress={skillProgress}
+                  pillarColor={color}
+                />
+              );
+            })}
           </div>
         )}
       </section>

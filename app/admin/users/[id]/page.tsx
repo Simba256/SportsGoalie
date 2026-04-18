@@ -68,6 +68,9 @@ import { CourseProgress } from '@/components/admin/analytics/CourseProgress';
 import { QuizAttemptHistory } from '@/components/admin/analytics/QuizAttemptHistory';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import { ChartingPerformanceSection } from '@/components/admin/charting/ChartingPerformanceSection';
+import { ProgressService } from '@/lib/database/services/progress.service';
+import { sportsService } from '@/lib/database/services/sports.service';
+import { getAllPillarsWithIds, getPillarColorClasses } from '@/lib/utils/pillars';
 
 export default function AdminUserDetailsPage() {
   return (
@@ -109,6 +112,20 @@ function UserDetailsContent() {
   const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
   const [loadingCharting, setLoadingCharting] = useState(false);
   const [chartingLoaded, setChartingLoaded] = useState(false);
+
+  // Per-pillar level snapshot (current level + progress toward next unlock)
+  const [pillarLevels, setPillarLevels] = useState<
+    Array<{
+      pillarId: string;
+      pillarName: string;
+      pillarColor: string;
+      currentLevel: import('@/types').DifficultyLevel;
+      unlockedLevels: import('@/types').DifficultyLevel[];
+      totalAtCurrent: number;
+      passedAtCurrent: number;
+    }>
+  >([]);
+  const [pillarLevelsLoading, setPillarLevelsLoading] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -209,6 +226,64 @@ function UserDetailsContent() {
     }
   };
 
+  const fetchPillarLevels = async () => {
+    try {
+      setPillarLevelsLoading(true);
+      const pillars = getAllPillarsWithIds();
+
+      const rows = await Promise.all(
+        pillars.map(async (pillar) => {
+          try {
+            const levelResult = await ProgressService.getOrBootstrapPillarLevel(userId, pillar.docId);
+            const currentLevel =
+              levelResult.success && levelResult.data ? levelResult.data.currentLevel : 'introduction';
+            const unlockedLevels: import('@/types').DifficultyLevel[] =
+              levelResult.success && levelResult.data
+                ? levelResult.data.unlockedLevels
+                : ['introduction'];
+
+            // Count skills at the current level + how many have been passed.
+            const skillsResult = await sportsService.getSkillsByDifficulty(pillar.docId, currentLevel);
+            const skills = skillsResult.success ? skillsResult.data?.items ?? [] : [];
+
+            const completionResults = await Promise.all(
+              skills.map((s) => ProgressService.getSkillProgress(userId, s.id))
+            );
+            const passed = completionResults.filter(
+              (r) => r.success && r.data?.status === 'completed'
+            ).length;
+
+            return {
+              pillarId: pillar.docId,
+              pillarName: pillar.shortName ?? pillar.name,
+              pillarColor: pillar.color,
+              currentLevel,
+              unlockedLevels,
+              totalAtCurrent: skills.length,
+              passedAtCurrent: passed,
+            };
+          } catch {
+            return {
+              pillarId: pillar.docId,
+              pillarName: pillar.shortName ?? pillar.name,
+              pillarColor: pillar.color,
+              currentLevel: 'introduction' as const,
+              unlockedLevels: ['introduction'] as import('@/types').DifficultyLevel[],
+              totalAtCurrent: 0,
+              passedAtCurrent: 0,
+            };
+          }
+        })
+      );
+
+      setPillarLevels(rows);
+    } catch (error) {
+      console.error('Error fetching pillar levels:', error);
+    } finally {
+      setPillarLevelsLoading(false);
+    }
+  };
+
   const fetchCharting = async () => {
     if (chartingLoaded) return;
     try {
@@ -249,6 +324,7 @@ function UserDetailsContent() {
     if (!userId) return;
     if (initialTab === 'charting') fetchCharting();
     if (initialTab === 'analytics' || initialTab === 'progress') fetchAnalytics();
+    if (initialTab === 'progress') fetchPillarLevels();
     if (initialTab === 'messages') fetchMessages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, initialTab]);
@@ -425,7 +501,7 @@ function UserDetailsContent() {
           <TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-red-100 bg-white p-2 shadow-sm">
             <TabsTrigger value="profile" className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Profile</TabsTrigger>
             <TabsTrigger value="analytics" onClick={fetchAnalytics} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Analytics</TabsTrigger>
-            <TabsTrigger value="progress" onClick={fetchAnalytics} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Progress</TabsTrigger>
+            <TabsTrigger value="progress" onClick={() => { fetchAnalytics(); fetchPillarLevels(); }} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Progress</TabsTrigger>
             <TabsTrigger value="charting" onClick={fetchCharting} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Charting</TabsTrigger>
             <TabsTrigger value="messages" onClick={fetchMessages} className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Messages</TabsTrigger>
             <TabsTrigger value="notifications" className="rounded-md border border-transparent px-4 py-2 data-[state=active]:border-red-200 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">Notifications</TabsTrigger>
@@ -726,6 +802,83 @@ function UserDetailsContent() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Per-pillar level progression */}
+            <Card className={`${themedCard} mt-6`}>
+              <CardHeader>
+                <CardTitle className="text-slate-900">Pillar progression</CardTitle>
+                <CardDescription className="text-slate-600">
+                  Each pillar is unlocked independently. A goalie advances once 70% of the skills at
+                  their current level have been passed.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pillarLevelsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading pillar levels…</p>
+                ) : pillarLevels.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No pillar data yet. The goalie needs to engage with a pillar to seed progression.
+                  </p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {pillarLevels.map((row) => {
+                      const colorCls = getPillarColorClasses(row.pillarColor);
+                      const pct =
+                        row.totalAtCurrent > 0
+                          ? Math.min(100, Math.round((row.passedAtCurrent / row.totalAtCurrent) * 100))
+                          : 0;
+                      const threshold = 70;
+                      const nearUnlock = pct >= threshold;
+                      return (
+                        <div
+                          key={row.pillarId}
+                          className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground truncate">
+                                {row.pillarName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {row.unlockedLevels.length} of 3 levels unlocked
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={`capitalize ${colorCls.border} ${colorCls.text}`}
+                            >
+                              {row.currentLevel}
+                            </Badge>
+                          </div>
+
+                          <div className="mt-1 space-y-1.5">
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>Skills passed at current level</span>
+                              <span className="font-semibold text-foreground">
+                                {row.passedAtCurrent} / {row.totalAtCurrent}
+                              </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={`h-full rounded-full transition-all ${colorCls.bg}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              {row.currentLevel === 'refinement'
+                                ? 'Top level reached.'
+                                : nearUnlock
+                                ? `Ready to unlock the next level (threshold ${threshold}%).`
+                                : `Needs ${threshold}% to unlock the next level.`}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Charting Tab */}

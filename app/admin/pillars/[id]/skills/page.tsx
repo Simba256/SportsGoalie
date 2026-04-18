@@ -6,6 +6,8 @@ import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { Sport, Skill, DifficultyLevel } from '@/types';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { sportsService } from '@/lib/database/services/sports.service';
+import { lessonService } from '@/lib/database/services/lesson.service';
+import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
 import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import { HTMLEditorWithAI } from '@/components/ui/html-editor-with-ai';
+import { SkillContentPanel } from '@/components/admin/skills/SkillContentPanel';
+import { useAuth } from '@/lib/auth/context';
 import {
   ArrowLeft,
   Plus,
@@ -30,6 +34,10 @@ import {
   Shapes,
   Grid3X3,
   Dumbbell,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Video,
 } from 'lucide-react';
 import { PILLARS } from '@/types';
 import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
@@ -82,6 +90,7 @@ const defaultFormData: SkillFormData = {
 function AdminSkillsContent() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const sportId = params.id as string;
 
   const [state, setState] = useState<AdminSkillsState>({
@@ -98,6 +107,11 @@ function AdminSkillsContent() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
+  // Inline content panel state (lessons + quizzes per skill)
+  const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
+  const [contentCounts, setContentCounts] = useState<
+    Record<string, { lessons: number; quizzes: number }>
+  >({});
 
   // Custom confirmation dialog for delete operations
   const { dialog, showDeleteConfirmation, setLoading } = useDeleteConfirmation();
@@ -136,12 +150,37 @@ function AdminSkillsContent() {
         return;
       }
 
+      const loadedSkills = skillsResult.data?.items || [];
       setState(prev => ({
         ...prev,
         sport: sportResult.data || null,
-        skills: skillsResult.data?.items || [],
+        skills: loadedSkills,
         loading: false,
       }));
+
+      // Fire-and-forget bulk fetch of lesson/quiz counts per skill so the card
+      // pills are accurate before the admin expands the content panel.
+      if (loadedSkills.length > 0) {
+        void Promise.all(
+          loadedSkills.map(async (skill) => {
+            try {
+              const [lessonsRes, quizzesRes] = await Promise.all([
+                lessonService.getAllLessonsBySkillForAdmin(skill.id),
+                videoQuizService.getVideoQuizzesBySkill(skill.id),
+              ]);
+              return [
+                skill.id,
+                {
+                  lessons: lessonsRes.success ? lessonsRes.data?.items?.length ?? 0 : 0,
+                  quizzes: quizzesRes.success ? quizzesRes.data?.items?.length ?? 0 : 0,
+                },
+              ] as const;
+            } catch {
+              return [skill.id, { lessons: 0, quizzes: 0 }] as const;
+            }
+          })
+        ).then((entries) => setContentCounts(Object.fromEntries(entries)));
+      }
     } catch {
       setState(prev => ({
         ...prev,
@@ -741,6 +780,56 @@ function AdminSkillsContent() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Content pills + manage toggle */}
+                  {(() => {
+                    const counts = contentCounts[skill.id];
+                    const isExpanded = expandedSkillId === skill.id;
+                    return (
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary">
+                            <FileText className="h-3 w-3" />
+                            {counts ? counts.lessons : '–'} lesson{counts?.lessons === 1 ? '' : 's'}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 font-medium text-accent">
+                            <Video className="h-3 w-3" />
+                            {counts ? counts.quizzes : '–'} quiz{counts?.quizzes === 1 ? '' : 'zes'}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setExpandedSkillId((prev) => (prev === skill.id ? null : skill.id))
+                          }
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="mr-1.5 h-3.5 w-3.5" />
+                              Hide content
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="mr-1.5 h-3.5 w-3.5" />
+                              Manage content
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Expanded lessons + quizzes panel */}
+                  {expandedSkillId === skill.id && user?.id && (
+                    <SkillContentPanel
+                      skill={skill}
+                      adminUserId={user.id}
+                      onCountsChange={(counts) =>
+                        setContentCounts((prev) => ({ ...prev, [skill.id]: counts }))
+                      }
+                    />
+                  )}
                 </CardContent>
               </Card>
             ))}

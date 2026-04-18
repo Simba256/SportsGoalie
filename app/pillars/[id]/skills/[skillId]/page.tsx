@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
-import { Sport, Skill, DifficultyLevel } from '@/types';
+import { Sport, Skill, DifficultyLevel, Lesson, VideoQuiz, LessonProgress } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
+import { lessonService } from '@/lib/database/services/lesson.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { customCurriculumService } from '@/lib/database';
 import { customContentService } from '@/lib/database/services/custom-content.service';
@@ -26,6 +27,10 @@ import {
   AlertTriangle,
   Bookmark,
   Share2,
+  FileText,
+  Video,
+  ChevronRight,
+  Eye,
 } from 'lucide-react';
 
 interface SkillDetailState {
@@ -72,6 +77,15 @@ export default function SkillDetailPage() {
   const [isInCurriculum, setIsInCurriculum] = useState(false);
   const [curriculumLoading, setCurriculumLoading] = useState(true);
   const [linkedCustomItems, setLinkedCustomItems] = useState<LinkedCustomItem[]>([]);
+
+  // Lessons + quizzes attached to this skill
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<Record<string, LessonProgress>>({});
+  const [quizzes, setQuizzes] = useState<VideoQuiz[]>([]);
+  const [quizStatusByQuizId, setQuizStatusByQuizId] = useState<
+    Record<string, { best: number; passed: boolean; attempts: number }>
+  >({});
+  const [contentLoading, setContentLoading] = useState(true);
 
   // Check if user is a custom workflow student
   const isCustomWorkflow = user?.workflowType === 'custom';
@@ -240,6 +254,74 @@ export default function SkillDetailPage() {
     loadSkillData();
   }, [sportId, skillId]);
 
+  // Load lessons + quizzes + their per-user progress
+  useEffect(() => {
+    if (!skillId) return;
+
+    const loadContent = async () => {
+      try {
+        setContentLoading(true);
+
+        const [lessonsResult, quizzesResult] = await Promise.all([
+          lessonService.getLessonsBySkill(skillId),
+          videoQuizService.getVideoQuizzesBySkill(skillId, {
+            where: [{ field: 'isPublished', operator: '==', value: true }],
+          }),
+        ]);
+
+        const loadedLessons = (lessonsResult.success ? lessonsResult.data?.items ?? [] : []).filter(
+          (l) => l.status === 'published'
+        );
+        const loadedQuizzes = quizzesResult.success ? quizzesResult.data?.items ?? [] : [];
+        setLessons(loadedLessons);
+        setQuizzes(loadedQuizzes);
+
+        if (user?.id) {
+          // Per-lesson progress
+          const progressResult = await lessonService.getLessonProgressForUser(user.id, { skillId });
+          if (progressResult.success && progressResult.data) {
+            const progressMap: Record<string, LessonProgress> = {};
+            for (const entry of progressResult.data.items) {
+              progressMap[entry.lessonId] = entry;
+            }
+            setLessonProgress(progressMap);
+          }
+
+          // Per-quiz attempt summary
+          const attemptsResult = await videoQuizService.getUserVideoQuizAttempts(user.id, {
+            skillId,
+            completed: true,
+          });
+          if (attemptsResult.success && attemptsResult.data) {
+            const byQuiz: Record<string, { best: number; passed: boolean; attempts: number }> = {};
+            for (const attempt of attemptsResult.data.items) {
+              const key = attempt.videoQuizId || (attempt as { quizId?: string }).quizId;
+              if (!key) continue;
+              const existing = byQuiz[key];
+              const pct = attempt.percentage ?? 0;
+              if (!existing) {
+                byQuiz[key] = { best: pct, passed: pct >= 70, attempts: 1 };
+              } else {
+                byQuiz[key] = {
+                  best: Math.max(existing.best, pct),
+                  passed: existing.passed || pct >= 70,
+                  attempts: existing.attempts + 1,
+                };
+              }
+            }
+            setQuizStatusByQuizId(byQuiz);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load skill content:', err);
+      } finally {
+        setContentLoading(false);
+      }
+    };
+
+    loadContent();
+  }, [skillId, user?.id]);
+
   const getDifficultyColor = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
       case 'introduction':
@@ -260,33 +342,6 @@ export default function SkillDetailPage() {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
-  };
-
-  const handleTakeQuiz = async () => {
-    if (!skillId) return;
-
-    try {
-      console.log('Fetching video quizzes for skillId:', skillId);
-      const quizzesResult = await videoQuizService.getVideoQuizzesBySkill(skillId, {
-        where: [{ field: 'isPublished', operator: '==', value: true }]
-      });
-
-      console.log('Video quiz query result:', quizzesResult);
-
-      if (quizzesResult.success && quizzesResult.data?.items && quizzesResult.data.items.length > 0) {
-        const quiz = quizzesResult.data.items[0];
-        console.log('Found video quiz:', quiz);
-        router.push(`/quiz/video/${quiz.id}`);
-      } else {
-        alert('Video quiz not available yet. Please check back later!');
-        console.log('No video quiz found for skill:', skillId);
-        console.log('Query result:', quizzesResult);
-      }
-    } catch (error) {
-      alert('Unable to load video quiz. Please try again later.');
-      console.error('Error navigating to video quiz:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-    }
   };
 
   // Handle marking lesson as complete (for custom workflow students)
@@ -596,36 +651,122 @@ export default function SkillDetailPage() {
                 </Card>
               )}
 
-              {/* Quiz Section - Dynamically shown if quizzes exist */}
-              {state.quizzesLoading ? (
-                <Card className="bg-gray-50 border-gray-200">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                      <p className="text-sm text-gray-600">Checking for quizzes...</p>
+              {/* Lessons + Quizzes assigned to this skill */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Lessons & Quizzes
+                  </CardTitle>
+                  <CardDescription>
+                    Work through the lessons and test your understanding with quizzes.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {contentLoading ? (
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary" />
+                      Loading content…
                     </div>
-                  </CardContent>
-                </Card>
-              ) : state.hasQuizzes ? (
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="w-8 h-8 text-blue-600" />
-                        <div>
-                          <h4 className="font-medium text-blue-900">Knowledge Check</h4>
-                          <p className="text-sm text-blue-700">
-                            Test your understanding with an interactive quiz
-                          </p>
-                        </div>
-                      </div>
-                      <Button onClick={handleTakeQuiz} className="bg-red-600 hover:bg-red-700 text-white">
-                        Take Quiz
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
+                  ) : lessons.length === 0 && quizzes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No lessons or quizzes have been added to this skill yet.
+                    </p>
+                  ) : (
+                    <>
+                      {/* Lessons */}
+                      {lessons.map((lesson) => {
+                        const progress = lessonProgress[lesson.id];
+                        const isCompleted = !!progress?.completedAt;
+                        const isViewed = !!progress?.viewedAt && !isCompleted;
+                        return (
+                          <Link
+                            key={lesson.id}
+                            href={`/pillars/${sportId}/skills/${skillId}/lessons/${lesson.id}`}
+                            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="flex items-start gap-3 min-w-0">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                                <FileText className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-semibold text-foreground truncate">{lesson.title}</p>
+                                  {isCompleted ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                      <CheckCircle className="h-3 w-3" /> Read
+                                    </span>
+                                  ) : isViewed ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                      <Eye className="h-3 w-3" /> In progress
+                                    </span>
+                                  ) : null}
+                                </div>
+                                {lesson.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                    {lesson.description}
+                                  </p>
+                                )}
+                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                  <Clock className="inline h-3 w-3 mr-1" />
+                                  {lesson.estimatedTimeMinutes} min
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                          </Link>
+                        );
+                      })}
+
+                      {/* Quizzes */}
+                      {quizzes.map((quiz) => {
+                        const status = quizStatusByQuizId[quiz.id];
+                        const passed = status?.passed ?? false;
+                        const hasAttempt = (status?.attempts ?? 0) > 0;
+                        return (
+                          <Link
+                            key={quiz.id}
+                            href={`/quiz/video/${quiz.id}`}
+                            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4 transition-colors hover:border-accent/40 hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="flex items-start gap-3 min-w-0">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent shrink-0">
+                                <Video className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-semibold text-foreground truncate">{quiz.title}</p>
+                                  {passed ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                      <CheckCircle className="h-3 w-3" /> Passed {status?.best}%
+                                    </span>
+                                  ) : hasAttempt ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                                      <Play className="h-3 w-3" /> Best {status?.best}%
+                                    </span>
+                                  ) : null}
+                                </div>
+                                {quiz.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                    {quiz.description}
+                                  </p>
+                                )}
+                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                  {quiz.questions?.length ?? 0} questions
+                                  {typeof quiz.settings?.passingScore === 'number' && (
+                                    <> · passing {quiz.settings.passingScore}%</>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                          </Link>
+                        );
+                      })}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Coach-assigned custom content linked to this skill */}
               {!curriculumLoading && linkedCustomItems.length > 0 && (

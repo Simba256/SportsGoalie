@@ -116,8 +116,9 @@ function VideoQuizPageContent() {
 
       if (result.success) {
         // Record progress for curriculum tracking (handles both automated and custom workflows)
+        let levelUp: { advanced: boolean; newlyUnlocked?: string } = { advanced: false };
         if (user && quiz) {
-          await ProgressService.recordQuizCompletion(
+          const completionResult = await ProgressService.recordQuizCompletion(
             user.id,
             quizId,
             quiz.skillId || '',
@@ -126,6 +127,13 @@ function VideoQuizPageContent() {
             progress.timeSpent || 0,
             progress.percentage >= (quiz.settings?.passingScore || 70)
           );
+
+          if (completionResult.success && completionResult.data?.levelAdvanced) {
+            levelUp = {
+              advanced: true,
+              newlyUnlocked: completionResult.data.newlyUnlockedLevel,
+            };
+          }
 
           // If this is a custom content item, mark it complete in the curriculum
           if (quizId.startsWith('content_')) {
@@ -136,6 +144,13 @@ function VideoQuizPageContent() {
         toast.success('Video quiz completed!', {
           description: `You scored ${progress.percentage.toFixed(1)}%`,
         });
+
+        if (levelUp.advanced && levelUp.newlyUnlocked) {
+          toast.success(`🎉 New level unlocked: ${levelUp.newlyUnlocked}!`, {
+            description: 'Fresh skills are now available for this pillar.',
+            duration: 6000,
+          });
+        }
 
         // Redirect to results page quickly
         setTimeout(() => {
