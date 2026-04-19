@@ -18,6 +18,40 @@ export const CalendarHeatmap = ({
   onDayClick,
   colorScheme = 'default',
 }: CalendarHeatmapProps) => {
+  const toDateSafe = (value: unknown): Date | null => {
+    if (!value) return null;
+
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? null : value;
+    }
+
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'toDate' in value &&
+      typeof (value as { toDate?: () => Date }).toDate === 'function'
+    ) {
+      const converted = (value as { toDate: () => Date }).toDate();
+      return converted instanceof Date && !isNaN(converted.getTime()) ? converted : null;
+    }
+
+    if (typeof value === 'string' || typeof value === 'number') {
+      const parsed = new Date(value);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      const maybeSeconds = (value as { seconds?: unknown; _seconds?: unknown }).seconds
+        ?? (value as { seconds?: unknown; _seconds?: unknown })._seconds;
+      if (typeof maybeSeconds === 'number') {
+        const parsed = new Date(maybeSeconds * 1000);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      }
+    }
+
+    return null;
+  };
+
   const today = startOfDay(new Date());
   const yearStart = addDays(today, -365);
   const yearEnd = addDays(today, 90);
@@ -25,7 +59,10 @@ export const CalendarHeatmap = ({
 
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
-    const dateKey = format(startOfDay(session.date.toDate()), 'yyyy-MM-dd');
+    const normalizedDate = toDateSafe((session as unknown as { date?: unknown }).date);
+    if (!normalizedDate) return acc;
+
+    const dateKey = format(startOfDay(normalizedDate), 'yyyy-MM-dd');
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(session);
     return acc;
