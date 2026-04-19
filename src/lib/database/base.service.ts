@@ -167,9 +167,30 @@ class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      if (this.shouldTrip(error)) {
+        this.onFailure();
+      }
       throw error;
     }
+  }
+
+  private shouldTrip(error: unknown): boolean {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code?: unknown }).code ?? '').toLowerCase()
+        : '';
+
+    // Permanent/user-scope errors should not poison the breaker state.
+    const nonTransientCodes = [
+      'permission-denied',
+      'not-found',
+      'invalid-argument',
+      'already-exists',
+      'failed-precondition',
+      'unauthenticated',
+    ];
+
+    return !nonTransientCodes.includes(code);
   }
 
   private onSuccess(): void {
@@ -191,6 +212,14 @@ class CircuitBreaker {
 export class BaseDatabaseService {
   private circuitBreaker = new CircuitBreaker();
   private retryDelays = [1000, 2000, 4000]; // exponential backoff
+
+  private isCircuitOpenError(error: unknown): boolean {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code?: unknown }).code ?? '').toLowerCase()
+        : '';
+    return code === 'circuit_breaker_open';
+  }
 
   // Enhanced CRUD operations with retry logic
   async create<T>(
@@ -890,7 +919,7 @@ export class BaseDatabaseService {
     operation: () => Promise<T>,
     maxRetries: number = 3
   ): Promise<T> {
-    return this.circuitBreaker.execute(async () => {
+    const runWithRetries = async (): Promise<T> => {
       let lastError: Error = new Error('Unknown error');
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -917,7 +946,18 @@ export class BaseDatabaseService {
         lastError,
         false
       );
-    });
+    };
+
+    try {
+      return await this.circuitBreaker.execute(runWithRetries);
+    } catch (error) {
+      if (this.isCircuitOpenError(error)) {
+        logger.warn('Circuit breaker open; attempting one direct database call', 'BaseDatabaseService');
+        // One direct attempt allows fast recovery after transient spikes.
+        return runWithRetries();
+      }
+      throw error;
+    }
   }
 
   private isNonRetryableError(error: any): boolean {

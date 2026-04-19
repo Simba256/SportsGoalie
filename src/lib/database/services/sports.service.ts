@@ -56,6 +56,29 @@ export class SportsService extends BaseDatabaseService {
   private readonly SPORT_PROGRESS_COLLECTION = 'sport_progress';
   private readonly SKILL_PROGRESS_COLLECTION = 'skill_progress';
 
+  private getErrorCode(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      return String((error as { code?: unknown }).code ?? '');
+    }
+    return '';
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    return '';
+  }
+
+  private isPermissionDeniedError(error: unknown): boolean {
+    const code = this.getErrorCode(error).toLowerCase();
+    const message = this.getErrorMessage(error).toLowerCase();
+    return code.includes('permission-denied') || message.includes('missing or insufficient permissions');
+  }
+
   // Sports CRUD operations
   /**
    * Creates a new sport in the database.
@@ -243,6 +266,30 @@ export class SportsService extends BaseDatabaseService {
 
     try {
       const result = await this.query<Sport>(this.SPORTS_COLLECTION, queryOptions);
+
+      if (!result.success) {
+        if (this.isPermissionDeniedError(result.error)) {
+          logger.warn('Permission denied querying sports; returning empty list', 'SportsService', {
+            error: result.error?.message,
+          });
+          return {
+            success: true,
+            data: {
+              items: [],
+              total: 0,
+              page: 1,
+              limit: queryOptions.limit || 0,
+              hasMore: false,
+              totalPages: 0,
+            },
+            timestamp: new Date(),
+          };
+        }
+
+        logger.error('Sports query failed', 'SportsService', result.error);
+        return result;
+      }
+
       logger.info('Sports query result', 'SportsService', { success: result.success, itemCount: result.data?.items?.length || 0 });
 
       // Apply client-side sorting to avoid index requirements
@@ -261,6 +308,24 @@ export class SportsService extends BaseDatabaseService {
 
       return result;
     } catch (error) {
+      if (this.isPermissionDeniedError(error)) {
+        logger.warn('Permission denied in getAllSports; returning empty list', 'SportsService', {
+          error: this.getErrorMessage(error),
+        });
+        return {
+          success: true,
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            limit: queryOptions.limit || 0,
+            hasMore: false,
+            totalPages: 0,
+          },
+          timestamp: new Date(),
+        };
+      }
+
       logger.error('Error in getAllSports', 'SportsService', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
