@@ -607,6 +607,23 @@ service cloud.firestore {
 
     // ==================== DYNAMIC CHARTING SYSTEM ====================
 
+    // Goalie Charting Profile collection - progression state for goalie self-charting
+    match /goalie_charting_profile/{userId} {
+      // Owner can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Owner can create/bootstrap their own profile, admins can create for any user
+      allow create: if isAuthenticated() &&
+                       (isOwner(userId) || isAdmin()) &&
+                       hasRequiredFields(['userId', 'currentLevel', 'unlockedLevels', 'stats']);
+
+      // Owner can update own progression profile, admins can update any
+      allow update: if isOwnerOrAdmin(userId);
+
+      // Only admins can delete progression profiles
+      allow delete: if isAdmin();
+    }
+
     // Form Templates collection - Dynamic form definitions
     match /form_templates/{templateId} {
       // PUBLIC: Anyone can read active, non-archived templates for form rendering
