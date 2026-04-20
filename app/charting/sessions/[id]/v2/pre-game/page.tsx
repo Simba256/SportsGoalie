@@ -47,8 +47,8 @@ export default function V2PreGamePage() {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState<V2PreGameData>({
-    personalStartTime: '1_hour_before',
-    mentalStateRating: 3,
+    personalStartTime: 'at_the_rink',
+    mentalStateRating: 1,
     mentalStateVoiceNote: undefined,
     routineCompleted: true,
     routineVoiceNote: undefined,

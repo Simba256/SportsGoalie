@@ -23,9 +23,32 @@ export const CalendarHeatmap = ({
   const yearEnd = addDays(today, 90);
   const totalDays = 455;
 
+  const toJsDate = (rawDate: unknown): Date | null => {
+    if (
+      rawDate &&
+      typeof rawDate === 'object' &&
+      'toDate' in rawDate &&
+      typeof (rawDate as { toDate?: unknown }).toDate === 'function'
+    ) {
+      return (rawDate as { toDate: () => Date }).toDate();
+    }
+    if (rawDate instanceof Date) {
+      return rawDate;
+    }
+    if (typeof rawDate === 'string' || typeof rawDate === 'number') {
+      const parsed = new Date(rawDate);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return null;
+  };
+
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
-    const dateKey = format(startOfDay(session.date.toDate()), 'yyyy-MM-dd');
+    const sessionDate = toJsDate((session as unknown as { date?: unknown }).date);
+    if (!sessionDate) return acc;
+    const dateKey = format(startOfDay(sessionDate), 'yyyy-MM-dd');
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(session);
     return acc;

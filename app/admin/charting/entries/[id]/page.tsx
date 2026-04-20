@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { ArrowLeft, Calendar, User, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { V2ChartReadOnlyView } from '@/components/charting/V2ChartReadOnlyView';
 
 export default function AdminChartingEntryDetailPage() {
   return (
@@ -200,6 +201,9 @@ function EntryDetailContent() {
             </div>
           )}
         </Card>
+
+        {/* V2 Chart Data (Game or Practice) */}
+        <V2ChartReadOnlyView entry={entry} session={session} />
 
         {/* Game Overview */}
         {entry.gameOverview && (

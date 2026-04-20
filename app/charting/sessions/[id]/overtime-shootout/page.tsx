@@ -232,7 +232,7 @@ export default function OvertimeShootoutPage() {
               <h1 className="text-3xl font-bold text-gray-900">Overtime & Shootout</h1>
               <p className="text-gray-600">
                 {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
-                {session.opponent && ` vs ${session.opponent}`}
+                {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
               </p>
             </div>
           </div>

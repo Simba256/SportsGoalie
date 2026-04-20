@@ -199,8 +199,9 @@ export class BaseDatabaseService {
     options: { validateSchema?: boolean; retries?: number } = {}
   ): Promise<ApiResponse<{ id: string }>> {
     return this.executeWithRetry(async () => {
+      const sanitizedData = this.removeUndefinedFields(data);
       const docData = {
-        ...data,
+        ...sanitizedData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -229,8 +230,9 @@ export class BaseDatabaseService {
     options: { validateSchema?: boolean; retries?: number } = {}
   ): Promise<ApiResponse<{ id: string }>> {
     return this.executeWithRetry(async () => {
+      const sanitizedData = this.removeUndefinedFields(data);
       const docData = {
-        ...data,
+        ...sanitizedData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };

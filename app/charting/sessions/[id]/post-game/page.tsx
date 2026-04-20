@@ -95,6 +95,7 @@ export default function PostGamePage() {
         if (existingEntry.shootout) entryData.shootout = existingEntry.shootout;
 
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
+        await chartingService.updateSession(sessionId, { status: 'completed' });
         toast.success('Post-Game section saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
@@ -105,6 +106,7 @@ export default function PostGamePage() {
             setExistingEntry(newEntryResult.data);
           }
         }
+        await chartingService.updateSession(sessionId, { status: 'completed' });
         toast.success('Post-Game section created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }
@@ -155,7 +157,7 @@ export default function PostGamePage() {
               <h1 className="text-3xl font-bold text-gray-900">Post-Game Review</h1>
               <p className="text-gray-600">
                 {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
-                {session.opponent && ` vs ${session.opponent}`}
+                {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
               </p>
             </div>
           </div>

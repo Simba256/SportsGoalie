@@ -53,13 +53,13 @@ export default function V2PostGamePage() {
 
   const [formData, setFormData] = useState<V2PostGameData>({
     overallFeeling: '',
-    overallGameFactorRating: 3,
+    overallGameFactorRating: 1,
     overallGameFactorVoiceNote: undefined,
     mindControlAverage: 0,
     goodGoalCount: 0,
     badGoalCount: 0,
     goodDecisionRate: 0,
-    gameRetentionRating: 3,
+    gameRetentionRating: 1,
     gameRetentionVoiceNote: undefined,
     mindVaultEntry: '',
     factorRatioSummary: 0,
@@ -182,6 +182,8 @@ export default function V2PostGamePage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await chartingService.createChartingEntry(entryData as any);
       }
+
+      await chartingService.updateSession(sessionId, { status: 'completed' });
 
       toast.success('Post-Game section saved!');
       router.push(`/charting/sessions/${sessionId}`);

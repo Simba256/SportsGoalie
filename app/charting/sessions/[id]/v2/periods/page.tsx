@@ -49,7 +49,7 @@ function createEmptyPeriod(): V2PeriodData {
   return {
     mindControlRating: 3,
     mindControlVoiceNote: undefined,
-    periodFactorRatio: 3,
+    periodFactorRatio: 1,
     goalsAgainst: 0,
     goals: [],
   };

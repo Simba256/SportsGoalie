@@ -220,12 +220,20 @@ export default function ChartingPage() {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'completed':
+      case 'charted':
         return 'default';
       case 'in-progress':
         return 'secondary';
       default:
         return 'outline';
     }
+  };
+
+  const getDisplayStatus = (session: Session) => {
+    if (session.status === 'completed') {
+      return 'completed';
+    }
+    return chartedSessionIds.has(session.id) ? 'charted' : session.status;
   };
 
   if (authLoading || loading) {
@@ -376,13 +384,21 @@ export default function ChartingPage() {
               
             </div>
 
-            <div className="flex-1 flex items-center">
+            <div className="flex-1 flex flex-col justify-center gap-2">
               <Button
                 onClick={() => router.push('/charting/sessions/new')}
                 className="w-full h-11 bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Session
+              </Button>
+              <Button
+                onClick={() => router.push('/charting/analytics')}
+                variant="outline"
+                className="w-full h-11 rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                View Analytics
               </Button>
             </div>
           </div>
@@ -445,8 +461,8 @@ export default function ChartingPage() {
                               {session.type === 'game' ? 'Game' : 'Practice'}
                               {session.opponent && ` vs ${session.opponent}`}
                             </h4>
-                            <Badge variant={getStatusBadgeVariant(session.status)}>
-                              {session.status}
+                            <Badge variant={getStatusBadgeVariant(getDisplayStatus(session))}>
+                              {getDisplayStatus(session)}
                             </Badge>
                           </div>
                           {session.location && (

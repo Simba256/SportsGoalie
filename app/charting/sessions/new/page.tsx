@@ -190,23 +190,25 @@ export default function NewSessionPage() {
               </div>
             </div>
 
-            {/* Opponent (only for games) */}
-            {formData.type === 'game' && (
-              <div className="space-y-2">
-                <Label htmlFor="opponent" className="text-sm font-semibold text-foreground flex items-center gap-2">
+            {/* Session Name / Opponent */}
+            <div className="space-y-2">
+              <Label htmlFor="opponent" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                {formData.type === 'game' ? (
                   <Users className="w-4 h-4 text-blue-600" />
-                  Opponent
-                </Label>
-                <Input
-                  id="opponent"
-                  type="text"
-                  placeholder="Enter opponent team name"
-                  value={formData.opponent}
-                  onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                  className="border-border focus-visible:ring-blue-500"
-                />
-              </div>
-            )}
+                ) : (
+                  <Tag className="w-4 h-4 text-blue-600" />
+                )}
+                {formData.type === 'game' ? 'Opponent' : 'Practice Name'}
+              </Label>
+              <Input
+                id="opponent"
+                type="text"
+                placeholder={formData.type === 'game' ? 'Enter opponent team name' : 'Enter practice session name'}
+                value={formData.opponent}
+                onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
+                className="border-border focus-visible:ring-blue-500"
+              />
+            </div>
 
             {/* Tags */}
             <div className="space-y-3">
