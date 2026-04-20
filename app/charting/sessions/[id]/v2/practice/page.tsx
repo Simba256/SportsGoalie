@@ -301,6 +301,8 @@ export default function V2PracticeChartPage() {
         await chartingService.createChartingEntry(entryData as any);
       }
 
+      await chartingService.updateSession(sessionId, { status: 'completed' });
+
       toast.success('Practice chart saved!');
       router.push(`/charting/sessions/${sessionId}`);
     } catch (error) {

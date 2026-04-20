@@ -164,10 +164,26 @@ export default function SessionDetailPage() {
   const sessionDateObj = (() => {
     const rawDate = session.date as unknown;
     if (rawDate && typeof rawDate === 'object' && 'toDate' in rawDate && typeof (rawDate as { toDate?: unknown }).toDate === 'function') {
-      return (rawDate as { toDate: () => Date }).toDate();
+      const converted = (rawDate as { toDate: () => Date }).toDate();
+      if (!Number.isNaN(converted.getTime())) {
+        return converted;
+      }
     }
     if (rawDate instanceof Date) {
-      return rawDate;
+      if (!Number.isNaN(rawDate.getTime())) {
+        return rawDate;
+      }
+    }
+    if (rawDate && typeof rawDate === 'object') {
+      const maybeSeconds =
+        (rawDate as { seconds?: unknown; _seconds?: unknown }).seconds ??
+        (rawDate as { seconds?: unknown; _seconds?: unknown })._seconds;
+      if (typeof maybeSeconds === 'number') {
+        const parsed = new Date(maybeSeconds * 1000);
+        if (!Number.isNaN(parsed.getTime())) {
+          return parsed;
+        }
+      }
     }
     if (typeof rawDate === 'string' || typeof rawDate === 'number') {
       const parsed = new Date(rawDate);
@@ -191,7 +207,7 @@ export default function SessionDetailPage() {
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">
                   {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
-                  {session.opponent && ` vs ${session.opponent}`}
+                  {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
                 </h1>
                 <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
                 {session.result && (

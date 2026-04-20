@@ -30,7 +30,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react';
-import { startOfWeek, startOfMonth, subMonths, isAfter } from 'date-fns';
+import { startOfWeek, startOfMonth, subMonths } from 'date-fns';
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
 
@@ -106,7 +106,7 @@ export default function ChartingAnalyticsPage() {
 
     return sessions.filter((s) => {
       const sessionDate = toDateSafe((s as unknown as { date?: unknown }).date);
-      return sessionDate ? isAfter(sessionDate, startDate) : false;
+      return sessionDate ? sessionDate >= startDate : false;
     });
   };
 
@@ -415,7 +415,7 @@ export default function ChartingAnalyticsPage() {
 
   const toDateSafe = (value: unknown): Date | null => {
     if (value instanceof Date) {
-      return value;
+      return Number.isNaN(value.getTime()) ? null : value;
     }
     if (
       value &&
@@ -423,7 +423,17 @@ export default function ChartingAnalyticsPage() {
       'toDate' in value &&
       typeof (value as { toDate?: unknown }).toDate === 'function'
     ) {
-      return (value as { toDate: () => Date }).toDate();
+      const converted = (value as { toDate: () => Date }).toDate();
+      return Number.isNaN(converted.getTime()) ? null : converted;
+    }
+    if (value && typeof value === 'object') {
+      const maybeSeconds =
+        (value as { seconds?: unknown; _seconds?: unknown }).seconds ??
+        (value as { seconds?: unknown; _seconds?: unknown })._seconds;
+      if (typeof maybeSeconds === 'number') {
+        const parsed = new Date(maybeSeconds * 1000);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
     }
     if (typeof value === 'string' || typeof value === 'number') {
       const parsed = new Date(value);
@@ -437,9 +447,14 @@ export default function ChartingAnalyticsPage() {
   const hasLegacyEntry = (sessionId: string) => entries.some((e) => e.sessionId === sessionId);
   const hasDynamicEntry = (sessionId: string) => dynamicEntries.some((e) => e.sessionId === sessionId);
   const getSessionDisplayStatus = (session: Session): 'completed' | 'charted' | 'in-progress' | 'scheduled' => {
+    // Always trust canonical session status first.
     if (session.status === 'completed') return 'completed';
+    if (session.status === 'in-progress') return 'in-progress';
+    if (session.status === 'pre-game' || session.status === 'scheduled') return 'scheduled';
+
+    // Fallback for legacy or unexpected statuses.
     if (hasLegacyEntry(session.id) || hasDynamicEntry(session.id)) return 'charted';
-    return session.status === 'pre-game' ? 'scheduled' : 'in-progress';
+    return 'in-progress';
   };
 
   const getStatusBadgeClasses = (status: ReturnType<typeof getSessionDisplayStatus>) => {
@@ -775,11 +790,10 @@ export default function ChartingAnalyticsPage() {
   const postGameStats = calculatePostGameStats();
 
   const filteredSessions = getFilteredSessions();
-  const filteredEntries = getFilteredEntries();
 
   const getTimeButtonClass = (range: TimeRange) => {
     if (timeRange === range) {
-      return 'rounded-xl border border-red-600 bg-gradient-to-r from-red-600 to-red-500 px-4 text-white shadow-sm hover:from-red-700 hover:to-red-600';
+      return 'rounded-xl border border-red-600 bg-red-600 px-4 text-white shadow-sm hover:bg-red-700';
     }
     return 'rounded-xl border border-transparent bg-transparent px-4 text-slate-700 hover:border-slate-200 hover:bg-slate-100/90 hover:text-slate-900';
   };
@@ -802,30 +816,30 @@ export default function ChartingAnalyticsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-[#1a1a3e] to-slate-900 p-6 md:p-8">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-56 h-56 bg-red-500/8 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-          <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+        <div className="relative rounded-2xl overflow-hidden border border-red-100 bg-red-50 p-6 md:p-8 shadow-sm">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-red-500/12 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-56 h-56 bg-red-500/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
+          <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle, #dc2626 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <div className="relative flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
                 size="icon"
-                className="border-white/25 bg-white/10 text-white hover:bg-white/20"
+                className="border-red-200 bg-white/80 text-red-700 hover:bg-red-50"
                 onClick={() => router.push('/charting')}
               >
               <ArrowLeft className="w-4 h-4" />
               </Button>
               <div>
-                <h1 className="text-3xl font-black text-white">Performance Analytics</h1>
-                <p className="text-white/60">Track trends, consistency, and growth with a clearer view of your game.</p>
+                <h1 className="text-3xl font-black text-slate-900">Performance Analytics</h1>
+                <p className="text-slate-600">Track trends, consistency, and growth with a clearer view of your game.</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Time Range Filter */}
-        <Card className="border border-red-100/80 bg-gradient-to-r from-red-50/70 via-white to-blue-50/70 p-3 md:p-4 shadow-sm">
+        <Card className="border border-red-100/80 bg-red-50/70 p-3 md:p-4 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Analytics Window</p>
@@ -881,7 +895,7 @@ export default function ChartingAnalyticsPage() {
                   setOpenV2Game((prev) => !prev);
                 }
               }}
-              className="p-5 border-blue-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+              className="p-5 border-red-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -904,7 +918,7 @@ export default function ChartingAnalyticsPage() {
             </Card>
 
             {openV2Game && (
-              <Card className="p-6 border-blue-100 shadow-sm bg-white">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
                     <Target className="w-4 h-4 text-blue-600" />
@@ -1052,7 +1066,7 @@ export default function ChartingAnalyticsPage() {
                   setOpenV2Practice((prev) => !prev);
                 }
               }}
-              className="p-5 border-blue-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+              className="p-5 border-red-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -1075,7 +1089,7 @@ export default function ChartingAnalyticsPage() {
             </Card>
 
             {openV2Practice && (
-              <Card className="p-6 border-blue-100 shadow-sm bg-white">
+              <Card className="p-6 border-red-100 shadow-sm bg-white">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
                     <Dumbbell className="w-4 h-4 text-blue-600" />
@@ -1214,7 +1228,7 @@ export default function ChartingAnalyticsPage() {
                   setOpenFormAnalytics((prev) => !prev);
                 }
               }}
-              className="p-5 border-blue-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+              className="p-5 border-red-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -1238,7 +1252,7 @@ export default function ChartingAnalyticsPage() {
 
             {openFormAnalytics && (
               <>
-                <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-red-50/70 px-5 py-4">
+                <div className="rounded-2xl border border-red-100 bg-red-50/70 px-5 py-4">
                   <h2 className="text-2xl font-bold text-foreground mb-1">Form Analytics</h2>
                   <p className="text-muted-foreground">Data from active form template: <span className="font-semibold text-blue-700">{activeTemplate.name}</span></p>
                 </div>
@@ -1341,7 +1355,7 @@ export default function ChartingAnalyticsPage() {
                           }
 
                           return (
-                            <Card key={`${section.id}-${field.id}`} className="p-4 bg-gradient-to-br from-blue-50/70 to-red-50/60 border border-blue-100">
+                            <Card key={`${section.id}-${field.id}`} className="p-4 bg-red-50/50 border border-red-100">
                               <p className="text-xs text-slate-500 mb-1">{section.title}</p>
                               <p className="text-sm font-semibold text-slate-900 mb-2">{field.label}</p>
                               <p className="text-2xl font-bold text-blue-600">{displayValue}</p>
@@ -1357,12 +1371,12 @@ export default function ChartingAnalyticsPage() {
           </div>
         )}
 
-        {filteredEntries.length === 0 ? (
+        {filteredSessions.length === 0 ? (
           <Card className="p-12 text-center border-red-100 shadow-sm bg-white">
             <BarChart3 className="w-16 h-16 text-blue-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">No Data Available</h3>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No Sessions Found</h3>
             <p className="text-slate-600 mb-4">
-              No charting data found for the selected time period.
+              No sessions found for the selected time period.
             </p>
             <Button onClick={() => router.push('/charting')} className="bg-red-600 hover:bg-red-700 text-white">Go to Sessions</Button>
           </Card>

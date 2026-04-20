@@ -168,7 +168,7 @@ export default function PreGamePage() {
               <h1 className="text-3xl font-bold text-gray-900">Pre-Game Checklist</h1>
               <p className="text-gray-600">
                 {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
-                {session.opponent && ` vs ${session.opponent}`}
+                  {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
               </p>
             </div>
           </div>

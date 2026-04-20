@@ -183,6 +183,8 @@ export default function V2PostGamePage() {
         await chartingService.createChartingEntry(entryData as any);
       }
 
+      await chartingService.updateSession(sessionId, { status: 'completed' });
+
       toast.success('Post-Game section saved!');
       router.push(`/charting/sessions/${sessionId}`);
     } catch (error) {
