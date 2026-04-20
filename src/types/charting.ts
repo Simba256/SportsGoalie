@@ -315,6 +315,78 @@ export interface ShootoutAnalytics {
   totalGoalsAgainst: number;
 }
 
+/** V2 per-period averages used inside V2GameAnalytics */
+export interface V2PeriodAverage {
+  period: 'period1' | 'period2' | 'period3' | 'overtime';
+  sampleSize: number;
+  avgMindControl: number; // 1-5
+  avgFactorRatio: number; // 1-5
+  totalGoalsAgainst: number;
+  totalGoodGoals: number;
+  totalBadGoals: number;
+}
+
+/** Aggregates sourced from v2 game chart entries (v2PreGame/v2Periods/v2PostGame) */
+export interface V2GameAnalytics {
+  totalV2Games: number; // entries with any v2 game field populated
+
+  // Mind Management (from v2PreGame)
+  mindManagement: {
+    sampleSize: number;
+    routineCompletedRate: number; // 0-100
+    anxietyPresentRate: number; // 0-100
+    targetStateAchievedRate: number; // 0-100
+    avgMentalStateRating: number; // 1-5
+  };
+
+  // Period aggregates (from v2Periods)
+  periods: V2PeriodAverage[];
+  overallAvgMindControl: number; // averaged across all periods seen
+  overallAvgFactorRatio: number; // averaged across all periods seen
+
+  // Goal aggregates (from v2Periods[*].goals[] + goalsAgainst)
+  totalGoalsAgainst: number;
+  totalGoodGoals: number;
+  totalBadGoals: number;
+  goodBadRatio: number;
+
+  // Post-Game summaries (from v2PostGame)
+  postGame: {
+    sampleSize: number;
+    avgOverallGameFactor: number; // 1-5
+    avgGameRetention: number; // 1-5
+    avgGoodDecisionRate: number; // percentage already in the data (0-100)
+    mindVaultEntriesCaptured: number;
+  };
+}
+
+/** Aggregates sourced from v2Practice entries */
+export interface V2PracticeAnalytics {
+  totalV2Practices: number;
+
+  avgPracticeValue: number; // 1-5
+  avgTechnicalEye: number; // 1-5
+
+  designatedTrainingRate: number; // 0-100, % of practices with designated training
+  totalDesignatedTrainingMinutes: number;
+  avgDesignatedTrainingMinutes: number; // averaged across practices that had it
+
+  videoCapturedRate: number; // 0-100
+
+  // Practice Index breakdown across all practices (item-occurrences, not unique)
+  indexCounts: {
+    immediate_development: number;
+    refinement: number;
+    maintenance: number;
+  };
+  totalIndexItemsWorkedOn: number;
+
+  // Improvement ratings
+  avgImprovementRating: number; // 1-5
+  improvementRatingsCount: number;
+  mindVaultEntriesCaptured: number;
+}
+
 export interface StudentChartingAnalytics {
   studentId: string;
   sessionStats: SessionStats;
@@ -324,6 +396,10 @@ export interface StudentChartingAnalytics {
   preGameRoutineAdherence: PreGameRoutineAdherence;
   periodPerformance: PeriodPerformanceAnalytics;
   shootoutAnalytics: ShootoutAnalytics;
+  // V2 analytics — populated from v2 chart entries. Optional for back-compat
+  // with historical analytics docs that predate the v2 migration.
+  v2GameAnalytics?: V2GameAnalytics;
+  v2PracticeAnalytics?: V2PracticeAnalytics;
   lastCalculated: Timestamp;
 }
 

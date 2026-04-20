@@ -9,6 +9,13 @@ import {
   PreGameRoutineAdherence,
   PeriodPerformanceAnalytics,
   ShootoutAnalytics,
+  V2GameAnalytics,
+  V2PeriodAverage,
+  V2PracticeAnalytics,
+  V2PreGameData,
+  V2PeriodData,
+  V2PostGameData,
+  V2PracticeChartEntry,
   StudentChartingAnalytics,
   StudentSummary,
   CohortAnalytics,
@@ -363,6 +370,12 @@ export class ChartingService extends BaseDatabaseService {
     if (entryData.postGame !== undefined) data.postGame = entryData.postGame;
     if (entryData.additionalComments !== undefined) data.additionalComments = entryData.additionalComments;
 
+    // V2 chart sections — persist first-time creates (kept as any so types don't need schema change)
+    const raw = entryData as unknown as Record<string, unknown>;
+    for (const key of ['v2PreGame', 'v2Periods', 'v2PostGame', 'v2Practice', 'v2Version']) {
+      if (raw[key] !== undefined) data[key] = raw[key];
+    }
+
     const result = await this.create<ChartingEntry>(this.CHARTING_ENTRIES_COLLECTION, data);
 
     if (result.success) {
@@ -594,6 +607,8 @@ export class ChartingService extends BaseDatabaseService {
         preGameRoutineAdherence: this.calculatePreGameRoutineAdherence(entries),
         periodPerformance: this.calculatePeriodPerformance(entries),
         shootoutAnalytics: this.calculateShootoutAnalytics(entries),
+        v2GameAnalytics: this.calculateV2GameAnalytics(entries),
+        v2PracticeAnalytics: this.calculateV2PracticeAnalytics(entries),
         lastCalculated: Timestamp.now(),
       };
 
@@ -717,6 +732,8 @@ export class ChartingService extends BaseDatabaseService {
         preGameRoutineAdherence: this.calculatePreGameRoutineAdherence([]),
         periodPerformance: this.calculatePeriodPerformance([]),
         shootoutAnalytics: this.calculateShootoutAnalytics([]),
+        v2GameAnalytics: this.calculateV2GameAnalytics([]),
+        v2PracticeAnalytics: this.calculateV2PracticeAnalytics([]),
         lastCalculated: Timestamp.now(),
       };
 
@@ -740,13 +757,15 @@ export class ChartingService extends BaseDatabaseService {
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const sessionsThisWeek = sessions.filter(s =>
-      s.date.toDate() >= oneWeekAgo
-    ).length;
+    const sessionsThisWeek = sessions.filter((s) => {
+      const d = this.toDate((s as unknown as { date?: unknown }).date);
+      return d ? d >= oneWeekAgo : false;
+    }).length;
 
-    const sessionsThisMonth = sessions.filter(s =>
-      s.date.toDate() >= oneMonthAgo
-    ).length;
+    const sessionsThisMonth = sessions.filter((s) => {
+      const d = this.toDate((s as unknown as { date?: unknown }).date);
+      return d ? d >= oneMonthAgo : false;
+    }).length;
 
     return {
       totalSessions: sessions.length,
@@ -1039,6 +1058,247 @@ export class ChartingService extends BaseDatabaseService {
       dekeSavePercentage: totalDekes > 0 ? (totalDekesSaved / totalDekes) * 100 : 0,
       totalSaves: totalShotsSaved + totalDekesSaved,
       totalGoalsAgainst: totalShotsScored + totalDekesScored,
+    };
+  }
+
+  // ==================== V2 ANALYTICS CALCULATORS ====================
+
+  /**
+   * Reads v2 chart fields from a ChartingEntry. These fields live on the
+   * same doc as legacy v1 data but are not typed on the ChartingEntry
+   * interface, so we extract them with a narrow cast here.
+   */
+  private extractV2(entry: ChartingEntry): {
+    preGame?: V2PreGameData;
+    periods?: {
+      period1?: V2PeriodData;
+      period2?: V2PeriodData;
+      period3?: V2PeriodData;
+      overtime?: V2PeriodData;
+    };
+    postGame?: V2PostGameData;
+    practice?: Omit<
+      V2PracticeChartEntry,
+      'id' | 'sessionId' | 'studentId' | 'version' | 'createdAt' | 'updatedAt'
+    >;
+  } {
+    const raw = entry as unknown as Record<string, unknown>;
+    return {
+      preGame: raw.v2PreGame as V2PreGameData | undefined,
+      periods: raw.v2Periods as {
+        period1?: V2PeriodData;
+        period2?: V2PeriodData;
+        period3?: V2PeriodData;
+        overtime?: V2PeriodData;
+      } | undefined,
+      postGame: raw.v2PostGame as V2PostGameData | undefined,
+      practice: raw.v2Practice as Omit<
+        V2PracticeChartEntry,
+        'id' | 'sessionId' | 'studentId' | 'version' | 'createdAt' | 'updatedAt'
+      > | undefined,
+    };
+  }
+
+  private safeAvg(total: number, count: number): number {
+    return count > 0 ? total / count : 0;
+  }
+
+  private calculateV2GameAnalytics(entries: ChartingEntry[]): V2GameAnalytics {
+    // Mind Management aggregation
+    let mindSample = 0;
+    let routineCompleted = 0;
+    let anxietyPresent = 0;
+    let targetStateAchieved = 0;
+    let mentalStateSum = 0;
+
+    // Period aggregation
+    type PeriodKey = 'period1' | 'period2' | 'period3' | 'overtime';
+    const periodAgg: Record<PeriodKey, {
+      count: number;
+      mindSum: number;
+      factorSum: number;
+      goalsAgainst: number;
+      good: number;
+      bad: number;
+    }> = {
+      period1: { count: 0, mindSum: 0, factorSum: 0, goalsAgainst: 0, good: 0, bad: 0 },
+      period2: { count: 0, mindSum: 0, factorSum: 0, goalsAgainst: 0, good: 0, bad: 0 },
+      period3: { count: 0, mindSum: 0, factorSum: 0, goalsAgainst: 0, good: 0, bad: 0 },
+      overtime: { count: 0, mindSum: 0, factorSum: 0, goalsAgainst: 0, good: 0, bad: 0 },
+    };
+
+    // Post-Game aggregation
+    let postSample = 0;
+    let overallFactorSum = 0;
+    let retentionSum = 0;
+    let goodDecisionSum = 0;
+    let mindVaultCount = 0;
+
+    let totalV2Games = 0;
+
+    entries.forEach((entry) => {
+      const v2 = this.extractV2(entry);
+      const hasAnyGameV2 = !!v2.preGame || !!v2.periods || !!v2.postGame;
+      if (!hasAnyGameV2) return;
+      totalV2Games++;
+
+      if (v2.preGame) {
+        mindSample++;
+        if (v2.preGame.routineCompleted) routineCompleted++;
+        if (v2.preGame.anxietyPresent) anxietyPresent++;
+        if (v2.preGame.targetStateAchieved) targetStateAchieved++;
+        mentalStateSum += v2.preGame.mentalStateRating || 0;
+      }
+
+      if (v2.periods) {
+        (Object.keys(periodAgg) as PeriodKey[]).forEach((key) => {
+          const p = v2.periods?.[key];
+          if (!p) return;
+          const agg = periodAgg[key];
+          agg.count++;
+          agg.mindSum += p.mindControlRating || 0;
+          agg.factorSum += p.periodFactorRatio || 0;
+          agg.goalsAgainst += p.goalsAgainst || 0;
+          const goods = p.goals?.filter((g) => g.isGoodGoal).length || 0;
+          const bads = (p.goals?.length || 0) - goods;
+          agg.good += goods;
+          agg.bad += bads;
+        });
+      }
+
+      if (v2.postGame) {
+        postSample++;
+        overallFactorSum += v2.postGame.overallGameFactorRating || 0;
+        retentionSum += v2.postGame.gameRetentionRating || 0;
+        goodDecisionSum += v2.postGame.goodDecisionRate || 0;
+        if (v2.postGame.mindVaultEntry && v2.postGame.mindVaultEntry.trim().length > 0) {
+          mindVaultCount++;
+        }
+      }
+    });
+
+    const periods: V2PeriodAverage[] = (Object.keys(periodAgg) as PeriodKey[]).map((key) => {
+      const a = periodAgg[key];
+      return {
+        period: key,
+        sampleSize: a.count,
+        avgMindControl: this.safeAvg(a.mindSum, a.count),
+        avgFactorRatio: this.safeAvg(a.factorSum, a.count),
+        totalGoalsAgainst: a.goalsAgainst,
+        totalGoodGoals: a.good,
+        totalBadGoals: a.bad,
+      };
+    });
+
+    const sampledPeriods = periods.filter((p) => p.sampleSize > 0);
+    const overallAvgMindControl =
+      sampledPeriods.length > 0
+        ? sampledPeriods.reduce((s, p) => s + p.avgMindControl, 0) / sampledPeriods.length
+        : 0;
+    const overallAvgFactorRatio =
+      sampledPeriods.length > 0
+        ? sampledPeriods.reduce((s, p) => s + p.avgFactorRatio, 0) / sampledPeriods.length
+        : 0;
+
+    const totalGoalsAgainst = periods.reduce((s, p) => s + p.totalGoalsAgainst, 0);
+    const totalGoodGoals = periods.reduce((s, p) => s + p.totalGoodGoals, 0);
+    const totalBadGoals = periods.reduce((s, p) => s + p.totalBadGoals, 0);
+
+    return {
+      totalV2Games,
+      mindManagement: {
+        sampleSize: mindSample,
+        routineCompletedRate: this.safeAvg(routineCompleted, mindSample) * 100,
+        anxietyPresentRate: this.safeAvg(anxietyPresent, mindSample) * 100,
+        targetStateAchievedRate: this.safeAvg(targetStateAchieved, mindSample) * 100,
+        avgMentalStateRating: this.safeAvg(mentalStateSum, mindSample),
+      },
+      periods,
+      overallAvgMindControl,
+      overallAvgFactorRatio,
+      totalGoalsAgainst,
+      totalGoodGoals,
+      totalBadGoals,
+      goodBadRatio: totalBadGoals > 0 ? totalGoodGoals / totalBadGoals : totalGoodGoals,
+      postGame: {
+        sampleSize: postSample,
+        avgOverallGameFactor: this.safeAvg(overallFactorSum, postSample),
+        avgGameRetention: this.safeAvg(retentionSum, postSample),
+        avgGoodDecisionRate: this.safeAvg(goodDecisionSum, postSample),
+        mindVaultEntriesCaptured: mindVaultCount,
+      },
+    };
+  }
+
+  private calculateV2PracticeAnalytics(entries: ChartingEntry[]): V2PracticeAnalytics {
+    let totalV2Practices = 0;
+    let practiceValueSum = 0;
+    let technicalEyeSum = 0;
+    let designatedTrainingCount = 0;
+    let designatedMinutesSum = 0;
+    let designatedMinutesCount = 0;
+    let videoCapturedCount = 0;
+
+    const indexCounts = {
+      immediate_development: 0,
+      refinement: 0,
+      maintenance: 0,
+    };
+    let totalIndexItemsWorkedOn = 0;
+
+    let improvementSum = 0;
+    let improvementCount = 0;
+    let mindVaultCount = 0;
+
+    entries.forEach((entry) => {
+      const { practice } = this.extractV2(entry);
+      if (!practice) return;
+
+      totalV2Practices++;
+      practiceValueSum += practice.practiceValueRating || 0;
+      technicalEyeSum += practice.technicalEyeDevelopmentRating || 0;
+
+      if (practice.designatedTrainingReceived) {
+        designatedTrainingCount++;
+        if (typeof practice.designatedTrainingDuration === 'number') {
+          designatedMinutesSum += practice.designatedTrainingDuration;
+          designatedMinutesCount++;
+        }
+      }
+
+      if (practice.videoCaptured) videoCapturedCount++;
+
+      (practice.practiceIndex || []).forEach((item) => {
+        if (item.category in indexCounts) {
+          indexCounts[item.category as keyof typeof indexCounts]++;
+        }
+      });
+
+      totalIndexItemsWorkedOn += (practice.indexItemsWorkedOn || []).length;
+
+      (practice.improvementRatings || []).forEach((r) => {
+        improvementSum += r.rating || 0;
+        improvementCount++;
+      });
+
+      if (practice.mindVaultEntry && practice.mindVaultEntry.trim().length > 0) {
+        mindVaultCount++;
+      }
+    });
+
+    return {
+      totalV2Practices,
+      avgPracticeValue: this.safeAvg(practiceValueSum, totalV2Practices),
+      avgTechnicalEye: this.safeAvg(technicalEyeSum, totalV2Practices),
+      designatedTrainingRate: this.safeAvg(designatedTrainingCount, totalV2Practices) * 100,
+      totalDesignatedTrainingMinutes: designatedMinutesSum,
+      avgDesignatedTrainingMinutes: this.safeAvg(designatedMinutesSum, designatedMinutesCount),
+      videoCapturedRate: this.safeAvg(videoCapturedCount, totalV2Practices) * 100,
+      indexCounts,
+      totalIndexItemsWorkedOn,
+      avgImprovementRating: this.safeAvg(improvementSum, improvementCount),
+      improvementRatingsCount: improvementCount,
+      mindVaultEntriesCaptured: mindVaultCount,
     };
   }
 

@@ -18,6 +18,17 @@ import {
   BarChart3,
   CheckCircle,
   Type,
+  Brain,
+  Target,
+  Video,
+  Eye,
+  Flame,
+  Sparkles,
+  ShieldCheck,
+  Timer,
+  Dumbbell,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { startOfWeek, startOfMonth, subMonths, isAfter } from 'date-fns';
 
@@ -33,6 +44,9 @@ export default function ChartingAnalyticsPage() {
   const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [openV2Game, setOpenV2Game] = useState(false);
+  const [openV2Practice, setOpenV2Practice] = useState(false);
+  const [openFormAnalytics, setOpenFormAnalytics] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -90,7 +104,10 @@ export default function ChartingAnalyticsPage() {
         return sessions;
     }
 
-    return sessions.filter((s) => isAfter(s.date.toDate(), startDate));
+    return sessions.filter((s) => {
+      const sessionDate = toDateSafe((s as unknown as { date?: unknown }).date);
+      return sessionDate ? isAfter(sessionDate, startDate) : false;
+    });
   };
 
   const getFilteredEntries = () => {
@@ -396,6 +413,48 @@ export default function ChartingAnalyticsPage() {
     };
   };
 
+  const toDateSafe = (value: unknown): Date | null => {
+    if (value instanceof Date) {
+      return value;
+    }
+    if (
+      value &&
+      typeof value === 'object' &&
+      'toDate' in value &&
+      typeof (value as { toDate?: unknown }).toDate === 'function'
+    ) {
+      return (value as { toDate: () => Date }).toDate();
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return null;
+  };
+
+  const hasLegacyEntry = (sessionId: string) => entries.some((e) => e.sessionId === sessionId);
+  const hasDynamicEntry = (sessionId: string) => dynamicEntries.some((e) => e.sessionId === sessionId);
+  const getSessionDisplayStatus = (session: Session): 'completed' | 'charted' | 'in-progress' | 'scheduled' => {
+    if (session.status === 'completed') return 'completed';
+    if (hasLegacyEntry(session.id) || hasDynamicEntry(session.id)) return 'charted';
+    return session.status === 'pre-game' ? 'scheduled' : 'in-progress';
+  };
+
+  const getStatusBadgeClasses = (status: ReturnType<typeof getSessionDisplayStatus>) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'charted':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'in-progress':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  };
+
   const calculateFreezingPuck = () => {
     const filtered = getFilteredEntries();
     const periods = [
@@ -510,6 +569,198 @@ export default function ChartingAnalyticsPage() {
     };
   };
 
+  // ─── V2 Analytics (client-side, time-filtered) ─────────────────────────────
+
+  const extractV2 = (entry: ChartingEntry) => {
+    const raw = entry as unknown as Record<string, unknown>;
+    return {
+      preGame: raw.v2PreGame as
+        | { routineCompleted: boolean; anxietyPresent: boolean; targetStateAchieved: boolean; mentalStateRating: number }
+        | undefined,
+      periods: raw.v2Periods as
+        | Record<
+            'period1' | 'period2' | 'period3' | 'overtime',
+            | {
+                mindControlRating: number;
+                periodFactorRatio: number;
+                goalsAgainst: number;
+                goals?: { isGoodGoal: boolean }[];
+              }
+            | undefined
+          >
+        | undefined,
+      postGame: raw.v2PostGame as
+        | { overallGameFactorRating: number; gameRetentionRating: number; goodDecisionRate: number; mindVaultEntry?: string }
+        | undefined,
+      practice: raw.v2Practice as
+        | {
+            practiceValueRating: number;
+            technicalEyeDevelopmentRating: number;
+            designatedTrainingReceived: boolean;
+            designatedTrainingDuration?: number;
+            videoCaptured: boolean;
+            practiceIndex?: { category: 'immediate_development' | 'refinement' | 'maintenance' }[];
+            indexItemsWorkedOn?: string[];
+            improvementRatings?: { rating: number }[];
+            mindVaultEntry?: string;
+          }
+        | undefined,
+    };
+  };
+
+  const calculateV2GameStats = () => {
+    const filtered = getFilteredEntries();
+    let totalV2 = 0;
+    let mindSample = 0;
+    let routine = 0;
+    let anxiety = 0;
+    let targetState = 0;
+    let mentalStateSum = 0;
+
+    let periodSamples = 0;
+    let mindSum = 0;
+    let factorSum = 0;
+    let goalsAgainst = 0;
+    let goodGoals = 0;
+    let badGoals = 0;
+
+    let postSample = 0;
+    let overallFactorSum = 0;
+    let retentionSum = 0;
+    let decisionSum = 0;
+    let vaultCount = 0;
+
+    filtered.forEach((entry) => {
+      const v2 = extractV2(entry);
+      if (!v2.preGame && !v2.periods && !v2.postGame) return;
+      totalV2++;
+
+      if (v2.preGame) {
+        mindSample++;
+        if (v2.preGame.routineCompleted) routine++;
+        if (v2.preGame.anxietyPresent) anxiety++;
+        if (v2.preGame.targetStateAchieved) targetState++;
+        mentalStateSum += v2.preGame.mentalStateRating || 0;
+      }
+
+      if (v2.periods) {
+        (['period1', 'period2', 'period3', 'overtime'] as const).forEach((key) => {
+          const p = v2.periods?.[key];
+          if (!p) return;
+          periodSamples++;
+          mindSum += p.mindControlRating || 0;
+          factorSum += p.periodFactorRatio || 0;
+          goalsAgainst += p.goalsAgainst || 0;
+          const good = p.goals?.filter((g) => g.isGoodGoal).length || 0;
+          const bad = (p.goals?.length || 0) - good;
+          goodGoals += good;
+          badGoals += bad;
+        });
+      }
+
+      if (v2.postGame) {
+        postSample++;
+        overallFactorSum += v2.postGame.overallGameFactorRating || 0;
+        retentionSum += v2.postGame.gameRetentionRating || 0;
+        decisionSum += v2.postGame.goodDecisionRate || 0;
+        if (v2.postGame.mindVaultEntry && v2.postGame.mindVaultEntry.trim().length > 0) vaultCount++;
+      }
+    });
+
+    if (totalV2 === 0) return null;
+
+    const avg = (sum: number, count: number) => (count > 0 ? sum / count : 0);
+
+    return {
+      totalV2,
+      mindSample,
+      routinePct: avg(routine, mindSample) * 100,
+      anxietyPct: avg(anxiety, mindSample) * 100,
+      targetStatePct: avg(targetState, mindSample) * 100,
+      avgMentalState: avg(mentalStateSum, mindSample),
+      periodSamples,
+      avgMindControl: avg(mindSum, periodSamples),
+      avgFactorRatio: avg(factorSum, periodSamples),
+      goalsAgainst,
+      goodGoals,
+      badGoals,
+      goodBadRatio: badGoals > 0 ? goodGoals / badGoals : goodGoals,
+      postSample,
+      avgOverallFactor: avg(overallFactorSum, postSample),
+      avgRetention: avg(retentionSum, postSample),
+      avgGoodDecisionRate: avg(decisionSum, postSample),
+      vaultCount,
+    };
+  };
+
+  const calculateV2PracticeStats = () => {
+    const filtered = getFilteredEntries();
+    let total = 0;
+    let valueSum = 0;
+    let eyeSum = 0;
+    let designatedCount = 0;
+    let designatedMinutes = 0;
+    let designatedMinutesCount = 0;
+    let videoCount = 0;
+    const indexCounts = { immediate_development: 0, refinement: 0, maintenance: 0 };
+    let workedOnTotal = 0;
+    let improvementSum = 0;
+    let improvementCount = 0;
+    let vaultCount = 0;
+
+    filtered.forEach((entry) => {
+      const { practice } = extractV2(entry);
+      if (!practice) return;
+      total++;
+      valueSum += practice.practiceValueRating || 0;
+      eyeSum += practice.technicalEyeDevelopmentRating || 0;
+
+      if (practice.designatedTrainingReceived) {
+        designatedCount++;
+        if (typeof practice.designatedTrainingDuration === 'number') {
+          designatedMinutes += practice.designatedTrainingDuration;
+          designatedMinutesCount++;
+        }
+      }
+
+      if (practice.videoCaptured) videoCount++;
+
+      (practice.practiceIndex || []).forEach((it) => {
+        if (it.category in indexCounts) indexCounts[it.category]++;
+      });
+      workedOnTotal += (practice.indexItemsWorkedOn || []).length;
+
+      (practice.improvementRatings || []).forEach((r) => {
+        improvementSum += r.rating || 0;
+        improvementCount++;
+      });
+
+      if (practice.mindVaultEntry && practice.mindVaultEntry.trim().length > 0) vaultCount++;
+    });
+
+    if (total === 0) return null;
+
+    const avg = (sum: number, count: number) => (count > 0 ? sum / count : 0);
+
+    return {
+      total,
+      avgValue: avg(valueSum, total),
+      avgEye: avg(eyeSum, total),
+      designatedPct: avg(designatedCount, total) * 100,
+      totalMinutes: designatedMinutes,
+      avgMinutes: avg(designatedMinutes, designatedMinutesCount),
+      videoPct: avg(videoCount, total) * 100,
+      indexCounts,
+      workedOnTotal,
+      avgImprovement: avg(improvementSum, improvementCount),
+      improvementCount,
+      vaultCount,
+    };
+  };
+
+  const v2GameStats = calculateV2GameStats();
+  const v2PracticeStats = calculateV2PracticeStats();
+
   const goalsStats = calculateGoalsStats();
   const challengeStats = calculateChallengeStats();
   const focusStats = calculateFocusConsistency();
@@ -617,123 +868,492 @@ export default function ChartingAnalyticsPage() {
           </div>
         </Card>
 
-        {/* Dynamic Form Analytics */}
-        {dynamicEntries.length > 0 && activeTemplate && (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-red-50/70 px-5 py-4">
-              <h2 className="text-2xl font-bold text-foreground mb-1">Dynamic Form Analytics</h2>
-              <p className="text-muted-foreground">Data from active form template: <span className="font-semibold text-blue-700">{activeTemplate.name}</span></p>
-            </div>
-
-            {/* Overview Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-6 border border-border bg-card shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Entries</p>
-                    <p className="text-3xl font-black text-foreground mt-2">{dynamicEntries.length}</p>
+        {/* ── V2 Game Analytics ─────────────────────────────────────────── */}
+        {v2GameStats && (
+          <div className="space-y-3">
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => setOpenV2Game((prev) => !prev)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setOpenV2Game((prev) => !prev);
+                }
+              }}
+              className="p-5 border-blue-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Target className="w-5 h-5 text-blue-600" />
                   </div>
-                  <BarChart3 className="w-8 h-8 text-blue-600" />
-                </div>
-              </Card>
-
-              <Card className="p-6 border border-border bg-card shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Complete Entries</p>
-                    <p className="text-3xl font-black text-foreground mt-2">
-                      {dynamicEntries.filter(e => e.isComplete).length}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {Math.round((dynamicEntries.filter(e => e.isComplete).length / dynamicEntries.length) * 100)}% completion rate
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold text-gray-900">Game Chart Analytics</h2>
+                    <p className="text-xs text-slate-500">
+                      {v2GameStats.totalV2} session{v2GameStats.totalV2 === 1 ? '' : 's'} • Mind {v2GameStats.avgMindControl.toFixed(1)}/5 • Good/Bad {v2GameStats.goodGoals}/{v2GameStats.badGoals}
                     </p>
                   </div>
-                  <CheckCircle className="w-8 h-8 text-red-600" />
                 </div>
-              </Card>
-
-              <Card className="p-6 border border-border bg-card shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Avg Completion</p>
-                    <p className="text-3xl font-black text-foreground mt-2">
-                      {Math.round(dynamicEntries.reduce((sum, e) => sum + e.completionPercentage, 0) / dynamicEntries.length)}%
-                    </p>
-                  </div>
-                  <Type className="w-8 h-8 text-blue-600" />
-                </div>
-              </Card>
-            </div>
-
-            {/* Field-by-Field Stats */}
-            <Card className="p-6 border border-border bg-card shadow-sm">
-              <h3 className="text-xl font-bold text-foreground mb-4">Field Statistics</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeTemplate.sections.map(section =>
-                  section.fields
-                    .filter(field => ['number', 'checkbox', 'select', 'radio'].includes(field.type))
-                    .map(field => {
-                      // Aggregate field data
-                      const values: any[] = [];
-                      dynamicEntries.forEach(entry => {
-                        const sectionData = entry.responses[section.id];
-                        if (!sectionData) return;
-
-                        if (section.isRepeatable && Array.isArray(sectionData)) {
-                          sectionData.forEach((instance: any) => {
-                            const val = instance[field.id];
-                            if (val !== undefined && val !== null) {
-                              values.push(typeof val === 'object' ? val.value : val);
-                            }
-                          });
-                        } else {
-                          const val = (sectionData as any)[field.id];
-                          if (val !== undefined && val !== null) {
-                            values.push(typeof val === 'object' ? val.value : val);
-                          }
-                        }
-                      });
-
-                      if (values.length === 0) return null;
-
-                      // Calculate stats based on field type
-                      let displayValue = '';
-                      let subtitle = '';
-
-                      if (field.type === 'numeric' || field.type === 'scale') {
-                        const nums = values.map(Number).filter(n => !isNaN(n));
-                        const avg = nums.reduce((sum, n) => sum + n, 0) / nums.length;
-                        displayValue = avg.toFixed(1);
-                        subtitle = `Avg across ${nums.length} entries`;
-                      } else if (field.type === 'checkbox' || field.type === 'yesno') {
-                        const trueCount = values.filter(v => v === true || v === 'yes').length;
-                        const percentage = Math.round((trueCount / values.length) * 100);
-                        displayValue = `${percentage}%`;
-                        subtitle = `${trueCount}/${values.length} checked`;
-                      } else if (field.type === 'radio') {
-                        // Find most common value
-                        const counts: Record<string, number> = {};
-                        values.forEach(v => {
-                          const key = String(v);
-                          counts[key] = (counts[key] || 0) + 1;
-                        });
-                        const mostCommon = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
-                        displayValue = mostCommon[0];
-                        subtitle = `${mostCommon[1]}/${values.length} times`;
-                      }
-
-                      return (
-                        <Card key={`${section.id}-${field.id}`} className="p-4 bg-gradient-to-br from-blue-50/70 to-red-50/60 border border-blue-100">
-                          <p className="text-xs text-slate-500 mb-1">{section.title}</p>
-                          <p className="text-sm font-semibold text-slate-900 mb-2">{field.label}</p>
-                          <p className="text-2xl font-bold text-blue-600">{displayValue}</p>
-                          <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
-                        </Card>
-                      );
-                    })
+                {openV2Game ? (
+                  <ChevronDown className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-slate-500 flex-shrink-0" />
                 )}
               </div>
             </Card>
+
+            {openV2Game && (
+              <Card className="p-6 border-blue-100 shadow-sm bg-white">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <Target className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Game Chart Analytics</h2>
+                    <p className="text-xs text-slate-500">
+                      Across {v2GameStats.totalV2} charted game session{v2GameStats.totalV2 === 1 ? '' : 's'} in this window
+                    </p>
+                  </div>
+                </div>
+
+            {/* Hero stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Mind Control Avg</p>
+                <p className="mt-1 text-3xl font-bold text-blue-900 tabular-nums">
+                  {v2GameStats.avgMindControl.toFixed(1)}
+                  <span className="text-base font-medium text-blue-600 ml-1">/ 5</span>
+                </p>
+                <p className="text-[11px] text-blue-700/70 mt-1">{v2GameStats.periodSamples} periods</p>
+              </div>
+              <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Factor Ratio Avg</p>
+                <p className="mt-1 text-3xl font-bold text-indigo-900 tabular-nums">
+                  {v2GameStats.avgFactorRatio.toFixed(1)}
+                  <span className="text-base font-medium text-indigo-600 ml-1">/ 5</span>
+                </p>
+                <p className="text-[11px] text-indigo-700/70 mt-1">Across periods</p>
+              </div>
+              <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Good / Bad Goals</p>
+                <p className="mt-1 text-3xl font-bold text-emerald-900 tabular-nums">
+                  {v2GameStats.goodGoals}
+                  <span className="text-base font-medium text-emerald-600 mx-1">/</span>
+                  <span className="text-red-700">{v2GameStats.badGoals}</span>
+                </p>
+                <p className="text-[11px] text-emerald-700/70 mt-1">
+                  Ratio {v2GameStats.goodBadRatio.toFixed(2)}:1
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Goals Against</p>
+                <p className="mt-1 text-3xl font-bold text-slate-900 tabular-nums">
+                  {v2GameStats.goalsAgainst}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">Total across sessions</p>
+              </div>
+            </div>
+
+            {/* Mind Management */}
+            {v2GameStats.mindSample > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 mb-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Timer className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-bold text-slate-800">Pre-Game Mind Management</p>
+                  <span className="text-[11px] text-slate-500">({v2GameStats.mindSample} sessions)</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Routine Completed</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{v2GameStats.routinePct.toFixed(0)}%</p>
+                    <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                      <div className="h-full bg-blue-500" style={{ width: `${v2GameStats.routinePct}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Target State Achieved</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{v2GameStats.targetStatePct.toFixed(0)}%</p>
+                    <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                      <div className="h-full bg-emerald-500" style={{ width: `${v2GameStats.targetStatePct}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Anxiety Present</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{v2GameStats.anxietyPct.toFixed(0)}%</p>
+                    <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                      <div className="h-full bg-amber-500" style={{ width: `${v2GameStats.anxietyPct}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Avg Mental State</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                      {v2GameStats.avgMentalState.toFixed(1)}
+                      <span className="text-xs font-medium text-slate-500 ml-1">/ 5</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Post-Game */}
+            {v2GameStats.postSample > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-bold text-slate-800">Post-Game Review</p>
+                  <span className="text-[11px] text-slate-500">({v2GameStats.postSample} sessions)</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Overall Game Factor</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                      {v2GameStats.avgOverallFactor.toFixed(1)}
+                      <span className="text-xs font-medium text-slate-500 ml-1">/ 5</span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Game Retention</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                      {v2GameStats.avgRetention.toFixed(1)}
+                      <span className="text-xs font-medium text-slate-500 ml-1">/ 5</span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Good Decision Rate</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                      {v2GameStats.avgGoodDecisionRate.toFixed(0)}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Mind Vault Entries</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                      {v2GameStats.vaultCount}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* ── V2 Practice Analytics ─────────────────────────────────────── */}
+        {v2PracticeStats && (
+          <div className="space-y-3">
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => setOpenV2Practice((prev) => !prev)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setOpenV2Practice((prev) => !prev);
+                }
+              }}
+              className="p-5 border-blue-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Dumbbell className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold text-gray-900">Practice Chart Analytics</h2>
+                    <p className="text-xs text-slate-500">
+                      {v2PracticeStats.total} session{v2PracticeStats.total === 1 ? '' : 's'} • Value {v2PracticeStats.avgValue.toFixed(1)}/5 • Tech Eye {v2PracticeStats.avgEye.toFixed(1)}/5
+                    </p>
+                  </div>
+                </div>
+                {openV2Practice ? (
+                  <ChevronDown className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                )}
+              </div>
+            </Card>
+
+            {openV2Practice && (
+              <Card className="p-6 border-blue-100 shadow-sm bg-white">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <Dumbbell className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Practice Chart Analytics</h2>
+                    <p className="text-xs text-slate-500">
+                      Across {v2PracticeStats.total} charted practice session{v2PracticeStats.total === 1 ? '' : 's'} in this window
+                    </p>
+                  </div>
+                </div>
+
+            {/* Core ratings */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Practice Value Avg</p>
+                <p className="mt-1 text-3xl font-bold text-blue-900 tabular-nums">
+                  {v2PracticeStats.avgValue.toFixed(1)}
+                  <span className="text-base font-medium text-blue-600 ml-1">/ 5</span>
+                </p>
+              </div>
+              <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Technical Eye Avg</p>
+                <p className="mt-1 text-3xl font-bold text-indigo-900 tabular-nums">
+                  {v2PracticeStats.avgEye.toFixed(1)}
+                  <span className="text-base font-medium text-indigo-600 ml-1">/ 5</span>
+                </p>
+              </div>
+              <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Designated Training</p>
+                <p className="mt-1 text-3xl font-bold text-emerald-900 tabular-nums">
+                  {v2PracticeStats.designatedPct.toFixed(0)}%
+                </p>
+                <p className="text-[11px] text-emerald-700/70 mt-1">
+                  {v2PracticeStats.totalMinutes} total min
+                  {v2PracticeStats.avgMinutes > 0 && ` · avg ${v2PracticeStats.avgMinutes.toFixed(0)}m`}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Video className="w-3 h-3 text-slate-500" />
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Video Capture Rate</p>
+                </div>
+                <p className="mt-1 text-3xl font-bold text-slate-900 tabular-nums">
+                  {v2PracticeStats.videoPct.toFixed(0)}%
+                </p>
+              </div>
+            </div>
+
+            {/* Practice Index breakdown */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 mb-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="w-4 h-4 text-blue-600" />
+                <p className="text-sm font-bold text-slate-800">Practice Index Breakdown</p>
+                <span className="text-[11px] text-slate-500">
+                  ({v2PracticeStats.workedOnTotal} items worked on total)
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-red-200 bg-red-50/60 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Flame className="w-3.5 h-3.5 text-red-600" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-red-700">Immediate Development</p>
+                  </div>
+                  <p className="text-2xl font-bold text-red-900 tabular-nums">
+                    {v2PracticeStats.indexCounts.immediate_development}
+                  </p>
+                  <p className="text-[11px] text-red-700/70 mt-0.5">Item occurrences</p>
+                </div>
+                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Refinement</p>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-900 tabular-nums">
+                    {v2PracticeStats.indexCounts.refinement}
+                  </p>
+                  <p className="text-[11px] text-blue-700/70 mt-0.5">Item occurrences</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-slate-600" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Maintenance</p>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                    {v2PracticeStats.indexCounts.maintenance}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Item occurrences</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Improvement + Mind Vault */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-bold text-slate-800">Did it improve?</p>
+                </div>
+                <p className="text-3xl font-bold text-slate-900 tabular-nums">
+                  {v2PracticeStats.avgImprovement.toFixed(1)}
+                  <span className="text-sm font-medium text-slate-500 ml-1">/ 5 avg</span>
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Across {v2PracticeStats.improvementCount} rated improvements
+                </p>
+              </div>
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-bold text-slate-800">Mind Vault Entries</p>
+                </div>
+                <p className="text-3xl font-bold text-blue-900 tabular-nums">
+                  {v2PracticeStats.vaultCount}
+                </p>
+                <p className="text-[11px] text-blue-700/70 mt-1">
+                  From {v2PracticeStats.total} practice session{v2PracticeStats.total === 1 ? '' : 's'}
+                </p>
+              </div>
+            </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Form Analytics */}
+        {dynamicEntries.length > 0 && activeTemplate && (
+          <div className="space-y-4">
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => setOpenFormAnalytics((prev) => !prev)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setOpenFormAnalytics((prev) => !prev);
+                }
+              }}
+              className="p-5 border-blue-100 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Type className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold text-gray-900">Form Analytics</h2>
+                    <p className="text-xs text-slate-500">
+                      Template {activeTemplate.name} • {dynamicEntries.length} entries • {Math.round((dynamicEntries.filter(e => e.isComplete).length / dynamicEntries.length) * 100)}% complete
+                    </p>
+                  </div>
+                </div>
+                {openFormAnalytics ? (
+                  <ChevronDown className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                )}
+              </div>
+            </Card>
+
+            {openFormAnalytics && (
+              <>
+                <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-red-50/70 px-5 py-4">
+                  <h2 className="text-2xl font-bold text-foreground mb-1">Form Analytics</h2>
+                  <p className="text-muted-foreground">Data from active form template: <span className="font-semibold text-blue-700">{activeTemplate.name}</span></p>
+                </div>
+
+                {/* Overview Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-6 border border-border bg-card shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Entries</p>
+                        <p className="text-3xl font-black text-foreground mt-2">{dynamicEntries.length}</p>
+                      </div>
+                      <BarChart3 className="w-8 h-8 text-blue-600" />
+                    </div>
+                  </Card>
+
+                  <Card className="p-6 border border-border bg-card shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Complete Entries</p>
+                        <p className="text-3xl font-black text-foreground mt-2">
+                          {dynamicEntries.filter(e => e.isComplete).length}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {Math.round((dynamicEntries.filter(e => e.isComplete).length / dynamicEntries.length) * 100)}% completion rate
+                        </p>
+                      </div>
+                      <CheckCircle className="w-8 h-8 text-red-600" />
+                    </div>
+                  </Card>
+
+                  <Card className="p-6 border border-border bg-card shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Avg Completion</p>
+                        <p className="text-3xl font-black text-foreground mt-2">
+                          {Math.round(dynamicEntries.reduce((sum, e) => sum + e.completionPercentage, 0) / dynamicEntries.length)}%
+                        </p>
+                      </div>
+                      <Type className="w-8 h-8 text-blue-600" />
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Field-by-Field Stats */}
+                <Card className="p-6 border border-border bg-card shadow-sm">
+                  <h3 className="text-xl font-bold text-foreground mb-4">Field Statistics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {activeTemplate.sections.map(section =>
+                      section.fields
+                        .filter(field => ['number', 'checkbox', 'select', 'radio'].includes(field.type))
+                        .map(field => {
+                          // Aggregate field data
+                          const values: any[] = [];
+                          dynamicEntries.forEach(entry => {
+                            const sectionData = entry.responses[section.id];
+                            if (!sectionData) return;
+
+                            if (section.isRepeatable && Array.isArray(sectionData)) {
+                              sectionData.forEach((instance: any) => {
+                                const val = instance[field.id];
+                                if (val !== undefined && val !== null) {
+                                  values.push(typeof val === 'object' ? val.value : val);
+                                }
+                              });
+                            } else {
+                              const val = (sectionData as any)[field.id];
+                              if (val !== undefined && val !== null) {
+                                values.push(typeof val === 'object' ? val.value : val);
+                              }
+                            }
+                          });
+
+                          if (values.length === 0) return null;
+
+                          // Calculate stats based on field type
+                          let displayValue = '';
+                          let subtitle = '';
+
+                          if (field.type === 'numeric' || field.type === 'scale') {
+                            const nums = values.map(Number).filter(n => !isNaN(n));
+                            const avg = nums.reduce((sum, n) => sum + n, 0) / nums.length;
+                            displayValue = avg.toFixed(1);
+                            subtitle = `Avg across ${nums.length} entries`;
+                          } else if (field.type === 'checkbox' || field.type === 'yesno') {
+                            const trueCount = values.filter(v => v === true || v === 'yes').length;
+                            const percentage = Math.round((trueCount / values.length) * 100);
+                            displayValue = `${percentage}%`;
+                            subtitle = `${trueCount}/${values.length} checked`;
+                          } else if (field.type === 'radio') {
+                            // Find most common value
+                            const counts: Record<string, number> = {};
+                            values.forEach(v => {
+                              const key = String(v);
+                              counts[key] = (counts[key] || 0) + 1;
+                            });
+                            const mostCommon = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
+                            displayValue = mostCommon[0];
+                            subtitle = `${mostCommon[1]}/${values.length} times`;
+                          }
+
+                          return (
+                            <Card key={`${section.id}-${field.id}`} className="p-4 bg-gradient-to-br from-blue-50/70 to-red-50/60 border border-blue-100">
+                              <p className="text-xs text-slate-500 mb-1">{section.title}</p>
+                              <p className="text-sm font-semibold text-slate-900 mb-2">{field.label}</p>
+                              <p className="text-2xl font-bold text-blue-600">{displayValue}</p>
+                              <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+                            </Card>
+                          );
+                        })
+                    )}
+                  </div>
+                </Card>
+              </>
+            )}
           </div>
         )}
 
@@ -1121,6 +1741,8 @@ export default function ChartingAnalyticsPage() {
               <div className="space-y-3">
                 {filteredSessions.slice(0, 10).map((session) => {
                   const entry = entries.find((e) => e.sessionId === session.id);
+                  const status = getSessionDisplayStatus(session);
+                  const sessionDate = toDateSafe((session as unknown as { date?: unknown }).date);
                   return (
                     <div
                       key={session.id}
@@ -1132,7 +1754,7 @@ export default function ChartingAnalyticsPage() {
                           {session.type === 'game' ? '🥅' : '🏒'} {session.opponent || 'Practice'}
                         </p>
                         <p className="text-xs text-gray-600">
-                          {session.date.toDate().toLocaleDateString()}
+                          {sessionDate ? sessionDate.toLocaleDateString() : 'Date unavailable'}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1151,11 +1773,9 @@ export default function ChartingAnalyticsPage() {
                             </span>
                           </div>
                         )}
-                        {entry && (
-                          <Badge variant="outline" className="text-xs">
-                            Charted
-                          </Badge>
-                        )}
+                        <Badge variant="outline" className={`text-xs capitalize ${getStatusBadgeClasses(status)}`}>
+                          {status}
+                        </Badge>
                       </div>
                     </div>
                   );

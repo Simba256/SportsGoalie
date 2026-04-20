@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog } from 'lucide-react';
+import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog, LineChart } from 'lucide-react';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { userService, onboardingService } from '@/lib/database';
@@ -347,6 +347,13 @@ export default function CoachStudentsPage() {
                         </Link>
                       </Button>
                     )}
+                    {/* View Charting History */}
+                    <Button asChild size="sm" variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50">
+                      <Link href={`/coach/students/${student.id}/charting`}>
+                        <LineChart className="h-4 w-4 mr-2" />
+                        View Charts
+                      </Link>
+                    </Button>
                     {/* Manage Curriculum - Only for custom workflow students */}
                     {isCustomWorkflow && (
                       <Button

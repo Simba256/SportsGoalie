@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CrossReferenceDisplay } from '@/components/parent';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
+import { GoalieChartingHistory } from '@/components/charting/GoalieChartingHistory';
 import {
   AlertCircle,
   ChevronLeft,
@@ -23,6 +24,7 @@ import {
   ClipboardCheck,
   BarChart3,
   Scale,
+  LineChart,
 } from 'lucide-react';
 import Link from 'next/link';
 import { redirect, useParams } from 'next/navigation';
@@ -294,10 +296,14 @@ export default function ChildDetailPage() {
 
         {/* Tabs for different views */}
         <Tabs defaultValue="comparison" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="comparison" className="flex items-center gap-2">
               <Scale className="h-4 w-4" />
               Perception Comparison
+            </TabsTrigger>
+            <TabsTrigger value="charting" className="flex items-center gap-2">
+              <LineChart className="h-4 w-4" />
+              Game & Practice Charts
             </TabsTrigger>
             <TabsTrigger value="progress" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -323,6 +329,20 @@ export default function ChildDetailPage() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="charting" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Game & Practice Charting</CardTitle>
+                <CardDescription>
+                  Review how {childData.displayName.split(' ')[0]} is reflecting on each session — mind management, performance, and what they&apos;re saving to their Mind Vault.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GoalieChartingHistory studentId={childId} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="progress" className="mt-6">

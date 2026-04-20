@@ -66,7 +66,16 @@ export function ProtectedRoute({
   }, [loading, isAuthenticated, user, requiredRole, router, redirectTo]);
 
   const renderDefaultFallback = () => {
-    // When role is known, show a role-appropriate page skeleton.
+    // Use requiredRole first to keep SSR and initial client render deterministic.
+    if (requiredRole === 'admin' || requiredRole === 'coach' || requiredRole === 'parent') {
+      return <SkeletonDarkPage />;
+    }
+
+    if (requiredRole === 'student') {
+      return <SkeletonDashboard />;
+    }
+
+    // Fallback to resolved role only for routes without explicit role requirements.
     if (user?.role === 'student') {
       return <SkeletonDashboard />;
     }

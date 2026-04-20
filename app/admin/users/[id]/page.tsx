@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { SkeletonDetailPage } from '@/components/ui/skeletons';
 import {
   ArrowLeft,
@@ -59,6 +59,7 @@ import { ActivityTimeline } from '@/components/admin/analytics/ActivityTimeline'
 import { EngagementMetrics } from '@/components/admin/analytics/EngagementMetrics';
 import { CourseProgress } from '@/components/admin/analytics/CourseProgress';
 import { QuizAttemptHistory } from '@/components/admin/analytics/QuizAttemptHistory';
+import { GoalieChartingHistory } from '@/components/charting/GoalieChartingHistory';
 
 export default function AdminUserDetailsPage() {
   return (
@@ -70,8 +71,11 @@ export default function AdminUserDetailsPage() {
 
 function UserDetailsContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { user: currentUser } = useAuth();
   const userId = params.id as string;
+  const initialTab = searchParams?.get('tab') || 'profile';
 
   const [user, setUser] = useState<UserType | null>(null);
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
@@ -352,11 +356,22 @@ function UserDetailsContent() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs
+          defaultValue={initialTab}
+          className="space-y-6"
+          onValueChange={(value) => {
+            const nextParams = new URLSearchParams(searchParams?.toString() || '');
+            if (value === 'profile') nextParams.delete('tab');
+            else nextParams.set('tab', value);
+            const qs = nextParams.toString();
+            router.replace(`/admin/users/${userId}${qs ? `?${qs}` : ''}`, { scroll: false });
+          }}
+        >
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="analytics" onClick={fetchAnalytics}>Analytics</TabsTrigger>
             <TabsTrigger value="progress" onClick={fetchAnalytics}>Progress</TabsTrigger>
+            <TabsTrigger value="charting">Charting</TabsTrigger>
             <TabsTrigger value="messages" onClick={fetchMessages}>Messages</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -645,6 +660,26 @@ function UserDetailsContent() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Charting Tab */}
+          <TabsContent value="charting">
+            <Card>
+              <CardHeader>
+                <CardTitle>Charting History</CardTitle>
+                <CardDescription>
+                  Every game and practice the goalie has charted. Expand a session to see full details.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GoalieChartingHistory
+                  studentId={userId}
+                  onOpenSession={(sessionId) =>
+                    router.push(`/charting/sessions/${sessionId}`)
+                  }
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Messages Tab */}
