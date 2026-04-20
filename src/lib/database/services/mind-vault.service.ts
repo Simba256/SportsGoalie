@@ -2,7 +2,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
   getDocs,
   Timestamp,
 } from 'firebase/firestore';
@@ -40,14 +39,26 @@ export class MindVaultService extends BaseDatabaseService {
   }
 
   /**
+   * Sorts entries newest-first by createdAt. Done in-memory so the query
+   * itself can rely only on auto-created single-field indexes and avoid a
+   * required Firestore composite index.
+   */
+  private sortByCreatedAtDesc(entries: MindVaultEntry[]): MindVaultEntry[] {
+    return [...entries].sort((a, b) => {
+      const aMs = a.createdAt?.toMillis?.() ?? 0;
+      const bMs = b.createdAt?.toMillis?.() ?? 0;
+      return bMs - aMs;
+    });
+  }
+
+  /**
    * Get all entries for a student
    */
   async getEntriesByStudent(studentId: string): Promise<ApiResponse<MindVaultEntry[]>> {
     try {
       const q = query(
         collection(db, this.COLLECTION),
-        where('studentId', '==', studentId),
-        orderBy('createdAt', 'desc')
+        where('studentId', '==', studentId)
       );
       const snapshot = await getDocs(q);
       const entries = snapshot.docs.map((doc) => ({
@@ -55,11 +66,12 @@ export class MindVaultService extends BaseDatabaseService {
         ...doc.data(),
       })) as MindVaultEntry[];
 
-      return { success: true, data: entries, timestamp: new Date() };
+      return { success: true, data: this.sortByCreatedAtDesc(entries), timestamp: new Date() };
     } catch (error) {
+      console.warn('[MindVaultService] getEntriesByStudent failed:', error);
       return {
         success: false,
-        error: { code: 'FETCH_ERROR', message: (error as Error).message },
+        error: this.normalizeError(error, 'FETCH_ERROR'),
         timestamp: new Date(),
       };
     }
@@ -76,8 +88,7 @@ export class MindVaultService extends BaseDatabaseService {
       const q = query(
         collection(db, this.COLLECTION),
         where('studentId', '==', studentId),
-        where('category', '==', category),
-        orderBy('createdAt', 'desc')
+        where('category', '==', category)
       );
       const snapshot = await getDocs(q);
       const entries = snapshot.docs.map((doc) => ({
@@ -85,11 +96,12 @@ export class MindVaultService extends BaseDatabaseService {
         ...doc.data(),
       })) as MindVaultEntry[];
 
-      return { success: true, data: entries, timestamp: new Date() };
+      return { success: true, data: this.sortByCreatedAtDesc(entries), timestamp: new Date() };
     } catch (error) {
+      console.warn('[MindVaultService] getEntriesByCategory failed:', error);
       return {
         success: false,
-        error: { code: 'FETCH_ERROR', message: (error as Error).message },
+        error: this.normalizeError(error, 'FETCH_ERROR'),
         timestamp: new Date(),
       };
     }

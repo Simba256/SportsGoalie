@@ -14,6 +14,7 @@ import {
   type MindVaultCategory,
   type MindVaultEntry,
 } from '@/types/mind-vault';
+import { toast } from 'sonner';
 
 export default function MindVaultCategoryPage() {
   const params = useParams();
@@ -43,6 +44,8 @@ export default function MindVaultCategoryPage() {
       const result = await mindVaultService.getEntriesByCategory(user.id, categorySlug);
       if (result.success && result.data) {
         setEntries(result.data);
+      } else {
+        toast.error(result.error?.message || 'Failed to load entries');
       }
       setLoading(false);
     };
@@ -59,11 +62,12 @@ export default function MindVaultCategoryPage() {
       source: 'manual',
     });
     if (result.success) {
-      // Reload entries
       const reload = await mindVaultService.getEntriesByCategory(user.id, categorySlug);
       if (reload.success && reload.data) {
         setEntries(reload.data);
       }
+    } else {
+      toast.error(result.error?.message || 'Failed to add entry');
     }
   };
 
