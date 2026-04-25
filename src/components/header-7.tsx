@@ -8,7 +8,6 @@ export const Header7 = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const isPricingPage = pathname === '/pricing';
   const isLandingPage = pathname === '/';
 
   useEffect(() => {
@@ -24,8 +23,8 @@ export const Header7 = () => {
     <nav
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
         isScrolled
-          ? 'bg-white/40 backdrop-blur-md border-b border-gray-200/50 py-4 shadow-sm'
-          : 'bg-transparent py-6'
+          ? 'bg-white/85 backdrop-blur-md border-b border-slate-200/70 py-3 shadow-sm'
+          : 'bg-slate-100/85 backdrop-blur-md border-b border-slate-200/70 py-4'
       }`}
     >
       <div
@@ -42,7 +41,7 @@ export const Header7 = () => {
           <img
             src="/logo.png"
             alt="Smarter Goalie Logo"
-            className="h-12 w-auto object-contain transition-all duration-300 brightness-110 contrast-105"
+            className="h-10 w-auto object-contain transition-all duration-300 brightness-110 contrast-105"
           />
         </button>
 
@@ -65,12 +64,8 @@ export const Header7 = () => {
               }}
               className={`transition-colors duration-500 font-medium text-[15px] tracking-wide cursor-pointer ${
                 label === 'Login'
-                  ? 'bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-md transition-all duration-300'
-                  : isScrolled
-                  ? 'text-gray-800 hover:text-gray-900'
-                  : isPricingPage
-                  ? 'text-gray-800 hover:text-gray-900'
-                  : 'text-white hover:text-white/80'
+                  ? 'bg-[#37b5ff] hover:bg-[#22a7f5] text-white px-4 py-2 rounded-md transition-all duration-300'
+                  : 'text-slate-800 hover:text-slate-900'
               }`}
             >
               {label}

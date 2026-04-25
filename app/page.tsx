@@ -53,49 +53,175 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section — full background image */}
+      {/* Hero Section — redesigned */}
       <section
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-end"
-        style={{ backgroundImage: "url('/hero-section-icehockey.png')" }}
+        className="relative min-h-screen overflow-hidden flex flex-col"
+        style={{ backgroundColor: '#37b5ff' }}
       >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+        {/* Background image — full coverage */}
+        <img
+          src="/hero-section-new.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ zIndex: 0 }}
+        />
+
+        {/* Mobile overlay — uniform dark so text is readable over the image */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{ background: 'rgba(0,15,40,0.82)', zIndex: 1 }}
+        />
+
+        {/* Desktop overlay — left dark → right transparent */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(0,15,40,0.92) 0%, rgba(0,15,40,0.75) 45%, rgba(0,15,40,0.22) 72%, rgba(0,15,40,0.03) 100%)',
+            zIndex: 1,
+          }}
+        />
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-8 pb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-10">
-          {/* Heading */}
-          <div className="max-w-3xl">
-            <div className="mb-6">
-              <p className="text-sm md:text-base font-semibold text-red-300 uppercase tracking-widest mb-4">
-                Smarter Goalie Academy
-              </p>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] uppercase tracking-tight mb-6">
-                Where Mind Meets Body
-              </h1>
-            </div>
-            <p className="text-base md:text-lg text-white/85 max-w-2xl leading-relaxed">
-              The only platform built for goalies who think as much as they react. Master positioning systems, decision-making frameworks, and technical mastery.
-            </p>
-          </div>
+        <div className="relative flex-1 flex items-center" style={{ zIndex: 2 }}>
+          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-24 md:py-28">
+            <div className="max-w-full md:max-w-[580px]">
 
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 md:pb-2">
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="bg-red-600 hover:bg-red-500 text-white font-semibold px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/30"
-            >
-              Start Your Journey
-            </button>
-            <button
-              onClick={() => {
-                const el = document.getElementById('features');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="border-2 border-white text-white font-semibold px-6 py-3 hover:bg-white hover:text-gray-900 transition-all duration-300"
-            >
-              See How It Works
-            </button>
+              {/* Main headline */}
+              <h1
+                className="font-black uppercase mb-5 md:mb-7 text-center md:text-left"
+                style={{
+                  fontSize: 'clamp(30px, 5vw, 54px)',
+                  lineHeight: 1.08,
+                  color: '#fff',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                ARE GOALIES THE{' '}
+                <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>WORST TRAINED</em>{' '}
+                ATHLETES IN SPORTS?
+              </h1>
+
+              {/* Tagline */}
+              <p
+                className="uppercase font-bold mb-8 md:mb-10 text-center md:text-left"
+                style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '2.5px', fontSize: '11px' }}
+              >
+                HERE IS WHAT WE KNOW.
+              </p>
+
+              {/* Video intro button */}
+              <button
+                className="flex items-center gap-3 mb-6 md:mb-10 cursor-pointer hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
+                style={{
+                  background: 'rgba(55,181,255,0.15)',
+                  border: '1px solid rgba(55,181,255,0.6)',
+                  color: '#fff',
+                  padding: '11px 20px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <span
+                  className="flex items-center justify-center shrink-0"
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#37b5ff',
+                    color: '#000f28',
+                    fontSize: '9px',
+                    fontWeight: 900,
+                  }}
+                >
+                  ▶
+                </span>
+                COACH MIKE — INTRODUCTION
+              </button>
+
+              {/* Primary CTA */}
+              <button
+                onClick={() => router.push('/explain')}
+                className="mb-8 md:mb-10 hover:opacity-90 hover:scale-[1.02] transition-all duration-200 w-full md:w-auto text-center"
+                style={{
+                  background: '#37b5ff',
+                  color: '#000f28',
+                  fontWeight: 800,
+                  fontSize: '12px',
+                  letterSpacing: '2px',
+                  padding: '15px 32px',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                }}
+              >
+                LET US EXPLAIN →
+              </button>
+
+              {/* Role pills */}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {[
+                  {
+                    label: 'GOALIE',
+                    action: () => {
+                      setSelectedRole('goalie');
+                      setTimeout(
+                        () => contentRef.current?.scrollIntoView({ behavior: 'smooth' }),
+                        100
+                      );
+                    },
+                  },
+                  {
+                    label: 'PARENT',
+                    action: () => {
+                      setSelectedRole('parent');
+                      setTimeout(
+                        () => contentRef.current?.scrollIntoView({ behavior: 'smooth' }),
+                        100
+                      );
+                    },
+                  },
+                  { label: 'COACH', action: () => router.push('/auth/register') },
+                  { label: 'GOALIE COACH', action: () => router.push('/auth/register') },
+                ].map(({ label, action }) => (
+                  <button
+                    key={label}
+                    onClick={action}
+                    className="hover:opacity-80 transition-opacity"
+                    style={{
+                      background: 'rgba(55,181,255,0.18)',
+                      border: '1px solid rgba(55,181,255,0.55)',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '1px',
+                      color: '#e6f6ff',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Bottom-right photo caption — hidden on small screens */}
+        <div
+          className="absolute bottom-6 right-6 hidden sm:block"
+          style={{
+            color: 'rgba(255,255,255,0.35)',
+            fontSize: '9px',
+            fontWeight: 700,
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            zIndex: 2,
+          }}
+        >
+          ANTONIO ATHANASIADIS • #41 • PLAYOFFS 2026
         </div>
       </section>
 

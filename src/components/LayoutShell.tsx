@@ -10,6 +10,7 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
+const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization'];
 const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
 
 function isPublicRoute(pathname: string): boolean {
@@ -21,6 +22,10 @@ function isPublicRoute(pathname: string): boolean {
 
 function isBareRoute(pathname: string): boolean {
   return BARE_ROUTES.some(route => pathname.startsWith(route));
+}
+
+function isNakedRoute(pathname: string): boolean {
+  return NAKED_ROUTES.some(route => pathname.startsWith(route));
 }
 
 function isAdminRoute(pathname: string): boolean {
@@ -127,6 +132,10 @@ export function LayoutShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (searchParams.get('embedded') === '1') {
+    return <>{children}</>;
+  }
+
+  if (isNakedRoute(pathname)) {
     return <>{children}</>;
   }
 
