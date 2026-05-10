@@ -228,23 +228,23 @@ export default function Home() {
       <ClubIntroSection />
 
       {/* Choose Your Role Section */}
-      <section className="py-32 px-6 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+      <section className="py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-10 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute top-20 right-10 w-72 h-72 bg-red-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-        
+
         <div className="max-w-6xl mx-auto relative z-10">
-         
-          <div className="mb-20">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
+
+          <div className="mb-12 sm:mb-20">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
               Choose Your Role
             </h2>
-            <p className="text-lg md:text-xl text-gray-500 font-medium">
+            <p className="text-base sm:text-lg md:text-xl text-gray-500 font-medium">
               Goalies build skills. Parents support the journey. Start here.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-10 mt-20 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mt-8 sm:mt-20 max-w-3xl mx-auto">
             {/* Card 1 - Goalie Role */}
             <button
               onClick={() => {
@@ -332,23 +332,23 @@ export default function Home() {
       {!selectedRole && (
         <>
           <section id="features" className="pt-20 pb-0 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6 mb-12">
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-12">
               <div className="flex justify-between items-center">
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
                 <span className="text-xl font-semibold text-gray-600">1/5</span>
               </div>
             </div>
             <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="20%" scaleEndPosition="15%" baseScale={0.95}>
               {/* 1 — The 7 Pillars of Intelligent Goaltending */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_1.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/7-pillars.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">1/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
-                        <p className="text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
                         <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
@@ -359,14 +359,14 @@ export default function Home() {
               </ScrollStackItem>
               {/* 2 — Video Learning */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">2/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
-                        <p className="text-xl text-red-400 mb-6">Structured lessons you can replay</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Structured lessons you can replay</p>
                         <p className="text-zinc-300 leading-relaxed mb-8">YouTube-integrated video lessons organised into structured modules covering technique, positioning, decision-making, and game sense. Track completion per lesson, pick up where you left off, and learn at your own pace.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
@@ -376,14 +376,14 @@ export default function Home() {
               </ScrollStackItem>
               {/* 3 — Performance Analytics & Gap Management */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">3/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
-                        <p className="text-xl text-red-400 mb-6">See what others miss</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">See what others miss</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">Chart every game and practice session. Our analytics reveal your consistency patterns, good vs. bad goal ratios, and pinpoint exactly which skills need work.</p>
                         <p className="text-zinc-400 text-sm mb-6">Nothing is left to imagination — advance with confidence knowing precisely where you stand.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
@@ -394,14 +394,14 @@ export default function Home() {
               </ScrollStackItem>
               {/* 4 — Goaltending: A Chess Game */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">4/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
-                        <p className="text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">Our video-questionnaire and quiz system assesses your decision-making from a goalie&rsquo;s point of view. We identify your knowledge gaps, then build your personalised &ldquo;UP YOUR GAME&rdquo; learning path.</p>
                         <p className="text-zinc-400 text-sm mb-6">Outsmart the shooter before the puck leaves their stick.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
@@ -412,14 +412,15 @@ export default function Home() {
               </ScrollStackItem>
               {/* 5 — Session Charting */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">5/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
-                        <p className="text-xl text-red-400 mb-6">Our flagship goalie feature</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Our flagship goalie feature</p>
+
                         <p className="text-zinc-300 leading-relaxed mb-8">Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
@@ -453,13 +454,13 @@ export default function Home() {
           </section>
 
           {/* What's In YOUR Tool Box? */}
-          <section className="py-24 px-6 bg-white">
+          <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 text-center">
                 What&rsquo;s In YOUR Tool Box?
               </h2>
-              <p className="text-center text-gray-500 text-lg mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
-              <div className="grid md:grid-cols-3 gap-8 items-stretch">
+              <p className="text-center text-gray-500 text-base sm:text-lg mb-10 sm:mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
                 {/* Card 1 — Positional Systems */}
                 <BackgroundGradient
                   containerClassName="rounded-[22px] h-full"
@@ -518,7 +519,7 @@ export default function Home() {
 
       {/* ── GOALIE ── */}
       {selectedRole === 'goalie' && (
-        <section className="py-24 px-6 bg-white">
+        <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Everything built for you</h2>
@@ -608,7 +609,7 @@ export default function Home() {
 
       {/* ── PARENT ── */}
       {selectedRole === 'parent' && (
-        <section className="py-24 px-6 bg-white">
+        <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Stay close to the journey</h2>

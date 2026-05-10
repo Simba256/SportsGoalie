@@ -276,7 +276,7 @@ export default function ExplainPage() {
                   {/* Body */}
                   <p
                     className="mb-6"
-                    style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.7 }}
+                    style={{ fontSize: '15px', color: '#94a3b8', lineHeight: 1.7 }}
                   >
                     {door.body}
                   </p>

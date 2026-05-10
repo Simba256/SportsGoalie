@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Building2, Check } from 'lucide-react';
+import { Play, Pause, Building2 } from 'lucide-react';
+import { TiltCard } from '@/components/ui/tilt-card';
+import { FloatingPaths } from '@/components/ui/background-paths';
+import { Boxes } from '@/components/ui/background-boxes';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
-const RED = '#C00000';
-const AMBER = '#d97706';
 
 function VoiceButton({ label }: { label: string }) {
   const [playing, setPlaying] = useState(false);
@@ -72,14 +73,6 @@ function AutoVoicePlayer() {
   );
 }
 
-function SectionLabel({ text }: { text: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-      <div style={{ width: '3px', height: '42px', background: `linear-gradient(180deg, ${BLUE2}, ${BLUE3}, rgba(14,165,233,0.1))`, borderRadius: '2px', flexShrink: 0 }} />
-      <p style={{ fontSize: 'clamp(18px, 2.2vw, 27px)', fontWeight: 800, color: BLUE2, textTransform: 'uppercase', letterSpacing: '1.5px', margin: 0 }}>{text}</p>
-    </div>
-  );
-}
 
 export default function OrganizationPage() {
   const router = useRouter();
@@ -106,7 +99,7 @@ export default function OrganizationPage() {
       </nav>
 
       {/* Role bar */}
-      <div style={{ background: '#050c18', borderBottom: '1px solid rgba(96,205,255,0.12)' }}>
+      <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center gap-3">
           <Building2 size={13} color={BLUE2} />
           <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
@@ -115,9 +108,10 @@ export default function OrganizationPage() {
       </div>
 
       {/* ── C: Voice Player ── */}
-      <section style={{ ...sec, background: 'linear-gradient(145deg, #1c4080 0%, #102e6c 58%, #091e55 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #1e5ec4 0%, #1850b4 58%, #0f3d9e 100%)' }}>
         <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: '55vw', height: '55vw', maxWidth: '680px', maxHeight: '680px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.14) 0%, transparent 65%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(55deg, transparent, transparent 80px, rgba(255,255,255,0.012) 80px, rgba(255,255,255,0.012) 81px)', pointerEvents: 'none' }} />
+        <FloatingPaths position={1} color="rgba(96,205,255,1)" />
+        <FloatingPaths position={-1} color="rgba(96,205,255,1)" />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-14 lg:gap-20">
             <div style={{ flex: '1 1 0' }}>
@@ -137,13 +131,14 @@ export default function OrganizationPage() {
       </section>
 
       {/* ── D: Opening Statement ── */}
-      <section style={{ ...sec, background: 'linear-gradient(155deg, #060c1a 0%, #0a1628 65%, #050f1c 100%)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(96,205,255,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(96,205,255,0.028) 1px, transparent 1px)', backgroundSize: '72px 72px', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-25%', right: '-5%', width: '700px', height: '700px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
+      <section style={{ ...sec, background: 'linear-gradient(155deg, #0d2848 0%, #133050 65%, #0b2242 100%)' }}>
+        <Boxes />
+        <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 25%, #0d2848 72%)' }} />
+        <div style={{ position: 'absolute', bottom: '-25%', right: '-5%', width: '700px', height: '700px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.07) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 2 }}>
           <h2 style={{ fontSize: 'clamp(30px, 5.8vw, 74px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', color: '#fff', margin: '0 0 28px', maxWidth: '1100px' }}>
             YOUR ORGANIZATION DEVELOPS FORWARDS AND DEFENCE.{' '}
-            <span style={{ color: RED }}>WHO DEVELOPS YOUR GOALIES?</span>
+            <span style={{ color: BLUE2 }}>WHO DEVELOPS YOUR GOALIES?</span>
           </h2>
           <p style={{ fontSize: 'clamp(17px, 2.1vw, 24px)', color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, maxWidth: '780px', margin: '0 0 28px', fontWeight: 500 }}>
             Consistent goaltending development across your entire organization. Every age group. One system. Scalable. Measurable. Built on principles that never change.
@@ -157,36 +152,75 @@ export default function OrganizationPage() {
       </section>
 
       {/* ── E: The Gap ── */}
-      <section style={{ ...sec, background: 'linear-gradient(140deg, #172e68 0%, #0c1e4e 100%)' }}>
-        <div style={{ position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(100px, 14vw, 200px)', fontWeight: 900, color: 'rgba(255,255,255,0.022)', letterSpacing: '-6px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', textTransform: 'uppercase' }}>GAP</div>
-        <div style={{ position: 'absolute', top: '-10%', left: '20%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <section style={{ ...sec, background: 'radial-gradient(circle at 30% 55%, #041525 0%, #070e1e 55%, #050912 100%)' }}>
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', fontSize: 'clamp(80px,18vw,260px)', fontWeight: 900, color: 'rgba(55,181,255,0.055)', letterSpacing: '-8px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', fontStyle: 'italic', whiteSpace: 'nowrap' }}>GAP</div>
+        <div style={{ position: 'absolute', top: '20%', left: '5%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.008) 60px, rgba(255,255,255,0.008) 61px)', pointerEvents: 'none' }} />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <SectionLabel text="The Gap in Every Organization" />
-          <div style={{ background: 'linear-gradient(135deg, rgba(192,0,0,0.09), rgba(192,0,0,0.05))', border: '1px solid rgba(192,0,0,0.26)', borderRadius: '16px', padding: 'clamp(24px,3vw,40px)', maxWidth: '820px', marginBottom: '32px', boxShadow: '0 3px 16px rgba(0,0,0,0.25)' }}>
-            <p style={{ fontSize: 'clamp(18px, 2.6vw, 30px)', fontWeight: 800, color: '#fff', lineHeight: 1.35, margin: 0 }}>
-              Most organizations have systems for every player on the ice{' '}
-              <span style={{ color: RED }}>except the most important one.</span>
-            </p>
+          <div className="flex flex-col lg:flex-row gap-16 lg:gap-20" style={{ alignItems: 'flex-start' }}>
+            {/* LEFT */}
+            <div className="w-full lg:w-auto" style={{ flex: '0 0 auto', maxWidth: '460px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '40px' }}>
+                <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
+                <div>
+                  <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>The Problem</p>
+                  <h2 style={{ fontSize: 'clamp(28px, 3.6vw, 46px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>The Gap in Every<br />Organization</h2>
+                </div>
+              </div>
+              <p style={{ fontSize: 'clamp(20px, 2.8vw, 32px)', fontWeight: 800, fontStyle: 'italic', color: BLUE2, lineHeight: 1.3, marginBottom: '28px', textShadow: `0 0 22px rgba(55,181,255,0.6), 0 0 44px rgba(55,181,255,0.3)` }}>
+                &ldquo;Most organizations have a system for every player on the ice &mdash; except the most important one.&rdquo;
+              </p>
+              <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: 'rgba(200,215,230,0.85)', lineHeight: 1.8, marginBottom: '20px' }}>
+                A bad habit developed at the atom level does not correct itself at peewee without a system designed to catch it. Most organizations do not have that system.
+              </p>
+              <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: '#fff', lineHeight: 1.8, marginBottom: '40px', fontWeight: 600 }}>
+                Parents choose organizations that can demonstrate measurable goalie development. Can you demonstrate it? What data do you have?
+              </p>
+              <VoiceButton label="HEAR COACH MIKE: WHAT ORGANIZATIONS ARE MISSING AND WHAT IT COSTS THEM" />
+            </div>
+            {/* RIGHT */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {([
+                { accent: BLUE2, label: 'Atom / Pee-Wee Gap', desc: 'Habits form before anyone notices. Without a tracking system, bad patterns become permanent — and no one catches them in time.' },
+                { accent: BLUE, label: 'The Data Gap', desc: 'Organizations cannot show parents what development looks like because they have never measured it. No data. No proof. No confidence.' },
+                { accent: BLUE3, label: 'The Coach Gap', desc: 'Most coaches at the minor level were never taught to develop goalies. The gap is not talent — it is the absence of a structured coaching framework.' },
+              ] as { accent: string; label: string; desc: string }[]).map((card, i) => (
+                <TiltCard key={i} effect="gravitate" tiltLimit={6} scale={1.02} style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+                  <div style={{ borderLeft: `4px solid ${card.accent}`, padding: '22px 24px', borderRadius: '0 12px 12px 0', backdropFilter: 'blur(10px)' }}>
+                    <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: card.accent, textTransform: 'uppercase', margin: '0 0 8px' }}>Gap {String(i + 1).padStart(2, '0')}</p>
+                    <h3 style={{ fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: 800, color: '#fff', margin: '0 0 10px', letterSpacing: '0.5px' }}>{card.label}</h3>
+                    <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', color: 'rgba(185,210,235,0.82)', lineHeight: 1.65, margin: 0 }}>{card.desc}</p>
+                  </div>
+                </TiltCard>
+              ))}
+              <div style={{ background: 'linear-gradient(135deg, rgba(55,181,255,0.08), rgba(55,181,255,0.04))', border: '1px solid rgba(55,181,255,0.24)', borderRadius: '12px', padding: '18px 22px', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+                <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.6 }}>
+                  Smarter Goalie is the system that fills every gap — from first-year atom to elite level.
+                </p>
+              </div>
+            </div>
           </div>
-          <div style={{ maxWidth: '820px' }}>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: 'rgba(184,212,232,0.9)', lineHeight: 1.9, marginBottom: '22px' }}>
-              A bad habit developed at the atom level does not correct itself at peewee without a system designed to catch it. Most organizations do not have that system. Smarter Goalie is that system.
-            </p>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, marginBottom: '40px', fontWeight: 600 }}>
-              Parents choose organizations that can demonstrate measurable goalie development. Can you demonstrate it? What data do you have?
-            </p>
-          </div>
-          <VoiceButton label="HEAR COACH MIKE: WHAT ORGANIZATIONS ARE MISSING AND WHAT IT COSTS THEM" />
         </div>
       </section>
 
       {/* ── F: What the System Delivers ── */}
-      <section style={{ ...sec, background: 'linear-gradient(135deg, #050a18 0%, #070d1c 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(135deg, #0d2648 0%, #102c50 100%)' }}>
         <div style={{ position: 'absolute', top: '10%', right: '10%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <SectionLabel text="The System" />
-          <h2 style={{ fontSize: 'clamp(24px, 3.6vw, 46px)', fontWeight: 900, letterSpacing: '-0.02em', color: '#fff', margin: '0 0 40px 56px' }}>What Smarter Goalie delivers to an organization:</h2>
-          <div style={{ maxWidth: '740px', marginBottom: '40px' }}>
+          {/* Header — Development Loop style */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
+            <div style={{ width: '6px', height: '100px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
+            <div>
+              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The System</p>
+              <h2 style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.1 }}>What Smarter Goalie<br />Delivers</h2>
+            </div>
+          </div>
+
+          {/* Timeline */}
+          <div style={{ position: 'relative', marginLeft: 'clamp(32px, 5vw, 48px)', marginBottom: '56px' }}>
+            {/* Vertical shiny cyan line */}
+            <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
+
             {[
               { num: '01', label: 'Foundation to Refinement', desc: 'A complete development pathway from first year goalie to elite level' },
               { num: '02', label: 'Every Age Group Covered', desc: 'One consistent system adapted to the development stage — no gaps, no blind spots' },
@@ -195,93 +229,149 @@ export default function OrganizationPage() {
               { num: '05', label: 'Admin Visibility', desc: 'Development data for every goalie at every level across the entire program' },
               { num: '06', label: 'Measurable Results', desc: 'Factor Ratios, charting data, development timelines across cohorts' },
               { num: '07', label: 'Custom Package Model', desc: 'Built for your organization\'s size, structure, and goals' },
-            ].map((item, i, arr) => (
-              <div key={i} style={{ display: 'flex', gap: 0 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '56px', flexShrink: 0, paddingTop: '18px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: BLUE2, boxShadow: `0 0 0 4px rgba(96,205,255,0.15)`, flexShrink: 0 }} />
-                  {i < arr.length - 1 && <div style={{ flex: 1, width: '2px', background: `linear-gradient(180deg, ${BLUE3}, rgba(14,165,233,0.06))`, margin: '6px 0', minHeight: '28px' }} />}
+            ].map((item, i) => (
+              <div key={i} style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', marginBottom: i < 6 ? '48px' : '0', zIndex: 1 }}>
+                {/* Glowing cyan node */}
+                <div style={{ position: 'absolute', left: '-45px', top: '28px', width: '24px', height: '24px', borderRadius: '50%', background: '#0d2648', border: `4px solid ${BLUE2}`, boxShadow: `0 0 12px ${BLUE2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE2 }} />
                 </div>
-                <div style={{ flex: 1, paddingLeft: '8px', paddingBottom: i < arr.length - 1 ? '24px' : '0', paddingTop: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(96,205,255,0.35)', letterSpacing: '2px' }}>{item.num}</span>
-                    <p style={{ fontWeight: 800, color: BLUE2, fontSize: 'clamp(13px, 1.4vw, 16px)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0 }}>{item.label}</p>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', width: '100%' }}>
+                  {/* Large translucent number */}
+                  <span style={{ fontSize: 'clamp(40px, 8vw, 88px)', fontWeight: 800, color: 'rgba(255,255,255,0.15)', lineHeight: 1, letterSpacing: '-3px', marginTop: '-8px', minWidth: '60px', textAlign: 'center', flexShrink: 0 }}>
+                    {item.num}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px', marginTop: '8px' }}>
+                      {item.label}
+                    </h3>
+                    <p style={{ fontSize: 'clamp(14px, 1.6vw, 16px)', color: 'rgba(150,200,232,0.85)', lineHeight: 1.65, margin: 0 }}>
+                      {item.desc}
+                    </p>
                   </div>
-                  <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', color: '#435a72', lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ marginLeft: '56px' }}><VoiceButton label="HEAR COACH MIKE: THE ORGANIZATION-WIDE SYSTEM AND HOW IT IS STRUCTURED" /></div>
+          <VoiceButton label="HEAR COACH MIKE: THE ORGANIZATION-WIDE SYSTEM AND HOW IT IS STRUCTURED" />
         </div>
       </section>
 
       {/* ── G: Scalability Architecture ── */}
-      <section style={{ ...sec, background: 'linear-gradient(140deg, #163068 0%, #0b1e52 100%)' }}>
-        <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.007) 60px, rgba(255,255,255,0.007) 61px)', pointerEvents: 'none' }} />
+      <section style={{ ...sec, background: 'radial-gradient(circle at 70% 25%, #041525 0%, #071120 55%, #050b18 100%)' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', overflow: 'hidden' }}>
+          <span style={{ fontSize: 'clamp(70px,16vw,230px)', fontWeight: 900, color: 'rgba(55,181,255,0.055)', letterSpacing: '-8px', lineHeight: 1, userSelect: 'none', fontStyle: 'italic', whiteSpace: 'nowrap' }}>SCALE</span>
+        </div>
+        <div style={{ position: 'absolute', top: '15%', right: '10%', width: '550px', height: '550px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.008) 60px, rgba(255,255,255,0.008) 61px)', pointerEvents: 'none' }} />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <SectionLabel text="The Scalability Architecture" />
-          <h2 style={{ fontSize: 'clamp(28px, 4.4vw, 56px)', fontWeight: 900, letterSpacing: '-0.02em', color: '#fff', lineHeight: 1.05, marginBottom: '32px' }}>
-            ONE SYSTEM.<br /><span style={{ color: AMBER }}>UNLIMITED SCALE.</span>
-          </h2>
-          <div style={{ maxWidth: '820px', marginBottom: '36px' }}>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: 'rgba(184,212,232,0.9)', lineHeight: 1.9, marginBottom: '22px' }}>
-              Smarter Goalie&rsquo;s architecture is built to grow with your organization. Whether you have 10 goalies or 500 &mdash; the system delivers the same consistent development framework to every one of them.
-            </p>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, fontWeight: 600 }}>
-              Admin controls all permissions. Every goalie, parent, and coach in your program operates within the structure you define. Nothing goes unseen.
-            </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
+            <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
+            <div>
+              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>The Architecture</p>
+              <h2 style={{ fontSize: 'clamp(28px, 3.6vw, 46px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>The Scalability<br />Architecture</h2>
+            </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10" style={{ maxWidth: '740px' }}>
-            {[{ n: '10', label: 'Goalies' }, { n: '50', label: 'Goalies' }, { n: '200', label: 'Goalies' }, { n: '500+', label: 'Goalies' }].map((item, i) => (
-              <div key={i} style={{ background: 'linear-gradient(135deg, rgba(217,119,6,0.1), rgba(217,119,6,0.05))', border: '1px solid rgba(217,119,6,0.25)', borderRadius: '14px', padding: '22px 16px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
-                <p style={{ fontSize: 'clamp(26px,3.8vw,40px)', fontWeight: 900, color: AMBER, lineHeight: 1, marginBottom: '6px' }}>{item.n}</p>
-                <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>{item.label}</p>
-                <p style={{ fontSize: '10px', color: '#334155', margin: 0 }}>Same system</p>
-              </div>
+          <p style={{ fontSize: 'clamp(22px, 3.2vw, 40px)', fontWeight: 800, fontStyle: 'italic', color: BLUE2, lineHeight: 1.25, marginBottom: '20px', maxWidth: '700px', textShadow: `0 0 24px rgba(55,181,255,0.55), 0 0 48px rgba(55,181,255,0.25)` }}>
+            &ldquo;One system. Every age group. Unlimited scale.&rdquo;
+          </p>
+          <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: 'rgba(200,220,235,0.82)', lineHeight: 1.8, marginBottom: '16px', maxWidth: '720px' }}>
+            Smarter Goalie&rsquo;s architecture is built to grow with your organization. Whether you have 10 goalies or 500 &mdash; the system delivers the same consistent development framework to every one of them.
+          </p>
+          <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: '#fff', lineHeight: 1.8, marginBottom: '44px', maxWidth: '720px', fontWeight: 600 }}>
+            Admin controls all permissions. Every goalie, parent, and coach in your program operates within the structure you define. Nothing goes unseen.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10" style={{ maxWidth: '840px' }}>
+            {([{ n: '10', label: 'Goalies', sub: 'Local club' }, { n: '50', label: 'Goalies', sub: 'Regional program' }, { n: '200', label: 'Goalies', sub: 'Association' }, { n: '500+', label: 'Goalies', sub: 'Provincial / national' }] as { n: string; label: string; sub: string }[]).map((item, i) => (
+              <TiltCard key={i} effect="gravitate" tiltLimit={10} scale={1.06} style={{ borderRadius: '16px', overflow: 'hidden', background: 'linear-gradient(180deg, rgba(11,23,45,0.96), rgba(10,18,36,0.98))', border: `2px solid rgba(55,181,255,0.45)`, boxShadow: `0 0 0 1px rgba(55,181,255,0.12), 0 0 24px rgba(55,181,255,0.15), 0 6px 22px rgba(0,0,0,0.3)` }}>
+                <div style={{ height: '3px', background: BLUE2, boxShadow: `0 0 8px ${BLUE2}` }} />
+                <div style={{ padding: '22px 16px', textAlign: 'center', position: 'relative' }}>
+                  <div style={{ position: 'absolute', bottom: '6px', right: '10px', fontSize: '48px', fontWeight: 900, color: 'rgba(55,181,255,0.07)', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>{String(i + 1).padStart(2, '0')}</div>
+                  <p style={{ fontSize: 'clamp(26px,3.8vw,42px)', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '6px', textShadow: `0 0 18px rgba(55,181,255,0.5)` }}>{item.n}</p>
+                  <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>{item.label}</p>
+                  <p style={{ fontSize: '10px', color: 'rgba(96,205,255,0.7)', fontWeight: 600, letterSpacing: '0.5px', margin: '0 0 16px' }}>{item.sub}</p>
+                </div>
+              </TiltCard>
             ))}
+          </div>
+          <div style={{ maxWidth: '640px', background: 'linear-gradient(135deg, rgba(55,181,255,0.07), rgba(55,181,255,0.03))', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '14px', padding: '22px 26px', marginBottom: '36px', backdropFilter: 'blur(8px)' }}>
+            <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.75, margin: 0, fontStyle: 'italic' }}>
+              &ldquo;The system does not change when the scale changes. That is the point. The framework is built to be consistent whether you are running one team or a hundred.&rdquo;
+            </p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: BLUE2, letterSpacing: '2px', textTransform: 'uppercase', margin: '14px 0 0' }}>— COACH MIKE</p>
           </div>
           <VoiceButton label="HEAR COACH MIKE: THE SCALABILITY ARCHITECTURE AND ADMIN CONTROLS" />
         </div>
       </section>
 
       {/* ── H: Custom Package ── */}
-      <section style={{ ...sec, background: 'linear-gradient(135deg, #05101e 0%, #030c18 100%)' }}>
-        <div style={{ position: 'absolute', top: '15%', left: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', right: '-30px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(100px, 14vw, 200px)', fontWeight: 900, color: 'rgba(255,255,255,0.022)', letterSpacing: '-6px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', textTransform: 'uppercase' }}>CUSTOM</div>
+      <section style={{ ...sec, background: 'linear-gradient(135deg, #0a1f3d 0%, #0d2648 55%, #091829 100%)' }}>
+        <div style={{ position: 'absolute', left: '-20px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(70px,15vw,200px)', fontWeight: 900, color: 'rgba(96,205,255,0.04)', letterSpacing: '-6px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', fontStyle: 'italic', whiteSpace: 'nowrap' }}>CUSTOM</div>
+        <div style={{ position: 'absolute', top: '15%', left: '5%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.008) 60px, rgba(255,255,255,0.008) 61px)', pointerEvents: 'none' }} />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <SectionLabel text="The Custom Package" />
-          <div style={{ maxWidth: '820px' }}>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, marginBottom: '22px', fontWeight: 600 }}>
-              Smarter Goalie does not offer a one-size-fits-all organization package. We build yours.
-            </p>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: 'rgba(184,212,232,0.9)', lineHeight: 1.9, marginBottom: '22px' }}>
-              Every organization is different in size, structure, competitive level, and development philosophy. Your package is designed around what your organization actually needs.
-            </p>
-            <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, marginBottom: '40px', fontWeight: 600 }}>
-              The conversation starts with Coach Mike. Not a sales team. Not an automated system. Coach Mike.
-            </p>
+          <div className="flex flex-col lg:flex-row gap-16 lg:gap-20" style={{ alignItems: 'flex-start' }}>
+            {/* LEFT */}
+            <div className="w-full lg:w-auto" style={{ flex: '0 0 auto', maxWidth: '440px' }}>
+              <div style={{ display: 'inline-block', border: '4px solid #00f2ff', boxShadow: '0 0 18px rgba(0,242,255,0.65), inset 0 0 12px rgba(0,242,255,0.4)', padding: '12px 20px', marginBottom: '28px' }}>
+                <h2 style={{ fontSize: 'clamp(14px, 1.6vw, 18px)', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '3px', margin: 0 }}>THE CUSTOM PACKAGE</h2>
+              </div>
+              <h3 style={{ fontSize: 'clamp(26px, 3.8vw, 50px)', fontWeight: 900, background: `linear-gradient(135deg, #fff 40%, ${BLUE2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 20px' }}>
+                Built Around<br />What You Need.
+              </h3>
+              <p style={{ fontSize: 'clamp(16px, 1.9vw, 21px)', fontStyle: 'italic', color: BLUE2, fontWeight: 700, lineHeight: 1.4, marginBottom: '22px', textShadow: `0 0 16px rgba(96,205,255,0.4)` }}>
+                &ldquo;We do not offer one-size-fits-all.<br />We build yours.&rdquo;
+              </p>
+              <p style={{ fontSize: 'clamp(15px, 1.5vw, 17px)', color: 'rgba(185,215,235,0.85)', lineHeight: 1.8, marginBottom: '16px' }}>
+                Every organization is different in size, structure, competitive level, and development philosophy. Your package is designed around what your organization actually needs.
+              </p>
+              <p style={{ fontSize: 'clamp(15px, 1.5vw, 17px)', color: '#fff', lineHeight: 1.8, marginBottom: '36px', fontWeight: 600 }}>
+                The conversation starts with Coach Mike. Not a sales team. Not an automated system. Coach Mike.
+              </p>
+              <VoiceButton label="HEAR COACH MIKE: THE CUSTOM PACKAGE MODEL AND WHAT THE FIRST CONVERSATION LOOKS LIKE" />
+            </div>
+            {/* RIGHT */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {([
+                { accent: BLUE2, label: 'Built for Your Size', desc: 'Whether you have 3 goalies or 300 — we build a package that fits your current size and scales as you grow. No paying for what you do not use.' },
+                { accent: BLUE, label: 'Built for Your Structure', desc: 'Every organization runs differently. We work around your age groups, coaching structure, and existing development framework — not against it.' },
+                { accent: BLUE3, label: 'Starts with Coach Mike', desc: 'The first conversation is always personal. Coach Mike reviews your inquiry and calls you directly. You speak to the person who built the system.' },
+              ] as { accent: string; label: string; desc: string }[]).map((card, i) => (
+                <TiltCard key={i} effect="gravitate" tiltLimit={6} scale={1.02} style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+                  <div style={{ borderLeft: `4px solid ${card.accent}`, padding: '22px 24px', borderRadius: '0 12px 12px 0', backdropFilter: 'blur(10px)' }}>
+                    <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: card.accent, textTransform: 'uppercase', margin: '0 0 8px' }}>Feature {String(i + 1).padStart(2, '0')}</p>
+                    <h3 style={{ fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>{card.label}</h3>
+                    <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', color: 'rgba(185,210,235,0.82)', lineHeight: 1.65, margin: 0 }}>{card.desc}</p>
+                  </div>
+                </TiltCard>
+              ))}
+              <div style={{ background: 'linear-gradient(135deg, rgba(96,205,255,0.07), rgba(96,205,255,0.03))', border: '1px solid rgba(96,205,255,0.2)', borderRadius: '12px', padding: '18px 22px', backdropFilter: 'blur(8px)' }}>
+                <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.65, fontStyle: 'italic' }}>
+                  &ldquo;This is not a product sale. It is a partnership. We are not done with you after the onboarding call.&rdquo;
+                </p>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: BLUE2, letterSpacing: '2px', textTransform: 'uppercase', margin: '12px 0 0' }}>— COACH MIKE</p>
+              </div>
+            </div>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE CUSTOM PACKAGE MODEL AND WHAT THE FIRST CONVERSATION LOOKS LIKE" />
         </div>
       </section>
 
       {/* ── I: Founding Partner ── */}
-      <section id="package" style={{ ...sec, background: 'linear-gradient(160deg, #04080f 0%, #070e1c 100%)' }}>
+      <section id="package" style={{ ...sec, background: 'linear-gradient(160deg, #092038 0%, #0e2848 100%)' }}>
         <div style={{ position: 'absolute', right: '-60px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(200px, 30vw, 440px)', fontWeight: 900, color: 'rgba(255,255,255,0.02)', letterSpacing: '-20px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>100</div>
         <div style={{ position: 'absolute', top: '-20%', left: '50%', width: '800px', height: '800px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.06) 0%, transparent 70%)', pointerEvents: 'none', transform: 'translateX(-50%)' }} />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.32)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px', boxShadow: '0 2px 12px rgba(217,119,6,0.12)' }}>
-            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: AMBER, boxShadow: '0 0 0 3px rgba(217,119,6,0.22)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: AMBER, margin: 0, textTransform: 'uppercase' }}>Founding Partner Opportunity</p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.32)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px', boxShadow: '0 2px 12px rgba(55,181,255,0.12)' }}>
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE2, boxShadow: '0 0 0 3px rgba(55,181,255,0.22)', flexShrink: 0 }} />
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Founding Partner Opportunity</p>
           </div>
           <h2 style={{ fontSize: 'clamp(30px, 5vw, 66px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>
             THIS IS THE EXPERIENCE<br /><span style={{ color: BLUE2 }}>BUILDING PHASE</span>
           </h2>
-          <p style={{ fontSize: 'clamp(16px, 2vw, 21px)', color: '#475569', lineHeight: 1.8, maxWidth: '680px', margin: '0 auto 16px' }}>
+          <p style={{ fontSize: 'clamp(16px, 2vw, 21px)', color: 'rgba(175,215,238,0.9)', lineHeight: 1.8, maxWidth: '680px', margin: '0 auto 16px' }}>
             Organizations that join during the Experience Building Phase become founding partners.
           </p>
-          <p style={{ fontSize: 'clamp(14px, 1.5vw, 17px)', color: '#2d3f52', lineHeight: 1.85, maxWidth: '640px', margin: '0 auto 52px' }}>
+          <p style={{ fontSize: 'clamp(14px, 1.5vw, 17px)', color: 'rgba(148,192,222,0.85)', lineHeight: 1.85, maxWidth: '640px', margin: '0 auto 52px' }}>
             The relationship we build with you during this phase shapes how Smarter Goalie serves organizations at every level for years to come.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
@@ -290,17 +380,17 @@ export default function OrganizationPage() {
               { num: '02', text: 'Coach Mike personally reviews your inquiry' },
               { num: '03', text: "Coach Mike calls you personally to discuss your organization's needs" },
             ].map((step) => (
-              <div key={step.num} style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(217,119,6,0.14)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
-                <p style={{ fontSize: '38px', fontWeight: 900, color: AMBER, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
-                <p style={{ fontSize: '15px', color: '#64748b', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
+              <div key={step.num} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(55,181,255,0.28)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+                <p style={{ fontSize: '38px', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
+                <p style={{ fontSize: '15px', color: 'rgba(155,200,228,0.9)', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
               </div>
             ))}
           </div>
           <button
             onClick={() => router.push('/auth/register')}
-            style={{ background: AMBER, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(217,119,6,0.38)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 44px rgba(217,119,6,0.58)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(217,119,6,0.38)'; }}
+            style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(55,181,255,0.38)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 44px rgba(55,181,255,0.58)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(55,181,255,0.38)'; }}
           >
             BUILD A PACKAGE →
           </button>
@@ -310,8 +400,8 @@ export default function OrganizationPage() {
         </div>
       </section>
 
-      <div style={{ background: '#020408', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <p style={{ fontSize: '10px', color: '#0f172a', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
+      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
       </div>
     </div>
   );
