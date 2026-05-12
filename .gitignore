@@ -114,4 +114,5 @@ docs/invoices/
 
 # Allow docs folder (important project documentation)
 # docs/
-/docs/michael-docs
+/docs/michael-docs/
+/docs 
