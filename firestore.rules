@@ -931,6 +931,39 @@ service cloud.firestore {
       allow delete: if isOwnerOrAdmin(resource.data.studentId);
     }
 
+    // Generic Invitations collection — all roles (student/coach/goalie_coach/parent)
+    match /invitations/{invitationId} {
+      // Admins can read all invitations
+      allow read: if isAdmin();
+
+      // PUBLIC: anyone can query by token — needed so the accept-invite page
+      // can validate the token before the user has an account
+      allow list: if true;
+
+      // Only admins can create invitations
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['email', 'token', 'role', 'status', 'invitedBy', 'invitedByName', 'createdAt', 'expiresAt']) &&
+                       request.resource.data.email is string &&
+                       isValidEmail(request.resource.data.email) &&
+                       request.resource.data.token is string &&
+                       request.resource.data.token.size() > 0 &&
+                       (request.resource.data.status == 'pending' ||
+                        request.resource.data.status == 'accepted' ||
+                        request.resource.data.status == 'expired' ||
+                        request.resource.data.status == 'revoked') &&
+                       request.resource.data.invitedBy is string &&
+                       request.resource.data.invitedByName is string &&
+                       isValidTimestamp(request.resource.data.createdAt) &&
+                       isValidTimestamp(request.resource.data.expiresAt);
+
+      // Admins can update (resend, revoke); authenticated users can mark accepted
+      // after completing registration via the invite link
+      allow update: if isAdmin() || isAuthenticated();
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections

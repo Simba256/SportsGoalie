@@ -52,6 +52,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'All Users', href: '/admin/users', icon: Users },
       { label: 'Coaches', href: '/admin/coaches', icon: UserPlus },
+      { label: 'Goalies', href: '/admin/goalies', icon: User },
     ],
   },
   {
