@@ -1191,18 +1191,37 @@ export class ProgressService extends BaseDatabaseService {
     pillarId?: string
   ): Promise<ApiResponse<void>> {
     try {
+      // Always write a video_quiz_progress record so the dashboard, pillar pages,
+      // and analytics all reflect this lesson completion via their standard query path.
+      const progressId = `lesson_${userId}_${skillId}`;
+      await setDoc(doc(db, 'video_quiz_progress', progressId), {
+        id: progressId,
+        userId,
+        videoQuizId: `lesson_${skillId}`,
+        skillId,
+        sportId: pillarId || '',
+        isCompleted: true,
+        status: 'submitted',
+        percentage: 100,
+        score: 100,
+        maxScore: 100,
+        questionsAnswered: [],
+        questionsRemaining: 0,
+        currentTime: 0,
+        watchTime: 0,
+        totalTimeSpent: 0,
+        startedAt: Timestamp.now(),
+        completedAt: Timestamp.now(),
+        lastAccessedAt: Timestamp.now(),
+      });
+
       const { userService } = await import('./user.service');
       const userResult = await userService.getUser(userId);
 
       if (!userResult.success || !userResult.data) {
-        return {
-          success: false,
-          error: {
-            code: 'USER_NOT_FOUND',
-            message: 'User not found',
-          },
-          timestamp: new Date(),
-        };
+        // Even if we can't load the user, the progress record was written above.
+        logger.warn('recordLessonCompletion: user not found for workflow step', 'ProgressService', { userId });
+        return { success: true, timestamp: new Date() };
       }
 
       const user = userResult.data;

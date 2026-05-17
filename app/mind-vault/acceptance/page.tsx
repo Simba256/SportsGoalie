@@ -15,6 +15,7 @@ import {
   ACCEPTANCE_PROMPTS,
   type MindVaultEntry,
 } from '@/types/mind-vault';
+import { toast } from 'sonner';
 
 export default function AcceptanceListPage() {
   const router = useRouter();
@@ -35,6 +36,8 @@ export default function AcceptanceListPage() {
       const result = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
       if (result.success && result.data) {
         setEntries(result.data);
+      } else {
+        toast.error(result.error?.message || 'Failed to load Acceptance List');
       }
       setLoading(false);
     };
@@ -63,17 +66,18 @@ export default function AcceptanceListPage() {
         const reload = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
         if (reload.success && reload.data) setEntries(reload.data);
       } else {
+        const msg = result.error?.message || result.message || 'Failed to add entry';
         console.warn('[MindVault] addEntry failed:', {
           code: result.error?.code || 'UNKNOWN_ERROR',
-          message: result.error?.message || result.message || 'Failed to add entry',
+          message: msg,
           details: result.error?.details,
         });
+        toast.error(msg);
       }
     } catch (error) {
-      console.warn('[MindVault] addEntry threw:', {
-        message: error instanceof Error ? error.message : String(error),
-        error,
-      });
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn('[MindVault] addEntry threw:', { message: msg, error });
+      toast.error(msg);
     }
   };
 
@@ -90,11 +94,13 @@ export default function AcceptanceListPage() {
       const reload = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
       if (reload.success && reload.data) setEntries(reload.data);
     } else {
+      const msg = result.error?.message || result.message || 'Failed to add entry';
       console.warn('[MindVault] custom addEntry failed:', {
         code: result.error?.code || 'UNKNOWN_ERROR',
-        message: result.error?.message || result.message || 'Failed to add entry',
+        message: msg,
         details: result.error?.details,
       });
+      toast.error(msg);
     }
   };
 

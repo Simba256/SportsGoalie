@@ -1,23 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
 import { toast } from 'sonner';
-import { userService } from '@/lib/database/services/user.service';
-import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -25,8 +22,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [coachCodeStatus, setCoachCodeStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
-  const [validatedCoachName, setValidatedCoachName] = useState<string | null>(null);
 
   const {
     register,
@@ -38,7 +33,7 @@ export default function RegisterPage() {
   } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: 'student' as const,
+      role: 'parent' as const,
       workflowType: 'automated' as const,
       agreeToTerms: false,
       email: '',
@@ -49,56 +44,6 @@ export default function RegisterPage() {
   });
 
   const selectedRole = watch('role');
-  const selectedWorkflowType = watch('workflowType');
-  const watchedCoachCode = watch('coachCode');
-
-  const validateCoachCode = async (code: string) => {
-    if (!code || code.trim().length === 0) {
-      setCoachCodeStatus('idle');
-      setValidatedCoachName(null);
-      return;
-    }
-
-    const normalizedCode = normalizeCoachCode(code);
-    const formatPattern = /^[A-Z]+-[A-Z0-9]{4}$/;
-    if (!formatPattern.test(normalizedCode)) {
-      setCoachCodeStatus('idle');
-      setValidatedCoachName(null);
-      return;
-    }
-
-    setCoachCodeStatus('checking');
-
-    try {
-      const result = await userService.getCoachByCode(normalizedCode);
-      if (result.success && result.data) {
-        setCoachCodeStatus('valid');
-        setValidatedCoachName(result.data.displayName);
-      } else {
-        setCoachCodeStatus('invalid');
-        setValidatedCoachName(null);
-      }
-    } catch {
-      setCoachCodeStatus('invalid');
-      setValidatedCoachName(null);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedRole !== 'student' || selectedWorkflowType !== 'custom') {
-      setCoachCodeStatus('idle');
-      setValidatedCoachName(null);
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      if (watchedCoachCode) {
-        validateCoachCode(watchedCoachCode);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [watchedCoachCode, selectedRole, selectedWorkflowType]);
 
   const onSubmit = async (data: Record<string, unknown>) => {
     try {
@@ -150,13 +95,21 @@ export default function RegisterPage() {
             <p className="text-gray-500 text-sm">Enter your information to get started</p>
           </div>
 
+          {/* Goalie notice */}
+          <div className="flex gap-3 items-start rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 mb-4">
+            <Mail className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-700">
+              <span className="font-semibold">Are you a goalie?</span> Goalies register via a personal invite link sent by the admin — not through this form. Check your email for your invitation.
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" data-testid="register-form">
             {/* Role Selection */}
             <div className="space-y-1">
               <Label htmlFor="role" className="text-gray-700 text-sm">I am a...</Label>
               <Select
                 value={selectedRole}
-                onValueChange={(value) => setValue('role', value as 'student' | 'parent' | 'coach')}
+                onValueChange={(value) => setValue('role', value as 'parent' | 'coach')}
               >
                 <SelectTrigger
                   id="role"
@@ -166,7 +119,6 @@ export default function RegisterPage() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
-                  <SelectItem value="student" data-testid="role-student" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Student / Athlete</SelectItem>
                   <SelectItem value="parent" data-testid="role-parent" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Parent</SelectItem>
                   <SelectItem value="coach" data-testid="role-coach" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Coach</SelectItem>
                 </SelectContent>
@@ -175,92 +127,6 @@ export default function RegisterPage() {
                 <p className="text-xs text-red-500" data-testid="role-error">{errors.role.message}</p>
               )}
             </div>
-
-            {/* Workflow Type Selection (Students Only) */}
-            {selectedRole === 'student' && (
-              <div className="space-y-1">
-                <Label className="text-gray-700 text-sm">Learning Mode</Label>
-                <RadioGroup
-                  value={selectedWorkflowType}
-                  onValueChange={(value) => setValue('workflowType', value as 'automated' | 'custom')}
-                  className="space-y-2"
-                >
-                  <div className="flex items-center space-x-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 hover:bg-gray-100 transition-colors">
-                    <RadioGroupItem value="automated" id="automated" className="border-gray-300 text-red-500" />
-                    <Label htmlFor="automated" className="font-normal cursor-pointer flex-1">
-                      <div className="font-semibold text-sm text-gray-900">Self-Paced (Automated)</div>
-                      <div className="text-xs text-gray-500">Progress automatically as you complete quizzes.</div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 hover:bg-gray-100 transition-colors">
-                    <RadioGroupItem value="custom" id="custom" className="border-gray-300 text-red-500" />
-                    <Label htmlFor="custom" className="font-normal cursor-pointer flex-1">
-                      <div className="font-semibold text-sm text-gray-900">Coach-Guided (Custom)</div>
-                      <div className="text-xs text-gray-500">Work with a coach for personalized guidance.</div>
-                    </Label>
-                  </div>
-                </RadioGroup>
-                {errors.workflowType && (
-                  <p className="text-xs text-red-500">{errors.workflowType.message}</p>
-                )}
-              </div>
-            )}
-
-            {/* Coach Code Input (Custom Workflow Students Only) */}
-            {selectedRole === 'student' && selectedWorkflowType === 'custom' && (
-              <div className="space-y-1">
-                <Label htmlFor="coachCode" className="text-gray-700 text-sm">Coach Code</Label>
-                <div className="relative">
-                  <Input
-                    id="coachCode"
-                    placeholder="Enter your coach's code (e.g., SMITH-7K3M)"
-                    {...register('coachCode')}
-                    aria-invalid={!!errors.coachCode || coachCodeStatus === 'invalid'}
-                    data-testid="coach-code-input"
-                    className={`uppercase bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 ${
-                      coachCodeStatus === 'valid'
-                        ? 'border-green-500 focus-visible:ring-green-500'
-                        : coachCodeStatus === 'invalid'
-                        ? 'border-red-500 focus-visible:ring-red-500'
-                        : ''
-                    }`}
-                    onChange={(e) => {
-                      e.target.value = e.target.value.toUpperCase();
-                      register('coachCode').onChange(e);
-                    }}
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {coachCodeStatus === 'checking' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    )}
-                    {coachCodeStatus === 'valid' && (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    )}
-                    {coachCodeStatus === 'invalid' && (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                    )}
-                  </div>
-                </div>
-                {coachCodeStatus === 'valid' && validatedCoachName && (
-                  <p className="text-sm text-green-600" data-testid="coach-code-valid">
-                    Coach found: {validatedCoachName}
-                  </p>
-                )}
-                {coachCodeStatus === 'invalid' && (
-                  <p className="text-sm text-red-500" data-testid="coach-code-invalid">
-                    Invalid coach code. Check with your coach.
-                  </p>
-                )}
-                {errors.coachCode && (
-                  <p className="text-sm text-red-500" data-testid="coach-code-error">
-                    {errors.coachCode.message}
-                  </p>
-                )}
-                <p className="text-[11px] text-gray-400">
-                  Get this code from your coach before registering.
-                </p>
-              </div>
-            )}
 
             {/* Display Name */}
             <div className="space-y-1">

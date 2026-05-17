@@ -53,72 +53,198 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section — full background image */}
+      {/* Hero Section — redesigned */}
       <section
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-end"
-        style={{ backgroundImage: "url('/hero-section-icehockey.png')" }}
+        className="relative min-h-screen overflow-hidden flex flex-col"
+        style={{ backgroundColor: '#37b5ff' }}
       >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+        {/* Background image — full coverage */}
+        <img
+          src="/hero-section-new.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ zIndex: 0 }}
+        />
+
+        {/* Mobile overlay — uniform dark so text is readable over the image */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{ background: 'rgba(0,15,40,0.82)', zIndex: 1 }}
+        />
+
+        {/* Desktop overlay — left dark → right transparent */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(0,15,40,0.92) 0%, rgba(0,15,40,0.75) 45%, rgba(0,15,40,0.22) 72%, rgba(0,15,40,0.03) 100%)',
+            zIndex: 1,
+          }}
+        />
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-8 pb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-10">
-          {/* Heading */}
-          <div className="max-w-3xl">
-            <div className="mb-6">
-              <p className="text-sm md:text-base font-semibold text-red-300 uppercase tracking-widest mb-4">
-                Smarter Goalie Academy
-              </p>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] uppercase tracking-tight mb-6">
-                Where Mind Meets Body
-              </h1>
-            </div>
-            <p className="text-base md:text-lg text-white/85 max-w-2xl leading-relaxed">
-              The only platform built for goalies who think as much as they react. Master positioning systems, decision-making frameworks, and technical mastery.
-            </p>
-          </div>
+        <div className="relative flex-1 flex items-center" style={{ zIndex: 2 }}>
+          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-24 md:py-28">
+            <div className="max-w-full md:max-w-[580px]">
 
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 md:pb-2">
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="bg-red-600 hover:bg-red-500 text-white font-semibold px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/30"
-            >
-              Start Your Journey
-            </button>
-            <button
-              onClick={() => {
-                const el = document.getElementById('features');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="border-2 border-white text-white font-semibold px-6 py-3 hover:bg-white hover:text-gray-900 transition-all duration-300"
-            >
-              See How It Works
-            </button>
+              {/* Main headline */}
+              <h1
+                className="font-black uppercase mb-5 md:mb-7 text-center md:text-left"
+                style={{
+                  fontSize: 'clamp(30px, 5vw, 54px)',
+                  lineHeight: 1.08,
+                  color: '#fff',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                ARE GOALIES THE{' '}
+                <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>WORST TRAINED</em>{' '}
+                ATHLETES IN SPORTS?
+              </h1>
+
+              {/* Tagline */}
+              <p
+                className="uppercase font-bold mb-8 md:mb-10 text-center md:text-left"
+                style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '2.5px', fontSize: '11px' }}
+              >
+                HERE IS WHAT WE KNOW.
+              </p>
+
+              {/* Video intro button */}
+              <button
+                className="flex items-center gap-3 mb-6 md:mb-10 cursor-pointer hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
+                style={{
+                  background: 'rgba(55,181,255,0.15)',
+                  border: '1px solid rgba(55,181,255,0.6)',
+                  color: '#fff',
+                  padding: '11px 20px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <span
+                  className="flex items-center justify-center shrink-0"
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#37b5ff',
+                    color: '#000f28',
+                    fontSize: '9px',
+                    fontWeight: 900,
+                  }}
+                >
+                  ▶
+                </span>
+                COACH MIKE — INTRODUCTION
+              </button>
+
+              {/* Primary CTA */}
+              <button
+                onClick={() => router.push('/explain')}
+                className="mb-8 md:mb-10 hover:opacity-90 hover:scale-[1.02] transition-all duration-200 w-full md:w-auto text-center"
+                style={{
+                  background: '#37b5ff',
+                  color: '#000f28',
+                  fontWeight: 800,
+                  fontSize: '12px',
+                  letterSpacing: '2px',
+                  padding: '15px 32px',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                }}
+              >
+                LET US EXPLAIN →
+              </button>
+
+              {/* Role pills */}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {[
+                  {
+                    label: 'GOALIE',
+                    action: () => {
+                      setSelectedRole('goalie');
+                      setTimeout(
+                        () => contentRef.current?.scrollIntoView({ behavior: 'smooth' }),
+                        100
+                      );
+                    },
+                  },
+                  {
+                    label: 'PARENT',
+                    action: () => {
+                      setSelectedRole('parent');
+                      setTimeout(
+                        () => contentRef.current?.scrollIntoView({ behavior: 'smooth' }),
+                        100
+                      );
+                    },
+                  },
+                  { label: 'COACH', action: () => router.push('/auth/register') },
+                  { label: 'GOALIE COACH', action: () => router.push('/auth/register') },
+                ].map(({ label, action }) => (
+                  <button
+                    key={label}
+                    onClick={action}
+                    className="hover:opacity-80 transition-opacity"
+                    style={{
+                      background: 'rgba(55,181,255,0.18)',
+                      border: '1px solid rgba(55,181,255,0.55)',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '1px',
+                      color: '#e6f6ff',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Bottom-right photo caption — hidden on small screens */}
+        <div
+          className="absolute bottom-6 right-6 hidden sm:block"
+          style={{
+            color: 'rgba(255,255,255,0.35)',
+            fontSize: '9px',
+            fontWeight: 700,
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            zIndex: 2,
+          }}
+        >
+          ANTONIO ATHANASIADIS • #41 • PLAYOFFS 2026
         </div>
       </section>
 
       <ClubIntroSection />
 
       {/* Choose Your Role Section */}
-      <section className="py-32 px-6 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+      <section className="py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-10 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute top-20 right-10 w-72 h-72 bg-red-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-        
+
         <div className="max-w-6xl mx-auto relative z-10">
-         
-          <div className="mb-20">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
+
+          <div className="mb-12 sm:mb-20">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
               Choose Your Role
             </h2>
-            <p className="text-lg md:text-xl text-gray-500 font-medium">
+            <p className="text-base sm:text-lg md:text-xl text-gray-500 font-medium">
               Goalies build skills. Parents support the journey. Start here.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-10 mt-20 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mt-8 sm:mt-20 max-w-3xl mx-auto">
             {/* Card 1 - Goalie Role */}
             <button
               onClick={() => {
@@ -206,23 +332,23 @@ export default function Home() {
       {!selectedRole && (
         <>
           <section id="features" className="pt-20 pb-0 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6 mb-12">
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-12">
               <div className="flex justify-between items-center">
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
                 <span className="text-xl font-semibold text-gray-600">1/5</span>
               </div>
             </div>
             <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="20%" scaleEndPosition="15%" baseScale={0.95}>
               {/* 1 — The 7 Pillars of Intelligent Goaltending */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_1.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/7-pillars.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">1/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
-                        <p className="text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
                         <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
@@ -233,14 +359,14 @@ export default function Home() {
               </ScrollStackItem>
               {/* 2 — Video Learning */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">2/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
-                        <p className="text-xl text-red-400 mb-6">Structured lessons you can replay</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Structured lessons you can replay</p>
                         <p className="text-zinc-300 leading-relaxed mb-8">YouTube-integrated video lessons organised into structured modules covering technique, positioning, decision-making, and game sense. Track completion per lesson, pick up where you left off, and learn at your own pace.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
@@ -250,14 +376,14 @@ export default function Home() {
               </ScrollStackItem>
               {/* 3 — Performance Analytics & Gap Management */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">3/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
-                        <p className="text-xl text-red-400 mb-6">See what others miss</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">See what others miss</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">Chart every game and practice session. Our analytics reveal your consistency patterns, good vs. bad goal ratios, and pinpoint exactly which skills need work.</p>
                         <p className="text-zinc-400 text-sm mb-6">Nothing is left to imagination — advance with confidence knowing precisely where you stand.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
@@ -268,14 +394,14 @@ export default function Home() {
               </ScrollStackItem>
               {/* 4 — Goaltending: A Chess Game */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">4/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
-                        <p className="text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">Our video-questionnaire and quiz system assesses your decision-making from a goalie&rsquo;s point of view. We identify your knowledge gaps, then build your personalised &ldquo;UP YOUR GAME&rdquo; learning path.</p>
                         <p className="text-zinc-400 text-sm mb-6">Outsmart the shooter before the puck leaves their stick.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
@@ -286,14 +412,15 @@ export default function Home() {
               </ScrollStackItem>
               {/* 5 — Session Charting */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">5/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
-                        <p className="text-xl text-red-400 mb-6">Our flagship goalie feature</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
+                        <p className="text-lg md:text-xl text-red-400 mb-6">Our flagship goalie feature</p>
+
                         <p className="text-zinc-300 leading-relaxed mb-8">Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.</p>
                         <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
@@ -327,13 +454,13 @@ export default function Home() {
           </section>
 
           {/* What's In YOUR Tool Box? */}
-          <section className="py-24 px-6 bg-white">
+          <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 text-center">
                 What&rsquo;s In YOUR Tool Box?
               </h2>
-              <p className="text-center text-gray-500 text-lg mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
-              <div className="grid md:grid-cols-3 gap-8 items-stretch">
+              <p className="text-center text-gray-500 text-base sm:text-lg mb-10 sm:mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
                 {/* Card 1 — Positional Systems */}
                 <BackgroundGradient
                   containerClassName="rounded-[22px] h-full"
@@ -392,7 +519,7 @@ export default function Home() {
 
       {/* ── GOALIE ── */}
       {selectedRole === 'goalie' && (
-        <section className="py-24 px-6 bg-white">
+        <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Everything built for you</h2>
@@ -482,7 +609,7 @@ export default function Home() {
 
       {/* ── PARENT ── */}
       {selectedRole === 'parent' && (
-        <section className="py-24 px-6 bg-white">
+        <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Stay close to the journey</h2>

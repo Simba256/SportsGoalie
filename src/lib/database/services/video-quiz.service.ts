@@ -758,9 +758,6 @@ export class VideoQuizService extends BaseDatabaseService {
         completedProgress
       );
 
-      // Update quiz metadata
-      await this.updateQuizMetadata(progress.videoQuizId, progress);
-
       logger.info('Video quiz completed', 'VideoQuizService', {
         progressId: progress.id,
         score: progress.percentage,
@@ -825,27 +822,21 @@ export class VideoQuizService extends BaseDatabaseService {
 
       const queryOptions: QueryOptions = {
         where: whereConditions,
-        orderBy: [{ field: 'completedAt', direction: 'desc' }],
         limit: filters?.limit || 10,
       };
-
-      // Debug logging
-      console.log('🔍 [VideoQuizService] Querying video quiz progress:', {
-        collection: this.VIDEO_QUIZ_PROGRESS_COLLECTION,
-        whereConditions,
-        queryOptions,
-      });
 
       const result = await this.query<VideoQuizProgress>(
         this.VIDEO_QUIZ_PROGRESS_COLLECTION,
         queryOptions
       );
 
-      console.log('📊 [VideoQuizService] Query result:', {
-        success: result.success,
-        itemsCount: result.data?.items?.length || 0,
-        error: result.error,
-      });
+      if (result.success && result.data) {
+        result.data.items = [...result.data.items].sort((a, b) => {
+          const aMs = a.completedAt?.toMillis?.() ?? a.startedAt?.toMillis?.() ?? 0;
+          const bMs = b.completedAt?.toMillis?.() ?? b.startedAt?.toMillis?.() ?? 0;
+          return bMs - aMs;
+        });
+      }
 
       return result;
     } catch (error) {
@@ -859,53 +850,6 @@ export class VideoQuizService extends BaseDatabaseService {
         },
         timestamp: new Date(),
       };
-    }
-  }
-
-  /**
-   * Updates quiz metadata based on completion.
-   */
-  private async updateQuizMetadata(
-    quizId: string,
-    progress: VideoQuizProgress
-  ): Promise<void> {
-    try {
-      const quiz = await this.getDocument<VideoQuiz>(this.VIDEO_QUIZZES_COLLECTION, quizId);
-      if (!quiz) {
-        console.warn('Quiz not found for metadata update:', quizId);
-        return;
-      }
-
-      const metadata = quiz.metadata || {
-        totalAttempts: 0,
-        totalCompletions: 0,
-        averageScore: 0,
-        averageTimeSpent: 0,
-        averageCompletionTime: 0,
-        dropOffPoints: [],
-      };
-
-      // Update metadata
-      metadata.totalAttempts += 1;
-      metadata.totalCompletions += progress.isCompleted ? 1 : 0;
-
-      // Recalculate averages
-      if (metadata.totalCompletions > 0) {
-        const currentAvgScore = metadata.averageScore * (metadata.totalCompletions - 1);
-        metadata.averageScore = (currentAvgScore + progress.percentage) / metadata.totalCompletions;
-
-        const currentAvgTime = metadata.averageTimeSpent * (metadata.totalCompletions - 1);
-        metadata.averageTimeSpent =
-          (currentAvgTime + progress.totalTimeSpent / 60) / metadata.totalCompletions;
-      }
-
-      await this.updateDocument(this.VIDEO_QUIZZES_COLLECTION, quizId, {
-        metadata,
-        updatedAt: Timestamp.now(),
-      });
-    } catch (error) {
-      logger.error('Failed to update quiz metadata', 'VideoQuizService', { error: error instanceof Error ? error.message : String(error), quizId });
-      // Don't throw - metadata update failure shouldn't block quiz completion
     }
   }
 

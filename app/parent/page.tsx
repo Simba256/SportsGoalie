@@ -84,24 +84,24 @@ export default function ParentDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Welcome Banner */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+      <div className="relative rounded-2xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 p-6 md:p-8 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-300/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">{greeting}</p>
+        <div className="relative flex items-start md:items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-blue-100 text-sm font-semibold tracking-wide uppercase mb-1">{greeting}</p>
             <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
               {firstName}!
             </h1>
-            <p className="text-white/60 text-sm mt-2 max-w-md">
+            <p className="text-white/75 text-sm mt-2 max-w-md">
               {children.length > 0
                 ? `You're tracking ${children.length} goalie${children.length !== 1 ? 's' : ''}. Stay updated on their progress and development.`
-                : 'Link your goalie\'s account to start tracking their progress and development.'}
+                : "Link your goalie's account to start tracking their progress and development."}
             </p>
           </div>
           {/* Progress ring */}
-          <div className="hidden md:flex flex-col items-center">
+          <div className="hidden md:flex flex-col items-center flex-shrink-0">
             <ProgressRing percentage={avgProgress} size={110} />
             <p className="text-white/40 text-xs mt-2 flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
@@ -113,17 +113,17 @@ export default function ParentDashboardPage() {
 
       {/* Assessment prompt */}
       {!user.parentOnboardingComplete && children.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
               <ClipboardCheck className="h-5 w-5 text-amber-600" />
             </div>
             <div>
               <p className="text-sm font-semibold text-amber-900">Complete Your Assessment</p>
-              <p className="text-xs text-amber-700">Compare your perceptions with your goalie's self-assessment.</p>
+              <p className="text-xs text-amber-700">Compare your perceptions with your goalie&apos;s self-assessment.</p>
             </div>
           </div>
-          <Link href="/onboarding?role=parent">
+          <Link href="/onboarding?role=parent" className="self-end sm:self-auto">
             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
               Start Assessment
             </Button>
