@@ -22,8 +22,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build the invite URL using the app's base URL
+    // INVITE_BASE_URL is the live deployment URL — ensures invite links work for
+    // recipients even when the admin sends from a local dev environment
     const appUrl =
+      process.env.INVITE_BASE_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 

@@ -27,9 +27,12 @@ export default function GoalieInvitationsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
@@ -81,7 +84,7 @@ export default function GoalieInvitationsPage() {
     revoked: invitations.filter(i => i.status === 'revoked').length,
   };
 
-  if (authLoading) {
+  if (!mounted || authLoading) {
     return (
       <div
         style={{

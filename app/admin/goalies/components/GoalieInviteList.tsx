@@ -81,7 +81,21 @@ export function GoalieInviteList({ invitations, loading, onResend, onRevoke }: P
     setActionId(inv.id);
     try {
       const updated = await invitationService.resendInvitation(inv.id);
-      toast.success(`Invite resent to ${updated.email}`);
+
+      try {
+        const res = await fetch('/api/invitations/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invitation: updated }),
+        });
+        if (!res.ok) throw new Error('Email API returned error');
+        toast.success(`Invite resent to ${updated.email}`);
+      } catch {
+        toast.success(`Invitation refreshed for ${updated.email}`, {
+          description: 'Email delivery failed — copy the invite link manually.',
+        });
+      }
+
       onResend(updated);
     } catch (error: any) {
       toast.error(error.message || 'Failed to resend invitation');
