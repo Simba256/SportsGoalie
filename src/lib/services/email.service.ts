@@ -65,14 +65,12 @@ export interface IEmailService {
  */
 export class EmailService implements IEmailService {
   private static instance: EmailService;
-  private readonly isDevelopment: boolean;
   private readonly appName: string;
   private readonly supportEmail: string;
   private readonly fromEmail: string;
   private readonly brandColor: string;
 
   private constructor() {
-    this.isDevelopment = process.env.NODE_ENV !== 'production';
     this.appName = 'Smarter Goalie';
     this.supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@smartergoalie.com';
     this.fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@smartergoalie.com';
