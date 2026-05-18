@@ -5,16 +5,35 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, ChevronDown } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import { isAuthError } from '@/lib/errors/auth-errors';
 import { toast } from 'sonner';
+
+const BLUE = '#37b5ff';
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '11px 14px',
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(55,181,255,0.2)',
+  borderRadius: '8px',
+  color: '#fff',
+  fontSize: '14px',
+  outline: 'none',
+  transition: 'border-color 0.2s',
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '12px',
+  fontWeight: 700,
+  letterSpacing: '0.5px',
+  color: 'rgba(255,255,255,0.65)',
+  display: 'block',
+  marginBottom: '6px',
+};
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -49,29 +68,22 @@ export default function RegisterPage() {
     try {
       setIsLoading(true);
       await registerUser(data as RegisterFormData);
-
       toast.success('Account created successfully!', {
-        description: 'Your account is ready. Let\'s complete onboarding.',
+        description: "Your account is ready. Let's complete onboarding.",
         duration: 6000,
       });
-
-      if (data.role === 'parent') {
-        router.push('/onboarding?role=parent');
-      } else if (data.role === 'admin') {
-        router.push('/admin');
-      } else if (data.role === 'coach') {
-        router.push('/coach');
-      } else {
-        router.push('/onboarding');
-      }
+      if (data.role === 'parent') router.push('/onboarding?role=parent');
+      else if (data.role === 'admin') router.push('/admin');
+      else if (data.role === 'coach') router.push('/coach');
+      else router.push('/onboarding');
     } catch (error) {
       if (isAuthError(error)) {
         setError('root', { message: error.userMessage });
         toast.error('Registration failed', { description: error.userMessage });
       } else {
-        const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-        setError('root', { message: errorMessage });
-        toast.error('Registration failed', { description: errorMessage });
+        const msg = error instanceof Error ? error.message : 'Registration failed';
+        setError('root', { message: msg });
+        toast.error('Registration failed', { description: msg });
       }
     } finally {
       setIsLoading(false);
@@ -79,201 +91,313 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left — Register Form */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center bg-white px-6 py-6">
-        <div className="w-full max-w-md">
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+
+      {/* Left — Form panel */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(145deg, #000f28 0%, #062344 60%, #0a3159 100%)',
+          padding: '48px 24px',
+          width: '100%',
+        }}
+        className="lg:w-1/2"
+      >
+        <div style={{ width: '100%', maxWidth: '420px' }}>
+
           {/* Mobile logo */}
-          <div className="lg:hidden mb-4 flex justify-center">
+          <div className="lg:hidden mb-6 flex justify-center">
             <Link href="/">
               <img src="/logo.png" alt="Smarter Goalie" className="h-10" />
             </Link>
           </div>
 
-          <div className="mb-5">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Create an Account</h1>
-            <p className="text-gray-500 text-sm">Enter your information to get started</p>
+          {/* Header */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ width: '24px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
+              <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
+                Get Started
+              </p>
+            </div>
+            <h1
+              style={{
+                fontSize: '28px',
+                fontWeight: 900,
+                color: '#fff',
+                letterSpacing: '-0.02em',
+                marginBottom: '6px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Create Account
+            </h1>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>
+              Enter your information to get started
+            </p>
           </div>
 
           {/* Goalie notice */}
-          <div className="flex gap-3 items-start rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 mb-4">
-            <Mail className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-blue-700">
-              <span className="font-semibold">Are you a goalie?</span> Goalies register via a personal invite link sent by the admin — not through this form. Check your email for your invitation.
-            </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start',
+              borderRadius: '10px',
+              border: `1px solid rgba(55,181,255,0.25)`,
+              background: 'rgba(55,181,255,0.07)',
+              padding: '12px 14px',
+              marginBottom: '20px',
+            }}
+          >
+            <Mail size={14} style={{ color: BLUE, marginTop: '2px', flexShrink: 0 }} />
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+              <span style={{ color: BLUE, fontWeight: 700 }}>Are you a goalie?</span>{' '}
+              Goalies register via a personal invite link sent by the admin — not through this form. Check your email for your invitation.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" data-testid="register-form">
-            {/* Role Selection */}
-            <div className="space-y-1">
-              <Label htmlFor="role" className="text-gray-700 text-sm">I am a...</Label>
-              <Select
-                value={selectedRole}
-                onValueChange={(value) => setValue('role', value as 'parent' | 'coach')}
-              >
-                <SelectTrigger
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+            data-testid="register-form"
+          >
+            {/* Role */}
+            <div>
+              <label htmlFor="role" style={labelStyle}>I am a...</label>
+              <div style={{ position: 'relative' }}>
+                <select
                   id="role"
+                  value={selectedRole}
+                  onChange={(e) => setValue('role', e.target.value as 'parent' | 'coach')}
                   data-testid="role-select"
-                  className="bg-gray-50 border-gray-300 text-gray-900 focus:ring-red-500"
+                  style={{
+                    ...inputStyle,
+                    appearance: 'none',
+                    paddingRight: '36px',
+                    cursor: 'pointer',
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
                 >
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200">
-                  <SelectItem value="parent" data-testid="role-parent" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Parent</SelectItem>
-                  <SelectItem value="coach" data-testid="role-coach" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">Coach</SelectItem>
-                </SelectContent>
-              </Select>
+                  <option value="parent" style={{ background: '#040e22' }}>Parent</option>
+                  <option value="coach" style={{ background: '#040e22' }}>Coach</option>
+                </select>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'rgba(255,255,255,0.35)',
+                    pointerEvents: 'none',
+                  }}
+                />
+              </div>
               {errors.role && (
-                <p className="text-xs text-red-500" data-testid="role-error">{errors.role.message}</p>
+                <p style={{ fontSize: '12px', color: '#f87171', marginTop: '5px' }} data-testid="role-error">
+                  {errors.role.message}
+                </p>
               )}
             </div>
 
             {/* Display Name */}
-            <div className="space-y-1">
-              <Label htmlFor="displayName" className="text-gray-700 text-sm">Full Name</Label>
-              <Input
+            <div>
+              <label htmlFor="displayName" style={labelStyle}>Full Name</label>
+              <input
                 id="displayName"
                 placeholder="Enter your full name"
                 {...register('displayName')}
-                aria-invalid={!!errors.displayName}
                 data-testid="display-name-input"
-                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
+                style={inputStyle}
+                onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
+                onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
               />
               {errors.displayName && (
-                <p className="text-sm text-red-500" data-testid="display-name-error">{errors.displayName.message}</p>
+                <p style={{ fontSize: '12px', color: '#f87171', marginTop: '5px' }} data-testid="display-name-error">
+                  {errors.displayName.message}
+                </p>
               )}
             </div>
 
             {/* Email */}
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-gray-700 text-sm">Email</Label>
-              <Input
+            <div>
+              <label htmlFor="email" style={labelStyle}>Email</label>
+              <input
                 id="email"
                 type="email"
                 placeholder="Enter your email"
                 {...register('email')}
-                aria-invalid={!!errors.email}
                 data-testid="email-input"
-                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
+                style={inputStyle}
+                onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
+                onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
               />
-              {errors.email && <p className="text-sm text-red-500" data-testid="email-error">{errors.email.message}</p>}
+              {errors.email && (
+                <p style={{ fontSize: '12px', color: '#f87171', marginTop: '5px' }} data-testid="email-error">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             {/* Password */}
-            <div className="space-y-1">
-              <Label htmlFor="password" className="text-gray-700 text-sm">Password</Label>
-              <div className="relative">
-                <Input
+            <div>
+              <label htmlFor="password" style={labelStyle}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   {...register('password')}
-                  aria-invalid={!!errors.password}
                   data-testid="password-input"
-                  className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
+                  style={{ ...inputStyle, paddingRight: '44px' }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-700"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   data-testid="toggle-password"
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex',
+                  }}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-500" data-testid="password-error">{errors.password.message}</p>
+                <p style={{ fontSize: '12px', color: '#f87171', marginTop: '5px' }} data-testid="password-error">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             {/* Confirm Password */}
-            <div className="space-y-1">
-              <Label htmlFor="confirmPassword" className="text-gray-700 text-sm">Confirm Password</Label>
-              <div className="relative">
-                <Input
+            <div>
+              <label htmlFor="confirmPassword" style={labelStyle}>Confirm Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirm your password"
                   {...register('confirmPassword')}
-                  aria-invalid={!!errors.confirmPassword}
                   data-testid="confirm-password-input"
-                  className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-red-500 focus-visible:border-red-500"
+                  style={{ ...inputStyle, paddingRight: '44px' }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-700"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   data-testid="toggle-confirm-password"
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex',
+                  }}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-500" data-testid="confirm-password-error">{errors.confirmPassword.message}</p>
+                <p style={{ fontSize: '12px', color: '#f87171', marginTop: '5px' }} data-testid="confirm-password-error">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
-            {/* Terms Agreement */}
-            <div className="space-y-1">
-              <label className="flex items-start space-x-2">
-                <input
-                  type="checkbox"
-                  {...register('agreeToTerms')}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-50 text-red-500 focus:ring-red-500"
-                  data-testid="agree-terms-checkbox"
-                />
-                <span className="text-xs text-gray-500">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-red-500 hover:text-red-600 transition-colors">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link href="/privacy" className="text-red-500 hover:text-red-600 transition-colors">
-                    Privacy Policy
-                  </Link>
-                </span>
-              </label>
-              {errors.agreeToTerms && (
-                <p className="text-sm text-red-500" data-testid="agree-terms-error">{errors.agreeToTerms.message}</p>
-              )}
+            {/* Terms */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <input
+                type="checkbox"
+                {...register('agreeToTerms')}
+                data-testid="agree-terms-checkbox"
+                style={{ width: '15px', height: '15px', accentColor: BLUE, cursor: 'pointer', marginTop: '2px', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+                I agree to the{' '}
+                <Link href="/terms" style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>
+                  Privacy Policy
+                </Link>
+              </span>
             </div>
+            {errors.agreeToTerms && (
+              <p style={{ fontSize: '12px', color: '#f87171', marginTop: '-8px' }} data-testid="agree-terms-error">
+                {errors.agreeToTerms.message}
+              </p>
+            )}
 
             {/* Submit */}
-            <Button
+            <button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25"
               disabled={isLoading}
               data-testid="register-submit"
+              style={{
+                width: '100%',
+                padding: '13px 0',
+                borderRadius: '8px',
+                border: 'none',
+                background: isLoading
+                  ? 'rgba(55,181,255,0.3)'
+                  : `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`,
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: 800,
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                boxShadow: isLoading ? 'none' : '0 4px 20px rgba(55,181,255,0.3)',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
                   Creating Account...
                 </>
-              ) : (
-                'Create Account'
-              )}
-            </Button>
+              ) : 'Create Account →'}
+            </button>
 
-            {/* Error */}
+            {/* Root error */}
             {errors.root && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-3" data-testid="register-error">
-                <p className="text-sm text-red-600">{errors.root.message}</p>
+              <div
+                style={{
+                  borderRadius: '8px',
+                  border: '1px solid rgba(248,113,113,0.3)',
+                  background: 'rgba(248,113,113,0.08)',
+                  padding: '12px 14px',
+                }}
+                data-testid="register-error"
+              >
+                <p style={{ fontSize: '13px', color: '#f87171' }}>{errors.root.message}</p>
               </div>
             )}
           </form>
 
-          {/* Login Link */}
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-500">
+          {/* Login link */}
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-red-500 hover:text-red-600 font-medium transition-colors" data-testid="login-link">
+              <Link
+                href="/auth/login"
+                style={{ color: BLUE, fontWeight: 700, textDecoration: 'none' }}
+                data-testid="login-link"
+              >
                 Sign in
               </Link>
             </p>
@@ -281,23 +405,54 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Right — Blurred Image Panel */}
+      {/* Right — Image panel */}
       <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center blur-sm scale-105"
-          style={{ backgroundImage: 'url("/register.avif")' }}
+          className="absolute inset-0 bg-cover bg-center scale-105"
+          style={{ backgroundImage: 'url("/register.avif")', filter: 'blur(2px)' }}
         />
-        <div className="absolute inset-0 bg-black/60" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0,15,40,0.92) 0%, rgba(6,35,68,0.82) 50%, rgba(10,49,89,0.75) 100%)',
+          }}
+        />
         <div className="relative z-10 text-center px-12">
           <Link href="/">
             <img src="/logo.png" alt="Smarter Goalie" className="h-12 mx-auto mb-8" />
           </Link>
-          <h2 className="text-5xl font-bold text-white leading-tight mb-4">
-            Start Your<br />Journey Today.
+          <h2
+            style={{
+              fontSize: 'clamp(28px, 3.5vw, 48px)',
+              fontWeight: 900,
+              color: '#fff',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}
+          >
+            Start Your<br />
+            <span style={{ color: BLUE }}>Journey Today.</span>
           </h2>
-          <p className="text-zinc-300 text-lg max-w-md mx-auto">
-            Join thousands of athletes training smarter with personalized drills, progress tracking, and expert coaching.
+          <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '340px', margin: '0 auto' }}>
+            Join athletes training smarter with personalized drills, progress tracking, and expert coaching.
           </p>
+          <div
+            style={{
+              marginTop: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+            }}
+          >
+            <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
+            <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
+              Smarter Goalie
+            </p>
+            <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
+          </div>
         </div>
       </div>
     </div>

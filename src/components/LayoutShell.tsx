@@ -140,12 +140,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
   }
 
   if (isBareRoute(pathname)) {
-    return (
-      <div className="min-h-screen flex flex-col bg-white">
-        <main className="flex-1">{children}</main>
-        <Footer7 />
-      </div>
-    );
+    return <>{children}</>;
   }
 
   if (isPublicRoute(pathname)) {
