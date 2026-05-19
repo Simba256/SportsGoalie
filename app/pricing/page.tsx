@@ -330,26 +330,27 @@ export default function PricingPage() {
           <div
             style={{
               borderRadius: '16px',
-              border: '1px solid rgba(55,181,255,0.2)',
+              border: '1.5px solid rgba(55,181,255,0.35)',
               overflow: 'hidden',
+              background: 'rgba(2, 18, 44, 0.85)',
+              boxShadow: '0 0 60px rgba(55,181,255,0.08), 0 8px 40px rgba(0,0,0,0.5)',
             }}
           >
             <div className="overflow-x-auto">
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                 <thead>
-                  <tr style={{ background: 'rgba(55,181,255,0.12)' }}>
+                  <tr style={{ background: 'rgba(55,181,255,0.18)', borderBottom: '1.5px solid rgba(55,181,255,0.35)' }}>
                     {['Offer', 'Founding Member', 'Post-Founding'].map((h) => (
                       <th
                         key={h}
                         style={{
-                          padding: '16px 24px',
+                          padding: '18px 28px',
                           textAlign: 'left',
                           fontSize: '11px',
                           fontWeight: 800,
-                          letterSpacing: '2px',
+                          letterSpacing: '2.5px',
                           textTransform: 'uppercase',
                           color: BLUE,
-                          borderBottom: '1px solid rgba(55,181,255,0.2)',
                         }}
                       >
                         {h}
@@ -362,17 +363,25 @@ export default function PricingPage() {
                     <tr
                       key={row.offer}
                       style={{
-                        borderBottom: i < comparisonRows.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                        background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                        borderBottom: i < comparisonRows.length - 1 ? '1px solid rgba(55,181,255,0.1)' : 'none',
+                        background: i % 2 === 0 ? 'rgba(55,181,255,0.05)' : 'rgba(255,255,255,0.025)',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(55,181,255,0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLTableRowElement).style.background =
+                          i % 2 === 0 ? 'rgba(55,181,255,0.05)' : 'rgba(255,255,255,0.025)';
                       }}
                     >
-                      <td style={{ padding: '16px 24px', fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                      <td style={{ padding: '18px 28px', fontSize: '13.5px', fontWeight: 700, color: '#fff' }}>
                         {row.offer}
                       </td>
-                      <td style={{ padding: '16px 24px', fontSize: '13px', color: BLUE2, fontWeight: 600 }}>
+                      <td style={{ padding: '18px 28px', fontSize: '13.5px', color: BLUE2, fontWeight: 600 }}>
                         {row.founding}
                       </td>
-                      <td style={{ padding: '16px 24px', fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>
+                      <td style={{ padding: '18px 28px', fontSize: '13.5px', color: 'rgba(255,255,255,0.55)' }}>
                         {row.postFounding}
                       </td>
                     </tr>
@@ -398,18 +407,19 @@ export default function PricingPage() {
             </h2>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {faqs.map((item, i) => {
               const isOpen = openFaqIndex === i;
               return (
                 <div
                   key={item.q}
                   style={{
-                    background: isOpen ? 'rgba(55,181,255,0.07)' : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${isOpen ? 'rgba(55,181,255,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                    borderRadius: '12px',
+                    background: isOpen ? 'rgba(4, 28, 64, 0.95)' : 'rgba(2, 18, 44, 0.8)',
+                    border: `1.5px solid ${isOpen ? 'rgba(55,181,255,0.5)' : 'rgba(55,181,255,0.18)'}`,
+                    borderRadius: '14px',
                     overflow: 'hidden',
-                    transition: 'all 0.2s ease',
+                    transition: 'border-color 0.2s ease, background 0.2s ease',
+                    boxShadow: isOpen ? '0 4px 32px rgba(55,181,255,0.1)' : '0 2px 12px rgba(0,0,0,0.3)',
                   }}
                 >
                   <button
@@ -421,27 +431,28 @@ export default function PricingPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: '16px',
-                      padding: '18px 24px',
+                      padding: '20px 24px',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
                       textAlign: 'left',
                     }}
                   >
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff', lineHeight: 1.5 }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: isOpen ? '#fff' : 'rgba(255,255,255,0.88)', lineHeight: 1.5 }}>
                       {item.q}
                     </span>
                     <span
                       style={{
-                        width: '32px',
-                        height: '32px',
+                        width: '34px',
+                        height: '34px',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        background: isOpen ? BLUE : 'rgba(55,181,255,0.12)',
-                        transition: 'background 0.2s',
+                        background: isOpen ? BLUE : 'rgba(55,181,255,0.15)',
+                        border: `1px solid ${isOpen ? 'transparent' : 'rgba(55,181,255,0.3)'}`,
+                        transition: 'background 0.2s, border-color 0.2s',
                       }}
                     >
                       <ChevronDown
@@ -452,8 +463,8 @@ export default function PricingPage() {
                     </span>
                   </button>
                   {isOpen && (
-                    <div style={{ padding: '0 24px 20px' }}>
-                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.75 }}>
+                    <div style={{ padding: '0 24px 22px', borderTop: '1px solid rgba(55,181,255,0.15)' }}>
+                      <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, paddingTop: '16px' }}>
                         {item.a}
                       </p>
                     </div>
@@ -470,12 +481,27 @@ export default function PricingPage() {
         <div
           className="max-w-3xl mx-auto text-center"
           style={{
-            background: 'rgba(55,181,255,0.07)',
-            border: '1px solid rgba(55,181,255,0.25)',
+            background: 'linear-gradient(160deg, rgba(4, 28, 64, 0.97) 0%, rgba(2, 18, 44, 0.95) 100%)',
+            border: '1.5px solid rgba(55,181,255,0.4)',
             borderRadius: '24px',
             padding: 'clamp(40px, 6vw, 72px) clamp(24px, 6vw, 64px)',
+            boxShadow: '0 0 80px rgba(55,181,255,0.1), 0 16px 60px rgba(0,0,0,0.5)',
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
+          {/* top glow accent */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '1px',
+              background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)`,
+            }}
+          />
           <SectionLabel>Limited Founding Spots</SectionLabel>
 
           <h3
