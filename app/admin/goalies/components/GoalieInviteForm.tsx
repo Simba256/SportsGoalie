@@ -67,7 +67,7 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
     e.preventDefault();
 
     if (!form.email.trim()) { toast.error('Email is required'); return; }
-    if (!form.assignedCoachId) { toast.error('Please assign a coach to this goalie'); return; }
+    if (form.tier === 'custom' && !form.assignedCoachId) { toast.error('Please assign a coach for the Custom tier'); return; }
 
     const selectedCoach = coaches.find(c => c.id === form.assignedCoachId);
 
@@ -138,8 +138,9 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+      <style>{`@media (max-width: 480px) { .gif-name { grid-template-columns: 1fr !important; } }`}</style>
       {/* Name row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="gif-name" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
           <label style={labelStyle}>First Name</label>
           <input
@@ -178,39 +179,6 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
         />
       </div>
 
-      {/* Coach Assignment */}
-      <div>
-        <label style={labelStyle}>Assign Coach <span style={{ color: BLUE }}>*</span></label>
-        {loadingCoaches ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
-            <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-            Loading coaches...
-          </div>
-        ) : (
-          <div style={{ position: 'relative' }}>
-            <select
-              value={form.assignedCoachId}
-              onChange={e => set('assignedCoachId', e.target.value)}
-              style={{ ...inputStyle, appearance: 'none', paddingRight: '36px', cursor: 'pointer' }}
-              required
-              disabled={submitting}
-            >
-              <option value="" style={{ background: '#0d1b3a' }}>Select a coach...</option>
-              {coaches.map(c => (
-                <option key={c.id} value={c.id} style={{ background: '#0d1b3a' }}>
-                  {c.displayName} — {c.email}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              color="rgba(255,255,255,0.4)"
-              style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-            />
-          </div>
-        )}
-      </div>
-
       {/* Tier */}
       <div>
         <label style={labelStyle}>Program Tier</label>
@@ -219,7 +187,10 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
             <button
               key={t}
               type="button"
-              onClick={() => set('tier', t)}
+              onClick={() => {
+                set('tier', t);
+                if (t === 'automated') set('assignedCoachId', '');
+              }}
               style={{
                 flex: 1,
                 padding: '9px 0',
@@ -245,6 +216,41 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
             : 'Automated: standard self-paced curriculum. Can be upgraded to Custom later.'}
         </p>
       </div>
+
+      {/* Coach Assignment — only shown for Custom tier */}
+      {form.tier === 'custom' && (
+        <div>
+          <label style={labelStyle}>Assign Coach <span style={{ color: BLUE }}>*</span></label>
+          {loadingCoaches ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+              <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+              Loading coaches...
+            </div>
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <select
+                value={form.assignedCoachId}
+                onChange={e => set('assignedCoachId', e.target.value)}
+                style={{ ...inputStyle, appearance: 'none', paddingRight: '36px', cursor: 'pointer' }}
+                required
+                disabled={submitting}
+              >
+                <option value="" style={{ background: '#0d1b3a' }}>Select a coach...</option>
+                {coaches.map(c => (
+                  <option key={c.id} value={c.id} style={{ background: '#0d1b3a' }}>
+                    {c.displayName} — {c.email}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                color="rgba(255,255,255,0.4)"
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Custom message */}
       <div>

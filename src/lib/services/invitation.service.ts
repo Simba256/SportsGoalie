@@ -15,6 +15,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   query,
   where,
   Timestamp,
@@ -258,6 +259,27 @@ class InvitationService {
       return null;
     } catch (error) {
       logError('Failed to check existing invitation', error instanceof Error ? error : undefined);
+      throw error;
+    }
+  }
+
+  async deleteInvitation(invitationId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, COLLECTION, invitationId));
+      logInfo('Invitation deleted', { invitationId });
+    } catch (error) {
+      logError('Failed to delete invitation', error instanceof Error ? error : undefined);
+      throw error;
+    }
+  }
+
+  async deleteByAcceptedUserId(userId: string): Promise<void> {
+    try {
+      const q = query(collection(db, COLLECTION), where('acceptedUserId', '==', userId));
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    } catch (error) {
+      logError('Failed to delete invitations for user', error instanceof Error ? error : undefined);
       throw error;
     }
   }

@@ -7,41 +7,44 @@ import { Sport, Skill, DifficultyLevel } from '@/types';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { storageService, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { MediaUpload } from '@/components/admin/media-upload';
 import { useDeleteConfirmation } from '@/components/ui/confirmation-dialog';
 import { HTMLEditorWithAI } from '@/components/ui/html-editor-with-ai';
 import {
-  ArrowLeft,
-  Plus,
-  Edit,
-  Trash2,
-  Save,
-  X,
-  Clock,
-  BookOpen,
-  Play,
-  Target,
-  Brain,
-  Footprints,
-  Shapes,
-  Grid3X3,
-  Dumbbell,
+  ArrowLeft, Plus, Edit, Trash2, Save, X, Clock, BookOpen, Play, Target,
+  Brain, Footprints, Shapes, Grid3X3, Dumbbell,
 } from 'lucide-react';
 import { PILLARS } from '@/types';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
 
-// Icon map for pillar icons
+const BLUE  = '#37b5ff';
+const RED   = '#f87171';
+const GREEN = '#22c55e';
+
+const card = {
+  background: 'rgba(2,18,44,0.85)',
+  border: '1px solid rgba(55,181,255,0.14)',
+  borderRadius: '16px',
+} as const;
+
+const PILLAR_GRADIENTS: Record<string, string> = {
+  blue:   'linear-gradient(135deg, #1e3a8a, #3730a3)',
+  green:  'linear-gradient(135deg, #14532d, #065f46)',
+  red:    'linear-gradient(135deg, #7f1d1d, #991b1b)',
+  purple: 'linear-gradient(135deg, #4c1d95, #6b21a8)',
+  orange: 'linear-gradient(135deg, #7c2d12, #9a3412)',
+  yellow: 'linear-gradient(135deg, #713f12, #92400e)',
+  teal:   'linear-gradient(135deg, #134e4a, #0f766e)',
+};
+
+const DIFF_STYLES: Record<string, { bg: string; color: string }> = {
+  introduction: { bg: 'rgba(34,197,94,0.12)',   color: GREEN },
+  development:  { bg: `rgba(55,181,255,0.12)`,  color: BLUE  },
+  refinement:   { bg: 'rgba(248,113,113,0.15)', color: RED   },
+};
+
 const PILLAR_ICONS: Record<string, React.ElementType> = {
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell,
 };
 
 interface AdminSkillsState {
@@ -67,16 +70,8 @@ interface SkillFormData {
 }
 
 const defaultFormData: SkillFormData = {
-  name: '',
-  description: '',
-  difficulty: 'introduction',
-  estimatedTimeToComplete: 30,
-  content: '',
-  learningObjectives: [],
-  tags: [],
-  isActive: true,
-  order: 0,
-  prerequisites: [],
+  name: '', description: '', difficulty: 'introduction', estimatedTimeToComplete: 30,
+  content: '', learningObjectives: [], tags: [], isActive: true, order: 0, prerequisites: [],
 };
 
 function AdminSkillsContent() {
@@ -84,87 +79,41 @@ function AdminSkillsContent() {
   const router = useRouter();
   const sportId = params.id as string;
 
-  const [state, setState] = useState<AdminSkillsState>({
-    sport: null,
-    skills: [],
-    loading: true,
-    error: null,
-    editingId: null,
-    showCreateForm: false,
-  });
-
+  const [state, setState] = useState<AdminSkillsState>({ sport: null, skills: [], loading: true, error: null, editingId: null, showCreateForm: false });
   const [formData, setFormData] = useState<SkillFormData>(defaultFormData);
   const [saving, setSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
 
-  // Custom confirmation dialog for delete operations
   const { dialog, showDeleteConfirmation, setLoading } = useDeleteConfirmation();
 
-  useEffect(() => {
-    if (!sportId) return;
-    loadData();
-  }, [sportId]);
+  useEffect(() => { if (sportId) loadData(); }, [sportId]);
 
   const loadData = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-
     try {
       const [sportResult, skillsResult] = await Promise.all([
         sportsService.getSport(sportId),
         sportsService.getSkillsBySport(sportId),
       ]);
-
       if (!sportResult.success || !sportResult.data) {
-        setState(prev => ({
-          ...prev,
-          sport: null,
-          error: 'Sport not found',
-          loading: false,
-        }));
+        setState(prev => ({ ...prev, sport: null, error: 'Sport not found', loading: false }));
         return;
       }
-
       if (!skillsResult.success) {
-        setState(prev => ({
-          ...prev,
-          sport: sportResult.data || null,
-          error: skillsResult.error?.message || 'Failed to load skills',
-          loading: false,
-        }));
+        setState(prev => ({ ...prev, sport: sportResult.data || null, error: skillsResult.error?.message || 'Failed to load skills', loading: false }));
         return;
       }
-
-      setState(prev => ({
-        ...prev,
-        sport: sportResult.data || null,
-        skills: skillsResult.data?.items || [],
-        loading: false,
-      }));
+      setState(prev => ({ ...prev, sport: sportResult.data || null, skills: skillsResult.data?.items || [], loading: false }));
     } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'An unexpected error occurred',
-        loading: false,
-      }));
+      setState(prev => ({ ...prev, error: 'An unexpected error occurred', loading: false }));
     }
   };
 
   const handleEdit = (skill: Skill) => {
-    setFormData({
-      name: skill.name,
-      description: skill.description,
-      difficulty: skill.difficulty,
-      estimatedTimeToComplete: skill.estimatedTimeToComplete,
-      content: skill.content || '',
-      learningObjectives: skill.learningObjectives,
-      tags: skill.tags,
-      isActive: skill.isActive,
-      order: skill.order,
-      prerequisites: skill.prerequisites,
-    });
-    setEditingSkill(skill); // Store the full skill being edited
+    setFormData({ name: skill.name, description: skill.description, difficulty: skill.difficulty, estimatedTimeToComplete: skill.estimatedTimeToComplete, content: skill.content || '', learningObjectives: skill.learningObjectives, tags: skill.tags, isActive: skill.isActive, order: skill.order, prerequisites: skill.prerequisites });
+    setEditingSkill(skill);
     setState(prev => ({ ...prev, editingId: skill.id, showCreateForm: false }));
   };
 
@@ -182,144 +131,67 @@ function AdminSkillsContent() {
   };
 
   const handleSave = async () => {
-    // Client-side validation
-    if (!formData.name.trim()) {
-      setState(prev => ({ ...prev, error: 'Skill name is required' }));
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      setState(prev => ({ ...prev, error: 'Skill description is required' }));
-      return;
-    }
-
-    if (formData.learningObjectives.length === 0) {
-      setState(prev => ({ ...prev, error: 'At least one learning objective is required' }));
-      return;
-    }
-
+    if (!formData.name.trim()) { setState(prev => ({ ...prev, error: 'Skill name is required' })); return; }
+    if (!formData.description.trim()) { setState(prev => ({ ...prev, error: 'Skill description is required' })); return; }
+    if (formData.learningObjectives.length === 0) { setState(prev => ({ ...prev, error: 'At least one learning objective is required' })); return; }
     setSaving(true);
-
     try {
-      // Upload media if new files were selected
       let mediaUrls: string[] = [];
       if (uploadedFiles.length > 0) {
         setUploading(true);
-        const uploadResults = await storageService.uploadFiles(
-          uploadedFiles,
-          STORAGE_CONFIGS.SKILL_MEDIA
-        );
-
-        mediaUrls = uploadResults
-          .filter(result => result.success && result.url)
-          .map(result => result.url!);
-
+        const uploadResults = await storageService.uploadFiles(uploadedFiles, STORAGE_CONFIGS.SKILL_MEDIA);
+        mediaUrls = uploadResults.filter(r => r.success && r.url).map(r => r.url!);
         if (mediaUrls.length !== uploadedFiles.length) {
-          setState(prev => ({
-            ...prev,
-            error: 'Some media files failed to upload',
-          }));
-          setUploading(false);
-          setSaving(false);
-          return;
+          setState(prev => ({ ...prev, error: 'Some media files failed to upload' }));
+          setUploading(false); setSaving(false); return;
         }
         setUploading(false);
       }
 
-      // Prepare skill data with uploaded media
-      const skillData: any = {
-        ...formData,
-        sportId,
-        createdBy: 'admin', // Add required createdBy field
-        externalResources: [],
-        hasVideo: false, // Will be set automatically based on media
-      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const skillData: any = { ...formData, sportId, createdBy: 'admin', externalResources: [], hasVideo: false };
 
-      // Handle media: either use new uploads or preserve existing media
       if (uploadedFiles.length > 0) {
-        // New files uploaded - replace existing media
-        const videoFiles = uploadedFiles.filter(file => file.type.startsWith('video/'));
-        const imageFiles = uploadedFiles.filter(file => file.type.startsWith('image/'));
-
+        const videoFiles = uploadedFiles.filter(f => f.type.startsWith('video/'));
+        const imageFiles = uploadedFiles.filter(f => f.type.startsWith('image/'));
         skillData.media = {
           text: formData.content,
-          images: imageFiles.map((file, index) => ({
-            id: `img-${Date.now()}-${index}`,
-            url: mediaUrls[uploadedFiles.indexOf(file)],
-            alt: file.name,
-            caption: file.name,
-            order: index,
-          })),
-          videos: videoFiles.map((file, index) => ({
-            id: `vid-${Date.now()}-${index}`,
-            url: mediaUrls[uploadedFiles.indexOf(file)],
-            youtubeId: '',
-            title: file.name,
-            duration: 0,
-            thumbnail: '',
-            order: index,
-          })),
+          images: imageFiles.map((f, i) => ({ id: `img-${Date.now()}-${i}`, url: mediaUrls[uploadedFiles.indexOf(f)], alt: f.name, caption: f.name, order: i })),
+          videos: videoFiles.map((f, i) => ({ id: `vid-${Date.now()}-${i}`, url: mediaUrls[uploadedFiles.indexOf(f)], youtubeId: '', title: f.name, duration: 0, thumbnail: '', order: i })),
         };
-
-        // Automatically set hasVideo based on uploaded videos
         skillData.hasVideo = videoFiles.length > 0;
       } else if (state.editingId && editingSkill?.media) {
-        // Editing without new uploads - preserve existing media
         skillData.media = editingSkill.media;
-        // Set hasVideo based on existing media
         skillData.hasVideo = editingSkill.media.videos && editingSkill.media.videos.length > 0;
       }
 
-      let result;
-      if (state.editingId) {
-        result = await sportsService.updateSkill(state.editingId, skillData);
-      } else {
-        result = await sportsService.createSkill(skillData);
-      }
+      const result = state.editingId
+        ? await sportsService.updateSkill(state.editingId, skillData)
+        : await sportsService.createSkill(skillData);
 
-      if (result.success) {
-        await loadData();
-        handleCancel();
-      } else {
-        setState(prev => ({
-          ...prev,
-          error: result.error?.message || 'Failed to save skill',
-        }));
-      }
+      if (result.success) { await loadData(); handleCancel(); }
+      else setState(prev => ({ ...prev, error: result.error?.message || 'Failed to save skill' }));
     } catch (error) {
       console.error('Skill creation error:', error);
-      setState(prev => ({
-        ...prev,
-        error: `An unexpected error occurred while saving: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      }));
+      setState(prev => ({ ...prev, error: `An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}` }));
     } finally {
-      setSaving(false);
-      setUploading(false);
+      setSaving(false); setUploading(false);
     }
   };
 
   const handleDelete = (skillId: string, skillName: string) => {
     showDeleteConfirmation({
       title: 'Delete Skill',
-      description: `Are you sure you want to delete "${skillName}"? This action cannot be undone and will remove all associated data.`,
+      description: `Are you sure you want to delete "${skillName}"? This action cannot be undone.`,
       itemName: 'skill',
       onConfirm: async () => {
         setLoading(true);
         try {
           const result = await sportsService.deleteSkill(skillId);
-          if (result.success) {
-            await loadData();
-          } else {
-            setState(prev => ({
-              ...prev,
-              error: result.error?.message || 'Failed to delete skill',
-            }));
-          }
+          if (result.success) await loadData();
+          else setState(prev => ({ ...prev, error: result.error?.message || 'Failed to delete skill' }));
         } catch {
-          setState(prev => ({
-            ...prev,
-            error: 'An unexpected error occurred while deleting',
-          }));
+          setState(prev => ({ ...prev, error: 'An unexpected error occurred while deleting' }));
         } finally {
           setLoading(false);
         }
@@ -327,430 +199,289 @@ function AdminSkillsContent() {
     });
   };
 
-  const getDifficultyColor = (difficulty: DifficultyLevel) => {
-    switch (difficulty) {
-      case 'introduction':
-        return 'text-green-600 bg-green-100';
-      case 'development':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'refinement':
-        return 'text-red-600 bg-red-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
-
   const formatDuration = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes}min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+    if (minutes < 60) return `${minutes}min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
   };
 
-  if (state.loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <SkeletonDarkPage />
-      </div>
-    );
-  }
+  if (state.loading) return <div className="container mx-auto px-4 py-8"><SkeletonDarkPage /></div>;
 
   if (state.error && !state.sport) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <div className="text-red-600 text-4xl">⚠️</div>
-              <h3 className="text-lg font-medium text-red-900">{state.error}</h3>
-              <Button variant="outline" onClick={() => router.back()}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Go Back
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div style={{ maxWidth: '800px', margin: '32px auto', padding: '0 24px' }}>
+        <div style={{ ...card, padding: '40px', textAlign: 'center', border: '1px solid rgba(248,113,113,0.3)' }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+          <h3 style={{ color: RED, fontSize: '18px', marginBottom: '16px' }}>{state.error}</h3>
+          <button onClick={() => router.back()} style={{ padding: '10px 20px', borderRadius: '10px', border: `1px solid rgba(55,181,255,0.25)`, background: `rgba(55,181,255,0.1)`, color: BLUE, cursor: 'pointer', fontWeight: 600 }}>
+            <ArrowLeft size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />Go Back
+          </button>
+        </div>
       </div>
     );
   }
 
-  // Get pillar display info
   const getPillarDisplayInfo = () => {
     if (!state.sport) return null;
     const slug = getPillarSlugFromDocId(state.sport.id);
     if (slug) {
       const info = PILLARS.find(p => p.slug === slug);
-      if (info) {
-        return {
-          icon: info.icon,
-          color: info.color,
-          shortName: info.shortName,
-        };
-      }
+      if (info) return { icon: info.icon, color: info.color, shortName: info.shortName };
     }
-    return {
-      icon: state.sport.icon,
-      color: 'blue',
-      shortName: state.sport.name.split(' ')[0],
-    };
+    return { icon: state.sport.icon, color: 'blue', shortName: state.sport.name.split(' ')[0] };
   };
 
   const displayInfo = getPillarDisplayInfo();
-  const colorClasses = displayInfo ? getPillarColorClasses(displayInfo.color) : null;
   const IconComponent = displayInfo ? (PILLAR_ICONS[displayInfo.icon] || Target) : Target;
+  const pillarGradient = displayInfo ? (PILLAR_GRADIENTS[displayInfo.color] || PILLAR_GRADIENTS.blue) : PILLAR_GRADIENTS.blue;
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="space-y-4">
-        <Button variant="ghost" onClick={() => router.push('/admin/pillars')} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Pillar Management
-        </Button>
+    <>
+      <style>{`
+        .sk-input { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; font-size: 15px; }
+        .sk-input::placeholder { color: rgba(255,255,255,0.3); }
+        .sk-input:focus { border-color: rgba(55,181,255,0.45); }
+        .sk-ta { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px; width: 100%; outline: none; resize: vertical; font-family: inherit; font-size: 15px; }
+        .sk-ta::placeholder { color: rgba(255,255,255,0.3); }
+        .sk-ta:focus { border-color: rgba(55,181,255,0.45); }
+        .sk-sel { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px; width: 100%; outline: none; font-size: 15px; }
+        .sk-sel:focus { border-color: rgba(55,181,255,0.45); }
+        .sk-sel option { background: #0a1628; color: #fff; }
+        .sk-save-btn:hover { filter: brightness(1.1); }
+        .sk-cancel-btn:hover { background: rgba(255,255,255,0.08) !important; }
+        .sk-skill-card:hover { border-color: rgba(55,181,255,0.25) !important; }
+        .sk-edit-btn:hover { background: rgba(55,181,255,0.12) !important; }
+        .sk-del-btn:hover { background: rgba(248,113,113,0.12) !important; }
+        .sk-add-btn:hover { filter: brightness(1.1); }
+        .sk-back-btn:hover { background: rgba(255,255,255,0.1) !important; }
+      `}</style>
 
-        {/* Pillar Header with Gradient */}
-        {state.sport && colorClasses && (
-          <div className={`rounded-lg bg-gradient-to-r ${colorClasses.gradient} p-6 text-white`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <IconComponent className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/80 text-sm">Pillar {state.sport.order}</p>
-                  <h1 className="text-2xl font-bold">
-                    {state.sport.name} - Skills
-                  </h1>
-                  <p className="text-white/80 text-sm mt-1">
-                    Manage skills for this pillar
-                  </p>
-                </div>
-              </div>
-              <Button onClick={handleCreate} className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Skill
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <div style={{ minHeight: '100vh', padding: '32px 24px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-      {/* Error Display */}
-      {state.error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2 text-red-600">
-              <span className="font-medium">Error:</span>
-              <span>{state.error}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setState(prev => ({ ...prev, error: null }))}
-              className="mt-2"
-            >
-              Dismiss
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          {/* Back Button */}
+          <button className="sk-back-btn" onClick={() => router.push('/admin/pillars')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontWeight: 500, fontSize: '15px', marginBottom: '20px', transition: 'all 0.2s' }}>
+            <ArrowLeft size={14} /> Back to Pillar Management
+          </button>
 
-      {/* Create/Edit Form */}
-      {(state.showCreateForm || state.editingId) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {state.editingId ? 'Edit Skill' : 'Create New Skill'}
-            </CardTitle>
-            <CardDescription>
-              {state.editingId ? 'Update skill information' : 'Add a new skill to this sport'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Skill name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Difficulty</Label>
-                <select
-                  id="difficulty"
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value as DifficultyLevel }))}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="introduction">Introduction</option>
-                  <option value="development">Development</option>
-                  <option value="refinement">Refinement</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimatedTime">Estimated Time (minutes)</Label>
-                <Input
-                  id="estimatedTime"
-                  type="number"
-                  value={formData.estimatedTimeToComplete}
-                  onChange={(e) => setFormData(prev => ({ ...prev, estimatedTimeToComplete: parseInt(e.target.value) || 0 }))}
-                  placeholder="30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="order">Display Order</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Skill description..."
-                className="w-full border rounded px-3 py-2 min-h-[100px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="objectives">Learning Objectives (one per line)</Label>
-              <textarea
-                id="objectives"
-                value={formData.learningObjectives.join('\n')}
-                onChange={(e) => {
-                  const objectives = e.target.value.split('\n').filter(line => line.trim() !== '');
-                  setFormData(prev => ({
-                    ...prev,
-                    learningObjectives: objectives
-                  }));
-                }}
-                placeholder="Master basic dribbling technique&#10;Understand ball control fundamentals&#10;Practice coordination drills"
-                className="w-full border rounded px-3 py-2 min-h-[120px]"
-              />
-            </div>
-
-            <HTMLEditorWithAI
-              label="Content (HTML)"
-              value={formData.content}
-              onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-              placeholder="Enter detailed skill content in HTML format, or use AI to generate professional content..."
-              skillName={formData.name}
-              description={formData.description}
-              difficulty={formData.difficulty}
-              objectives={formData.learningObjectives}
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                value={formData.tags.join(', ')}
-                onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value.split(', ').filter(Boolean) }))}
-                placeholder="fundamentals, technique, basics"
-              />
-            </div>
-
-            {/* Media Upload */}
-            <div className="space-y-2">
-              <Label>Media Files</Label>
-              <MediaUpload
-                onUpload={setUploadedFiles}
-                acceptedTypes={['image/*', 'video/*']}
-                maxFiles={10}
-                maxSizePerFile={100}
-              />
-            </div>
-
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                className="rounded"
-              />
-              <span>Active</span>
-            </label>
-
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900">
-                <strong>Note:</strong> Quizzes are managed separately through the Quiz Management section.
-                Students will see quiz options automatically when quizzes are created for this skill.
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving || uploading} className="flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                {uploading ? 'Uploading...' : saving ? 'Saving...' : 'Save'}
-              </Button>
-              <Button variant="outline" onClick={handleCancel} disabled={saving || uploading} className="flex items-center gap-2">
-                <X className="w-4 h-4" />
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Skills List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Skills ({state.skills.length})</h2>
-
-        {state.skills.length === 0 ? (
-          <Card className="p-8">
-            <div className="text-center space-y-4">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto" />
-              <h3 className="text-lg font-medium">No skills yet</h3>
-              <p className="text-muted-foreground">
-                Start by creating the first skill for this sport.
-              </p>
-              <Button onClick={handleCreate}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add First Skill
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {state.skills.map((skill, index) => (
-              <Card key={skill.id} className="hover:shadow-md transition-shadow overflow-hidden">
-                {/* Display image or video thumbnail if available */}
-                {(skill.media?.images?.[0] || skill.media?.videos?.[0]) && (
-                  <div className="aspect-video relative overflow-hidden bg-muted">
-                    {skill.media?.videos?.[0] ? (
-                      <>
-                        <video
-                          src={skill.media.videos[0].url}
-                          className="w-full h-full object-cover"
-                          muted
-                        />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                          <Play className="w-12 h-12 text-white" />
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                          <Play className="w-3 h-3" />
-                          Video
-                        </div>
-                      </>
-                    ) : skill.media?.images?.[0] ? (
-                      <img
-                        src={skill.media.images[0].url}
-                        alt={skill.media.images[0].title || skill.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : null}
-
-                    {!skill.isActive && (
-                      <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                        Inactive
-                      </div>
-                    )}
+          {/* Pillar Header */}
+          {state.sport && (
+            <div style={{ background: pillarGradient, borderRadius: '16px', padding: '24px', marginBottom: '24px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', borderRadius: '16px' }} />
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconComponent size={28} color="#fff" />
                   </div>
-                )}
+                  <div>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: '0 0 4px' }}>Pillar {state.sport.order}</p>
+                    <h1 style={{ color: '#fff', fontSize: '22px', fontWeight: 700, margin: '0 0 4px' }}>{state.sport.name} — Skills</h1>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '15px', margin: 0 }}>Manage skills for this pillar</p>
+                  </div>
+                </div>
+                <button className="sk-add-btn" onClick={handleCreate} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s' }}>
+                  <Plus size={16} /> Add Skill
+                </button>
+              </div>
+            </div>
+          )}
 
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-3 flex-1">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-muted px-2 py-1 rounded text-xs">
-                            Skill {index + 1}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${getDifficultyColor(skill.difficulty)}`}
-                          >
-                            {skill.difficulty}
-                          </span>
-                          {!skill.media?.images?.[0] && !skill.media?.videos?.[0] && !skill.isActive && (
-                            <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs">
-                              Inactive
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-semibold">{skill.name}</h3>
-                      </div>
+          {/* Error Banner */}
+          {state.error && (
+            <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ color: RED, fontWeight: 600 }}>Error:</span>
+                <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px' }}>{state.error}</span>
+              </div>
+              <button onClick={() => setState(prev => ({ ...prev, error: null }))} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>×</button>
+            </div>
+          )}
 
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {skill.description}
-                      </p>
+          {/* Create/Edit Form */}
+          {(state.showCreateForm || state.editingId) && (
+            <div style={{ ...card, padding: '28px', marginBottom: '24px' }}>
+              <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, margin: '0 0 6px' }}>{state.editingId ? 'Edit Skill' : 'Create New Skill'}</h2>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', margin: '0 0 24px' }}>{state.editingId ? 'Update skill information' : 'Add a new skill to this sport'}</p>
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{formatDuration(skill.estimatedTimeToComplete)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Target className="w-4 h-4" />
-                          <span>{skill.learningObjectives.length} objectives</span>
-                        </div>
-                        {skill.hasVideo && (
-                          <div className="flex items-center gap-1">
-                            <Play className="w-4 h-4" />
-                            <span>Has Video</span>
-                          </div>
-                        )}
-                      </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '16px', marginBottom: '16px' }}>
+                {[
+                  { lbl: 'Name', id: 'name', type: 'text', val: formData.name, onChange: (v: string) => setFormData(p => ({ ...p, name: v })), ph: 'Skill name' },
+                  { lbl: 'Estimated Time (min)', id: 'time', type: 'number', val: String(formData.estimatedTimeToComplete), onChange: (v: string) => setFormData(p => ({ ...p, estimatedTimeToComplete: parseInt(v) || 0 })), ph: '30' },
+                  { lbl: 'Display Order', id: 'order', type: 'number', val: String(formData.order), onChange: (v: string) => setFormData(p => ({ ...p, order: parseInt(v) || 0 })), ph: '0' },
+                ].map(f => (
+                  <div key={f.id}>
+                    <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{f.lbl}</label>
+                    <input className="sk-input" type={f.type} value={f.val} onChange={e => f.onChange(e.target.value)} placeholder={f.ph} />
+                  </div>
+                ))}
+                <div>
+                  <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Difficulty</label>
+                  <select className="sk-sel" value={formData.difficulty} onChange={e => setFormData(p => ({ ...p, difficulty: e.target.value as DifficultyLevel }))}>
+                    <option value="introduction">Introduction</option>
+                    <option value="development">Development</option>
+                    <option value="refinement">Refinement</option>
+                  </select>
+                </div>
+              </div>
 
-                      {/* Show media counts if available */}
-                      {((skill.media?.images?.length ?? 0) > 0 || (skill.media?.videos?.length ?? 0) > 0) && (
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {(skill.media?.images?.length ?? 0) > 0 && (
-                            <span>{skill.media?.images?.length} image{(skill.media?.images?.length ?? 0) > 1 ? 's' : ''}</span>
-                          )}
-                          {(skill.media?.videos?.length ?? 0) > 0 && (
-                            <span>{skill.media?.videos?.length} video{(skill.media?.videos?.length ?? 0) > 1 ? 's' : ''}</span>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</label>
+                <textarea className="sk-ta" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} placeholder="Skill description..." rows={3} />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learning Objectives (one per line)</label>
+                <textarea
+                  className="sk-ta"
+                  value={formData.learningObjectives.join('\n')}
+                  onChange={e => { const objectives = e.target.value.split('\n').filter(l => l.trim() !== ''); setFormData(p => ({ ...p, learningObjectives: objectives })); }}
+                  placeholder={"Master basic dribbling technique\nUnderstand ball control fundamentals"}
+                  rows={4}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <HTMLEditorWithAI
+                  label="Content (HTML)"
+                  value={formData.content}
+                  onChange={content => setFormData(p => ({ ...p, content }))}
+                  placeholder="Enter detailed skill content in HTML format, or use AI to generate professional content..."
+                  skillName={formData.name}
+                  description={formData.description}
+                  difficulty={formData.difficulty}
+                  objectives={formData.learningObjectives}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tags (comma-separated)</label>
+                <input className="sk-input" value={formData.tags.join(', ')} onChange={e => setFormData(p => ({ ...p, tags: e.target.value.split(', ').filter(Boolean) }))} placeholder="fundamentals, technique, basics" />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Media Files</label>
+                <MediaUpload onUpload={setUploadedFiles} acceptedTypes={['image/*', 'video/*']} maxFiles={10} maxSizePerFile={100} />
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '16px' }}>
+                <input type="checkbox" checked={formData.isActive} onChange={e => setFormData(p => ({ ...p, isActive: e.target.checked }))} style={{ width: '16px', height: '16px', accentColor: BLUE }} />
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Active</span>
+              </label>
+
+              <div style={{ background: `rgba(55,181,255,0.07)`, border: `1px solid rgba(55,181,255,0.18)`, borderRadius: '10px', padding: '12px 16px', marginBottom: '20px' }}>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: 0 }}>
+                  <strong style={{ color: BLUE }}>Note:</strong> Quizzes are managed separately through the Quiz Management section.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="sk-save-btn" onClick={handleSave} disabled={saving || uploading} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 20px', borderRadius: '10px', border: 'none', background: BLUE, color: '#fff', fontWeight: 700, fontSize: '15px', cursor: saving || uploading ? 'not-allowed' : 'pointer', opacity: saving || uploading ? 0.7 : 1, transition: 'all 0.2s' }}>
+                  <Save size={14} />{uploading ? 'Uploading...' : saving ? 'Saving...' : 'Save'}
+                </button>
+                <button className="sk-cancel-btn" onClick={handleCancel} disabled={saving || uploading} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  <X size={14} /> Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Skills List */}
+          <div>
+            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>
+              Skills <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400, fontSize: '15px' }}>({state.skills.length})</span>
+            </h2>
+
+            {state.skills.length === 0 ? (
+              <div style={{ ...card, padding: '64px', textAlign: 'center' }}>
+                <BookOpen size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>No skills yet</h3>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', marginBottom: '20px' }}>Start by creating the first skill for this sport.</p>
+                <button onClick={handleCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 24px', borderRadius: '10px', border: 'none', background: BLUE, color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>
+                  <Plus size={16} /> Add First Skill
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '16px' }}>
+                {state.skills.map((skill, index) => {
+                  const diff = DIFF_STYLES[skill.difficulty] ?? { bg: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)' };
+                  return (
+                    <div key={skill.id} className="sk-skill-card" style={{ ...card, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+                      {(skill.media?.images?.[0] || skill.media?.videos?.[0]) && (
+                        <div style={{ aspectRatio: '16/9', position: 'relative', overflow: 'hidden', background: '#000' }}>
+                          {skill.media?.videos?.[0] ? (
+                            <>
+                              <video src={skill.media.videos[0].url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Play size={48} color="rgba(255,255,255,0.9)" />
+                              </div>
+                              <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '12px', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Play size={10} /> Video
+                              </div>
+                            </>
+                          ) : skill.media?.images?.[0] ? (
+                            <img src={skill.media.images[0].url} alt={skill.media.images[0].title || skill.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : null}
+                          {!skill.isActive && (
+                            <div style={{ position: 'absolute', top: '10px', right: '10px', background: RED, color: '#fff', fontSize: '12px', padding: '3px 10px', borderRadius: '20px', fontWeight: 700 }}>Inactive</div>
                           )}
                         </div>
                       )}
-                    </div>
 
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(skill)}
-                        className="h-8 w-8 p-0"
-                        title="Edit Skill"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(skill.id, skill.name)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        title="Delete Skill"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div style={{ padding: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px', alignItems: 'center' }}>
+                              <span style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', borderRadius: '6px', padding: '2px 8px', fontSize: '12px' }}>Skill {index + 1}</span>
+                              <span style={{ background: diff.bg, color: diff.color, borderRadius: '6px', padding: '2px 8px', fontSize: '12px', fontWeight: 600, textTransform: 'capitalize' }}>{skill.difficulty}</span>
+                              {!skill.media?.images?.[0] && !skill.media?.videos?.[0] && !skill.isActive && (
+                                <span style={{ background: 'rgba(248,113,113,0.1)', color: RED, borderRadius: '6px', padding: '2px 8px', fontSize: '12px' }}>Inactive</span>
+                              )}
+                            </div>
+                            <h3 style={{ color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '8px' }}>{skill.name}</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{skill.description}</p>
+                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                                <Clock size={12} />{formatDuration(skill.estimatedTimeToComplete)}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                                <Target size={12} />{skill.learningObjectives.length} objectives
+                              </div>
+                              {skill.hasVideo && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                                  <Play size={12} /> Has Video
+                                </div>
+                              )}
+                            </div>
+                            {((skill.media?.images?.length ?? 0) > 0 || (skill.media?.videos?.length ?? 0) > 0) && (
+                              <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
+                                {(skill.media?.images?.length ?? 0) > 0 && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>{skill.media?.images?.length} image{(skill.media?.images?.length ?? 0) > 1 ? 's' : ''}</span>}
+                                {(skill.media?.videos?.length ?? 0) > 0 && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>{skill.media?.videos?.length} video{(skill.media?.videos?.length ?? 0) > 1 ? 's' : ''}</span>}
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
+                            <button className="sk-edit-btn" onClick={() => handleEdit(skill)} title="Edit Skill" style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: 'rgba(55,181,255,0.08)', color: BLUE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                              <Edit size={14} />
+                            </button>
+                            <button className="sk-del-btn" onClick={() => handleDelete(skill.id, skill.name)} title="Delete Skill" style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: 'rgba(248,113,113,0.08)', color: RED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Custom confirmation dialog */}
-      {dialog}
-    </div>
+          {dialog}
+        </div>
+      </div>
+    </>
   );
 }
 

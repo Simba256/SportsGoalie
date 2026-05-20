@@ -2,35 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { chartingService, dynamicChartingService, userService } from '@/lib/database';
 import { ChartingEntry, DynamicChartingEntry, Session, User } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AdminRoute } from '@/components/auth/protected-route';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Search,
-  Users,
-  Activity,
-  CheckCircle2,
-  Clock,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, Users, Activity, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
-type SortKey = 'completion' | 'sessions' | 'recent' | 'name';
+const BLUE = '#37b5ff';
+const GREEN = '#22c55e';
+const AMBER = '#fbbf24';
+const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
 
-export default function AdminChartingGoaliesPage() {
-  return (
-    <AdminRoute>
-      <GoaliesContent />
-    </AdminRoute>
-  );
-}
+type SortKey = 'completion' | 'sessions' | 'recent' | 'name';
 
 interface GoalieSummary {
   studentId: string;
@@ -45,6 +28,10 @@ interface GoalieSummary {
   lastActive: Date | null;
 }
 
+export default function AdminChartingGoaliesPage() {
+  return <AdminRoute><GoaliesContent /></AdminRoute>;
+}
+
 function GoaliesContent() {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -54,45 +41,28 @@ function GoaliesContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('completion');
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
-
       const [sessionsResult, entriesResult, dynamicResult] = await Promise.all([
         chartingService.getAllSessions({ limit: 1000 }),
         chartingService.getAllChartingEntries({ limit: 1000 }),
         dynamicChartingService.getAllDynamicEntries({ limit: 1000 }),
       ]);
-
       const sessionsData = sessionsResult.success ? sessionsResult.data || [] : [];
       const entriesData = entriesResult.success ? entriesResult.data || [] : [];
       const dynamicData = dynamicResult.success ? dynamicResult.data || [] : [];
-
       setSessions(sessionsData);
       setEntries(entriesData);
       setDynamicEntries(dynamicData);
-
-      const uniqueStudentIds = Array.from(
-        new Set([
-          ...entriesData.map((e) => e.studentId),
-          ...dynamicData.map((e) => e.studentId),
-          ...sessionsData.map((s) => s.studentId),
-        ])
-      );
-
+      const uniqueStudentIds = Array.from(new Set([...entriesData.map(e => e.studentId), ...dynamicData.map(e => e.studentId), ...sessionsData.map(s => s.studentId)]));
       const userMap = new Map<string, User>();
-      await Promise.all(
-        uniqueStudentIds.map(async (studentId) => {
-          const userResult = await userService.getUser(studentId);
-          if (userResult.success && userResult.data) {
-            userMap.set(studentId, userResult.data);
-          }
-        })
-      );
+      await Promise.all(uniqueStudentIds.map(async (studentId) => {
+        const userResult = await userService.getUser(studentId);
+        if (userResult.success && userResult.data) userMap.set(studentId, userResult.data);
+      }));
       setUsers(userMap);
     } catch (error) {
       console.error('Failed to load goalies:', error);
@@ -104,50 +74,24 @@ function GoaliesContent() {
 
   const isLegacyEntryComplete = (entry: ChartingEntry | undefined) => {
     if (!entry) return false;
-    return !!(
-      entry.preGame &&
-      entry.gameOverview &&
-      entry.period1 &&
-      entry.period2 &&
-      entry.period3 &&
-      entry.postGame
-    );
+    return !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
   };
 
-  const getBestDynamicEntry = (
-    items: DynamicChartingEntry[]
-  ): DynamicChartingEntry | undefined => {
+  const getBestDynamicEntry = (items: DynamicChartingEntry[]): DynamicChartingEntry | undefined => {
     if (items.length === 0) return undefined;
-    const complete = items.filter((i) => i.isComplete);
+    const complete = items.filter(i => i.isComplete);
     const pool = complete.length > 0 ? complete : items;
-    return [...pool].sort((a, b) => {
-      const timeA = a.submittedAt?.toDate?.()?.getTime() || 0;
-      const timeB = b.submittedAt?.toDate?.()?.getTime() || 0;
-      return timeB - timeA;
-    })[0];
+    return [...pool].sort((a, b) => (b.submittedAt?.toDate?.()?.getTime() || 0) - (a.submittedAt?.toDate?.()?.getTime() || 0))[0];
   };
 
-  const getStatus = (
-    legacy?: ChartingEntry,
-    dynamic?: DynamicChartingEntry
-  ): 'complete' | 'partial' | 'not_charted' => {
-    const legacyStatus: 'complete' | 'partial' | 'not_charted' = legacy
-      ? isLegacyEntryComplete(legacy)
-        ? 'complete'
-        : 'partial'
-      : 'not_charted';
-    const dynamicStatus: 'complete' | 'partial' | 'not_charted' = dynamic
-      ? dynamic.isComplete
-        ? 'complete'
-        : dynamic.completionPercentage > 0
-        ? 'partial'
-        : 'not_charted'
-      : 'not_charted';
+  const getStatus = (legacy?: ChartingEntry, dynamic?: DynamicChartingEntry): 'complete' | 'partial' | 'not_charted' => {
+    const legacyStatus: 'complete' | 'partial' | 'not_charted' = legacy ? (isLegacyEntryComplete(legacy) ? 'complete' : 'partial') : 'not_charted';
+    const dynamicStatus: 'complete' | 'partial' | 'not_charted' = dynamic ? (dynamic.isComplete ? 'complete' : dynamic.completionPercentage > 0 ? 'partial' : 'not_charted') : 'not_charted';
     const rank = { not_charted: 0, partial: 1, complete: 2 } as const;
     return rank[dynamicStatus] >= rank[legacyStatus] ? dynamicStatus : legacyStatus;
   };
 
-  const legacyBySession = new Map(entries.map((e) => [e.sessionId, e]));
+  const legacyBySession = new Map(entries.map(e => [e.sessionId, e]));
   const dynamicBySession = dynamicEntries.reduce((acc, e) => {
     const existing = acc.get(e.sessionId) || [];
     existing.push(e);
@@ -156,73 +100,31 @@ function GoaliesContent() {
   }, new Map<string, DynamicChartingEntry[]>());
 
   const buildGoalieSummary = (studentId: string): GoalieSummary => {
-    const studentSessions = sessions.filter((s) => s.studentId === studentId);
-
-    let complete = 0;
-    let partial = 0;
+    const studentSessions = sessions.filter(s => s.studentId === studentId);
+    let complete = 0, partial = 0;
     let lastActive: Date | null = null;
-
-    studentSessions.forEach((session) => {
-      const status = getStatus(
-        legacyBySession.get(session.id),
-        getBestDynamicEntry(dynamicBySession.get(session.id) || [])
-      );
+    studentSessions.forEach(session => {
+      const status = getStatus(legacyBySession.get(session.id), getBestDynamicEntry(dynamicBySession.get(session.id) || []));
       if (status === 'complete') complete++;
       if (status === 'partial') partial++;
-
       const sessionDate = session.date?.toDate?.() ?? null;
-      if (sessionDate && (!lastActive || sessionDate > lastActive)) {
-        lastActive = sessionDate;
-      }
+      if (sessionDate && (!lastActive || sessionDate > lastActive)) lastActive = sessionDate;
     });
-
     const user = users.get(studentId);
     const completion = studentSessions.length > 0 ? (complete / studentSessions.length) * 100 : 0;
-
-    return {
-      studentId,
-      name: user?.displayName || user?.email || `Student ${studentId.slice(-6)}`,
-      email: user?.email,
-      avatar: user?.profileImage,
-      totalSessions: studentSessions.length,
-      completeSessions: complete,
-      partialSessions: partial,
-      chartedSessions: complete + partial,
-      completionRate: completion,
-      lastActive,
-    };
+    return { studentId, name: user?.displayName || user?.email || `Student ${studentId.slice(-6)}`, email: user?.email, avatar: user?.profileImage, totalSessions: studentSessions.length, completeSessions: complete, partialSessions: partial, chartedSessions: complete + partial, completionRate: completion, lastActive };
   };
 
-  const uniqueStudentIds = Array.from(
-    new Set([
-      ...entries.map((e) => e.studentId),
-      ...dynamicEntries.map((e) => e.studentId),
-      ...sessions.map((s) => s.studentId),
-    ])
-  );
-
-  const goalies: GoalieSummary[] = uniqueStudentIds
-    .map(buildGoalieSummary)
-    .filter((g) => g.chartedSessions > 0 || g.totalSessions > 0);
-
-  const filtered = goalies.filter((g) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return g.name.toLowerCase().includes(q) || g.email?.toLowerCase().includes(q);
-  });
-
+  const uniqueStudentIds = Array.from(new Set([...entries.map(e => e.studentId), ...dynamicEntries.map(e => e.studentId), ...sessions.map(s => s.studentId)]));
+  const goalies: GoalieSummary[] = uniqueStudentIds.filter(id => users.has(id)).map(buildGoalieSummary).filter(g => g.chartedSessions > 0 || g.totalSessions > 0);
+  const filtered = goalies.filter(g => !searchQuery || g.name.toLowerCase().includes(searchQuery.toLowerCase()) || g.email?.toLowerCase().includes(searchQuery.toLowerCase()));
   const sorted = [...filtered].sort((a, b) => {
     switch (sortBy) {
-      case 'completion':
-        return b.completionRate - a.completionRate;
-      case 'sessions':
-        return b.totalSessions - a.totalSessions;
-      case 'recent':
-        return (b.lastActive?.getTime() || 0) - (a.lastActive?.getTime() || 0);
-      case 'name':
-        return a.name.localeCompare(b.name);
-      default:
-        return 0;
+      case 'completion': return b.completionRate - a.completionRate;
+      case 'sessions': return b.totalSessions - a.totalSessions;
+      case 'recent': return (b.lastActive?.getTime() || 0) - (a.lastActive?.getTime() || 0);
+      case 'name': return a.name.localeCompare(b.name);
+      default: return 0;
     }
   });
 
@@ -232,219 +134,136 @@ function GoaliesContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-6">
-        <SkeletonDarkPage />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Loading goalies…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-10">
-      <div className="mx-auto max-w-7xl px-4 pt-4 md:px-6">
-        {/* Back link */}
-        <Link
-          href="/admin/charting"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Charting Analytics
-        </Link>
+    <>
+      <style>{`
+        .cg-inp { background: rgba(2,18,44,0.7) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: #fff !important; border-radius: 10px !important; padding: 10px 12px 10px 36px !important; width: 100% !important; font-size: 15px !important; outline: none !important; box-sizing: border-box !important; }
+        .cg-inp:focus { border-color: rgba(55,181,255,0.45) !important; }
+        .cg-inp::placeholder { color: rgba(255,255,255,0.25) !important; }
+        .cg-card:hover { border-color: rgba(55,181,255,0.3) !important; transform: translateY(-2px); }
+        @media (max-width: 1024px) { .cg-stats { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (max-width: 640px) { .cg-stats { grid-template-columns: repeat(1, 1fr) !important; } }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-        {/* Header */}
-        <div className="mt-4 space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Goalies with Charting Activity
-          </h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Select a goalie to view their full charting performance and progress.
-          </p>
+        {/* Back link + header */}
+        <div>
+          <Link href="/admin/charting" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', marginBottom: '12px' }}>
+            <ArrowLeft size={13} /> Back to Charting Analytics
+          </Link>
+          <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>Goalies with Charting Activity</h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px' }}>Select a goalie to view their full charting performance and progress.</p>
         </div>
 
         {/* Summary strip */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Active Goalies
-                </p>
-                <p className="text-2xl font-bold text-foreground">{totalGoalies}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-                <Activity className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Total Sessions
-                </p>
-                <p className="text-2xl font-bold text-foreground">{totalSessionsAcross}</p>
+        <div className="cg-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+          {[
+            { label: 'Active Goalies', value: totalGoalies, icon: Users, color: BLUE },
+            { label: 'Total Sessions', value: totalSessionsAcross, icon: Activity, color: AMBER },
+            { label: 'Charted Sessions', value: totalChartedAcross, icon: CheckCircle2, color: GREEN },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} style={{ position: 'relative', ...card, padding: '18px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}66, transparent)` }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={18} color={`${color}bb`} />
+                </div>
+                <div>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
+                  <p style={{ color: '#fff', fontWeight: 800, fontSize: '26px' }}>{value}</p>
+                </div>
               </div>
             </div>
-          </Card>
-
-          <Card className="border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Charted Sessions
-                </p>
-                <p className="text-2xl font-bold text-foreground">{totalChartedAcross}</p>
-              </div>
-            </div>
-          </Card>
+          ))}
         </div>
 
-        {/* Filters */}
-        <Card className="mt-6 border-border bg-card p-4 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-10 pl-10"
-              />
+        {/* Search + sort */}
+        <div style={{ position: 'relative', ...card, padding: '16px', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} color="rgba(255,255,255,0.3)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input className="cg-inp" placeholder="Search by name or email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <div className="flex gap-2 overflow-x-auto">
-              {(
-                [
-                  { key: 'completion', label: 'Top completion' },
-                  { key: 'sessions', label: 'Most sessions' },
-                  { key: 'recent', label: 'Recently active' },
-                  { key: 'name', label: 'Name' },
-                ] as { key: SortKey; label: string }[]
-              ).map((opt) => (
-                <Button
-                  key={opt.key}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortBy(opt.key)}
-                  className={`shrink-0 transition-colors ${
-                    sortBy === opt.key
-                      ? 'border-red-600 bg-red-600 text-white hover:bg-red-700 hover:text-white'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {([{ key: 'completion', label: 'Top completion' }, { key: 'sessions', label: 'Most sessions' }, { key: 'recent', label: 'Recently active' }, { key: 'name', label: 'Name' }] as { key: SortKey; label: string }[]).map(opt => (
+                <button key={opt.key} onClick={() => setSortBy(opt.key)} style={{ padding: '7px 14px', borderRadius: '8px', border: `1px solid ${sortBy === opt.key ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.1)'}`, background: sortBy === opt.key ? 'rgba(248,113,113,0.15)' : 'rgba(255,255,255,0.04)', color: sortBy === opt.key ? '#f87171' : 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {opt.label}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Goalies list */}
         {sorted.length === 0 ? (
-          <Card className="mt-6 border-border bg-card p-12 text-center shadow-sm">
-            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-            <h3 className="text-lg font-semibold text-foreground">No goalies found</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {searchQuery
-                ? 'Try adjusting your search.'
-                : 'No goalies have charted any sessions yet.'}
-            </p>
-          </Card>
+          <div style={{ position: 'relative', ...card, padding: '64px', textAlign: 'center', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+            <Users size={44} color="rgba(255,255,255,0.1)" style={{ margin: '0 auto 12px' }} />
+            <p style={{ color: '#fff', fontWeight: 600, fontSize: '17px', marginBottom: '6px' }}>No goalies found</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>{searchQuery ? 'Try adjusting your search.' : 'No goalies have charted any sessions yet.'}</p>
+          </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {sorted.map((goalie) => (
-              <Card
-                key={goalie.studentId}
-                className="group flex flex-col border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                <CardHeader className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-11 w-11">
-                      <AvatarImage src={goalie.avatar} />
-                      <AvatarFallback>
-                        {goalie.name
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base leading-tight truncate">{goalie.name}</CardTitle>
-                      {goalie.email && (
-                        <CardDescription className="truncate text-xs">{goalie.email}</CardDescription>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+            {sorted.map(goalie => {
+              const initials = goalie.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+              return (
+                <div key={goalie.studentId} className="cg-card" style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden', transition: 'all 0.2s' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}44, transparent)` }} />
 
-                <CardContent className="flex-1 space-y-4">
-                  <div>
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Completion rate</span>
-                      <span className="text-lg font-bold text-foreground">
-                        {goalie.completionRate.toFixed(0)}%
-                      </span>
+                  {/* Avatar + name */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: `linear-gradient(135deg, ${BLUE}33, rgba(14,165,233,0.2))`, border: `1px solid rgba(55,181,255,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 800, color: BLUE, flexShrink: 0, overflow: 'hidden' }}>
+                      {goalie.avatar ? <img src={goalie.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                     </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-muted">
-                      <div
-                        className="h-2 rounded-full bg-primary transition-all"
-                        style={{ width: `${Math.min(goalie.completionRate, 100)}%` }}
-                      />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goalie.name}</p>
+                      {goalie.email && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goalie.email}</p>}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-lg bg-muted/50 px-2 py-2">
-                      <p className="text-xs text-muted-foreground">Total</p>
-                      <p className="text-sm font-bold text-foreground">{goalie.totalSessions}</p>
+                  {/* Completion bar */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600 }}>Completion rate</span>
+                      <span style={{ color: '#fff', fontWeight: 800, fontSize: '17px' }}>{goalie.completionRate.toFixed(0)}%</span>
                     </div>
-                    <div className="rounded-lg bg-muted/50 px-2 py-2">
-                      <p className="text-xs text-muted-foreground">Complete</p>
-                      <p className="text-sm font-bold text-foreground">{goalie.completeSessions}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 px-2 py-2">
-                      <p className="text-xs text-muted-foreground">Partial</p>
-                      <p className="text-sm font-bold text-foreground">{goalie.partialSessions}</p>
+                    <div style={{ width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(goalie.completionRate, 100)}%`, background: `linear-gradient(90deg, ${BLUE}, #0ea5e9)`, borderRadius: '3px', transition: 'width 0.5s' }} />
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    {goalie.lastActive && (
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Last session {goalie.lastActive.toLocaleDateString()}
-                      </span>
-                    )}
-                    {goalie.chartedSessions === 0 && (
-                      <Badge variant="outline" className="text-[10px]">
-                        No entries yet
-                      </Badge>
-                    )}
+                  {/* Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+                    {[['Total', goalie.totalSessions], ['Complete', goalie.completeSessions], ['Partial', goalie.partialSessions]].map(([label, value]) => (
+                      <div key={String(label)} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '10px 6px' }}>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>{label}</p>
+                        <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>{value}</p>
+                      </div>
+                    ))}
                   </div>
 
-                  <Button
-                    asChild
-                    className="w-full border border-red-600 bg-red-600 text-white hover:bg-red-700"
-                  >
-                    <Link href={`/admin/users/${goalie.studentId}?tab=charting`}>
-                      View Performance
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  {/* Last active */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
+                    {goalie.lastActive && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}><Clock size={12} /> Last session {goalie.lastActive.toLocaleDateString()}</span>}
+                    {goalie.chartedSessions === 0 && <span style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>No entries yet</span>}
+                  </div>
+
+                  {/* CTA */}
+                  <Link href={`/admin/users/${goalie.studentId}?tab=charting`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: `linear-gradient(135deg, #f87171 0%, #dc2626 100%)`, color: '#fff', padding: '10px', borderRadius: '10px', fontWeight: 700, fontSize: '15px', textDecoration: 'none' }}>
+                    View Performance <ArrowRight size={15} />
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

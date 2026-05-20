@@ -88,6 +88,9 @@ export function ProtectedRoute({
     return <SkeletonContentPage />;
   };
 
+  // During initial hydration or while auth is loading, render a
+  // neutral, deterministic skeleton to avoid server/client markup
+  // mismatches. If a custom `fallback` was provided, prefer it.
   if (!isHydrated || loading) {
     if (fallback) {
       return <>{fallback}</>;
