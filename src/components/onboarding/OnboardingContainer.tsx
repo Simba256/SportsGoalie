@@ -1,29 +1,23 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import { Component as BackgroundComponent } from '@/components/ui/background-components';
 
 interface OnboardingContainerProps {
   children: ReactNode;
   className?: string;
 }
 
-/**
- * Full-screen immersive container for the onboarding flow.
- * Clean light theme matching the dashboard.
- */
-export function OnboardingContainer({ children, className }: OnboardingContainerProps) {
+export function OnboardingContainer({ children }: OnboardingContainerProps) {
   return (
-    <BackgroundComponent
-      className={cn(
-        'text-gray-900 overflow-hidden pt-20',
-        className
-      )}
-    >
-      <div className="min-h-screen flex flex-col">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(145deg, #000a1f 0%, #041530 40%, #071e42 100%)',
+      color: '#fff',
+      overflowX: 'hidden',
+    }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingTop: '80px' }}>
         {children}
       </div>
-    </BackgroundComponent>
+    </div>
   );
 }

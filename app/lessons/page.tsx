@@ -9,9 +9,8 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { customCurriculumService, customContentService, sportsService } from '@/lib/database';
 import { CustomCurriculumItem } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+
+const BLUE = '#37b5ff';
 
 interface LessonEntry {
   item: CustomCurriculumItem;
@@ -32,83 +31,34 @@ function LessonsPageContent() {
 
   const loadLessons = async () => {
     if (!user?.id) return;
-
     try {
       setLoading(true);
       const curriculumResult = await customCurriculumService.getStudentCurriculum(user.id);
-
-      if (!curriculumResult.success || !curriculumResult.data) {
-        setEntries([]);
-        return;
-      }
+      if (!curriculumResult.success || !curriculumResult.data) { setEntries([]); return; }
 
       const lessonLikeItems = curriculumResult.data.items
-        .filter((item) => ['lesson', 'custom_lesson', 'quiz', 'custom_quiz'].includes(item.type))
+        .filter(item => ['lesson', 'custom_lesson', 'quiz', 'custom_quiz'].includes(item.type))
         .sort((a, b) => a.order - b.order);
 
       const resolved = await Promise.all(
-        lessonLikeItems.map(async (item) => {
-          if (!item.contentId) {
-            return {
-              item,
-              title: item.customContent?.title || 'Curriculum Item',
-              description: item.customContent?.description,
-              duration: item.customContent?.estimatedTimeMinutes,
-            };
-          }
-
+        lessonLikeItems.map(async item => {
+          if (!item.contentId) return { item, title: item.customContent?.title || 'Curriculum Item', description: item.customContent?.description, duration: item.customContent?.estimatedTimeMinutes };
           try {
             if (item.type === 'lesson') {
-              const skillResult = await sportsService.getSkill(item.contentId);
-              if (skillResult.success && skillResult.data) {
-                return {
-                  item,
-                  title: skillResult.data.name,
-                  description: skillResult.data.description,
-                  duration: skillResult.data.estimatedTimeToComplete,
-                };
-              }
+              const r = await sportsService.getSkill(item.contentId);
+              if (r.success && r.data) return { item, title: r.data.name, description: r.data.description, duration: r.data.estimatedTimeToComplete };
             }
-
             if (item.type === 'quiz') {
-              const contentResult = await customContentService.getContent(item.contentId);
-              if (contentResult.success && contentResult.data) {
-                return {
-                  item,
-                  title: contentResult.data.title,
-                  description: contentResult.data.description,
-                  duration: contentResult.data.estimatedTimeMinutes,
-                };
-              }
-
-              return {
-                item,
-                title: 'Video Quiz',
-                description: 'Assigned by your coach',
-              };
+              const r = await customContentService.getContent(item.contentId);
+              if (r.success && r.data) return { item, title: r.data.title, description: r.data.description, duration: r.data.estimatedTimeMinutes };
+              return { item, title: 'Video Quiz', description: 'Assigned by your coach' };
             }
-
-            const customResult = await customContentService.getContent(item.contentId);
-            if (customResult.success && customResult.data) {
-              return {
-                item,
-                title: customResult.data.title,
-                description: customResult.data.description,
-                duration: customResult.data.estimatedTimeMinutes,
-              };
-            }
-          } catch {
-            // fall through to fallback
-          }
-
-          return {
-            item,
-            title: item.type.includes('quiz') ? 'Quiz' : 'Lesson',
-            description: 'Assigned by your coach',
-          };
+            const r = await customContentService.getContent(item.contentId);
+            if (r.success && r.data) return { item, title: r.data.title, description: r.data.description, duration: r.data.estimatedTimeMinutes };
+          } catch { /* fallthrough */ }
+          return { item, title: item.type.includes('quiz') ? 'Quiz' : 'Lesson', description: 'Assigned by your coach' };
         })
       );
-
       setEntries(resolved);
     } catch (error) {
       console.error('Error loading lessons:', error);
@@ -119,115 +69,96 @@ function LessonsPageContent() {
   };
 
   const getHref = (item: CustomCurriculumItem) => {
-    if (item.status === 'locked') return '';
-    if (!item.contentId) return '';
-
+    if (item.status === 'locked' || !item.contentId) return '';
     if (item.type === 'lesson') return `/pillars/${item.pillarId}/skills/${item.contentId}`;
     if (item.type === 'quiz' || item.type === 'custom_quiz') return `/quiz/video/${item.contentId}`;
     if (item.type === 'custom_lesson') return `/learn/lesson/${item.contentId}`;
     return '';
   };
 
-  if (loading) {
-    return <SkeletonListPage cols={3} count={6} />;
-  }
+  if (loading) return <SkeletonListPage cols={3} count={6} />;
 
   return (
-    <div className="space-y-6">
-      {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-        <div className="relative">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Lessons and Quizzes</h1>
-          <p className="text-muted-foreground mt-1">All coach-assigned learning items in one place.</p>
+    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', padding: '28px 24px 48px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {/* Banner */}
+        <div style={{ position: 'relative', borderRadius: '20px', background: 'rgba(2,18,44,0.9)', border: '1.5px solid rgba(55,181,255,0.3)', padding: '28px 32px', overflow: 'hidden', boxShadow: '0 0 60px rgba(55,181,255,0.06)' }}>
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '50%', height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <p style={{ fontSize: '10px', letterSpacing: '3px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Your Curriculum</p>
+          <h1 style={{ fontSize: 'clamp(20px,3.5vw,32px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Lessons &amp; Quizzes</h1>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)' }}>All coach-assigned learning items in one place.</p>
         </div>
-      </div>
 
-      {entries.length === 0 ? (
-        <Card className="border-border">
-          <CardContent className="py-10 text-center">
-            <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
-            <p className="mt-3 text-foreground font-medium">No assigned items yet</p>
-            <p className="text-sm text-muted-foreground">Your coach will add lessons and quizzes here.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {entries.map(({ item, title, description, duration }) => {
-            const href = getHref(item);
-            const isLocked = item.status === 'locked';
-            const isCompleted = item.status === 'completed';
-            const isQuiz = item.type === 'quiz' || item.type === 'custom_quiz';
+        {entries.length === 0 ? (
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '16px', padding: '64px 24px', textAlign: 'center' }}>
+            <FileText size={36} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />
+            <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No assigned items yet</p>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>Your coach will add lessons and quizzes here.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+            {entries.map(({ item, title, description, duration }) => {
+              const href = getHref(item);
+              const isLocked = item.status === 'locked';
+              const isCompleted = item.status === 'completed';
+              const isQuiz = item.type === 'quiz' || item.type === 'custom_quiz';
+              const typeColor = isQuiz ? BLUE : '#a78bfa';
 
-            return (
-              <Card
-                key={item.id}
-                className={`border transition-all ${
-                  isLocked
-                    ? 'border-border bg-muted/80'
-                    : 'border-border hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10'
-                }`}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge className={isQuiz ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' : 'bg-red-100 text-red-700 hover:bg-red-100'}>
+              return (
+                <div key={item.id} style={{ background: isLocked ? 'rgba(2,14,36,0.7)' : 'rgba(2,18,44,0.82)', border: `1px solid ${isCompleted ? 'rgba(74,222,128,0.2)' : isLocked ? 'rgba(255,255,255,0.07)' : 'rgba(55,181,255,0.18)'}`, borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', opacity: isLocked ? 0.6 : 1, transition: 'transform 0.2s, box-shadow 0.2s', borderTopWidth: '2px', borderTopColor: isCompleted ? '#4ade80' : isLocked ? 'rgba(255,255,255,0.1)' : typeColor }}
+                  onMouseEnter={e => { if (!isLocked) { const el = e.currentTarget; el.style.transform = 'translateY(-3px)'; el.style.boxShadow = '0 12px 32px rgba(55,181,255,0.1)'; }}}
+                  onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none'; }}
+                >
+                  {/* Header badges */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', color: typeColor, background: `${typeColor}15`, border: `1px solid ${typeColor}25`, borderRadius: '20px', padding: '3px 10px' }}>
                       {isQuiz ? 'Quiz' : 'Lesson'}
-                    </Badge>
+                    </span>
                     {isCompleted ? (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Completed
-                      </Badge>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+                        <CheckCircle2 size={10} /> Completed
+                      </span>
                     ) : isLocked ? (
-                      <Badge variant="outline" className="border-slate-300 text-muted-foreground">
-                        <Lock className="h-3 w-3 mr-1" />
-                        Locked
-                      </Badge>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', borderRadius: '20px', padding: '3px 9px' }}>
+                        <Lock size={10} /> Locked
+                      </span>
                     ) : (
-                      <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50">
-                        <Target className="h-3 w-3 mr-1" />
-                        Available
-                      </Badge>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+                        <Target size={10} /> Available
+                      </span>
                     )}
                   </div>
-                  <CardTitle className="text-lg text-foreground line-clamp-2">{title}</CardTitle>
-                </CardHeader>
 
-                <CardContent className="pt-0 space-y-4">
-                  {description && <p className="text-sm text-muted-foreground line-clamp-3">{description}</p>}
+                  <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{title}</h3>
 
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      Step {item.order + 1}
-                    </span>
-                    {duration ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {duration} min
-                      </span>
-                    ) : null}
+                  {description && (
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</p>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><BookOpen size={11} /> Step {item.order + 1}</span>
+                    {duration && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={11} /> {duration} min</span>}
                   </div>
 
                   {isLocked ? (
-                    <Button disabled className="w-full">
-                      Locked
-                    </Button>
+                    <button disabled style={{ width: '100%', padding: '11px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)', fontSize: '12px', fontWeight: 700, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <Lock size={12} /> Locked
+                    </button>
                   ) : (
-                    <Link href={href}>
-                      <Button className="w-full">
+                    <Link href={href} style={{ textDecoration: 'none' }}>
+                      <button style={{ width: '100%', padding: '11px', borderRadius: '10px', background: isCompleted ? 'rgba(74,222,128,0.15)' : `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: isCompleted ? '1px solid rgba(74,222,128,0.3)' : 'none', color: isCompleted ? '#4ade80' : '#000f28', fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         {isCompleted ? 'Review' : isQuiz ? 'Start Quiz' : 'Start Lesson'}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
+                        <ArrowRight size={13} />
+                      </button>
                     </Link>
                   )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

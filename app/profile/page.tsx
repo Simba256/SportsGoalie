@@ -6,16 +6,28 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Camera, Loader2, Mail, Shield, User, Copy, Check, RefreshCw, Zap, Users } from 'lucide-react';
 import Image from 'next/image';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { profileUpdateSchema, type ProfileUpdateFormData } from '@/lib/validation/auth';
 import { ParentLinkManager } from '@/components/settings/ParentLinkManager';
 import { userService } from '@/lib/database/services/user.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
 import type { WorkflowType } from '@/types/index';
+
+const BLUE = '#37b5ff';
+
+function formatTs(ts: unknown): string {
+  if (!ts) return 'N/A';
+  const t = ts as { toDate?: () => Date };
+  const date = t.toDate ? t.toDate() : new Date(ts as string);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatTsShort(ts: unknown): string {
+  if (!ts) return 'N/A';
+  const t = ts as { toDate?: () => Date };
+  const date = t.toDate ? t.toDate() : new Date(ts as string);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
 export default function ProfilePage() {
   const { user, updateUserProfile, resendEmailVerification } = useAuth();
@@ -28,18 +40,9 @@ export default function ProfilePage() {
   const [coachCode, setCoachCode] = useState('');
   const [showCoachCodeInput, setShowCoachCodeInput] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    reset,
-  } = useForm<ProfileUpdateFormData>({
+  const { register, handleSubmit, formState: { errors }, setError, reset } = useForm<ProfileUpdateFormData>({
     resolver: zodResolver(profileUpdateSchema),
-    defaultValues: {
-      displayName: user?.displayName || '',
-      photoURL: user?.profileImage || '',
-    },
+    defaultValues: { displayName: user?.displayName || '', photoURL: user?.profileImage || '' },
   });
 
   const onSubmit = async (data: ProfileUpdateFormData) => {
@@ -48,9 +51,7 @@ export default function ProfilePage() {
       await updateUserProfile(data);
       reset(data);
     } catch (error) {
-      setError('root', {
-        message: error instanceof Error ? error.message : 'Failed to update profile',
-      });
+      setError('root', { message: error instanceof Error ? error.message : 'Failed to update profile' });
     } finally {
       setIsLoading(false);
     }
@@ -61,9 +62,7 @@ export default function ProfilePage() {
       setIsResendingVerification(true);
       await resendEmailVerification();
     } catch (error) {
-      setError('root', {
-        message: error instanceof Error ? error.message : 'Failed to send verification email',
-      });
+      setError('root', { message: error instanceof Error ? error.message : 'Failed to send verification email' });
     } finally {
       setIsResendingVerification(false);
     }
@@ -79,447 +78,290 @@ export default function ProfilePage() {
 
   const handleWorkflowSwitch = async (targetWorkflow: WorkflowType) => {
     if (!user) return;
-
     setWorkflowError(null);
     setWorkflowSuccess(null);
 
-    // Switching to custom requires a coach code
     if (targetWorkflow === 'custom') {
-      if (!showCoachCodeInput) {
-        setShowCoachCodeInput(true);
-        return;
-      }
-
-      if (!coachCode.trim()) {
-        setWorkflowError('Please enter a coach code to switch to coach-guided mode.');
-        return;
-      }
-
+      if (!showCoachCodeInput) { setShowCoachCodeInput(true); return; }
+      if (!coachCode.trim()) { setWorkflowError('Please enter a coach code to switch to coach-guided mode.'); return; }
       try {
         setIsWorkflowSwitching(true);
         const normalizedCode = normalizeCoachCode(coachCode.trim());
         const coachResult = await userService.getCoachByCode(normalizedCode);
-
         if (!coachResult.success || !coachResult.data) {
           setWorkflowError('Invalid coach code. Please check with your coach and try again.');
           return;
         }
-
-        await updateUserProfile({
-          workflowType: 'custom',
-          assignedCoachId: coachResult.data.id,
-        });
-
+        await updateUserProfile({ workflowType: 'custom', assignedCoachId: coachResult.data.id });
         setWorkflowSuccess(`Switched to Coach-Guided mode with ${coachResult.data.displayName}.`);
         setShowCoachCodeInput(false);
         setCoachCode('');
-      } catch {
-        setWorkflowError('Failed to switch workflow. Please try again.');
-      } finally {
-        setIsWorkflowSwitching(false);
-      }
+      } catch { setWorkflowError('Failed to switch workflow. Please try again.'); }
+      finally { setIsWorkflowSwitching(false); }
     } else {
-      // Switching to automated - remove coach assignment
       try {
         setIsWorkflowSwitching(true);
-        await updateUserProfile({
-          workflowType: 'automated',
-        });
+        await updateUserProfile({ workflowType: 'automated' });
         setWorkflowSuccess('Switched to Self-Paced mode.');
         setShowCoachCodeInput(false);
         setCoachCode('');
-      } catch {
-        setWorkflowError('Failed to switch workflow. Please try again.');
-      } finally {
-        setIsWorkflowSwitching(false);
-      }
+      } catch { setWorkflowError('Failed to switch workflow. Please try again.'); }
+      finally { setIsWorkflowSwitching(false); }
     }
   };
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto flex items-center justify-center py-8">
-        <div className="text-center">
-          <p className="text-muted-foreground">Please log in to view your profile.</p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>Please log in to view your profile.</p>
       </div>
     );
   }
 
+  const sectionStyle = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px', overflow: 'hidden' };
+  const inputStyle = { width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid rgba(55,181,255,0.18)', background: 'rgba(55,181,255,0.04)', color: '#fff', fontSize: '13px', transition: 'all 0.2s', boxSizing: 'border-box' as const };
+  const inputDisabledStyle = { ...inputStyle, background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' };
+  const labelStyle = { display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700 as const, marginBottom: '6px', textTransform: 'uppercase' as const, letterSpacing: '0.8px' };
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-        <div className="relative flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <User className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Profile Settings</h1>
-            <p className="text-muted-foreground mt-1">Manage your account information and preferences.</p>
+    <>
+      <style>{`
+        .pf-input::placeholder { color: rgba(255,255,255,0.2); }
+        .pf-input:focus { outline: none; border-color: ${BLUE} !important; box-shadow: 0 0 0 3px rgba(55,181,255,0.1) !important; }
+        .pf-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .pf-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .pf-outline:hover { background: rgba(55,181,255,0.12) !important; border-color: ${BLUE} !important; }
+        .pf-wf-btn:hover:not(:disabled) { border-color: rgba(55,181,255,0.35) !important; }
+        @keyframes pf-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+      <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* Hero */}
+        <div style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #000f28 0%, #062344 50%, #0a1628 100%)', padding: '28px 32px', overflow: 'hidden', border: '1px solid rgba(55,181,255,0.15)' }}>
+          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(55,181,255,0.07)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <User size={20} color={BLUE} />
+            </div>
+            <div>
+              <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '4px' }}>Profile Settings</h1>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Manage your account information and preferences.</p>
+            </div>
           </div>
         </div>
-      </div>
 
         {/* Email Verification Banner */}
         {!user.emailVerified && (
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-5 w-5 text-yellow-600" />
-                  <div>
-                    <p className="font-medium text-yellow-800">Email not verified</p>
-                    <p className="text-sm text-yellow-600">
-                      Please verify your email address to access all features.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResendVerification}
-                  disabled={isResendingVerification}
-                >
-                  {isResendingVerification ? (
-                    <>
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Resend'
-                  )}
-                </Button>
+          <div style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Mail size={18} color="#fbbf24" style={{ flexShrink: 0 }} />
+              <div>
+                <p style={{ color: '#fbbf24', fontSize: '13px', fontWeight: 700, marginBottom: '2px' }}>Email not verified</p>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>Please verify your email to access all features.</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <button
+              onClick={handleResendVerification}
+              disabled={isResendingVerification}
+              className="pf-outline"
+              style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)', color: '#fbbf24', fontSize: '12px', fontWeight: 700, cursor: isResendingVerification ? 'not-allowed' : 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+            >
+              {isResendingVerification ? <><Loader2 size={13} style={{ animation: 'pf-spin 1s linear infinite' }} />Sending...</> : 'Resend'}
+            </button>
+          </div>
         )}
 
         {/* Profile Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <User className="h-5 w-5" />
-              <span>Profile Information</span>
-            </CardTitle>
-            <CardDescription>Update your personal information and profile picture.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div style={sectionStyle}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <User size={16} color={BLUE} />
+              <h2 style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>Profile Information</h2>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginTop: '4px' }}>Update your personal information and profile picture.</p>
+          </div>
+          <div style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               {/* Profile Picture */}
-              <div className="flex items-center space-x-4">
-                <div className="relative">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
                   {user.profileImage ? (
-                    <Image
-                      src={user.profileImage}
-                      alt="Profile"
-                      width={80}
-                      height={80}
-                      className="rounded-full object-cover"
-                    />
+                    <Image src={user.profileImage} alt="Profile" width={72} height={72} style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(55,181,255,0.3)' }} />
                   ) : (
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                      <User className="h-8 w-8 text-muted-foreground" />
+                    <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', border: '2px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <User size={28} color="rgba(255,255,255,0.3)" />
                     </div>
                   )}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full p-0"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
+                  <button type="button" style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(2,18,44,0.9)', border: `1px solid rgba(55,181,255,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <Camera size={13} color={BLUE} />
+                  </button>
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="photoURL">Profile Picture URL</Label>
-                  <Input
-                    id="photoURL"
-                    placeholder="https://example.com/photo.jpg"
-                    {...register('photoURL')}
-                    aria-invalid={!!errors.photoURL}
-                  />
-                  {errors.photoURL && (
-                    <p className="text-sm text-destructive">{errors.photoURL.message}</p>
-                  )}
+                <div style={{ flex: 1 }}>
+                  <label htmlFor="photoURL" style={labelStyle}>Profile Picture URL</label>
+                  <input id="photoURL" placeholder="https://example.com/photo.jpg" {...register('photoURL')} className="pf-input" style={{ ...inputStyle, ...(errors.photoURL ? { borderColor: '#f87171' } : {}) }} />
+                  {errors.photoURL && <p style={{ color: '#f87171', fontSize: '11px', marginTop: '4px' }}>{errors.photoURL.message}</p>}
                 </div>
               </div>
 
               {/* Display Name */}
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                  id="displayName"
-                  placeholder="Enter your display name"
-                  {...register('displayName')}
-                  aria-invalid={!!errors.displayName}
-                />
-                {errors.displayName && (
-                  <p className="text-sm text-destructive">{errors.displayName.message}</p>
-                )}
+              <div>
+                <label htmlFor="displayName" style={labelStyle}>Display Name</label>
+                <input id="displayName" placeholder="Enter your display name" {...register('displayName')} className="pf-input" style={{ ...inputStyle, ...(errors.displayName ? { borderColor: '#f87171' } : {}) }} />
+                {errors.displayName && <p style={{ color: '#f87171', fontSize: '11px', marginTop: '4px' }}>{errors.displayName.message}</p>}
               </div>
 
-              {/* Email (Read-only) */}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={user.email}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Email address cannot be changed. Contact support if you need to update it.
-                </p>
+              {/* Email */}
+              <div>
+                <label htmlFor="email" style={labelStyle}>Email Address</label>
+                <input id="email" type="email" value={user.email} disabled style={inputDisabledStyle} />
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', marginTop: '4px' }}>Email address cannot be changed. Contact support if needed.</p>
               </div>
 
-              {/* Student ID (Read-only, only for students) */}
+              {/* Student ID */}
               {user.role === 'student' && user.studentNumber && (
-                <div className="space-y-2">
-                  <Label htmlFor="studentId">Student ID</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      id="studentId"
-                      value={user.studentNumber}
-                      disabled
-                      className="bg-muted font-mono text-lg"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={copyStudentIdToClipboard}
-                      title="Copy Student ID"
-                    >
-                      {copiedStudentId ? (
-                        <Check className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
+                <div>
+                  <label htmlFor="studentId" style={labelStyle}>Student ID</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input id="studentId" value={user.studentNumber} disabled style={{ ...inputDisabledStyle, fontFamily: 'monospace', fontSize: '15px', flex: 1 }} />
+                    <button type="button" onClick={copyStudentIdToClipboard} title="Copy Student ID" className="pf-outline"
+                      style={{ width: '42px', height: '42px', borderRadius: '10px', border: '1px solid rgba(55,181,255,0.2)', background: 'rgba(55,181,255,0.05)', color: copiedStudentId ? '#34d399' : BLUE, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {copiedStudentId ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Share this ID with your parents so they can link their account to yours.
-                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', marginTop: '4px' }}>Share this ID with your parents so they can link their account to yours.</p>
                 </div>
               )}
 
-              {/* Submit Button */}
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    'Update Profile'
-                  )}
-                </Button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px' }}>
+                <button type="submit" disabled={isLoading} className="pf-btn"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '11px 22px', borderRadius: '10px', border: 'none', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 16px rgba(55,181,255,0.3)' }}>
+                  {isLoading ? <><Loader2 size={15} style={{ animation: 'pf-spin 1s linear infinite' }} />Updating...</> : 'Update Profile'}
+                </button>
               </div>
 
-              {/* Error Message */}
               {errors.root && (
-                <div className="rounded-md bg-destructive/15 p-3">
-                  <p className="text-sm text-destructive">{errors.root.message}</p>
+                <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '10px', padding: '12px' }}>
+                  <p style={{ color: '#f87171', fontSize: '12px' }}>{errors.root.message}</p>
                 </div>
               )}
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Family Links - Only for students */}
-        {user.role === 'student' && (
-          <ParentLinkManager user={user} />
-        )}
+        {/* Family Links */}
+        {user.role === 'student' && <ParentLinkManager user={user} />}
 
-        {/* Learning Mode - Only for students */}
+        {/* Learning Mode */}
         {user.role === 'student' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <RefreshCw className="h-5 w-5" />
-                <span>Learning Mode</span>
-              </CardTitle>
-              <CardDescription>
-                Switch between self-paced and coach-guided learning workflows.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {/* Automated / Self-Paced Option */}
-                <button
-                  type="button"
-                  onClick={() => handleWorkflowSwitch('automated')}
+          <div style={sectionStyle}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <RefreshCw size={16} color={BLUE} />
+                <h2 style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>Learning Mode</h2>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginTop: '4px' }}>Switch between self-paced and coach-guided learning workflows.</p>
+            </div>
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {/* Self-Paced */}
+                <button type="button" onClick={() => handleWorkflowSwitch('automated')}
                   disabled={isWorkflowSwitching || user.workflowType === 'automated'}
-                  className={`relative rounded-lg border-2 p-4 text-left transition-all ${
-                    user.workflowType === 'automated'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-muted hover:border-primary/50'
-                  } ${isWorkflowSwitching ? 'opacity-50' : ''}`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <Zap className={`mt-0.5 h-5 w-5 ${
-                      user.workflowType === 'automated' ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
+                  className="pf-wf-btn"
+                  style={{ position: 'relative', borderRadius: '12px', border: `2px solid ${user.workflowType === 'automated' ? BLUE : 'rgba(255,255,255,0.08)'}`, padding: '16px', textAlign: 'left', background: user.workflowType === 'automated' ? 'rgba(55,181,255,0.08)' : 'rgba(255,255,255,0.02)', cursor: isWorkflowSwitching || user.workflowType === 'automated' ? 'default' : 'pointer', transition: 'all 0.2s', opacity: isWorkflowSwitching ? 0.5 : 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <Zap size={18} color={user.workflowType === 'automated' ? BLUE : 'rgba(255,255,255,0.3)'} style={{ flexShrink: 0, marginTop: '2px' }} />
                     <div>
-                      <p className="font-semibold">Self-Paced</p>
-                      <p className="text-sm text-muted-foreground">
-                        Progress automatically through the curriculum at your own speed.
-                      </p>
+                      <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Self-Paced</p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', lineHeight: 1.5 }}>Progress automatically through the curriculum at your own speed.</p>
                     </div>
                   </div>
                   {user.workflowType === 'automated' && (
-                    <div className="absolute right-3 top-3">
-                      <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                        Active
-                      </span>
-                    </div>
+                    <span style={{ position: 'absolute', top: '10px', right: '10px', padding: '2px 8px', borderRadius: '20px', background: BLUE, color: '#000f28', fontSize: '10px', fontWeight: 800 }}>Active</span>
                   )}
                 </button>
 
-                {/* Custom / Coach-Guided Option */}
-                <button
-                  type="button"
-                  onClick={() => handleWorkflowSwitch('custom')}
+                {/* Coach-Guided */}
+                <button type="button" onClick={() => handleWorkflowSwitch('custom')}
                   disabled={isWorkflowSwitching || (user.workflowType === 'custom' && !showCoachCodeInput)}
-                  className={`relative rounded-lg border-2 p-4 text-left transition-all ${
-                    user.workflowType === 'custom'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-muted hover:border-primary/50'
-                  } ${isWorkflowSwitching ? 'opacity-50' : ''}`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <Users className={`mt-0.5 h-5 w-5 ${
-                      user.workflowType === 'custom' ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
+                  className="pf-wf-btn"
+                  style={{ position: 'relative', borderRadius: '12px', border: `2px solid ${user.workflowType === 'custom' ? BLUE : 'rgba(255,255,255,0.08)'}`, padding: '16px', textAlign: 'left', background: user.workflowType === 'custom' ? 'rgba(55,181,255,0.08)' : 'rgba(255,255,255,0.02)', cursor: isWorkflowSwitching || (user.workflowType === 'custom' && !showCoachCodeInput) ? 'default' : 'pointer', transition: 'all 0.2s', opacity: isWorkflowSwitching ? 0.5 : 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <Users size={18} color={user.workflowType === 'custom' ? BLUE : 'rgba(255,255,255,0.3)'} style={{ flexShrink: 0, marginTop: '2px' }} />
                     <div>
-                      <p className="font-semibold">Coach-Guided</p>
-                      <p className="text-sm text-muted-foreground">
-                        Follow a personalized curriculum created by your coach.
-                      </p>
+                      <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Coach-Guided</p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', lineHeight: 1.5 }}>Follow a personalized curriculum created by your coach.</p>
                     </div>
                   </div>
                   {user.workflowType === 'custom' && (
-                    <div className="absolute right-3 top-3">
-                      <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                        Active
-                      </span>
-                    </div>
+                    <span style={{ position: 'absolute', top: '10px', right: '10px', padding: '2px 8px', borderRadius: '20px', background: BLUE, color: '#000f28', fontSize: '10px', fontWeight: 800 }}>Active</span>
                   )}
                 </button>
               </div>
 
-              {/* Coach Code Input - shown when switching to custom */}
+              {/* Coach Code Input */}
               {showCoachCodeInput && user.workflowType !== 'custom' && (
-                <div className="space-y-2 rounded-lg border border-muted bg-muted/30 p-4">
-                  <Label htmlFor="coachCode">Coach Code</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enter the code provided by your coach to link your account.
-                  </p>
-                  <div className="flex space-x-2">
-                    <Input
-                      id="coachCode"
-                      placeholder="e.g. SMITH-7K3M"
-                      value={coachCode}
-                      onChange={(e) => setCoachCode(e.target.value.toUpperCase())}
-                      className="font-mono uppercase"
-                    />
-                    <Button
-                      onClick={() => handleWorkflowSwitch('custom')}
-                      disabled={isWorkflowSwitching || !coachCode.trim()}
-                    >
-                      {isWorkflowSwitching ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        'Confirm'
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setShowCoachCodeInput(false);
-                        setCoachCode('');
-                        setWorkflowError(null);
-                      }}
-                    >
+                <div style={{ background: 'rgba(55,181,255,0.04)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <label htmlFor="coachCode" style={labelStyle}>Coach Code</label>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginTop: '-6px' }}>Enter the code provided by your coach to link your account.</p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input id="coachCode" placeholder="e.g. SMITH-7K3M" value={coachCode} onChange={(e) => setCoachCode(e.target.value.toUpperCase())} className="pf-input"
+                      style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase', flex: 1 }} />
+                    <button onClick={() => handleWorkflowSwitch('custom')} disabled={isWorkflowSwitching || !coachCode.trim()} className="pf-btn"
+                      style={{ padding: '11px 18px', borderRadius: '10px', border: 'none', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: isWorkflowSwitching || !coachCode.trim() ? 'not-allowed' : 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                      {isWorkflowSwitching ? <Loader2 size={15} style={{ animation: 'pf-spin 1s linear infinite' }} /> : 'Confirm'}
+                    </button>
+                    <button onClick={() => { setShowCoachCodeInput(false); setCoachCode(''); setWorkflowError(null); }} className="pf-outline"
+                      style={{ padding: '11px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
                       Cancel
-                    </Button>
+                    </button>
                   </div>
                 </div>
               )}
 
-              {/* Success Message */}
               {workflowSuccess && (
-                <div className="rounded-md bg-green-50 p-3">
-                  <p className="text-sm text-green-700">{workflowSuccess}</p>
+                <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '10px', padding: '12px' }}>
+                  <p style={{ color: '#34d399', fontSize: '12px' }}>{workflowSuccess}</p>
                 </div>
               )}
-
-              {/* Error Message */}
               {workflowError && (
-                <div className="rounded-md bg-destructive/15 p-3">
-                  <p className="text-sm text-destructive">{workflowError}</p>
+                <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '10px', padding: '12px' }}>
+                  <p style={{ color: '#f87171', fontSize: '12px' }}>{workflowError}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* Account Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>Account Information</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Account Type</p>
-                <p className="font-medium capitalize">{user.role}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Member Since</p>
-                <p className="font-medium">
-                  {user.createdAt ? (user.createdAt && typeof user.createdAt === 'object' && 'toDate' in user.createdAt ? user.createdAt.toDate() : new Date(user.createdAt)).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  }) : 'Unknown'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Email Status</p>
-                <p className="font-medium">
-                  {user.emailVerified ? (
-                    <span className="text-green-600">Verified</span>
-                  ) : (
-                    <span className="text-yellow-600">Pending Verification</span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Last Login</p>
-                <p className="font-medium">
-                  {user.lastLoginAt
-                    ? (user.lastLoginAt && typeof user.lastLoginAt === 'object' && 'toDate' in user.lastLoginAt ? user.lastLoginAt.toDate() : new Date(user.lastLoginAt)).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : 'N/A'}
-                </p>
-              </div>
+        <div style={sectionStyle}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={16} color={BLUE} />
+              <h2 style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>Account Information</h2>
             </div>
-          </CardContent>
-        </Card>
-    </div>
+          </div>
+          <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <p style={{ ...labelStyle, marginBottom: '4px' }}>Account Type</p>
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, textTransform: 'capitalize' }}>{user.role}</p>
+            </div>
+            <div>
+              <p style={{ ...labelStyle, marginBottom: '4px' }}>Member Since</p>
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{formatTs(user.createdAt)}</p>
+            </div>
+            <div>
+              <p style={{ ...labelStyle, marginBottom: '4px' }}>Email Status</p>
+              <p style={{ fontSize: '13px', fontWeight: 700, color: user.emailVerified ? '#34d399' : '#fbbf24' }}>
+                {user.emailVerified ? 'Verified' : 'Pending Verification'}
+              </p>
+            </div>
+            <div>
+              <p style={{ ...labelStyle, marginBottom: '4px' }}>Last Login</p>
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{formatTsShort(user.lastLoginAt)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

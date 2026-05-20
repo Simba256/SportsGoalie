@@ -7,364 +7,155 @@ import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { onboardingService } from '@/lib/database';
 import { useAuth } from '@/lib/auth/context';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
 import { SkeletonPillarDetail } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import {
-  ArrowLeft,
-  BookOpen,
-  Play,
-  CheckCircle,
-  Loader2,
-  ChevronRight,
-  Zap,
-  TrendingUp,
-  Star,
+  ArrowLeft, BookOpen, Play, CheckCircle, Loader2, ChevronRight, Zap, TrendingUp, Star,
 } from 'lucide-react';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+const BLUE = '#37b5ff';
 
-const HERO_THEME: Record<
-  string,
-  {
-    gradient: 'red' | 'lightBlue' | 'darkBlue' | 'gray' | 'dark';
-    sectionBg: string;
-    glowBg: string;
-    secondaryGlowBg: string;
-    accent: string;
-    accentSoft: string;
-  }
-> = {
-  purple: {
-    gradient: 'dark',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#1b1f3a] to-[#111827]',
-    glowBg: 'bg-blue-500/30',
-    secondaryGlowBg: 'bg-red-400/18',
-    accent: 'text-blue-300',
-    accentSoft: 'bg-blue-400/20',
-  },
-  blue: {
-    gradient: 'darkBlue',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#0f233f] to-[#102847]',
-    glowBg: 'bg-blue-500/30',
-    secondaryGlowBg: 'bg-red-400/16',
-    accent: 'text-blue-300',
-    accentSoft: 'bg-blue-400/20',
-  },
-  cyan: {
-    gradient: 'darkBlue',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#0d2a3a] to-[#0a3448]',
-    glowBg: 'bg-sky-500/30',
-    secondaryGlowBg: 'bg-red-400/14',
-    accent: 'text-sky-300',
-    accentSoft: 'bg-sky-400/20',
-  },
-  green: {
-    gradient: 'lightBlue',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#12314a] to-[#1b3f63]',
-    glowBg: 'bg-blue-500/28',
-    secondaryGlowBg: 'bg-red-400/16',
-    accent: 'text-blue-300',
-    accentSoft: 'bg-blue-400/20',
-  },
-  orange: {
-    gradient: 'gray',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#2a2633] to-[#1f2433]',
-    glowBg: 'bg-red-500/24',
-    secondaryGlowBg: 'bg-blue-400/15',
-    accent: 'text-red-300',
-    accentSoft: 'bg-red-400/20',
-  },
-  red: {
-    gradient: 'red',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#331a2b] to-[#3a1a26]',
-    glowBg: 'bg-red-500/28',
-    secondaryGlowBg: 'bg-blue-500/16',
-    accent: 'text-red-300',
-    accentSoft: 'bg-red-400/20',
-  },
-  pink: {
-    gradient: 'red',
-    sectionBg: 'bg-gradient-to-r from-slate-950 via-[#2d1b35] to-[#281d43]',
-    glowBg: 'bg-red-500/24',
-    secondaryGlowBg: 'bg-blue-500/18',
-    accent: 'text-rose-300',
-    accentSoft: 'bg-rose-400/20',
-  },
-};
-
-const LEVEL_CONFIG: Record<PacingLevel, {
-  label: string;
-  color: string;
-  bg: string;
-  border: string;
-  ring: string;
-  bar: string;
-  icon: React.ElementType;
-  tagline: string;
-  range: string;
-}> = {
-  introduction: {
-    label: 'Introduction',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    ring: 'ring-blue-400',
-    bar: 'bg-blue-500',
-    icon: BookOpen,
-    tagline: 'Building your foundation',
-    range: '1.0 – 2.2',
-  },
-  development: {
-    label: 'Development',
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    ring: 'ring-red-400',
-    bar: 'bg-red-500',
-    icon: TrendingUp,
-    tagline: 'Growing your skills',
-    range: '2.2 – 3.1',
-  },
-  refinement: {
-    label: 'Refinement',
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    ring: 'ring-red-400',
-    bar: 'bg-red-500',
-    icon: Zap,
-    tagline: 'Mastering your craft',
-    range: '3.1 – 4.0',
-  },
+const LEVEL_CONFIG: Record<PacingLevel, { label: string; color: string; tagline: string; range: string; icon: React.ElementType; }> = {
+  introduction: { label: 'Introduction', color: BLUE,     tagline: 'Building your foundation', range: '1.0 – 2.2', icon: BookOpen },
+  development:  { label: 'Development',  color: '#a78bfa', tagline: 'Growing your skills',       range: '2.2 – 3.1', icon: TrendingUp },
+  refinement:   { label: 'Refinement',   color: '#4ade80', tagline: 'Mastering your craft',      range: '3.1 – 4.0', icon: Zap },
 };
 
 const DIFFICULTY_ORDER: DifficultyLevel[] = ['introduction', 'development', 'refinement'];
 
-const PILLAR_CARD_ACCENT: Record<string, string> = {
-  purple: '#2563eb',
-  blue: '#2563eb',
-  cyan: '#0ea5e9',
-  green: '#2563eb',
-  orange: '#dc2626',
-  red: '#dc2626',
-  pink: '#dc2626',
-};
-
-
-interface SkillProgress {
-  [skillId: string]: { percentage: number; isCompleted: boolean } | null;
-}
-
-// ─── Score Bar ────────────────────────────────────────────────────────────────
+interface SkillProgress { [skillId: string]: { percentage: number; isCompleted: boolean } | null; }
 
 function ScoreBar({ score, level }: { score: number; level: PacingLevel }) {
   const pct = Math.round(((score - 1.0) / 3.0) * 100);
   const cfg = LEVEL_CONFIG[level];
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs text-slate-200">
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>
         <span>1.0</span>
-        <span className="font-bold text-white">{score.toFixed(1)} / 4.0</span>
+        <span style={{ fontWeight: 700, color: '#fff' }}>{score.toFixed(1)} / 4.0</span>
         <span>4.0</span>
       </div>
-      <div className="h-2.5 w-full bg-zinc-200 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${cfg.bar}`}
-          style={{ width: `${pct}%` }}
-        />
+      <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden' }}>
+        <div style={{ height: '100%', borderRadius: '99px', background: cfg.color, width: `${pct}%`, transition: 'width 0.7s' }} />
       </div>
     </div>
   );
 }
 
-// ─── Skill Card ───────────────────────────────────────────────────────────────
-
-function SkillCard({
-  skill,
-  pillarId,
-  isUserLevel,
-  progress,
-  accentColor,
-}: {
-  skill: Skill;
-  pillarId: string;
-  isUserLevel: boolean;
+function SkillCard({ skill, pillarId, progress }: {
+  skill: Skill; pillarId: string;
   progress: { percentage: number; isCompleted: boolean } | null | undefined;
-  accentColor: string;
 }) {
   const hasAttempt = progress !== undefined && progress !== null;
   const isCompleted = hasAttempt && progress!.isCompleted;
   const isInProgress = hasAttempt && !isCompleted;
 
-  const topBorderColor = isCompleted ? '#2563eb' : isInProgress ? '#dc2626' : accentColor;
-
   return (
-    <Link href={`/pillars/${pillarId}/skills/${skill.id}`} className="block group h-full">
-      <div className="relative h-full rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 overflow-hidden flex flex-col">
-        {/* Colored top border accent */}
-        <div className="h-1 w-full" style={{ backgroundColor: topBorderColor }} />
+    <Link href={`/pillars/${pillarId}/skills/${skill.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+      <div
+        style={{ background: 'rgba(2,18,44,0.9)', border: `1px solid ${isCompleted ? 'rgba(74,222,128,0.3)' : isInProgress ? 'rgba(55,181,255,0.3)' : 'rgba(55,181,255,0.15)'}`, borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', height: '100%', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s', boxSizing: 'border-box', borderTopWidth: '2px', borderTopColor: isCompleted ? '#4ade80' : isInProgress ? BLUE : 'rgba(55,181,255,0.3)' }}
+        onMouseEnter={e => { const el = e.currentTarget; el.style.transform = 'translateY(-3px)'; el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)'; }}
+        onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none'; }}
+      >
+        {/* Status badge */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          {isCompleted ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+              <CheckCircle size={10} /> Completed
+            </span>
+          ) : isInProgress ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+              <Play size={10} /> In Progress
+            </span>
+          ) : null}
+        </div>
 
-        <div className="p-5 flex flex-col flex-1">
+        <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#fff', lineHeight: 1.3, marginBottom: '8px' }}>{skill.name}</h4>
 
-          {/* Top row: status badge */}
-          <div className="flex items-center justify-end mb-3">
-            {isCompleted ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
-                <CheckCircle className="w-3 h-3" /> Completed
-              </span>
-            ) : isInProgress ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
-                <Play className="w-3 h-3" /> In Progress
-              </span>
-            ) : isUserLevel ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
-                Start
-              </span>
-            ) : null}
-          </div>
+        {skill.description && (
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '10px' }}>
+            {skill.description}
+          </p>
+        )}
 
-          {/* Title */}
-          <h4 className="font-bold text-base leading-snug text-foreground group-hover:text-blue-600 transition-colors">
-            {skill.name}
-          </h4>
+        {skill.learningObjectives.length > 0 && (
+          <ul style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px' }}>
+            {skill.learningObjectives.slice(0, 2).map((obj, i) => (
+              <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '7px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(55,181,255,0.4)', flexShrink: 0, marginTop: '5px' }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{obj}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
-          {/* Description */}
-          {skill.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mt-2">
-              {skill.description}
-            </p>
-          )}
+        <div style={{ flex: 1 }} />
 
-          {/* Learning objectives */}
-          {skill.learningObjectives.length > 0 && (
-            <ul className="space-y-1.5 mt-3">
-              {skill.learningObjectives.slice(0, 2).map((obj, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 bg-slate-300" />
-                  <span className="line-clamp-1">{obj}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Spacer to push footer down */}
-          <div className="flex-1" />
-
-          {/* Progress bar (if attempted) */}
-          {hasAttempt && (
-            <div className="mt-4 space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progress</span>
-                <span className={`font-bold ${isCompleted ? 'text-blue-600' : 'text-red-600'}`}>
-                  {Math.round(progress!.percentage)}%
-                </span>
-              </div>
-              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-blue-500' : 'bg-red-500'}`}
-                  style={{ width: `${progress!.percentage}%` }}
-                />
-              </div>
+        {hasAttempt && (
+          <div style={{ marginTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '5px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Progress</span>
+              <span style={{ fontWeight: 800, color: isCompleted ? '#4ade80' : BLUE }}>{Math.round(progress!.percentage)}%</span>
             </div>
-          )}
-
-          {/* Footer */}
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {skill.estimatedTimeToComplete > 0 && (
-                <span className="flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-                  {skill.estimatedTimeToComplete} min
-                </span>
-              )}
+            <div style={{ height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: '99px', background: isCompleted ? '#4ade80' : BLUE, width: `${progress!.percentage}%` }} />
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
           </div>
+        )}
 
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(55,181,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+            {skill.estimatedTimeToComplete > 0 && <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>{skill.estimatedTimeToComplete} min</>}
+          </div>
+          <ChevronRight size={14} color="rgba(55,181,255,0.35)" />
         </div>
       </div>
     </Link>
   );
 }
 
-// ─── Skills Group ─────────────────────────────────────────────────────────────
-
-function SkillsGroup({
-  difficulty,
-  skills,
-  pillarId,
-  userLevel,
-  skillProgress,
-  pillarColor,
-}: {
-  difficulty: DifficultyLevel;
-  skills: Skill[];
-  pillarId: string;
-  userLevel: PacingLevel | null;
-  skillProgress: SkillProgress;
-  pillarColor: string;
+function SkillsGroup({ difficulty, skills, pillarId, userLevel, skillProgress }: {
+  difficulty: DifficultyLevel; skills: Skill[]; pillarId: string;
+  userLevel: PacingLevel | null; skillProgress: SkillProgress;
 }) {
   const cfg = LEVEL_CONFIG[difficulty];
   const Icon = cfg.icon;
   const isUserLevel = userLevel === difficulty;
   const completedCount = skills.filter(s => skillProgress[s.id]?.isCompleted).length;
-  const cardAccent = PILLAR_CARD_ACCENT[pillarColor] ?? '#2563eb';
-
   if (skills.length === 0) return null;
 
   return (
-    <div className="space-y-4">
-      {/* Section header bar */}
-      <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between ${
-        isUserLevel ? `${cfg.bg} ${cfg.border}` : 'bg-slate-50 border-slate-200'
-      }`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-            isUserLevel ? `bg-white/80 ${cfg.border} border` : 'bg-white border border-slate-200'
-          }`}>
-            <Icon className={`w-4 h-4 ${isUserLevel ? cfg.color : 'text-slate-400'}`} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isUserLevel ? `${cfg.color}10` : 'rgba(2,18,44,0.7)', border: `1px solid ${isUserLevel ? `${cfg.color}30` : 'rgba(55,181,255,0.12)'}`, borderRadius: '14px', padding: '14px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${cfg.color}15`, border: `1px solid ${cfg.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon size={16} color={cfg.color} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-sm ${isUserLevel ? cfg.color : 'text-foreground'}`}>
-                {cfg.label}
-              </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>{cfg.label}</h3>
               {isUserLevel && (
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/80 ${cfg.color} ${cfg.border} border`}>
-                  Your Level
-                </span>
+                <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: cfg.color, background: `${cfg.color}15`, borderRadius: '20px', padding: '2px 8px' }}>Your Level</span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">{cfg.tagline}</p>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{cfg.tagline}</p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-semibold text-foreground">{skills.length} skills</p>
-          {completedCount > 0 && (
-            <p className="text-xs text-blue-600 font-medium">{completedCount} completed</p>
-          )}
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{skills.length} skills</p>
+          {completedCount > 0 && <p style={{ fontSize: '11px', color: '#4ade80', marginTop: '2px' }}>{completedCount} completed</p>}
         </div>
       </div>
 
-      {/* Skills grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {skills.map((skill) => (
-          <SkillCard
-            key={skill.id}
-            skill={skill}
-            pillarId={pillarId}
-            isUserLevel={isUserLevel}
-            progress={skillProgress[skill.id]}
-            accentColor={cardAccent}
-          />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+        {skills.map(skill => (
+          <SkillCard key={skill.id} skill={skill} pillarId={pillarId} progress={skillProgress[skill.id]} />
         ))}
       </div>
     </div>
   );
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PillarDetailPage() {
   const params = useParams();
@@ -381,12 +172,10 @@ export default function PillarDetailPage() {
   const [userScore, setUserScore] = useState<number | null>(null);
   const [levelLoading, setLevelLoading] = useState(false);
 
-  // ── Load pillar + skills ──────────────────────────────────────────────────
   useEffect(() => {
     if (!pillarId) return;
     const load = async () => {
-      setLoading(true);
-      setError(null);
+      setLoading(true); setError(null);
       try {
         const [pillarResult, skillsResult] = await Promise.all([
           sportsService.getSport(pillarId),
@@ -398,16 +187,12 @@ export default function PillarDetailPage() {
           setPillar(pillarResult.data);
           setSkills(skillsResult.data?.items || []);
         }
-      } catch {
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
-      }
+      } catch { setError('An unexpected error occurred'); }
+      finally { setLoading(false); }
     };
     load();
   }, [pillarId]);
 
-  // ── Load user level from evaluation ──────────────────────────────────────
   useEffect(() => {
     if (!user) return;
     const load = async () => {
@@ -420,209 +205,136 @@ export default function PillarDetailPage() {
         } else if (result.success && result.data?.pacingLevel) {
           setUserLevel(result.data.pacingLevel);
         }
-      } catch {
-        // non-blocking
-      } finally {
-        setLevelLoading(false);
-      }
+      } catch { /* non-blocking */ }
+      finally { setLevelLoading(false); }
     };
     load();
   }, [user]);
 
-  // ── Load skill progress ───────────────────────────────────────────────────
   useEffect(() => {
     if (!user || !skills.length) return;
     const load = async () => {
       const map: SkillProgress = {};
-      await Promise.all(
-        skills.map(async (skill) => {
-          try {
-            const res = await videoQuizService.getUserVideoQuizAttempts(user.id, {
-              skillId: skill.id,
-              completed: true,
-              limit: 1,
-            });
-            if (res.success && res.data?.items?.length) {
-              const latest = res.data.items[0];
-              map[skill.id] = { percentage: latest.percentage, isCompleted: latest.isCompleted };
-            } else {
-              map[skill.id] = null;
-            }
-          } catch {
-            map[skill.id] = null;
-          }
-        })
-      );
+      await Promise.all(skills.map(async skill => {
+        try {
+          const res = await videoQuizService.getUserVideoQuizAttempts(user.id, { skillId: skill.id, completed: true, limit: 1 });
+          map[skill.id] = (res.success && res.data?.items?.length)
+            ? { percentage: res.data.items[0].percentage, isCompleted: res.data.items[0].isCompleted }
+            : null;
+        } catch { map[skill.id] = null; }
+      }));
       setSkillProgress(map);
     };
     load();
   }, [user, skills]);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const getDisplayInfo = (p: Sport) => {
-    const slug = getPillarSlugFromDocId(p.id);
-    if (slug) {
-      const info = PILLARS.find(x => x.slug === slug);
-      if (info) return { icon: info.icon, color: info.color };
-    }
-    return { icon: p.icon, color: 'blue' };
-  };
-
-  // Only show skills at the goalie's assessed level (or all if no level yet)
-  const filteredSkills = userLevel
-    ? skills.filter(s => s.difficulty === userLevel)
-    : skills;
-
-  const skillsByDifficulty: Record<DifficultyLevel, Skill[]> = {
-    introduction: filteredSkills.filter(s => s.difficulty === 'introduction'),
-    development: filteredSkills.filter(s => s.difficulty === 'development'),
-    refinement: filteredSkills.filter(s => s.difficulty === 'refinement'),
-  };
-
-  const completedTotal = filteredSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
-  const progressPct = filteredSkills.length > 0 ? Math.round((completedTotal / filteredSkills.length) * 100) : 0;
-
-  // ── States ────────────────────────────────────────────────────────────────
-  if (loading) {
-    return <SkeletonPillarDetail />;
-  }
+  if (loading) return <SkeletonPillarDetail />;
 
   if (error || !pillar) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-6">
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-md">
-          <p className="text-red-700 font-medium mb-4">{error || 'Pillar not found'}</p>
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-zinc-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> Go Back
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg, #000f28 0%, #062344 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '16px', padding: '32px', textAlign: 'center', maxWidth: '400px' }}>
+          <p style={{ color: '#f87171', fontSize: '14px', marginBottom: '16px' }}>{error || 'Pillar not found'}</p>
+          <button onClick={() => router.back()} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', padding: '10px 18px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+            <ArrowLeft size={14} /> Go Back
           </button>
         </div>
       </div>
     );
   }
 
-  const { color } = getDisplayInfo(pillar);
-  const colorCls = getPillarColorClasses(color);
-  const heroTheme = HERO_THEME[color] ?? HERO_THEME.blue;
+  const slug = getPillarSlugFromDocId(pillar.id);
+  void (slug ? PILLARS.find(x => x.slug === slug) : null);
+
+  const filteredSkills = userLevel ? skills.filter(s => s.difficulty === userLevel) : skills;
+  const skillsByDifficulty: Record<DifficultyLevel, Skill[]> = {
+    introduction: filteredSkills.filter(s => s.difficulty === 'introduction'),
+    development:  filteredSkills.filter(s => s.difficulty === 'development'),
+    refinement:   filteredSkills.filter(s => s.difficulty === 'refinement'),
+  };
+  const completedTotal = filteredSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+  const progressPct = filteredSkills.length > 0 ? Math.round((completedTotal / filteredSkills.length) * 100) : 0;
+  const orderedDifficulties = userLevel ? [userLevel] as DifficultyLevel[] : DIFFICULTY_ORDER;
   const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
-  // Show only the user's level section, or all if no level determined
-  const orderedDifficulties = userLevel
-    ? [userLevel] as DifficultyLevel[]
-    : DIFFICULTY_ORDER;
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className="px-5 pt-4 md:px-6 md:pt-5">
-        <div className={`relative overflow-hidden rounded-2xl border border-slate-700/70 ${heroTheme.sectionBg} px-6 py-5 md:px-8 md:py-6 shadow-2xl shadow-slate-900/40`}>
-          <div className={`pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full blur-3xl ${heroTheme.glowBg}`} />
-          <div className={`pointer-events-none absolute right-10 top-6 h-56 w-56 rounded-full blur-3xl ${heroTheme.secondaryGlowBg}`} />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,255,255,0.04)_0%,transparent_28%,transparent_70%,rgba(255,255,255,0.06)_100%)]" />
-          <div className="pointer-events-none absolute right-[-5%] top-0 h-full w-[55%] opacity-35">
-            <svg viewBox="0 0 700 320" className="h-full w-full" preserveAspectRatio="none">
-              <g fill="none" stroke="rgba(226,232,240,0.65)" strokeWidth="1.6">
-                <path d="M20 300 C160 230, 220 80, 360 110 C500 140, 560 10, 700 40" />
-                <path d="M-10 270 C120 210, 210 60, 350 90 C500 120, 570 20, 710 55" />
-                <path d="M10 240 C140 180, 220 55, 360 80 C510 105, 590 25, 730 65" />
-                <path d="M20 210 C150 155, 230 45, 370 70 C520 95, 600 35, 740 80" />
-                <path d="M30 180 C165 130, 245 40, 390 65 C535 90, 620 40, 760 95" />
-              </g>
-            </svg>
-          </div>
+      {/* ── Hero ── */}
+      <section style={{ padding: '20px 24px 0' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', borderRadius: '20px', background: 'rgba(2,18,44,0.9)', border: '1.5px solid rgba(55,181,255,0.25)', padding: '28px 32px', overflow: 'hidden', boxShadow: '0 0 60px rgba(55,181,255,0.08)' }}>
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '50%', height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
 
-          <button
-            onClick={() => router.push('/pillars')}
-            className="relative z-20 inline-flex items-center gap-1.5 text-sm font-medium text-slate-300 transition-colors hover:text-white"
-          >
-            <ArrowLeft className="w-4 h-4" /> All Pillars
+          <button onClick={() => router.push('/pillars')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '20px' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#fff')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}>
+            <ArrowLeft size={14} /> All Pillars
           </button>
 
-          <div className="relative z-10 mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            {/* Left: pillar info */}
-            <div className="flex-1 pb-1 md:pb-2">
-              <h1 className="text-3xl md:text-5xl font-black leading-[1.05] mb-3 max-w-3xl text-white">
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '12px' }}>
                 {pillar.name}
               </h1>
-              <p className="text-base md:text-lg leading-relaxed max-w-2xl text-slate-300">
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: '560px', marginBottom: '16px' }}>
                 {pillar.description}
               </p>
 
-              {/* Skill count + progress */}
-              <div className="flex items-center gap-5 mt-4 text-sm">
-                <div className="flex items-center gap-1.5 text-slate-300">
-                  <BookOpen className="w-4 h-4" />
-                  <span>{skills.length} skills</span>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '14px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <BookOpen size={13} /> {skills.length} skills
+                </span>
                 {user && completedTotal > 0 && (
-                  <div className={`flex items-center gap-1.5 ${heroTheme.accent}`}>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>{completedTotal} completed</span>
-                  </div>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#4ade80' }}>
+                    <CheckCircle size={13} /> {completedTotal} completed
+                  </span>
                 )}
               </div>
 
-              {/* Overall progress bar */}
               {user && skills.length > 0 && (
-                <div className="mt-3 max-w-sm space-y-1.5">
-                  <div className="flex justify-between text-xs text-slate-400">
+                <div style={{ maxWidth: '360px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>
                     <span>Your progress</span>
-                    <span className="font-semibold text-slate-200">{progressPct}%</span>
+                    <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{progressPct}%</span>
                   </div>
-                  <div className="h-2 w-full rounded-full overflow-hidden bg-slate-700/70">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${colorCls.bg}`}
-                      style={{ width: `${progressPct}%` }}
-                    />
+                  <div style={{ height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: BLUE, borderRadius: '99px', width: `${progressPct}%`, transition: 'width 0.7s' }} />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Right: level panel */}
+            {/* Level Panel */}
             {user && (
-              <div className="lg:w-64 flex-shrink-0">
+              <div style={{ width: '240px', flexShrink: 0 }}>
                 {levelLoading ? (
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-5 flex items-center justify-center gap-2 text-slate-300 text-sm backdrop-blur-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Loading your level…
+                  <div style={{ background: 'rgba(55,181,255,0.07)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '14px', padding: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
+                    <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading your level…
                   </div>
                 ) : userLevel && levelCfg ? (
-                  <div className="rounded-2xl border border-white/25 bg-white/12 p-5 space-y-3 backdrop-blur-md shadow-xl shadow-slate-900/40">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-100">
-                        Your Level
-                      </p>
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white">
-                        <TrendingUp className="h-3.5 w-3.5" />
-                        {levelCfg.label}
+                  <div style={{ background: 'rgba(55,181,255,0.07)', border: `1px solid ${levelCfg.color}30`, borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)' }}>Your Level</p>
+                      <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: levelCfg.color, background: `${levelCfg.color}18`, borderRadius: '20px', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <TrendingUp size={10} /> {levelCfg.label}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300">{levelCfg.tagline}</p>
-                    {userScore !== null && (
-                      <ScoreBar score={userScore} level={userLevel} />
-                    )}
-                    <p className="text-xs text-slate-300">
-                      Score range: <span className="font-semibold text-white">{levelCfg.range}</span>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>{levelCfg.tagline}</p>
+                    {userScore !== null && <ScoreBar score={userScore} level={userLevel} />}
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>
+                      Score range: <span style={{ fontWeight: 700, color: '#fff' }}>{levelCfg.range}</span>
                     </p>
-                    <div className="rounded-xl border border-white/20 bg-white/90 p-3 text-xs font-semibold text-slate-800">
-                      {skillsByDifficulty[userLevel].length} skills at your level —&nbsp;
-                      <span className="font-black">start here</span>
+                    <div style={{ background: 'rgba(55,181,255,0.1)', border: `1px solid ${levelCfg.color}25`, borderRadius: '10px', padding: '10px 12px', fontSize: '12px', fontWeight: 600, color: '#fff' }}>
+                      {skillsByDifficulty[userLevel].length} skills at your level — <span style={{ fontWeight: 900, color: levelCfg.color }}>start here</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-5 space-y-2 backdrop-blur-sm">
-                    <p className="text-slate-200 text-xs font-semibold uppercase tracking-wider">Your Level</p>
-                    <p className="text-slate-300 text-xs leading-relaxed">
-                      Complete your onboarding assessment to see your recommended level for this pillar.
+                  <div style={{ background: 'rgba(55,181,255,0.07)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)' }}>Your Level</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+                      Complete your onboarding assessment to see your recommended level.
                     </p>
-                    <Link
-                      href="/onboarding"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-500 px-3 py-2 rounded-lg transition-colors mt-1"
-                    >
-                      Take Assessment <ChevronRight className="w-3.5 h-3.5" />
+                    <Link href="/onboarding" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#000f28', background: BLUE, borderRadius: '8px', padding: '8px 14px', textDecoration: 'none' }}>
+                      Take Assessment <ChevronRight size={12} />
                     </Link>
                   </div>
                 )}
@@ -632,29 +344,28 @@ export default function PillarDetailPage() {
         </div>
       </section>
 
-      {/* ── Skills ────────────────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-10 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">
-            Skills <span className="text-muted-foreground font-normal text-base">({filteredSkills.length})</span>
+      {/* ── Skills ── */}
+      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px 64px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>
+            Skills <span style={{ fontSize: '14px', fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>({filteredSkills.length})</span>
           </h2>
           {userLevel && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Star className="w-3.5 h-3.5 text-amber-400" />
-              <span>Showing skills for your level: <span className="font-semibold text-foreground">{userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span></span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
+              <Star size={13} color="#fbbf24" />
+              Showing: <span style={{ fontWeight: 700, color: '#fff' }}>{userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span>
             </div>
           )}
         </div>
 
         {filteredSkills.length === 0 ? (
-          <div className="bg-card rounded-2xl border border-border p-12 text-center">
-            <BookOpen className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="font-semibold text-foreground">Skills coming soon</p>
-            <p className="text-sm text-muted-foreground mt-1">Content for this pillar is being added.</p>
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '16px', padding: '48px', textAlign: 'center' }}>
+            <BookOpen size={36} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />
+            <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Skills coming soon</p>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>Content for this pillar is being added.</p>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             {orderedDifficulties.map(difficulty => (
               <SkillsGroup
                 key={difficulty}
@@ -663,13 +374,13 @@ export default function PillarDetailPage() {
                 pillarId={pillarId}
                 userLevel={userLevel}
                 skillProgress={skillProgress}
-                pillarColor={color}
               />
             ))}
           </div>
         )}
       </section>
 
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

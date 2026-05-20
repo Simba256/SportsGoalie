@@ -1,16 +1,21 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
-import ClubIntroSection from '@/components/ClubIntroSection/ClubIntroSection';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
 
 export default function Home() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<'goalie' | 'parent' | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [vidIndex, setVidIndex] = useState(0);
+  const VIDEOS = [
+    { src: '/video1.mp4', label: 'Training Session', tag: '01' },
+    { src: '/video2.mp4', label: 'Game Performance', tag: '02' },
+  ];
+  useEffect(() => {
+    const t = setInterval(() => setVidIndex(i => (i + 1) % VIDEOS.length), 8000);
+    return () => clearInterval(t);
+  }, []);
 
   const testimonials = [
     {
@@ -53,91 +58,120 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section — redesigned */}
+      {/* Hero Section */}
       <section
         className="relative min-h-screen overflow-hidden flex flex-col"
-        style={{ backgroundColor: '#37b5ff' }}
+        style={{ backgroundColor: '#000f28' }}
       >
-        {/* Background image — full coverage */}
+        {/* Background image — blue-tinted */}
         <img
-          src="/hero-section-new.png"
+          src="/quality.png"
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center"
-          style={{ zIndex: 0 }}
+          style={{ zIndex: 0, filter: 'brightness(0.81) saturate(1.3)' }}
         />
 
-        {/* Mobile overlay — uniform dark so text is readable over the image */}
-        <div
-          className="absolute inset-0 md:hidden"
-          style={{ background: 'rgba(0,15,40,0.82)', zIndex: 1 }}
-        />
+        {/* Blue colour wash over the image */}
+        <div className="absolute inset-0" style={{ background: 'rgba(5,20,80,0.38)', zIndex: 1 }} />
 
-        {/* Desktop overlay — left dark → right transparent */}
-        <div
-          className="absolute inset-0 hidden md:block"
-          style={{
-            background:
-              'linear-gradient(90deg, rgba(0,15,40,0.92) 0%, rgba(0,15,40,0.75) 45%, rgba(0,15,40,0.22) 72%, rgba(0,15,40,0.03) 100%)',
-            zIndex: 1,
-          }}
-        />
+        {/* Bottom-up fade */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,10,30,0.65) 75%, #000f28 100%)', zIndex: 2 }} />
 
-        {/* Content */}
-        <div className="relative flex-1 flex items-center" style={{ zIndex: 2 }}>
-          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-24 md:py-28">
-            <div className="max-w-full md:max-w-[580px]">
+        {/* Left-side vignette for text area */}
+        <div className="absolute inset-0 hidden md:block" style={{ background: 'linear-gradient(90deg, rgba(0,5,25,0.70) 0%, rgba(0,5,25,0.40) 40%, rgba(0,5,25,0.08) 65%, transparent 100%)', zIndex: 2 }} />
+        <div className="absolute inset-0 md:hidden" style={{ background: 'rgba(0,5,25,0.65)', zIndex: 2 }} />
 
-              {/* Main headline */}
-              <h1
-                className="font-black uppercase mb-5 md:mb-7 text-center md:text-left"
-                style={{
-                  fontSize: 'clamp(30px, 5vw, 54px)',
-                  lineHeight: 1.08,
-                  color: '#fff',
-                  letterSpacing: '-0.01em',
-                }}
+        {/* ── NAV BAR ── */}
+        <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          {/* Brand */}
+          <div className="flex items-center gap-2">
+            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" fill="#000f28" />
+              </svg>
+            </div>
+            <span style={{ fontSize: '18px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>
+              SMARTER <span style={{ color: '#37b5ff' }}>GOALIE</span>
+            </span>
+          </div>
+
+          {/* Nav links — desktop only */}
+          <div className="hidden md:flex items-center gap-6">
+            {['Features', 'For Goalies', 'For Parents'].map((item) => (
+              <span key={item} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', letterSpacing: '0.2px', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+              >{item}</span>
+            ))}
+          </div>
+
+          {/* Login CTA */}
+          <button
+            onClick={() => router.push('/auth/login')}
+            className="hover:opacity-90 transition-opacity"
+            style={{ background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.45)', color: '#37b5ff', padding: '8px 20px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer' }}
+          >
+            Login
+          </button>
+        </nav>
+
+        {/* ── HERO CONTENT ── */}
+        <div className="relative flex-1 flex items-center" style={{ zIndex: 10 }}>
+          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-16">
+            <div className="max-w-full md:max-w-[680px]">
+
+              {/* ── BRAND NAME — the dominant element ── */}
+              <div className="mb-6 md:mb-8 text-center md:text-left">
+                <p style={{ fontSize: '11px', fontWeight: 700, color: '#37b5ff', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '10px' }}>
+                  WELCOME TO
+                </p>
+                <h1
+                  className="font-black uppercase leading-none"
+                  style={{ fontSize: 'clamp(36px, 6.5vw, 72px)', letterSpacing: '-0.03em', lineHeight: 0.9 }}
+                >
+                  <span style={{
+                    display: 'block',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #a8d8ff 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    filter: 'drop-shadow(0 0 24px rgba(55,181,255,0.5))',
+                  }}>SMARTER</span>
+                  <span style={{
+                    display: 'block',
+                    color: 'transparent',
+                    WebkitTextStroke: '2.5px #37b5ff',
+                    filter: 'drop-shadow(0 0 20px rgba(55,181,255,0.8)) drop-shadow(0 0 40px rgba(55,181,255,0.4))',
+                  }}>GOALIE</span>
+                </h1>
+                {/* Blue accent line */}
+                <div style={{ width: '56px', height: '3px', background: 'linear-gradient(90deg, #37b5ff, transparent)', borderRadius: '99px', marginTop: '18px', boxShadow: '0 0 8px rgba(55,181,255,0.5)' }} className="mx-auto md:mx-0" />
+              </div>
+
+              {/* Sub-headline question */}
+              <h2
+                className="font-black uppercase mb-4 text-center md:text-left"
+                style={{ fontSize: 'clamp(15px, 2.4vw, 22px)', lineHeight: 1.3, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.02em' }}
               >
-                ARE GOALIES THE{' '}
-                <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>WORST TRAINED</em>{' '}
-                ATHLETES IN SPORTS?
-              </h1>
+                Are goalies the{' '}
+                <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>worst trained</em>{' '}
+                athletes in sports?
+              </h2>
 
               {/* Tagline */}
               <p
                 className="uppercase font-bold mb-8 md:mb-10 text-center md:text-left"
-                style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '2.5px', fontSize: '11px' }}
+                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '2.5px', fontSize: '10px' }}
               >
                 HERE IS WHAT WE KNOW.
               </p>
 
               {/* Video intro button */}
               <button
-                className="flex items-center gap-3 mb-6 md:mb-10 cursor-pointer hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
-                style={{
-                  background: 'rgba(55,181,255,0.15)',
-                  border: '1px solid rgba(55,181,255,0.6)',
-                  color: '#fff',
-                  padding: '11px 20px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '1.5px',
-                  textTransform: 'uppercase',
-                }}
+                className="flex items-center gap-3 mb-5 md:mb-7 cursor-pointer hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
+                style={{ background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.5)', color: '#fff', padding: '11px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}
               >
-                <span
-                  className="flex items-center justify-center shrink-0"
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: '#37b5ff',
-                    color: '#000f28',
-                    fontSize: '9px',
-                    fontWeight: 900,
-                  }}
-                >
-                  ▶
-                </span>
+                <span className="flex items-center justify-center shrink-0" style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#37b5ff', color: '#000f28', fontSize: '9px', fontWeight: 900 }}>▶</span>
                 COACH MIKE — INTRODUCTION
               </button>
 
@@ -145,16 +179,7 @@ export default function Home() {
               <button
                 onClick={() => router.push('/explain')}
                 className="mb-8 md:mb-10 hover:opacity-90 hover:scale-[1.02] transition-all duration-200 w-full md:w-auto text-center"
-                style={{
-                  background: '#37b5ff',
-                  color: '#000f28',
-                  fontWeight: 800,
-                  fontSize: '12px',
-                  letterSpacing: '2px',
-                  padding: '15px 32px',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                }}
+                style={{ background: '#37b5ff', color: '#000f28', fontWeight: 800, fontSize: '12px', letterSpacing: '2px', padding: '15px 36px', textTransform: 'uppercase', display: 'block', borderRadius: '4px' }}
               >
                 LET US EXPLAIN →
               </button>
@@ -162,44 +187,13 @@ export default function Home() {
               {/* Role pills */}
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {[
-                  {
-                    label: 'GOALIE',
-                    action: () => {
-                      setSelectedRole('goalie');
-                      setTimeout(
-                        () => contentRef.current?.scrollIntoView({ behavior: 'smooth' }),
-                        100
-                      );
-                    },
-                  },
-                  {
-                    label: 'PARENT',
-                    action: () => {
-                      setSelectedRole('parent');
-                      setTimeout(
-                        () => contentRef.current?.scrollIntoView({ behavior: 'smooth' }),
-                        100
-                      );
-                    },
-                  },
+                  { label: 'GOALIE', action: () => router.push('/auth/register') },
+                  { label: 'PARENT', action: () => router.push('/auth/register') },
                   { label: 'COACH', action: () => router.push('/auth/register') },
                   { label: 'GOALIE COACH', action: () => router.push('/auth/register') },
                 ].map(({ label, action }) => (
-                  <button
-                    key={label}
-                    onClick={action}
-                    className="hover:opacity-80 transition-opacity"
-                    style={{
-                      background: 'rgba(55,181,255,0.18)',
-                      border: '1px solid rgba(55,181,255,0.55)',
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      color: '#e6f6ff',
-                      cursor: 'pointer',
-                    }}
+                  <button key={label} onClick={action} className="hover:opacity-80 transition-opacity"
+                    style={{ background: 'rgba(55,181,255,0.14)', border: '1px solid rgba(55,181,255,0.45)', padding: '7px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', color: '#e6f6ff', cursor: 'pointer' }}
                   >
                     {label}
                   </button>
@@ -209,149 +203,141 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Bottom-right photo caption — hidden on small screens */}
-        <div
-          className="absolute bottom-6 right-6 hidden sm:block"
-          style={{
-            color: 'rgba(255,255,255,0.35)',
-            fontSize: '9px',
-            fontWeight: 700,
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            zIndex: 2,
-          }}
-        >
-          ANTONIO ATHANASIADIS • #41 • PLAYOFFS 2026
+        {/* Bottom brand watermark */}
+        <div className="relative pb-6 flex justify-center md:justify-end md:px-12" style={{ zIndex: 2 }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.18)', letterSpacing: '3px', textTransform: 'uppercase' }}>
+            © SMARTER GOALIE
+          </span>
         </div>
       </section>
 
-      <ClubIntroSection />
+      {/* ── VIDEO SLIDESHOW ── */}
+      <section style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)', padding: '80px 24px' }}>
+        <style>{`
+          @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+          @keyframes slide-out-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+          .vid-next-enter { animation: slide-in-right 0.7s cubic-bezier(0.4,0,0.2,1) forwards; }
+          .vid-prev-exit  { animation: slide-out-left 0.7s cubic-bezier(0.4,0,0.2,1) forwards; }
+          .vs-dot:hover { opacity: 1 !important; }
+          .vs-arrow:hover { background: rgba(55,181,255,0.25) !important; }
+        `}</style>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-      {/* Choose Your Role Section */}
-      <section className="py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-10 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-red-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
-
-          <div className="mb-12 sm:mb-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
-              Choose Your Role
-            </h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-500 font-medium">
-              Goalies build skills. Parents support the journey. Start here.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mt-8 sm:mt-20 max-w-3xl mx-auto">
-            {/* Card 1 - Goalie Role */}
-            <button
-              onClick={() => {
-                setSelectedRole('goalie');
-                setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-              }}
-              className={`group relative h-[380px] rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] text-left bg-red-500 ${
-                selectedRole === 'parent' ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'
-              }`}
-            >
-              {/* Hover background image */}
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ backgroundImage: 'url("/goalie_card_hover.png")' }}
-              />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative h-full flex flex-col justify-between p-7 z-10">
-                <span className="text-lg font-semibold text-white/80">(01)</span>
-                <div>
-                  <h3 className="text-3xl font-bold text-white mb-4">
-                    I&rsquo;m a Goalie
-                  </h3>
-                  <p className="text-white/80 leading-relaxed">
-                    Access role-based drills, smart feedback, and progress tracking designed to improve your saves, reactions, and game confidence.
-                  </p>
-                  <span className="inline-block mt-5 rounded-full bg-white text-red-500 px-5 py-2 text-sm font-semibold">
-                    Enter as Goalie
-                  </span>
-                </div>
-              </div>
-            </button>
-
-            {/* Card 2 - Parent Role */}
-            <button
-              onClick={() => {
-                setSelectedRole('parent');
-                setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-              }}
-              className={`group relative h-[380px] rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] text-left bg-zinc-800 ${
-                selectedRole === 'goalie' ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'
-              }`}
-            >
-              {/* Hover background image */}
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ backgroundImage: 'url("/parent_card_hover.png")' }}
-              />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative h-full flex flex-col justify-between p-7 z-10">
-                <span className="text-lg font-semibold text-white/80">(02)</span>
-                <div>
-                  <h3 className="text-3xl font-bold text-white mb-4">
-                    I&rsquo;m a Parent
-                  </h3>
-                  <p className="text-zinc-300 leading-relaxed">
-                    Stay informed with clear progress updates, coach notes, and learning milestones so you can confidently support your child&rsquo;s development.
-                  </p>
-                  <span className="inline-block mt-5 rounded-full bg-white text-zinc-800 px-5 py-2 text-sm font-semibold">
-                    Enter as Parent
-                  </span>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          {/* Change role link */}
-          {selectedRole && (
-            <div className="mt-8 max-w-3xl mx-auto">
-              <button
-                onClick={() => setSelectedRole(null)}
-                className="text-sm text-gray-400 hover:text-gray-700 transition-colors duration-200 underline underline-offset-4"
-              >
-                ← Change role
-              </button>
+          {/* Header */}
+          <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '10px' }}>IN ACTION</p>
+              <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 48px)', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>
+                Watch Goalies Train Smarter
+              </h2>
             </div>
-          )}
-         
+            {/* Prev / Next arrows */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {['‹', '›'].map((arrow, i) => (
+                <button
+                  key={arrow}
+                  className="vs-arrow"
+                  onClick={() => setVidIndex(idx => (idx + (i === 0 ? -1 + VIDEOS.length : 1)) % VIDEOS.length)}
+                  style={{
+                    width: '44px', height: '44px', borderRadius: '50%',
+                    background: 'rgba(55,181,255,0.1)',
+                    border: '1px solid rgba(55,181,255,0.3)',
+                    color: '#37b5ff', fontSize: '22px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.2s', lineHeight: 1,
+                  }}
+                >{arrow}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Slider */}
+          <div style={{
+            position: 'relative', borderRadius: '20px', overflow: 'hidden',
+            border: '1px solid rgba(55,181,255,0.3)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+            aspectRatio: '16/9', background: '#000',
+          }}>
+            {VIDEOS.map(({ src, label, tag }, i) => (
+              <div
+                key={src}
+                style={{
+                  position: 'absolute', inset: 0,
+                  transform: i === vidIndex ? 'translateX(0)' : i < vidIndex ? 'translateX(-100%)' : 'translateX(100%)',
+                  transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
+                  willChange: 'transform',
+                }}
+              >
+                <video
+                  src={src}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+                {/* Bottom overlay */}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  background: 'linear-gradient(to top, rgba(0,8,24,0.9) 0%, transparent 100%)',
+                  padding: '40px 28px 20px',
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+                }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase' }}>{label}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#37b5ff', letterSpacing: '2px' }}>{tag} / {String(VIDEOS.length).padStart(2,'0')}</span>
+                </div>
+                {/* Top glow line */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(55,181,255,0.6), transparent)' }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Dots */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+            {VIDEOS.map((_, i) => (
+              <button
+                key={i}
+                className="vs-dot"
+                onClick={() => setVidIndex(i)}
+                style={{
+                  width: i === vidIndex ? '28px' : '8px',
+                  height: '8px', borderRadius: '99px', border: 'none', cursor: 'pointer',
+                  background: i === vidIndex ? '#37b5ff' : 'rgba(255,255,255,0.2)',
+                  opacity: i === vidIndex ? 1 : 0.6,
+                  transition: 'all 0.3s ease',
+                  boxShadow: i === vidIndex ? '0 0 8px rgba(55,181,255,0.5)' : 'none',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Role-conditional content anchor */}
-      <div ref={contentRef} />
 
-      {/* ── GENERAL (no role selected) ── */}
-      {!selectedRole && (
-        <>
-          <section id="features" className="pt-20 pb-0 bg-gray-50">
+      {/* ── MAIN CONTENT ── */}
+      <>
+          <section id="features" className="pt-20 pb-0" style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
             <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-12">
               <div className="flex justify-between items-center">
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
-                <span className="text-xl font-semibold text-gray-600">1/5</span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">WHAT WE DO</h2>
+                <span className="text-xl font-semibold" style={{ color: '#37b5ff' }}>1/5</span>
               </div>
             </div>
             <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="20%" scaleEndPosition="15%" baseScale={0.95}>
               {/* 1 — The 7 Pillars of Intelligent Goaltending */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/7-pillars.png")' }}></div>
                       <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">1/5</span></div>
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>1/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
-                        <p className="text-lg md:text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Learn Smart. Play Smart. Stay Consistent.</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
                         <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -360,15 +346,15 @@ export default function Home() {
               {/* 2 — Video Learning */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
                       <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">2/5</span></div>
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>2/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
-                        <p className="text-lg md:text-xl text-red-400 mb-6">Structured lessons you can replay</p>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Structured lessons you can replay</p>
                         <p className="text-zinc-300 leading-relaxed mb-8">YouTube-integrated video lessons organised into structured modules covering technique, positioning, decision-making, and game sense. Track completion per lesson, pick up where you left off, and learn at your own pace.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -377,16 +363,16 @@ export default function Home() {
               {/* 3 — Performance Analytics & Gap Management */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
                       <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">3/5</span></div>
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>3/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
-                        <p className="text-lg md:text-xl text-red-400 mb-6">See what others miss</p>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>See what others miss</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">Chart every game and practice session. Our analytics reveal your consistency patterns, good vs. bad goal ratios, and pinpoint exactly which skills need work.</p>
                         <p className="text-zinc-400 text-sm mb-6">Nothing is left to imagination — advance with confidence knowing precisely where you stand.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -395,16 +381,16 @@ export default function Home() {
               {/* 4 — Goaltending: A Chess Game */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
                       <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">4/5</span></div>
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>4/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
-                        <p className="text-lg md:text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Think Smart. Play Smart. Read the Play.</p>
                         <p className="text-zinc-300 leading-relaxed mb-5">Our video-questionnaire and quiz system assesses your decision-making from a goalie&rsquo;s point of view. We identify your knowledge gaps, then build your personalised &ldquo;UP YOUR GAME&rdquo; learning path.</p>
                         <p className="text-zinc-400 text-sm mb-6">Outsmart the shooter before the puck leaves their stick.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -413,16 +399,16 @@ export default function Home() {
               {/* 5 — Session Charting */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
                       <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">5/5</span></div>
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>5/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
-                        <p className="text-lg md:text-xl text-red-400 mb-6">Our flagship goalie feature</p>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Our flagship goalie feature</p>
 
                         <p className="text-zinc-300 leading-relaxed mb-8">Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
                     </div>
                   </div>
@@ -432,21 +418,21 @@ export default function Home() {
           </section>
 
           {/* Scrolling Marquee */}
-          <section className="py-6 bg-gray-50 overflow-hidden border-y border-gray-100">
+          <section className="py-6 overflow-hidden" style={{ background: '#041530', borderTop: '1px solid rgba(55,181,255,0.12)', borderBottom: '1px solid rgba(55,181,255,0.12)' }}>
             <div className="relative flex" style={{ '--duration': '30s', '--gap': '2rem' } as React.CSSProperties}>
               <div className="flex shrink-0 animate-marquee items-center gap-8">
                 {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide text-gray-800 hover:text-gray-900 transition-colors duration-300 cursor-default">{text}</span>
-                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
               <div className="flex shrink-0 animate-marquee items-center gap-8" aria-hidden="true">
                 {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide text-gray-800 hover:text-gray-900 transition-colors duration-300 cursor-default">{text}</span>
-                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
@@ -454,57 +440,61 @@ export default function Home() {
           </section>
 
           {/* What's In YOUR Tool Box? */}
-          <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 text-center">
-                What&rsquo;s In YOUR Tool Box?
+          <section style={{ padding: '80px 20px', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
+            <style>{`
+              .toolbox-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+              .toolbox-card:hover { transform: translateY(-4px) scale(1.02); }
+            `}</style>
+            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+              <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '16px' }}>YOUR TOOLKIT</p>
+              <h2 style={{ fontSize: 'clamp(28px,4.5vw,48px)', fontWeight: 900, color: '#fff', textAlign: 'center', marginBottom: '14px' }}>
+                What&rsquo;s In <span style={{ color: '#37b5ff' }}>YOUR</span> Tool Box?
               </h2>
-              <p className="text-center text-gray-500 text-base sm:text-lg mb-10 sm:mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
+              <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '17px', marginBottom: '56px', maxWidth: '520px', margin: '0 auto 56px' }}>
+                Three systems that separate good goalies from great ones.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                 {/* Card 1 — Positional Systems */}
-                <BackgroundGradient
-                  containerClassName="rounded-[22px] h-full"
-                  className="rounded-[18px] h-full"
-                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#b91c1c,transparent),radial-gradient(circle_farthest-side_at_100%_0,#ef4444,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#7f1d1d,transparent),radial-gradient(circle_farthest-side_at_0_0,#dc2626,#1c0505)]"
-                >
-                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-red-700 rounded-[18px] h-full">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-5 group-hover:bg-white/30 transition-colors duration-300">
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Positional Systems</h3>
-                    <p className="text-white/85 leading-relaxed mb-4">See the ice through the puck&rsquo;s eyes. Master net-crease positioning and the angle-mark system so you&rsquo;re always in the right spot before the shot.</p>
+                <div className="toolbox-card" style={{
+                  background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.35)',
+                  borderRadius: '18px', padding: '32px', cursor: 'default',
+                  boxShadow: '0 4px 32px rgba(55,181,255,0.08)',
+                }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#37b5ff" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
                   </div>
-                </BackgroundGradient>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>Positional Systems</h3>
+                  <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>See the ice through the puck&rsquo;s eyes. Master net-crease positioning and the angle-mark system so you&rsquo;re always in the right spot before the shot.</p>
+                  <div style={{ marginTop: '24px', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, #37b5ff 0%, transparent 100%)', opacity: 0.5 }} />
+                </div>
 
                 {/* Card 2 — Game IQ */}
-                <BackgroundGradient
-                  containerClassName="rounded-[22px] h-full"
-                  className="rounded-[18px] h-full"
-                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#374151,transparent),radial-gradient(circle_farthest-side_at_100%_0,#6b7280,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#111827,transparent),radial-gradient(circle_farthest-side_at_0_0,#4b5563,#030712)]"
-                >
-                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-black rounded-[18px] h-full">
-                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5 group-hover:bg-white/20 transition-colors duration-300">
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Game IQ Assessments</h3>
-                    <p className="text-white/85 leading-relaxed mb-4">Think two passes ahead. Measure your hockey sense through video analysis and charting — then watch your decision speed climb game after game.</p>
+                <div className="toolbox-card" style={{
+                  background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(167,139,250,0.35)',
+                  borderRadius: '18px', padding: '32px', cursor: 'default',
+                  boxShadow: '0 4px 32px rgba(167,139,250,0.08)',
+                }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#a78bfa" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
                   </div>
-                </BackgroundGradient>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>Game IQ Assessments</h3>
+                  <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>Think two passes ahead. Measure your hockey sense through video analysis and charting — then watch your decision speed climb game after game.</p>
+                  <div style={{ marginTop: '24px', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, #a78bfa 0%, transparent 100%)', opacity: 0.5 }} />
+                </div>
 
                 {/* Card 3 — Performance Analytics */}
-                <BackgroundGradient
-                  containerClassName="rounded-[22px] h-full"
-                  className="rounded-[18px] h-full"
-                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#1d4ed8,transparent),radial-gradient(circle_farthest-side_at_100%_0,#3b82f6,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#1e3a8a,transparent),radial-gradient(circle_farthest-side_at_0_0,#2563eb,#030712)]"
-                >
-                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-blue-600 rounded-[18px] h-full">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-5 group-hover:bg-white/30 transition-colors duration-300">
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Performance Analytics</h3>
-                    <p className="text-white/85 leading-relaxed mb-4">Know what you don&rsquo;t know. Track your gaps, chart your growth, and build the self-awareness to coach yourself between sessions.</p>
+                <div className="toolbox-card" style={{
+                  background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(45,212,191,0.35)',
+                  borderRadius: '18px', padding: '32px', cursor: 'default',
+                  boxShadow: '0 4px 32px rgba(45,212,191,0.08)',
+                }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#2dd4bf" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                   </div>
-                </BackgroundGradient>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>Performance Analytics</h3>
+                  <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>Know what you don&rsquo;t know. Track your gaps, chart your growth, and build the self-awareness to coach yourself between sessions.</p>
+                  <div style={{ marginTop: '24px', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, #2dd4bf 0%, transparent 100%)', opacity: 0.5 }} />
+                </div>
               </div>
             </div>
           </section>
@@ -513,188 +503,10 @@ export default function Home() {
             title="Voices From The Smarter Goalie Community"
             description="Goalkeepers, parents, and coaches trust our sports LMS to build skills, confidence, and consistent match performance."
             testimonials={testimonials}
+            className="!bg-[#000f28]"
           />
-        </>
-      )}
+      </>
 
-      {/* ── GOALIE ── */}
-      {selectedRole === 'goalie' && (
-        <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Everything built for you</h2>
-              <p className="text-lg text-gray-500 max-w-2xl mx-auto">Every tool, drill, and insight in one place — designed specifically for goalies who want to improve.</p>
-            </div>
-
-            <div className="space-y-24">
-              {[
-                {
-                  title: 'Session Charting',
-                  desc: 'The most complete in-game tracking tool for goalies. Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.',
-                  image: '/goalie_feature_1.png',
-                  badge: 'Flagship Feature',
-                },
-                {
-                  title: 'Two Learning Paths',
-                  desc: 'Choose between Automated self-paced progression driven by the algorithm, or a Custom coach-guided curriculum where content is unlocked by your coach. Both paths adapt to your skill level and keep you moving forward.',
-                  image: '/goalie_feature_2.png',
-                },
-                {
-                  title: 'Sports Catalog & Video Learning',
-                  desc: 'Browse all available lessons and quizzes across every skill category. YouTube-integrated video lessons are organised into structured modules covering technique, positioning, decision-making, and game sense — with built-in progress tracking per lesson.',
-                  image: '/goalie_feature_3.png',
-                },
-                {
-                  title: 'Progress Tracking & Achievements',
-                  desc: 'Visual charts show your skill-level and sport-level progress over time. Earn badges, hit milestones, and maintain streaks — every improvement is tracked and celebrated to keep you motivated.',
-                  image: '/goalie_feature_4.png',
-                },
-                {
-                  title: 'Interactive Quizzes',
-                  desc: 'Multiple question types — multiple-choice, true/false, scenario-based — with instant feedback after every answer. Quizzes are tied directly to video lessons so you prove your understanding before moving on.',
-                  image: '/goalie_feature_5.png',
-                },
-                {
-                  title: 'Goal Setting & Profile',
-                  desc: 'Set personal development goals and track how close you are to hitting them. Your unique Student ID (SG-XXXX-XXXX) lets you share your profile with parents and coaches, keeping everyone connected.',
-                  image: '/goalie_feature_6.png',
-                },
-                {
-                  title: 'Messages & Notifications',
-                  desc: 'Stay connected with your coach and team through a built-in inbox. Receive notifications about new lessons, quiz results, coach feedback, and milestone achievements — all in one place.',
-                  image: '/goalie_feature_7.png',
-                },
-              ].map((feature, i) => (
-                <div key={feature.title} className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-16`}>
-                  {/* Text */}
-                  <div className="flex-1">
-                    {feature.badge && (
-                      <span className="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4">{feature.badge}</span>
-                    )}
-                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                    <p className="text-gray-500 text-base md:text-lg leading-relaxed">{feature.desc}</p>
-                  </div>
-                  {/* Image */}
-                  <div className="flex-1 w-full">
-                    <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-[4/3]">
-                      <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Goalie CTA */}
-            <div className="mt-24 flex justify-center">
-              <div className="w-full max-w-2xl relative bg-gradient-to-br from-red-50 to-white border border-red-100 rounded-2xl p-8 md:p-10 text-center overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-red-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-red-50/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-                <div className="relative z-10">
-                  <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-3">Your journey starts here</p>
-                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ready to Play Smarter?</h3>
-                  <p className="text-gray-600 mb-8 leading-relaxed">Join the academy and get access to every drill, lesson, quiz, and analytics tool — built for goalies who want to level up.</p>
-                  <button
-                    onClick={() => router.push('/auth/register')}
-                    className="group bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
-                  >
-                    Register Now
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── PARENT ── */}
-      {selectedRole === 'parent' && (
-        <section className="py-16 sm:py-24 px-5 sm:px-8 lg:px-10 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Stay close to the journey</h2>
-              <p className="text-lg text-gray-500 max-w-2xl mx-auto">Everything you need to support your child — progress reports, coach notes, achievements, and more.</p>
-            </div>
-
-            <div className="space-y-24">
-              {[
-                {
-                  title: 'Monitor Progress',
-                  desc: 'Link to your child via their unique Student ID and track their full learning journey from your own dashboard. See skill levels, completion rates, and growth trends at a glance.',
-                  image: '/parent_feature_1.png',
-                },
-                {
-                  title: 'Learning Activity',
-                  desc: 'See exactly what your child is working on — active lessons, quizzes attempted, and time spent training. Stay informed about their daily engagement without needing to ask.',
-                  image: '/parent_feature_2.png',
-                },
-                {
-                  title: 'Achievements & Badges',
-                  desc: 'View every badge earned and milestone reached. Celebrate their wins as they happen and use achievements as conversation starters to encourage continued growth.',
-                  image: '/parent_feature_3.png',
-                },
-                {
-                  title: 'Session Review',
-                  desc: "Browse your child's charting session history — shot counts, save rates, and period-by-period factor ratings. Understand how they performed on game day without being on the bench.",
-                  image: '/parent_feature_4.png',
-                },
-                {
-                  title: 'Child Messages',
-                  desc: "Monitor your child's coach communications with privacy controls so you're informed without being intrusive. Know what feedback they're receiving and how they're responding.",
-                  image: '/parent_feature_5.png',
-                },
-                {
-                  title: 'Multi-child Support',
-                  desc: 'Link and manage multiple children from a single parent account — each with their own independent progress view. Switch between profiles effortlessly.',
-                  image: '/parent_feature_6.png',
-                },
-              ].map((feature, i) => (
-                <div key={feature.title} className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-16`}>
-                  {/* Text */}
-                  <div className="flex-1">
-                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                    <p className="text-gray-500 text-base md:text-lg leading-relaxed">{feature.desc}</p>
-                  </div>
-                  {/* Image */}
-                  <div className="flex-1 w-full">
-                    <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-[4/3]">
-                      <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Parent CTA */}
-            <div className="mt-24 flex justify-center">
-              <div className="w-full max-w-2xl relative bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-8 md:p-10 text-center overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-50/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-                <div className="relative z-10">
-                  <p className="text-blue-500 font-semibold tracking-widest uppercase text-xs mb-3">Stay connected to their growth</p>
-                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Support Starts Here</h3>
-                  <p className="text-gray-600 mb-8 leading-relaxed">Create your parent account and link to your child&rsquo;s profile. Track progress, celebrate wins, and stay informed — all from one dashboard.</p>
-                  <button
-                    onClick={() => router.push('/auth/register')}
-                    className="group bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
-                  >
-                    Register Now
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-24">
-              <TestimonialsSection
-                title="What Parents Are Saying"
-                description="Parents across the community trust Smarter Goalie to keep them informed and connected to their child's development."
-                testimonials={testimonials.filter((_, i) => [1, 2, 3].includes(i))}
-              />
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   );
 }
