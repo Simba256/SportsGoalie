@@ -1,10 +1,12 @@
 'use client';
 
 import { Flame, Sparkles, Trophy } from 'lucide-react';
-import { SkeletonBannerLight, SkeletonCardGrid } from '@/components/ui/skeletons';
+import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAchievements } from '@/hooks/useProgress';
 import { AchievementsList } from '@/components/achievements/AchievementsList';
+
+const BLUE = '#37b5ff';
 
 export default function AchievementsPage() {
   return (
@@ -17,99 +19,98 @@ export default function AchievementsPage() {
 function AchievementsContent() {
   const { achievements, userAchievements, loading, error } = useAchievements();
   const completedAchievements = userAchievements.filter(a => a.isCompleted).length;
-  const completionRate = achievements.length > 0
-    ? Math.round((completedAchievements / achievements.length) * 100)
-    : 0;
+  const completionRate = achievements.length > 0 ? Math.round((completedAchievements / achievements.length) * 100) : 0;
   const totalPoints = achievements
     .filter(a => userAchievements.find(ua => ua.achievementId === a.id && ua.isCompleted))
     .reduce((sum, a) => sum + a.points, 0);
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <SkeletonBannerLight />
-        <SkeletonCardGrid count={6} cols={3} />
+      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', padding: '24px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ height: '200px', background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '18px', animation: 'pulse 1.5s infinite' }} />
+          <SkeletonCardGrid count={6} cols={3} />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="text-center">
-          <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Unable to load achievements</h3>
-          <p className="text-muted-foreground">{error}</p>
+      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Trophy size={48} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Unable to load achievements</h3>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page Banner */}
-      <section className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 rounded-b-none overflow-hidden bg-gradient-to-br from-slate-900 via-[#1a1a3e] to-slate-900">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/12 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-red-500/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative z-10 px-6 py-7 md:px-8 md:py-9">
-          <div className="max-w-2xl">
-            <h1 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-              Unlock Your Milestones,
-              <span className="block text-red-500">Track Every Win.</span>
-            </h1>
-            <p className="mt-3 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">
-              Keep building momentum through quizzes, consistency, and focused progress across all seven goalie pillars.
-            </p>
-          </div>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-blue-300/30 bg-blue-500/10 px-4 py-3 backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-100">Unlocked</p>
-              <p className="mt-1 text-2xl font-black text-white">{completedAchievements}</p>
-            </div>
-            <div className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-red-100">Completion Rate</p>
-              <p className="mt-1 text-2xl font-black text-white">{completionRate}%</p>
-            </div>
-            <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Points Earned</p>
-              <p className="mt-1 text-2xl font-black text-white">{totalPoints}</p>
-            </div>
+    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+      <style>{`
+        .ach-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        @media (max-width: 640px) { .ach-stats { grid-template-columns: 1fr; } }
+      `}</style>
+
+      {/* Hero Banner */}
+      <section style={{ position: 'relative', background: 'linear-gradient(135deg, rgba(0,15,40,0.95) 0%, rgba(6,35,68,0.92) 50%, rgba(10,49,89,0.9) 100%)', padding: '40px 24px 48px', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '300px', background: `radial-gradient(circle, ${BLUE}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(248,113,113,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h1 style={{ fontSize: 'clamp(22px,4vw,38px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '8px' }}>
+            Unlock Your Milestones,<br /><span style={{ color: BLUE }}>Track Every Win.</span>
+          </h1>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '28px', maxWidth: '520px' }}>
+            Keep building momentum through quizzes, consistency, and focused progress across all seven goalie pillars.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', maxWidth: '600px' }}>
+            {[
+              { label: 'Unlocked', value: completedAchievements, color: BLUE },
+              { label: 'Completion Rate', value: `${completionRate}%`, color: BLUE },
+              { label: 'Points Earned', value: totalPoints, color: 'rgba(255,255,255,0.7)' },
+            ].map(s => (
+              <div key={s.label} style={{ background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '14px', padding: '14px 16px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>{s.label}</p>
+                <p style={{ fontSize: '26px', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-blue-200/70 bg-blue-50/80 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Total Achievements</p>
-          <div className="mt-2 flex items-end justify-between">
-            <p className="text-3xl font-black text-slate-900">{achievements.length}</p>
-            <Trophy className="h-5 w-5 text-blue-600" />
-          </div>
-        </div>
-        <div className="rounded-2xl border border-red-200/70 bg-red-50/80 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-red-700">In Progress</p>
-          <div className="mt-2 flex items-end justify-between">
-            <p className="text-3xl font-black text-slate-900">{Math.max(achievements.length - completedAchievements, 0)}</p>
-            <Flame className="h-5 w-5 text-red-600" />
-          </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Next Push</p>
-          <div className="mt-2 flex items-end justify-between">
-            <p className="text-lg font-black text-slate-900">Keep Consistency</p>
-            <Sparkles className="h-5 w-5 text-blue-600" />
-          </div>
-          <p className="mt-1 text-xs text-slate-500">A steady streak usually unlocks your next badge fastest.</p>
-        </div>
-      </div>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* Achievements List */}
-      <AchievementsList
-        achievements={achievements}
-        userAchievements={userAchievements}
-        loading={loading}
-      />
+        {/* Stat Cards */}
+        <div className="ach-stats">
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '20px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>Total Achievements</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '36px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{achievements.length}</p>
+              <Trophy size={20} color={BLUE} />
+            </div>
+          </div>
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '20px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>In Progress</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '36px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{Math.max(achievements.length - completedAchievements, 0)}</p>
+              <Flame size={20} color={BLUE} />
+            </div>
+          </div>
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '20px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Next Push</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <p style={{ fontSize: '16px', fontWeight: 800, color: '#fff' }}>Keep Consistency</p>
+              <Sparkles size={18} color={BLUE} />
+            </div>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>A steady streak usually unlocks your next badge fastest.</p>
+          </div>
+        </div>
+
+        {/* Achievements List */}
+        <AchievementsList achievements={achievements} userAchievements={userAchievements} loading={loading} />
+      </main>
     </div>
   );
 }

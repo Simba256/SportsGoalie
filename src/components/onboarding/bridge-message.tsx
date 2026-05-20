@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { GoalieAgeRange } from '@/types';
 import { ChevronRight, Target, Sparkles, CheckCircle2 } from 'lucide-react';
+
+const BLUE = '#37b5ff';
 
 interface BridgeMessageProps {
   studentName: string;
@@ -31,6 +32,12 @@ const EXPERIENCE_DISPLAY: Record<string, string> = {
   '4_plus_seasons': "You're a veteran between the pipes with plenty of games behind you.",
 };
 
+const card: React.CSSProperties = {
+  background: 'rgba(2,18,44,0.85)',
+  border: '1px solid rgba(55,181,255,0.14)',
+  borderRadius: '16px',
+};
+
 export function BridgeMessage({
   studentName,
   ageRange,
@@ -54,100 +61,118 @@ export function BridgeMessage({
   const isYounger = ageRange === '8-10' || ageRange === '11-13';
 
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full text-center">
-        {/* Icon */}
-        <div className="mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-50 border-2 border-red-200">
-            <Sparkles className="w-10 h-10 text-red-500" />
+    <>
+      <style>{`
+        .bm-btn:hover { opacity: 0.88 !important; transform: scale(1.02) !important; }
+        @keyframes sparkle-pop { 0% { transform: scale(0.7); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+        .bm-icon { animation: sparkle-pop 0.5s 0.1s ease both; }
+        @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .bm-s1 { animation: fade-up 0.45s ease both; }
+        .bm-s2 { animation: fade-up 0.45s 0.1s ease both; }
+        .bm-s3 { animation: fade-up 0.45s 0.2s ease both; }
+        .bm-s4 { animation: fade-up 0.45s 0.3s ease both; }
+      `}</style>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
+
+          {/* Icon */}
+          <div className="bm-icon" style={{ marginBottom: '28px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: '80px', height: '80px', borderRadius: '50%',
+              background: `${BLUE}15`,
+              border: `2px solid ${BLUE}40`,
+              boxShadow: `0 0 32px ${BLUE}20`,
+            }}>
+              <Sparkles style={{ width: '36px', height: '36px', color: BLUE }} />
+            </div>
+          </div>
+
+          {/* Greeting */}
+          <div className="bm-s1">
+            <h1 style={{ fontSize: 'clamp(28px,5vw,42px)', fontWeight: 900, color: '#fff', marginBottom: '20px' }}>
+              {isYounger ? <>Got it, {studentName}!</> : <>Thanks, {studentName}.</>}
+            </h1>
+          </div>
+
+          {/* Experience */}
+          <div className="bm-s2">
+            {experienceMessage && (
+              <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.65)', marginBottom: '12px', lineHeight: 1.6 }}>
+                {experienceMessage}
+              </p>
+            )}
+            <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.65)', marginBottom: '32px', lineHeight: 1.6 }}>
+              {isYounger ? (
+                <>
+                  It sounds like you&apos;re interested in{' '}
+                  <span style={{ color: BLUE, fontWeight: 700 }}>{formattedReasons}</span>.
+                  {' '}That&apos;s exactly what Smarter Goalie is here to help with.
+                </>
+              ) : (
+                <>
+                  You&apos;re here for{' '}
+                  <span style={{ color: BLUE, fontWeight: 700 }}>{formattedReasons}</span>{' '}—
+                  and that&apos;s exactly what Smarter Goalie is built to help you with.
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Info card */}
+          <div className="bm-s3" style={{ ...card, padding: '24px', textAlign: 'left', marginBottom: '28px' }}>
+            <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Target style={{ width: '18px', height: '18px', color: BLUE }} />
+              {isYounger ? "What's next?" : "Now let's get to know your game."}
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '14px', lineHeight: 1.6, marginBottom: '16px' }}>
+              {isYounger ? (
+                "We're going to ask you some questions about how you play goalie — things like how you feel about games, what you do during practice, and how you think about your position."
+              ) : (
+                "The next section will ask you questions across 7 areas of your goaltending. This isn't a test — there are no wrong answers. We're trying to understand where you are today so we can personalize your experience."
+              )}
+            </p>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px', listStyle: 'none', margin: 0, padding: 0 }}>
+              {[
+                '7 categories covering different parts of goaltending',
+                '28 quick questions — all multiple choice',
+                'No right or wrong answers — just be honest',
+                'Your progress is saved if you need to take a break',
+              ].map(item => (
+                <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <CheckCircle2 style={{ width: '16px', height: '16px', color: BLUE, flexShrink: 0, marginTop: '2px' }} />
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bm-s4">
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', marginBottom: '24px' }}>
+              {isYounger
+                ? "Take your time with each question. There's no rush, and your answers help us help you!"
+                : "Your answers will help us build your Intelligence Profile and customize your learning path."}
+            </p>
+
+            <button
+              className="bm-btn"
+              onClick={onContinue}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`,
+                border: 'none', color: '#fff',
+                padding: '14px 36px', borderRadius: '12px',
+                fontWeight: 800, fontSize: '17px', cursor: 'pointer',
+                transition: 'opacity 0.2s, transform 0.2s',
+                boxShadow: `0 8px 32px rgba(55,181,255,0.25)`,
+              }}
+            >
+              {isYounger ? "Let's Go!" : 'Continue to Assessment'}
+              <ChevronRight style={{ width: '18px', height: '18px' }} />
+            </button>
           </div>
         </div>
-
-        {/* Greeting */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-          {isYounger ? (
-            <>Got it, {studentName}!</>
-          ) : (
-            <>Thanks, {studentName}.</>
-          )}
-        </h1>
-
-        {/* Experience acknowledgment */}
-        {experienceMessage && (
-          <p className="text-lg text-gray-600 mb-4">
-            {experienceMessage}
-          </p>
-        )}
-
-        {/* Reasons acknowledgment */}
-        <p className="text-lg text-gray-600 mb-8">
-          {isYounger ? (
-            <>
-              It sounds like you&apos;re interested in <span className="text-red-500 font-medium">{formattedReasons}</span>.
-              {' '}That&apos;s exactly what Smarter Goalie is here to help with.
-            </>
-          ) : (
-            <>
-              You&apos;re here for <span className="text-red-500 font-medium">{formattedReasons}</span> —
-              and that&apos;s exactly what Smarter Goalie is built to help you with.
-            </>
-          )}
-        </p>
-
-        {/* Assessment explanation box */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 text-left">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-red-500" />
-            {isYounger ? "What's next?" : "Now let's get to know your game."}
-          </h3>
-
-          <p className="text-gray-600 mb-4">
-            {isYounger ? (
-              "We're going to ask you some questions about how you play goalie — things like how you feel about games, what you do during practice, and how you think about your position."
-            ) : (
-              "The next section will ask you questions across 7 areas of your goaltending. This isn't a test — there are no wrong answers. We're trying to understand where you are today so we can personalize your experience."
-            )}
-          </p>
-
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>7 categories covering different parts of goaltending</span>
-            </li>
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>28 quick questions — all multiple choice</span>
-            </li>
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>No right or wrong answers — just be honest</span>
-            </li>
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>Your progress is saved if you need to take a break</span>
-            </li>
-          </ul>
-        </div>
-
-        {/* Encouragement */}
-        <p className="text-gray-400 mb-8">
-          {isYounger ? (
-            "Take your time with each question. There's no rush, and your answers help us help you!"
-          ) : (
-            "Your answers will help us build your Intelligence Profile and customize your learning path."
-          )}
-        </p>
-
-        {/* Continue button */}
-        <Button
-          size="lg"
-          onClick={onContinue}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-red-500/20 transition-all hover:scale-105"
-        >
-          {isYounger ? "Let's Go!" : "Continue to Assessment"}
-          <ChevronRight className="ml-2 w-5 h-5" />
-        </Button>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,27 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Trophy,
-  BookOpen,
-  Target,
-  Flame,
-  Brain,
-  Footprints,
-  Shapes,
-  Grid3X3,
-  Dumbbell,
-  Heart,
-  ArrowRight,
-  TrendingUp,
-  Play,
-  ChevronRight,
+  Trophy, BookOpen, Target, Flame, Brain, Footprints, Shapes,
+  Grid3X3, Dumbbell, Heart, ArrowRight, TrendingUp, Play,
+  ChevronRight, Zap, Sparkles,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { SkeletonDashboard } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
@@ -30,39 +17,32 @@ import { useEnrollment } from '@/hooks/useEnrollment';
 import { useRecentQuizzes } from '@/hooks/useRecentQuizzes';
 import { CustomCurriculumDashboard } from '@/components/dashboard/CustomCurriculumDashboard';
 import { PILLARS } from '@/types';
-import { getPillarColorClasses, getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
+
+const BLUE = '#37b5ff';
+const BLUE2 = '#60a5fa';
 
 const PILLAR_ICONS: Record<string, React.ElementType> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
+const PILLAR_COLORS: Record<string, string> = {
+  Brain: '#a78bfa', Footprints: '#37b5ff', Shapes: '#4ade80',
+  Target: '#fb923c', Grid3X3: '#f87171', Dumbbell: '#fbbf24', Heart: '#2dd4bf',
+};
+const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function DashboardPage() {
-  return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute><DashboardContent /></ProtectedRoute>;
 }
 
 function DashboardContent() {
   const router = useRouter();
   const { user } = useAuth();
-
   useEffect(() => {
-    if (user?.role === 'student' && !user?.onboardingCompleted) {
-      router.push('/onboarding');
-    }
+    if (user?.role === 'student' && !user?.onboardingCompleted) router.push('/onboarding');
   }, [user, router]);
-
-  if (user?.role === 'student' && !user?.onboardingCompleted) {
-    return <SkeletonDashboard />;
-  }
-
-  // Route custom workflow students to their dashboard without loading standard hooks
-  if (user?.role === 'student' && user?.workflowType === 'custom') {
-    return <CustomCurriculumDashboard user={user} />;
-  }
-
+  if (user?.role === 'student' && !user?.onboardingCompleted) return <SkeletonDashboard />;
+  if (user?.role === 'student' && user?.workflowType === 'custom') return <CustomCurriculumDashboard user={user} />;
   return <StandardDashboard />;
 }
 
@@ -70,268 +50,283 @@ function StandardDashboard() {
   const { user } = useAuth();
   const { userProgress, loading } = useProgress();
   const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
-  const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(5);
+  const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(14);
 
-  if (loading || enrollmentsLoading) {
-    return <SkeletonDashboard />;
-  }
+  if (loading || enrollmentsLoading) return <SkeletonDashboard />;
 
   const stats = userProgress?.overallStats;
-  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0];
-
+  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Goalie';
   const totalSkills = enrolledSports.reduce((sum, e) => sum + e.progress.totalSkills, 0);
   const completedSkills = enrolledSports.reduce((sum, e) => sum + e.progress.completedSkills.length, 0);
   const overallPct = totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const activePillar = enrolledSports.find((e) => e.progress.status === 'in_progress') || enrolledSports[0];
 
-  // Find next pillar to continue (most recently accessed, not completed)
-  const activePillar = enrolledSports.find(
-    (e) => e.progress.status === 'in_progress'
-  ) || enrolledSports[0];
+  const today = new Date();
+  const last7 = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() - (6 - i)); return d; });
+  const activeDayStrings = new Set(recentQuizzes.map((q) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const raw = (q as any).completedAt;
+      return (raw?.toDate ? raw.toDate() : new Date(raw)).toDateString();
+    } catch { return ''; }
+  }));
 
   return (
-    <div className="bg-gray-50">
-      <section
-        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[340px] md:h-[390px] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: "url('/goalie-dashboard.png')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
+    <div style={{ background: 'linear-gradient(160deg, #000a1f 0%, #041530 40%, #071e42 100%)', minHeight: '100vh' }}>
+      <style>{`
+        @keyframes blob { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-15px) scale(1.04)} }
+        @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-15px,20px) scale(0.96)} }
+        @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+        @keyframes pulse-ring { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.03)} }
+        @keyframes fade-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin-slow { from{transform:rotate(-90deg)} to{transform:rotate(270deg)} }
+        .s1{animation:fade-up .45s .05s both}
+        .s2{animation:fade-up .45s .12s both}
+        .s3{animation:fade-up .45s .20s both}
+        .s4{animation:fade-up .45s .28s both}
+        .s5{animation:fade-up .45s .36s both}
+        .stat-lift{transition:transform .2s,box-shadow .2s,border-color .2s}
+        .stat-lift:hover{transform:translateY(-5px)}
+        .pillar-row{transition:background .15s,padding-left .15s}
+        .pillar-row:hover{background:rgba(255,255,255,0.04)!important;padding-left:26px!important}
+        .qa-btn{transition:transform .18s,box-shadow .18s,border-color .18s,background .18s}
+        .qa-btn:hover{transform:translateY(-3px) scale(1.02)}
+        .dash-grid{display:grid;grid-template-columns:1fr;gap:24px}
+        @media(min-width:1024px){.dash-grid{grid-template-columns:1.6fr 1fr}}
+        .continue-hover{transition:border-color .2s,box-shadow .2s}
+        .continue-hover:hover{box-shadow:0 12px 40px rgba(0,0,0,.35)!important}
+        .vault-hover{transition:border-color .2s,transform .2s}
+        .vault-hover:hover{border-color:rgba(167,139,250,.45)!important;transform:translateY(-2px)}
+        .shimmer-bar{background:linear-gradient(90deg,var(--c) 0%,var(--c2) 45%,var(--c) 100%);background-size:400px 100%;animation:shimmer 2.5s infinite linear}
+      `}</style>
 
-        <div className="relative z-10 flex flex-col items-center text-center">
-          <h1 className="text-white text-3xl md:text-5xl font-bold bg-white/10 border border-white/25 backdrop-blur-sm px-6 py-2 rounded-xl inline-block shadow-lg mb-2">
-            {greeting}, {firstName}
-          </h1>
-          <p className="text-white text-sm md:text-base font-medium drop-shadow-md max-w-2xl px-4">
-            {stats?.quizzesCompleted
-              ? `You've learned ${overallPct}% of your course. Keep it up and improve your skills!`
-              : 'Start your goalie training journey by exploring pillars and taking quizzes.'}
-          </p>
+      {/* ── HERO ── */}
+      <section style={{ position: 'relative', backgroundImage: "url('/goalie-dashboard.png')", backgroundSize: 'cover', backgroundPosition: 'center top', minHeight: '420px', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
+        {/* overlays */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(130deg,rgba(0,10,31,.95) 0%,rgba(4,21,48,.85) 50%,rgba(0,10,31,.78) 100%)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to top,#000a1f,transparent)' }} />
 
-          <div className="mt-4 w-full max-w-lg rounded-full bg-white/35 h-2.5 overflow-hidden">
-            <div className="h-full rounded-full bg-blue-600" style={{ width: `${overallPct}%` }} />
-          </div>
+        {/* animated glow blobs */}
+        <div style={{ position: 'absolute', top: '5%', right: '12%', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(55,181,255,.1) 0%,transparent 70%)', animation: 'blob 7s ease-in-out infinite', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '30%', right: '30%', width: '240px', height: '240px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,.07) 0%,transparent 70%)', animation: 'blob2 9s ease-in-out infinite', pointerEvents: 'none' }} />
 
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 px-2">
-            <div className="flex items-center gap-3 rounded-full border border-white/30 bg-white/20 px-4 py-2 backdrop-blur-md shadow-sm">
-              <ProgressRing percentage={overallPct} size={48} />
-              <div className="text-left">
-                <p className="text-[11px] font-medium text-white/80">Overall Progress</p>
-                <p className="text-sm font-bold text-white">{overallPct}%</p>
-              </div>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 28px 44px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+
+          {/* Left text block */}
+          <div style={{ flex: 1, minWidth: '260px' }}>
+            <div className="s1" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '30px', padding: '5px 14px', marginBottom: '18px' }}>
+              <Sparkles size={12} color={BLUE} />
+              <span style={{ fontSize: '12px', color: BLUE, fontWeight: 700, letterSpacing: '.5px' }}>{greeting}</span>
             </div>
 
-            {activePillar && (
-              <Link href={`/pillars/${activePillar.sport.id}`}>
-                <button className="flex items-center gap-1 rounded-full border border-white/35 bg-white/90 px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-white">
-                  <Play className="h-3.5 w-3.5" />
-                  Continue Learning
+            <h1 className="s2" style={{ fontSize: 'clamp(44px,8vw,84px)', fontWeight: 900, lineHeight: 1, letterSpacing: '-.04em', marginBottom: '14px' }}>
+              <span style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,.5)', letterSpacing: '.02em', marginBottom: '4px' }}>Welcome back,</span>
+              <span style={{ background: `linear-gradient(135deg, #fff 30%, ${BLUE} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                {firstName}
+              </span>
+            </h1>
+
+            <p className="s3" style={{ fontSize: '15px', color: 'rgba(255,255,255,.45)', marginBottom: '28px', maxWidth: '380px', lineHeight: 1.6 }}>
+              {stats?.quizzesCompleted
+                ? `You're ${overallPct}% through your course. ${overallPct >= 80 ? 'Almost there — finish strong!' : overallPct >= 40 ? 'Keep the momentum going!' : 'Great start — keep building!'}`
+                : 'Start your goalie training journey by exploring the pillars below.'}
+            </p>
+
+            <div className="s4" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {activePillar && (
+                <Link href={`/pillars/${activePillar.sport.id}`}>
+                  <button style={{ display: 'inline-flex', alignItems: 'center', gap: '9px', background: BLUE, border: 'none', borderRadius: '12px', padding: '14px 26px', color: '#000a1f', fontSize: '14px', fontWeight: 900, letterSpacing: '.3px', cursor: 'pointer', boxShadow: `0 6px 24px ${BLUE}55`, transition: 'transform .15s,box-shadow .15s' }}
+                    onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-2px)'; b.style.boxShadow = `0 10px 30px ${BLUE}66`; }}
+                    onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = ''; b.style.boxShadow = `0 6px 24px ${BLUE}55`; }}
+                  >
+                    <Play size={15} fill="#000a1f" /> Continue Learning
+                  </button>
+                </Link>
+              )}
+              <Link href="/progress">
+                <button style={{ display: 'inline-flex', alignItems: 'center', gap: '9px', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.16)', borderRadius: '12px', padding: '14px 26px', color: 'rgba(255,255,255,.7)', fontSize: '14px', fontWeight: 700, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'background .15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.13)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.08)'; }}
+                >
+                  <TrendingUp size={15} /> Analytics
                 </button>
               </Link>
-            )}
+            </div>
+          </div>
+
+          {/* Progress ring (right side) */}
+          <div className="s4" style={{ flexShrink: 0 }}>
+            <HeroRing pct={overallPct} completed={completedSkills} total={totalSkills} />
           </div>
         </div>
       </section>
 
-      <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-8">
-      {/* ── Main Layout ────────────────────────────────────────────── */}
-      <div className="grid lg:grid-cols-3 gap-6">
-
-        {/* LEFT 2/3 */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Your Pillars — table-style list */}
-          <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h2 className="text-base font-bold text-foreground">Your Pillars</h2>
-              <Link href="/pillars" className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1">
-                View all <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            {enrollmentsError ? (
-              <p className="text-red-500 text-sm text-center py-8">{enrollmentsError}</p>
-            ) : enrolledSports.length === 0 ? (
-              <EmptyPillars />
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {enrolledSports.map(({ sport, progress }) => {
-                  const slug = getPillarSlugFromDocId(sport.id);
-                  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
-                  const color = info?.color || 'blue';
-                  const colorClasses = getPillarColorClasses(color);
-                  const IconComponent = PILLAR_ICONS[info?.icon || 'Target'] || Target;
-                  const pct = Math.round(progress.progressPercentage);
-
-                  return (
-                    <Link
-                      key={sport.id}
-                      href={`/pillars/${sport.id}`}
-                      className="flex items-center gap-4 px-6 py-4 hover:bg-muted/50/80 transition-colors group"
-                    >
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
-                        <IconComponent className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                          {info?.shortName || sport.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {progress.completedSkills.length}/{progress.totalSkills} skills
-                        </p>
-                      </div>
-                      <div className="w-24 hidden sm:block">
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${colorClasses.bg}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className={`text-sm font-bold w-12 text-right ${
-                        pct >= 80 ? 'text-green-600' : pct > 0 ? 'text-foreground' : 'text-muted-foreground/60'
-                      }`}>
-                        {pct}%
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Continue Learning — highlight next skill */}
-          {activePillar && (
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-foreground">Continue Learning</h2>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-primary border-blue-200">
-                  <Play className="h-3 w-3 mr-1" /> In Progress
-                </Badge>
-              </div>
-              <Link href={`/pillars/${activePillar.sport.id}`} className="block group">
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-blue-50/80 to-white border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-300">
-                  {(() => {
-                    const slug = getPillarSlugFromDocId(activePillar.sport.id);
-                    const info = slug ? PILLARS.find(p => p.slug === slug) : null;
-                    const colorClasses = getPillarColorClasses(info?.color || 'blue');
-                    const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
-                    return (
-                      <>
-                        <div className={`h-14 w-14 rounded-xl flex items-center justify-center bg-gradient-to-br ${colorClasses.gradient} flex-shrink-0`}>
-                          <Icon className="h-7 w-7 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
-                            {info?.name || activePillar.sport.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {activePillar.progress.completedSkills.length} of {activePillar.progress.totalSkills} skills completed
-                          </p>
-                          <div className="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden max-w-xs">
-                            <div
-                              className={`h-full rounded-full ${colorClasses.bg}`}
-                              style={{ width: `${Math.round(activePillar.progress.progressPercentage)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                      </>
-                    );
-                  })()}
-                </div>
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT 1/3 */}
-        <div className="space-y-6">
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Quizzes" value={stats?.quizzesCompleted || 0} icon={<Trophy className="h-4 w-4" />} color="red" />
-            <StatCard label="Skills" value={stats?.skillsCompleted || 0} icon={<BookOpen className="h-4 w-4" />} color="blue" />
-            <StatCard label="Avg Score" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target className="h-4 w-4" />} color="green" />
-            <StatCard label="Streak" value={stats?.currentStreak || 0} icon={<Flame className="h-4 w-4" />} color="orange" />
-          </div>
-
-          {/* Recent Results */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-              <h3 className="text-sm font-bold text-foreground">Recent Results</h3>
-              <Link href="/quizzes" className="text-xs text-primary hover:text-blue-700 font-semibold flex items-center gap-1">
-                View More <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            {quizzesLoading ? (
-              <div className="divide-y divide-border/50">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-5 py-3">
-                    <div className="flex-1"><div className="h-3 w-24 rounded bg-muted animate-pulse" /></div>
-                    <div className="h-1.5 w-20 rounded-full bg-muted animate-pulse" />
-                    <div className="h-3 w-8 rounded bg-muted animate-pulse" />
-                  </div>
-                ))}
-              </div>
-            ) : recentQuizzes.length === 0 ? (
-              <div className="text-center py-8 px-4">
-                <Trophy className="mx-auto h-8 w-8 text-gray-200 mb-2" />
-                <p className="text-xs text-muted-foreground">No results yet</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {recentQuizzes.slice(0, 5).map((quiz) => {
-                  const pillarInfo = getPillarByDocId(quiz.sportId);
-                  const pct = Math.round(quiz.percentage);
-                  return (
-                    <div key={quiz.id} className="flex items-center gap-3 px-5 py-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">
-                          {pillarInfo?.shortName || 'Quiz'}
-                        </p>
-                      </div>
-                      <div className="w-20">
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className={`text-xs font-bold w-10 text-right ${
-                        pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-primary' : 'text-red-500'
-                      }`}>
-                        {pct}%
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
-            <h3 className="text-sm font-bold text-foreground mb-3">Quick Actions</h3>
-            <div className="space-y-1.5">
-              <QuickActionLink href="/pillars" icon={<BookOpen className="h-4 w-4 text-primary" />} bg="bg-blue-50" label="Browse Pillars" />
-              <QuickActionLink href="/quizzes" icon={<Trophy className="h-4 w-4 text-green-600" />} bg="bg-green-50" label="Take a Quiz" />
-              <QuickActionLink href="/progress" icon={<TrendingUp className="h-4 w-4 text-purple-600" />} bg="bg-purple-50" label="Analytics" />
-              <QuickActionLink href="/charting" icon={<Target className="h-4 w-4 text-red-600" />} bg="bg-red-50" label="Charting" />
-            </div>
-          </div>
+      {/* ── STATS + ACTIVITY STRIP ── */}
+      <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '14px' }}>
+          <StatCard label="Quizzes" value={stats?.quizzesCompleted ?? 0} icon={<Trophy size={16} />} color={BLUE} delay="0s" />
+          <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
+          <StatCard label="Avg Score" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
+          <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
+          <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
       </div>
+
+      {/* ── MAIN CONTENT ── */}
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 64px' }}>
+        <div className="dash-grid">
+
+          {/* LEFT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* Your Pillars */}
+            <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Your Pillars</h2>
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.35)' }}>
+                    {enrolledSports.length} active {enrolledSports.length === 1 ? 'course' : 'courses'}
+                  </p>
+                </div>
+                <Link href="/pillars" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: BLUE, fontWeight: 700, textDecoration: 'none', background: 'rgba(55,181,255,.09)', border: '1px solid rgba(55,181,255,.2)', borderRadius: '10px', padding: '7px 13px', transition: 'background .15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(55,181,255,.16)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(55,181,255,.09)'; }}
+                >
+                  View all <ArrowRight size={13} />
+                </Link>
+              </div>
+
+              {enrollmentsError ? (
+                <p style={{ color: '#f87171', fontSize: '14px', textAlign: 'center', padding: '36px' }}>{enrollmentsError}</p>
+              ) : enrolledSports.length === 0 ? (
+                <EmptyPillars />
+              ) : (
+                <div>
+                  {enrolledSports.map(({ sport, progress }, idx) => {
+                    const slug = getPillarSlugFromDocId(sport.id);
+                    const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+                    const IconComp = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+                    const iconKey = info?.icon || 'Target';
+                    const accent = PILLAR_COLORS[iconKey] || BLUE;
+                    const pct = Math.round(progress.progressPercentage);
+                    const scoreColor = pct >= 80 ? '#4ade80' : pct > 0 ? accent : 'rgba(255,255,255,.25)';
+
+                    return (
+                      <Link key={sport.id} href={`/pillars/${sport.id}`} className="pillar-row"
+                        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 24px', paddingLeft: '20px', borderBottom: idx < enrolledSports.length - 1 ? '1px solid rgba(55,181,255,.07)' : 'none', textDecoration: 'none', borderLeft: `4px solid ${accent}` }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: `${accent}1a`, border: `1px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 16px ${accent}22` }}>
+                          <IconComp size={20} color={accent} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {info?.shortName || sport.name}
+                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ flex: 1, height: '6px', borderRadius: '99px', background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                              <div className="shimmer-bar" style={{ height: '100%', borderRadius: '99px', width: `${pct}%`, '--c': accent, '--c2': `${accent}99` } as React.CSSProperties} />
+                            </div>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)', flexShrink: 0 }}>
+                              {progress.completedSkills.length}/{progress.totalSkills}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                          <span style={{ fontSize: '20px', fontWeight: 900, color: scoreColor, display: 'block' }}>{pct}%</span>
+                          {pct >= 100 && <span style={{ fontSize: '9px', color: '#4ade80', fontWeight: 800, letterSpacing: '.5px' }}>DONE ✓</span>}
+                        </div>
+                        <ChevronRight size={15} color="rgba(255,255,255,.2)" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Continue Learning */}
+            {activePillar && <ContinueLearningCard pillar={activePillar} />}
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* Performance */}
+            <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
+                <div>
+                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Performance</h3>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)' }}>Recent quiz results</p>
+                </div>
+                <Link href="/quizzes" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: BLUE, fontWeight: 700, textDecoration: 'none' }}>
+                  All <ArrowRight size={11} />
+                </Link>
+              </div>
+
+              {quizzesLoading ? (
+                <div style={{ padding: '12px' }}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,.02)', marginBottom: '6px' }}>
+                      <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(255,255,255,.05)' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ height: '12px', borderRadius: '4px', background: 'rgba(255,255,255,.05)', marginBottom: '8px', width: '65%' }} />
+                        <div style={{ height: '5px', borderRadius: '99px', background: 'rgba(255,255,255,.05)' }} />
+                      </div>
+                      <div style={{ width: '40px', height: '14px', borderRadius: '4px', background: 'rgba(255,255,255,.05)' }} />
+                    </div>
+                  ))}
+                </div>
+              ) : recentQuizzes.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '36px 16px' }}>
+                  <Trophy size={28} color="rgba(255,255,255,.1)" style={{ margin: '0 auto 10px' }} />
+                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,.28)' }}>No results yet</p>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.16)', marginTop: '4px' }}>Complete a quiz to see your scores here</p>
+                </div>
+              ) : (
+                <div style={{ padding: '10px' }}>
+                  {recentQuizzes.slice(0, 5).map((quiz) => {
+                    const pillarInfo = getPillarByDocId(quiz.sportId);
+                    const pct = Math.round(quiz.percentage);
+                    const scoreColor = pct >= 80 ? '#4ade80' : pct >= 60 ? BLUE2 : '#f87171';
+                    const iconKey = pillarInfo?.icon || 'Target';
+                    const pillarColor = PILLAR_COLORS[iconKey] || BLUE;
+                    const IconComp = PILLAR_ICONS[iconKey] || Target;
+                    return (
+                      <QuizRow key={quiz.id} pct={pct} scoreColor={scoreColor} pillarColor={pillarColor} name={pillarInfo?.shortName || 'Quiz'} IconComp={IconComp} />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', padding: '20px' }}>
+              <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Quick Actions</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <QuickActionCard href="/pillars" icon={<BookOpen size={22} />} label="Pillars" sub="Browse content" color={BLUE} />
+                <QuickActionCard href="/quizzes" icon={<Trophy size={22} />} label="Quizzes" sub="Test yourself" color="#4ade80" />
+                <QuickActionCard href="/progress" icon={<TrendingUp size={22} />} label="Progress" sub="View analytics" color="#a78bfa" />
+                <QuickActionCard href="/charting" icon={<Target size={22} />} label="Charting" sub="Track sessions" color="#fb923c" />
+              </div>
+            </div>
+
+            {/* Mind Vault */}
+            <Link href="/mind-vault" style={{ textDecoration: 'none' }}>
+              <div className="vault-hover" style={{ background: 'linear-gradient(135deg,rgba(167,139,250,.14) 0%,rgba(2,18,44,.92) 55%,rgba(109,40,217,.1) 100%)', border: '1px solid rgba(167,139,250,.22)', borderRadius: '20px', padding: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(167,139,250,.15)', border: '1px solid rgba(167,139,250,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(167,139,250,.2)' }}>
+                  <Brain size={24} color="#a78bfa" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Mind Vault</p>
+                  <p style={{ fontSize: '13px', color: 'rgba(167,139,250,.6)', lineHeight: 1.4 }}>Mental performance &amp; focus tools</p>
+                </div>
+                <div style={{ background: 'rgba(167,139,250,.15)', border: '1px solid rgba(167,139,250,.25)', borderRadius: '8px', padding: '6px' }}>
+                  <Zap size={16} color="#a78bfa" />
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
       </main>
     </div>
   );
@@ -339,84 +334,164 @@ function StandardDashboard() {
 
 /* ──────────────────── Sub-components ──────────────────── */
 
-
-function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: number }) {
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
+function HeroRing({ pct, completed, total }: { pct: number; completed: number; total: number }) {
+  const size = 148;
+  const stroke = 9;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
-        <circle
-          cx={size / 2} cy={size / 2} r={radius} fill="none"
-          stroke="url(#ring-grad)" strokeWidth={strokeWidth} strokeLinecap="round"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      {/* outer glow ring */}
+      <div style={{ position: 'absolute', inset: '-8px', borderRadius: '50%', background: `radial-gradient(circle,${BLUE}20 0%,transparent 70%)`, animation: 'pulse-ring 3s ease-in-out infinite' }} />
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={BLUE} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ filter: `drop-shadow(0 0 8px ${BLUE}88)`, transition: 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)' }}
         />
-        <defs>
-          <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#ef4444" />
-          </linearGradient>
-        </defs>
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-foreground">{percentage}</span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">%</span>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+        <span style={{ fontSize: '34px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pct}%</span>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.4)', fontWeight: 600, letterSpacing: '.3px' }}>Progress</span>
+        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,.25)', marginTop: '2px' }}>{completed}/{total} skills</span>
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value, icon, color }: {
-  label: string; value: string | number; icon: React.ReactNode;
-  color: 'red' | 'blue' | 'green' | 'orange';
-}) {
-  const colorMap = {
-    red: 'bg-red-50 text-red-600',
-    blue: 'bg-blue-50 text-primary',
-    green: 'bg-green-50 text-green-600',
-    orange: 'bg-orange-50 text-orange-600',
-  };
+function StatCard({ label, value, icon, color, delay }: { label: string; value: string | number; icon: React.ReactNode; color: string; delay: string }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${colorMap[color]}`}>{icon}</div>
+    <div className="stat-lift"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative', background: 'rgba(2,18,44,.85)', border: `1px solid ${hovered ? color + '44' : 'rgba(55,181,255,.14)'}`, borderRadius: '16px', padding: '18px', overflow: 'hidden',
+        boxShadow: hovered ? `0 8px 28px ${color}22` : 'none',
+        animation: `fade-up .45s ${delay} both`,
+      }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${color}99,transparent)` }} />
+      <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: `${color}1a`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', color, boxShadow: hovered ? `0 0 14px ${color}44` : 'none', transition: 'box-shadow .2s' }}>
+        {icon}
       </div>
-      <p className="text-xl font-black text-foreground">{value}</p>
-      <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+      <p style={{ fontSize: '30px', fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: '6px' }}>{value}</p>
+      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.38)', fontWeight: 600 }}>{label}</p>
     </div>
+  );
+}
+
+function ActivityDots({ days, active, today }: { days: Date[]; active: Set<string>; today: string }) {
+  return (
+    <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px', animation: 'fade-up .45s .2s both' }}>
+      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.38)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.6px' }}>This Week</p>
+      <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
+        {days.map((d, i) => {
+          const isToday = d.toDateString() === today;
+          const done = active.has(d.toDateString());
+          const dayIdx = d.getDay() === 0 ? 6 : d.getDay() - 1;
+          return (
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '100%', aspectRatio: '1', borderRadius: '7px', background: done ? BLUE : isToday ? 'rgba(55,181,255,.14)' : 'rgba(255,255,255,.05)', border: isToday ? `1.5px solid rgba(55,181,255,.45)` : '1px solid transparent', boxShadow: done ? `0 0 10px ${BLUE}66` : 'none', transition: 'all .2s' }} />
+              <span style={{ fontSize: '9px', color: isToday ? BLUE : 'rgba(255,255,255,.22)', fontWeight: isToday ? 800 : 400 }}>{WEEK_LABELS[dayIdx]}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ContinueLearningCard({ pillar }: { pillar: { sport: { id: string; name: string }; progress: { completedSkills: string[]; totalSkills: number; progressPercentage: number } } }) {
+  const slug = getPillarSlugFromDocId(pillar.sport.id);
+  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+  const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
+  const iconKey = info?.icon || 'Target';
+  const color = PILLAR_COLORS[iconKey] || BLUE;
+  const pct = Math.round(pillar.progress.progressPercentage);
+
+  return (
+    <Link href={`/pillars/${pillar.sport.id}`} style={{ textDecoration: 'none' }}>
+      <div className="continue-hover" style={{ background: `linear-gradient(135deg,rgba(2,18,44,.95) 0%,${color}18 60%,${color}0a 100%)`, border: `1px solid ${color}30`, borderRadius: '20px', padding: '24px', cursor: 'pointer', boxShadow: `0 4px 24px rgba(0,0,0,.3)` }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px' }}>
+          <div style={{ width: '58px', height: '58px', borderRadius: '18px', background: `${color}1c`, border: `1px solid ${color}38`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 24px ${color}33` }}>
+            <Icon size={26} color={color} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 800, color, background: `${color}18`, border: `1px solid ${color}28`, borderRadius: '20px', padding: '3px 10px', letterSpacing: '.5px', textTransform: 'uppercase', animation: 'pulse-ring 2.5s ease-in-out infinite' }}>
+                <Play size={9} fill={color} /> In Progress
+              </span>
+              <span style={{ fontSize: '22px', fontWeight: 900, color }}>{pct}%</span>
+            </div>
+            <p style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>
+              {info?.name || pillar.sport.name}
+            </p>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.38)', marginBottom: '14px' }}>
+              {pillar.progress.completedSkills.length} of {pillar.progress.totalSkills} skills completed
+            </p>
+            <div style={{ height: '8px', background: 'rgba(255,255,255,.08)', borderRadius: '99px', overflow: 'hidden' }}>
+              <div className="shimmer-bar" style={{ height: '100%', borderRadius: '99px', width: `${pct}%`, '--c': color, '--c2': `${color}88`, boxShadow: `0 0 10px ${color}55` } as React.CSSProperties} />
+            </div>
+          </div>
+          <ArrowRight size={18} color="rgba(255,255,255,.2)" style={{ flexShrink: 0, marginTop: '4px' }} />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function QuizRow({ pct, scoreColor, pillarColor, name, IconComp }: { pct: number; scoreColor: string; pillarColor: string; name: string; IconComp: React.ElementType }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', marginBottom: '4px', background: hovered ? 'rgba(255,255,255,.04)' : 'transparent', transition: 'background .15s' }}>
+      <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: `${pillarColor}18`, border: `1px solid ${pillarColor}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <IconComp size={16} color={pillarColor} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '6px' }}>{name}</p>
+        <div style={{ height: '5px', background: 'rgba(255,255,255,.07)', borderRadius: '99px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', background: scoreColor, borderRadius: '99px', width: `${pct}%`, boxShadow: `0 0 6px ${scoreColor}88`, transition: 'width .5s' }} />
+        </div>
+      </div>
+      <span style={{ fontSize: '15px', fontWeight: 900, color: scoreColor, minWidth: '42px', textAlign: 'right', flexShrink: 0 }}>{pct}%</span>
+    </div>
+  );
+}
+
+function QuickActionCard({ href, icon, label, sub, color }: { href: string; icon: React.ReactNode; label: string; sub: string; color: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Link href={href} style={{ textDecoration: 'none' }}>
+      <div className="qa-btn" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+        style={{ padding: '18px 14px', borderRadius: '14px', background: hovered ? `${color}18` : `${color}0c`, border: `1px solid ${hovered ? color + '40' : color + '20'}`, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', boxShadow: hovered ? `0 6px 20px ${color}22` : 'none' }}>
+        <div style={{ color }}>{icon}</div>
+        <div>
+          <p style={{ fontSize: '14px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>{label}</p>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)' }}>{sub}</p>
+        </div>
+      </div>
+    </Link>
   );
 }
 
 function EmptyPillars() {
   return (
-    <div className="text-center py-12 px-6">
-      <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-blue-50 flex items-center justify-center">
-        <BookOpen className="h-7 w-7 text-blue-400" />
+    <div style={{ textAlign: 'center', padding: '52px 24px' }}>
+      <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: 'rgba(55,181,255,.09)', border: '1px solid rgba(55,181,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: `0 0 24px ${BLUE}22` }}>
+        <BookOpen size={26} color={BLUE} />
       </div>
-      <h3 className="text-sm font-semibold text-foreground mb-1">No courses yet</h3>
-      <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
-        Start your goaltending journey by exploring the fundamental pillars.
+      <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>No courses yet</h3>
+      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,.35)', marginBottom: '24px', maxWidth: '260px', margin: '0 auto 24px', lineHeight: 1.5 }}>
+        Start your journey by exploring the fundamental goalie pillars.
       </p>
       <Link href="/pillars">
-        <Button size="sm">
+        <button style={{ background: BLUE, border: 'none', borderRadius: '10px', padding: '12px 24px', color: '#000a1f', fontSize: '14px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 16px ${BLUE}44` }}>
           Explore Pillars
-        </Button>
+        </button>
       </Link>
     </div>
-  );
-}
-
-function QuickActionLink({ href, icon, bg, label }: { href: string; icon: React.ReactNode; bg: string; label: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-colors group">
-      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>{icon}</div>
-      <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground">{label}</span>
-      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 ml-auto group-hover:text-muted-foreground transition-colors" />
-    </Link>
   );
 }

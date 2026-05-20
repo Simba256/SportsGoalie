@@ -12,22 +12,21 @@ import {
   Eye,
   Inbox,
 } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useAuth } from '@/lib/auth/context';
-import { SkeletonBannerLight, SkeletonStatCards, SkeletonList } from '@/components/ui/skeletons';
+import { SkeletonList } from '@/components/ui/skeletons';
 import { messageService } from '@/lib/database/services/message.service';
 import { Message, MessageType } from '@/types/message';
 import { toast } from 'sonner';
+
+const BLUE = '#37b5ff';
+const card = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px' };
+
+const TYPE_COLORS: Record<string, string> = {
+  general: BLUE,
+  instruction: '#a78bfa',
+  feedback: '#34d399',
+  video_review: '#f87171',
+};
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -40,25 +39,17 @@ export default function MessagesPage() {
 
   const fetchMessages = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
-
       const result = await messageService.getUserMessages(user.id, { limit: 50 });
-
       if (result.success && result.data) {
-        // Sort by date, newest first, with unread messages at the top
         const sorted = result.data.items.sort((a, b) => {
-          // Unread messages first
           if (!a.isRead && b.isRead) return -1;
           if (a.isRead && !b.isRead) return 1;
-
-          // Then by date
           const dateA = a.createdAt && typeof a.createdAt === 'object' && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
           const dateB = b.createdAt && typeof b.createdAt === 'object' && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
           return dateB.getTime() - dateA.getTime();
         });
-
         setMessages(sorted);
       }
     } catch (error) {
@@ -69,29 +60,15 @@ export default function MessagesPage() {
     }
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, [user]);
+  useEffect(() => { fetchMessages(); }, [user]);
 
-  // Filter messages
-  const filteredMessages = messages.filter(message => {
-    // Type filter
-    if (filterType !== 'all' && message.type !== filterType) {
-      return false;
-    }
-
-    // Read/unread filter
-    if (filterRead === 'read' && !message.isRead) {
-      return false;
-    }
-    if (filterRead === 'unread' && message.isRead) {
-      return false;
-    }
-
+  const filteredMessages = messages.filter(m => {
+    if (filterType !== 'all' && m.type !== filterType) return false;
+    if (filterRead === 'read' && !m.isRead) return false;
+    if (filterRead === 'unread' && m.isRead) return false;
     return true;
   });
 
-  // Calculate statistics
   const stats = {
     total: messages.length,
     unread: messages.filter(m => !m.isRead).length,
@@ -101,265 +78,194 @@ export default function MessagesPage() {
 
   const getTypeIcon = (type: MessageType) => {
     switch (type) {
-      case 'general':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'instruction':
-        return <FileText className="h-4 w-4" />;
-      case 'feedback':
-        return <Mail className="h-4 w-4" />;
-      case 'video_review':
-        return <Video className="h-4 w-4" />;
-      default:
-        return <MessageSquare className="h-4 w-4" />;
-    }
-  };
-
-  const getTypeBadgeVariant = (type: MessageType) => {
-    switch (type) {
-      case 'general':
-        return 'default';
-      case 'instruction':
-        return 'secondary';
-      case 'feedback':
-        return 'outline';
-      case 'video_review':
-        return 'destructive';
-      default:
-        return 'default';
+      case 'general': return <MessageSquare size={14} />;
+      case 'instruction': return <FileText size={14} />;
+      case 'feedback': return <Mail size={14} />;
+      case 'video_review': return <Video size={14} />;
+      default: return <MessageSquare size={14} />;
     }
   };
 
   if (!user) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Please log in to view your messages</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <SkeletonBannerLight />
-        <SkeletonStatCards count={4} />
-        <SkeletonList count={5} />
+      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>Please log in to view your messages</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
-        <div className="relative flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <MessageSquare className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Messages</h1>
-            <p className="text-muted-foreground mt-1">
-              Messages and feedback from your coaches
-            </p>
+    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+      <style>{`
+        .msg-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (min-width: 768px) { .msg-stats { grid-template-columns: repeat(4, 1fr); } }
+        .msg-filters { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 640px) { .msg-filters { grid-template-columns: 1fr 1fr; } }
+      `}</style>
+
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* Banner */}
+        <div style={{ ...card, padding: '24px 28px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '50%', height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <MessageSquare size={18} color={BLUE} />
+            </div>
+            <div>
+              <h1 style={{ fontSize: 'clamp(18px,3vw,28px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>Messages</h1>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Messages and feedback from your coaches</p>
+            </div>
           </div>
         </div>
-      </div>
 
-        {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-              <Inbox className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unread</CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.unread}</div>
-              {stats.unread > 0 && (
-                <p className="text-xs text-destructive font-medium mt-1">
-                  You have unread messages
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Video Reviews</CardTitle>
-              <Video className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.videoReview}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Instructions</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.instruction}</div>
-            </CardContent>
-          </Card>
+        {/* Stats */}
+        <div className="msg-stats">
+          {[
+            { label: 'Total Messages', value: stats.total, icon: <Inbox size={16} color={BLUE} /> },
+            { label: 'Unread', value: stats.unread, icon: <Mail size={16} color={BLUE} />, alert: stats.unread > 0 },
+            { label: 'Video Reviews', value: stats.videoReview, icon: <Video size={16} color={BLUE} /> },
+            { label: 'Instructions', value: stats.instruction, icon: <FileText size={16} color={BLUE} /> },
+          ].map(s => (
+            <div key={s.label} style={{ ...card, padding: '18px 20px', borderColor: s.alert ? 'rgba(248,113,113,0.35)' : 'rgba(55,181,255,0.18)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+                {s.icon}
+              </div>
+              <p style={{ fontSize: '32px', fontWeight: 900, color: s.alert ? '#f87171' : '#fff', lineHeight: 1 }}>{s.value}</p>
+              {s.alert && <p style={{ fontSize: '11px', color: '#f87171', marginTop: '4px', fontWeight: 600 }}>You have unread messages</p>}
+            </div>
+          ))}
         </div>
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filter Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Type Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Message Type</label>
-                <Select
-                  value={filterType}
-                  onValueChange={(value) => setFilterType(value as MessageType | 'all')}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="instruction">Instruction</SelectItem>
-                    <SelectItem value="feedback">Feedback</SelectItem>
-                    <SelectItem value="video_review">Video Review</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Read Status Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Read Status</label>
-                <Select
-                  value={filterRead}
-                  onValueChange={(value) => setFilterRead(value as 'all' | 'read' | 'unread')}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Messages</SelectItem>
-                    <SelectItem value="unread">Unread Only</SelectItem>
-                    <SelectItem value="read">Read Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <div style={{ ...card, padding: '18px 20px' }}>
+          <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Filter Messages</p>
+          <div className="msg-filters">
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '6px' }}>Message Type</label>
+              <select
+                value={filterType}
+                onChange={e => setFilterType(e.target.value as MessageType | 'all')}
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(1,12,32,0.9)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="all">All Types</option>
+                <option value="general">General</option>
+                <option value="instruction">Instruction</option>
+                <option value="feedback">Feedback</option>
+                <option value="video_review">Video Review</option>
+              </select>
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '6px' }}>Read Status</label>
+              <select
+                value={filterRead}
+                onChange={e => setFilterRead(e.target.value as 'all' | 'read' | 'unread')}
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(1,12,32,0.9)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="all">All Messages</option>
+                <option value="unread">Unread Only</option>
+                <option value="read">Read Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         {/* Messages List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Inbox ({filteredMessages.length})</CardTitle>
-            <CardDescription>
-              {filterType !== 'all' && `Showing ${filterType} messages`}
-              {filterRead !== 'all' && ` • ${filterRead}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredMessages.length > 0 ? (
-              <div className="space-y-3">
-                {filteredMessages.map((message) => (
+        <div style={{ ...card, padding: '22px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Inbox ({filteredMessages.length})</h2>
+              {(filterType !== 'all' || filterRead !== 'all') && (
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                  {filterType !== 'all' && `Showing ${filterType} messages`}{filterRead !== 'all' && ` · ${filterRead}`}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {loading ? (
+            <SkeletonList count={5} />
+          ) : filteredMessages.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {filteredMessages.map(message => {
+                const typeColor = TYPE_COLORS[message.type] || BLUE;
+                const msgDate = message.createdAt && typeof message.createdAt === 'object' && 'toDate' in message.createdAt
+                  ? message.createdAt.toDate()
+                  : new Date(message.createdAt);
+                return (
                   <div
                     key={message.id}
-                    className={`p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
-                      !message.isRead ? 'border-primary bg-primary/5' : ''
-                    }`}
                     onClick={() => router.push(`/messages/${message.id}`)}
+                    style={{ padding: '14px 16px', borderRadius: '12px', border: `1px solid ${!message.isRead ? `${typeColor}35` : 'rgba(55,181,255,0.12)'}`, background: !message.isRead ? `${typeColor}06` : 'rgba(1,12,32,0.4)', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `${typeColor}50`; (e.currentTarget as HTMLDivElement).style.background = `${typeColor}0a`; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = !message.isRead ? `${typeColor}35` : 'rgba(55,181,255,0.12)'; (e.currentTarget as HTMLDivElement).style.background = !message.isRead ? `${typeColor}06` : 'rgba(1,12,32,0.4)'; }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        {/* Header */}
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center space-x-2">
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Header row */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: typeColor }}>
                             {getTypeIcon(message.type)}
-                            <h4 className="font-medium">{message.subject}</h4>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{message.subject}</span>
                           </div>
-                          <Badge variant={getTypeBadgeVariant(message.type)} className="text-xs">
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: typeColor, background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: '20px', padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             {message.type.replace('_', ' ')}
-                          </Badge>
+                          </span>
                           {!message.isRead && (
-                            <Badge variant="default" className="text-xs">
-                              New
-                            </Badge>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#000f28', background: BLUE, borderRadius: '20px', padding: '2px 8px' }}>New</span>
                           )}
                         </div>
 
-                        {/* Message Preview */}
-                        <p className="text-sm text-muted-foreground">
-                          {message.message.length > 150
-                            ? message.message.substring(0, 150) + '...'
-                            : message.message}
+                        {/* Preview */}
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {message.message.length > 150 ? message.message.substring(0, 150) + '...' : message.message}
                         </p>
 
                         {/* Attachments */}
                         {message.attachments && message.attachments.length > 0 && (
-                          <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
                             {message.attachments.some(a => a.type === 'image') && (
-                              <div className="flex items-center space-x-1">
-                                <ImageIcon className="h-3 w-3" />
-                                <span>{message.attachments.filter(a => a.type === 'image').length} image(s)</span>
-                              </div>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ImageIcon size={11} />{message.attachments.filter(a => a.type === 'image').length} image(s)</span>
                             )}
                             {message.attachments.some(a => a.type === 'video') && (
-                              <div className="flex items-center space-x-1">
-                                <Video className="h-3 w-3" />
-                                <span>{message.attachments.filter(a => a.type === 'video').length} video(s)</span>
-                              </div>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Video size={11} />{message.attachments.filter(a => a.type === 'video').length} video(s)</span>
                             )}
                             {message.attachments.some(a => a.type === 'document') && (
-                              <div className="flex items-center space-x-1">
-                                <FileText className="h-3 w-3" />
-                                <span>{message.attachments.filter(a => a.type === 'document').length} document(s)</span>
-                              </div>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={11} />{message.attachments.filter(a => a.type === 'document').length} doc(s)</span>
                             )}
                           </div>
                         )}
 
                         {/* Date */}
-                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{(message.createdAt && typeof message.createdAt === 'object' && 'toDate' in message.createdAt ? message.createdAt.toDate() : new Date(message.createdAt)).toLocaleString()}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                          <Clock size={10} />
+                          <span>{msgDate.toLocaleString()}</span>
                         </div>
                       </div>
 
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <button
+                        onClick={e => { e.stopPropagation(); router.push(`/messages/${message.id}`); }}
+                        style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                      >
+                        <Eye size={14} />
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Inbox className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No messages found</h3>
-                <p className="text-muted-foreground">
-                  {filterType !== 'all' || filterRead !== 'all'
-                    ? 'Try adjusting your filters'
-                    : 'You don\'t have any messages yet'}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+              <Inbox size={48} color="rgba(255,255,255,0.12)" style={{ margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No messages found</h3>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
+                {filterType !== 'all' || filterRead !== 'all' ? 'Try adjusting your filters' : "You don't have any messages yet"}
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

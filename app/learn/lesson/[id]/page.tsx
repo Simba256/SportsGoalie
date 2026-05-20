@@ -3,43 +3,29 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Loader2,
-  ArrowLeft,
-  BookOpen,
-  Clock,
-  Target,
-  CheckCircle2,
-} from 'lucide-react';
+import { Loader2, ArrowLeft, BookOpen, Clock, Target, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { customContentService, customCurriculumService } from '@/lib/database';
 import { CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 
-// Helper functions for YouTube URLs
+const BLUE = '#37b5ff';
+const RED = '#f87171';
+
 function isYouTubeUrl(url: string): boolean {
   return url.includes('youtube.com') || url.includes('youtu.be');
 }
 
 function getYouTubeEmbedUrl(url: string): string {
-  // Handle various YouTube URL formats
   let videoId = '';
-
   if (url.includes('youtu.be/')) {
-    // Short format: https://youtu.be/VIDEO_ID
     videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
   } else if (url.includes('youtube.com/watch')) {
-    // Standard format: https://www.youtube.com/watch?v=VIDEO_ID
     const urlParams = new URLSearchParams(url.split('?')[1]);
     videoId = urlParams.get('v') || '';
   } else if (url.includes('youtube.com/embed/')) {
-    // Already embed format
     return url;
   }
-
   return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
 }
 
@@ -51,7 +37,6 @@ export default function CustomLessonPage() {
   const lessonId = params.id as string;
   const pillarId = searchParams.get('pillarId');
   const skillId = searchParams.get('skillId');
-
   const backToSkillPage = !!pillarId && !!skillId;
 
   const [lesson, setLesson] = useState<CustomContentLibrary | null>(null);
@@ -60,28 +45,18 @@ export default function CustomLessonPage() {
   const [isCompleted, setIsCompleted] = useState(false);
 
   const getBackHref = () => {
-    if (!backToSkillPage) {
-      return '/dashboard';
-    }
-
-    if (!isCompleted) {
-      return `/pillars/${pillarId}/skills/${skillId}`;
-    }
-
+    if (!backToSkillPage) return '/dashboard';
+    if (!isCompleted) return `/pillars/${pillarId}/skills/${skillId}`;
     return `/pillars/${pillarId}/skills/${skillId}?completedContentId=${lessonId}&completedAt=${Date.now()}`;
   };
 
   useEffect(() => {
-    if (lessonId) {
-      loadLesson();
-    }
+    if (lessonId) { loadLesson(); }
   }, [lessonId, user?.id]);
 
   const loadLesson = async () => {
     try {
       setLoading(true);
-
-      // Fetch lesson content and curriculum status in parallel
       const [result, curriculumResult] = await Promise.all([
         customContentService.getContent(lessonId),
         user?.id
@@ -91,7 +66,6 @@ export default function CustomLessonPage() {
 
       if (result.success && result.data) {
         setLesson(result.data);
-
         if (curriculumResult?.success && curriculumResult.data) {
           const curriculumItem = curriculumResult.data.items.find(
             item => item.contentId === lessonId && (item.type === 'custom_lesson' || item.type === 'lesson')
@@ -115,34 +89,23 @@ export default function CustomLessonPage() {
 
   const handleMarkComplete = async () => {
     if (!user?.id || !lessonId) return;
-
     try {
       setCompleting(true);
-
-      // Get student's curriculum
       const curriculumResult = await customCurriculumService.getStudentCurriculum(user.id);
       if (!curriculumResult.success || !curriculumResult.data) {
         toast.error('Could not find your curriculum');
         return;
       }
-
-      // Find the curriculum item for this lesson
       const curriculumItem = curriculumResult.data.items.find(
         item => item.contentId === lessonId && (item.type === 'custom_lesson' || item.type === 'lesson')
       );
-
       if (!curriculumItem) {
         toast.error('This lesson is not in your curriculum');
         return;
       }
-
-      // Mark as completed
       const result = await customCurriculumService.markItemComplete(
-        curriculumResult.data.id,
-        curriculumItem.id,
-        user.id
+        curriculumResult.data.id, curriculumItem.id, user.id
       );
-
       if (result.success) {
         setIsCompleted(true);
         toast.success('Lesson completed! Great job!');
@@ -158,166 +121,150 @@ export default function CustomLessonPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] p-6">
-        <SkeletonContentPage />
-      </div>
-    );
+    return <div style={{ minHeight: '60vh', padding: '24px' }}><SkeletonContentPage /></div>;
   }
 
-  if (!lesson) {
-    return null;
-  }
+  if (!lesson) return null;
+
+  const cardStyle = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px', overflow: 'hidden' };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* Header */}
-      <div className="relative rounded-3xl border border-red-200/70 bg-gradient-to-r from-red-100/80 via-white to-blue-100/70 px-6 py-6 overflow-hidden shadow-xl shadow-red-200/30">
-        <Button variant="ghost" onClick={() => router.push(getBackHref())} className="mb-4 text-slate-700 hover:bg-white/80">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {backToSkillPage ? 'Back to Skill' : 'Back to Dashboard'}
-        </Button>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary">
-                <BookOpen className="h-3 w-3 mr-1" />
-                Lesson
-              </Badge>
+    <>
+      <style>{`
+        .lesson-complete:hover:not(:disabled) { opacity: 0.9 !important; transform: translateY(-1px); }
+        .lesson-back:hover { color: #fff !important; }
+        @keyframes ls-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+      <div style={{ maxWidth: '896px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* Header */}
+        <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(55,181,255,0.2)', background: 'linear-gradient(135deg, #000f28 0%, #062344 50%, #0a1628 100%)', padding: '24px', boxShadow: '0 4px 32px rgba(0,0,0,0.4)' }}>
+          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(55,181,255,0.08)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '-40px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(248,113,113,0.05)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+          <button
+            onClick={() => router.push(getBackHref())}
+            className="lesson-back"
+            style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.45)', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: '16px', transition: 'color 0.2s', padding: 0 }}
+          >
+            <ArrowLeft size={14} />
+            {backToSkillPage ? 'Back to Skill' : 'Back to Dashboard'}
+          </button>
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', color: BLUE, fontSize: '11px', fontWeight: 700 }}>
+                <BookOpen size={11} /> Lesson
+              </span>
               {lesson.estimatedTimeMinutes && (
-                <Badge variant="outline">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {lesson.estimatedTimeMinutes} min
-                </Badge>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 600 }}>
+                  <Clock size={11} /> {lesson.estimatedTimeMinutes} min
+                </span>
+              )}
+              {isCompleted && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399', fontSize: '11px', fontWeight: 700 }}>
+                  <CheckCircle2 size={11} /> Completed
+                </span>
               )}
             </div>
-            <h1 className="text-3xl font-bold mb-2 text-slate-900">{lesson.title}</h1>
-            <p className="text-slate-600">{lesson.description}</p>
+            <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: 900, marginBottom: '8px', letterSpacing: '-0.02em' }}>{lesson.title}</h1>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>{lesson.description}</p>
           </div>
         </div>
-      </div>
 
-      {/* Video Section */}
-      {lesson.videoUrl && (
-        <Card className="border-red-100">
-          <CardContent className="p-0">
-            <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
+        {/* Video */}
+        {lesson.videoUrl && (
+          <div style={cardStyle}>
+            <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
               {isYouTubeUrl(lesson.videoUrl) ? (
                 <iframe
                   src={getYouTubeEmbedUrl(lesson.videoUrl)}
-                  className="w-full h-full"
+                  style={{ width: '100%', height: '100%' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title={lesson.title}
                 />
               ) : (
-                <video
-                  src={lesson.videoUrl}
-                  controls
-                  className="w-full h-full"
-                >
+                <video src={lesson.videoUrl} controls style={{ width: '100%', height: '100%' }}>
                   Your browser does not support the video tag.
                 </video>
               )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Learning Objectives */}
-      {lesson.learningObjectives && lesson.learningObjectives.length > 0 && (
-        <Card className="border-red-100">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Learning Objectives
-            </CardTitle>
-            <CardDescription>
-              What you'll learn in this lesson
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
+        {/* Learning Objectives */}
+        {lesson.learningObjectives && lesson.learningObjectives.length > 0 && (
+          <div style={{ ...cardStyle, padding: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+              <Target size={18} color={BLUE} />
+              <h2 style={{ color: '#fff', fontSize: '15px', fontWeight: 700 }}>Learning Objectives</h2>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginBottom: '16px' }}>What you'll learn in this lesson</p>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
               {lesson.learningObjectives.map((objective, index) => (
-                <li key={index} className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <span>{objective}</span>
+                <li key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <CheckCircle2 size={16} color={RED} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', lineHeight: 1.6 }}>{objective}</span>
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Lesson Content */}
-      {lesson.content && (
-        <Card className="border-red-100">
-          <CardHeader>
-            <CardTitle>Lesson Content</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+        {/* Lesson Content */}
+        {lesson.content && (
+          <div style={{ ...cardStyle, padding: '24px' }}>
+            <h2 style={{ color: '#fff', fontSize: '15px', fontWeight: 700, marginBottom: '16px' }}>Lesson Content</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {lesson.content.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">
+                <p key={index} style={{ color: 'rgba(255,255,255,0.65)', fontSize: '14px', lineHeight: 1.7 }}>
                   {paragraph}
                 </p>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Tags */}
-      {lesson.tags && lesson.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {lesson.tags.map((tag, index) => (
-            <Badge key={index} variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
+        {/* Tags */}
+        {lesson.tags && lesson.tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {lesson.tags.map((tag, index) => (
+              <span key={index} style={{ padding: '5px 12px', borderRadius: '20px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, fontSize: '11px', fontWeight: 700 }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
-      {/* Complete Button */}
-      {user?.role === 'student' && (
-        <Card className="border-red-200 bg-red-50/50">
-          <CardContent className="flex items-center justify-between py-6">
+        {/* Complete Button */}
+        {user?.role === 'student' && (
+          <div style={{ background: isCompleted ? 'rgba(52,211,153,0.05)' : 'rgba(248,113,113,0.05)', border: `1px solid ${isCompleted ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.18)'}`, borderRadius: '16px', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div>
-              <h3 className="font-semibold">
+              <h3 style={{ color: '#fff', fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>
                 {isCompleted ? 'Lesson Completed!' : 'Finished the lesson?'}
               </h3>
-              <p className="text-sm text-slate-600">
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
                 {isCompleted
                   ? 'Great job! You can review this lesson anytime.'
                   : 'Mark it as complete to track your progress'}
               </p>
             </div>
-            <Button
+            <button
               onClick={handleMarkComplete}
               disabled={completing || isCompleted}
-              size="lg"
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="lesson-complete"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 22px', borderRadius: '10px', border: 'none', background: isCompleted ? 'rgba(52,211,153,0.15)' : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', color: isCompleted ? '#34d399' : '#fff', fontSize: '13px', fontWeight: 700, cursor: completing || isCompleted ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxShadow: isCompleted ? 'none' : '0 4px 16px rgba(220,38,38,0.3)', whiteSpace: 'nowrap', opacity: completing ? 0.7 : 1 }}
             >
               {completing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Completing...
-                </>
+                <><Loader2 size={16} style={{ animation: 'ls-spin 1s linear infinite' }} />Completing...</>
               ) : isCompleted ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Completed
-                </>
+                <><CheckCircle2 size={16} />Completed</>
               ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Mark Complete
-                </>
+                <><CheckCircle2 size={16} />Mark Complete</>
               )}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
