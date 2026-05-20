@@ -138,8 +138,9 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+      <style>{`@media (max-width: 480px) { .gif-name { grid-template-columns: 1fr !important; } }`}</style>
       {/* Name row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="gif-name" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
           <label style={labelStyle}>First Name</label>
           <input

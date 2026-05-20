@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
-import { Loader2, Users, Mail } from 'lucide-react';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
+import { UserPlus, CheckCircle, Clock, XCircle, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { invitationService } from '@/lib/services/invitation.service';
 import { Invitation } from '@/types/invitation';
@@ -11,28 +12,23 @@ import { GoalieInviteForm } from './components/GoalieInviteForm';
 import { GoalieInviteList } from './components/GoalieInviteList';
 
 const BLUE = '#37b5ff';
-const BLUE3 = '#0ea5e9';
+const RED = '#f87171';
+const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
 
 const TABS = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'accepted', label: 'Accepted' },
-  { key: 'expired', label: 'Expired' },
-  { key: 'revoked', label: 'Revoked' },
-] as const;
-
-type TabKey = (typeof TABS)[number]['key'];
+  { id: 'all', label: 'All' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'accepted', label: 'Accepted' },
+  { id: 'expired', label: 'Expired' },
+  { id: 'revoked', label: 'Revoked' },
+];
 
 export default function GoalieInvitationsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-
-  const [mounted, setMounted] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabKey>('all');
-
-  useEffect(() => { setMounted(true); }, []);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
@@ -41,9 +37,7 @@ export default function GoalieInvitationsPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      loadInvitations();
-    }
+    if (user?.role === 'admin') loadInvitations();
   }, [user]);
 
   const loadInvitations = async () => {
@@ -72,213 +66,108 @@ export default function GoalieInvitationsPage() {
     );
   };
 
-  const filtered = activeTab === 'all'
-    ? invitations
-    : invitations.filter(i => i.status === activeTab);
-
-  const counts = {
-    all: invitations.length,
-    pending: invitations.filter(i => i.status === 'pending').length,
-    accepted: invitations.filter(i => i.status === 'accepted').length,
-    expired: invitations.filter(i => i.status === 'expired').length,
-    revoked: invitations.filter(i => i.status === 'revoked').length,
+  const handleDelete = (deleted: Invitation) => {
+    setInvitations(prev => prev.filter(i => i.id !== deleted.id));
   };
 
-  if (!mounted || authLoading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'rgba(255,255,255,0.4)',
-          gap: '10px',
-        }}
-      >
-        <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
-        Loading...
-      </div>
-    );
+  const filterInvitations = (status: string) => {
+    if (status === 'all') return invitations;
+    return invitations.filter(i => i.status === status);
+  };
+
+  const pendingCount = invitations.filter(i => i.status === 'pending').length;
+  const acceptedCount = invitations.filter(i => i.status === 'accepted').length;
+  const expiredCount = invitations.filter(i => i.status === 'expired').length;
+  const revokedCount = invitations.filter(i => i.status === 'revoked').length;
+
+  if (authLoading || user?.role !== 'admin') {
+    return <div style={{ padding: '48px' }}><SkeletonDarkPage /></div>;
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
-        padding: '32px 24px',
-      }}
-    >
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <>
+      <style>{`
+        .gi-tab { transition: all 0.2s !important; }
+        .gi-tab:hover { background: rgba(55,181,255,0.06) !important; }
+        @media (max-width: 768px) { .gi-layout { grid-template-columns: 1fr !important; } .gi-stats { grid-template-columns: repeat(2, 1fr) !important; } }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
         {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Users size={20} color="#fff" />
-            </div>
-            <div>
-              <h1
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 800,
-                  color: '#fff',
-                  margin: 0,
-                  letterSpacing: '-0.5px',
-                }}
-              >
-                Goalie Invitations
-              </h1>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
-                Invite goalies and assign them to a coach
-              </p>
-            </div>
-          </div>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>Goalie Invitations</h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px' }}>Invite goalies to join your platform and assign them to a coach</p>
         </div>
 
-        {/* Invite form card */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(96,205,255,0.15)',
-            borderRadius: '14px',
-            padding: '24px',
-            marginBottom: '28px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '20px',
-            }}
-          >
-            <Mail size={15} color={BLUE} />
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 700,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                color: BLUE,
-              }}
-            >
-              Send Invite Link
-            </span>
-          </div>
-          {user && (
-            <GoalieInviteForm
-              invitedBy={user.id}
-              invitedByName={user.displayName ?? 'Admin'}
-              onInvitationCreated={handleInvitationCreated}
-            />
-          )}
+        {/* Stat Cards */}
+        <div className="gi-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {[
+            { label: 'Total', value: invitations.length, icon: Mail, color: BLUE },
+            { label: 'Pending', value: pendingCount, icon: Clock, color: '#fbbf24' },
+            { label: 'Accepted', value: acceptedCount, icon: CheckCircle, color: '#22c55e' },
+            { label: 'Revoked', value: revokedCount, icon: XCircle, color: RED },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} style={{ position: 'relative', ...card, padding: '16px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}66, transparent)` }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600 }}>{label}</p>
+                <Icon size={14} color={`${color}88`} />
+              </div>
+              <p style={{ color: '#fff', fontWeight: 800, fontSize: '26px', lineHeight: 1 }}>{value}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Invitations list card */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(96,205,255,0.15)',
-            borderRadius: '14px',
-            padding: '24px',
-          }}
-        >
-          {/* List header + tabs */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '20px',
-              flexWrap: 'wrap',
-              gap: '12px',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 700,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.5)',
-              }}
-            >
-              Sent Invitations
-            </span>
+        {/* Main Layout */}
+        <div className="gi-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', alignItems: 'start' }}>
+
+          {/* Invite Form */}
+          <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <UserPlus size={16} color={RED} />
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Invite New Goalie</h2>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', marginBottom: '18px' }}>Send an invitation email and assign a coach</p>
+            {user && (
+              <GoalieInviteForm
+                invitedBy={user.id}
+                invitedByName={user.displayName ?? 'Admin'}
+                onInvitationCreated={handleInvitationCreated}
+              />
+            )}
+          </div>
+
+          {/* Invitations List */}
+          <div style={{ position: 'relative', ...card, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
 
             {/* Tabs */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '4px',
-                background: 'rgba(255,255,255,0.05)',
-                borderRadius: '8px',
-                padding: '4px',
-              }}
-            >
-              {TABS.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: activeTab === tab.key ? `rgba(55,181,255,0.2)` : 'transparent',
-                    color: activeTab === tab.key ? BLUE : 'rgba(255,255,255,0.4)',
-                    fontSize: '12px',
-                    fontWeight: activeTab === tab.key ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  {tab.label}
-                  {counts[tab.key] > 0 && (
-                    <span
-                      style={{
-                        background:
-                          activeTab === tab.key
-                            ? `rgba(55,181,255,0.3)`
-                            : 'rgba(255,255,255,0.1)',
-                        color: activeTab === tab.key ? BLUE : 'rgba(255,255,255,0.5)',
-                        borderRadius: '10px',
-                        padding: '1px 6px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                      }}
-                    >
-                      {counts[tab.key]}
-                    </span>
-                  )}
-                </button>
-              ))}
+            <div style={{ display: 'flex', borderBottom: '1px solid rgba(55,181,255,0.1)', overflowX: 'auto' }}>
+              {TABS.map(tab => {
+                const active = activeTab === tab.id;
+                const count = tab.id === 'all' ? invitations.length : tab.id === 'pending' ? pendingCount : tab.id === 'accepted' ? acceptedCount : tab.id === 'expired' ? expiredCount : revokedCount;
+                return (
+                  <button key={tab.id} className={!active ? 'gi-tab' : ''} onClick={() => setActiveTab(tab.id)}
+                    style={{ flex: 1, minWidth: '80px', padding: '13px 6px', background: active ? 'rgba(55,181,255,0.08)' : 'transparent', border: 'none', borderBottom: active ? `2px solid ${BLUE}` : '2px solid transparent', color: active ? BLUE : 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {tab.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <GoalieInviteList
+                invitations={filterInvitations(activeTab)}
+                loading={loading}
+                onResend={handleResend}
+                onRevoke={handleRevoke}
+                onDelete={handleDelete}
+              />
             </div>
           </div>
-
-          <GoalieInviteList
-            invitations={filtered}
-            loading={loading}
-            onResend={handleResend}
-            onRevoke={handleRevoke}
-          />
         </div>
       </div>
-    </div>
+    </>
   );
 }
