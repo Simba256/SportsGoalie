@@ -264,6 +264,16 @@ export class UserService extends BaseDatabaseService {
     });
   }
 
+  async deleteUser(userId: string, requestingAdminId: string): Promise<ApiResponse<void>> {
+    if (!requestingAdminId) {
+      return { success: false, error: { code: 'UNAUTHORIZED', message: 'Admin ID required' }, timestamp: new Date() };
+    }
+    if (userId === requestingAdminId) {
+      return { success: false, error: { code: 'FORBIDDEN', message: 'Cannot delete your own account' }, timestamp: new Date() };
+    }
+    return this.delete(this.USERS_COLLECTION, userId);
+  }
+
   // User listing and search
   async getAllUsers(
     options: QueryOptions & {
