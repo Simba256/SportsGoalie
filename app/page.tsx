@@ -1,21 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
 
 export default function Home() {
   const router = useRouter();
-  const [vidIndex, setVidIndex] = useState(0);
-  const VIDEOS = [
-    { src: '/video1.mp4', label: 'Training Session', tag: '01' },
-    { src: '/video2.mp4', label: 'Game Performance', tag: '02' },
-  ];
-  useEffect(() => {
-    const t = setInterval(() => setVidIndex(i => (i + 1) % VIDEOS.length), 8000);
-    return () => clearInterval(t);
-  }, []);
 
   const testimonials = [
     {
@@ -103,6 +93,10 @@ export default function Home() {
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
               >{item}</span>
             ))}
+            <a href="tel:+14169390555" style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', textDecoration: 'none', letterSpacing: '0.2px', transition: 'color 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+            >+1 (416) 939-0555</a>
           </div>
 
           {/* Login CTA */}
@@ -210,110 +204,6 @@ export default function Home() {
           </span>
         </div>
       </section>
-
-      {/* ── VIDEO SLIDESHOW ── */}
-      <section style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)', padding: '80px 24px' }}>
-        <style>{`
-          @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
-          @keyframes slide-out-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
-          .vid-next-enter { animation: slide-in-right 0.7s cubic-bezier(0.4,0,0.2,1) forwards; }
-          .vid-prev-exit  { animation: slide-out-left 0.7s cubic-bezier(0.4,0,0.2,1) forwards; }
-          .vs-dot:hover { opacity: 1 !important; }
-          .vs-arrow:hover { background: rgba(55,181,255,0.25) !important; }
-        `}</style>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-
-          {/* Header */}
-          <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '10px' }}>IN ACTION</p>
-              <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 48px)', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>
-                Watch Goalies Train Smarter
-              </h2>
-            </div>
-            {/* Prev / Next arrows */}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {['‹', '›'].map((arrow, i) => (
-                <button
-                  key={arrow}
-                  className="vs-arrow"
-                  onClick={() => setVidIndex(idx => (idx + (i === 0 ? -1 + VIDEOS.length : 1)) % VIDEOS.length)}
-                  style={{
-                    width: '44px', height: '44px', borderRadius: '50%',
-                    background: 'rgba(55,181,255,0.1)',
-                    border: '1px solid rgba(55,181,255,0.3)',
-                    color: '#37b5ff', fontSize: '22px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'background 0.2s', lineHeight: 1,
-                  }}
-                >{arrow}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Slider */}
-          <div style={{
-            position: 'relative', borderRadius: '20px', overflow: 'hidden',
-            border: '1px solid rgba(55,181,255,0.3)',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-            aspectRatio: '16/9', background: '#000',
-          }}>
-            {VIDEOS.map(({ src, label, tag }, i) => (
-              <div
-                key={src}
-                style={{
-                  position: 'absolute', inset: 0,
-                  transform: i === vidIndex ? 'translateX(0)' : i < vidIndex ? 'translateX(-100%)' : 'translateX(100%)',
-                  transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
-                  willChange: 'transform',
-                }}
-              >
-                <video
-                  src={src}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-                {/* Bottom overlay */}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  background: 'linear-gradient(to top, rgba(0,8,24,0.9) 0%, transparent 100%)',
-                  padding: '40px 28px 20px',
-                  display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
-                }}>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase' }}>{label}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#37b5ff', letterSpacing: '2px' }}>{tag} / {String(VIDEOS.length).padStart(2,'0')}</span>
-                </div>
-                {/* Top glow line */}
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(55,181,255,0.6), transparent)' }} />
-              </div>
-            ))}
-          </div>
-
-          {/* Dots */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
-            {VIDEOS.map((_, i) => (
-              <button
-                key={i}
-                className="vs-dot"
-                onClick={() => setVidIndex(i)}
-                style={{
-                  width: i === vidIndex ? '28px' : '8px',
-                  height: '8px', borderRadius: '99px', border: 'none', cursor: 'pointer',
-                  background: i === vidIndex ? '#37b5ff' : 'rgba(255,255,255,0.2)',
-                  opacity: i === vidIndex ? 1 : 0.6,
-                  transition: 'all 0.3s ease',
-                  boxShadow: i === vidIndex ? '0 0 8px rgba(55,181,255,0.5)' : 'none',
-                  padding: 0,
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
 
       {/* ── MAIN CONTENT ── */}
       <>
@@ -506,6 +396,81 @@ export default function Home() {
             className="!bg-[#000f28]"
           />
       </>
+
+      {/* ── FOOTER ── */}
+      <footer style={{ background: '#000a1e', borderTop: '1px solid rgba(55,181,255,0.15)', padding: '48px 24px 32px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" fill="#000f28" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>
+                  SMARTER <span style={{ color: '#37b5ff' }}>GOALIE</span>
+                </span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, maxWidth: '240px' }}>
+                Building intelligent goaltenders through structured learning, data-driven analytics, and personalized coaching.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '16px' }}>Platform</p>
+              <div className="flex flex-col gap-3">
+                {['Features', 'For Goalies', 'For Parents', 'For Coaches'].map(link => (
+                  <span key={link} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'color 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+                  >{link}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '16px' }}>Contact Us</p>
+              <div className="flex flex-col gap-4">
+                <a href="mailto:info@smartergoalie.com" className="flex items-center gap-3 group" style={{ textDecoration: 'none' }}>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#37b5ff" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  </div>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', transition: 'color 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
+                  >info@smartergoalie.com</span>
+                </a>
+                <a href="tel:+14169390555" className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#37b5ff" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                  </div>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', transition: 'color 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
+                  >+1 (416) 939-0555</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', letterSpacing: '1px' }}>© 2024 SMARTER GOALIE. ALL RIGHTS RESERVED.</span>
+            <div className="flex gap-5">
+              {['Privacy Policy', 'Terms of Service'].map(item => (
+                <span key={item} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'color 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+                >{item}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
 
     </div>
   );
