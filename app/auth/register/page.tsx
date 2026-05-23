@@ -175,6 +175,7 @@ export default function RegisterPage() {
                   data-testid="role-select"
                   style={{
                     ...inputStyle,
+                    background: '#062344',
                     appearance: 'none',
                     paddingRight: '36px',
                     cursor: 'pointer',
@@ -182,8 +183,8 @@ export default function RegisterPage() {
                   onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
                   onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
                 >
-                  <option value="parent" style={{ background: '#040e22' }}>Parent</option>
-                  <option value="coach" style={{ background: '#040e22' }}>Coach</option>
+                  <option value="parent" style={{ background: '#062344', color: '#fff' }}>Parent</option>
+                  <option value="coach" style={{ background: '#062344', color: '#fff' }}>Coach</option>
                 </select>
                 <ChevronDown
                   size={14}

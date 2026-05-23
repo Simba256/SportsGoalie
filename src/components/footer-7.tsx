@@ -49,7 +49,7 @@ const defaultSections = [
     title: "Connect",
     links: [
       { name: "info@smartergoalie.com", href: "mailto:info@smartergoalie.com" },
-      { name: "416", href: "tel:416" },
+      { name: "+1 (416) 939-0555", href: "tel:+14169390555" },
       { name: "Help Center", href: "#" },
       { name: "Privacy", href: "#" },
     ],
