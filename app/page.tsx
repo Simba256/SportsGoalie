@@ -10,39 +10,57 @@ export default function Home() {
   const testimonials = [
     {
       author: {
-        name: 'Aarav Singh',
-        handle: '@goalieaarav',
+        name: 'Tyler Bouchard',
+        handle: '@tylerbouchard_g',
         avatar:
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'The goalie drills are super practical. I can see my reaction speed improving every week with clear feedback after each session.',
+      text: 'The angle-mark system changed how I read plays entirely. I used to guess my positioning — now I own my crease with confidence every game.',
     },
     {
       author: {
-        name: 'Maya Patel',
-        handle: '@parentmaya',
+        name: 'Sandra Lafleur',
+        handle: '@sandraL_hockeymom',
         avatar:
-          'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'As a parent, I finally understand my child\'s progress. The weekly reports and coach notes make it easy to support training at home.',
+      text: 'My son used to come off the ice frustrated with no idea what went wrong. Now he logs his sessions, reviews the feedback, and shows up next practice with a real plan.',
     },
     {
       author: {
-        name: 'Coach Leo Martins',
-        handle: '@coachleo',
+        name: 'Coach Rémi Tremblay',
+        handle: '@remitremblay_goalie',
         avatar:
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'Smarter Goalie helps me assign the right drills to each athlete. Personalized learning paths save time and improve outcomes fast.',
+      text: 'I coach AAA midget goalies in Québec and this platform fills a gap nothing else does. The charting tools give me data I can actually coach from — not just gut feelings.',
     },
     {
       author: {
-        name: 'Zoya Khan',
-        handle: '@zoyasaves',
+        name: 'Kaitlyn MacPherson',
+        handle: '@kaitlyn_saves',
         avatar:
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'I love that everything is in one place: training plans, quizzes, and progress charts. It feels like having a full academy in my pocket.',
+      text: 'As a female goalie in a program that rarely focuses on us specifically, Smarter Goalie finally feels like it was built for me. The seven-point system alone is worth it.',
+    },
+    {
+      author: {
+        name: 'Derek Kowalski',
+        handle: '@dkowalski_pads',
+        avatar:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+      },
+      text: 'I\'ve been playing rep hockey in Ontario for six years. Nothing has improved my rebound control and breakout reading faster than the video quizzes on this platform.',
+    },
+    {
+      author: {
+        name: 'Lucie Gagnon',
+        handle: '@lucieg_parentBC',
+        avatar:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      },
+      text: 'The coach sends weekly notes through the app and I can actually follow along with my daughter\'s development. For the first time I feel like part of her training, not just a driver.',
     },
   ];
 
@@ -391,86 +409,13 @@ export default function Home() {
 
           <TestimonialsSection
             title="Voices From The Smarter Goalie Community"
-            description="Goalkeepers, parents, and coaches trust our sports LMS to build skills, confidence, and consistent match performance."
+            description="Goalies, parents, and coaches trust Smarter Goalie to sharpen their game, track real progress, and train with purpose."
             testimonials={testimonials}
             className="!bg-[#000f28]"
+            dark={true}
+            gradientColor="#000f28"
           />
       </>
-
-      {/* ── FOOTER ── */}
-      <footer style={{ background: '#000a1e', borderTop: '1px solid rgba(55,181,255,0.15)', padding: '48px 24px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" fill="#000f28" />
-                  </svg>
-                </div>
-                <span style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>
-                  SMARTER <span style={{ color: '#37b5ff' }}>GOALIE</span>
-                </span>
-              </div>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, maxWidth: '240px' }}>
-                Building intelligent goaltenders through structured learning, data-driven analytics, and personalized coaching.
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '16px' }}>Platform</p>
-              <div className="flex flex-col gap-3">
-                {['Features', 'For Goalies', 'For Parents', 'For Coaches'].map(link => (
-                  <span key={link} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'color 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-                  >{link}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '16px' }}>Contact Us</p>
-              <div className="flex flex-col gap-4">
-                <a href="mailto:info@smartergoalie.com" className="flex items-center gap-3 group" style={{ textDecoration: 'none' }}>
-                  <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#37b5ff" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  </div>
-                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', transition: 'color 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
-                  >info@smartergoalie.com</span>
-                </a>
-                <a href="tel:+14169390555" className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
-                  <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#37b5ff" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                  </div>
-                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', transition: 'color 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
-                  >+1 (416) 939-0555</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', letterSpacing: '1px' }}>© 2024 SMARTER GOALIE. ALL RIGHTS RESERVED.</span>
-            <div className="flex gap-5">
-              {['Privacy Policy', 'Terms of Service'].map(item => (
-                <span key={item} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'color 0.15s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
-                >{item}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
 
     </div>
   );
