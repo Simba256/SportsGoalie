@@ -78,7 +78,7 @@ function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSid
   );
 }
 
-const appBg = 'linear-gradient(160deg, #000f28 0%, #051e3e 100%)';
+const appBg = 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)';
 
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

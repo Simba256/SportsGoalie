@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Sport, PILLARS } from '@/types';
@@ -50,7 +50,7 @@ export default function PillarsPage() {
   if (state.loading) return <SkeletonPillarsPage />;
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
 
       {/* ── Hero ── */}
       <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,96px) 24px clamp(32px,5vw,56px)', maxWidth: '720px', margin: '0 auto' }}>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -74,7 +74,7 @@ function StandardDashboard() {
   }));
 
   return (
-    <div style={{ background: 'linear-gradient(160deg, #000a1f 0%, #041530 40%, #071e42 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
       <style>{`
         @keyframes blob { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-15px) scale(1.04)} }
         @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-15px,20px) scale(0.96)} }
@@ -95,6 +95,8 @@ function StandardDashboard() {
         .qa-btn:hover{transform:translateY(-3px) scale(1.02)}
         .dash-grid{display:grid;grid-template-columns:1fr;gap:24px}
         @media(min-width:1024px){.dash-grid{grid-template-columns:1.6fr 1fr}}
+        .hero-ring{display:none}
+        @media(min-width:520px){.hero-ring{display:block}}
         .continue-hover{transition:border-color .2s,box-shadow .2s}
         .continue-hover:hover{box-shadow:0 12px 40px rgba(0,0,0,.35)!important}
         .vault-hover{transition:border-color .2s,transform .2s}
@@ -112,7 +114,7 @@ function StandardDashboard() {
         <div style={{ position: 'absolute', top: '5%', right: '12%', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(55,181,255,.1) 0%,transparent 70%)', animation: 'blob 7s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '30%', right: '30%', width: '240px', height: '240px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,.07) 0%,transparent 70%)', animation: 'blob2 9s ease-in-out infinite', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 28px 44px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: 'clamp(0px,2vw,0px) clamp(14px,4vw,28px) clamp(24px,5vw,44px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
 
           {/* Left text block */}
           <div style={{ flex: 1, minWidth: '260px' }}>
@@ -157,25 +159,25 @@ function StandardDashboard() {
           </div>
 
           {/* Progress ring (right side) */}
-          <div className="s4" style={{ flexShrink: 0 }}>
+          <div className="s4 hero-ring" style={{ flexShrink: 0 }}>
             <HeroRing pct={overallPct} completed={completedSkills} total={totalSkills} />
           </div>
         </div>
       </section>
 
       {/* ── STATS + ACTIVITY STRIP ── */}
-      <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 0' }}>
+      <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '14px' }}>
-          <StatCard label="Quizzes" value={stats?.quizzesCompleted ?? 0} icon={<Trophy size={16} />} color={BLUE} delay="0s" />
+          <StatCard label="Knowledge Checks" value={stats?.quizzesCompleted ?? 0} icon={<Trophy size={16} />} color={BLUE} delay="0s" />
           <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
-          <StatCard label="Avg Score" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
+          <StatCard label="Avg Grasp Level" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
           <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
           <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 64px' }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 64px' }}>
         <div className="dash-grid">
 
           {/* LEFT COLUMN */}
@@ -280,7 +282,7 @@ function StandardDashboard() {
                 <div style={{ textAlign: 'center', padding: '36px 16px' }}>
                   <Trophy size={28} color="rgba(255,255,255,.1)" style={{ margin: '0 auto 10px' }} />
                   <p style={{ fontSize: '14px', color: 'rgba(255,255,255,.28)' }}>No results yet</p>
-                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.16)', marginTop: '4px' }}>Complete a quiz to see your scores here</p>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.16)', marginTop: '4px' }}>Complete a Knowledge Check to see your Grasp Levels here</p>
                 </div>
               ) : (
                 <div style={{ padding: '10px' }}>
@@ -304,7 +306,7 @@ function StandardDashboard() {
               <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Quick Actions</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <QuickActionCard href="/pillars" icon={<BookOpen size={22} />} label="Pillars" sub="Browse content" color={BLUE} />
-                <QuickActionCard href="/quizzes" icon={<Trophy size={22} />} label="Quizzes" sub="Test yourself" color="#4ade80" />
+                <QuickActionCard href="/quizzes" icon={<Trophy size={22} />} label="Knowledge Checks" sub="Test yourself" color="#4ade80" />
                 <QuickActionCard href="/progress" icon={<TrendingUp size={22} />} label="Progress" sub="View analytics" color="#a78bfa" />
                 <QuickActionCard href="/charting" icon={<Target size={22} />} label="Charting" sub="Track sessions" color="#fb923c" />
               </div>
