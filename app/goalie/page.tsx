@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Shield, Check } from 'lucide-react';
+import { Play, Pause, Shield, Check, ChevronLeft } from 'lucide-react';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
@@ -218,10 +218,21 @@ export default function GoaliePage() {
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center gap-3">
-          <Shield size={13} color={BLUE2} />
-          <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
-          <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fff' }}>GOALIE</span>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center justify-between gap-3">
+          <button
+            onClick={() => router.push('/explain')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 10px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
+            onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
+            onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
+          >
+            <ChevronLeft size={12} />
+            Back to Roles
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Shield size={13} color={BLUE2} />
+            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
+            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fff' }}>GOALIE</span>
+          </div>
         </div>
       </div>
 

@@ -24,6 +24,8 @@ interface PillarData {
   number: string;
   title: string;
   titleOneLine?: boolean;
+  titleBreakAt?: number;
+  titleGroups?: number[];
   subtitle: string;
   intro: string;
   accent: string;
@@ -169,6 +171,7 @@ const PILLARS: Record<string, PillarData> = {
   '4': {
     number: '04',
     title: '7 Point System',
+    titleBreakAt: 2,
     subtitle: 'Command Everything Below the Icing Line',
     intro: 'The 7 Point System governs everything that happens below the icing line. Wraparounds. Behind-net play. Net management. This is the area of the ice most goalies are least prepared for and most vulnerable in. The 7 Points give the goalie a complete framework for what is historically the most dangerous area of the ice.',
     accent: BLUE3,
@@ -244,6 +247,7 @@ const PILLARS: Record<string, PillarData> = {
   '6': {
     number: '06',
     title: 'Game & Practice Performance',
+    titleGroups: [2, 1, 1],
     subtitle: 'Where Everything Comes Together',
     intro: 'Game and Practice Performance is where everything comes together. Reading the play. Reading the stick. Reading the breakout. Charting the game and the practice. The Development Loop. This Pillar is the measure of the entire system — it is where the goalie finds out if everything they have built actually works under game conditions.',
     accent: '#22d3ee',
@@ -283,15 +287,15 @@ const PILLARS: Record<string, PillarData> = {
   },
   '7': {
     number: '07',
-    title: 'Lifestyle',
+    title: 'LIFE STYLE',
     subtitle: 'The Pillar Most Programs Never Address',
-    intro: 'Lifestyle is the final Pillar and the one most programs never address at all. Off-ice routine. Mental preparation. Balance. Sleep. Nutrition. Recovery. The goalie who takes care of themselves off the ice is the goalie who performs on it. Lifestyle is not separate from goaltending. It is part of it.',
+    intro: 'LIFE STYLE is the final Pillar and the one most programs never address at all. Off-ice routine. Mental preparation. Balance. Sleep. Nutrition. Recovery. The goalie who takes care of themselves off the ice is the goalie who performs on it. LIFE STYLE is not separate from goaltending. It is part of it.',
     accent: BLUE2,
     accentAlt: BLUE,
     facts: [
       {
         statement: 'WHAT THE GOALIE DOES BETWEEN GAMES IS AS IMPORTANT AS WHAT THEY DO DURING THEM.',
-        support: 'Sleep. Nutrition. Recovery. Mental preparation. Off-ice routine. These are not lifestyle suggestions. They are performance variables. Smarter Goalie treats them as such.',
+        support: 'Sleep. Nutrition. Recovery. Mental preparation. Off-ice routine. These are not LIFE STYLE suggestions. They are performance variables. Smarter Goalie treats them as such.',
         voiceLabel: 'HEAR COACH MIKE: LIFESTYLE AS A PERFORMANCE VARIABLE AND WHY MOST PROGRAMS IGNORE IT',
       },
       {
@@ -524,15 +528,34 @@ export default function PillarPage() {
             </p>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(48px, 8vw, 108px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', margin: '0 0 20px', color: '#fff', whiteSpace: pillar.titleOneLine ? 'nowrap' : 'normal' }}>
+          <h1 style={{ fontSize: 'clamp(32px, 8vw, 108px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', margin: '0 0 20px', color: '#fff', whiteSpace: 'normal' }}>
             {pillar.titleOneLine
               ? pillar.title
-              : pillar.title.split(' ').map((word, wi) => (
-                  <span key={wi}>
-                    {wi > 0 && <br />}
-                    {word}
-                  </span>
-                ))
+              : pillar.titleGroups
+                ? (() => {
+                    const words = pillar.title.split(' ');
+                    const lines: string[] = [];
+                    let idx = 0;
+                    for (const count of pillar.titleGroups) {
+                      lines.push(words.slice(idx, idx + count).join(' '));
+                      idx += count;
+                    }
+                    if (idx < words.length) lines.push(words.slice(idx).join(' '));
+                    return <>{lines.map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</>;
+                  })()
+                : pillar.titleBreakAt
+                  ? (() => {
+                      const words = pillar.title.split(' ');
+                      const line1 = words.slice(0, pillar.titleBreakAt).join(' ');
+                      const line2 = words.slice(pillar.titleBreakAt).join(' ');
+                      return <>{line1}<br />{line2}</>;
+                    })()
+                  : pillar.title.split(' ').map((word, wi) => (
+                      <span key={wi}>
+                        {wi > 0 && <br />}
+                        {word}
+                      </span>
+                    ))
             }
           </h1>
           <p style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: accent, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
@@ -683,7 +706,7 @@ export default function PillarPage() {
           {/* All 7 pillars overview */}
           <div style={{ marginBottom: '52px' }}>
             <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 24px' }}>EXPLORE ALL 7 PILLARS</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 items-start" style={{ maxWidth: '960px' }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 items-start" style={{ maxWidth: '960px' }}>
               {([
                 { num: '01', label: 'Mind-Set', a: '#00f2ff' },
                 { num: '02', label: 'Skating Tech', a: BLUE2 },
@@ -691,7 +714,7 @@ export default function PillarPage() {
                 { num: '04', label: '7 Point', a: BLUE3 },
                 { num: '05', label: 'Form Tech', a: '#38bdf8' },
                 { num: '06', label: 'Game & Practice', a: '#22d3ee' },
-                { num: '07', label: 'Lifestyle', a: BLUE2 },
+                { num: '07', label: 'LIFE STYLE', a: BLUE2 },
               ] as { num: string; label: string; a: string }[]).map((p, i) => {
                 const isCurrentPillar = String(i + 1) === id;
                 return (

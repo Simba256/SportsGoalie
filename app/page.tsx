@@ -71,23 +71,33 @@ export default function Home() {
         className="relative min-h-screen overflow-hidden flex flex-col"
         style={{ backgroundColor: '#000f28' }}
       >
-        {/* Background image — blue-tinted */}
+        {/* Background image — clearly visible */}
         <img
           src="/quality.png"
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center"
-          style={{ zIndex: 0, filter: 'brightness(0.81) saturate(1.3)' }}
+          style={{ zIndex: 0, filter: 'brightness(0.88) saturate(1.15)' }}
         />
 
-        {/* Blue colour wash over the image */}
-        <div className="absolute inset-0" style={{ background: 'rgba(5,20,80,0.38)', zIndex: 1 }} />
+        {/* Left-to-right gradient — strong on left for text, fades to almost nothing on right */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background: 'linear-gradient(90deg, rgba(0,8,28,0.97) 0%, rgba(0,10,35,0.93) 25%, rgba(0,12,38,0.72) 45%, rgba(0,10,30,0.25) 65%, transparent 100%)',
+            zIndex: 1,
+          }}
+        />
+        {/* Mobile: lighter overlay so image still shows */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{ background: 'rgba(0,8,28,0.78)', zIndex: 1 }}
+        />
 
-        {/* Bottom-up fade */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,10,30,0.65) 75%, #000f28 100%)', zIndex: 2 }} />
-
-        {/* Left-side vignette for text area */}
-        <div className="absolute inset-0 hidden md:block" style={{ background: 'linear-gradient(90deg, rgba(0,5,25,0.70) 0%, rgba(0,5,25,0.40) 40%, rgba(0,5,25,0.08) 65%, transparent 100%)', zIndex: 2 }} />
-        <div className="absolute inset-0 md:hidden" style={{ background: 'rgba(0,5,25,0.65)', zIndex: 2 }} />
+        {/* Subtle bottom fade to match next section */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(0,8,28,0.55) 80%, #000f28 100%)', zIndex: 2 }}
+        />
 
         {/* ── NAV BAR ── */}
         <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -129,88 +139,77 @@ export default function Home() {
 
         {/* ── HERO CONTENT ── */}
         <div className="relative flex-1 flex items-center" style={{ zIndex: 10 }}>
-          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-16">
-            <div className="max-w-full md:max-w-[680px]">
+          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20">
+            {/* Content lives in the left ~45% on desktop, full width on mobile */}
+            <div className="w-full md:max-w-[520px]">
 
-              {/* ── BRAND NAME — the dominant element ── */}
-              <div className="mb-6 md:mb-8 text-center md:text-left">
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#37b5ff', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '10px' }}>
-                  WELCOME TO
-                </p>
-                <h1
-                  className="font-black uppercase leading-none"
-                  style={{ fontSize: 'clamp(36px, 6.5vw, 72px)', letterSpacing: '-0.03em', lineHeight: 0.9 }}
-                >
-                  <span style={{
-                    display: 'block',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #a8d8ff 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    filter: 'drop-shadow(0 0 24px rgba(55,181,255,0.5))',
-                  }}>SMARTER</span>
-                  <span style={{
-                    display: 'block',
-                    color: 'transparent',
-                    WebkitTextStroke: '2.5px #37b5ff',
-                    filter: 'drop-shadow(0 0 20px rgba(55,181,255,0.8)) drop-shadow(0 0 40px rgba(55,181,255,0.4))',
-                  }}>GOALIE</span>
-                </h1>
-                {/* Blue accent line */}
-                <div style={{ width: '56px', height: '3px', background: 'linear-gradient(90deg, #37b5ff, transparent)', borderRadius: '99px', marginTop: '18px', boxShadow: '0 0 8px rgba(55,181,255,0.5)' }} className="mx-auto md:mx-0" />
-              </div>
+              {/* Eyebrow */}
+              <p style={{ fontSize: '10px', fontWeight: 700, color: '#37b5ff', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+                WELCOME TO
+              </p>
 
-              {/* Sub-headline question */}
+              {/* Brand name */}
+              <h1
+                className="font-black uppercase leading-none mb-6"
+                style={{ fontSize: 'clamp(52px, 8vw, 96px)', letterSpacing: '-0.03em', lineHeight: 0.88 }}
+              >
+                <span style={{
+                  display: 'block',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #c8e8ff 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>SMARTER</span>
+                <span style={{
+                  display: 'block',
+                  color: 'transparent',
+                  WebkitTextStroke: '3px #37b5ff',
+                  filter: 'drop-shadow(0 0 18px rgba(55,181,255,0.7))',
+                }}>GOALIE</span>
+              </h1>
+
+              {/* Accent line */}
+              <div style={{ width: '48px', height: '3px', background: '#37b5ff', borderRadius: '99px', marginBottom: '24px', boxShadow: '0 0 10px rgba(55,181,255,0.6)' }} />
+
+              {/* Sub-headline */}
               <h2
-                className="font-black uppercase mb-4 text-center md:text-left"
-                style={{ fontSize: 'clamp(15px, 2.4vw, 22px)', lineHeight: 1.3, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.02em' }}
+                className="font-bold uppercase mb-3"
+                style={{ fontSize: 'clamp(13px, 1.8vw, 18px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.04em' }}
               >
                 Are goalies the{' '}
                 <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>worst trained</em>{' '}
                 athletes in sports?
               </h2>
 
-              {/* Tagline */}
               <p
-                className="uppercase font-bold mb-8 md:mb-10 text-center md:text-left"
-                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '2.5px', fontSize: '10px' }}
+                className="uppercase font-semibold mb-10"
+                style={{ color: 'rgba(255,255,255,0.38)', letterSpacing: '2.5px', fontSize: '10px' }}
               >
                 HERE IS WHAT WE KNOW.
               </p>
 
-              {/* Video intro button */}
-              <button
-                className="flex items-center gap-3 mb-5 md:mb-7 cursor-pointer hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
-                style={{ background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.5)', color: '#fff', padding: '11px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}
-              >
-                <span className="flex items-center justify-center shrink-0" style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#37b5ff', color: '#000f28', fontSize: '9px', fontWeight: 900 }}>▶</span>
-                COACH MIKE — INTRODUCTION
-              </button>
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                {/* Video button */}
+                <button
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
+                  style={{ background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.45)', color: '#fff', padding: '12px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', borderRadius: '6px', whiteSpace: 'nowrap' }}
+                >
+                  <span className="flex items-center justify-center shrink-0" style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#37b5ff', color: '#000f28', fontSize: '9px', fontWeight: 900 }}>▶</span>
+                  COACH MIKE
+                </button>
 
-              {/* Primary CTA */}
-              <button
-                onClick={() => router.push('/explain')}
-                className="mb-8 md:mb-10 hover:opacity-90 hover:scale-[1.02] transition-all duration-200 w-full md:w-auto text-center"
-                style={{ background: '#37b5ff', color: '#000f28', fontWeight: 800, fontSize: '12px', letterSpacing: '2px', padding: '15px 36px', textTransform: 'uppercase', display: 'block', borderRadius: '4px' }}
-              >
-                LET US EXPLAIN →
-              </button>
-
-              {/* Role pills */}
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {[
-                  { label: 'GOALIE', action: () => router.push('/auth/register') },
-                  { label: 'PARENT', action: () => router.push('/auth/register') },
-                  { label: 'COACH', action: () => router.push('/auth/register') },
-                  { label: 'GOALIE COACH', action: () => router.push('/auth/register') },
-                ].map(({ label, action }) => (
-                  <button key={label} onClick={action} className="hover:opacity-80 transition-opacity"
-                    style={{ background: 'rgba(55,181,255,0.14)', border: '1px solid rgba(55,181,255,0.45)', padding: '7px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', color: '#e6f6ff', cursor: 'pointer' }}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {/* Primary CTA */}
+                <button
+                  onClick={() => router.push('/explain')}
+                  className="hover:opacity-90 hover:scale-[1.02] transition-all duration-200"
+                  style={{ background: '#37b5ff', color: '#000f28', fontWeight: 800, fontSize: '11px', letterSpacing: '2px', padding: '12px 28px', textTransform: 'uppercase', borderRadius: '6px', whiteSpace: 'nowrap' }}
+                >
+                  LET US EXPLAIN →
+                </button>
               </div>
+
+             
             </div>
           </div>
         </div>
@@ -243,7 +242,7 @@ export default function Home() {
                         <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>1/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
                         <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Learn Smart. Play Smart. Stay Consistent.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 7 Pillars — from MIND-SET and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, TEAM-PRACTICE, and LIFE STYLE.</p>
                         <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
                         <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
@@ -348,7 +347,7 @@ export default function Home() {
           </section>
 
           {/* What's In YOUR Tool Box? */}
-          <section style={{ padding: '80px 20px', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
+          <section style={{ padding: 'clamp(40px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
             <style>{`
               .toolbox-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
               .toolbox-card:hover { transform: translateY(-4px) scale(1.02); }

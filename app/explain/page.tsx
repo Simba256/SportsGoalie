@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Shield, Users, ClipboardList, Target, Building2 } from 'lucide-react';
+import { Shield, Users, ClipboardList, Target, Building2, ChevronLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Door {
@@ -25,8 +25,8 @@ const DOORS: Door[] = [
     id: '01',
     role: 'GOALIE',
     Icon: Shield,
-    headline: 'The knowledge and support that sets you apart is here.',
-    body: 'All you need is an open mind. You will become one of the best goalies at your level. Failure is not in our vocabulary.',
+    headline: 'THE KNOWLEDGE AND SUPPORT SYSTEMS THAT SET YOU APART FROM THE REST IS HERE.',
+    body: 'ALL YOU NEED IS AN OPEN MIND AND THE DRIVE TO BE THE BEST YOU CAN BE! THERE ARE NO SHORT CUTS.',
     cta: 'ENTER AS GOALIE',
     href: '/goalie',
     accent: '#60a5fa',
@@ -40,8 +40,8 @@ const DOORS: Door[] = [
     id: '02',
     role: 'PARENT',
     Icon: Users,
-    headline: 'How to be the goalie parent who truly understands and supports their goalie.',
-    body: 'Smarter Goalie meets you where you are. Coach Mike is your guide.',
+    headline: "WHETHER YOU'RE NEW TO THE GAME, HAVE A COUPLE OF YEARS IN, OR HAVE BEEN IN THE GAME LONGER — THIS IS YOUR LUCKY DAY.",
+    body: 'SMARTER GOALIE MEETS YOU WHERE YOU ARE.',
     cta: 'ENTER AS PARENT',
     href: '/parent-role',
     accent: '#60a5fa',
@@ -53,9 +53,9 @@ const DOORS: Door[] = [
   },
   {
     id: '03',
-    role: 'COACH / MANAGER',
+    role: 'TEAM',
     Icon: ClipboardList,
-    headline: 'The goalie development layer your program has always needed.',
+    headline: 'THE GOALIE DEVELOPMENT LAYER TO SUPPORT YOUR GOALIE — REGARDLESS IF THEY HAVE A GOALIE COACH OR NOT.',
     body: 'Structured. Measurable. Real data every game and every practice.',
     cta: 'ENTER AS COACH',
     href: '/team-programs',
@@ -68,12 +68,12 @@ const DOORS: Door[] = [
   },
   {
     id: '04',
-    role: 'GOALIE COACH',
-    Icon: Target,
-    headline: "The toughest job in hockey. We don't compete with what you do. We complete it.",
-    body: 'How goes the goalie — how goes the team. You are an influencer who creates starters.',
-    cta: 'ENQUIRE',
-    href: '/goalie-coach',
+    role: 'ORGANIZATION',
+    Icon: Building2,
+    headline: 'PROVEN TEACHING SYSTEMS AND METHODS ACROSS YOUR ENTIRE ORGANIZATION.',
+    body: 'Every age group. One system. Scalable. Measurable. Built on principles that never change.',
+    cta: 'BUILD A PACKAGE',
+    href: '/organization',
     accent: '#60a5fa',
     iconBg: '#eff6ff',
     iconBorder: '#bfdbfe',
@@ -83,12 +83,12 @@ const DOORS: Door[] = [
   },
   {
     id: '05',
-    role: 'ORGANIZATION',
-    Icon: Building2,
-    headline: 'Consistent goaltending development across your entire organization.',
-    body: 'Every age group. One system. Scalable. Measurable. Built on principles that never change.',
-    cta: 'BUILD A PACKAGE',
-    href: '/organization',
+    role: 'GOALIE COACH',
+    Icon: Target,
+    headline: 'THE TOUGHEST JOB IN HOCKEY, SIMPLIFIED WITH LOGIC, COMMON SENSE, MATH AND SCIENCE WHICH ARE THE CORE IN BUILDING THIS UNIQUE TEACHING SYSTEM. WE ONLY BUILD STARTERS. NO BACKUPS HERE.',
+    body: 'How goes the goalie — how goes the team. You are an influencer who creates starters.',
+    cta: 'ENQUIRE',
+    href: '/goalie-coach',
     accent: '#60a5fa',
     iconBg: '#eff6ff',
     iconBorder: '#bfdbfe',
@@ -148,6 +148,19 @@ export default function ExplainPage() {
         </div>
       </nav>
 
+      {/* ── Back Button ── */}
+      <div style={{ padding: '14px 20px 0' }}>
+        <button
+          onClick={() => router.push('/')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '7px 14px', color: 'rgba(255,255,255,0.75)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s' }}
+          onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
+          onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
+        >
+          <ChevronLeft size={14} />
+          Back to Home
+        </button>
+      </div>
+
       {/* ── Header ── */}
       <div className="text-center px-4 sm:px-6 pt-10 sm:pt-16 pb-8 sm:pb-14 flex-shrink-0">
         {/* Label */}
@@ -173,11 +186,11 @@ export default function ExplainPage() {
             letterSpacing: '-0.02em',
           }}
         >
-          ONE UNIQUE SYSTEM BUILT FOR{' '}
-          <span style={{ color: '#37b5ff' }}>THE GOALIE</span>
+          ONE UNIQUE SYSTEM BUILT BY A GOALIE FOR{' '}
+          <span style={{ color: '#37b5ff' }}>MOTIVATED GOALIES ONLY&hellip;</span>
           <span className="hidden sm:inline"><br /></span>
           <span className="sm:hidden"> </span>
-          <span style={{ color: '#37b5ff' }}>&amp; EVERYONE WHO CARES ABOUT THEM</span>
+          <span style={{ color: '#37b5ff' }}>&amp; EVERYONE ELSE WHO CARES ABOUT THEM</span>
         </h1>
 
         {/* Subtitle */}
@@ -323,7 +336,7 @@ export default function ExplainPage() {
           className="uppercase font-bold"
           style={{ fontSize: '9px', letterSpacing: '3px', color: '#cbd5e1' }}
         >
-          EVERY DOOR LEADS TO THE SAME DESTINATION &mdash; THE INTELLIGENT ATHLETIC GOALTENDER
+          EVERY DOOR LEADS TO THE SAME DESTINATION &mdash; BUILDING THE INTELLIGENT ATHLETIC GOALTENDER
         </p>
       </div>
     </div>
