@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { SkeletonCardGrid } from '@/components/ui/skeletons';
@@ -34,7 +34,7 @@ export default function MindVaultPage() {
   const safeMomentum = loading ? 0 : Math.max(momentum, 6);
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
 
       {/* ── Hero Banner ── */}
       <section style={{ position: 'relative', height: '280px', display: 'flex', alignItems: 'flex-end', backgroundImage: "url('/mind-vault.png')", backgroundSize: 'cover', backgroundPosition: 'center', overflow: 'hidden' }}>

@@ -12,17 +12,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Wrench, Anchor, Trophy, Users,
 };
 
-const COLOR_MAP: Record<string, { text: string }> = {
-  emerald: { text: 'text-blue-500' },
-  red: { text: 'text-red-500' },
-  amber: { text: 'text-blue-400' },
-  yellow: { text: 'text-blue-500' },
-  purple: { text: 'text-blue-500' },
-  blue: { text: 'text-blue-500' },
-  indigo: { text: 'text-blue-500' },
-  cyan: { text: 'text-blue-400' },
-  pink: { text: 'text-red-400' },
-};
+const BLUE = '#37b5ff';
 
 interface Props {
   category: MindVaultCategoryInfo;
@@ -31,10 +21,8 @@ interface Props {
 
 export function MindVaultCategoryCard({ category, summary }: Props) {
   const Icon = ICON_MAP[category.icon] || Heart;
-  const colors = COLOR_MAP[category.color] || COLOR_MAP.blue;
   const entryCount = summary?.entryCount || 0;
 
-  // Route acceptance/cannot_accept to their dedicated pages
   const href =
     category.slug === 'acceptance'
       ? '/mind-vault/acceptance'
@@ -45,20 +33,54 @@ export function MindVaultCategoryCard({ category, summary }: Props) {
   return (
     <Link
       href={href}
-      className="group block bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden"
+      style={{
+        display: 'block',
+        background: 'rgba(2,18,44,0.85)',
+        borderRadius: '14px',
+        padding: '20px',
+        paddingBottom: '52px',
+        border: '1px solid rgba(55,181,255,0.14)',
+        position: 'relative',
+        overflow: 'hidden',
+        textDecoration: 'none',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(55,181,255,0.32)';
+        e.currentTarget.style.boxShadow = '0 4px 24px rgba(55,181,255,0.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(55,181,255,0.14)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
     >
-      <div className="mb-3">
-        <Icon className={`h-6 w-6 ${colors.text}`} />
+      <div style={{ marginBottom: '12px' }}>
+        <Icon style={{ width: '24px', height: '24px', color: BLUE }} />
       </div>
 
-      <h3 className="text-lg font-bold text-gray-900 mb-1">{category.name}</h3>
-      <p className="text-sm text-gray-600 mb-10 line-clamp-2">{category.description}</p>
+      <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: '0 0 6px 0' }}>
+        {category.name}
+      </h3>
+      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: 0 }}>
+        {category.description}
+      </p>
 
-      <div className="absolute bottom-0 left-0 right-0 px-5 py-3 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between group-hover:bg-gray-100 transition-colors">
-        <span className="text-xs font-semibold text-gray-700">
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: '10px 20px',
+        borderTop: '1px solid rgba(55,181,255,0.1)',
+        background: 'rgba(0,8,24,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>
           {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
         </span>
-        <ArrowUpRight className="h-4 w-4 text-gray-400 text-xs group-hover:text-gray-600" />
+        <ArrowUpRight style={{ width: '14px', height: '14px', color: `rgba(55,181,255,0.6)` }} />
       </div>
     </Link>
   );

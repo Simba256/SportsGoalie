@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -74,7 +74,7 @@ export default function AcceptanceListPage() {
   if (loading) return <div style={{ padding: '16px' }}><SkeletonListPage cols={2} count={4} /></div>;
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', padding: '24px' }}>
+    <div style={{ minHeight: '100vh', padding: '24px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* Header */}

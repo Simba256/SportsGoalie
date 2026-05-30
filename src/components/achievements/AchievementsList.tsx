@@ -1,10 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Filter, Trophy, Star, Clock, Target, Zap } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Filter, Trophy, Star, Target } from 'lucide-react';
 import { AchievementCard } from './AchievementCard';
 import { Achievement, UserAchievement } from '@/types';
 
@@ -14,248 +11,186 @@ interface AchievementsListProps {
   loading?: boolean;
 }
 
+type AchTab = 'completed' | 'progress' | 'locked';
+
+const BLUE = '#37b5ff';
+
+const CATEGORIES = ['WINS', 'BREAKTHROUGHS', 'CLIMBS', 'STREAKS', 'MILESTONES'] as const;
+const TYPES = ['progress', 'knowledge-check', 'streak', 'time', 'special'] as const;
+
+const cardStyle: React.CSSProperties = {
+  background: 'rgba(2,18,44,0.85)',
+  border: '1px solid rgba(55,181,255,0.14)',
+  borderRadius: '14px',
+  padding: '24px',
+};
+
 export function AchievementsList({ achievements, userAchievements, loading = false }: AchievementsListProps) {
-  const [filterRarity, setFilterRarity] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<AchTab>('completed');
 
-  // Create a map for quick lookup of user achievements
-  const userAchievementMap = new Map(
-    userAchievements.map(ua => [ua.achievementId, ua])
-  );
+  const userAchievementMap = new Map(userAchievements.map(ua => [ua.achievementId, ua]));
 
-  // Filter achievements
-  const filteredAchievements = achievements.filter(achievement => {
-    const matchesRarity = filterRarity === 'all' || achievement.rarity === filterRarity;
-    const matchesType = filterType === 'all' || achievement.type === filterType;
-    return matchesRarity && matchesType;
+  const filteredAchievements = achievements.filter(a => {
+    const matchesCategory = filterCategory === 'all' || (a.rarity ?? '').toUpperCase() === filterCategory;
+    const matchesType = filterType === 'all' || a.type === filterType || (filterType === 'knowledge-check' && a.type === 'quiz');
+    return matchesCategory && matchesType;
   });
 
-  // Separate achievements by completion status
-  const completedAchievements = filteredAchievements.filter(achievement =>
-    userAchievementMap.get(achievement.id)?.isCompleted
-  );
-
-  const inProgressAchievements = filteredAchievements.filter(achievement => {
-    const userAchievement = userAchievementMap.get(achievement.id);
-    return userAchievement && !userAchievement.isCompleted && userAchievement.progress > 0;
+  const completedAchievements = filteredAchievements.filter(a => userAchievementMap.get(a.id)?.isCompleted);
+  const inProgressAchievements = filteredAchievements.filter(a => {
+    const ua = userAchievementMap.get(a.id);
+    return ua && !ua.isCompleted && ua.progress > 0;
   });
+  const lockedAchievements = filteredAchievements.filter(a => !userAchievementMap.has(a.id));
 
-  const lockedAchievements = filteredAchievements.filter(achievement =>
-    !userAchievementMap.has(achievement.id)
-  );
-
-  // Calculate stats
   const totalCompleted = userAchievements.filter(ua => ua.isCompleted).length;
-  const totalPoints = completedAchievements.reduce((sum, achievement) => sum + achievement.points, 0);
+  const totalPoints = completedAchievements.reduce((sum, a) => sum + a.points, 0);
 
-  const rarityColors = {
-    common: 'bg-slate-100 text-slate-700',
-    uncommon: 'bg-blue-50 text-blue-700',
-    rare: 'bg-blue-100 text-blue-800',
-    epic: 'bg-red-50 text-red-700',
-    legendary: 'bg-red-100 text-red-800'
+  const tabData: Record<AchTab, Achievement[]> = {
+    completed: completedAchievements,
+    progress: inProgressAchievements,
+    locked: lockedAchievements,
   };
 
-  const typeIcons = {
-    progress: <Target className="h-4 w-4" />,
-    quiz: <Trophy className="h-4 w-4" />,
-    streak: <Zap className="h-4 w-4" />,
-    time: <Clock className="h-4 w-4" />,
-    special: <Star className="h-4 w-4" />
+  const tabs: Array<{ key: AchTab; label: string }> = [
+    { key: 'completed', label: `Completed (${completedAchievements.length})` },
+    { key: 'progress', label: `In Progress (${inProgressAchievements.length})` },
+    { key: 'locked', label: `Locked (${lockedAchievements.length})` },
+  ];
+
+  const emptyContent: Record<AchTab, { icon: React.ReactNode; title: string; body: string }> = {
+    completed: {
+      icon: <Trophy style={{ width: '48px', height: '48px', color: 'rgba(55,181,255,0.4)' }} />,
+      title: 'No completed achievements yet',
+      body: 'Start learning and completing Knowledge Checks to unlock your first achievement!',
+    },
+    progress: {
+      icon: <Target style={{ width: '48px', height: '48px', color: 'rgba(55,181,255,0.4)' }} />,
+      title: 'No achievements in progress',
+      body: 'Continue your learning journey to make progress on achievements.',
+    },
+    locked: {
+      icon: <Star style={{ width: '48px', height: '48px', color: 'rgba(55,181,255,0.4)' }} />,
+      title: 'All achievements unlocked!',
+      body: "You've made progress on all available achievements. Great work!",
+    },
   };
 
   if (loading) {
     return (
-      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-32">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-200 border-t-red-600" />
-          </div>
-        </CardContent>
-      </Card>
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px' }}>
+          <div className="animate-spin" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid rgba(55,181,255,0.3)', borderTopColor: BLUE }} />
+        </div>
+      </div>
     );
   }
 
+  const filterBtnStyle = (active: boolean): React.CSSProperties => ({
+    padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+    fontSize: '11px', fontWeight: 600, textTransform: 'capitalize',
+    background: active ? `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)` : 'transparent',
+    color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+  });
+
+  const currentList = tabData[activeTab];
+  const empty = emptyContent[activeTab];
+
   return (
-    <div className="space-y-6">
-      {/* Achievement Stats */}
-      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-slate-900">
-            <Trophy className="h-5 w-5 text-red-600" />
-            <span>Achievement Progress</span>
-          </CardTitle>
-          <CardDescription className="text-slate-600">
-            Track your learning milestones and accomplishments
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="rounded-xl border border-red-100 bg-red-50/60 p-3 text-center">
-              <div className="text-2xl font-bold text-red-700">{totalCompleted}</div>
-              <div className="text-sm text-slate-600">Completed</div>
-            </div>
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
-              <div className="text-2xl font-bold text-blue-700">{totalPoints}</div>
-              <div className="text-sm text-slate-600">Points Earned</div>
-            </div>
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
-              <div className="text-2xl font-bold text-blue-600">{inProgressAchievements.length}</div>
-              <div className="text-sm text-slate-600">In Progress</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-              <div className="text-2xl font-bold text-slate-700">{achievements.length}</div>
-              <div className="text-sm text-slate-600">Total Available</div>
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+      {/* Stats */}
+      <div style={cardStyle}>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <Trophy style={{ width: '20px', height: '20px', color: BLUE }} />
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: 0 }}>Achievement Progress</h2>
           </div>
-        </CardContent>
-      </Card>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+            Track your learning milestones and accomplishments
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {[
+            { label: 'Completed', value: totalCompleted, color: '#4ade80' },
+            { label: 'Growth Points', value: totalPoints, color: BLUE },
+            { label: 'In Progress', value: inProgressAchievements.length, color: BLUE },
+            { label: 'Total Available', value: achievements.length, color: 'rgba(255,255,255,0.6)' },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 800, color, marginBottom: '4px' }}>{value}</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Filters */}
-      <Card className="rounded-2xl border border-red-100/80 bg-gradient-to-r from-red-50/70 via-white to-blue-50/70 shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="inline-flex items-center space-x-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
-              <Filter className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-semibold text-red-700">Filters</span>
-            </div>
-
-            {/* Rarity Filter */}
-            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilterRarity('all')}
-                className={filterRarity === 'all' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
-              >
-                All Rarities
-              </Button>
-              {Object.entries(rarityColors).map(([rarity, _colorClass]) => (
-                <Button
-                  key={rarity}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFilterRarity(rarity)}
-                  className={`capitalize ${filterRarity === rarity ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}`}
-                >
-                  {rarity}
-                </Button>
-              ))}
-            </div>
-
-            {/* Type Filter */}
-            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilterType('all')}
-                className={filterType === 'all' ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}
-              >
-                All Types
-              </Button>
-              {Object.entries(typeIcons).map(([type, icon]) => (
-                <Button
-                  key={type}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFilterType(type)}
-                  className={`capitalize ${filterType === type ? 'bg-red-600 text-white hover:bg-red-700' : 'text-slate-700 hover:bg-slate-100'}`}
-                >
-                  <span className="mr-1">{icon}</span>
-                  {type}
-                </Button>
-              ))}
-            </div>
+      <div style={{ ...cardStyle, padding: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '8px' }}>
+            <Filter style={{ width: '14px', height: '14px', color: BLUE }} />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: BLUE }}>Filters</span>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Achievement Tabs */}
-      <Tabs defaultValue="completed" className="space-y-4">
-        <TabsList className="border border-slate-200 bg-white p-1">
-          <TabsTrigger value="completed">
-            Completed ({completedAchievements.length})
-          </TabsTrigger>
-          <TabsTrigger value="progress">
-            In Progress ({inProgressAchievements.length})
-          </TabsTrigger>
-          <TabsTrigger value="locked">
-            Locked ({lockedAchievements.length})
-          </TabsTrigger>
-        </TabsList>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '10px' }}>
+            <button onClick={() => setFilterCategory('all')} style={filterBtnStyle(filterCategory === 'all')}>All Categories</button>
+            {CATEGORIES.map(c => (
+              <button key={c} onClick={() => setFilterCategory(c)} style={filterBtnStyle(filterCategory === c)}>{c}</button>
+            ))}
+          </div>
 
-        <TabsContent value="completed" className="space-y-4">
-          {completedAchievements.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {completedAchievements.map(achievement => (
-                <AchievementCard
-                  key={achievement.id}
-                  achievement={achievement}
-                  userAchievement={userAchievementMap.get(achievement.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <CardContent className="p-6 text-center">
-                <Trophy className="mx-auto h-12 w-12 text-blue-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No completed achievements yet</h3>
-                <p className="text-muted-foreground">
-                  Start learning and taking quizzes to unlock your first achievement!
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '10px' }}>
+            <button onClick={() => setFilterType('all')} style={filterBtnStyle(filterType === 'all')}>All Types</button>
+            {TYPES.map(t => (
+              <button key={t} onClick={() => setFilterType(t)} style={filterBtnStyle(filterType === t)}>
+                {t === 'knowledge-check' ? 'Knowledge Check' : t}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
-        <TabsContent value="progress" className="space-y-4">
-          {inProgressAchievements.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {inProgressAchievements.map(achievement => (
-                <AchievementCard
-                  key={achievement.id}
-                  achievement={achievement}
-                  userAchievement={userAchievementMap.get(achievement.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <CardContent className="p-6 text-center">
-                <Target className="mx-auto h-12 w-12 text-blue-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No achievements in progress</h3>
-                <p className="text-muted-foreground">
-                  Continue your learning journey to make progress on achievements.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+      {/* Tabs + content */}
+      <div>
+        <div style={{ display: 'flex', gap: '4px', padding: '6px', background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '10px', marginBottom: '16px', width: 'fit-content' }}>
+          {tabs.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              style={{
+                padding: '6px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+                fontSize: '12px', fontWeight: 600,
+                background: activeTab === key ? `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)` : 'transparent',
+                color: activeTab === key ? '#fff' : 'rgba(255,255,255,0.5)',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-        <TabsContent value="locked" className="space-y-4">
-          {lockedAchievements.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {lockedAchievements.map(achievement => (
-                <AchievementCard
-                  key={achievement.id}
-                  achievement={achievement}
-                  isLocked={true}
-                />
-              ))}
-            </div>
-          ) : (
-            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <CardContent className="p-6 text-center">
-                <Star className="mx-auto h-12 w-12 text-blue-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">All achievements unlocked!</h3>
-                <p className="text-muted-foreground">
-                  You've made progress on all available achievements. Great work!
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+        {currentList.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+            {currentList.map(achievement => (
+              <AchievementCard
+                key={achievement.id}
+                achievement={achievement}
+                userAchievement={userAchievementMap.get(achievement.id)}
+                isLocked={activeTab === 'locked'}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ ...cardStyle, padding: '40px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>{empty.icon}</div>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: '0 0 8px 0' }}>{empty.title}</h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>{empty.body}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

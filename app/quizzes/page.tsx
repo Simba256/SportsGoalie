@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -79,15 +79,15 @@ function QuizzesPageContent() {
   if (loading) return <SkeletonListPage cols={3} count={6} />;
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', padding: '28px 24px 48px' }}>
+    <div style={{ minHeight: '100vh', padding: '28px 24px 48px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Banner */}
         <div style={{ position: 'relative', borderRadius: '20px', background: 'rgba(2,18,44,0.9)', border: '1.5px solid rgba(55,181,255,0.3)', padding: '28px 32px', overflow: 'hidden', boxShadow: '0 0 60px rgba(55,181,255,0.06)' }}>
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '50%', height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
-          <p style={{ fontSize: '10px', letterSpacing: '3px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Test Your Knowledge</p>
-          <h1 style={{ fontSize: 'clamp(20px,3.5vw,32px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Available Quizzes</h1>
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)' }}>Test your knowledge and track your progress with our interactive quizzes.</p>
+          <p style={{ fontSize: '10px', letterSpacing: '3px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Knowledge Check</p>
+          <h1 style={{ fontSize: 'clamp(20px,3.5vw,32px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Knowledge Checks</h1>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)' }}>Confirm your knowledge and track your Grasp Level with our interactive Knowledge Checks.</p>
         </div>
 
         {/* Filters */}
@@ -95,7 +95,7 @@ function QuizzesPageContent() {
           <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
             <Search size={15} color="rgba(255,255,255,0.35)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             <input
-              placeholder="Search quizzes..."
+              placeholder="Search Knowledge Checks..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               style={{ width: '100%', paddingLeft: '38px', padding: '10px 14px 10px 38px', background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
@@ -117,9 +117,9 @@ function QuizzesPageContent() {
         {filteredQuizzes.length === 0 ? (
           <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '16px', padding: '64px 24px', textAlign: 'center' }}>
             <BookOpen size={36} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No quizzes found</h3>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No Knowledge Checks found</h3>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>
-              {searchTerm || selectedDifficulty !== 'all' ? 'Try adjusting your filters or search term.' : 'Check back later for new quizzes.'}
+              {searchTerm || selectedDifficulty !== 'all' ? 'Try adjusting your filters or search term.' : 'Check back later for new Knowledge Checks.'}
             </p>
           </div>
         ) : (
@@ -138,7 +138,7 @@ function QuizzesPageContent() {
                       {quiz.difficulty}
                     </span>
                     <span style={{ fontSize: '10px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 10px' }}>
-                      Video Quiz
+                      Knowledge Check
                     </span>
                   </div>
 
@@ -165,7 +165,7 @@ function QuizzesPageContent() {
 
                   <Link href={`/quiz/video/${quiz.id}`} style={{ textDecoration: 'none' }}>
                     <button style={{ width: '100%', padding: '12px', borderRadius: '10px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', color: '#000f28', fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      Start Video Quiz <ArrowRight size={13} />
+                      Start Knowledge Check <ArrowRight size={13} />
                     </button>
                   </Link>
                 </div>

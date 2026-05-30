@@ -1,9 +1,6 @@
 'use client';
 
 import { Calendar, Target, Clock, CheckCircle, Circle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
 interface Goal {
   id: string;
@@ -25,157 +22,180 @@ interface GoalCardProps {
   onDelete?: (goalId: string) => void;
 }
 
+const BLUE = '#37b5ff';
+
 export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
   const progress = Math.min((goal.currentValue / goal.targetValue) * 100, 100);
   const isOverdue = goal.deadline && new Date() > goal.deadline && !goal.isCompleted;
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityStyle = (priority: string): React.CSSProperties => {
     switch (priority) {
       case 'high':
-        return 'bg-red-50 text-red-700 border-red-200';
+        return { background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' };
       case 'medium':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'low':
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+        return { background: 'rgba(55,181,255,0.12)', color: BLUE, border: `1px solid rgba(55,181,255,0.3)` };
       default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+        return { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.15)' };
     }
   };
 
   const getTypeIcon = (type: string) => {
+    const s = { width: '16px', height: '16px' };
     switch (type) {
-      case 'skill_completion':
-        return <Target className="h-4 w-4" />;
-      case 'quiz_score':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'time_spent':
-        return <Clock className="h-4 w-4" />;
-      case 'streak':
-        return <Calendar className="h-4 w-4" />;
-      case 'sport_completion':
-        return <Target className="h-4 w-4" />;
-      default:
-        return <Circle className="h-4 w-4" />;
+      case 'skill_completion': return <Target style={s} />;
+      case 'quiz_score': return <CheckCircle style={s} />;
+      case 'time_spent': return <Clock style={s} />;
+      case 'streak': return <Calendar style={s} />;
+      case 'sport_completion': return <Target style={s} />;
+      default: return <Circle style={s} />;
     }
   };
 
   const formatDeadline = (deadline: Date) => {
-    const now = new Date();
-    const diffTime = deadline.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return `Overdue by ${Math.abs(diffDays)} day(s)`;
-    } else if (diffDays === 0) {
-      return 'Due today';
-    } else if (diffDays === 1) {
-      return 'Due tomorrow';
-    } else if (diffDays <= 7) {
-      return `Due in ${diffDays} day(s)`;
-    } else {
-      return `Due ${deadline.toLocaleDateString()}`;
-    }
+    const diffDays = Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} day(s)`;
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    if (diffDays <= 7) return `Due in ${diffDays} day(s)`;
+    return `Due ${deadline.toLocaleDateString()}`;
   };
 
   const handleMarkComplete = () => {
-    if (onUpdate) {
-      onUpdate(goal.id, {
-        isCompleted: true,
-        currentValue: goal.targetValue
-      });
-    }
+    onUpdate?.(goal.id, { isCompleted: true, currentValue: goal.targetValue });
   };
 
+  const cardBorder = goal.isCompleted
+    ? 'rgba(55,181,255,0.25)'
+    : isOverdue
+    ? 'rgba(239,68,68,0.25)'
+    : 'rgba(55,181,255,0.14)';
+
   return (
-    <Card className={`rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-      goal.isCompleted ? 'border-blue-200 bg-blue-50/30 hover:shadow-blue-100/50' :
-      isOverdue ? 'border-red-200 bg-red-50/30 hover:shadow-red-100/50' : 'border-slate-200 bg-white hover:shadow-slate-200/60'
-    }`}>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-3">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                goal.isCompleted
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'bg-blue-100 text-blue-600'
-              }`}>
-                {getTypeIcon(goal.type)}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm">{goal.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {goal.isCompleted && (
-                <Badge variant="default" className="bg-blue-100 text-blue-800 border border-blue-200">
-                  Completed
-                </Badge>
-              )}
-              <Badge className={`border ${getPriorityColor(goal.priority)}`}>
-                {goal.priority}
-              </Badge>
-            </div>
+    <div style={{
+      background: 'rgba(2,18,44,0.85)',
+      border: `1px solid ${cardBorder}`,
+      borderRadius: '14px',
+      padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+            background: 'rgba(55,181,255,0.12)', color: BLUE,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {getTypeIcon(goal.type)}
           </div>
-
-          {/* Progress */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">
-                {goal.currentValue} / {goal.targetValue} {goal.unit}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{Math.round(progress)}% complete</span>
-              {goal.deadline && !goal.isCompleted && (
-                <span className={isOverdue ? 'text-red-600' : ''}>
-                  {formatDeadline(goal.deadline)}
-                </span>
-              )}
-            </div>
+          <div>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#fff', margin: '0 0 4px 0' }}>
+              {goal.title}
+            </h3>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
+              {goal.description}
+            </p>
           </div>
-
-          {/* Actions */}
-          {!goal.isCompleted && (
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex space-x-2">
-                {progress >= 100 && (
-                  <Button size="sm" onClick={handleMarkComplete} className="bg-red-600 text-white hover:bg-red-700">
-                    Mark Complete
-                  </Button>
-                )}
-              </div>
-              {onDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(goal.id)}
-                  className="text-slate-500 hover:bg-red-50 hover:text-red-600"
-                >
-                  Delete
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Completion info */}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           {goal.isCompleted && (
-            <div className="flex items-center space-x-2 text-sm text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-100">
-              <CheckCircle className="h-4 w-4" />
-              <span>Goal completed! Great work!</span>
-            </div>
+            <span style={{
+              fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px',
+              background: 'rgba(55,181,255,0.15)', color: BLUE, border: `1px solid rgba(55,181,255,0.3)`,
+            }}>
+              Completed
+            </span>
+          )}
+          <span style={{
+            fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px',
+            textTransform: 'capitalize', ...getPriorityStyle(goal.priority),
+          }}>
+            {goal.priority}
+          </span>
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Progress</span>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>
+            {goal.currentValue} / {goal.targetValue} {goal.unit}
+          </span>
+        </div>
+        <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{
+            height: '100%', borderRadius: '3px',
+            background: `linear-gradient(90deg, ${BLUE} 0%, #0ea5e9 100%)`,
+            width: `${progress}%`, transition: 'width 0.5s',
+          }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+            {Math.round(progress)}% complete
+          </span>
+          {goal.deadline && !goal.isCompleted && (
+            <span style={{ fontSize: '11px', color: isOverdue ? '#f87171' : 'rgba(255,255,255,0.35)' }}>
+              {formatDeadline(goal.deadline)}
+            </span>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Actions */}
+      {!goal.isCompleted && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
+          <div>
+            {progress >= 100 && (
+              <button
+                onClick={handleMarkComplete}
+                style={{
+                  padding: '6px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`,
+                  color: '#fff', fontSize: '12px', fontWeight: 600,
+                }}
+              >
+                Mark Complete
+              </button>
+            )}
+          </div>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(goal.id)}
+              style={{
+                padding: '6px 12px', borderRadius: '7px', cursor: 'pointer',
+                background: 'transparent', border: '1px solid rgba(239,68,68,0.2)',
+                color: 'rgba(248,113,113,0.7)', fontSize: '12px', fontWeight: 500,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239,68,68,0.1)';
+                e.currentTarget.style.color = '#f87171';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'rgba(248,113,113,0.7)';
+              }}
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Completion banner */}
+      {goal.isCompleted && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '8px 12px', borderRadius: '8px',
+          background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)',
+        }}>
+          <CheckCircle style={{ width: '14px', height: '14px', color: BLUE }} />
+          <span style={{ fontSize: '12px', color: BLUE }}>Goal completed! Great work!</span>
+        </div>
+      )}
+    </div>
   );
 }
