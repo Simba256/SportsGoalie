@@ -3,18 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { parentLinkService } from '@/lib/database';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  AlertCircle,
-  ChevronLeft,
-  ClipboardCheck,
-  CheckCircle2,
-} from 'lucide-react';
+import { AlertCircle, ChevronLeft, ClipboardCheck, CheckCircle2 } from 'lucide-react';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import { redirect, useParams } from 'next/navigation';
+
+const BLUE = '#37b5ff';
+const cardBg = 'rgba(2,18,44,0.82)';
+const border = '1px solid rgba(55,181,255,0.18)';
 
 export default function ParentAssessmentPage() {
   const { user, loading: authLoading } = useAuth();
@@ -28,30 +24,18 @@ export default function ParentAssessmentPage() {
 
   useEffect(() => {
     if (!user || !childId) return;
-
     const checkAuthorization = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Verify the parent is linked to this child
         const isLinked = await parentLinkService.isLinked(user.id, childId);
-        if (!isLinked) {
-          setError('You are not linked to this goalie');
-          return;
-        }
-
+        if (!isLinked) { setError('You are not linked to this goalie'); return; }
         setIsAuthorized(true);
-
-        // Get child name
         const childrenResult = await parentLinkService.getLinkedChildren(user.id);
         if (childrenResult.success && childrenResult.data) {
           const child = childrenResult.data.find(c => c.childId === childId);
-          if (child) {
-            setChildName(child.displayName);
-          }
+          if (child) setChildName(child.displayName);
         }
-
       } catch (err) {
         console.error('Failed to check authorization:', err);
         setError('Failed to verify access');
@@ -59,135 +43,118 @@ export default function ParentAssessmentPage() {
         setLoading(false);
       }
     };
-
     checkAuthorization();
   }, [user, childId]);
 
-  if (authLoading || loading) {
-    return <SkeletonContentPage />;
-  }
+  if (authLoading || loading) return <SkeletonContentPage />;
+  if (!user) { redirect('/auth/login'); }
 
-  if (!user) {
-    redirect('/auth/login');
-  }
-
-  if (user.role !== 'parent') {
-    return (
-      <div className="container mx-auto max-w-2xl px-4 py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Access Denied</AlertTitle>
-          <AlertDescription>
-            This page is only available for parent accounts.
-          </AlertDescription>
-        </Alert>
+  const ErrorState = ({ msg }: { msg: string }) => (
+    <div style={{ maxWidth: '560px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Link href="/parent" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, padding: '6px 10px', borderRadius: '8px' }}>
+        <ChevronLeft size={16} /> Back to Dashboard
+      </Link>
+      <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '16px', padding: '20px', display: 'flex', gap: '12px' }}>
+        <AlertCircle size={20} color="#f87171" style={{ flexShrink: 0, marginTop: '2px' }} />
+        <div>
+          <p style={{ color: '#f87171', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Error</p>
+          <p style={{ color: 'rgba(248,113,113,0.7)', fontSize: '13px' }}>{msg}</p>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (error || !isAuthorized) {
-    return (
-      <div className="container mx-auto max-w-2xl px-4 py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error || 'You are not authorized to view this page'}</AlertDescription>
-        </Alert>
-        <Button variant="outline" className="mt-4" asChild>
-          <Link href="/parent">
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Link>
-        </Button>
-      </div>
-    );
-  }
+  if (user.role !== 'parent') return <ErrorState msg="This page is only available for parent accounts." />;
+  if (error || !isAuthorized) return <ErrorState msg={error || 'You are not authorized to view this page'} />;
 
-  // Check if parent has already completed their assessment
   if (user.parentOnboardingComplete) {
     return (
-      <div className="container mx-auto max-w-2xl px-4 py-8">
-        <div className="space-y-6">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/parent/child/${childId}`} className="flex items-center gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              Back to {childName}'s Profile
-            </Link>
-          </Button>
-
-          <Card>
-            <CardContent className="py-12 text-center">
-              <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Assessment Complete</h2>
-              <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                You've already completed your parent assessment. View the perception comparison
-                to see how your views align with {childName}'s self-assessment.
-              </p>
-              <Button asChild>
-                <Link href={`/parent/child/${childId}`}>
-                  View Perception Comparison
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Link href={`/parent/child/${childId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, padding: '6px 10px', borderRadius: '8px' }}>
+          <ChevronLeft size={16} /> Back to {childName}&apos;s Profile
+        </Link>
+        <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', padding: '48px 28px', textAlign: 'center', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <CheckCircle2 size={30} color="#22c55e" />
+          </div>
+          <h2 style={{ color: '#fff', fontWeight: 800, fontSize: '22px', marginBottom: '8px' }}>Assessment Complete</h2>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', lineHeight: 1.7, maxWidth: '340px', margin: '0 auto 28px' }}>
+            You&apos;ve already completed your parent assessment. View the perception comparison to see how your views align with {childName}&apos;s self-assessment.
+          </p>
+          <Link href={`/parent/child/${childId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '12px 24px', borderRadius: '12px', textDecoration: 'none', fontWeight: 700, fontSize: '14px' }}>
+            View Perception Comparison
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8">
-      <div className="space-y-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/parent/child/${childId}`} className="flex items-center gap-2">
-            <ChevronLeft className="h-4 w-4" />
-            Back to {childName}'s Profile
-          </Link>
-        </Button>
+    <>
+      <style>{`
+        .pa-start:hover { opacity: 0.9 !important; transform: translateY(-1px) !important; box-shadow: 0 8px 24px rgba(55,181,255,0.25) !important; }
+        .pa-start { transition: all 0.2s !important; }
+      `}</style>
+      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Link href={`/parent/child/${childId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, padding: '6px 10px', borderRadius: '8px' }}>
+          <ChevronLeft size={16} /> Back to {childName}&apos;s Profile
+        </Link>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5" />
-              Parent Assessment
-            </CardTitle>
-            <CardDescription>
-              Share your perspective on {childName}'s goaltending journey
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              This assessment helps us understand your perspective on your goalie's skills,
-              confidence, and development. Your answers will be compared with {childName}'s
-              self-assessment to identify areas of alignment and opportunities for better support.
+        <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+
+          {/* Header */}
+          <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `rgba(55,181,255,0.12)`, border: `1px solid rgba(55,181,255,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ClipboardCheck size={20} color={BLUE} />
+              </div>
+              <div>
+                <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '18px', marginBottom: '2px' }}>Parent Assessment</h1>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Share your perspective on {childName}&apos;s goaltending journey</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding: '20px 24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.7 }}>
+              This assessment helps us understand your perspective on your goalie&apos;s skills, confidence, and development. Your answers will be compared with {childName}&apos;s self-assessment to identify areas of alignment and opportunities for better support.
             </p>
 
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-medium">What to expect:</h4>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>28 questions across 7 categories</li>
-                <li>Estimated completion: 10-15 minutes</li>
-                <li>No right or wrong answers - just your honest perspective</li>
-                <li>Results compared with your goalie's self-assessment</li>
+            {/* What to expect */}
+            <div style={{ background: 'rgba(55,181,255,0.05)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '12px', padding: '16px' }}>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: '13px', marginBottom: '10px' }}>What to expect:</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  '28 questions across 7 categories',
+                  'Estimated completion: 10–15 minutes',
+                  'No right or wrong answers — just your honest perspective',
+                  "Results compared with your goalie's self-assessment",
+                ].map((item, i) => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0, marginTop: '5px' }} />
+                    {item}
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                For the most accurate comparison, complete this assessment based on your
-                current observations of {childName}, not how you hope they'll develop.
-              </AlertDescription>
-            </Alert>
+            {/* Notice */}
+            <div style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '10px', padding: '12px 14px', display: 'flex', gap: '10px' }}>
+              <AlertCircle size={16} color={BLUE} style={{ flexShrink: 0, marginTop: '1px' }} />
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', lineHeight: 1.6 }}>
+                For the most accurate comparison, complete this assessment based on your current observations of {childName}, not how you hope they&apos;ll develop.
+              </p>
+            </div>
 
-            <Button className="w-full" asChild>
-              <Link href="/onboarding?role=parent">
-                Start Assessment
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <Link href="/onboarding?role=parent" className="pa-start" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '13px', borderRadius: '12px', textDecoration: 'none', fontWeight: 800, fontSize: '14px' }}>
+              Start Assessment
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

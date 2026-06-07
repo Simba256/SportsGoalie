@@ -223,22 +223,20 @@ export function compareGoalieAndParent(
     const parentResponse = findResponse(parentResponses, rule.parentQuestionId!);
 
     if (goalieResponse && parentResponse) {
-      const { isGap, difference } = compareScores(
+      const { difference } = compareScores(
         goalieResponse.score,
         parentResponse.score,
         rule.scoreDifferenceThreshold
       );
 
-      // Create flag for both gaps and significant alignments
-      if (isGap || difference < 0.5) {
-        flags.push(createFlag(
-          rule,
-          goalieResponse.score,
-          parentResponse.score,
-          undefined,
-          difference
-        ));
-      }
+      // Always create a comparison for every matched pair
+      flags.push(createFlag(
+        rule,
+        goalieResponse.score,
+        parentResponse.score,
+        undefined,
+        difference
+      ));
     }
   }
 
@@ -260,21 +258,19 @@ export function compareGoalieAndCoach(
     const coachResponse = findResponse(coachResponses, rule.coachQuestionId!);
 
     if (goalieResponse && coachResponse) {
-      const { isGap, difference } = compareScores(
+      const { difference } = compareScores(
         goalieResponse.score,
         coachResponse.score,
         rule.scoreDifferenceThreshold
       );
 
-      if (isGap || difference < 0.5) {
-        flags.push(createFlag(
-          rule,
-          goalieResponse.score,
-          undefined,
-          coachResponse.score,
-          difference
-        ));
-      }
+      flags.push(createFlag(
+        rule,
+        goalieResponse.score,
+        undefined,
+        coachResponse.score,
+        difference
+      ));
     }
   }
 
