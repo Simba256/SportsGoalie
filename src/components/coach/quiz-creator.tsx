@@ -1,48 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Plus,
-  X,
-  Loader2,
-  Save,
-  ArrowRight,
-  Clock,
-  Settings,
-  PlayCircle,
-  FileText,
-  Video,
-  HelpCircle,
-} from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Plus, X, Loader2, Save, ArrowRight, Clock, Settings, PlayCircle, FileText, Video, HelpCircle } from 'lucide-react';
 import { VideoUploader } from '@/components/coach/video-uploader';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { customContentService, videoQuizService } from '@/lib/database';
 import { toast } from 'sonner';
 import { VideoQuizQuestion, VideoQuizSettings, CustomContentLibrary } from '@/types';
+
+const BLUE = '#37b5ff';
+const PURPLE = '#a78bfa';
 
 const defaultSettings: VideoQuizSettings = {
   allowPlaybackSpeedChange: true,
@@ -63,14 +31,34 @@ interface QuizCreatorProps {
   onSave: (content: CustomContentLibrary) => void;
 }
 
+const inputS: React.CSSProperties = { width: '100%', padding: '10px 13px', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'text' };
+const labelS: React.CSSProperties = { display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '7px' };
+const sectionCard: React.CSSProperties = { background: 'rgba(2,18,44,0.7)', border: '1px solid rgba(55,181,255,0.12)', borderTop: '2px solid rgba(55,181,255,0.28)', borderRadius: '14px', padding: '20px' };
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button type="button" onClick={() => onChange(!checked)}
+      style={{ width: '44px', height: '24px', borderRadius: '99px', background: checked ? BLUE : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', top: '3px', left: checked ? '23px' : '3px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }} />
+    </button>
+  );
+}
+
+const TABS = [
+  { key: 'info',      icon: <FileText size={14} />,    label: 'Quiz Info' },
+  { key: 'video',     icon: <Video size={14} />,       label: 'Video' },
+  { key: 'questions', icon: <HelpCircle size={14} />,  label: 'Questions' },
+  { key: 'settings',  icon: <Settings size={14} />,    label: 'Settings' },
+] as const;
+type TabKey = typeof TABS[number]['key'];
+
 export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreatorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeTab, setActiveTab] = useState<TabKey>('info');
   const [videoDuration, setVideoDuration] = useState(0);
   const [questions, setQuestions] = useState<VideoQuizQuestion[]>([]);
   const [settings, setSettings] = useState<VideoQuizSettings>(defaultSettings);
 
-  // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState<'introduction' | 'development' | 'refinement'>('introduction');
@@ -79,497 +67,260 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
   const [isPublic, setIsPublic] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
-
-  // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const resetForm = () => {
-    setIsSubmitting(false);
-    setActiveTab('info');
-    setVideoDuration(0);
-    setQuestions([]);
-    setSettings(defaultSettings);
-    setTitle('');
-    setDescription('');
-    setDifficulty('introduction');
-    setVideoUrl('');
-    setSaveToLibrary(true);
-    setIsPublic(false);
-    setTags([]);
-    setNewTag('');
-    setErrors({});
+    setIsSubmitting(false); setActiveTab('info'); setVideoDuration(0); setQuestions([]); setSettings(defaultSettings);
+    setTitle(''); setDescription(''); setDifficulty('introduction'); setVideoUrl('');
+    setSaveToLibrary(true); setIsPublic(false); setTags([]); setNewTag(''); setErrors({});
   };
 
-  const handleClose = () => {
-    if (isSubmitting) return;
-    onOpenChange(false);
-    resetForm();
-  };
+  const handleClose = () => { if (isSubmitting) return; onOpenChange(false); resetForm(); };
+  const handleVideoUploaded = (url: string, duration?: number) => { setVideoUrl(url); if (duration) setVideoDuration(duration); };
 
-  const handleVideoUploaded = (url: string, duration?: number) => {
-    setVideoUrl(url);
-    if (duration) {
-      setVideoDuration(duration);
-    }
-  };
-
-  const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim().toLowerCase())) {
-      setTags([...tags, newTag.trim().toLowerCase()]);
-      setNewTag('');
-    }
-  };
-
-  const removeTag = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index));
-  };
+  const addTag = () => { if (newTag.trim() && !tags.includes(newTag.trim().toLowerCase())) { setTags([...tags, newTag.trim().toLowerCase()]); setNewTag(''); } };
+  const removeTag = (i: number) => setTags(tags.filter((_, idx) => idx !== i));
 
   const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!title.trim() || title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
-    }
-    if (!description.trim() || description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e: Record<string, string> = {};
+    if (!title.trim() || title.length < 3) e.title = 'Title must be at least 3 characters';
+    if (!description.trim() || description.length < 10) e.description = 'Description must be at least 10 characters';
+    setErrors(e); return Object.keys(e).length === 0;
   };
 
   const onSubmit = async () => {
-    if (!validate()) {
-      toast.error('Please fix the errors in the form');
-      setActiveTab('info');
-      return;
-    }
-
-    if (!videoUrl) {
-      toast.error('Please add a video');
-      setActiveTab('video');
-      return;
-    }
-
-    if (questions.length === 0) {
-      toast.error('Please add at least one question');
-      setActiveTab('questions');
-      return;
-    }
-
+    if (!validate()) { toast.error('Please fix the form errors'); setActiveTab('info'); return; }
+    if (!videoUrl) { toast.error('Please add a video'); setActiveTab('video'); return; }
+    if (questions.length === 0) { toast.error('Please add at least one question'); setActiveTab('questions'); return; }
     setIsSubmitting(true);
-
     try {
-      const totalPoints = questions.reduce((sum, q) => sum + (q.points || 10), 0);
+      const totalPoints = questions.reduce((s, q) => s + (q.points || 10), 0);
       const estimatedDuration = Math.ceil(videoDuration / 60) + Math.ceil(questions.length * 0.5);
-
-      const quizData = {
-        title: title.trim(),
-        description: description.trim(),
-        videoUrl,
-        videoDuration,
-        questions,
-        settings,
-        difficulty,
-        estimatedDuration,
-        tags,
-        isActive: true,
-        isPublished: true,
-        category: 'coach-content',
-        sportId: 'coach-custom',
-        skillId: 'coach-custom',
-        createdBy: coachId,
-        source: 'coach',
-        metadata: {
-          totalAttempts: 0,
-          totalCompletions: 0,
-          averageScore: 0,
-          averageTimeSpent: 0,
-          averageCompletionTime: 0,
-          dropOffPoints: [],
-        },
-      };
-
-      const quizResult = await videoQuizService.createVideoQuiz(quizData);
-
-      if (!quizResult.success) {
-        throw new Error(quizResult.error?.message || 'Failed to create quiz');
-      }
-
-      if (!saveToLibrary) {
-        toast.success('Quiz created successfully');
-        onOpenChange(false);
-        resetForm();
-        return;
-      }
-
-      const contentData = {
-        title: title.trim(),
-        description: description.trim(),
-        type: 'quiz' as const,
-        content: JSON.stringify({
-          videoQuizId: quizResult.data?.id,
-          totalPoints,
-          questionCount: questions.length,
-        }),
-        videoUrl,
-        tags,
-        isPublic,
-        estimatedTimeMinutes: estimatedDuration,
-      };
-
-      const contentResult = await customContentService.createContent(coachId, contentData);
-
-      if (!contentResult.success || !contentResult.data) {
-        throw new Error(contentResult.error?.message || 'Failed to save quiz to library');
-      }
-
+      const quizResult = await videoQuizService.createVideoQuiz({ title: title.trim(), description: description.trim(), videoUrl, videoDuration, questions, settings, difficulty, estimatedDuration, tags, isActive: true, isPublished: true, category: 'coach-content', sportId: 'coach-custom', skillId: 'coach-custom', createdBy: coachId });
+      if (!quizResult.success) throw new Error(quizResult.error?.message || 'Failed to create quiz');
+      if (!saveToLibrary) { toast.success('Quiz created'); onOpenChange(false); resetForm(); return; }
+      const contentResult = await customContentService.createContent(coachId, { title: title.trim(), description: description.trim(), type: 'quiz', content: JSON.stringify({ videoQuizId: quizResult.data?.id, totalPoints, questionCount: questions.length }), videoUrl, tags, isPublic, estimatedTimeMinutes: estimatedDuration });
+      if (!contentResult.success || !contentResult.data) throw new Error(contentResult.error?.message || 'Failed to save quiz to library');
       toast.success('Quiz created successfully');
-      onSave(contentResult.data);
-      onOpenChange(false);
-      resetForm();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save quiz';
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+      onSave(contentResult.data); onOpenChange(false); resetForm();
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to save quiz'); }
+    finally { setIsSubmitting(false); }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(nextOpen) => {
-      if (!nextOpen) {
-        handleClose();
-      } else {
-        onOpenChange(nextOpen);
-      }
-    }}>
-      <DialogContent showCloseButton={false} className="sm:max-w-6xl w-[95vw] h-[90vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
-        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
-          <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
-            <DialogTitle className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <PlayCircle className="h-7 w-7" />
-            Create Video Quiz
-            </DialogTitle>
-            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
-              Create an interactive video quiz with questions at specific timestamps
-            </DialogDescription>
+  if (!open) return null;
+
+  const selectS: React.CSSProperties = { width: '100%', padding: '10px 13px', background: 'rgba(2,8,28,0.95)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', fontFamily: 'inherit' };
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}
+      onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
+      <style>{`
+        .qc-input:focus{border-color:${BLUE}!important;box-shadow:0 0 0 3px rgba(55,181,255,0.1)!important}
+        .qc-input::placeholder{color:rgba(255,255,255,0.22)}
+        .qc-add:hover{background:rgba(55,181,255,0.18)!important}
+        .qc-save:hover:not(:disabled){opacity:0.9;transform:translateY(-1px)}
+        .qc-save:disabled{opacity:0.5;cursor:not-allowed}
+        .qc-cancel:hover{background:rgba(255,255,255,0.06)!important}
+        .qc-select option{background:#020e24;color:#fff}
+        @keyframes qc-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+      `}</style>
+
+      <div style={{ background: 'rgba(2,10,30,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '24px', width: '100%', maxWidth: '900px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+
+        {/* Header */}
+        <div style={{ position: 'relative', background: 'linear-gradient(135deg, #1a0a3d 0%, #2d0f6e 50%, #1a0a3d 100%)', padding: '24px 28px', overflow: 'hidden', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(167,139,250,0.15)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${PURPLE}, transparent)` }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ color: PURPLE, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Content Library</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <PlayCircle size={18} color={PURPLE} />
+                </div>
+                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 900, letterSpacing: '-0.02em' }}>Create Video Quiz</h2>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Create an interactive quiz with questions at specific video timestamps.</p>
+            </div>
+            <button onClick={handleClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '4px', borderRadius: '8px', display: 'flex' }}>
+              <X size={18} />
+            </button>
           </div>
-        </DialogHeader>
+        </div>
 
-        <ScrollArea className="flex-1">
-          <div className="space-y-6 px-8 py-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-              <TabsList className="grid w-full grid-cols-4 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
-                <TabsTrigger value="info" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-800">
-                  <FileText className="h-4 w-4" />
-                  Quiz Info
-                </TabsTrigger>
-                <TabsTrigger value="video" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-800">
-                  <Video className="h-4 w-4" />
-                  Video
-                </TabsTrigger>
-                <TabsTrigger value="questions" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-red-50 data-[state=active]:text-red-800">
-                  <HelpCircle className="h-4 w-4" />
-                  Questions
-                  {questions.length > 0 && (
-                    <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-800 border-blue-200">
-                      {questions.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-900">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </TabsTrigger>
-              </TabsList>
+        {/* Tab nav */}
+        <div style={{ display: 'flex', gap: '4px', padding: '12px 28px 0', background: 'rgba(2,10,30,0.6)', flexShrink: 0, borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+          {TABS.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '10px 10px 0 0', border: '1px solid transparent', borderBottom: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                background: activeTab === tab.key ? 'rgba(55,181,255,0.1)' : 'transparent',
+                color: activeTab === tab.key ? BLUE : 'rgba(255,255,255,0.45)',
+                borderColor: activeTab === tab.key ? 'rgba(55,181,255,0.25)' : 'transparent',
+              }}>
+              {tab.icon}
+              {tab.label}
+              {tab.key === 'questions' && questions.length > 0 && (
+                <span style={{ fontSize: '10px', fontWeight: 800, color: BLUE, background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.3)', borderRadius: '20px', padding: '1px 7px' }}>{questions.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
 
-              <TabsContent value="info" className="space-y-5">
-                <Card className="border-zinc-200 bg-white shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="quiz-title">Quiz Title *</Label>
-                      <Input
-                        id="quiz-title"
-                        placeholder="Enter quiz title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
-                      {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
+        {/* Tab body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(55,181,255,0.2) transparent' }}>
+
+          {/* Info tab */}
+          {activeTab === 'info' && (
+            <>
+              <div style={sectionCard}>
+
+                <p style={{ color: PURPLE, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Basic Information</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={labelS}>Quiz Title *</label>
+                    <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Enter quiz title" className="qc-input" style={{ ...inputS, borderColor: errors.title ? '#f87171' : undefined }} />
+                    {errors.title && <p style={{ color: '#f87171', fontSize: '11px', marginTop: '4px' }}>{errors.title}</p>}
+                  </div>
+                  <div>
+                    <label style={labelS}>Description *</label>
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what this quiz covers" rows={4} className="qc-input" style={{ ...inputS, resize: 'vertical', borderColor: errors.description ? '#f87171' : undefined }} />
+                    {errors.description && <p style={{ color: '#f87171', fontSize: '11px', marginTop: '4px' }}>{errors.description}</p>}
+                  </div>
+                  <div>
+                    <label style={labelS}>Difficulty Level</label>
+                    <select value={difficulty} onChange={e => setDifficulty(e.target.value as 'introduction' | 'development' | 'refinement')} className="qc-select" style={{ ...selectS, maxWidth: '240px' }}>
+                      <option value="introduction">Introduction</option>
+                      <option value="development">Development</option>
+                      <option value="refinement">Refinement</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelS}>Tags (Optional)</label>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                      <input value={newTag} onChange={e => setNewTag(e.target.value)} placeholder="Add a tag" className="qc-input" style={{ ...inputS, flex: 1 }}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
+                      <button type="button" onClick={addTag} className="qc-add"
+                        style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', color: BLUE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}>
+                        <Plus size={16} />
+                      </button>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="quiz-description">Description *</Label>
-                      <Textarea
-                        id="quiz-description"
-                        placeholder="Describe what this quiz covers"
-                        rows={4}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                      />
-                      {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Difficulty Level</Label>
-                      <Select value={difficulty} onValueChange={(v: 'introduction' | 'development' | 'refinement') => setDifficulty(v)}>
-                        <SelectTrigger className="w-full md:w-64">
-                          <SelectValue placeholder="Select difficulty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="introduction">Introduction</SelectItem>
-                          <SelectItem value="development">Development</SelectItem>
-                          <SelectItem value="refinement">Refinement</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Tags (Optional)</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Add a tag"
-                          value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addTag();
-                            }
-                          }}
-                          className="flex-1"
-                        />
-                        <Button type="button" variant="outline" onClick={addTag}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="gap-1">
-                              {tag}
-                              <button
-                                type="button"
-                                onClick={() => removeTag(index)}
-                                className="ml-1 hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-zinc-200 bg-white shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Library Options</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Save to Library</Label>
-                        <p className="text-xs text-muted-foreground">
-                          Save this quiz to your content library for reuse
-                        </p>
-                      </div>
-                      <Switch checked={saveToLibrary} onCheckedChange={setSaveToLibrary} />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Make Public</Label>
-                        <p className="text-xs text-muted-foreground">
-                          Allow other coaches to use this quiz
-                        </p>
-                      </div>
-                      <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="video">
-                <Card className="border-zinc-200 bg-white shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Quiz Video</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Upload or add a video URL. Questions will be added at specific timestamps.
-                    </p>
-                    <VideoUploader
-                      coachId={coachId}
-                      onVideoUploaded={handleVideoUploaded}
-                      initialVideoUrl={videoUrl}
-                    />
-                    {videoDuration > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>
-                          Video duration: {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')}
-                        </span>
+                    {tags.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {tags.map((tag, i) => (
+                          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: PURPLE, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', padding: '3px 10px' }}>
+                            {tag}
+                            <button type="button" onClick={() => removeTag(i)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0, display: 'flex' }}><X size={11} /></button>
+                          </span>
+                        ))}
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                </div>
+              </div>
 
-              <TabsContent value="questions">
-                {!videoUrl ? (
-                  <Card className="border-zinc-200 bg-white shadow-sm">
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Video className="h-14 w-14 text-muted-foreground mb-4" />
-                      <h3 className="text-xl font-semibold mb-2">Add a Video First</h3>
-                      <p className="text-muted-foreground text-center max-w-md mb-6">
-                        Please add a video in the Video tab before creating questions.
-                      </p>
-                      <Button onClick={() => setActiveTab('video')}>Go to Video Tab</Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <VideoQuestionBuilder
-                    questions={questions}
-                    videoDuration={videoDuration}
-                    videoUrl={videoUrl}
-                    onChange={setQuestions}
-                  />
-                )}
-              </TabsContent>
+              <div style={sectionCard}>
 
-              <TabsContent value="settings">
-                <Card className="border-zinc-200 bg-white shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      Quiz Settings
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center justify-between">
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Library Options</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {[
+                    { label: 'Save to Library', desc: 'Save this quiz to your content library for reuse', checked: saveToLibrary, onChange: setSaveToLibrary },
+                    { label: 'Make Public', desc: 'Allow other coaches to use this quiz', checked: isPublic, onChange: setIsPublic },
+                  ].map(row => (
+                    <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                       <div>
-                        <Label>Allow Playback Speed Change</Label>
-                        <p className="text-xs text-muted-foreground">Let students adjust video playback speed</p>
+                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600, marginBottom: '2px' }}>{row.label}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>{row.desc}</p>
                       </div>
-                      <Switch
-                        checked={settings.allowPlaybackSpeedChange}
-                        onCheckedChange={(checked) => setSettings({ ...settings, allowPlaybackSpeedChange: checked })}
-                      />
+                      <Toggle checked={row.checked} onChange={row.onChange} />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Allow Rewind</Label>
-                        <p className="text-xs text-muted-foreground">Let students rewind the video</p>
-                      </div>
-                      <Switch
-                        checked={settings.allowRewind}
-                        onCheckedChange={(checked) => setSettings({ ...settings, allowRewind: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Allow Skip Ahead</Label>
-                        <p className="text-xs text-muted-foreground">Let students skip ahead in the video</p>
-                      </div>
-                      <Switch
-                        checked={settings.allowSkipAhead}
-                        onCheckedChange={(checked) => setSettings({ ...settings, allowSkipAhead: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Require Sequential Answers</Label>
-                        <p className="text-xs text-muted-foreground">Students must answer questions in order</p>
-                      </div>
-                      <Switch
-                        checked={settings.requireSequentialAnswers}
-                        onCheckedChange={(checked) => setSettings({ ...settings, requireSequentialAnswers: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Show Progress Bar</Label>
-                        <p className="text-xs text-muted-foreground">Display progress through the quiz</p>
-                      </div>
-                      <Switch
-                        checked={settings.showProgressBar}
-                        onCheckedChange={(checked) => setSettings({ ...settings, showProgressBar: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Show Correct Answers</Label>
-                        <p className="text-xs text-muted-foreground">Show correct answers after submission</p>
-                      </div>
-                      <Switch
-                        checked={settings.showCorrectAnswers}
-                        onCheckedChange={(checked) => setSettings({ ...settings, showCorrectAnswers: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Show Explanations</Label>
-                        <p className="text-xs text-muted-foreground">Show explanations for each answer</p>
-                      </div>
-                      <Switch
-                        checked={settings.showExplanations}
-                        onCheckedChange={(checked) => setSettings({ ...settings, showExplanations: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Auto-Play Next</Label>
-                        <p className="text-xs text-muted-foreground">Automatically continue after answering</p>
-                      </div>
-                      <Switch
-                        checked={settings.autoPlayNext}
-                        onCheckedChange={(checked) => setSettings({ ...settings, autoPlayNext: checked })}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </ScrollArea>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
-        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
-              </>
+          {/* Video tab */}
+          {activeTab === 'video' && (
+            <div style={sectionCard}>
+
+              <p style={{ color: PURPLE, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Quiz Video</p>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '16px' }}>Upload or link a video. Questions will be added at specific timestamps.</p>
+              <VideoUploader coachId={coachId} onVideoUploaded={handleVideoUploaded} initialVideoUrl={videoUrl} />
+              {videoDuration > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                  <Clock size={13} />
+                  <span>Duration: {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Questions tab */}
+          {activeTab === 'questions' && (
+            !videoUrl ? (
+              <div style={{ ...sectionCard, textAlign: 'center', padding: '48px 24px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                  <Video size={24} color="rgba(255,255,255,0.25)" />
+                </div>
+                <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '16px', marginBottom: '8px' }}>Add a Video First</h3>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px', maxWidth: '320px', margin: '0 auto 20px' }}>Please add a video in the Video tab before creating questions.</p>
+                <button onClick={() => setActiveTab('video')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', borderRadius: '10px', color: '#000f28', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                  Go to Video Tab
+                </button>
+              </div>
             ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Create Quiz
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+              <VideoQuestionBuilder questions={questions} videoDuration={videoDuration} videoUrl={videoUrl} onChange={setQuestions} />
+            )
+          )}
+
+          {/* Settings tab */}
+          {activeTab === 'settings' && (
+            <div style={sectionCard}>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <Settings size={14} color={PURPLE} />
+                <p style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>Quiz Settings</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                {([
+                  { label: 'Allow Playback Speed', desc: 'Let students adjust video playback speed', key: 'allowPlaybackSpeedChange' as const },
+                  { label: 'Allow Rewind', desc: 'Let students rewind the video', key: 'allowRewind' as const },
+                  { label: 'Allow Skip Ahead', desc: 'Let students skip ahead in the video', key: 'allowSkipAhead' as const },
+                  { label: 'Sequential Answers', desc: 'Students must answer questions in order', key: 'requireSequentialAnswers' as const },
+                  { label: 'Show Progress Bar', desc: 'Display progress through the quiz', key: 'showProgressBar' as const },
+                  { label: 'Show Correct Answers', desc: 'Show correct answers after submission', key: 'showCorrectAnswers' as const },
+                  { label: 'Show Explanations', desc: 'Show explanations for each answer', key: 'showExplanations' as const },
+                  { label: 'Auto-Play Next', desc: 'Automatically continue after answering', key: 'autoPlayNext' as const },
+                ] as Array<{ label: string; desc: string; key: keyof VideoQuizSettings }>).map(row => (
+                  <div key={row.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+                    <div>
+                      <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600, marginBottom: '2px' }}>{row.label}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>{row.desc}</p>
+                    </div>
+                    <Toggle checked={settings[row.key] as boolean} onChange={v => setSettings({ ...settings, [row.key]: v })} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(55,181,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0, background: 'rgba(2,10,30,0.6)' }}>
+          <button onClick={handleClose} disabled={isSubmitting} className="qc-cancel"
+            style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            Cancel
+          </button>
+          <button onClick={onSubmit} disabled={isSubmitting} className="qc-save"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px', background: `linear-gradient(135deg, ${PURPLE} 0%, #7c3aed 100%)`, border: 'none', borderRadius: '10px', color: '#fff', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: `0 4px 16px rgba(167,139,250,0.35)` }}>
+            {isSubmitting
+              ? <><Loader2 size={15} style={{ animation: 'qc-spin 1s linear infinite' }} />Creating…</>
+              : <><Save size={15} />Create Quiz<ArrowRight size={14} /></>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  , document.body);
 }

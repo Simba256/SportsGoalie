@@ -1,42 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  BookOpen,
-  PlayCircle,
-  Search,
-  Loader2,
-  ChevronRight,
-  Clock,
-  Check,
-  FolderOpen,
-  User,
+  BookOpen, PlayCircle, Search, Loader2, ChevronRight,
+  Clock, Check, FolderOpen, User, X, Video,
 } from 'lucide-react';
 import { sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { useAuth } from '@/lib/auth/context';
 import { Sport, Skill, VideoQuiz, CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
+
+const BLUE = '#37b5ff';
+const PURPLE = '#a78bfa';
 
 interface ContentItem {
   id: string;
@@ -46,7 +22,7 @@ interface ContentItem {
   sportId: string;
   sportName: string;
   difficulty: string;
-  estimatedTime: number; // minutes
+  estimatedTime: number;
   hasVideo?: boolean;
   icon?: string;
   color?: string;
@@ -62,14 +38,7 @@ interface ContentBrowserProps {
   preSelectedSportId?: string;
 }
 
-export function ContentBrowser({
-  open,
-  onOpenChange,
-  onSelect,
-  selectedSportId,
-  coachId,
-  preSelectedSportId,
-}: ContentBrowserProps) {
+export function ContentBrowser({ open, onOpenChange, onSelect, selectedSportId, coachId, preSelectedSportId }: ContentBrowserProps) {
   const { user } = useAuth();
   const effectiveCoachId = coachId || user?.id;
 
@@ -80,109 +49,71 @@ export function ContentBrowser({
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState(selectedSportId || '');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [contentSource, setContentSource] = useState<'library' | 'custom'>('library');
   const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
 
-  // Auto-select pillar when opened from intelligence sidebar
   useEffect(() => {
-    if (open && preSelectedSportId) {
-      setSelectedSport(preSelectedSportId);
-    }
+    if (open && preSelectedSportId) setSelectedSport(preSelectedSportId);
   }, [open, preSelectedSportId]);
 
-  // Load sports on mount
   useEffect(() => {
     if (open) {
       loadSports();
-      if (effectiveCoachId) {
-        loadCustomContent();
-      }
+      if (effectiveCoachId) loadCustomContent();
     }
   }, [open, effectiveCoachId]);
 
-  // Load content when sport or type changes
   useEffect(() => {
-    if (selectedSport && contentSource === 'library') {
-      loadContent();
-    }
+    if (selectedSport && contentSource === 'library') loadContent();
   }, [selectedSport, contentType, contentSource]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
+    if (open) document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onOpenChange]);
 
   const loadSports = async () => {
     try {
       setLoading(true);
       const result = await sportsService.getAllSports();
-
       if (result.success && result.data) {
-        // getAllSports returns PaginatedResponse<Sport>
-        const activeSports = result.data.items.filter(s => s.isActive);
-        setSports(activeSports);
-
-        // Auto-select first sport if none selected
-        if (!selectedSport && activeSports.length > 0) {
-          setSelectedSport(activeSports[0].id);
-        }
-      } else {
-        toast.error('Failed to load sports');
-      }
-    } catch (error) {
-      console.error('Failed to load sports:', error);
-      toast.error('Failed to load sports');
-    } finally {
-      setLoading(false);
-    }
+        const active = result.data.items.filter(s => s.isActive);
+        setSports(active);
+        if (!selectedSport && active.length > 0) setSelectedSport(active[0].id);
+      } else { toast.error('Failed to load sports'); }
+    } catch { toast.error('Failed to load sports'); }
+    finally { setLoading(false); }
   };
 
   const loadContent = async () => {
     try {
       setLoading(true);
-
       if (contentType === 'lesson') {
-        // Load skills for the selected sport
         const result = await sportsService.getSkillsBySport(selectedSport);
-
-        if (result.success && result.data) {
-          // getSkillsBySport returns PaginatedResponse<Skill>
-          setSkills(result.data.items.filter(s => s.isActive));
-        } else {
-          toast.error('Failed to load lessons');
-        }
+        if (result.success && result.data) setSkills(result.data.items.filter(s => s.isActive));
+        else toast.error('Failed to load lessons');
       } else {
-        // Load quizzes for the selected sport
         const result = await videoQuizService.getQuizzesBySport(selectedSport);
-
-        if (result.success && result.data) {
-          // getQuizzesBySport returns PaginatedResponse<VideoQuiz>
-          setQuizzes(result.data.items.filter(q => q.isActive));
-        } else {
-          toast.error('Failed to load quizzes');
-        }
+        if (result.success && result.data) setQuizzes(result.data.items.filter(q => q.isActive));
+        else toast.error('Failed to load quizzes');
       }
-    } catch (error) {
-      console.error('Failed to load content:', error);
-      toast.error('Failed to load content');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Failed to load content'); }
+    finally { setLoading(false); }
   };
 
   const loadCustomContent = async () => {
     if (!effectiveCoachId) return;
-
     try {
       const result = await customContentService.getCoachContent(effectiveCoachId);
-      if (result.success && result.data) {
-        setCustomContent(result.data);
-      }
-    } catch (error) {
-      console.error('Failed to load custom content:', error);
-    }
+      if (result.success && result.data) setCustomContent(result.data);
+    } catch { /* silent */ }
   };
 
   const getFilteredContent = (): ContentItem[] => {
     if (contentSource === 'custom') {
-      // Filter custom content
       let items = customContent
         .filter(item => contentType === 'lesson' ? item.type === 'lesson' : item.type === 'quiz')
         .map(item => ({
@@ -195,358 +126,233 @@ export function ContentBrowser({
           difficulty: 'custom',
           estimatedTime: item.estimatedTimeMinutes || 15,
           hasVideo: !!item.videoUrl,
-          color: item.type === 'lesson' ? '#3B82F6' : '#22C55E',
+          color: item.type === 'lesson' ? BLUE : PURPLE,
           isCustom: true,
         }));
-
-      // Apply search filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        items = items.filter(
-          item =>
-            item.title.toLowerCase().includes(query) ||
-            item.description.toLowerCase().includes(query)
-        );
+        const q = searchQuery.toLowerCase();
+        items = items.filter(i => i.title.toLowerCase().includes(q) || i.description.toLowerCase().includes(q));
       }
-
       return items;
     }
 
-    // Library content
     const sport = sports.find(s => s.id === selectedSport);
     if (!sport) return [];
 
-    let items: ContentItem[] = [];
+    let items: ContentItem[] = contentType === 'lesson'
+      ? skills.map(skill => ({ id: skill.id, type: 'lesson' as const, title: skill.name, description: skill.description, sportId: sport.id, sportName: sport.name, difficulty: skill.difficulty, estimatedTime: skill.estimatedTimeToComplete, hasVideo: skill.hasVideo, icon: sport.icon, color: sport.color }))
+      : quizzes.map(quiz => ({ id: quiz.id, type: 'quiz' as const, title: quiz.title, description: quiz.description || '', sportId: sport.id, sportName: sport.name, difficulty: quiz.difficulty, estimatedTime: quiz.estimatedDuration || 30, icon: sport.icon, color: sport.color }));
 
-    if (contentType === 'lesson') {
-      items = skills.map(skill => ({
-        id: skill.id,
-        type: 'lesson' as const,
-        title: skill.name,
-        description: skill.description,
-        sportId: sport.id,
-        sportName: sport.name,
-        difficulty: skill.difficulty,
-        estimatedTime: skill.estimatedTimeToComplete,
-        hasVideo: skill.hasVideo,
-        icon: sport.icon,
-        color: sport.color,
-      }));
-    } else {
-      items = quizzes.map(quiz => ({
-        id: quiz.id,
-        type: 'quiz' as const,
-        title: quiz.title,
-        description: quiz.description || '',
-        sportId: sport.id,
-        sportName: sport.name,
-        difficulty: quiz.difficulty,
-        estimatedTime: quiz.estimatedDuration || 30,
-        icon: sport.icon,
-        color: sport.color,
-      }));
-    }
-
-    // Apply filters
-    let filtered = items;
-
-    // Search filter
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        item =>
-          item.title.toLowerCase().includes(query) ||
-          item.description.toLowerCase().includes(query)
-      );
+      const q = searchQuery.toLowerCase();
+      items = items.filter(i => i.title.toLowerCase().includes(q) || i.description.toLowerCase().includes(q));
     }
-
-    // Difficulty filter
-    if (selectedDifficulty !== 'all') {
-      filtered = filtered.filter(item => item.difficulty === selectedDifficulty);
-    }
-
-    return filtered;
+    if (selectedDifficulty !== 'all') items = items.filter(i => i.difficulty === selectedDifficulty);
+    return items;
   };
 
-  const handleSelect = () => {
+  const handleAdd = () => {
     if (selectedItem) {
       onSelect(selectedItem);
       onOpenChange(false);
-      // Reset state
       setSelectedItem(null);
       setSearchQuery('');
     }
   };
 
+  if (!open) return null;
+
   const filteredContent = getFilteredContent();
   const customLessonCount = customContent.filter(c => c.type === 'lesson').length;
   const customQuizCount = customContent.filter(c => c.type === 'quiz').length;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-5xl w-[95vw] max-h-[86vh] flex flex-col overflow-hidden border-0 bg-white shadow-2xl rounded-2xl p-0 gap-0">
-        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
-          <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Curriculum</p>
-            <DialogTitle className="text-2xl font-bold tracking-tight text-white">Add Content to Curriculum</DialogTitle>
-            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
-              Browse and select lessons or quizzes to add to the student&apos;s learning path
-            </DialogDescription>
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
+  const selectStyle: React.CSSProperties = { padding: '9px 12px', background: 'rgba(2,14,36,0.95)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' };
+
+  return createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}
+      onClick={e => { if (e.target === e.currentTarget) onOpenChange(false); }}
+    >
+      <style>{`
+        .cb-tab-active { background: rgba(55,181,255,0.15) !important; border-color: rgba(55,181,255,0.4) !important; color: #37b5ff !important; }
+        .cb-tab-type-active { background: rgba(55,181,255,0.12) !important; border-color: rgba(55,181,255,0.3) !important; color: #37b5ff !important; }
+        .cb-item:hover { background: rgba(55,181,255,0.05) !important; border-color: rgba(55,181,255,0.25) !important; }
+        .cb-item-selected { background: rgba(55,181,255,0.1) !important; border-color: rgba(55,181,255,0.4) !important; }
+        .cb-input:focus { border-color: #37b5ff !important; box-shadow: 0 0 0 3px rgba(55,181,255,0.1) !important; }
+        .cb-input::placeholder { color: rgba(255,255,255,0.25); }
+        .cb-add:hover:not(:disabled) { opacity: 0.9 !important; transform: translateY(-1px) !important; }
+        .cb-add:disabled { opacity: 0.4 !important; cursor: not-allowed !important; }
+        .cb-cancel:hover { background: rgba(255,255,255,0.06) !important; }
+        .cb-select option { background: #020e24; color: #fff; }
+      `}</style>
+
+      <div style={{ background: 'rgba(2,14,36,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '24px', width: '100%', maxWidth: '860px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+
+        {/* Header */}
+        <div style={{ position: 'relative', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 60%, #0d1f40 100%)', padding: '24px 28px', overflow: 'hidden', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(55,181,255,0.12)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ color: BLUE, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px' }}>Curriculum</p>
+              <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '4px' }}>Add Content to Curriculum</h2>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px' }}>Browse and select lessons or quizzes to add to the student's learning path</p>
+            </div>
+            <button onClick={() => onOpenChange(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '4px', borderRadius: '8px', display: 'flex' }}>
+              <X size={18} />
+            </button>
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-y-auto space-y-5 px-8 py-8">
-          {/* Content Source Tabs */}
-          <Tabs value={contentSource} onValueChange={(v) => {
-            setContentSource(v as 'library' | 'custom');
-            setSelectedItem(null);
-          }}>
-            <TabsList className="grid w-full grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-100 p-1">
-              <TabsTrigger value="library" className="gap-2 rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                <FolderOpen className="h-4 w-4" />
-                Content Library
-              </TabsTrigger>
-              <TabsTrigger value="custom" className="gap-2 rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-sm">
-                <User className="h-4 w-4" />
-                My Content
-                {customContent.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 text-xs bg-blue-100 text-blue-700 border border-blue-200">
-                    {customContent.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(55,181,255,0.2) transparent' }}>
 
-          {/* Sport Selection (only for library) */}
+          {/* Source tabs */}
+          <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '12px', padding: '4px' }}>
+            {([
+              { key: 'library' as const, icon: <FolderOpen size={14} />, label: 'Content Library' },
+              { key: 'custom' as const, icon: <User size={14} />, label: `My Content${customContent.length > 0 ? ` (${customContent.length})` : ''}` },
+            ]).map(tab => (
+              <button key={tab.key} onClick={() => { setContentSource(tab.key); setSelectedItem(null); }}
+                className={contentSource === tab.key ? 'cb-tab-active' : ''}
+                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px', padding: '9px 16px', borderRadius: '9px', border: '1px solid transparent', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sport selector (library only) */}
           {contentSource === 'library' && (
-            <div className="space-y-2">
-              <Label className="text-zinc-700">Sport / Pillar</Label>
-              <Select value={selectedSport} onValueChange={setSelectedSport}>
-                <SelectTrigger className="border-zinc-300 bg-white focus:ring-blue-200">
-                  <SelectValue placeholder="Select a sport..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {sports.map(sport => (
-                    <SelectItem key={sport.id} value={sport.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{sport.icon}</span>
-                        <span>{sport.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {sport.skillsCount} skills
-                        </Badge>
-                      </div>
-                    </SelectItem>
+            <div>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '7px' }}>Sport / Pillar</label>
+              <div style={{ position: 'relative' }}>
+                <select value={selectedSport} onChange={e => setSelectedSport(e.target.value)} className="cb-select" style={{ ...selectStyle, width: '100%' }}>
+                  {sports.map(s => (
+                    <option key={s.id} value={s.id}>{s.icon} {s.name} ({s.skillsCount} skills)</option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
             </div>
           )}
 
-          {/* Content Type Tabs */}
-          <Tabs value={contentType} onValueChange={(v) => {
-            setContentType(v as 'lesson' | 'quiz');
-            setSelectedItem(null);
-          }}>
-            <TabsList className="grid w-full grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-100 p-1">
-              <TabsTrigger value="lesson" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                <BookOpen className="h-4 w-4 mr-2" />
-                Lessons
-                {contentSource === 'custom' && customLessonCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-700 border border-blue-200">
-                    {customLessonCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="quiz" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-sm">
-                <PlayCircle className="h-4 w-4 mr-2" />
-                Quizzes
-                {contentSource === 'custom' && customQuizCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs bg-red-100 text-red-700 border border-red-200">
-                    {customQuizCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+          {/* Content type tabs + filters */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '10px', padding: '4px' }}>
+              {([
+                { key: 'lesson' as const, icon: <BookOpen size={13} />, label: `Lessons${contentSource === 'custom' && customLessonCount > 0 ? ` (${customLessonCount})` : ''}` },
+                { key: 'quiz' as const, icon: <PlayCircle size={13} />, label: `Quizzes${contentSource === 'custom' && customQuizCount > 0 ? ` (${customQuizCount})` : ''}` },
+              ]).map(tab => (
+                <button key={tab.key} onClick={() => { setContentType(tab.key); setSelectedItem(null); }}
+                  className={contentType === tab.key ? 'cb-tab-type-active' : ''}
+                  style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '7px 14px', borderRadius: '7px', border: '1px solid transparent', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+            </div>
 
-            <TabsContent value={contentType} className="space-y-4">
-              {/* Filters */}
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search content..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 border-zinc-300 bg-white focus-visible:ring-blue-200"
-                    />
-                  </div>
-                </div>
-                {contentSource === 'library' && (
-                  <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                    <SelectTrigger className="w-40 border-zinc-300 bg-white focus:ring-blue-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Levels</SelectItem>
-                      <SelectItem value="introduction">Introduction</SelectItem>
-                      <SelectItem value="development">Development</SelectItem>
-                      <SelectItem value="refinement">Refinement</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+            {/* Search + difficulty */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <Search size={14} color="rgba(255,255,255,0.3)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                <input placeholder="Search content…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  className="cb-input" style={{ ...inputStyle, paddingLeft: '36px' }} />
               </div>
-
-              {/* Content List */}
-              <ScrollArea className="h-[250px] rounded-xl border border-zinc-200 bg-white">
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : filteredContent.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    {contentSource === 'custom' ? (
-                      <>
-                        <User className="h-12 w-12 mb-4 opacity-50" />
-                        <p className="text-sm">
-                          {searchQuery
-                            ? 'No content found matching your search'
-                            : `You haven't created any custom ${contentType === 'lesson' ? 'lessons' : 'quizzes'} yet`}
-                        </p>
-                        <p className="text-xs mt-1">
-                          Create content from the Content Library page
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                        <p className="text-sm">
-                          {searchQuery
-                            ? 'No content found matching your search'
-                            : `No ${contentType === 'lesson' ? 'lessons' : 'quizzes'} available for this sport`}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-2 space-y-2">
-                    {filteredContent.map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => setSelectedItem(item)}
-                        className={`w-full text-left p-4 rounded-xl border transition-all hover:bg-zinc-50 ${
-                          selectedItem?.id === item.id
-                            ? 'border-blue-300 bg-blue-50/70 shadow-sm shadow-blue-100'
-                            : 'border-zinc-200'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                            style={{ backgroundColor: `${item.color}20` }}
-                          >
-                            {item.type === 'lesson' || item.type === 'custom_lesson' ? (
-                              <BookOpen className="h-5 w-5" style={{ color: item.color }} />
-                            ) : (
-                              <PlayCircle className="h-5 w-5" style={{ color: item.color }} />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium truncate">{item.title}</h4>
-                              {item.isCustom && (
-                                <Badge variant="outline" className="text-xs border-red-200 text-red-700 bg-red-50">
-                                  Custom
-                                </Badge>
-                              )}
-                              {selectedItem?.id === item.id && (
-                                <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {item.description}
-                            </p>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              {!item.isCustom && (
-                                <Badge variant="outline" className="text-xs border-zinc-300 text-zinc-700 bg-zinc-50">
-                                  {item.difficulty}
-                                </Badge>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                <span>{item.estimatedTime} min</span>
-                              </div>
-                              {item.hasVideo && (
-                                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border border-blue-200">
-                                  Video
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-
-              {/* Selection Summary */}
-              {selectedItem && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-xl"
-                      style={{ backgroundColor: `${selectedItem.color}20` }}
-                    >
-                      {selectedItem.type === 'lesson' || selectedItem.type === 'custom_lesson' ? (
-                        <BookOpen className="h-6 w-6" style={{ color: selectedItem.color }} />
-                      ) : (
-                        <PlayCircle className="h-6 w-6" style={{ color: selectedItem.color }} />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{selectedItem.title}</h4>
-                        {selectedItem.isCustom && (
-                          <Badge variant="outline" className="text-xs border-red-200 text-red-700 bg-red-50">
-                            Custom
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {selectedItem.sportName} • {selectedItem.isCustom ? 'Custom Content' : selectedItem.difficulty} • {selectedItem.estimatedTime} min
-                      </p>
-                      <p className="text-sm">{selectedItem.description}</p>
-                    </div>
-                  </div>
-                </div>
+              {contentSource === 'library' && (
+                <select value={selectedDifficulty} onChange={e => setSelectedDifficulty(e.target.value)} className="cb-select" style={{ ...selectStyle, minWidth: '150px' }}>
+                  <option value="all">All Levels</option>
+                  <option value="introduction">Introduction</option>
+                  <option value="development">Development</option>
+                  <option value="refinement">Refinement</option>
+                </select>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
+
+          {/* Content list */}
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '14px', overflow: 'hidden', maxHeight: '280px', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(55,181,255,0.15) transparent' }}>
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '10px' }}>
+                <Loader2 size={20} color="rgba(255,255,255,0.3)" style={{ animation: 'spin 1s linear infinite' }} />
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Loading…</p>
+                <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+              </div>
+            ) : filteredContent.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+                {contentSource === 'custom' ? <User size={36} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} /> : <BookOpen size={36} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />}
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '4px' }}>
+                  {searchQuery ? 'No content matches your search' : contentSource === 'custom' ? `No custom ${contentType === 'lesson' ? 'lessons' : 'quizzes'} created yet` : `No ${contentType === 'lesson' ? 'lessons' : 'quizzes'} for this pillar`}
+                </p>
+                {contentSource === 'custom' && !searchQuery && <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px' }}>Create content from the Content Library page</p>}
+              </div>
+            ) : (
+              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {filteredContent.map(item => {
+                  const isLesson = item.type === 'lesson' || item.type === 'custom_lesson';
+                  const accent = item.color || (isLesson ? BLUE : PURPLE);
+                  const isSelected = selectedItem?.id === item.id;
+                  return (
+                    <button key={item.id} onClick={() => setSelectedItem(item)}
+                      className={isSelected ? 'cb-item cb-item-selected' : 'cb-item'}
+                      style={{ width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: '10px', background: 'transparent', border: '1px solid transparent', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${accent}18`, border: `1px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {isLesson ? <BookOpen size={17} color={accent} /> : <PlayCircle size={17} color={accent} />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                          <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+                          {item.isCustom && <span style={{ fontSize: '9px', fontWeight: 700, color: PURPLE, background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', padding: '1px 7px', flexShrink: 0 }}>Custom</span>}
+                          {isSelected && <Check size={14} color={BLUE} style={{ flexShrink: 0 }} />}
+                        </div>
+                        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '5px' }}>{item.description}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                          {!item.isCustom && <span style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '1px 6px', textTransform: 'capitalize' }}>{item.difficulty}</span>}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Clock size={10} /> {item.estimatedTime}m</span>
+                          {item.hasVideo && <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: BLUE }}><Video size={10} /> Video</span>}
+                        </div>
+                      </div>
+                      <ChevronRight size={14} color="rgba(255,255,255,0.2)" style={{ flexShrink: 0 }} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Selected item summary */}
+          {selectedItem && (
+            <div style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: `${selectedItem.color || BLUE}18`, border: `1px solid ${selectedItem.color || BLUE}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {selectedItem.type === 'lesson' || selectedItem.type === 'custom_lesson'
+                  ? <BookOpen size={20} color={selectedItem.color || BLUE} />
+                  : <PlayCircle size={20} color={selectedItem.color || PURPLE} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                  <p style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>{selectedItem.title}</p>
+                  {selectedItem.isCustom && <span style={{ fontSize: '9px', fontWeight: 700, color: PURPLE, background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', padding: '1px 7px' }}>Custom</span>}
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                  {selectedItem.sportName} · {selectedItem.isCustom ? 'Custom Content' : selectedItem.difficulty} · {selectedItem.estimatedTime} min
+                </p>
+              </div>
+              <Check size={18} color="#4ade80" style={{ flexShrink: 0 }} />
+            </div>
+          )}
         </div>
 
-        <DialogFooter className="flex-shrink-0 px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
-          >
+        {/* Footer */}
+        <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(55,181,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0, background: 'rgba(2,14,36,0.6)' }}>
+          <button onClick={() => onOpenChange(false)} className="cb-cancel"
+            style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
             Cancel
-          </Button>
-          <Button
-            onClick={handleSelect}
-            disabled={!selectedItem}
-            className="bg-red-600 text-white hover:bg-red-700 disabled:bg-zinc-300 disabled:text-zinc-500"
-          >
-            <Check className="h-4 w-4 mr-2" />
-            Add to Curriculum
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+          </button>
+          <button onClick={handleAdd} disabled={!selectedItem} className="cb-add"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', borderRadius: '10px', color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: selectedItem ? `0 4px 16px rgba(55,181,255,0.35)` : 'none' }}>
+            <Check size={15} /> Add to Curriculum
+          </button>
+        </div>
+      </div>
+    </div>
+  , document.body);
 }

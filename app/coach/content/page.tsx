@@ -1,29 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import {
   Plus,
   Search,
@@ -37,6 +15,7 @@ import {
   Clock,
   Calendar,
   FolderOpen,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { customContentService } from '@/lib/database';
@@ -45,6 +24,9 @@ import { toast } from 'sonner';
 import { ContentTypeSelector, ContentType } from '@/components/coach/content-type-selector';
 import { LessonCreator } from '@/components/coach/lesson-creator';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
+
+const BLUE = '#37b5ff';
+const card = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px' };
 
 export default function CoachContentPage() {
   const router = useRouter();
@@ -57,379 +39,297 @@ export default function CoachContentPage() {
   const [showLessonCreator, setShowLessonCreator] = useState(false);
   const [editingContent, setEditingContent] = useState<CustomContentLibrary | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<CustomContentLibrary | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadContent();
-    }
-  }, [user?.id]);
+  useEffect(() => { if (user?.id) loadContent(); }, [user?.id]);
 
   const loadContent = async () => {
     if (!user?.id) return;
-
     try {
       setLoading(true);
       const result = await customContentService.getCoachContent(user.id);
-
-      if (result.success && result.data) {
-        setContent(result.data);
-      } else {
-        toast.error('Failed to load content library');
-      }
-    } catch (error) {
-      console.error('Failed to load content:', error);
-      toast.error('Failed to load content library');
-    } finally {
-      setLoading(false);
-    }
+      if (result.success && result.data) setContent(result.data);
+      else toast.error('Failed to load content library');
+    } catch { toast.error('Failed to load content library'); }
+    finally { setLoading(false); }
   };
 
   const handleTypeSelect = (type: ContentType) => {
-    if (type === 'lesson') {
-      setShowLessonCreator(true);
-    } else {
-      // Navigate to full-page quiz creator
-      router.push('/coach/content/quiz/create');
-    }
+    if (type === 'lesson') setShowLessonCreator(true);
+    else router.push('/coach/content/quiz/create');
   };
 
   const handleContentSaved = (newContent: CustomContentLibrary) => {
     if (editingContent) {
-      setContent((prev) =>
-        prev.map((c) => (c.id === newContent.id ? newContent : c))
-      );
+      setContent(prev => prev.map(c => c.id === newContent.id ? newContent : c));
       setEditingContent(null);
     } else {
-      setContent((prev) => [newContent, ...prev]);
+      setContent(prev => [newContent, ...prev]);
     }
   };
 
   const handleEdit = (item: CustomContentLibrary) => {
-    if (item.type === 'lesson') {
-      setEditingContent(item);
-      setShowLessonCreator(true);
-    } else {
-      // Navigate to full-page quiz editor
-      router.push(`/coach/content/quiz/${item.id}/edit`);
-    }
+    if (item.type === 'lesson') { setEditingContent(item); setShowLessonCreator(true); }
+    else router.push(`/coach/content/quiz/${item.id}/edit`);
+    setOpenMenuId(null);
   };
 
   const handleDuplicate = async (item: CustomContentLibrary) => {
     if (!user?.id) return;
-
+    setOpenMenuId(null);
     try {
       const result = await customContentService.cloneContent(item.id, user.id);
-      if (result.success && result.data) {
-        setContent((prev) => [result.data!, ...prev]);
-        toast.success('Content duplicated successfully');
-      } else {
-        toast.error('Failed to duplicate content');
-      }
-    } catch (error) {
-      console.error('Failed to duplicate content:', error);
-      toast.error('Failed to duplicate content');
-    }
+      if (result.success && result.data) { setContent(prev => [result.data!, ...prev]); toast.success('Content duplicated successfully'); }
+      else toast.error('Failed to duplicate content');
+    } catch { toast.error('Failed to duplicate content'); }
   };
 
   const handleDelete = async () => {
     if (!deleteConfirm || !user?.id) return;
-
     try {
       const result = await customContentService.deleteContent(deleteConfirm.id, user.id);
-      if (result.success) {
-        setContent((prev) => prev.filter((c) => c.id !== deleteConfirm.id));
-        toast.success('Content deleted successfully');
-      } else {
-        toast.error('Failed to delete content');
-      }
-    } catch (error) {
-      console.error('Failed to delete content:', error);
-      toast.error('Failed to delete content');
-    } finally {
-      setDeleteConfirm(null);
-    }
+      if (result.success) { setContent(prev => prev.filter(c => c.id !== deleteConfirm.id)); toast.success('Content deleted successfully'); }
+      else toast.error('Failed to delete content');
+    } catch { toast.error('Failed to delete content'); }
+    finally { setDeleteConfirm(null); }
   };
 
-  const formatDate = (timestamp: any) => {
+  const formatDate = (timestamp: unknown) => {
     if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    const date = (timestamp as { toDate?: () => Date }).toDate ? (timestamp as { toDate: () => Date }).toDate() : new Date(timestamp as string);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const filteredContent = content.filter((item) => {
-    // Type filter
-    if (contentFilter !== 'all' && item.type !== contentFilter) {
-      return false;
-    }
-
-    // Search filter
+  const filteredContent = content.filter(item => {
+    if (contentFilter !== 'all' && item.type !== contentFilter) return false;
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        item.title.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query) ||
-        (item.tags || []).some((tag) => tag.toLowerCase().includes(query))
-      );
+      const q = searchQuery.toLowerCase();
+      return item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q) || (item.tags || []).some(t => t.toLowerCase().includes(q));
     }
-
     return true;
   });
 
-  const lessonCount = content.filter((c) => c.type === 'lesson').length;
-  const quizCount = content.filter((c) => c.type === 'quiz').length;
+  const lessonCount = content.filter(c => c.type === 'lesson').length;
+  const quizCount = content.filter(c => c.type === 'quiz').length;
 
-  if (loading) {
-    return <SkeletonDarkPage />;
-  }
+  if (loading) return <SkeletonDarkPage />;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-        <div className="relative flex items-center justify-between">
-          <div>
-            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">Library</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Content Library</h1>
-            <p className="text-white/60 text-sm mt-1">Create and manage your custom lessons and quizzes</p>
-          </div>
-          <Button
-            onClick={() => setShowTypeSelector(true)}
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Content
-          </Button>
-        </div>
-      </div>
+    <div style={{ minHeight: '100vh' }}>
+      <style>{`
+        .content-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 768px) { .content-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 1024px) { .content-grid { grid-template-columns: 1fr 1fr 1fr; } }
+        .content-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        @media (max-width: 480px) { .content-stats { grid-template-columns: 1fr; } }
+      `}</style>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: 'Total Content', value: content.length, icon: <FolderOpen className="h-5 w-5" />, color: 'red' },
-          { label: 'Lessons', value: lessonCount, icon: <BookOpen className="h-5 w-5" />, color: 'blue' },
-          { label: 'Quizzes', value: quizCount, icon: <PlayCircle className="h-5 w-5" />, color: 'green' },
-        ].map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className={`h-11 w-11 rounded-xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-600`}>
-                {stat.icon}
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+        {/* Header */}
+        <div style={{ position: 'relative', borderRadius: '20px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.22)', boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(55,181,255,0.12)', padding: '28px 32px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', filter: 'blur(70px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '-40px', left: '10%', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(167,139,250,0.07)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: BLUE, marginBottom: '6px' }}>Library</p>
+              <h1 style={{ fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Content Library</h1>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>Create and manage your custom lessons and quizzes</p>
             </div>
-            <Tabs
-              value={contentFilter}
-              onValueChange={(v) => setContentFilter(v as typeof contentFilter)}
+            <button
+              onClick={() => setShowTypeSelector(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 22px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', borderRadius: '12px', color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 16px rgba(55,181,255,0.35)`, transition: 'all 0.2s' }}
             >
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="lesson">Lessons</TabsTrigger>
-                <TabsTrigger value="quiz">Quizzes</TabsTrigger>
-              </TabsList>
-            </Tabs>
+              <Plus size={15} /> Create Content
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Content Grid */}
-      {filteredContent.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <FolderOpen className="h-16 w-16 text-muted-foreground mb-4" />
+        {/* Stats */}
+        <div className="content-stats">
+          {[
+            { label: 'Total Content', value: content.length, color: BLUE, icon: <FolderOpen size={16} color={BLUE} /> },
+            { label: 'Lessons', value: lessonCount, color: '#4ade80', icon: <BookOpen size={16} color="#4ade80" /> },
+            { label: 'Quizzes', value: quizCount, color: '#a78bfa', icon: <PlayCircle size={16} color="#a78bfa" /> },
+          ].map(s => (
+            <div key={s.label} style={{ position: 'relative', background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px', padding: '18px 20px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${s.color}99, transparent)` }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: `${s.color}1a`, border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
+              </div>
+              <p style={{ fontSize: '36px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+            <Search size={14} color="rgba(255,255,255,0.35)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input
+              placeholder="Search content..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px 10px 36px', background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '4px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '10px', padding: '4px' }}>
+            {(['all', 'lesson', 'quiz'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setContentFilter(f)}
+                style={{ padding: '7px 16px', borderRadius: '7px', border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', background: contentFilter === f ? BLUE : 'transparent', color: contentFilter === f ? '#000f28' : 'rgba(255,255,255,0.5)', textTransform: 'capitalize' }}
+              >{f === 'all' ? 'All' : f === 'lesson' ? 'Lessons' : 'Quizzes'}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Grid */}
+        {filteredContent.length === 0 ? (
+          <div style={{ ...card, padding: '64px 24px', textAlign: 'center' }}>
+            <FolderOpen size={56} color="rgba(255,255,255,0.12)" style={{ margin: '0 auto 16px' }} />
             {content.length === 0 ? (
               <>
-                <h3 className="text-xl font-semibold mb-2">No Content Yet</h3>
-                <p className="text-muted-foreground text-center max-w-md mb-6">
-                  Start creating custom lessons and quizzes for your students. Your content will appear here.
-                </p>
-                <Button onClick={() => setShowTypeSelector(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Content
-                </Button>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>No Content Yet</h3>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', maxWidth: '360px', margin: '0 auto 20px' }}>Start creating custom lessons and quizzes for your students. Your content will appear here.</p>
+                <button
+                  onClick={() => setShowTypeSelector(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', borderRadius: '10px', color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  <Plus size={14} /> Create Your First Content
+                </button>
               </>
             ) : (
               <>
-                <h3 className="text-xl font-semibold mb-2">No Matching Content</h3>
-                <p className="text-muted-foreground text-center">
-                  No content matches your search criteria. Try adjusting your filters.
-                </p>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No Matching Content</h3>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>No content matches your search criteria. Try adjusting your filters.</p>
               </>
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredContent.map((item) => (
-            <Card key={item.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-lg ${
-                        item.type === 'lesson'
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-green-100 text-green-600'
-                      }`}
-                    >
-                      {item.type === 'lesson' ? (
-                        <BookOpen className="h-5 w-5" />
-                      ) : (
-                        <PlayCircle className="h-5 w-5" />
+          </div>
+        ) : (
+          <div className="content-grid">
+            {filteredContent.map(item => {
+              const isLesson = item.type === 'lesson';
+              const typeColor = isLesson ? BLUE : '#a78bfa';
+              return (
+                <div key={item.id} style={{ ...card, padding: '18px 20px', position: 'relative', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.35)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.18)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; }}
+                >
+                  {/* Top border accent */}
+                  <div style={{ position: 'absolute', top: 0, left: '20px', right: '20px', height: '2px', background: `linear-gradient(90deg, transparent, ${typeColor}, transparent)`, borderRadius: '2px' }} />
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                      <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: `${typeColor}18`, border: `1px solid ${typeColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {isLesson ? <BookOpen size={17} color={typeColor} /> : <PlayCircle size={17} color={typeColor} />}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</h3>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: typeColor, background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: '20px', padding: '2px 8px', display: 'inline-block', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {isLesson ? 'Lesson' : 'Quiz'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Kebab menu */}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                        style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(55,181,255,0.15)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                      {openMenuId === item.id && (
+                        <div style={{ position: 'absolute', right: 0, top: '36px', background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '12px', padding: '6px', zIndex: 50, minWidth: '140px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+                          onMouseLeave={() => setOpenMenuId(null)}>
+                          {[
+                            { label: 'Edit', icon: <Edit size={13} />, action: () => handleEdit(item), color: '#fff' },
+                            { label: 'Duplicate', icon: <Copy size={13} />, action: () => handleDuplicate(item), color: '#fff' },
+                            { label: 'Delete', icon: <Trash2 size={13} />, action: () => { setDeleteConfirm(item); setOpenMenuId(null); }, color: '#f87171' },
+                          ].map((m, i) => (
+                            <button
+                              key={m.label}
+                              onClick={m.action}
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'transparent', border: 'none', borderRadius: '8px', color: m.color, fontSize: '13px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', marginTop: i === 2 ? '4px' : 0, borderTop: i === 2 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.08)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                            >
+                              {m.icon}{m.label}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base truncate">{item.title}</CardTitle>
-                      <Badge variant="outline" className="text-xs mt-1">
-                        {item.type === 'lesson' ? 'Lesson' : 'Quiz'}
-                      </Badge>
-                    </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(item)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(item)}>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setDeleteConfirm(item)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                  {item.description}
-                </p>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {(item.tags || []).slice(0, 3).map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {(item.tags || []).length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{item.tags!.length - 3}
-                    </Badge>
-                  )}
-                </div>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: '12px' }}>{item.description}</p>
 
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    <span>{item.usageCount || 0} uses</span>
-                  </div>
-                  {item.estimatedTimeMinutes && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{item.estimatedTimeMinutes} min</span>
+                  {/* Tags */}
+                  {(item.tags || []).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                      {(item.tags || []).slice(0, 3).map((tag, i) => (
+                        <span key={i} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2px 8px' }}>{tag}</span>
+                      ))}
+                      {(item.tags || []).length > 3 && (
+                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '2px 8px' }}>+{item.tags!.length - 3}</span>
+                      )}
                     </div>
                   )}
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatDate(item.createdAt)}</span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px', color: 'rgba(255,255,255,0.35)', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={10} />{item.usageCount || 0} uses</span>
+                    {item.estimatedTimeMinutes && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={10} />{item.estimatedTimeMinutes} min</span>}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={10} />{formatDate(item.createdAt)}</span>
+                    {item.isPublic && <span style={{ color: '#4ade80', fontWeight: 700 }}>Public</span>}
                   </div>
                 </div>
-
-                {item.isPublic && (
-                  <Badge variant="outline" className="mt-3 text-xs text-green-600 border-green-200">
-                    Public
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </main>
 
       {/* Dialogs */}
-      <ContentTypeSelector
-        open={showTypeSelector}
-        onOpenChange={setShowTypeSelector}
-        onSelect={handleTypeSelect}
-      />
-
+      <ContentTypeSelector open={showTypeSelector} onOpenChange={setShowTypeSelector} onSelect={handleTypeSelect} />
       {user?.id && (
         <LessonCreator
           open={showLessonCreator}
-          onOpenChange={(open) => {
-            setShowLessonCreator(open);
-            if (!open) setEditingContent(null);
-          }}
+          onOpenChange={open => { setShowLessonCreator(open); if (!open) setEditingContent(null); }}
           coachId={user.id}
           onSave={handleContentSaved}
           editContent={editingContent?.type === 'lesson' ? editingContent : undefined}
         />
       )}
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-0 bg-card shadow-2xl rounded-2xl">
-          <AlertDialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-            <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
-            <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Content Library</p>
-              <AlertDialogTitle className="text-2xl font-bold tracking-tight text-white">Delete Content</AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-300 mt-1.5 text-sm">
-              Are you sure you want to delete "{deleteConfirm?.title}"? This action cannot be undone.
-              {(deleteConfirm?.usageCount || 0) > 0 && (
-                <span className="block mt-2 text-amber-600">
-                  Warning: This content has been assigned to {deleteConfirm?.usageCount} student(s).
-                  Deleting it may affect their curriculum.
-                </span>
+      {/* Delete Confirm Modal */}
+      {deleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px' }}>
+          <div style={{ background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(248,113,113,0.4)', borderRadius: '20px', padding: '0', maxWidth: '480px', width: '100%', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+            <div style={{ padding: '28px 28px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: BLUE }}>Content Library</p>
+                <button onClick={() => setDeleteConfirm(null)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X size={18} /></button>
+              </div>
+              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Delete Content</h2>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                Are you sure you want to delete &quot;{deleteConfirm.title}&quot;? This action cannot be undone.
+              </p>
+              {(deleteConfirm.usageCount || 0) > 0 && (
+                <p style={{ fontSize: '12px', color: '#fbbf24', marginTop: '8px', fontWeight: 600 }}>
+                  Warning: This content has been assigned to {deleteConfirm.usageCount} student(s). Deleting it may affect their curriculum.
+                </p>
               )}
-              </AlertDialogDescription>
             </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-card">
-            <AlertDialogCancel className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <div style={{ display: 'flex', gap: '10px', padding: '16px 28px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setDeleteConfirm(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleDelete} style={{ padding: '10px 20px', background: '#dc2626', border: 'none', borderRadius: '10px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

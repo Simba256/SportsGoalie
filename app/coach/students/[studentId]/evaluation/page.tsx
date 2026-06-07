@@ -4,133 +4,57 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Loader2,
-  ArrowLeft,
-  Heart,
-  Brain,
-  Clock,
-  Target,
-  MessageCircle,
-  Dumbbell,
-  BookOpen,
-  Save,
-  CheckCircle,
-  TrendingUp,
-  AlertCircle,
-  LucideIcon,
-  ChevronDown,
-  ChevronUp,
+  Loader2, ArrowLeft, Heart, Brain, Clock, Target, MessageCircle,
+  Dumbbell, BookOpen, Save, CheckCircle, TrendingUp, AlertCircle,
+  LucideIcon, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { userService, onboardingService } from '@/lib/database';
 import {
-  User,
-  OnboardingEvaluation,
-  PacingLevel,
-  GoalieCategorySlug,
-  getPacingLevelDisplayText,
-  getPacingLevelColor,
-  GOALIE_CATEGORIES,
-  CategoryScoreResult,
-  AssessmentResponse,
+  User, OnboardingEvaluation, PacingLevel, GoalieCategorySlug,
+  getPacingLevelDisplayText, GOALIE_CATEGORIES, CategoryScoreResult, AssessmentResponse,
 } from '@/types';
 import { GOALIE_ASSESSMENT_QUESTIONS } from '@/data/goalie-assessment-questions';
 import { toast } from 'sonner';
 
-// Icons for the 7 goalie categories
+const BLUE = '#37b5ff';
+const GREEN = '#22c55e';
+const YELLOW = '#fbbf24';
+const RED = '#f87171';
+const cardBg = 'rgba(2,18,44,0.82)';
+const border = '1px solid rgba(55,181,255,0.18)';
+
 const categoryIcons: Record<GoalieCategorySlug, LucideIcon> = {
-  feelings: Heart,
-  knowledge: Brain,
-  pre_game: Clock,
-  in_game: Target,
-  post_game: MessageCircle,
-  training: Dumbbell,
-  learning: BookOpen,
+  feelings: Heart, knowledge: Brain, pre_game: Clock, in_game: Target,
+  post_game: MessageCircle, training: Dumbbell, learning: BookOpen,
 };
 
 const pacingOptions: PacingLevel[] = ['introduction', 'development', 'refinement'];
 
-// Helper to safely convert Firestore Timestamp to Date
 function toDate(timestamp: unknown): Date | null {
   if (!timestamp) return null;
-
-  if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof (timestamp as { toDate: unknown }).toDate === 'function') {
-    return (timestamp as { toDate: () => Date }).toDate();
-  }
-
-  if (typeof timestamp === 'object' && 'seconds' in timestamp) {
-    return new Date((timestamp as { seconds: number }).seconds * 1000);
-  }
-
-  if (timestamp instanceof Date) {
-    return timestamp;
-  }
-
+  if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof (timestamp as { toDate: unknown }).toDate === 'function') return (timestamp as { toDate: () => Date }).toDate();
+  if (typeof timestamp === 'object' && 'seconds' in timestamp) return new Date((timestamp as { seconds: number }).seconds * 1000);
+  if (timestamp instanceof Date) return timestamp;
   return null;
 }
 
-// Format score for display (1.0 - 4.0 scale)
-function formatScore(score: number): string {
-  return score.toFixed(1);
+function fmt(score: number) { return score.toFixed(1); }
+
+function getScoreStyle(score: number): { color: string; bar: string } {
+  if (score >= 3.1) return { color: GREEN, bar: GREEN };
+  if (score >= 2.2) return { color: BLUE, bar: BLUE };
+  return { color: YELLOW, bar: YELLOW };
 }
 
-// Get color class for score
-function getScoreColor(score: number): string {
-  if (score >= 3.1) return 'text-emerald-600';
-  if (score >= 2.2) return 'text-blue-600';
-  return 'text-amber-600';
-}
+function getQuestionById(questionId: string) { return GOALIE_ASSESSMENT_QUESTIONS.find(q => q.id === questionId); }
 
-// Get progress bar color for score
-function getProgressBarColor(score: number): string {
-  if (score >= 3.1) return 'bg-emerald-500';
-  if (score >= 2.2) return 'bg-blue-500';
-  return 'bg-amber-500';
-}
-
-// Get score badge color class
-function getScoreBadgeColor(score: number): string {
-  if (score >= 3.1) return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-  if (score >= 2.2) return 'bg-blue-100 text-blue-700 border-blue-200';
-  return 'bg-amber-100 text-amber-700 border-amber-200';
-}
-
-// Look up question by ID from the assessment questions
-function getQuestionById(questionId: string) {
-  return GOALIE_ASSESSMENT_QUESTIONS.find(q => q.id === questionId);
-}
-
-// Get the text of the selected option
 function getSelectedOptionText(questionId: string, optionId: string | string[]): string {
   const question = getQuestionById(questionId);
   if (!question) return 'Unknown';
-
-  // Handle both single select and multi-select
   const optionIds = Array.isArray(optionId) ? optionId : [optionId];
-  const selectedTexts = optionIds.map(id => {
-    const option = question.options.find(opt => opt.id === id);
-    return option?.text || 'Unknown';
-  });
-
-  return selectedTexts.join(', ');
+  return optionIds.map(id => question.options.find(opt => opt.id === id)?.text || 'Unknown').join(', ');
 }
 
 export default function CoachEvaluationPage() {
@@ -143,137 +67,70 @@ export default function CoachEvaluationPage() {
   const [evaluation, setEvaluation] = useState<OnboardingEvaluation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Review form state
   const [notes, setNotes] = useState('');
   const [adjustedPacingLevel, setAdjustedPacingLevel] = useState<PacingLevel | ''>('');
-
-  // Assessment responses expansion state
   const [showResponses, setShowResponses] = useState(false);
 
-  // Group assessment responses by category (must be before early returns)
   const responsesByCategory = useMemo(() => {
     if (!evaluation?.assessmentResponses) return {};
     const grouped: Record<string, AssessmentResponse[]> = {};
     evaluation.assessmentResponses.forEach(response => {
-      if (!grouped[response.categorySlug]) {
-        grouped[response.categorySlug] = [];
-      }
+      if (!grouped[response.categorySlug]) grouped[response.categorySlug] = [];
       grouped[response.categorySlug].push(response);
     });
-    // Sort responses within each category by questionCode
-    Object.values(grouped).forEach(responses => {
-      responses.sort((a, b) => a.questionCode.localeCompare(b.questionCode));
-    });
+    Object.values(grouped).forEach(responses => responses.sort((a, b) => a.questionCode.localeCompare(b.questionCode)));
     return grouped;
   }, [evaluation?.assessmentResponses]);
 
   const totalResponses = evaluation?.assessmentResponses?.length || 0;
 
   useEffect(() => {
-    if (studentId && coach?.id) {
-      loadData();
-    }
+    if (studentId && coach?.id) loadData();
   }, [studentId, coach?.id]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-
-      // Load student
       const studentResult = await userService.getUser(studentId);
-      if (!studentResult.success || !studentResult.data) {
-        toast.error('Student not found');
-        router.push('/coach/students');
-        return;
-      }
-
-      // Verify access (admin or any coach can view)
-      if (coach?.role !== 'admin' && coach?.role !== 'coach') {
-        toast.error('Unauthorized: Only coaches and admins can view evaluations');
-        router.push('/coach/students');
-        return;
-      }
-
+      if (!studentResult.success || !studentResult.data) { toast.error('Student not found'); router.push('/coach/students'); return; }
+      if (coach?.role !== 'admin' && coach?.role !== 'coach') { toast.error('Unauthorized'); router.push('/coach/students'); return; }
       setStudent(studentResult.data);
-
-      // Load evaluation
       const evalResult = await onboardingService.getEvaluation(studentId);
       if (evalResult.success && evalResult.data) {
         setEvaluation(evalResult.data);
-
-        // Pre-fill form with existing review if any
-        if (evalResult.data.coachReview) {
-          setNotes(evalResult.data.coachReview.notes || '');
-          setAdjustedPacingLevel(evalResult.data.coachReview.adjustedPacingLevel || '');
-        }
+        if (evalResult.data.coachReview) { setNotes(evalResult.data.coachReview.notes || ''); setAdjustedPacingLevel(evalResult.data.coachReview.adjustedPacingLevel || ''); }
       }
-    } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load evaluation data');
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Failed to load data:', error); toast.error('Failed to load evaluation data'); }
+    finally { setLoading(false); }
   };
 
   const handleSaveReview = async () => {
     if (!evaluation || !coach?.id || !coach?.displayName) return;
-
     try {
       setSaving(true);
-
-      const result = await onboardingService.addCoachReview({
-        evaluationId: evaluation.id,
-        coachId: coach.id,
-        coachName: coach.displayName,
-        notes,
-        adjustedPacingLevel: adjustedPacingLevel || undefined,
-      });
-
-      if (result.success) {
-        toast.success('Review saved successfully');
-        loadData(); // Refresh to show updated status
-      } else {
-        toast.error(result.error?.message || 'Failed to save review');
-      }
-    } catch (error) {
-      console.error('Failed to save review:', error);
-      toast.error('Failed to save review');
-    } finally {
-      setSaving(false);
-    }
+      const result = await onboardingService.addCoachReview({ evaluationId: evaluation.id, coachId: coach.id, coachName: coach.displayName, notes, adjustedPacingLevel: adjustedPacingLevel || undefined });
+      if (result.success) { toast.success('Review saved successfully'); loadData(); }
+      else toast.error(result.error?.message || 'Failed to save review');
+    } catch (error) { console.error('Failed to save review:', error); toast.error('Failed to save review'); }
+    finally { setSaving(false); }
   };
 
-  if (loading) {
-    return <SkeletonContentPage />;
-  }
-
-  if (!student) {
-    return null;
-  }
+  if (loading) return <SkeletonContentPage />;
+  if (!student) return null;
 
   if (!evaluation) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link href="/coach/students">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Students
-            </Button>
-          </Link>
+      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Link href="/coach/students" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, padding: '6px 10px', borderRadius: '8px' }}>
+          <ArrowLeft size={15} /> Back to Students
+        </Link>
+        <div style={{ background: cardBg, border, borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
+          <AlertCircle size={48} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 16px' }} />
+          <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '18px', marginBottom: '8px' }}>No Evaluation Found</h3>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', maxWidth: '360px', margin: '0 auto', lineHeight: 1.6 }}>
+            {student.displayName} has not completed their onboarding evaluation yet. It will appear here once they complete it.
+          </p>
         </div>
-
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Evaluation Found</h3>
-            <p className="text-muted-foreground text-center max-w-md">
-              {student.displayName} has not completed their onboarding evaluation
-              yet. The evaluation will appear here once they complete it.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -283,494 +140,294 @@ export default function CoachEvaluationPage() {
   const pacingLevel = profile?.pacingLevel || evaluation.pacingLevel || 'introduction';
   const overallScore = profile?.overallScore || 1.0;
   const categoryScores = profile?.categoryScores || [];
-
-  // Get strengths and gaps from profile
   const strengths = profile?.identifiedStrengths || [];
   const gaps = profile?.identifiedGaps || [];
+  const overallStyle = getScoreStyle(overallScore);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <Link href="/coach/students">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Students
-          </Button>
+    <>
+      <style>{`
+        .ev-back:hover { color: ${BLUE} !important; background: rgba(55,181,255,0.08) !important; }
+        .ev-resp-toggle:hover { background: rgba(55,181,255,0.06) !important; }
+        .ev-save:hover:not(:disabled) { opacity: 0.9 !important; transform: translateY(-1px) !important; }
+        .ev-save { transition: all 0.2s !important; }
+        .ev-select { background: rgba(2,18,44,0.9) !important; border: 1px solid rgba(55,181,255,0.2) !important; color: #fff !important; padding: 9px 12px !important; borderRadius: 8px !important; width: 100% !important; fontSize: 13px !important; cursor: pointer !important; outline: none !important; }
+        .ev-select:focus { border-color: rgba(55,181,255,0.5) !important; }
+        .ev-textarea { background: rgba(2,18,44,0.9) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: #fff !important; padding: 10px 12px !important; borderRadius: 8px !important; width: 100% !important; fontSize: 13px !important; outline: none !important; resize: vertical !important; }
+        .ev-textarea:focus { border-color: rgba(55,181,255,0.4) !important; }
+        .ev-textarea::placeholder { color: rgba(255,255,255,0.25) !important; }
+        @media(min-width:1024px){.ev-grid{grid-template-columns:2fr 1fr!important;}}
+      `}</style>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Link href="/coach/students" className="ev-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
+          <ArrowLeft size={15} /> Back to Students
         </Link>
-      </div>
 
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              {student.displayName}&apos;s Evaluation
-            </h1>
-            <p className="text-muted-foreground">
-              Review assessment results and adjust recommended pacing level
-            </p>
+        {/* Page title + status */}
+        <div style={{ position: 'relative', borderRadius: '20px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.22)', boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(55,181,255,0.12)', padding: '24px 28px', overflow: 'hidden', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-30px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ position: 'relative' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: BLUE, marginBottom: '6px' }}>Evaluation</p>
+            <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '24px', marginBottom: '4px' }}>{student.displayName}&apos;s Evaluation</h1>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px' }}>Review assessment results and adjust recommended pacing level</p>
           </div>
-          <div className="flex items-center gap-2">
-            {hasCoachReview ? (
-              <Badge variant="default" className="bg-green-600">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Reviewed
-              </Badge>
-            ) : (
-              <Badge variant="secondary">
-                <Clock className="h-3 w-3 mr-1" />
-                Pending Review
-              </Badge>
-            )}
-          </div>
+          <span style={{ position: 'relative', background: hasCoachReview ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${hasCoachReview ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.12)'}`, color: hasCoachReview ? GREEN : 'rgba(255,255,255,0.5)', padding: '8px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start', marginTop: '4px' }}>
+            {hasCoachReview ? <><CheckCircle size={13} /> Reviewed</> : <><Clock size={13} /> Pending Review</>}
+          </span>
         </div>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Results Column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Overall Summary Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Intelligence Profile</CardTitle>
-              <CardDescription>
-                Completed{' '}
-                {evaluation.completedAt
-                  ? toDate(evaluation.completedAt)?.toLocaleDateString() ?? 'Unknown'
-                  : 'Unknown'}
-                {evaluation.duration &&
-                  ` • ${Math.round(evaluation.duration / 60)} minutes`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-6">
+        {/* Main grid */}
+        <div className="ev-grid" style={{ display: 'grid', gap: '20px' }}>
+          {/* Left column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* Intelligence Profile */}
+            <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', padding: '20px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Intelligence Profile</h2>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '20px' }}>
+                Completed {evaluation.completedAt ? toDate(evaluation.completedAt)?.toLocaleDateString() ?? 'Unknown' : 'Unknown'}
+                {evaluation.duration && ` · ${Math.round(evaluation.duration / 60)} minutes`}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Pacing Level
-                  </p>
-                  <Badge
-                    variant="outline"
-                    className={`text-lg px-4 py-1 capitalize ${getPacingLevelColor(pacingLevel)}`}
-                  >
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '6px' }}>Pacing Level</p>
+                  <span style={{ background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, padding: '4px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, textTransform: 'capitalize' }}>
                     {getPacingLevelDisplayText(pacingLevel)}
-                  </Badge>
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Overall Score
-                  </p>
-                  <p className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
-                    {formatScore(overallScore)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">out of 4.0</p>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Overall Score</p>
+                  <p style={{ color: overallStyle.color, fontWeight: 800, fontSize: '32px', lineHeight: 1 }}>{fmt(overallScore)}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '11px' }}>out of 4.0</p>
                 </div>
               </div>
-
-              {/* Score breakdown bar */}
-              <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${getProgressBarColor(overallScore)}`}
-                  style={{ width: `${((overallScore - 1) / 3) * 100}%` }}
-                />
+              <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
+                <div style={{ height: '100%', width: `${((overallScore - 1) / 3) * 100}%`, background: `linear-gradient(90deg, ${overallStyle.bar}, ${overallStyle.bar}aa)`, borderRadius: '4px', transition: 'width 0.5s ease' }} />
               </div>
-              <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                <span>Introduction (1.0-2.2)</span>
-                <span>Development (2.2-3.1)</span>
-                <span>Refinement (3.1-4.0)</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>
+                <span>Introduction (1.0–2.2)</span><span>Development (2.2–3.1)</span><span>Refinement (3.1–4.0)</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Category Results Grid */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Breakdown</CardTitle>
-              <CardDescription>
-                Performance across the 7 assessment categories
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
+            {/* Category Breakdown */}
+            <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', padding: '20px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, rgba(55,181,255,0.3), transparent)` }} />
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Category Breakdown</h2>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '16px' }}>Performance across the 7 assessment categories</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {GOALIE_CATEGORIES.map((category) => {
                   const Icon = categoryIcons[category.slug as GoalieCategorySlug];
-                  const result = categoryScores.find(
-                    (cs: CategoryScoreResult) => cs.categorySlug === category.slug
-                  );
+                  const result = categoryScores.find((cs: CategoryScoreResult) => cs.categorySlug === category.slug);
                   const score = result?.averageScore || 1.0;
-
+                  const style = getScoreStyle(score);
                   return (
-                    <div
-                      key={category.slug}
-                      className="p-4 border rounded-lg space-y-3"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-primary" />
+                    <div key={category.slug} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon size={16} color={BLUE} />
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-sm">{category.shortName}</h4>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-lg font-bold ${getScoreColor(score)}`}>
-                              {formatScore(score)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              ({category.weight}% weight)
-                            </span>
+                        <div>
+                          <p style={{ color: '#fff', fontWeight: 600, fontSize: '12px', marginBottom: '2px' }}>{category.shortName}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: style.color, fontWeight: 800, fontSize: '16px' }}>{fmt(score)}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px' }}>({category.weight}%)</span>
                           </div>
                         </div>
                       </div>
-
-                      {/* Score bar */}
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${getProgressBarColor(score)}`}
-                          style={{ width: `${((score - 1) / 3) * 100}%` }}
-                        />
+                      <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${((score - 1) / 3) * 100}%`, background: style.bar, borderRadius: '2px' }} />
                       </div>
-
-                      {/* Strengths/Gaps indicators */}
                       {result && (result.strengths.length > 0 || result.gaps.length > 0) && (
-                        <div className="flex gap-2 flex-wrap">
-                          {result.strengths.length > 0 && (
-                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                              {result.strengths.length} strength{result.strengths.length > 1 ? 's' : ''}
-                            </Badge>
-                          )}
-                          {result.gaps.length > 0 && (
-                            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                              {result.gaps.length} gap{result.gaps.length > 1 ? 's' : ''}
-                            </Badge>
-                          )}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {result.strengths.length > 0 && <span style={{ background: 'rgba(34,197,94,0.1)', color: GREEN, padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700 }}>{result.strengths.length} strength{result.strengths.length > 1 ? 's' : ''}</span>}
+                          {result.gaps.length > 0 && <span style={{ background: 'rgba(251,191,36,0.1)', color: YELLOW, padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700 }}>{result.gaps.length} gap{result.gaps.length > 1 ? 's' : ''}</span>}
                         </div>
                       )}
                     </div>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Assessment Responses - Collapsible Section */}
-          <Card>
-            {totalResponses > 0 ? (
-              <>
-                <CardHeader
-                  className="cursor-pointer select-none"
-                  onClick={() => setShowResponses(!showResponses)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        Assessment Responses
-                        {showResponses ? (
-                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        View all {totalResponses} questions and answers
-                      </CardDescription>
-                    </div>
-                    <Badge variant="secondary">{totalResponses} questions</Badge>
-                  </div>
-                </CardHeader>
-                {showResponses && (
-                  <CardContent className="space-y-6">
-                    {GOALIE_CATEGORIES.map((category) => {
-                      const Icon = categoryIcons[category.slug as GoalieCategorySlug];
-                      const responses = responsesByCategory[category.slug] || [];
-                      if (responses.length === 0) return null;
-
-                      return (
-                        <div key={category.slug} className="space-y-3">
-                          {/* Category Header */}
-                          <div className="flex items-center gap-2 pb-2 border-b">
-                            <Icon className="h-5 w-5 text-primary" />
-                            <h4 className="font-semibold">{category.name}</h4>
-                            <span className="text-sm text-muted-foreground">
-                              ({responses.length} question{responses.length > 1 ? 's' : ''})
-                            </span>
-                          </div>
-
-                          {/* Questions in this category */}
-                          <div className="space-y-3 pl-7">
-                            {responses.map((response) => {
-                              const question = getQuestionById(response.questionId);
-                              const answerText = getSelectedOptionText(
-                                response.questionId,
-                                response.value
-                              );
-
-                              return (
-                                <div
-                                  key={response.questionId}
-                                  className="p-3 bg-muted/50 rounded-lg space-y-2"
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1">
-                                      <span className="text-xs font-mono text-muted-foreground">
-                                        {response.questionCode}
-                                      </span>
-                                      <p className="text-sm font-medium">
-                                        {question?.question || 'Unknown question'}
-                                      </p>
-                                    </div>
-                                    <Badge
-                                      variant="outline"
-                                      className={`text-xs font-mono shrink-0 ${getScoreBadgeColor(response.score)}`}
-                                    >
-                                      {formatScore(response.score)}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium text-foreground">Answer:</span>{' '}
-                                    {answerText}
-                                  </p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </CardContent>
-                )}
-              </>
-            ) : (
-              <>
-                <CardHeader>
-                  <CardTitle>Assessment Responses</CardTitle>
-                  <CardDescription>
-                    Individual question and answer details
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Detailed response data is not available for this evaluation.
-                    This student may have completed onboarding before the detailed
-                    response tracking feature was added.
-                  </p>
-                </CardContent>
-              </>
-            )}
-          </Card>
-
-          {/* Strengths & Gaps */}
-          {(strengths.length > 0 || gaps.length > 0) && (
-            <div className="grid gap-6 sm:grid-cols-2">
-              <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                    <TrendingUp className="h-5 w-5" />
-                    Strengths
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    {strengths.slice(0, 4).map((strength) => (
-                      <li key={strength.categorySlug} className="flex items-start gap-2">
-                        <span className="text-green-600 dark:text-green-500 mt-1">•</span>
-                        <div>
-                          <span className="font-medium">{strength.categoryName}</span>
-                          <span className="text-muted-foreground ml-1">
-                            ({formatScore(strength.score)})
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                    {strengths.length === 0 && (
-                      <li className="text-muted-foreground">
-                        Focus on building foundational skills
-                      </li>
-                    )}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                    <AlertCircle className="h-5 w-5" />
-                    Areas for Growth
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    {gaps.slice(0, 4).map((gap) => (
-                      <li key={gap.categorySlug} className="flex items-start gap-2">
-                        <span className="text-amber-600 dark:text-amber-500 mt-1">•</span>
-                        <div>
-                          <span className="font-medium">{gap.categoryName}</span>
-                          <span className="text-muted-foreground ml-1">
-                            ({formatScore(gap.score)})
-                          </span>
-                          {gap.priority === 'high' && (
-                            <Badge variant="outline" className="ml-2 text-xs bg-red-50 text-red-700 border-red-200">
-                              Priority
-                            </Badge>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                    {gaps.length === 0 && (
-                      <li className="text-muted-foreground">
-                        Strong performance across all categories
-                      </li>
-                    )}
-                  </ul>
-                </CardContent>
-              </Card>
             </div>
-          )}
 
-          {/* Intake Data Summary */}
-          {evaluation.intakeData && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Student Background</CardTitle>
-                <CardDescription>Information from intake questionnaire</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {evaluation.intakeData.ageRange && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Age Range</p>
-                      <p className="font-medium">{evaluation.intakeData.ageRange}</p>
+            {/* Assessment Responses */}
+            <div style={{ background: cardBg, border, borderRadius: '16px', overflow: 'hidden' }}>
+              {totalResponses > 0 ? (
+                <>
+                  <button className="ev-resp-toggle" onClick={() => setShowResponses(!showResponses)} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                          <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Assessment Responses</p>
+                          {showResponses ? <ChevronUp size={16} color="rgba(255,255,255,0.4)" /> : <ChevronDown size={16} color="rgba(255,255,255,0.4)" />}
+                        </div>
+                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px' }}>View all {totalResponses} questions and answers</p>
+                      </div>
+                      <span style={{ background: 'rgba(55,181,255,0.1)', color: BLUE, padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>{totalResponses}</span>
+                    </div>
+                  </button>
+                  {showResponses && (
+                    <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {GOALIE_CATEGORIES.map((category) => {
+                        const Icon = categoryIcons[category.slug as GoalieCategorySlug];
+                        const responses = responsesByCategory[category.slug] || [];
+                        if (responses.length === 0) return null;
+                        return (
+                          <div key={category.slug}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '10px', borderBottom: '1px solid rgba(55,181,255,0.1)', marginBottom: '10px' }}>
+                              <Icon size={15} color={BLUE} />
+                              <p style={{ color: '#fff', fontWeight: 700, fontSize: '13px' }}>{category.name}</p>
+                              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px' }}>({responses.length} question{responses.length > 1 ? 's' : ''})</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '20px' }}>
+                              {responses.map((response) => {
+                                const question = getQuestionById(response.questionId);
+                                const answerText = getSelectedOptionText(response.questionId, response.value);
+                                const rStyle = getScoreStyle(response.score);
+                                return (
+                                  <div key={response.questionId} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '6px' }}>
+                                      <div style={{ flex: 1 }}>
+                                        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px', fontFamily: 'monospace', marginBottom: '2px' }}>{response.questionCode}</p>
+                                        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '12px' }}>{question?.question || 'Unknown question'}</p>
+                                      </div>
+                                      <span style={{ background: `${rStyle.color}22`, color: rStyle.color, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, fontFamily: 'monospace', flexShrink: 0 }}>{fmt(response.score)}</span>
+                                    </div>
+                                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                                      <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>Answer:</span> {answerText}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
-                  {evaluation.intakeData.experienceLevel && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Experience</p>
-                      <p className="font-medium">{evaluation.intakeData.experienceLevel}</p>
-                    </div>
-                  )}
-                  {evaluation.intakeData.playingLevel && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Playing Level</p>
-                      <p className="font-medium">{evaluation.intakeData.playingLevel}</p>
-                    </div>
-                  )}
-                  {evaluation.intakeData.hasGoalieCoach !== undefined && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Has Goalie Coach</p>
-                      <p className="font-medium">{evaluation.intakeData.hasGoalieCoach ? 'Yes' : 'No'}</p>
-                    </div>
-                  )}
-                  {evaluation.intakeData.primaryReasons && evaluation.intakeData.primaryReasons.length > 0 && (
-                    <div className="sm:col-span-2">
-                      <p className="text-sm text-muted-foreground">Primary Reasons for Joining</p>
-                      <p className="font-medium">{evaluation.intakeData.primaryReasons.join(', ')}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Coach Review Panel */}
-        <div className="space-y-6">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle>Coach Review</CardTitle>
-              <CardDescription>
-                Add notes and adjust the recommended pacing level
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Adjust Pacing Level */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Adjust Pacing Level
-                </label>
-                <Select
-                  value={adjustedPacingLevel || 'none'}
-                  onValueChange={(value) =>
-                    setAdjustedPacingLevel(value === 'none' ? '' : value as PacingLevel)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Keep assessed level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Keep assessed level</SelectItem>
-                    {pacingOptions.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {getPacingLevelDisplayText(level)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {adjustedPacingLevel && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Will change from {getPacingLevelDisplayText(pacingLevel)} to{' '}
-                    {getPacingLevelDisplayText(adjustedPacingLevel)}
-                  </p>
-                )}
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Coach Notes
-                </label>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add observations, recommendations, or context about the student's assessment..."
-                  rows={6}
-                />
-              </div>
-
-              {/* Previous review info */}
-              {evaluation.coachReview && (
-                <div className="text-xs text-muted-foreground p-3 bg-muted rounded-lg">
-                  <p>
-                    Previously reviewed by{' '}
-                    <span className="font-medium">
-                      {evaluation.coachReview.reviewerName || 'Coach'}
-                    </span>
-                  </p>
-                  <p>
-                    on{' '}
-                    {toDate(evaluation.coachReview.reviewedAt)?.toLocaleDateString() ?? 'Unknown'}
-                  </p>
+                </>
+              ) : (
+                <div style={{ padding: '20px' }}>
+                  <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Assessment Responses</p>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', lineHeight: 1.6 }}>Detailed response data is not available for this evaluation. This student may have completed onboarding before detailed response tracking was added.</p>
                 </div>
               )}
+            </div>
 
-              {/* Save button */}
-              <Button
-                onClick={handleSaveReview}
-                disabled={saving}
-                className="w-full"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {hasCoachReview ? 'Update Review' : 'Save Review'}
-                  </>
-                )}
-              </Button>
-
-              {/* Link to curriculum */}
-              <div className="pt-4 border-t">
-                <Link href={`/coach/students/${studentId}/curriculum`}>
-                  <Button variant="outline" className="w-full">
-                    Manage Curriculum
-                  </Button>
-                </Link>
+            {/* Strengths & Gaps */}
+            {(strengths.length > 0 || gaps.length > 0) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '14px', padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <TrendingUp size={15} color={GREEN} />
+                    <p style={{ color: GREEN, fontWeight: 700, fontSize: '13px' }}>Strengths</p>
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {strengths.slice(0, 4).map((strength) => (
+                      <li key={strength.categorySlug} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <span style={{ color: GREEN, marginTop: '2px', flexShrink: 0, fontSize: '14px' }}>•</span>
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}><strong style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{strength.categoryName}</strong> <span style={{ color: 'rgba(255,255,255,0.35)' }}>({fmt(strength.score)})</span></span>
+                      </li>
+                    ))}
+                    {strengths.length === 0 && <li style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Focus on building foundational skills</li>}
+                  </ul>
+                </div>
+                <div style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '14px', padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <AlertCircle size={15} color={YELLOW} />
+                    <p style={{ color: YELLOW, fontWeight: 700, fontSize: '13px' }}>Areas for Growth</p>
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {gaps.slice(0, 4).map((gap) => (
+                      <li key={gap.categorySlug} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <span style={{ color: YELLOW, marginTop: '2px', flexShrink: 0, fontSize: '14px' }}>•</span>
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
+                          <strong style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{gap.categoryName}</strong> <span style={{ color: 'rgba(255,255,255,0.35)' }}>({fmt(gap.score)})</span>
+                          {gap.priority === 'high' && <span style={{ background: 'rgba(248,113,113,0.12)', color: RED, padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, marginLeft: '6px' }}>Priority</span>}
+                        </span>
+                      </li>
+                    ))}
+                    {gaps.length === 0 && <li style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Strong performance across all categories</li>}
+                  </ul>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
+
+            {/* Intake Data */}
+            {evaluation.intakeData && (
+              <div style={{ background: cardBg, border, borderRadius: '14px', padding: '18px' }}>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Student Background</p>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '16px' }}>Information from intake questionnaire</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+                  {evaluation.intakeData.ageRange && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Age Range</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.ageRange}</p></div>}
+                  {evaluation.intakeData.experienceLevel && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Experience</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.experienceLevel}</p></div>}
+                  {evaluation.intakeData.playingLevel && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Playing Level</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.playingLevel}</p></div>}
+                  {evaluation.intakeData.hasGoalieCoach !== undefined && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Has Goalie Coach</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.hasGoalieCoach ? 'Yes' : 'No'}</p></div>}
+                  {evaluation.intakeData.primaryReasons && evaluation.intakeData.primaryReasons.length > 0 && (
+                    <div style={{ gridColumn: 'span 2' }}><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Primary Reasons</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.primaryReasons.join(', ')}</p></div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right column — Coach Review */}
+          <div>
+            <div style={{ position: 'sticky', top: '24px', background: cardBg, border, borderRadius: '16px', padding: '20px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Coach Review</h2>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '20px' }}>Add notes and adjust the recommended pacing level</p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Adjust Pacing */}
+                <div>
+                  <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Adjust Pacing Level</label>
+                  <select className="ev-select" value={adjustedPacingLevel || 'none'} onChange={e => setAdjustedPacingLevel(e.target.value === 'none' ? '' : e.target.value as PacingLevel)}
+                    style={{ background: 'rgba(2,18,44,0.9)', border: '1px solid rgba(55,181,255,0.2)', color: '#fff', padding: '9px 12px', borderRadius: '8px', width: '100%', fontSize: '13px', cursor: 'pointer', outline: 'none' }}>
+                    <option value="none">Keep assessed level</option>
+                    {pacingOptions.map(level => <option key={level} value={level}>{getPacingLevelDisplayText(level)}</option>)}
+                  </select>
+                  {adjustedPacingLevel && (
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', marginTop: '6px' }}>
+                      Will change from {getPacingLevelDisplayText(pacingLevel)} to {getPacingLevelDisplayText(adjustedPacingLevel)}
+                    </p>
+                  )}
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Coach Notes</label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={6} placeholder="Add observations, recommendations, or context about the student's assessment..."
+                    style={{ background: 'rgba(2,18,44,0.9)', border: '1px solid rgba(55,181,255,0.18)', color: '#fff', padding: '10px 12px', borderRadius: '8px', width: '100%', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
+                </div>
+
+                {/* Previous review */}
+                {evaluation.coachReview && (
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', padding: '10px 12px' }}>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', lineHeight: 1.6 }}>
+                      Previously reviewed by <strong style={{ color: 'rgba(255,255,255,0.5)' }}>{evaluation.coachReview.reviewerName || 'Coach'}</strong> on {toDate(evaluation.coachReview.reviewedAt)?.toLocaleDateString() ?? 'Unknown'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Save */}
+                <button onClick={handleSaveReview} disabled={saving} className="ev-save"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '12px', borderRadius: '10px', border: 'none', fontWeight: 800, fontSize: '14px', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</> : <><Save size={16} /> {hasCoachReview ? 'Update Review' : 'Save Review'}</>}
+                </button>
+
+                {/* Curriculum link */}
+                <div style={{ paddingTop: '14px', borderTop: '1px solid rgba(55,181,255,0.1)' }}>
+                  <Link href={`/coach/students/${studentId}/curriculum`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', padding: '11px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '13px' }}>
+                    Manage Curriculum
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
