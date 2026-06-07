@@ -8,6 +8,8 @@ import { useAuth } from '@/lib/auth/context';
 import { customContentService, customCurriculumService } from '@/lib/database';
 import { CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
+import { GrowthPointsToast } from '@/components/ui/GrowthPointsToast';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -43,6 +45,7 @@ export default function CustomLessonPage() {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showGpToast, setShowGpToast] = useState(false);
 
   const getBackHref = () => {
     if (!backToSkillPage) return '/dashboard';
@@ -108,6 +111,7 @@ export default function CustomLessonPage() {
       );
       if (result.success) {
         setIsCompleted(true);
+        setShowGpToast(true);
         toast.success('Lesson completed! Great job!');
       } else {
         toast.error('Failed to mark lesson as complete');
@@ -130,6 +134,7 @@ export default function CustomLessonPage() {
 
   return (
     <>
+      <GrowthPointsToast points={GROWTH_POINTS.MODULE} show={showGpToast} />
       <style>{`
         .lesson-complete:hover:not(:disabled) { opacity: 0.9 !important; transform: translateY(-1px); }
         .lesson-back:hover { color: #fff !important; }

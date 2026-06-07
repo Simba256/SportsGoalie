@@ -24,15 +24,17 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
   };
 
   const getRarityStyle = (rarity: string): React.CSSProperties => {
-    switch (rarity) {
-      case 'uncommon':
+    switch (rarity?.toUpperCase()) {
+      case 'WINS':
+        return { background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' };
+      case 'BREAKTHROUGHS':
         return { background: 'rgba(55,181,255,0.1)', color: BLUE, border: `1px solid rgba(55,181,255,0.25)` };
-      case 'rare':
+      case 'CLIMBS':
         return { background: 'rgba(96,165,250,0.12)', color: '#93c5fd', border: '1px solid rgba(96,165,250,0.3)' };
-      case 'epic':
+      case 'STREAKS':
+        return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' };
+      case 'MILESTONES':
         return { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' };
-      case 'legendary':
-        return { background: 'rgba(234,179,8,0.12)', color: '#fbbf24', border: '1px solid rgba(234,179,8,0.3)' };
       default:
         return { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)' };
     }
@@ -109,7 +111,7 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
-              {achievement.points} points
+              {achievement.points} Growth Points
             </span>
             {isCompleted && userAchievement?.unlockedAt && (
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>

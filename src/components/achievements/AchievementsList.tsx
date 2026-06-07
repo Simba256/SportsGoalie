@@ -16,6 +16,14 @@ type AchTab = 'completed' | 'progress' | 'locked';
 const BLUE = '#37b5ff';
 
 const CATEGORIES = ['WINS', 'BREAKTHROUGHS', 'CLIMBS', 'STREAKS', 'MILESTONES'] as const;
+const TIERS = ['FOUNDATION', 'DEVELOPING', 'OWNING IT', '80-100 CLUB', '95-100 CLUB'] as const;
+const TIER_COLORS: Record<string, string> = {
+  'FOUNDATION': '#fbbf24',
+  'DEVELOPING': '#60a5fa',
+  'OWNING IT': '#37b5ff',
+  '80-100 CLUB': '#22d3ee',
+  '95-100 CLUB': '#fbbf24',
+};
 const TYPES = ['progress', 'knowledge-check', 'streak', 'time', 'special'] as const;
 
 const cardStyle: React.CSSProperties = {
@@ -27,6 +35,7 @@ const cardStyle: React.CSSProperties = {
 
 export function AchievementsList({ achievements, userAchievements, loading = false }: AchievementsListProps) {
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterTier, setFilterTier] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<AchTab>('completed');
 
@@ -34,8 +43,9 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
 
   const filteredAchievements = achievements.filter(a => {
     const matchesCategory = filterCategory === 'all' || (a.rarity ?? '').toUpperCase() === filterCategory;
+    const matchesTier = filterTier === 'all' || (a.tier ?? '').toUpperCase() === filterTier;
     const matchesType = filterType === 'all' || a.type === filterType || (filterType === 'knowledge-check' && a.type === 'quiz');
-    return matchesCategory && matchesType;
+    return matchesCategory && matchesTier && matchesType;
   });
 
   const completedAchievements = filteredAchievements.filter(a => userAchievementMap.get(a.id)?.isCompleted);
@@ -140,6 +150,29 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
             {CATEGORIES.map(c => (
               <button key={c} onClick={() => setFilterCategory(c)} style={filterBtnStyle(filterCategory === c)}>{c}</button>
             ))}
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '10px' }}>
+            <button onClick={() => setFilterTier('all')} style={filterBtnStyle(filterTier === 'all')}>All Tiers</button>
+            {TIERS.map(t => {
+              const isActive = filterTier === t;
+              const tierColor = TIER_COLORS[t] || BLUE;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setFilterTier(t)}
+                  style={{
+                    padding: '4px 10px', borderRadius: '6px', border: isActive ? `1px solid ${tierColor}66` : 'none',
+                    cursor: 'pointer', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const,
+                    background: isActive ? `${tierColor}22` : 'transparent',
+                    color: isActive ? tierColor : 'rgba(255,255,255,0.5)',
+                    letterSpacing: '.3px',
+                  }}
+                >
+                  {t}
+                </button>
+              );
+            })}
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '10px' }}>

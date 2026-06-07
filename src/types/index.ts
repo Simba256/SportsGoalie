@@ -416,8 +416,10 @@ export interface Achievement {
   criteria: AchievementCriteria;
   points: number;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  tier?: 'FOUNDATION' | 'DEVELOPING' | 'OWNING IT' | '80-100 CLUB' | '95-100 CLUB';
+  category?: 'WINS' | 'BREAKTHROUGHS' | 'CLIMBS' | 'STREAKS' | 'MILESTONES';
   isActive: boolean;
-  isSecret: boolean; // Hidden until unlocked
+  isSecret: boolean;
   metadata: AchievementMetadata;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -912,6 +914,7 @@ export {
   pacingLevelToAssessmentLevel,
   GOALIE_CATEGORIES,
   PARENT_CATEGORIES,
+  COACH_CATEGORIES,
   getCategoryInfo,
 } from './onboarding';
 

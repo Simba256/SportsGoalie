@@ -6,11 +6,12 @@ import {
   BookOpen, PlayCircle, Lock, CheckCircle2, Trophy, Target,
   ArrowRight, Loader2, ChevronRight, MessageSquare, TrendingUp,
   Brain, Footprints, Shapes, Grid3X3, Dumbbell, Heart,
-  Play, Sparkles, Zap, User as UserIcon,
+  Play, Sparkles, Zap, User as UserIcon, Flame,
 } from 'lucide-react';
 import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { onboardingService } from '@/lib/database';
+import { useProgress } from '@/hooks/useProgress';
 import { User, Sport, SportProgress, CustomCurriculum, CustomCurriculumItem, IntelligenceProfile, getPacingLevelDisplayText, PILLARS } from '@/types';
 import { enrollmentService } from '@/lib/database/services/enrollment.service';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
@@ -47,6 +48,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   const [contentInfo, setContentInfo] = useState<Record<string, ContentInfo>>({});
   const [profile, setProfile] = useState<IntelligenceProfile | null>(null);
   const [enrolledSports, setEnrolledSports] = useState<Array<{ sport: Sport; progress: SportProgress }>>([]);
+  const { userProgress } = useProgress();
 
   useEffect(() => { loadData(); }, [user.id]);
 
@@ -193,6 +195,17 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
         <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 28px 44px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
           {/* Left text */}
           <div style={{ flex: 1, minWidth: '260px' }}>
+            {(userProgress?.overallStats?.currentStreak ?? 0) > 0 && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)',
+                borderRadius: '30px', padding: '4px 12px', marginBottom: '10px',
+                color: '#fb923c',
+              }}>
+                <Flame size={13} color="#fb923c" />
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>{userProgress!.overallStats.currentStreak} day streak</span>
+              </div>
+            )}
             <div className="s1" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '30px', padding: '5px 14px', marginBottom: '18px' }}>
               <Sparkles size={12} color={BLUE} />
               <span style={{ fontSize: '12px', color: BLUE, fontWeight: 700, letterSpacing: '.5px' }}>{greeting}</span>
@@ -207,7 +220,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
 
             <p className="s3" style={{ fontSize: '15px', color: 'rgba(255,255,255,.45)', marginBottom: '28px', maxWidth: '380px', lineHeight: 1.6 }}>
               {totalItems > 0
-                ? `You've completed ${completedItems} of ${totalItems} items. ${progressPct >= 80 ? 'Almost there — finish strong!' : progressPct >= 40 ? 'Keep the momentum going!' : unlockedItems > 0 ? `${unlockedItems} item${unlockedItems > 1 ? 's' : ''} ready to learn.` : 'Great start — keep building!'}`
+                ? `You've completed ${completedItems} of ${totalItems} modules. ${progressPct >= 80 ? 'Almost there — finish strong!' : progressPct >= 40 ? 'Keep the momentum going!' : unlockedItems > 0 ? `${unlockedItems} module${unlockedItems > 1 ? 's' : ''} ready to learn.` : 'Great start — keep building!'}`
                 : 'Your coach will assign learning materials soon. Check back or message your coach.'}
             </p>
 
@@ -243,10 +256,11 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
       {/* ── STATS STRIP ── */}
       <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '14px' }}>
-          <StatCard label="Items Done" value={completedItems} icon={<CheckCircle2 size={16} />} color="#4ade80" delay="0s" />
+          <StatCard label="Modules Done" value={completedItems} icon={<CheckCircle2 size={16} />} color="#4ade80" delay="0s" />
           <StatCard label="Available" value={unlockedItems} icon={<PlayCircle size={16} />} color={BLUE} delay=".05s" />
-          <StatCard label="Total Items" value={totalItems} icon={<BookOpen size={16} />} color="#a78bfa" delay=".10s" />
+          <StatCard label="Total Modules" value={totalItems} icon={<BookOpen size={16} />} color="#a78bfa" delay=".10s" />
           <StatCard label="Progress" value={`${progressPct}%`} icon={<Trophy size={16} />} color="#fb923c" delay=".15s" />
+          <StatCard label="Growth Points" value={(user as { growthPoints?: number }).growthPoints ?? 0} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
           {coach && <CoachStrip coach={coach} />}
         </div>
       </div>
@@ -262,9 +276,9 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
             <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
                 <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Learning Path</h2>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Your Development Path</h2>
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.35)' }}>
-                    {totalItems} {totalItems === 1 ? 'item' : 'items'} assigned by your coach
+                    {totalItems} {totalItems === 1 ? 'module' : 'modules'} assigned by your coach
                   </p>
                 </div>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#4ade80', fontWeight: 700, background: 'rgba(74,222,128,.1)', border: '1px solid rgba(74,222,128,.25)', borderRadius: '10px', padding: '6px 12px' }}>
@@ -302,10 +316,10 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                         {/* Content info */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: '14px', fontWeight: 700, color: isLocked ? 'rgba(255,255,255,.35)' : '#fff', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {info?.title || item.customContent?.title || `Item ${index + 1}`}
+                            {info?.title || item.customContent?.title || `Module ${index + 1}`}
                           </p>
                           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)' }}>
-                            {info?.sportName || (item.type.includes('quiz') ? 'Quiz' : 'Lesson')}
+                            {info?.sportName || (item.type.includes('quiz') ? 'Knowledge Check' : 'Lesson')}
                           </p>
                         </div>
 
@@ -320,7 +334,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(55,181,255,.2)')}
                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(55,181,255,.12)')}
                               >
-                                {isDone ? 'Review' : item.type.includes('quiz') ? 'Quiz' : 'Start'}
+                                {isDone ? 'Review' : item.type.includes('quiz') ? 'Knowledge Check' : 'Start'}
                               </button>
                             </Link>
                           )}
@@ -512,7 +526,7 @@ function HeroRing({ pct, completed, total }: { pct: number; completed: number; t
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
         <span style={{ fontSize: '34px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pct}%</span>
         <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.4)', fontWeight: 600, letterSpacing: '.3px' }}>Progress</span>
-        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,.25)', marginTop: '2px' }}>{completed}/{total} items</span>
+        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,.25)', marginTop: '2px' }}>{completed}/{total} modules</span>
       </div>
     </div>
   );

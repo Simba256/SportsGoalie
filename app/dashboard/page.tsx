@@ -118,6 +118,17 @@ function StandardDashboard() {
 
           {/* Left text block */}
           <div style={{ flex: 1, minWidth: '260px' }}>
+            {stats?.currentStreak != null && stats.currentStreak > 0 && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)',
+                borderRadius: '30px', padding: '4px 12px', marginBottom: '10px',
+                color: '#fb923c',
+              }}>
+                <Flame size={13} color="#fb923c" />
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>{stats.currentStreak} day streak</span>
+              </div>
+            )}
             <div className="s1" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '30px', padding: '5px 14px', marginBottom: '18px' }}>
               <Sparkles size={12} color={BLUE} />
               <span style={{ fontSize: '12px', color: BLUE, fontWeight: 700, letterSpacing: '.5px' }}>{greeting}</span>
@@ -172,6 +183,7 @@ function StandardDashboard() {
           <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
           <StatCard label="Avg Grasp Level" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
           <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
+          <StatCard label="Growth Points" value={(user as unknown as { growthPoints?: number })?.growthPoints ?? 0} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
           <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
       </div>
@@ -248,6 +260,40 @@ function StandardDashboard() {
 
             {/* Continue Learning */}
             {activePillar && <ContinueLearningCard pillar={activePillar} />}
+
+            {/* MY MIND-VAULT — Coming Soon */}
+            <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.12) 0%, rgba(2,18,44,0.95) 55%, rgba(109,40,217,0.08) 100%)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(167,139,250,0.12)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Brain size={18} color="#a78bfa" />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>MY MIND-VAULT</h2>
+                    <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)', margin: 0 }}>Your personal performance foundation</p>
+                  </div>
+                </div>
+                <div style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.32)', borderRadius: '20px', padding: '5px 14px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#a78bfa', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Coming Soon</span>
+                </div>
+              </div>
+              <div style={{ padding: '36px 24px', textAlign: 'center' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 28px rgba(167,139,250,0.18)' }}>
+                  <Brain size={28} color="#a78bfa" />
+                </div>
+                <h3 style={{ fontSize: '19px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Building Your Personal Vault</h3>
+                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, maxWidth: '340px', margin: '0 auto 24px' }}>
+                  Your MIND-VAULT is where only the most valuable foundational thoughts and behaviors are stored — for game performance and for life.
+                </p>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {['Mental Filters', 'Acceptance List', 'Focus Protocol'].map((item) => (
+                    <div key={item} style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '20px', padding: '6px 14px' }}>
+                      <span style={{ fontSize: '11px', color: 'rgba(167,139,250,0.7)', fontWeight: 600 }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* RIGHT COLUMN */}
@@ -258,7 +304,7 @@ function StandardDashboard() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
                 <div>
                   <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Performance</h3>
-                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)' }}>Recent quiz results</p>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)' }}>Recent Knowledge Check results</p>
                 </div>
                 <Link href="/quizzes" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: BLUE, fontWeight: 700, textDecoration: 'none' }}>
                   All <ArrowRight size={11} />

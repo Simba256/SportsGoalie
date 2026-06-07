@@ -14,6 +14,8 @@ import {
   RotateCcw, ChevronRight, Target,
 } from 'lucide-react';
 import Link from 'next/link';
+import { GrowthPointsToast } from '@/components/ui/GrowthPointsToast';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -28,6 +30,7 @@ function VideoQuizResultsContent() {
   const [progress, setProgress] = useState<VideoQuizProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showGpToast, setShowGpToast] = useState(false);
 
   useEffect(() => {
     if (quizId && user) { loadResults(); }
@@ -66,6 +69,12 @@ function VideoQuizResultsContent() {
 
       setQuiz(quizResult.data);
       setProgress(progressData);
+
+      const sessionKey = `gp_shown_quiz_${quizId}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, '1');
+        setTimeout(() => setShowGpToast(true), 600);
+      }
     } catch (err) {
       console.error('Error loading results:', err);
       setError('Failed to load quiz results');
@@ -115,6 +124,7 @@ function VideoQuizResultsContent() {
 
   return (
     <>
+      <GrowthPointsToast points={GROWTH_POINTS.KNOWLEDGE_CHECK} show={showGpToast} />
       <style>{`
         .qr-action:hover { opacity: 0.85 !important; transform: translateY(-1px); }
         .qr-outline:hover { background: rgba(55,181,255,0.08) !important; }

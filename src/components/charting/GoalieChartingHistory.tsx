@@ -3,36 +3,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { chartingService } from '@/lib/database';
 import { ChartingEntry, Session } from '@/types';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
-  Calendar,
-  MapPin,
-  Trophy,
-  Dumbbell,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  ClipboardList,
-  Filter,
+  Calendar, MapPin, Trophy, Dumbbell,
+  ChevronDown, ChevronUp, ClipboardList, Filter, Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { V2ChartReadOnlyView } from './V2ChartReadOnlyView';
 
-type V2Fields = {
-  v2PreGame?: unknown;
-  v2Periods?: unknown;
-  v2PostGame?: unknown;
-  v2Practice?: unknown;
-};
+const BLUE = '#37b5ff';
 
+type V2Fields = { v2PreGame?: unknown; v2Periods?: unknown; v2PostGame?: unknown; v2Practice?: unknown };
 type TypeFilter = 'all' | 'game' | 'practice';
 
 interface GoalieChartingHistoryProps {
   studentId: string;
-  /** Called when a session card's "Open" button is clicked (optional). */
   onOpenSession?: (sessionId: string) => void;
 }
 
@@ -49,10 +33,7 @@ const isComplete = (entry: ChartingEntry | undefined, sessionType: string): bool
   return !!v2.v2PreGame && !!v2.v2Periods && !!v2.v2PostGame;
 };
 
-export function GoalieChartingHistory({
-  studentId,
-  onOpenSession,
-}: GoalieChartingHistoryProps) {
+export function GoalieChartingHistory({ studentId, onOpenSession }: GoalieChartingHistoryProps) {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
@@ -65,11 +46,7 @@ export function GoalieChartingHistory({
       setLoading(true);
       try {
         const [sessionsResult, entriesResult] = await Promise.all([
-          chartingService.getSessionsByStudent(studentId, {
-            limit: 200,
-            orderBy: 'date',
-            orderDirection: 'desc',
-          }),
+          chartingService.getSessionsByStudent(studentId, { limit: 200, orderBy: 'date', orderDirection: 'desc' }),
           chartingService.getChartingEntriesByStudent(studentId),
         ]);
         if (cancelled) return;
@@ -82,81 +59,68 @@ export function GoalieChartingHistory({
       }
     };
     load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [studentId]);
 
   const entriesBySession = useMemo(() => {
     const map = new Map<string, ChartingEntry>();
     entries.forEach((e) => {
       const existing = map.get(e.sessionId);
-      // Prefer student-submitted entries with v2 data
-      if (!existing || (hasV2Data(e) && !hasV2Data(existing))) {
-        map.set(e.sessionId, e);
-      }
+      if (!existing || (hasV2Data(e) && !hasV2Data(existing))) map.set(e.sessionId, e);
     });
     return map;
   }, [entries]);
 
-  const filteredSessions = useMemo(() => {
-    return sessions.filter((s) => {
+  const filteredSessions = useMemo(() =>
+    sessions.filter((s) => {
       if (typeFilter !== 'all' && s.type !== typeFilter) return false;
       return hasV2Data(entriesBySession.get(s.id));
-    });
-  }, [sessions, entriesBySession, typeFilter]);
+    }), [sessions, entriesBySession, typeFilter]);
 
   const counts = useMemo(() => {
     const all = sessions.filter((s) => hasV2Data(entriesBySession.get(s.id)));
-    return {
-      all: all.length,
-      game: all.filter((s) => s.type === 'game').length,
-      practice: all.filter((s) => s.type === 'practice').length,
-    };
+    return { all: all.length, game: all.filter(s => s.type === 'game').length, practice: all.filter(s => s.type === 'practice').length };
   }, [sessions, entriesBySession]);
 
   if (loading) {
     return (
-      <Card className="p-12 text-center">
-        <Loader2 className="w-6 h-6 mx-auto text-slate-400 animate-spin mb-2" />
-        <p className="text-sm text-slate-500">Loading charting history…</p>
-      </Card>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 20px', gap: '12px' }}>
+        <Loader2 size={24} color="rgba(255,255,255,0.3)" style={{ animation: 'spin 1s linear infinite' }} />
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>Loading charting history…</p>
+        <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+      </div>
     );
   }
 
   if (counts.all === 0) {
     return (
-      <Card className="p-12 text-center border-dashed bg-slate-50/50">
-        <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-        <p className="text-sm font-semibold text-slate-700">No charting history yet</p>
-        <p className="text-xs text-slate-500 mt-1">
-          Once the goalie charts a game or practice session, it will appear here.
-        </p>
-      </Card>
+      <div style={{ textAlign: 'center', padding: '48px 20px' }}>
+        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+          <ClipboardList size={26} color="rgba(255,255,255,0.2)" />
+        </div>
+        <p style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>No charting history yet</p>
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.6 }}>Once the goalie charts a game or practice session, it will appear here.</p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {/* Filters */}
-      <div className="flex items-center gap-2 text-xs">
-        <Filter className="w-3.5 h-3.5 text-slate-400" />
-        {(
-          [
-            { key: 'all', label: 'All', count: counts.all },
-            { key: 'game', label: 'Games', count: counts.game },
-            { key: 'practice', label: 'Practices', count: counts.practice },
-          ] as const
-        ).map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => setTypeFilter(opt.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              typeFilter === opt.key
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <Filter size={13} color="rgba(255,255,255,0.3)" />
+        {([
+          { key: 'all' as TypeFilter, label: 'All', count: counts.all },
+          { key: 'game' as TypeFilter, label: 'Games', count: counts.game },
+          { key: 'practice' as TypeFilter, label: 'Practices', count: counts.practice },
+        ]).map((opt) => (
+          <button key={opt.key} type="button" onClick={() => setTypeFilter(opt.key)}
+            style={{
+              padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+              background: typeFilter === opt.key ? BLUE : 'rgba(255,255,255,0.06)',
+              border: typeFilter === opt.key ? `1px solid ${BLUE}` : '1px solid rgba(255,255,255,0.1)',
+              color: typeFilter === opt.key ? '#000f28' : 'rgba(255,255,255,0.5)',
+            }}
           >
             {opt.label} · {opt.count}
           </button>
@@ -165,93 +129,75 @@ export function GoalieChartingHistory({
 
       {/* Session list */}
       {filteredSessions.length === 0 ? (
-        <Card className="p-8 text-center border-dashed bg-slate-50/50">
-          <p className="text-sm text-slate-500">No {typeFilter === 'all' ? '' : typeFilter + ' '}sessions in history.</p>
-        </Card>
+        <div style={{ textAlign: 'center', padding: '28px', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px' }}>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>No {typeFilter === 'all' ? '' : typeFilter + ' '}sessions in history.</p>
+        </div>
       ) : (
         filteredSessions.map((session) => {
           const entry = entriesBySession.get(session.id);
           const expanded = expandedId === session.id;
           const complete = isComplete(entry, session.type);
           const TypeIcon = session.type === 'game' ? Trophy : Dumbbell;
-          const dateStr = session.date?.toDate
-            ? format(session.date.toDate(), 'EEE, MMM d, yyyy')
-            : '';
+          const dateStr = session.date?.toDate ? format(session.date.toDate(), 'EEE, MMM d, yyyy') : '';
+          const typeAccent = session.type === 'game' ? BLUE : '#4ade80';
 
           return (
-            <Card key={session.id} className="overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setExpandedId(expanded ? null : session.id)}
-                className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
+            <div key={session.id} style={{ background: 'rgba(2,18,44,0.7)', border: `1px solid rgba(55,181,255,0.12)`, borderRadius: '14px', overflow: 'hidden', transition: 'border-color 0.2s' }}>
+              <button type="button" onClick={() => setExpandedId(expanded ? null : session.id)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(55,181,255,0.05)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    session.type === 'game'
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'bg-emerald-50 text-emerald-600'
-                  }`}
-                >
-                  <TypeIcon className="w-5 h-5" />
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${typeAccent}15`, border: `1px solid ${typeAccent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <TypeIcon size={18} color={typeAccent} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-bold text-slate-900 capitalize">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', textTransform: 'capitalize' }}>
                       {session.type}
-                      {session.opponent && (
-                        <span className="font-normal text-slate-600"> vs {session.opponent}</span>
-                      )}
+                      {session.opponent && <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.5)' }}> vs {session.opponent}</span>}
                     </p>
-                    {complete ? (
-                      <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px]">
-                        <CheckCircle2 className="w-3 h-3 mr-1" /> Complete
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="secondary"
-                        className="bg-amber-100 text-amber-700 text-[10px]"
-                      >
-                        Partial
-                      </Badge>
-                    )}
+                    <span style={{
+                      fontSize: '9px', fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase',
+                      padding: '2px 8px', borderRadius: '20px',
+                      color: complete ? '#4ade80' : '#fbbf24',
+                      background: complete ? 'rgba(74,222,128,0.1)' : 'rgba(251,191,36,0.1)',
+                      border: complete ? '1px solid rgba(74,222,128,0.3)' : '1px solid rgba(251,191,36,0.3)',
+                    }}>
+                      {complete ? '✓ Complete' : 'Partial'}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {dateStr}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar size={11} /> {dateStr}
                     </span>
                     {session.location && (
-                      <span className="inline-flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3" />
-                        {session.location}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <MapPin size={11} /> {session.location}
                       </span>
                     )}
                   </div>
                 </div>
-                {expanded ? (
-                  <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                )}
+                {expanded
+                  ? <ChevronUp size={15} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0 }} />
+                  : <ChevronDown size={15} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0 }} />
+                }
               </button>
 
               {expanded && entry && (
-                <div className="border-t border-slate-100 bg-slate-50/40 p-4 space-y-3">
+                <div style={{ borderTop: '1px solid rgba(55,181,255,0.1)', background: 'rgba(2,18,44,0.5)', padding: '16px' }}>
                   <V2ChartReadOnlyView entry={entry} session={session} />
                   {onOpenSession && (
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onOpenSession(session.id)}
-                      >
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                      <button onClick={() => onOpenSession(session.id)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', background: 'transparent', border: `1px solid ${BLUE}40`, color: BLUE, fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
                         Open full session →
-                      </Button>
+                      </button>
                     </div>
                   )}
                 </div>
               )}
-            </Card>
+            </div>
           );
         })
       )}

@@ -1,8 +1,75 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
+
+const MIND_VAULT_GEMS = [
+  {
+    label: 'THE FOUNDATION',
+    gem: 'Regardless how technically strong you are — if the mind is not the strongest tool you have, then what is your foundation built on?',
+  },
+  {
+    label: 'THE MIND-VAULT',
+    gem: 'The discipline of building where only the most valuable foundational thoughts and behaviors are kept. For game performance. And for life in general.',
+  },
+  {
+    label: 'YOUR FILTERS',
+    gem: 'Logic, Common Sense, Math, and Science become your filters — applied to every read, every shift, every decision.',
+  },
+  {
+    label: 'PERFORMANCE VS OUTCOME',
+    gem: 'Learn the difference between performance and outcome — and understand why the goalie controls one, not the other.',
+  },
+  {
+    label: 'THE BENCH',
+    gem: 'How the goalie goes reflects on the bench. A solid goalie lifts the bench. An inconsistent goalie deflates it.',
+  },
+  {
+    label: 'SIX DECADES OF ORIGINAL IP',
+    gem: 'One foundation. Built over sixty years. Proven on every goalie it has ever touched. The MIND-VAULT is yours to build.',
+  },
+];
+
+function MindVaultGemPanel() {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setActive(a => (a + 1) % MIND_VAULT_GEMS.length), 4500);
+    return () => clearInterval(iv);
+  }, []);
+  const gem = MIND_VAULT_GEMS[active];
+  return (
+    <section style={{ padding: 'clamp(48px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #041530 0%, #000f28 100%)', borderTop: '1px solid rgba(167,139,250,0.1)' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', marginBottom: '32px' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a78bfa', boxShadow: '0 0 10px rgba(167,139,250,0.8)' }} />
+          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: '#a78bfa', textTransform: 'uppercase', margin: 0 }}>THE MIND-VAULT — DAILY GEMS</p>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a78bfa', boxShadow: '0 0 10px rgba(167,139,250,0.8)' }} />
+        </div>
+
+        {/* Gem card */}
+        <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.1) 0%, rgba(6,30,70,0.98) 60%, rgba(109,40,217,0.06) 100%)', border: '1px solid rgba(167,139,250,0.28)', borderRadius: '20px', padding: 'clamp(28px,4vw,48px)', textAlign: 'center', minHeight: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 4px 32px rgba(167,139,250,0.1)', transition: 'all 0.4s ease' }}>
+          <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', margin: 0 }}>{gem.label}</p>
+          <p style={{ fontSize: 'clamp(16px,2.2vw,22px)', color: '#fff', lineHeight: 1.75, maxWidth: '680px', margin: 0, fontStyle: 'italic' }}>
+            &ldquo;{gem.gem}&rdquo;
+          </p>
+        </div>
+
+        {/* Navigation dots */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+          {MIND_VAULT_GEMS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActive(i)}
+              style={{ width: i === active ? '24px' : '8px', height: '8px', borderRadius: i === active ? '4px' : '50%', background: i === active ? '#a78bfa' : 'rgba(167,139,250,0.25)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.3s', boxShadow: i === active ? '0 0 8px rgba(167,139,250,0.6)' : 'none' }}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
@@ -328,23 +395,26 @@ export default function Home() {
           <section className="py-6 overflow-hidden" style={{ background: '#041530', borderTop: '1px solid rgba(55,181,255,0.12)', borderBottom: '1px solid rgba(55,181,255,0.12)' }}>
             <div className="relative flex" style={{ '--duration': '30s', '--gap': '2rem' } as React.CSSProperties}>
               <div className="flex shrink-0 animate-marquee items-center gap-8">
-                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: text === 'MIND-VAULT' ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: text === 'MIND-VAULT' ? '#a78bfa' : '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
               <div className="flex shrink-0 animate-marquee items-center gap-8" aria-hidden="true">
-                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: text === 'MIND-VAULT' ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: text === 'MIND-VAULT' ? '#a78bfa' : '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
             </div>
           </section>
+
+          {/* MIND-VAULT GEM Panel */}
+          <MindVaultGemPanel />
 
           {/* What's In YOUR Tool Box? */}
           <section style={{ padding: 'clamp(40px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>

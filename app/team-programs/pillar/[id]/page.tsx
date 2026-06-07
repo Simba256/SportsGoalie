@@ -45,7 +45,7 @@ const PILLARS: Record<string, PillarData> = {
     facts: [
       {
         statement: 'THE SUB-CONSCIOUS MIND RUNS AT GAME SPEED. THE CONSCIOUS MIND DOESN\'T. WE TRAIN THE RIGHT ONE.',
-        voiceLabel: 'HEAR COACH MIKE: THE SUB-CONSCIOUS AND WHY EVERY OTHER PROGRAM IS TRAINING THE WRONG MIND',
+        voiceLabel: 'HEAR COACH MIKE: THE SUB-CONSCIOUS MIND AND WHY TRAINING IT CHANGES EVERYTHING',
       },
       {
         statement: 'THE GOALIE IS THE MOST IMPORTANT POSITION ON THE TEAM AND THE LEAST UNDERSTOOD.',
@@ -95,37 +95,12 @@ const PILLARS: Record<string, PillarData> = {
   '2': {
     number: '02',
     title: 'Skating Tech',
-    subtitle: 'The Engine of the System',
-    intro: 'Skating Tech is the locomotion Pillar. Every save starts and ends with movement. The goalie who moves with precision, economy, and purpose is the goalie who covers the ice with authority. Skating Tech teaches the goalie how to move — not just how to get from point A to point B, but how to arrive in position ready to execute.',
+    titleOneLine: true,
+    subtitle: 'The Mobility That Keeps You In Game Frequency',
+    intro: 'The goalie who understands goalie skating — not just how to move, but when, why, and how to arrive — separates from the rest at every level of the game.',
     accent: BLUE2,
     accentAlt: BLUE,
-    facts: [
-      {
-        statement: 'THE GOALIE WHO MOVES WITH PURPOSE IS NEVER OUT OF POSITION. THE GOALIE WHO MOVES AT RANDOM IS ALWAYS SCRAMBLING.',
-        support: 'Every movement in the Smarter Goalie system has a reason. Skating Tech teaches the goalie why they move, not just how.',
-        voiceLabel: 'HEAR COACH MIKE: PURPOSEFUL MOVEMENT AND WHAT IT MEANS TO ARRIVE READY',
-      },
-      {
-        statement: 'THE T-PUSH, THE C-CUT, AND THE SHUFFLE ARE NOT EQUAL TOOLS. KNOWING WHEN TO USE EACH IS THE SKILL.',
-        support: 'Most programs teach the mechanics. Smarter Goalie teaches the decision. The right movement at the right time is not instinct — it is trained.',
-        voiceLabel: 'HEAR COACH MIKE: THE THREE PRIMARY MOVEMENTS AND THE DECISIONS THAT GOVERN THEM',
-      },
-      {
-        statement: 'SKATING TECH AND THE 7AMS WORK TOGETHER. POSITION IS MEANINGLESS WITHOUT THE MOVEMENT TO GET THERE.',
-        support: 'The 7 Angle-Mark System tells the goalie where to be. Skating Tech gives them the tools to get there. Neither Pillar is complete without the other.',
-        voiceLabel: 'HEAR COACH MIKE: HOW SKATING TECH AND THE 7AMS CONNECT INTO ONE POSITIONAL SYSTEM',
-      },
-      {
-        statement: 'ECONOMY OF MOVEMENT IS NOT LAZINESS. IT IS INTELLIGENCE.',
-        support: 'The goalie who takes two steps when one is required is spending energy they will need later. Smarter Goalie builds economy into every movement pattern.',
-        voiceLabel: 'HEAR COACH MIKE: ECONOMY OF MOVEMENT AND WHAT IT PRODUCES ACROSS A FULL SIXTY MINUTES',
-      },
-      {
-        statement: 'RECOVERY IS A SKILL. MOST GOALIES NEVER TRAIN IT.',
-        support: 'Going down is easy. Getting back up — efficiently, in position, ready for the next shot — is what separates the developed goalie from the developing one. Skating Tech includes recovery as a first-class skill.',
-        voiceLabel: 'HEAR COACH MIKE: RECOVERY MOVEMENT AND WHY IT BELONGS IN EVERY PRACTICE',
-      },
-    ],
+    facts: [],
   },
   '3': {
     number: '03',
@@ -223,9 +198,9 @@ const PILLARS: Record<string, PillarData> = {
         voiceLabel: 'HEAR COACH MIKE: MAXIMUM COVERAGE WITH MINIMAL MOVEMENT AND WHAT IT LOOKS LIKE IN PRACTICE',
       },
       {
-        statement: 'MOST GOALIE SCHOOLS TEACH A 6 FOOT PLUS GAME TO YOUTH GOALIES. THIS IS WRONG AND WE WILL TELL YOU WHY.',
-        support: 'A technique built for a large body does not fit a developing body. Forcing a young goalie into a technique designed for a body they do not have creates habits that need to be unlearned later. Smarter Goalie teaches for the body in front of them.',
-        voiceLabel: 'HEAR COACH MIKE: WHY TEACHING THE WRONG BODY TEMPLATE IS THE MOST COMMON AND DAMAGING MISTAKE IN YOUTH GOALTENDING INSTRUCTION',
+        statement: 'A TECHNIQUE BUILT FOR A LARGE BODY DOES NOT FIT EVERY DEVELOPING GOALIE. SMARTER GOALIE TEACHES FOR THE BODY IN FRONT OF THEM.',
+        support: 'Forcing a young goalie into a technique designed for a different body creates habits that take years to undo. Smarter Goalie finds the right technique for the body standing in front of them — not a template imposed on it.',
+        voiceLabel: 'HEAR COACH MIKE: WHY EVERY GOALIE NEEDS A TECHNIQUE BUILT FOR THEIR BODY, NOT SOMEONE ELSE\'S',
       },
       {
         statement: 'THE BUTTERFLY IS A TOOL. NOT A RELIGION. KNOWING WHEN TO USE IT AND WHEN NOT TO IS THE SKILL.',
@@ -264,9 +239,9 @@ const PILLARS: Record<string, PillarData> = {
         voiceLabel: 'HEAR COACH MIKE: THE GAME CHART, WHAT IT CAPTURES, AND HOW IT DRIVES THE NEXT PRACTICE',
       },
       {
-        statement: 'THE DEVELOPMENT LOOP IS THE MOST POWERFUL TOOL IN GOALTENDING DEVELOPMENT. MOST PROGRAMS DO NOT HAVE ONE.',
+        statement: 'THE DEVELOPMENT LOOP IS THE MOST POWERFUL TOOL IN GOALTENDING DEVELOPMENT. SMARTER GOALIE BUILDS IT INTO EVERY SESSION.',
         support: 'Game Chart → Practice Index → Practice Chart → Next Game Chart. Every game informs every practice. Every practice prepares for every game. The loop never breaks. Nothing is ever lost.',
-        voiceLabel: 'HEAR COACH MIKE: THE DEVELOPMENT LOOP AND WHY IT MAKES SMARTER GOALIE DIFFERENT FROM EVERY OTHER PROGRAM',
+        voiceLabel: 'HEAR COACH MIKE: THE DEVELOPMENT LOOP AND HOW IT TURNS EVERY GAME INTO A DEVELOPMENT ROADMAP',
       },
       {
         statement: 'A GOOD GOAL AND A BAD GOAL ARE NOT THE SAME THING. MOST GOALIES NEVER LEARN THE DIFFERENCE.',
@@ -480,11 +455,12 @@ export default function PillarPage() {
             <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
           </button>
           <div className="hidden sm:flex gap-6 items-center">
-            {['WHO WE ARE', 'THE SYSTEM'].map((item) => (
-              <button key={item} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{item}
-              </button>
-            ))}
+            <button onClick={() => router.push('/who-we-are')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />WHO WE ARE
+            </button>
+            <button style={{ background: 'none', border: 'none', cursor: 'default', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />THE SYSTEM
+            </button>
           </div>
         </div>
       </nav>
@@ -657,6 +633,241 @@ export default function PillarPage() {
                   </h2>
                 </div>
               </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ── RICH SECTIONS for Pillar 2 ── */}
+      {id === '2' && (
+        <>
+          {/* Opening body + WHERE THIS TAKES YOU */}
+          <section style={{ position: 'relative', overflow: 'hidden', padding: 'clamp(80px,10vw,130px) 0', background: 'linear-gradient(155deg, #0d2848 0%, #133050 65%, #0b2242 100%)' }}>
+            <div style={{ position: 'absolute', top: '10%', right: '-5%', width: '500px', height: '500px', background: `radial-gradient(ellipse, ${BLUE2}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
+
+              {/* Body paragraphs */}
+              <div style={{ maxWidth: '820px', marginBottom: '52px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '32px' }}>
+                  <div style={{ width: '6px', height: '48px', background: BLUE2, boxShadow: `0 0 14px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
+                  <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: 0 }}>PILLAR 02 — SKATING TECH</p>
+                </div>
+                {/* Placeholder for Michael's opening line */}
+                <div style={{ background: `${BLUE2}08`, border: `1px dashed ${BLUE2}28`, borderRadius: '10px', padding: '14px 18px', marginBottom: '24px' }}>
+                  <p style={{ fontSize: '12px', color: `${BLUE2}60`, margin: 0, letterSpacing: '1px', fontStyle: 'italic' }}>[Opening message from Coach Mike — content to be provided]</p>
+                </div>
+                {[
+                  'The goalie who separates from the pack does so by understanding one thing that is rarely taught — the difference between goalie skating and player skating.',
+                  'The more proficient the goalie becomes at moving through different postures, different situations, and different reads — the more they become in sync with the play. Not a target inside the crease. In sync with the game.',
+                  'And when the puck separates from the center-line connection — when the read shifts and the play opens up — the trained goalie still knows what the shooter has, and what the puck sees.',
+                  'What the shooter sees and what the puck sees are entirely different.',
+                  'Smarter Goalie teaches the goalie to read from the puck\'s point of view — not the shooter\'s.',
+                  'That is Game Frequency READS — where mobility, position, and read move as one.',
+                ].map((para, i) => (
+                  <p key={i} style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: i === 5 ? '#fff' : 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '18px', fontStyle: 'italic', fontWeight: i === 5 ? 700 : 400 }}>{para}</p>
+                ))}
+              </div>
+
+              {/* WHERE THIS TAKES YOU */}
+              <div style={{ background: 'rgba(55,181,255,0.05)', border: `1px solid ${BLUE2}22`, borderLeft: `4px solid ${BLUE2}`, borderRadius: '0 16px 16px 0', padding: 'clamp(24px,3vw,40px)', maxWidth: '820px', marginBottom: '48px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '4px', color: BLUE2, textTransform: 'uppercase', marginBottom: '24px' }}>WHERE THIS TAKES YOU</p>
+                {[
+                  { text: 'Every person in that building — teammates, coaches, parents, opponents — sees a goalie who moves with purpose. That is visible. That is noticed.', highlight: false },
+                  { text: 'From there, the goalie has a choice: stay at the current level and become a leader there, or jump to the next level entirely.', highlight: false },
+                  { text: 'Either path — Smarter Goalie builds more than skill. We build character. We build leaders.', highlight: true },
+                  { text: '"Are you in tonight?" — That is what teammates start asking before games. Not just coaches. Teammates. Because they feel it.', highlight: false },
+                  { text: 'Six decades of learning, observing, and refining tells me this is not optional.', highlight: true },
+                ].map((item, i) => (
+                  <p key={i} style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: item.highlight ? (i === 4 ? BLUE2 : '#fff') : 'rgba(184,212,232,0.85)', lineHeight: 1.85, marginBottom: i < 4 ? '16px' : '0', fontWeight: item.highlight ? 700 : 400 }}>{item.text}</p>
+                ))}
+              </div>
+
+              <VoiceButton label="HEAR COACH MIKE EXPLAIN" />
+            </div>
+          </section>
+
+          {/* FACT 01 — THE DECISION-MAKING ENGINE */}
+          <section style={{ position: 'relative', overflow: 'hidden', padding: 'clamp(80px,10vw,130px) 0', background: 'radial-gradient(circle at 65% 30%, #0d1b3a 0%, #050912 100%)' }}>
+            <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(160px,22vw,320px)', fontWeight: 900, fontStyle: 'italic', color: `${BLUE2}07`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>01</div>
+            <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '500px', height: '500px', background: `radial-gradient(ellipse, ${BLUE2}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '28px' }}>
+                <div style={{ width: '6px', height: '52px', background: BLUE2, boxShadow: `0 0 14px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
+                <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' }}>FACT 01</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(22px, 4vw, 54px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', margin: '0 0 20px', maxWidth: '960px' }}>
+                THE DECISION-MAKING ENGINE BEHIND EVERY MOVE
+              </h2>
+              <p style={{ fontSize: 'clamp(17px, 2.3vw, 26px)', fontWeight: 700, color: BLUE2, lineHeight: 1.3, maxWidth: '900px', marginBottom: '48px', fontStyle: 'italic' }}>
+                &ldquo;THE GOALIE WHO MOVES WITH CONNECTION — TO THE PLAY, THE PUCK, AND THE PLAYER WITH THE PUCK&apos;S OPTIONS — IS IN GAME FREQUENCY.&rdquo;
+              </p>
+
+              {/* Four questions */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '48px' }}>
+                {['WHERE', 'WHEN', 'WHY', 'HOW'].map((q) => (
+                  <div key={q} style={{ background: `${BLUE2}12`, border: `1px solid ${BLUE2}35`, borderRadius: '12px', padding: '14px 28px', textAlign: 'center', minWidth: '80px' }}>
+                    <p style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 900, color: BLUE2, margin: 0, textShadow: `0 0 20px ${BLUE2}55` }}>{q}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* 3 Live Inputs */}
+              <div style={{ marginBottom: '48px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>THE 3 LIVE INPUTS</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px', maxWidth: '960px' }}>
+                  {[
+                    { num: '01', label: 'PLAY FACTORS', desc: 'Reading the player and their options — where they are, what they have, what they can do.' },
+                    { num: '02', label: 'PUCK MOVEMENT', desc: 'Reading the player\'s stick with the puck — what the puck is about to do, not just what the player is doing.' },
+                    { num: '03', label: 'STRATEGIC POSITIONING', desc: 'Read and react. Repositioning with purpose — every movement has a reason connected to the live read.' },
+                  ].map((input) => (
+                    <div key={input.num} style={{ background: `${BLUE2}0a`, border: `1px solid ${BLUE2}30`, borderRadius: '14px', padding: '22px 24px' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 800, color: BLUE2, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>{input.num}</p>
+                      <p style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>{input.label}</p>
+                      <p style={{ fontSize: '14px', color: 'rgba(184,212,232,0.75)', lineHeight: 1.65, margin: 0 }}>{input.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Game IQ */}
+              <div style={{ maxWidth: '820px', marginBottom: '36px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '14px' }}>GAME IQ</p>
+                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '14px', fontStyle: 'italic' }}>
+                  Game IQ grows across Pillars 1 through 6. Each Pillar adds a layer. Each layer expands what the goalie sees and reads in real time.
+                </p>
+                <p style={{ fontSize: 'clamp(18px, 2.5vw, 28px)', fontWeight: 900, color: '#fff', lineHeight: 1.2 }}>
+                  &ldquo;The puck enters your zone. Your house. Your terms.&rdquo;
+                </p>
+              </div>
+
+              {/* Decision IQ + Two Enemies */}
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: 'clamp(20px,3vw,32px)', maxWidth: '820px', marginBottom: '36px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>DECISION IQ — THE TWO ENEMIES</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                  {[{ label: 'Over-Reacting', desc: 'Moving before the read is complete.' }, { label: 'Over-Anticipating', desc: 'Committing to the wrong read.' }].map((enemy) => (
+                    <div key={enemy.label} style={{ background: 'rgba(248,113,113,0.07)', border: '1px solid rgba(248,113,113,0.22)', borderRadius: '12px', padding: '18px 20px' }}>
+                      <p style={{ fontSize: '15px', fontWeight: 800, color: '#f87171', marginBottom: '6px' }}>{enemy.label}</p>
+                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>{enemy.desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: `${BLUE2}0a`, border: `1px solid ${BLUE2}25`, borderRadius: '12px', padding: '18px 20px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: BLUE2, marginBottom: '6px', letterSpacing: '0.5px' }}>THE 90s</p>
+                  <p style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.7, margin: 0 }}>
+                    Decision IQ in the high 90s — 96, 97, 98% — is what separates the starter. The goalie at 70% is competing. The goalie at 96% is controlling.
+                  </p>
+                </div>
+              </div>
+
+              {/* Are You In Tonight? */}
+              <div style={{ borderLeft: `4px solid ${BLUE2}`, paddingLeft: '24px', maxWidth: '720px', marginBottom: '48px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '12px' }}>&ldquo;ARE YOU IN TONIGHT?&rdquo;</p>
+                <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '14px', fontStyle: 'italic' }}>
+                  The goalie with Game Frequency changes the energy on the bench. Teammates feel it before the puck drops. The question shifts — because when the answer is yes, everyone in that locker room already knows.
+                </p>
+                <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: '#fff', lineHeight: 1.75, fontWeight: 600 }}>
+                  The question is not whether the goalie has the skill. The question is whether they have the desire to build the engine behind it.
+                </p>
+              </div>
+
+              <VoiceButton label="HEAR COACH MIKE: THE DECISION-MAKING ENGINE" />
+            </div>
+          </section>
+
+          {/* FACT 02 — TECHNIQUE + THE TECHNICAL EYE */}
+          <section style={{ position: 'relative', overflow: 'hidden', padding: 'clamp(80px,10vw,130px) 0', background: 'linear-gradient(150deg, #0d2848 0%, #133050 100%)' }}>
+            <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(160px,22vw,320px)', fontWeight: 900, fontStyle: 'italic', color: `${BLUE2}07`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>02</div>
+            <div style={{ position: 'absolute', bottom: '-5%', left: '-5%', width: '500px', height: '500px', background: `radial-gradient(ellipse, ${BLUE2}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '28px' }}>
+                <div style={{ width: '6px', height: '52px', background: BLUE2, boxShadow: `0 0 14px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
+                <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' }}>FACT 02</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(22px, 4vw, 54px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', margin: '0 0 32px', maxWidth: '960px' }}>
+                NOT EVERY SKATING TECHNIQUE IS THE RIGHT TOOL FOR EVERY MOMENT
+              </h2>
+              <div style={{ maxWidth: '820px', marginBottom: '48px' }}>
+                {[
+                  'No skating skill is overlooked in the Smarter Goalie system. Biomechanics. Body mechanics. Every movement examined through the same four questions: WHERE, WHEN, WHY, HOW.',
+                  '"Knowing is understanding. Seeing is correct tech verification."',
+                  'The Technical Eye and the Self-Evaluation Portal work together — the goalie learns to see what they are doing, not just feel it.',
+                ].map((para, i) => (
+                  <p key={i} style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: i === 1 ? BLUE2 : 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '18px', fontStyle: 'italic', fontWeight: i === 1 ? 700 : 400 }}>{para}</p>
+                ))}
+              </div>
+
+              {/* Set-Crouch story */}
+              <div style={{ background: 'rgba(55,181,255,0.04)', border: `1px solid ${BLUE2}22`, borderLeft: `4px solid ${BLUE2}`, borderRadius: '0 16px 16px 0', padding: 'clamp(20px,3vw,36px)', maxWidth: '820px', marginBottom: '48px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '18px' }}>THE SET-CROUCH STORY — GERMANY</p>
+                <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '14px', fontStyle: 'italic' }}>
+                  Coach Mike was playing professionally in Germany when he noticed his set-crouch had degraded. He went home for the off-season and did mental training only — no ice, no physical work.
+                </p>
+                <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '14px', fontStyle: 'italic' }}>
+                  He returned to the ice. On his first day back, a defenseman skated over and said:
+                </p>
+                <p style={{ fontSize: 'clamp(20px, 3vw, 36px)', fontWeight: 900, fontStyle: 'italic', color: '#fff', lineHeight: 1.2, marginBottom: '14px' }}>
+                  &ldquo;Mike — you have your set-crouch back.&rdquo;
+                </p>
+                <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, margin: 0, fontStyle: 'italic' }}>
+                  He had not touched the ice. The change was invisible to him — but visible to everyone watching.
+                </p>
+              </div>
+
+              {/* Subconscious */}
+              <div style={{ maxWidth: '820px', marginBottom: '48px' }}>
+                <h3 style={{ fontSize: 'clamp(20px, 3vw, 36px)', fontWeight: 900, color: '#fff', lineHeight: 1.2, margin: '0 0 14px' }}>
+                  Mental training is training the SUBCONSCIOUS.
+                </h3>
+                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, fontStyle: 'italic', margin: 0 }}>
+                  And the subconscious is what runs the game underneath the game.
+                </p>
+              </div>
+
+              {/* Basketball study */}
+              <div style={{ background: 'rgba(2,12,36,0.6)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: 'clamp(20px,3vw,36px)', maxWidth: '900px', marginBottom: '48px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '24px' }}>THE BASKETBALL STUDY — 3 TEAMS, 3 WEEKS</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                  {[
+                    { team: 'TEAM 1', training: 'Physical training only', result: 'Improved', rc: '#4ade80' },
+                    { team: 'TEAM 2', training: 'Mental training only', result: 'Maintained', rc: BLUE2 },
+                    { team: 'TEAM 3', training: 'No training', result: 'Declined', rc: '#f87171' },
+                  ].map((t) => (
+                    <div key={t.team} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '18px 20px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>{t.team}</p>
+                      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '10px', lineHeight: 1.4 }}>{t.training}</p>
+                      <p style={{ fontSize: '17px', fontWeight: 900, color: t.rc, margin: 0 }}>{t.result}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3 Lessons */}
+              <div style={{ maxWidth: '820px', marginBottom: '48px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>THE 3 LESSONS</p>
+                {[
+                  'Mental training trains the subconscious.',
+                  'The subconscious produces visible on-ice change — even when the goalie cannot see it happening in themselves.',
+                  'A trained outside Technical Eye reveals what the goalie cannot see in themselves.',
+                ].map((lesson, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '16px' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: `${BLUE2}14`, border: `1px solid ${BLUE2}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 900, color: BLUE2 }}>{String(i + 1).padStart(2, '0')}</span>
+                    </div>
+                    <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.75, margin: 0 }}>{lesson}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Closing */}
+              <div style={{ background: `${BLUE2}0a`, border: `1px solid ${BLUE2}25`, borderLeft: `4px solid ${BLUE2}`, borderRadius: '0 16px 16px 0', padding: '22px 28px', maxWidth: '820px', marginBottom: '48px' }}>
+                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#fff', lineHeight: 1.75, margin: 0, fontWeight: 700 }}>
+                  MIND-VAULT does the internal work. Self-Evaluation Portal and Video Analysis do the verification. Inside work. Outside proof. That is the loop.
+                </p>
+              </div>
+
+              <VoiceButton label="HEAR COACH MIKE: TECHNIQUE + THE TECHNICAL EYE" />
             </div>
           </section>
         </>

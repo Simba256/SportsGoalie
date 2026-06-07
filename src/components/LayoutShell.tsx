@@ -10,8 +10,9 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization'];
-const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
+const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are'];
+const ONBOARDING_ROUTES = ['/onboarding'];
+const PUBLIC_ROUTES = ['/', '/pricing'];
 
 function isPublicRoute(pathname: string): boolean {
   if (pathname === '/') return true;
@@ -22,6 +23,9 @@ function isBareRoute(pathname: string): boolean {
 }
 function isNakedRoute(pathname: string): boolean {
   return NAKED_ROUTES.some(route => pathname.startsWith(route));
+}
+function isOnboardingRoute(pathname: string): boolean {
+  return ONBOARDING_ROUTES.some(route => pathname.startsWith(route));
 }
 function isAdminRoute(pathname: string): boolean { return pathname.startsWith('/admin'); }
 function isCoachRoute(pathname: string): boolean { return pathname.startsWith('/coach'); }
@@ -90,6 +94,18 @@ export function LayoutShell({ children }: { children: ReactNode }) {
   if (isNakedRoute(pathname)) return <>{children}</>;
   if (isBareRoute(pathname)) return <>{children}</>;
 
+  // Onboarding: Header7 navbar (fixed) + dark content below it, no footer
+  if (isOnboardingRoute(pathname)) {
+    return (
+      <>
+        <Header7 />
+        <div style={{ paddingTop: '72px', height: '100dvh', overflow: 'hidden', background: 'linear-gradient(145deg, #000a1f 0%, #041530 40%, #071e42 100%)' }}>
+          {children}
+        </div>
+      </>
+    );
+  }
+
   if (isPublicRoute(pathname)) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
@@ -121,7 +137,6 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
-          <Footer7 />
         </div>
       </div>
     );
@@ -134,7 +149,6 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
-          <Footer7 />
         </div>
       </div>
     );
@@ -146,7 +160,6 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
         <main className="p-6">{children}</main>
-        <Footer7 />
       </div>
     </div>
   );
