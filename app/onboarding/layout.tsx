@@ -15,7 +15,7 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen">
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {children}
     </div>
   );

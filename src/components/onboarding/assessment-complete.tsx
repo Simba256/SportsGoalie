@@ -3,7 +3,7 @@
 import { ChevronRight, CheckCircle, Sparkles } from 'lucide-react';
 
 const BLUE = '#37b5ff';
-const GREEN = '#4ade80';
+const PURPLE = '#a78bfa';
 
 interface AssessmentCompleteProps {
   studentName?: string;
@@ -37,25 +37,25 @@ export function AssessmentComplete({
             {/* Pulse ring */}
             <div className="ac-ring" style={{
               position: 'absolute', inset: '-12px', borderRadius: '50%',
-              border: `2px solid ${GREEN}40`,
+              border: `2px solid ${BLUE}40`,
             }} />
             {/* Main circle */}
             <div className="ac-icon" style={{
               width: '96px', height: '96px', borderRadius: '50%',
-              background: `${GREEN}18`,
-              border: `2px solid ${GREEN}50`,
+              background: `${BLUE}18`,
+              border: `2px solid ${BLUE}50`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 0 40px ${GREEN}25`,
+              boxShadow: `0 0 40px ${BLUE}25`,
             }}>
-              <CheckCircle style={{ width: '48px', height: '48px', color: GREEN }} />
+              <CheckCircle style={{ width: '48px', height: '48px', color: BLUE }} />
             </div>
             {/* Sparkle badge */}
             <div className="ac-sparkle" style={{
               position: 'absolute', top: '-4px', right: '-8px',
               width: '32px', height: '32px', borderRadius: '50%',
-              background: '#fbbf24',
+              background: PURPLE,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(251,191,36,0.4)',
+              boxShadow: `0 4px 12px ${PURPLE}60`,
             }}>
               <Sparkles style={{ width: '16px', height: '16px', color: '#fff' }} />
             </div>
@@ -64,7 +64,7 @@ export function AssessmentComplete({
           {/* Title */}
           <div className="ac-s1">
             <h1 style={{ fontSize: 'clamp(28px,5vw,42px)', fontWeight: 900, color: '#fff', marginBottom: '16px' }}>
-              Great Job, <span style={{ color: GREEN }}>{studentName}!</span>
+              Great Job, <span style={{ color: BLUE }}>{studentName}!</span>
             </h1>
           </div>
 
