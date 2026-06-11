@@ -1,75 +1,67 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
+import { GalleryHoverCarousel, type GalleryCarouselItem } from '@/components/ui/gallery-hover-carousel';
+import { Network, Lock, Filter, TrendingUp, Users, Trophy } from 'lucide-react';
 
-const MIND_VAULT_GEMS = [
+const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
   {
+    id: 'gem-1',
     label: 'THE FOUNDATION',
-    gem: 'Regardless how technically strong you are — if the mind is not the strongest tool you have, then what is your foundation built on?',
+    title: 'What is your foundation built on?',
+    quote: 'Regardless how technically strong you are — if the mind is not the strongest tool you have, then what is your foundation built on?',
+    accent: '#bde4ff',
+    bg: 'linear-gradient(145deg, #1562ea 0%, #0d44c2 55%, #0a2e9a 100%)',
+    WatermarkIcon: Network,
   },
   {
+    id: 'gem-2',
     label: 'THE MIND-VAULT',
-    gem: 'The discipline of building where only the most valuable foundational thoughts and behaviors are kept. For game performance. And for life in general.',
+    title: 'Where only the most valuable thoughts are kept.',
+    quote: 'The discipline of building where only the most valuable foundational thoughts and behaviors are kept. For game performance. And for life in general.',
+    accent: '#a8ecff',
+    bg: 'linear-gradient(145deg, #0892cc 0%, #0672ac 55%, #044e84 100%)',
+    WatermarkIcon: Lock,
   },
   {
+    id: 'gem-3',
     label: 'YOUR FILTERS',
-    gem: 'Logic, Common Sense, Math, and Science become your filters — applied to every read, every shift, every decision.',
+    title: 'Logic. Math. Science. Every read.',
+    quote: 'Logic, Common Sense, Math, and Science become your filters — applied to every read, every shift, every decision.',
+    accent: '#c8e8ff',
+    bg: 'linear-gradient(145deg, #0c3ed6 0%, #0828ae 55%, #061a86 100%)',
+    WatermarkIcon: Filter,
   },
   {
+    id: 'gem-4',
     label: 'PERFORMANCE VS OUTCOME',
-    gem: 'Learn the difference between performance and outcome — and understand why the goalie controls one, not the other.',
+    title: 'You control one. Not the other.',
+    quote: 'Learn the difference between performance and outcome — and understand why the goalie controls one, not the other.',
+    accent: '#b8ddff',
+    bg: 'linear-gradient(145deg, #1e72e8 0%, #1452c8 55%, #0e3aa8 100%)',
+    WatermarkIcon: TrendingUp,
   },
   {
+    id: 'gem-5',
     label: 'THE BENCH',
-    gem: 'How the goalie goes reflects on the bench. A solid goalie lifts the bench. An inconsistent goalie deflates it.',
+    title: 'How the goalie goes, the bench follows.',
+    quote: 'How the goalie goes reflects on the bench. A solid goalie lifts the bench. An inconsistent goalie deflates it.',
+    accent: '#9ed8f8',
+    bg: 'linear-gradient(145deg, #067ab8 0%, #055898 55%, #033878 100%)',
+    WatermarkIcon: Users,
   },
   {
+    id: 'gem-6',
     label: 'SIX DECADES OF ORIGINAL IP',
-    gem: 'One foundation. Built over sixty years. Proven on every goalie it has ever touched. The MIND-VAULT is yours to build.',
+    title: 'One foundation. Sixty years. Proven.',
+    quote: 'One foundation. Built over sixty years. Proven on every goalie it has ever touched. The MIND-VAULT is yours to build.',
+    accent: '#c0d8ff',
+    bg: 'linear-gradient(145deg, #2248c8 0%, #1630a8 55%, #102088 100%)',
+    WatermarkIcon: Trophy,
   },
 ];
-
-function MindVaultGemPanel() {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const iv = setInterval(() => setActive(a => (a + 1) % MIND_VAULT_GEMS.length), 4500);
-    return () => clearInterval(iv);
-  }, []);
-  const gem = MIND_VAULT_GEMS[active];
-  return (
-    <section style={{ padding: 'clamp(48px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #041530 0%, #000f28 100%)', borderTop: '1px solid rgba(167,139,250,0.1)' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', marginBottom: '32px' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a78bfa', boxShadow: '0 0 10px rgba(167,139,250,0.8)' }} />
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: '#a78bfa', textTransform: 'uppercase', margin: 0 }}>THE MIND-VAULT — DAILY GEMS</p>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a78bfa', boxShadow: '0 0 10px rgba(167,139,250,0.8)' }} />
-        </div>
-
-        {/* Gem card */}
-        <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.1) 0%, rgba(6,30,70,0.98) 60%, rgba(109,40,217,0.06) 100%)', border: '1px solid rgba(167,139,250,0.28)', borderRadius: '20px', padding: 'clamp(28px,4vw,48px)', textAlign: 'center', minHeight: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 4px 32px rgba(167,139,250,0.1)', transition: 'all 0.4s ease' }}>
-          <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', margin: 0 }}>{gem.label}</p>
-          <p style={{ fontSize: 'clamp(16px,2.2vw,22px)', color: '#fff', lineHeight: 1.75, maxWidth: '680px', margin: 0, fontStyle: 'italic' }}>
-            &ldquo;{gem.gem}&rdquo;
-          </p>
-        </div>
-
-        {/* Navigation dots */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
-          {MIND_VAULT_GEMS.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              style={{ width: i === active ? '24px' : '8px', height: '8px', borderRadius: i === active ? '4px' : '50%', background: i === active ? '#a78bfa' : 'rgba(167,139,250,0.25)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.3s', boxShadow: i === active ? '0 0 8px rgba(167,139,250,0.6)' : 'none' }}
-            />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export default function Home() {
   const router = useRouter();
@@ -136,38 +128,43 @@ export default function Home() {
       {/* Hero Section */}
       <section
         className="relative min-h-screen overflow-hidden flex flex-col"
-        style={{ backgroundColor: '#000f28' }}
+        style={{ backgroundColor: '#020e2e' }}
       >
-        {/* Background image — clearly visible */}
-        <img
-          src="/quality.png"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center"
-          style={{ zIndex: 0, filter: 'brightness(0.88) saturate(1.15)' }}
+        {/* Background image — positioned right so goalie fills the right half */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url("/quality.png")',
+            backgroundSize: 'auto 90%',
+            backgroundPosition: 'right center',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 0,
+            filter: 'brightness(0.85) saturate(1.1)',
+          }}
         />
 
-        {/* Left-to-right gradient — strong on left for text, fades to almost nothing on right */}
+        {/* Left-to-right gradient — blue-tinted opaque on left, transparent on right */}
         <div
           className="absolute inset-0 hidden md:block"
           style={{
-            background: 'linear-gradient(90deg, rgba(0,8,28,0.97) 0%, rgba(0,10,35,0.93) 25%, rgba(0,12,38,0.72) 45%, rgba(0,10,30,0.25) 65%, transparent 100%)',
+            background: 'linear-gradient(to right, rgba(2,18,60,1) 0%, rgba(2,15,52,0.95) 35%, rgba(2,10,38,0.18) 58%, rgba(2,6,23,0.0) 80%)',
             zIndex: 1,
           }}
         />
-        {/* Mobile: lighter overlay so image still shows */}
+        {/* Mobile overlay */}
         <div
           className="absolute inset-0 md:hidden"
-          style={{ background: 'rgba(0,8,28,0.78)', zIndex: 1 }}
+          style={{ background: 'rgba(2,18,60,0.86)', zIndex: 1 }}
         />
 
-        {/* Subtle bottom fade to match next section */}
+        {/* Bottom fade into next section */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(0,8,28,0.55) 80%, #000f28 100%)', zIndex: 2 }}
+          style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(2,6,23,0.6) 85%, #000f28 100%)', zIndex: 2 }}
         />
 
         {/* ── NAV BAR ── */}
-        <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10 }}>
           {/* Brand */}
           <div className="flex items-center gap-2">
             <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -181,24 +178,20 @@ export default function Home() {
           </div>
 
           {/* Nav links — desktop only */}
-          <div className="hidden md:flex items-center gap-6">
-            {['Features', 'For Goalies', 'For Parents'].map((item) => (
-              <span key={item} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', letterSpacing: '0.2px', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+          <div className="hidden md:flex items-center gap-8">
+            {['Features', 'About', 'Pricing'].map((item) => (
+              <span key={item} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', letterSpacing: '0.5px', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
               >{item}</span>
             ))}
-            <a href="tel:+14169390555" style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', textDecoration: 'none', letterSpacing: '0.2px', transition: 'color 0.15s' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
-            >+1 (416) 939-0555</a>
           </div>
 
           {/* Login CTA */}
           <button
             onClick={() => router.push('/auth/login')}
             className="hover:opacity-90 transition-opacity"
-            style={{ background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.45)', color: '#37b5ff', padding: '8px 20px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer' }}
+            style={{ background: '#37b5ff', color: '#000f28', padding: '8px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px', cursor: 'pointer', border: 'none' }}
           >
             Login
           </button>
@@ -206,84 +199,72 @@ export default function Home() {
 
         {/* ── HERO CONTENT ── */}
         <div className="relative flex-1 flex items-center" style={{ zIndex: 10 }}>
-          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20">
-            {/* Content lives in the left ~45% on desktop, full width on mobile */}
-            <div className="w-full md:max-w-[520px]">
+          <div className="w-full max-w-7xl mx-auto pl-4 md:pl-6 pr-6 md:pr-16 py-12 md:py-20">
+            <div className="w-full md:max-w-[600px]">
 
               {/* Eyebrow */}
-              <p style={{ fontSize: '10px', fontWeight: 700, color: '#37b5ff', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', fontWeight: 700, color: '#37b5ff', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '16px' }}>
                 WELCOME TO
               </p>
 
-              {/* Brand name */}
+              {/* Brand name — italic, SMARTER=blue, GOALIE=white */}
               <h1
-                className="font-black uppercase leading-none mb-6"
-                style={{ fontSize: 'clamp(52px, 8vw, 96px)', letterSpacing: '-0.03em', lineHeight: 0.88 }}
+                className="font-black uppercase italic leading-none mb-6"
+                style={{ fontSize: 'clamp(56px, 9vw, 108px)', letterSpacing: '-0.03em', lineHeight: 0.92, fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif' }}
               >
-                <span style={{
-                  display: 'block',
-                  background: 'linear-gradient(135deg, #ffffff 0%, #c8e8ff 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>SMARTER</span>
-                <span style={{
-                  display: 'block',
-                  color: 'transparent',
-                  WebkitTextStroke: '3px #37b5ff',
-                  filter: 'drop-shadow(0 0 18px rgba(55,181,255,0.7))',
-                }}>GOALIE</span>
+                <span style={{ display: 'block', color: '#42a5f5' }}>SMARTER</span>
+                <span style={{ display: 'block', color: '#ffffff' }}>GOALIE</span>
               </h1>
 
-              {/* Accent line */}
-              <div style={{ width: '48px', height: '3px', background: '#37b5ff', borderRadius: '99px', marginBottom: '24px', boxShadow: '0 0 10px rgba(55,181,255,0.6)' }} />
+              {/* Full-width divider */}
+              <div style={{ width: '100%', maxWidth: '520px', height: '1px', background: 'rgba(255,255,255,0.2)', marginBottom: '32px' }} />
 
-              {/* Sub-headline */}
+              {/* Sub-headline — large bold */}
               <h2
-                className="font-bold uppercase mb-3"
-                style={{ fontSize: 'clamp(13px, 1.8vw, 18px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.04em' }}
+                className="font-black uppercase leading-tight mb-4"
+                style={{ fontSize: 'clamp(22px, 3.5vw, 42px)', lineHeight: 1.1, color: '#ffffff', letterSpacing: '-0.01em' }}
               >
-                Are goalies the{' '}
-                <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>worst trained</em>{' '}
-                athletes in sports?
+                ARE GOALIES THE WORST<br />ATHLETES IN SPORTS?
               </h2>
 
               <p
-                className="uppercase font-semibold mb-10"
-                style={{ color: 'rgba(255,255,255,0.38)', letterSpacing: '2.5px', fontSize: '10px' }}
+                className="uppercase font-semibold mb-12"
+                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', fontSize: '11px' }}
               >
                 HERE IS WHAT WE KNOW.
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+              <div className="flex flex-col sm:flex-row gap-4">
                 {/* Video button */}
                 <button
-                  className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.45)', color: '#fff', padding: '12px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', borderRadius: '6px', whiteSpace: 'nowrap' }}
+                  className="flex items-center gap-3 cursor-pointer transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '14px 24px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
                 >
-                  <span className="flex items-center justify-center shrink-0" style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#37b5ff', color: '#000f28', fontSize: '9px', fontWeight: 900 }}>▶</span>
+                  <span className="flex items-center justify-center shrink-0" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fff', color: '#020617', fontSize: '9px', fontWeight: 900 }}>▶</span>
                   COACH MIKE
                 </button>
 
                 {/* Primary CTA */}
                 <button
                   onClick={() => router.push('/explain')}
-                  className="hover:opacity-90 hover:scale-[1.02] transition-all duration-200"
-                  style={{ background: '#37b5ff', color: '#000f28', fontWeight: 800, fontSize: '11px', letterSpacing: '2px', padding: '12px 28px', textTransform: 'uppercase', borderRadius: '6px', whiteSpace: 'nowrap' }}
+                  className="transition-all duration-200"
+                  style={{ background: '#42a5f5', color: '#fff', fontWeight: 800, fontSize: '12px', letterSpacing: '0.15em', padding: '14px 32px', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 0 24px rgba(66,165,245,0.45)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 36px rgba(66,165,245,0.7)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(66,165,245,0.45)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
                 >
                   LET US EXPLAIN →
                 </button>
               </div>
-
-             
             </div>
           </div>
         </div>
 
         {/* Bottom brand watermark */}
         <div className="relative pb-6 flex justify-center md:justify-end md:px-12" style={{ zIndex: 2 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.18)', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.15)', letterSpacing: '3px', textTransform: 'uppercase' }}>
             © SMARTER GOALIE
           </span>
         </div>
@@ -414,7 +395,12 @@ export default function Home() {
           </section>
 
           {/* MIND-VAULT GEM Panel */}
-          <MindVaultGemPanel />
+          <GalleryHoverCarousel
+            eyebrow="THE MIND-VAULT — DAILY GEMS"
+            heading="Six Foundations. One Complete System."
+            subheading="The mental pillars every goalie needs — built into your game, your mindset, and your life."
+            items={MIND_VAULT_ITEMS}
+          />
 
           {/* What's In YOUR Tool Box? */}
           <section style={{ padding: 'clamp(40px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>

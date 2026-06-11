@@ -1,344 +1,201 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Shield, Users, ClipboardList, Target, Building2, ChevronLeft } from 'lucide-react';
+import { useState } from 'react';
+import { Shield, Users, ClipboardList, Target, Building2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Header7 } from '@/components/header-7';
 
-interface Door {
+interface Role {
   id: string;
-  role: string;
+  label: string;
   Icon: LucideIcon;
-  headline: string;
-  body: string;
-  cta: string;
   href: string;
-  accent: string;
-  iconBg: string;
-  iconBorder: string;
-  hoverShadow: string;
-  hoverRing: string;
-  btnBg: string;
 }
 
-const DOORS: Door[] = [
-  {
-    id: '01',
-    role: 'GOALIE',
-    Icon: Shield,
-    headline: 'THE KNOWLEDGE AND SUPPORT SYSTEMS THAT SET YOU APART FROM THE REST IS HERE.',
-    body: 'ALL YOU NEED IS AN OPEN MIND AND THE DRIVE TO BE THE BEST YOU CAN BE! THERE ARE NO SHORT CUTS.',
-    cta: 'ENTER AS GOALIE',
-    href: '/goalie',
-    accent: '#60a5fa',
-    iconBg: '#eff6ff',
-    iconBorder: '#bfdbfe',
-    hoverShadow: 'rgba(96,165,250,0.18)',
-    hoverRing: '#60a5fa40',
-    btnBg: '#3b82f6',
-  },
-  {
-    id: '02',
-    role: 'PARENT',
-    Icon: Users,
-    headline: "WHETHER YOU'RE NEW TO THE GAME, HAVE A COUPLE OF YEARS IN, OR HAVE BEEN IN THE GAME LONGER — THIS IS YOUR LUCKY DAY.",
-    body: 'SMARTER GOALIE MEETS YOU WHERE YOU ARE.',
-    cta: 'ENTER AS PARENT',
-    href: '/parent-role',
-    accent: '#60a5fa',
-    iconBg: '#eff6ff',
-    iconBorder: '#bfdbfe',
-    hoverShadow: 'rgba(96,165,250,0.18)',
-    hoverRing: '#60a5fa40',
-    btnBg: '#3b82f6',
-  },
-  {
-    id: '03',
-    role: 'TEAM',
-    Icon: ClipboardList,
-    headline: 'THE GOALIE DEVELOPMENT LAYER TO SUPPORT YOUR GOALIE — REGARDLESS IF THEY HAVE A GOALIE COACH OR NOT.',
-    body: 'Structured. Measurable. Real data every game and every practice.',
-    cta: 'ENTER AS COACH',
-    href: '/team-programs',
-    accent: '#60a5fa',
-    iconBg: '#eff6ff',
-    iconBorder: '#bfdbfe',
-    hoverShadow: 'rgba(96,165,250,0.18)',
-    hoverRing: '#60a5fa40',
-    btnBg: '#3b82f6',
-  },
-  {
-    id: '04',
-    role: 'ORGANIZATION',
-    Icon: Building2,
-    headline: 'PROVEN TEACHING SYSTEMS AND METHODS ACROSS YOUR ENTIRE ORGANIZATION.',
-    body: 'Every age group. One system. Scalable. Measurable. Built on principles that never change.',
-    cta: 'BUILD A PACKAGE',
-    href: '/organization',
-    accent: '#60a5fa',
-    iconBg: '#eff6ff',
-    iconBorder: '#bfdbfe',
-    hoverShadow: 'rgba(96,165,250,0.18)',
-    hoverRing: '#60a5fa40',
-    btnBg: '#3b82f6',
-  },
-  {
-    id: '05',
-    role: 'GOALIE COACH',
-    Icon: Target,
-    headline: 'THE TOUGHEST JOB IN HOCKEY, SIMPLIFIED WITH LOGIC, COMMON SENSE, MATH AND SCIENCE WHICH ARE THE CORE IN BUILDING THIS UNIQUE TEACHING SYSTEM. WE ONLY BUILD STARTERS. NO BACKUPS HERE.',
-    body: 'How goes the goalie — how goes the team. You are an influencer who creates starters.',
-    cta: 'ENQUIRE',
-    href: '/goalie-coach',
-    accent: '#60a5fa',
-    iconBg: '#eff6ff',
-    iconBorder: '#bfdbfe',
-    hoverShadow: 'rgba(96,165,250,0.18)',
-    hoverRing: '#60a5fa40',
-    btnBg: '#3b82f6',
-  },
+const ROLES: Role[] = [
+  { id: 'goalie',       label: 'Goalie',          Icon: Shield,        href: '/goalie' },
+  { id: 'parent',       label: 'Parent',           Icon: Users,         href: '/parent-role' },
+  { id: 'coach',        label: 'Coach / Manager',  Icon: ClipboardList, href: '/team-programs' },
+  { id: 'goaliecoach',  label: 'Goalie Coach',     Icon: Target,        href: '/goalie-coach' },
+  { id: 'organization', label: 'Organization',     Icon: Building2,     href: '/organization' },
 ];
 
 export default function ExplainPage() {
   const router = useRouter();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
     <div
-      className="min-h-screen flex flex-col"
       style={{
-        background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)',
+        height: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#000f28',
+        overflow: 'hidden',
+        position: 'relative',
       }}
     >
-      {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-50 bg-slate-100/85 backdrop-blur-md border-b border-slate-200/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="flex items-center"
-            aria-label="Go to home"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <img
-              src="/logo.png"
-              alt="Smarter Goalie"
-              className="h-10 w-auto object-contain"
-            />
-          </button>
+      {/* Radial blue glow */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '55%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '80vw',
+          height: '60vh',
+          background: 'radial-gradient(ellipse at center, rgba(14,80,180,0.32) 0%, rgba(5,30,80,0.12) 55%, transparent 75%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
 
-          <div className="hidden md:flex items-center gap-7">
-            <button
-              onClick={() => router.push('/')}
-              className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => router.push('/pricing')}
-              className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide"
-            >
-              Pricing
-            </button>
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="bg-[#37b5ff] hover:bg-[#22a7f5] text-white px-4 py-2 rounded-md text-[15px] font-medium tracking-wide transition-colors duration-300"
-            >
-              Login
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Back Button ── */}
-      <div style={{ padding: '14px 20px 0' }}>
-        <button
-          onClick={() => router.push('/')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '7px 14px', color: 'rgba(255,255,255,0.75)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s' }}
-          onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
-          onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
-        >
-          <ChevronLeft size={14} />
-          Back to Home
-        </button>
+      {/* Navbar */}
+      <div style={{ flexShrink: 0, position: 'relative', zIndex: 20 }}>
+        <Header7 />
       </div>
 
-      {/* ── Header ── */}
-      <div className="text-center px-4 sm:px-6 pt-10 sm:pt-16 pb-8 sm:pb-14 flex-shrink-0">
-        {/* Label */}
-        <div className="flex items-center justify-center gap-3 mb-5 sm:mb-6">
-          <div style={{ width: '32px', height: '1.5px', background: '#37b5ff', opacity: 0.5 }} />
-          <p
-            className="uppercase font-bold"
-            style={{ fontSize: '10px', letterSpacing: '4px', color: '#37b5ff' }}
+      {/* Main content — fills remaining height, centres everything */}
+      <main
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 'clamp(20px,3.5vh,44px)',
+          padding: 'clamp(32px,6vh,80px) clamp(16px,4vw,48px) clamp(12px,2vh,24px)',
+          position: 'relative',
+          zIndex: 5,
+        }}
+      >
+        {/* ── Text block ── */}
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: '900px' }}>
+          {/* Eyebrow */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: 'clamp(12px,1.8vh,20px)' }}>
+            <div style={{ width: '36px', height: '1.5px', background: '#37b5ff', opacity: 0.6 }} />
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', margin: 0 }}>
+              THE SMARTER GOALIE DIFFERENCE
+            </p>
+            <div style={{ width: '36px', height: '1.5px', background: '#37b5ff', opacity: 0.6 }} />
+          </div>
+
+          {/* Heading */}
+          <h1
+            style={{
+              fontSize: 'clamp(24px,4vw,52px)',
+              fontWeight: 900,
+              lineHeight: 1.1,
+              color: '#ffffff',
+              letterSpacing: '-0.02em',
+              textTransform: 'uppercase',
+              margin: '0 0 clamp(24px,3vh,40px)',
+            }}
           >
-            THE SMARTER GOALIE DIFFERENCE
+            ONE UNIQUE SYSTEM BUILT BY A GOALIE FOR{' '}
+            <span
+              style={{
+                color: '#37b5ff',
+                textShadow: '0 0 30px rgba(55,181,255,0.6), 0 0 60px rgba(55,181,255,0.25)',
+              }}
+            >
+              MOTIVATED GOALIES ONLY&hellip;
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p style={{ fontSize: 'clamp(13px,1.2vw,15px)', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
+            Select your role below. Coach Mike&rsquo;s voice is waiting on the other side.
           </p>
-          <div style={{ width: '32px', height: '1.5px', background: '#37b5ff', opacity: 0.5 }} />
         </div>
 
-        {/* Headline */}
-        <h1
-          className="font-black uppercase mx-auto"
+        {/* ── Role cards ── */}
+        <div
           style={{
-            fontSize: 'clamp(20px, 4vw, 50px)',
-            lineHeight: 1.1,
-            color: '#ffffff',
-            maxWidth: '840px',
-            letterSpacing: '-0.02em',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: 'clamp(10px,1.5vw,20px)',
+            width: '100%',
+            maxWidth: '1100px',
+            marginTop: 'clamp(28px,5vh,64px)',
           }}
         >
-          ONE UNIQUE SYSTEM BUILT BY A GOALIE FOR{' '}
-          <span style={{ color: '#37b5ff' }}>MOTIVATED GOALIES ONLY&hellip;</span>
-          <span className="hidden sm:inline"><br /></span>
-          <span className="sm:hidden"> </span>
-          <span style={{ color: '#37b5ff' }}>&amp; EVERYONE ELSE WHO CARES ABOUT THEM</span>
-        </h1>
-
-        {/* Subtitle */}
-        <p
-          className="mt-4 sm:mt-5 mx-auto"
-          style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', maxWidth: '400px', lineHeight: 1.65 }}
-        >
-          Select your role below. Coach Mike&rsquo;s voice is waiting on the other side.
-        </p>
-      </div>
-
-      {/* ── Cards ── */}
-      <div className="flex-1 px-4 sm:px-6 pt-3 pb-10 sm:pb-14">
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 mx-auto"
-          style={{ maxWidth: '1300px' }}
-        >
-          {DOORS.map((door) => {
-            const Icon = door.Icon;
+          {ROLES.map((role) => {
+            const hovered = hoveredId === role.id;
+            const Icon = role.Icon;
             return (
               <div
-                key={door.id}
-                className="flex flex-col cursor-pointer"
+                key={role.id}
+                onClick={() => router.push(role.href)}
+                onMouseEnter={() => setHoveredId(role.id)}
+                onMouseLeave={() => setHoveredId(null)}
                 style={{
-                  background: '#ffffff',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)',
-                  transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                  background: hovered ? 'rgba(14,60,140,0.55)' : 'rgba(8,28,72,0.45)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: `1px solid ${hovered ? 'rgba(55,181,255,0.45)' : 'rgba(55,181,255,0.15)'}`,
+                  borderRadius: '18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 'clamp(24px,3vh,40px) 12px clamp(20px,2.5vh,32px)',
+                  height: 'clamp(200px,26vh,300px)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: hovered
+                    ? '0 8px 40px rgba(55,181,255,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    : '0 4px 20px rgba(0,0,20,0.4), inset 0 1px 0 rgba(255,255,255,0.04)',
+                  transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
                 }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLDivElement;
-                  el.style.transform = 'translateY(-6px)';
-                  el.style.boxShadow = `0 20px 48px ${door.hoverShadow}, 0 0 0 1.5px ${door.hoverRing}`;
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLDivElement;
-                  el.style.transform = 'translateY(0)';
-                  el.style.boxShadow = '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)';
-                }}
-                onClick={() => router.push(door.href)}
               >
-                {/* Colored top stripe */}
-                <div style={{ height: '5px', background: door.accent, flexShrink: 0 }} />
-
-                {/* Content */}
-                <div className="flex flex-col flex-1 items-center text-center p-6">
-                  {/* Icon */}
-                  <div
-                    className="mb-5 flex items-center justify-center"
+                {/* Icon */}
+                <div
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon
+                    size={52}
+                    color={hovered ? '#7dd3fc' : '#37b5ff'}
+                    strokeWidth={1.2}
                     style={{
-                      width: '68px',
-                      height: '68px',
-                      borderRadius: '50%',
-                      background: door.iconBg,
-                      border: `1.5px solid ${door.iconBorder}`,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Icon size={30} color={door.accent} strokeWidth={1.6} />
-                  </div>
-
-                  {/* Role title */}
-                  <p
-                    className="font-black uppercase mb-2"
-                    style={{ fontSize: '15px', letterSpacing: '1.8px', color: '#0f172a' }}
-                  >
-                    {door.role}
-                  </p>
-
-                  {/* Accent divider */}
-                  <div
-                    className="mb-4"
-                    style={{
-                      width: '28px',
-                      height: '3px',
-                      borderRadius: '2px',
-                      background: door.accent,
-                      opacity: 0.6,
+                      filter: hovered
+                        ? 'drop-shadow(0 0 12px rgba(55,181,255,0.7))'
+                        : 'drop-shadow(0 0 6px rgba(55,181,255,0.3))',
+                      transition: 'all 0.3s',
                     }}
                   />
-
-                  {/* Headline */}
-                  <p
-                    className="mb-3"
-                    style={{
-                      fontSize: '13.5px',
-                      fontWeight: 600,
-                      color: '#1e293b',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {door.headline}
-                  </p>
-
-                  {/* Body */}
-                  <p
-                    className="mb-6"
-                    style={{ fontSize: '15px', color: '#94a3b8', lineHeight: 1.7 }}
-                  >
-                    {door.body}
-                  </p>
-
-                  <div className="flex-1" />
-
-                  {/* CTA button */}
-                  <button
-                    className="w-full font-bold uppercase mt-3"
-                    style={{
-                      background: door.btnBg,
-                      border: 'none',
-                      color: '#fff',
-                      padding: '13px 0',
-                      fontSize: '11px',
-                      letterSpacing: '1.5px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      transition: 'filter 0.2s',
-                    }}
-                    onMouseEnter={(e) =>
-                      ((e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.08)')
-                    }
-                    onMouseLeave={(e) =>
-                      ((e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1)')
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(door.href);
-                    }}
-                  >
-                    {door.cta} →
-                  </button>
                 </div>
+
+                {/* Label */}
+                <p
+                  style={{
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: 'clamp(13px,1.2vw,17px)',
+                    letterSpacing: '0.3px',
+                    margin: 0,
+                    textAlign: 'center',
+                  }}
+                >
+                  {role.label}
+                </p>
               </div>
             );
           })}
         </div>
-      </div>
 
-      {/* ── Footer ── */}
-      <div className="text-center px-4 pb-8 sm:pb-10 flex-shrink-0">
-        <p
-          className="uppercase font-bold"
-          style={{ fontSize: '9px', letterSpacing: '3px', color: '#cbd5e1' }}
-        >
+        {/* Footer note */}
+        <p style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>
           EVERY DOOR LEADS TO THE SAME DESTINATION &mdash; BUILDING THE INTELLIGENT ATHLETIC GOALTENDER
         </p>
-      </div>
+      </main>
     </div>
   );
 }

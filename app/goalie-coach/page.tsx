@@ -115,8 +115,8 @@ export default function GoalieCoachPage() {
             <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
           </button>
           <div className="hidden sm:flex gap-6 items-center">
-            {['WHO WE ARE', 'THE SYSTEM'].map((item) => (
-              <button key={item} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {(['WHO WE ARE', 'THE SYSTEM'] as const).map((item) => (
+              <button key={item} onClick={() => router.push(item === 'WHO WE ARE' ? '/explain' : '/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{item}
               </button>
             ))}

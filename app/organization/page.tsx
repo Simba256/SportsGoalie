@@ -106,8 +106,8 @@ export default function OrganizationPage() {
             <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
           </button>
           <div className="hidden sm:flex gap-6 items-center">
-            {['WHO WE ARE', 'THE SYSTEM'].map((item) => (
-              <button key={item} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {(['WHO WE ARE', 'THE SYSTEM'] as const).map((item) => (
+              <button key={item} onClick={() => router.push(item === 'WHO WE ARE' ? '/explain' : '/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{item}
               </button>
             ))}
@@ -234,7 +234,7 @@ export default function OrganizationPage() {
               ))}
               <div style={{ background: 'linear-gradient(135deg, rgba(55,181,255,0.08), rgba(55,181,255,0.04))', border: '1px solid rgba(55,181,255,0.24)', borderRadius: '12px', padding: '18px 22px', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
                 <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.6 }}>
-                  Smarter Goalie is the system that fills every gap — from first-year atom to elite level.
+                  Smarter Goalie is the system that fills every gap — from first-year atom to high performance athlete.
                 </p>
               </div>
             </div>
@@ -261,7 +261,7 @@ export default function OrganizationPage() {
             <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
 
             {[
-              { num: '01', label: 'Foundation to Refinement', desc: 'A complete development pathway from first year goalie to elite level' },
+              { num: '01', label: 'Foundation to Refinement', desc: 'A complete development pathway from first year goalie to high performance athlete' },
               { num: '02', label: 'Every Age Group Covered', desc: 'One consistent system adapted to the development stage — no gaps, no blind spots' },
               { num: '03', label: 'Organization-Wide Curriculum', desc: 'Every goalie in your program following the same proven framework' },
               { num: '04', label: 'Coach Education at Every Level', desc: 'Your coaches learn alongside your goalies' },
