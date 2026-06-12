@@ -9,7 +9,8 @@ import { customContentService, videoQuizService } from '@/lib/database';
 import { toast } from 'sonner';
 import { VideoQuizQuestion, VideoQuizSettings, CustomContentLibrary } from '@/types';
 
-const BLUE = '#37b5ff';
+const GOLD   = '#D4A93B';
+const BLUE   = '#37b5ff';
 const PURPLE = '#a78bfa';
 
 const defaultSettings: VideoQuizSettings = {
@@ -31,21 +32,21 @@ interface QuizCreatorProps {
   onSave: (content: CustomContentLibrary) => void;
 }
 
-const inputS: React.CSSProperties = { width: '100%', padding: '10px 13px', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'text' };
-const labelS: React.CSSProperties = { display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '7px' };
-const sectionCard: React.CSSProperties = { background: 'rgba(2,18,44,0.7)', border: '1px solid rgba(55,181,255,0.12)', borderTop: '2px solid rgba(55,181,255,0.28)', borderRadius: '14px', padding: '20px' };
+const inputS: React.CSSProperties = { width: '100%', padding: '10px 13px', background: 'rgba(4,33,63,0.7)', border: '1px solid rgba(212,169,59,0.22)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'text' };
+const labelS: React.CSSProperties = { display: 'block', color: GOLD, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '7px' };
+const sectionCard: React.CSSProperties = { background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.16)', borderTop: `2px solid ${GOLD}`, borderRadius: '14px', padding: '20px' };
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" onClick={() => onChange(!checked)}
-      style={{ width: '44px', height: '24px', borderRadius: '99px', background: checked ? BLUE : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+      style={{ width: '44px', height: '24px', borderRadius: '99px', background: checked ? GOLD : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
       <div style={{ position: 'absolute', top: '3px', left: checked ? '23px' : '3px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }} />
     </button>
   );
 }
 
 const TABS = [
-  { key: 'info',      icon: <FileText size={14} />,    label: 'Quiz Info' },
+  { key: 'info',      icon: <FileText size={14} />,    label: 'KC Info' },
   { key: 'video',     icon: <Video size={14} />,       label: 'Video' },
   { key: 'questions', icon: <HelpCircle size={14} />,  label: 'Questions' },
   { key: 'settings',  icon: <Settings size={14} />,    label: 'Settings' },
@@ -125,20 +126,20 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
         @keyframes qc-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
       `}</style>
 
-      <div style={{ background: 'rgba(2,10,30,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '24px', width: '100%', maxWidth: '900px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+      <div style={{ background: 'linear-gradient(145deg, #030e22 0%, #04213f 100%)', border: `1px solid rgba(212,169,59,0.25)`, borderRadius: '22px', width: '100%', maxWidth: '900px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: `0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(212,169,59,0.06)` }}>
 
         {/* Header */}
-        <div style={{ position: 'relative', background: 'linear-gradient(135deg, #1a0a3d 0%, #2d0f6e 50%, #1a0a3d 100%)', padding: '24px 28px', overflow: 'hidden', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(167,139,250,0.15)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${PURPLE}, transparent)` }} />
+        <div style={{ position: 'relative', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 60%, #0d1f40 100%)', padding: '24px 28px', overflow: 'hidden', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(212,169,59,0.1)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent, ${GOLD}, ${PURPLE}55, transparent)` }} />
           <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
-              <p style={{ color: PURPLE, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Content Library</p>
+              <p style={{ color: GOLD, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Content Library</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <PlayCircle size={18} color={PURPLE} />
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(212,169,59,0.15)', border: `1px solid rgba(212,169,59,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <PlayCircle size={18} color={GOLD} />
                 </div>
-                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 900, letterSpacing: '-0.02em' }}>Create Video Quiz</h2>
+                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 900, letterSpacing: '-0.02em' }}>Create Knowledge Check</h2>
               </div>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Create an interactive quiz with questions at specific video timestamps.</p>
             </div>
@@ -149,12 +150,12 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
         </div>
 
         {/* Tab nav */}
-        <div style={{ display: 'flex', gap: '4px', padding: '12px 28px 0', background: 'rgba(2,10,30,0.6)', flexShrink: 0, borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+        <div style={{ display: 'flex', gap: '4px', padding: '12px 28px 0', background: 'rgba(3,14,34,0.7)', flexShrink: 0, borderBottom: `1px solid rgba(212,169,59,0.14)` }}>
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '10px 10px 0 0', border: '1px solid transparent', borderBottom: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-                background: activeTab === tab.key ? 'rgba(55,181,255,0.1)' : 'transparent',
-                color: activeTab === tab.key ? BLUE : 'rgba(255,255,255,0.45)',
+                background: activeTab === tab.key ? 'rgba(212,169,59,0.1)' : 'transparent',
+                color: activeTab === tab.key ? GOLD : 'rgba(255,255,255,0.45)',
                 borderColor: activeTab === tab.key ? 'rgba(55,181,255,0.25)' : 'transparent',
               }}>
               {tab.icon}
@@ -307,16 +308,16 @@ export function QuizCreator({ open, onOpenChange, coachId, onSave }: QuizCreator
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(55,181,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0, background: 'rgba(2,10,30,0.6)' }}>
+        <div style={{ padding: '16px 28px', borderTop: `1px solid rgba(212,169,59,0.14)`, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0, background: 'rgba(3,14,34,0.7)' }}>
           <button onClick={handleClose} disabled={isSubmitting} className="qc-cancel"
             style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
             Cancel
           </button>
           <button onClick={onSubmit} disabled={isSubmitting} className="qc-save"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px', background: `linear-gradient(135deg, ${PURPLE} 0%, #7c3aed 100%)`, border: 'none', borderRadius: '10px', color: '#fff', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: `0 4px 16px rgba(167,139,250,0.35)` }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, border: 'none', borderRadius: '10px', color: '#0c0800', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: `0 4px 16px rgba(212,169,59,0.35)` }}>
             {isSubmitting
               ? <><Loader2 size={15} style={{ animation: 'qc-spin 1s linear infinite' }} />Creating…</>
-              : <><Save size={15} />Create Quiz<ArrowRight size={14} /></>
+              : <><Save size={15} />Create Knowledge Check<ArrowRight size={14} /></>
             }
           </button>
         </div>

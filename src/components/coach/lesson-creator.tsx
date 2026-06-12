@@ -8,6 +8,7 @@ import { customContentService, sportsService } from '@/lib/database';
 import { toast } from 'sonner';
 import { CustomContentLibrary, Sport, Skill } from '@/types';
 
+const GOLD = '#D4A93B';
 const BLUE = '#37b5ff';
 
 interface StudentGapInfo {
@@ -27,14 +28,14 @@ interface LessonCreatorProps {
 }
 
 // ── Shared input styles ──────────────────────────────────────────────────────
-const inputS: React.CSSProperties = { width: '100%', padding: '10px 13px', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'text' };
-const labelS: React.CSSProperties = { display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '7px' };
-const sectionCard: React.CSSProperties = { background: 'rgba(2,18,44,0.7)', border: '1px solid rgba(55,181,255,0.12)', borderTop: '2px solid rgba(55,181,255,0.28)', borderRadius: '14px', padding: '18px' };
+const inputS: React.CSSProperties = { width: '100%', padding: '10px 13px', background: 'rgba(4,33,63,0.7)', border: '1px solid rgba(212,169,59,0.22)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'text' };
+const labelS: React.CSSProperties = { display: 'block', color: GOLD, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '7px' };
+const sectionCard: React.CSSProperties = { background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.16)', borderTop: `2px solid ${GOLD}`, borderRadius: '14px', padding: '18px' };
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" onClick={() => onChange(!checked)}
-      style={{ width: '44px', height: '24px', borderRadius: '99px', background: checked ? BLUE : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+      style={{ width: '44px', height: '24px', borderRadius: '99px', background: checked ? GOLD : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
       <div style={{ position: 'absolute', top: '3px', left: checked ? '23px' : '3px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }} />
     </button>
   );
@@ -190,18 +191,18 @@ export function LessonCreator({ open, onOpenChange, coachId, onSave, editContent
         @keyframes lc-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
       `}</style>
 
-      <div style={{ background: 'rgba(2,10,30,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '24px', width: '100%', maxWidth: '640px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+      <div style={{ background: 'linear-gradient(145deg, #030e22 0%, #04213f 100%)', border: `1px solid rgba(212,169,59,0.25)`, borderRadius: '22px', width: '100%', maxWidth: '640px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: `0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(212,169,59,0.06)` }}>
 
         {/* Header */}
         <div style={{ position: 'relative', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 60%, #0d1f40 100%)', padding: '24px 28px', overflow: 'hidden', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(55,181,255,0.12)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(212,169,59,0.1)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
           <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
-              <p style={{ color: BLUE, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Content Library</p>
+              <p style={{ color: GOLD, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Content Library</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <BookOpen size={18} color={BLUE} />
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(212,169,59,0.15)', border: `1px solid rgba(212,169,59,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BookOpen size={18} color={GOLD} />
                 </div>
                 <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 900, letterSpacing: '-0.02em' }}>{isEditing ? 'Edit Lesson' : 'Create New Lesson'}</h2>
               </div>
@@ -399,7 +400,7 @@ export function LessonCreator({ open, onOpenChange, coachId, onSave, editContent
             Cancel
           </button>
           <button onClick={onSubmit} disabled={isSubmitting || uploadingAttachments} className="lc-save"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', borderRadius: '10px', color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: `0 4px 16px rgba(55,181,255,0.35)` }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, border: 'none', borderRadius: '10px', color: '#0c0800', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: `0 4px 16px rgba(212,169,59,0.35)` }}>
             {isSubmitting
               ? <><Loader2 size={15} style={{ animation: 'lc-spin 1s linear infinite' }} />{uploadingAttachments ? 'Uploading…' : 'Saving…'}</>
               : <><Save size={15} />{isEditing ? 'Update Lesson' : 'Create Lesson'}<ArrowRight size={14} /></>

@@ -21,10 +21,11 @@ import { CurriculumTemplatePicker } from '@/components/coach/CurriculumTemplateP
 import { getApplicableTemplates, type CurriculumTemplate as CurrTemplate } from '@/lib/utils/curriculum-templates';
 import type { PacingLevel } from '@/types/onboarding';
 
-const BLUE = '#37b5ff';
+const BLUE  = '#37b5ff';
 const GREEN = '#22c55e';
-const cardBg = 'rgba(2,18,44,0.82)';
-const border = '1px solid rgba(55,181,255,0.18)';
+const GOLD  = '#D4A93B';
+const cardBg = 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)';
+const border = '1px solid rgba(55,181,255,0.22)';
 
 export default function StudentCurriculumPage() {
   const params = useParams();
@@ -204,16 +205,15 @@ export default function StudentCurriculumPage() {
         .sc-remove:hover { color: #f87171 !important; background: rgba(248,113,113,0.1) !important; }
         .sc-unlock:hover { color: ${BLUE} !important; background: rgba(55,181,255,0.1) !important; }
       `}</style>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,3vw,24px) 56px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Header */}
-        <div style={{ position: 'relative', borderRadius: '20px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.22)', boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(55,181,255,0.12)', padding: '28px 28px 24px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(55,181,255,0.12) 0%, transparent 70%)', transform: 'translate(30%, -40%)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '160px', height: '160px', borderRadius: '50%', background: `radial-gradient(circle, rgba(55,181,255,0.1) 0%, transparent 70%)`, transform: 'translate(-30%, 40%)' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+        <div style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.2)', boxShadow: '0 4px 32px rgba(0,0,0,0.5)', padding: '28px 28px 24px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-40px', right: '-20px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,169,59,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent, ${GOLD}, ${BLUE}44, transparent)` }} />
           <div style={{ position: 'relative' }}>
-            <p style={{ color: BLUE, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px' }}>Curriculum</p>
-            <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '26px', marginBottom: '4px' }}>{student.displayName}&apos;s Learning Path</h1>
+            <p style={{ color: GOLD, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Curriculum</p>
+            <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '26px', marginBottom: '4px' }}>{student.displayName}&apos;s Development Path</h1>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Manage personalized curriculum for {student.displayName}</p>
           </div>
         </div>
@@ -244,10 +244,10 @@ export default function StudentCurriculumPage() {
                   {/* Actions */}
                   <div style={{ position: 'relative', background: cardBg, border, borderRadius: '14px', padding: '18px', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, rgba(55,181,255,0.3), transparent)` }} />
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>Curriculum Actions</p>
+                    <p style={{ color: GOLD, fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>Curriculum Actions</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                       <button onClick={() => setShowContentBrowser(true)} className="sc-action"
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '10px 18px', borderRadius: '10px', border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, color: '#0c0800', padding: '10px 18px', borderRadius: '10px', border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', boxShadow: `0 4px 14px rgba(212,169,59,0.3)` }}>
                         <Plus size={15} /> Add Content
                       </button>
                       <button onClick={() => setShowTypeSelector(true)} className="sc-action"
@@ -265,7 +265,7 @@ export default function StudentCurriculumPage() {
                   <div style={{ position: 'relative', background: cardBg, border, borderRadius: '14px', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, rgba(55,181,255,0.3), transparent)` }} />
                     <div style={{ padding: '16px 18px 14px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
-                      <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Curriculum Items ({curriculum.items.length})</h2>
+                      <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Curriculum Modules ({curriculum.items.length})</h2>
                       <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px' }}>Content assigned to {student.displayName}</p>
                     </div>
 
@@ -298,15 +298,15 @@ export default function StudentCurriculumPage() {
                             const baseType = item.type.replace('custom_', '');
                             return (
                               <div key={item.id} className="sc-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '10px', marginBottom: '4px', transition: 'background 0.2s', cursor: 'default' }}>
-                                <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.15)', color: BLUE, fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{index + 1}</span>
+                                <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(212,169,59,0.1)', border: `1px solid rgba(212,169,59,0.28)`, color: GOLD, fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{index + 1}</span>
                                 <div style={{ flexShrink: 0 }}>{getItemIcon(item)}</div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <p style={{ color: '#fff', fontWeight: 600, fontSize: '13px', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {item.contentId && contentTitles[item.contentId] ? contentTitles[item.contentId] : item.customContent?.title || 'Untitled Content'}
                                   </p>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                    <span style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', padding: '1px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>{baseType === 'lesson' ? 'Lesson' : 'Quiz'}</span>
-                                    {isCustom && <span style={{ background: 'rgba(55,181,255,0.1)', color: BLUE, padding: '1px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>Custom</span>}
+                                    <span style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', padding: '1px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>{baseType === 'lesson' ? 'Lesson' : 'Knowledge Check'}</span>
+                                    {isCustom && <span style={{ background: 'rgba(212,169,59,0.1)', color: GOLD, padding: '1px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>Custom</span>}
                                     <span style={{ background: statusStyle.bg, color: statusStyle.color, padding: '1px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, textTransform: 'capitalize' }}>{item.status.replace('_', ' ')}</span>
                                   </div>
                                 </div>

@@ -18,12 +18,13 @@ import {
 import { GOALIE_ASSESSMENT_QUESTIONS } from '@/data/goalie-assessment-questions';
 import { toast } from 'sonner';
 
-const BLUE = '#37b5ff';
-const GREEN = '#22c55e';
+const BLUE   = '#37b5ff';
+const GREEN  = '#22c55e';
+const GOLD   = '#D4A93B';
 const YELLOW = '#fbbf24';
-const RED = '#f87171';
-const cardBg = 'rgba(2,18,44,0.82)';
-const border = '1px solid rgba(55,181,255,0.18)';
+const RED    = '#f87171';
+const cardBg = 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)';
+const border = '1px solid rgba(55,181,255,0.22)';
 
 const categoryIcons: Record<GoalieCategorySlug, LucideIcon> = {
   feelings: Heart, knowledge: Brain, pre_game: Clock, in_game: Target,
@@ -158,17 +159,17 @@ export default function CoachEvaluationPage() {
         .ev-textarea::placeholder { color: rgba(255,255,255,0.25) !important; }
         @media(min-width:1024px){.ev-grid{grid-template-columns:2fr 1fr!important;}}
       `}</style>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,3vw,24px) 56px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <Link href="/coach/students" className="ev-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
           <ArrowLeft size={15} /> Back to Students
         </Link>
 
         {/* Page title + status */}
         <div style={{ position: 'relative', borderRadius: '20px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.22)', boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(55,181,255,0.12)', padding: '24px 28px', overflow: 'hidden', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ position: 'absolute', top: '-50px', right: '-30px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ position: 'absolute', top: '-50px', right: '-30px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(212,169,59,0.08)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent, ${GOLD}, ${BLUE}44, transparent)` }} />
           <div style={{ position: 'relative' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: BLUE, marginBottom: '6px' }}>Evaluation</p>
+            <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: GOLD, marginBottom: '6px' }}>Evaluation</p>
             <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '24px', marginBottom: '4px' }}>{student.displayName}&apos;s Evaluation</h1>
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px' }}>Review assessment results and adjust recommended pacing level</p>
           </div>
@@ -180,7 +181,7 @@ export default function CoachEvaluationPage() {
         {/* Main grid */}
         <div className="ev-grid" style={{ display: 'grid', gap: '20px' }}>
           {/* Left column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
             {/* Intelligence Profile */}
             <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', padding: '20px', overflow: 'hidden' }}>
@@ -223,7 +224,7 @@ export default function CoachEvaluationPage() {
                   const score = result?.averageScore || 1.0;
                   const style = getScoreStyle(score);
                   return (
-                    <div key={category.slug} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div key={category.slug} style={{ background: 'rgba(4,33,63,0.6)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <Icon size={16} color={BLUE} />
@@ -286,7 +287,7 @@ export default function CoachEvaluationPage() {
                                 const answerText = getSelectedOptionText(response.questionId, response.value);
                                 const rStyle = getScoreStyle(response.score);
                                 return (
-                                  <div key={response.questionId} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px' }}>
+                                  <div key={response.questionId} style={{ background: 'rgba(4,33,63,0.6)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '10px', padding: '12px' }}>
                                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '6px' }}>
                                       <div style={{ flex: 1 }}>
                                         <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px', fontFamily: 'monospace', marginBottom: '2px' }}>{response.questionCode}</p>
@@ -379,7 +380,7 @@ export default function CoachEvaluationPage() {
               <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Coach Review</h2>
               <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '20px' }}>Add notes and adjust the recommended pacing level</p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* Adjust Pacing */}
                 <div>
                   <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Adjust Pacing Level</label>
@@ -413,13 +414,13 @@ export default function CoachEvaluationPage() {
 
                 {/* Save */}
                 <button onClick={handleSaveReview} disabled={saving} className="ev-save"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '12px', borderRadius: '10px', border: 'none', fontWeight: 800, fontSize: '14px', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, color: '#0c0800', padding: '12px', borderRadius: '10px', border: 'none', fontWeight: 800, fontSize: '14px', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, boxShadow: `0 4px 14px rgba(212,169,59,0.3)` }}>
                   {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</> : <><Save size={16} /> {hasCoachReview ? 'Update Review' : 'Save Review'}</>}
                 </button>
 
                 {/* Curriculum link */}
                 <div style={{ paddingTop: '14px', borderTop: '1px solid rgba(55,181,255,0.1)' }}>
-                  <Link href={`/coach/students/${studentId}/curriculum`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', padding: '11px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '13px' }}>
+                  <Link href={`/coach/students/${studentId}/curriculum`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(212,169,59,0.08)', border: `1px solid rgba(212,169,59,0.22)`, color: GOLD, padding: '11px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '13px' }}>
                     Manage Curriculum
                   </Link>
                 </div>

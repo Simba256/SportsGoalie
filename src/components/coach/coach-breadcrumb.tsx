@@ -54,7 +54,7 @@ export function CoachBreadcrumb({ className }: Props) {
       // Handle known routes
       if (segment === 'students') {
         breadcrumbs.push({
-          label: 'My Students',
+          label: 'My Goalies',
           href: '/coach/students',
           current: isLast,
         });
@@ -90,7 +90,7 @@ export function CoachBreadcrumb({ className }: Props) {
         // Quiz create page
         if (segments[i - 1] === 'quiz') {
           breadcrumbs.push({
-            label: 'Create Quiz',
+            label: 'Create Knowledge Check',
             current: isLast,
           });
         }
@@ -103,7 +103,7 @@ export function CoachBreadcrumb({ className }: Props) {
           });
         } else if (segments[i - 1] === 'quiz') {
           breadcrumbs.push({
-            label: 'New Quiz',
+            label: 'New Knowledge Check',
             current: isLast,
           });
         }
@@ -116,7 +116,7 @@ export function CoachBreadcrumb({ className }: Props) {
           });
         } else if (segments[i - 2] === 'quiz') {
           breadcrumbs.push({
-            label: 'Edit Quiz',
+            label: 'Edit Knowledge Check',
             current: isLast,
           });
         }

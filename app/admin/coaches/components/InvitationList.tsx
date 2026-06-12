@@ -11,7 +11,7 @@ const GREEN = '#22c55e';
 const RED = '#f87171';
 const AMBER = '#fbbf24';
 
-const STATUS_CONFIG: Record<CoachInvitation['status'], { bg: string; color: string; label: string; Icon: React.ElementType }> = {
+const STATUS_CONFIG: Record<CoachInvitation['status'], { bg: string; color: string; label: string; Icon: React.ComponentType<{ size?: number; color?: string; className?: string }> }> = {
   pending:  { bg: 'rgba(55,181,255,0.12)',   color: BLUE,  label: 'Pending',  Icon: Clock },
   accepted: { bg: 'rgba(34,197,94,0.12)',    color: GREEN, label: 'Accepted', Icon: CheckCircle },
   expired:  { bg: 'rgba(255,255,255,0.08)',  color: 'rgba(255,255,255,0.4)', label: 'Expired', Icon: XCircle },
@@ -65,7 +65,7 @@ export function InvitationList({ invitations, loading, onResend, onRevoke }: Inv
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {invitations.map(invitation => {
           const cfg = STATUS_CONFIG[invitation.status];
-          const Icon = cfg.Icon;
+          const Icon = cfg.Icon as React.ComponentType<{ size?: number }>;
           return (
             <div key={invitation.id} className="il-item" style={{ padding: '16px', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>

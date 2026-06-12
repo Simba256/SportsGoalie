@@ -11,7 +11,8 @@ import { User, OnboardingEvaluation } from '@/types';
 import { toast } from 'sonner';
 import { StudentSearchDialog } from '@/components/coach/student-search-dialog';
 
-const BLUE = '#37b5ff';
+const GOLD   = '#D4A93B';
+const BLUE   = '#37b5ff';
 
 type WorkflowFilter = 'all' | 'custom' | 'automated';
 
@@ -102,43 +103,48 @@ export default function CoachStudentsPage() {
     <div style={{ minHeight: '100vh' }}>
       <style>{`
         .students-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-        @media (min-width: 768px) { .students-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 640px)  { .students-grid { grid-template-columns: 1fr 1fr; } }
         @media (min-width: 1024px) { .students-grid { grid-template-columns: 1fr 1fr 1fr; } }
+        .students-header { padding: 20px 20px; }
+        @media (min-width: 640px) { .students-header { padding: 28px 32px; } }
+        .filter-tabs { flex-wrap: wrap; }
+        @media (max-width: 480px) { .filter-tabs { width: 100%; } .filter-tabs button { flex: 1; justify-content: center; } }
+        .card-actions { flex-direction: column; }
+        @media (min-width: 380px) { .card-actions { flex-direction: row; flex-wrap: wrap; } }
       `}</style>
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,3vw,24px) 56px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* Header */}
-        <div style={{ position: 'relative', borderRadius: '20px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.22)', boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(55,181,255,0.12)', padding: '28px 32px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', filter: 'blur(70px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: '-40px', left: '5%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(167,139,250,0.07)', filter: 'blur(50px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+        <div className="students-header" style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.18)', boxShadow: '0 4px 32px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(55,181,255,0.08)', filter: 'blur(70px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: BLUE, marginBottom: '6px' }}>My Students</p>
-              <h1 style={{ fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Students</h1>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>View evaluations and manage curriculum for your students</p>
+              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: GOLD, marginBottom: '6px' }}>My Goalies</p>
+              <h1 style={{ fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Goalies</h1>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>View evaluations and manage curriculum for your goalies</p>
             </div>
             {user?.role === 'coach' && workflowFilter === 'custom' && (
               <button
                 onClick={() => setSearchDialogOpen(true)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 22px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', borderRadius: '12px', color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 16px rgba(55,181,255,0.35)` }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '11px 20px', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, border: 'none', borderRadius: '12px', color: '#0c0800', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 16px rgba(212,169,59,0.3)`, whiteSpace: 'nowrap' }}
               >
-                <UserPlus size={14} /> Add Student
+                <UserPlus size={14} /> Add Goalie
               </button>
             )}
           </div>
         </div>
 
         {/* Workflow Filter Tabs */}
-        <div style={{ display: 'flex', gap: '6px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px', width: 'fit-content', flexWrap: 'wrap' }}>
+        <div className="filter-tabs" style={{ display: 'flex', gap: '6px', background: 'rgba(2,18,44,0.8)', border: `1px solid rgba(212,169,59,0.18)`, borderRadius: '12px', padding: '5px', width: 'fit-content', maxWidth: '100%' }}>
           {WORKFLOW_TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setWorkflowFilter(t.key)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-                background: workflowFilter === t.key ? BLUE : 'transparent',
-                color: workflowFilter === t.key ? '#000f28' : 'rgba(255,255,255,0.5)',
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                background: workflowFilter === t.key ? GOLD : 'transparent',
+                color: workflowFilter === t.key ? '#0c0800' : 'rgba(255,255,255,0.5)',
               }}
             >{t.icon}{t.label}</button>
           ))}
@@ -146,13 +152,13 @@ export default function CoachStudentsPage() {
 
         {/* Students Grid */}
         {filteredStudents.length === 0 ? (
-          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '64px 24px', textAlign: 'center' }}>
+          <div style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '16px', padding: '64px 24px', textAlign: 'center' }}>
             <Users size={56} color="rgba(255,255,255,0.12)" style={{ margin: '0 auto 16px' }} />
             <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>
-              {workflowFilter === 'all' ? 'No Students Found' : workflowFilter === 'custom' ? 'No Custom Workflow Students' : 'No Automated Workflow Students'}
+              {workflowFilter === 'all' ? 'No Goalies Found' : workflowFilter === 'custom' ? 'No Custom Workflow Goalies' : 'No Automated Workflow Goalies'}
             </h3>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', maxWidth: '360px', margin: '0 auto' }}>
-              {workflowFilter === 'custom' ? 'Students with custom workflow type will appear here when assigned.' : workflowFilter === 'automated' ? 'Students with automated (self-paced) workflow will appear here.' : 'No students have registered yet.'}
+              {workflowFilter === 'custom' ? 'Goalies with custom workflow type will appear here when assigned.' : workflowFilter === 'automated' ? 'Goalies with automated (self-paced) workflow will appear here.' : 'No goalies have registered yet.'}
             </p>
           </div>
         ) : (
@@ -165,12 +171,12 @@ export default function CoachStudentsPage() {
               const workflowColor = isCustomWorkflow ? '#f87171' : BLUE;
 
               return (
-                <div key={student.id} style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.3s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.4)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.18)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; }}
+                <div key={student.id} style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: `1px solid rgba(212,169,59,0.18)`, borderRadius: '16px', overflow: 'hidden', transition: 'all 0.3s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,169,59,0.38)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,169,59,0.16)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; }}
                 >
                   {/* Top gradient bar */}
-                  <div style={{ height: '3px', background: `linear-gradient(90deg, ${BLUE}, #0ea5e9)` }} />
+                  <div style={{ height: '3px', background: `linear-gradient(90deg, ${GOLD}, #B8891E)` }} />
 
                   <div style={{ padding: '18px 20px' }}>
                     {/* Student header */}
@@ -217,18 +223,18 @@ export default function CoachStudentsPage() {
                     {/* Curriculum Progress */}
                     {isCustomWorkflow && (
                       hasCurriculum && curriculumProgress ? (
-                        <div style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '10px', padding: '12px 14px', marginBottom: '12px' }}>
+                        <div style={{ background: 'rgba(212,169,59,0.06)', border: '1px solid rgba(212,169,59,0.14)', borderRadius: '10px', padding: '12px 14px', marginBottom: '12px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Curriculum Progress</span>
                             <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{curriculumProgress.progressPercentage}%</span>
                           </div>
-                          <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
-                            <div style={{ height: '100%', borderRadius: '99px', background: `linear-gradient(90deg, ${BLUE}, #0ea5e9)`, width: `${curriculumProgress.progressPercentage}%`, transition: 'width 0.7s' }} />
+                          <div style={{ height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
+                            <div style={{ height: '100%', borderRadius: '99px', background: `linear-gradient(90deg, ${GOLD}, #B8891E)`, width: `${curriculumProgress.progressPercentage}%`, transition: 'width 0.7s' }} />
                           </div>
-                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{curriculumProgress.completedItems} of {curriculumProgress.totalItems} items completed</p>
+                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{curriculumProgress.completedItems} of {curriculumProgress.totalItems} modules completed</p>
                         </div>
                       ) : (
-                        <div style={{ borderRadius: '10px', border: '1px dashed rgba(55,181,255,0.2)', padding: '10px 14px', marginBottom: '12px' }}>
+                        <div style={{ borderRadius: '10px', border: `1px dashed rgba(212,169,59,0.2)`, padding: '10px 14px', marginBottom: '12px' }}>
                           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>No curriculum created yet</p>
                         </div>
                       )
@@ -238,29 +244,29 @@ export default function CoachStudentsPage() {
                     {evaluation?.intelligenceProfile?.pacingLevel && (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                         <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Pacing Level</span>
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '2px 8px', textTransform: 'capitalize' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: GOLD, background: 'rgba(212,169,59,0.1)', border: '1px solid rgba(212,169,59,0.25)', borderRadius: '20px', padding: '2px 8px', textTransform: 'capitalize' }}>
                           {evaluation.intelligenceProfile.pacingLevel}
                         </span>
                       </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="card-actions" style={{ display: 'flex', gap: '8px' }}>
                       {hasCompletedEvaluation && (
                         <Link href={`/coach/students/${student.id}/evaluation`} style={{ textDecoration: 'none' }}>
-                          <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '8px', color: BLUE, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
+                          <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(212,169,59,0.1)', border: '1px solid rgba(212,169,59,0.25)', borderRadius: '8px', color: GOLD, fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             <ClipboardCheck size={12} />View Evaluation
                           </button>
                         </Link>
                       )}
                       <Link href={`/coach/students/${student.id}/charting`} style={{ textDecoration: 'none' }}>
-                        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
+                        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                           <LineChart size={12} />View Charts
                         </button>
                       </Link>
                       {isCustomWorkflow && (
                         <Link href={`/coach/students/${student.id}/curriculum`} style={{ textDecoration: 'none', flex: 1 }}>
-                          <button style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '7px 12px', background: hasCurriculum ? `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)` : 'rgba(55,181,255,0.08)', border: hasCurriculum ? 'none' : '1px solid rgba(55,181,255,0.25)', borderRadius: '8px', color: hasCurriculum ? '#000f28' : BLUE, fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>
+                          <button style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '7px 12px', background: hasCurriculum ? `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)` : 'rgba(212,169,59,0.08)', border: hasCurriculum ? 'none' : '1px solid rgba(212,169,59,0.25)', borderRadius: '8px', color: hasCurriculum ? '#0c0800' : GOLD, fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             <BookOpen size={12} />{hasCurriculum ? 'Manage Curriculum' : 'Create Curriculum'}
                           </button>
                         </Link>
@@ -282,16 +288,16 @@ export default function CoachStudentsPage() {
       {/* Remove Student Confirm Modal */}
       {removeDialogOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px' }}>
-          <div style={{ background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(248,113,113,0.4)', borderRadius: '20px', maxWidth: '480px', width: '100%', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+          <div style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(248,113,113,0.4)', borderRadius: '20px', maxWidth: '480px', width: '100%', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
             <div style={{ padding: '28px 28px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: BLUE }}>Roster</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: GOLD }}>Roster</p>
                 <button onClick={() => setRemoveDialogOpen(false)} disabled={removing} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X size={18} /></button>
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Remove Student from Roster</h2>
+              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Remove Goalie from Roster</h2>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                 Are you sure you want to remove <span style={{ fontWeight: 700, color: '#fff' }}>{studentToRemove?.displayName}</span> from your roster?
-                They will no longer appear in your student list, but their curriculum progress will be preserved.
+                They will no longer appear in your goalie list, but their curriculum progress will be preserved.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '10px', padding: '16px 28px', justifyContent: 'flex-end' }}>

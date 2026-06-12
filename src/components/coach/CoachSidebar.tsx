@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Users, FolderOpen, LogOut,
-  ChevronLeft, Menu, X, User, UserCircle, ClipboardCheck,
+  ChevronLeft, Menu, X, User, UserCircle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
@@ -16,9 +16,8 @@ interface CoachSidebarProps { isOpen: boolean; onToggle: () => void; }
 
 const navItems = [
   { label: 'Dashboard',       href: '/coach',              icon: LayoutDashboard },
-  { label: 'My Students',     href: '/coach/students',     icon: Users },
+  { label: 'My Goalies',      href: '/coach/students',     icon: Users },
   { label: 'Content Library', href: '/coach/content',      icon: FolderOpen },
-  { label: 'Assessment',      href: '/coach/onboarding',   icon: ClipboardCheck },
   { label: 'Profile',         href: '/coach/profile',      icon: UserCircle },
 ];
 
@@ -72,7 +71,7 @@ export function CoachSidebar({ isOpen, onToggle }: CoachSidebarProps) {
             {isOpen && (
               <div style={{ overflow: 'hidden' }}>
                 <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.displayName || user?.email?.split('@')[0]}</p>
-                <p style={{ color: BLUE, fontSize: '11px', fontWeight: 600 }}>Coach</p>
+                <p style={{ color: BLUE, fontSize: '11px', fontWeight: 600 }}>TEAM</p>
               </div>
             )}
           </div>

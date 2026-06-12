@@ -11,9 +11,10 @@ import { User as UserType } from '@/types';
 import { toast } from 'sonner';
 import { GoalieChartingHistory } from '@/components/charting/GoalieChartingHistory';
 
-const BLUE = '#37b5ff';
-const cardBg = 'rgba(2,18,44,0.82)';
-const border = '1px solid rgba(55,181,255,0.18)';
+const BLUE  = '#37b5ff';
+const GOLD  = '#D4A93B';
+const cardBg = 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)';
+const border = '1px solid rgba(55,181,255,0.22)';
 
 export default function CoachStudentChartingPage() {
   const { user } = useAuth();
@@ -69,25 +70,25 @@ export default function CoachStudentChartingPage() {
       <style>{`
         .sc-back:hover { color: ${BLUE} !important; background: rgba(55,181,255,0.08) !important; }
       `}</style>
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,3vw,24px) 56px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <Link href="/coach/students" className="sc-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
           <ArrowLeft size={15} /> Back to Students
         </Link>
 
         {/* Header */}
         <div style={{ position: 'relative', borderRadius: '20px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.22)', boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(55,181,255,0.12)', padding: '24px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-50px', right: '-30px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ position: 'absolute', top: '-50px', right: '-30px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(212,169,59,0.08)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent, ${GOLD}, ${BLUE}44, transparent)` }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 800, color: '#000f28', flexShrink: 0, border: `2px solid rgba(55,181,255,0.3)` }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 800, color: '#0c0800', flexShrink: 0, border: `2px solid rgba(212,169,59,0.35)` }}>
               {student.profileImage
                 ? <img src={student.profileImage} alt={student.displayName} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 : initials}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <LineChart size={15} color={BLUE} />
-                <span style={{ color: BLUE, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Charting History</span>
+                <LineChart size={15} color={GOLD} />
+                <span style={{ color: GOLD, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Charting History</span>
               </div>
               <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '22px' }}>{student.displayName}</h1>
               {student.email && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginTop: '2px' }}>{student.email}</p>}
