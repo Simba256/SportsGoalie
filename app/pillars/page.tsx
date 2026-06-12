@@ -12,7 +12,7 @@ import {
 
 const BLUE = '#37b5ff';
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 

@@ -16,7 +16,7 @@ import {
 
 const BLUE = '#37b5ff';
 
-const LEVEL_CONFIG: Record<PacingLevel, { label: string; color: string; tagline: string; range: string; icon: React.ElementType; }> = {
+const LEVEL_CONFIG: Record<PacingLevel, { label: string; color: string; tagline: string; range: string; icon: React.ComponentType<{ size?: number; color?: string }>; }> = {
   introduction: { label: 'Introduction', color: BLUE,     tagline: 'Building your foundation', range: '1.0 – 2.2', icon: BookOpen },
   development:  { label: 'Development',  color: '#a78bfa', tagline: 'Growing your skills',       range: '2.2 – 3.1', icon: TrendingUp },
   refinement:   { label: 'Refinement',   color: '#4ade80', tagline: 'Mastering your craft',      range: '3.1 – 4.0', icon: Zap },

@@ -10,8 +10,8 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are'];
-const ONBOARDING_ROUTES = ['/onboarding'];
+const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact'];
+const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
 const PUBLIC_ROUTES = ['/', '/pricing'];
 
 function isPublicRoute(pathname: string): boolean {
@@ -44,7 +44,10 @@ function getPageTitle(pathname: string): string {
     return titles[segments[1]] || 'Dashboard';
   }
   if (first === 'coach') {
-    const titles: Record<string, string> = { coach: 'Dashboard', students: 'My Students', content: 'Content Library' };
+    const titles: Record<string, string> = {
+      coach: 'Dashboard', students: 'My Students', content: 'Content Library',
+      assessment: 'Baseline Assessment',
+    };
     return titles[segments[1]] || 'Dashboard';
   }
   if (first === 'parent') {
@@ -82,7 +85,7 @@ function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSid
   );
 }
 
-const appBg = 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)';
+const appBg = 'linear-gradient(145deg, #00091a 0%, #030f25 50%, #050e20 100%)';
 
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

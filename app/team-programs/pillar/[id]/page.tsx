@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Play, Pause, ArrowLeft, ClipboardList } from 'lucide-react';
 import { TiltCard } from '@/components/ui/tilt-card';
-import { Boxes } from '@/components/ui/background-boxes';
 import { BeamsBackground } from '@/components/ui/beams-background';
 
 const BLUE = '#37b5ff';
@@ -39,7 +38,7 @@ const PILLARS: Record<string, PillarData> = {
     number: '01',
     title: 'Mind-Set',
     subtitle: 'The Foundation of Everything',
-    intro: 'Pillar 1 is the foundation of the entire Smarter Goalie system. Everything else is built on what happens between the goalie\'s ears. The facts in this section are universal — they apply to every role. The goalie lives them. The parent supports them. The coach works around them. The organization builds them.',
+    intro: 'Regardless how technically strong you are — if the mind is not the strongest tool you have, then what is your foundation built on?\n\nMIND-SET for a Smarter Goalie is the discipline of building what we call the MIND-VAULT — where only the most valuable foundational thoughts and behaviors are kept. For game performance. And for life in general.\n\nThis is where Logic, Common Sense, Math, and Science become your filters — applied to every read, every shift, every decision.\n\nThis is where you learn the difference between performance and outcome — and why the goalie controls one, not the other.\n\nThis is where respect is forged through consistency in performance — not single games.\n\nThis is where you understand that how the goalie goes reflects on the bench. A solid goalie lifts the bench. An inconsistent goalie deflates it.\n\nSix decades of original IP. One foundation. The MIND-VAULT is yours to build.\n\nThe goalie lives it. The parent supports it. The coach builds around it. The organization stands on it.\n\nLearn Smart — Play Smart. Think Smart — Play Smart.',
     accent: '#00f2ff',
     accentAlt: '#60cdff',
     facts: [
@@ -104,118 +103,132 @@ const PILLARS: Record<string, PillarData> = {
   },
   '3': {
     number: '03',
-    title: '7 Angle-Mark System',
+    title: '7AMS',
     titleOneLine: true,
-    subtitle: 'The Goalie\'s GPS',
-    intro: 'The 7 Angle-Mark System is the goalie\'s GPS. It is the mathematical framework that tells the goalie exactly where they are on the ice in relation to the puck at all times. It is the most original and powerful technical tool in the Smarter Goalie system. Nothing like it exists anywhere else in goaltending instruction.',
+    subtitle: 'Net · Crease · White Ice management above the icing line.',
+    intro: 'The most important relationship the goalie can have? Stop and think. The answer is the Net. The Crease — to Net. The White Ice — to Crease and the Net. In that exact order. An ultimate sensitivity to all three will empower you, simplify your game, and hand you a strategic advantage a general would be envious to have.',
     accent: BLUE,
     accentAlt: BLUE3,
     facts: [
       {
-        statement: 'THE 7 ANGLE-MARK SYSTEM IS THE GOALIE\'S GPS. SEVEN MARKERS. ONE COMPLETE POSITIONAL GRID.',
-        support: 'Most goalies guess where they are in relation to the puck. The 7AMS removes the guess. The goalie feels their position within the marker grid as the puck moves while reading adjacent markers.',
+        statement: 'THE MOST IMPORTANT RELATIONSHIP THE GOALIE CAN HAVE IS THE NET.',
+        support: 'THE NET. THE CREASE — TO NET. THE WHITE ICE — TO CREASE AND THE NET. In that exact order.\n\nAn ultimate sensitivity and awareness to the Net — to the Crease — and to the White Ice will empower you. It will simplify your game. It gives you an understanding of what the player has, and hands you a strategic and tactical advantage a general would be envious to have.\n\nBetter decision-making. More consistency in performance. And respect — not only from your team and coaches, but from the opposition. They know you\'re a Smarter Goalie. They know you\'re one tough cookie to beat. Your position game is superior to all competitors.',
+        voiceLabel: 'HEAR COACH MIKE: THE MOST IMPORTANT RELATIONSHIP AND HOW IT TRANSFORMS YOUR ENTIRE POSITIONAL GAME',
+      },
+      {
+        statement: 'THE 7 ANGLE MARKER GRID IS THE GOALIE\'S GPS — YOUR POSITIONAL SYSTEM.',
+        support: 'This system is mathematical, logical, and the science of sound positional play. You want consistency in performance? This is one of the greatest tools to make that happen.\n\nThe process in learning it is systematic — evolving through the Net-to-Crease relationship and on to the White Ice — Challenging Mode — taking the net away from the shooter, optimizing your sensitivity to crease and post relationships, providing added energy to actions taken.\n\nSimply said: a foundation you can build your game on.',
         voiceLabel: 'HEAR COACH MIKE: THE 7AMS AND HOW IT TRANSFORMS POSITIONAL AWARENESS FROM GUESSWORK TO PRECISION',
       },
       {
-        statement: 'THE ICING LINE IS THE FIRST LANDMARK. THE POSTS ARE ATTACHED TO IT. EVERYTHING BUILDS FROM THERE.',
-        support: 'The 7AMS grid is built from the ice up. The icing line anchors everything. The goalie learns to read the grid from the moment the puck crosses the line.',
-        voiceLabel: 'HEAR COACH MIKE: THE FOUNDATIONAL LANDMARKS OF THE 7AMS AND HOW THE GRID IS READ',
+        statement: 'YELLOW ALERT. ORANGE ALERT. RED ALERT — THREE LEVELS, THREE DEGREES OF DANGER.',
+        support: 'Three alert levels that tell a goaltender how much danger the moment carries and how much intensity the position demands. Pressure is not one-size-fits-all — and neither is your readiness.\n\nBreak Out. Neutral Zone. Blue Line In. Understanding the game will determine your staging for the attack coming through the three zones.',
+        voiceLabel: 'HEAR COACH MIKE: THE ALERT SYSTEM — MATCHING YOUR POSITIONAL GAME TO THE LEVEL OF DANGER',
       },
       {
-        statement: 'THE FEEL FACTOR IS THE GOALIE FEELING THEIR POSITION WITHIN THE MARKER GRID IN REAL TIME.',
-        support: 'Not a fixed-point concept. Not a single marker. A spatial awareness that moves with the puck. The goalie feels where they are — before they see where they need to be.',
-        voiceLabel: 'HEAR COACH MIKE: THE FEEL FACTOR AND HOW IT CONNECTS TO THE 7AMS IN LIVE PLAY',
-      },
-      {
-        statement: 'MOST GOALIES ARE TAUGHT ANGLES. FEW ARE TAUGHT THE MATHEMATICAL SYSTEM THAT MAKES ANGLES WORK CONSISTENTLY.',
-        support: 'Teaching a goalie to come out on angles without giving them a positional reference system is like teaching someone to drive without giving them a map. Smarter Goalie gives the goalie the map.',
-        voiceLabel: 'HEAR COACH MIKE: THE DIFFERENCE BETWEEN TEACHING ANGLES AND TEACHING THE SYSTEM THAT MAKES ANGLES WORK',
-      },
-      {
-        statement: 'THE 7AMS WORKS AT EVERY LEVEL. ATOM TO AAA. THE FRAMEWORK DOES NOT CHANGE. THE GOALIE GROWS INTO IT.',
-        support: 'The system is introduced at the Foundation level and refined through Development and Refinement. The markers are always there. The goalie\'s ability to read and feel them deepens over time.',
-        voiceLabel: 'HEAR COACH MIKE: HOW THE 7AMS SCALES WITH THE GOALIE\'S DEVELOPMENT',
-      },
-      {
-        statement: 'A GOALIE WHO KNOWS WHERE THEY ARE NEVER HAS TO THINK ABOUT WHERE THEY ARE. THE MIND IS FREE TO READ THE PLAY.',
-        support: 'Positional certainty frees the mind. The sub-conscious handles the positioning. The conscious mind reads the play. This is the goal of the 7AMS. This is what Smarter Goalie builds.',
-        voiceLabel: 'HEAR COACH MIKE: POSITIONAL CERTAINTY AND WHAT THE MIND CAN DO WHEN IT IS FREE FROM POSITIONAL DOUBT',
+        statement: 'ABOVE THE ICING LINE, THE SMART GOALIE IS ALWAYS IN THE RIGHT POSITION.',
+        support: 'The position game, yours. Connect to the Net — Crease — and White Ice. A strategy and tactical game that belongs to you. The intuitive nature comes with knowing — not hoping — but optimizing your positional game.',
+        voiceLabel: 'HEAR COACH MIKE: THE POSITION GAME — YOURS',
+        extra: {
+          label: 'What You\'ll Own',
+          items: [
+            'A connect to the Net — Crease — and White Ice',
+            'What you will have is a strategy and tactical game',
+            'The Alert System — matching your positional game to meet the challenge',
+            'The intuitive nature comes with knowing — not hoping, but optimizing your positional game',
+            'You will simplify your game — and make it look easy',
+          ],
+        },
       },
     ],
   },
   '4': {
     number: '04',
-    title: '7 Point System',
+    title: 'The 6 Zone Grid',
     titleBreakAt: 2,
-    subtitle: 'Command Everything Below the Icing Line',
-    intro: 'The 7 Point System governs everything that happens below the icing line. Wraparounds. Behind-net play. Net management. This is the area of the ice most goalies are least prepared for and most vulnerable in. The 7 Points give the goalie a complete framework for what is historically the most dangerous area of the ice.',
+    subtitle: '"Keeping the Advantage in Your House"',
+    intro: 'Below the icing line the game changes — the strategies and the tactical game take on new meaning. Six zones. Three pairs of twins. One system for the area of the ice most goalies are least prepared for. The goalie who knows each zone\'s fundamentals is never guessing.',
     accent: BLUE3,
     accentAlt: BLUE,
     facts: [
       {
-        statement: 'BELOW THE ICING LINE IS WHERE MOST GOALS ARE SCORED AND WHERE MOST GOALIES HAVE THE LEAST TRAINING.',
-        support: 'The area behind and around the net is the most dangerous real estate on the ice. Most programs spend the least time developing it. Smarter Goalie gives it an entire Pillar.',
+        statement: 'BELOW THE ICING LINE THE GAME CHANGES. KNOWING THE CHALLENGE IS AN ADVANTAGE.',
+        support: 'Staying on your feet or going to the ice is based on the read of the situation. Each zone offers a challenge. Knowing the challenge is an advantage. Knowing the degree of challenge is an advantage. Outsmarting your opponent behind the net using a knowledge you will possess — is advantage.\n\nYour mind versus the opponent\'s mind. Think Smart. Play Smart.',
         voiceLabel: 'HEAR COACH MIKE: WHY BELOW THE ICING LINE DESERVES ITS OWN COMPLETE FRAMEWORK',
       },
       {
-        statement: 'THE 7 POINT SYSTEM GIVES THE GOALIE A COMPLETE POSITIONAL FRAMEWORK FOR EVERY SITUATION BELOW THE ICING LINE.',
-        support: 'Seven specific positions. Seven specific reads. Every wraparound, every cycle, every behind-net play has a correct positional response. The 7 Points define what that response is.',
-        voiceLabel: 'HEAR COACH MIKE: THE 7 POINT SYSTEM AND HOW IT MAPS EVERY SITUATION BELOW THE ICING LINE',
+        statement: 'SIX ZONES — THREE TWINS. THE PASS OPTIONS CHANGE WITH EVERY ZONE.',
+        support: 'One system: the 6 Zone Grid — the layers of knowledge required to be steps ahead of the player with the puck. The puck\'s location determines "The Passing Field" — the area a pass has to travel, from The Location Principle: what path can the puck take, given no obstructions?\n\nThe beauty: six zones, identical on both sides — Zones 1 & 6 twins · Zones 2 & 5 twins · Zones 3 & 4 twins.\n\nAnd the goalie can BE that obstruction — a pass traveling through the crease, or just outside it, is a pass your stick can interfere with. Knowing this is an advantage.',
+        voiceLabel: 'HEAR COACH MIKE: THE 6 ZONE GRID AND HOW IT MAPS EVERY SITUATION BELOW THE ICING LINE',
       },
       {
-        statement: 'A GOALIE WHO DOES NOT OWN THE AREA BELOW THE ICING LINE IS NOT A COMPLETE GOALTENDER.',
-        support: 'Net management is a skill. It is developed. Most goalies learn it by accident over years. Smarter Goalie teaches it deliberately from the beginning.',
-        voiceLabel: 'HEAR COACH MIKE: NET MANAGEMENT AS A TRAINED SKILL AND WHAT IT LOOKS LIKE WHEN IT IS FULLY DEVELOPED',
+        statement: 'WHEN THE PASS LEAVES, YOUR READ ALERT IS ALREADY WORKING.',
+        support: 'The chess match behind the net. The puck, the player\'s position, and the strategy to keep the advantage in your house — how to play the player.\n\nForehand or backhand — and the more clever the playmaker, the more your Read Alert is flashing. Reading the stick to the left or right of the post, to center, behind the net — that alone will not be enough. This is a mental game.',
+        voiceLabel: 'HEAR COACH MIKE: THE READ ALERT — THE PUCK, THE PLAYER, AND HOW TO KEEP THE ADVANTAGE IN YOUR HOUSE',
       },
       {
-        statement: 'EVERY WRAPAROUND IS PREVENTABLE. NONE ARE SURPRISES WHEN THE GOALIE KNOWS THE 7 POINTS.',
-        support: 'A goalie who knows the system sees the wraparound developing before the puck carrier does. Anticipation. Not reaction. The 7 Points build anticipation.',
-        voiceLabel: 'HEAR COACH MIKE: WRAPAROUNDS, ANTICIPATION, AND WHY THE GOALIE WHO KNOWS THE SYSTEM IS NEVER SURPRISED',
-      },
-      {
-        statement: 'THE 7 POINT SYSTEM AND THE 7AMS WORK TOGETHER. POSITION ABOVE THE ICING LINE AND BELOW IT ARE ONE CONNECTED SYSTEM.',
-        support: 'No Pillar in the Smarter Goalie system operates in isolation. The 7AMS gives the goalie positional certainty above the icing line. The 7 Points complete the picture below it.',
-        voiceLabel: 'HEAR COACH MIKE: HOW THE 7AMS AND 7 POINT SYSTEM CONNECT INTO ONE COMPLETE POSITIONAL FRAMEWORK',
+        statement: 'BEHIND THE NET, IT\'S YOUR MIND VERSUS THEIRS — AND THE ADVANTAGE STAYS IN YOUR HOUSE.',
+        support: 'The 6 Zone Grid. The Passing Field and The Location Principle — knowing the puck\'s paths before the pass leaves. Your Read Alert — the puck, the player\'s position, and how to play the player.',
+        voiceLabel: 'HEAR COACH MIKE: KEEPING THE ADVANTAGE IN YOUR HOUSE',
+        extra: {
+          label: 'What You\'ll Own',
+          items: [
+            'The 6 Zone Grid — and the twins that make it learnable',
+            'The Passing Field and The Location Principle — knowing the puck\'s paths before the pass leaves',
+            'Your Read Alert — the puck, the player\'s position, and how to play the player',
+            'The strategies and tactical game behind the net — read by read',
+            'The advantage, kept — in your house',
+          ],
+        },
       },
     ],
   },
   '5': {
     number: '05',
     title: 'Form Tech',
-    subtitle: 'The Technical Execution Pillar',
-    intro: 'Form Tech is the technical execution Pillar. Set crouch. Maximum coverage. Minimal movement. Every save technique examined, taught, and refined. The goalie\'s body is their tool. Form Tech teaches them how to use it with precision. This is where the goalie discovers their game — not a template applied to their body.',
+    subtitle: 'The body & mind, built to make it look easy.',
+    intro: 'Anyone can make a save. It\'s the second, the third, and even beyond that will separate you from the wannabes. Form Tech covers a wide array of skills — all broken down and systematically taught to render an Intelligent Athletic Goaltender.',
     accent: '#38bdf8',
     accentAlt: BLUE2,
     facts: [
       {
-        statement: 'YOUR SET CROUCH IS THE MOST IMPORTANT POSITION IN GOALTENDING. AND IT IS YOURS.',
-        support: 'No two goalies have the same set crouch. The body that works for a 6 foot 3 goalie does not work for a 5 foot 8 goalie. Smarter Goalie finds your set crouch. Not someone else\'s.',
-        voiceLabel: 'HEAR COACH MIKE: THE SET CROUCH, WHAT IT MEANS, AND WHY IT IS THE FOUNDATION OF ALL TECHNICAL EXECUTION',
+        statement: 'THAT IS NOT LUCK — BUT TRAINED INTO EXISTENCE.',
+        support: 'Watch any goalie make a save that looks effortless — or combination saves that appear controlled, with visible athletic understanding of tech, when, where, why and how. You will learn how to perform a single execution or multiple saves in sequence that makes watchers marvel at the efficiency of decision-making, execution, and recovery tech.\n\nWe don\'t depend on luck. It\'s a healthy by-product of work put in — not something you can rely on or base your game on, rather something we welcome when the hockey gods wish to show us some love.',
+        voiceLabel: 'HEAR COACH MIKE: TRAINED INTO EXISTENCE — HOW INTELLIGENT GOALTENDING IS BUILT',
       },
       {
-        statement: 'MAXIMUM COVERAGE WITH MINIMAL MOVEMENT. EVERY TECHNIQUE IN FORM TECH IS BUILT ON THIS PRINCIPLE.',
-        support: 'The goalie who moves the most is not the goalie who stops the most. The goalie who covers the most with the least movement wins. M.E.T. applied to technical execution.',
-        voiceLabel: 'HEAR COACH MIKE: MAXIMUM COVERAGE WITH MINIMAL MOVEMENT AND WHAT IT LOOKS LIKE IN PRACTICE',
+        statement: 'FORM TECH COVERS A WIDE ARRAY OF SKILLS — OPTIMIZING WHAT WORKS FOR YOU.',
+        support: 'At Smarter Goalie we assist you in knowledge acquisition and skill know-how: optimizing your understanding of what works FOR YOU — to the ability to not just make one save, but make multiple saves in succession without balance loss.\n\nEvery save, every sequence, every time. Nothing is left to the imagination. You will be a Smarter Goalie without a doubt — and mold your game to your ability level.',
+        voiceLabel: 'HEAR COACH MIKE: THE WIDE ARRAY OF FORM TECH SKILLS AND HOW EACH ONE IS BUILT FOR YOUR BODY',
+        extra: {
+          label: 'Skills Covered',
+          items: [
+            'Set-Crouch (Ready Positions)',
+            'Stick Use',
+            'Catching Glove',
+            'Blocker Use',
+            'Execution',
+            'Recovery Tech',
+          ],
+        },
       },
       {
-        statement: 'A TECHNIQUE BUILT FOR A LARGE BODY DOES NOT FIT EVERY DEVELOPING GOALIE. SMARTER GOALIE TEACHES FOR THE BODY IN FRONT OF THEM.',
-        support: 'Forcing a young goalie into a technique designed for a different body creates habits that take years to undo. Smarter Goalie finds the right technique for the body standing in front of them — not a template imposed on it.',
-        voiceLabel: 'HEAR COACH MIKE: WHY EVERY GOALIE NEEDS A TECHNIQUE BUILT FOR THEIR BODY, NOT SOMEONE ELSE\'S',
+        statement: 'EVERY EXECUTION CLIMBS THE LADDER — FORM INTRODUCED. SKILLS DEVELOPING. REFINEMENT LEVELS.',
+        support: 'From introduced — through developed — to refined. Nothing skipped, everything earned.\n\nYou never know who is watching — in practices and games: coaches, your team and opposition players, scouts. We build reputations and achieve respect levels that are earned. There is no greater feeling than having a reputation and respect factor for the consistency you bring game in and game out — and the compete level you have in practice tells your team you\'re a competitor across the board.',
+        voiceLabel: 'HEAR COACH MIKE: THE LADDER AND HOW EVERY EXECUTION CLIMBS FROM INTRODUCTION TO REFINEMENT',
       },
       {
-        statement: 'THE BUTTERFLY IS A TOOL. NOT A RELIGION. KNOWING WHEN TO USE IT AND WHEN NOT TO IS THE SKILL.',
-        support: 'Most programs teach the butterfly as the default technique. Smarter Goalie teaches the goalie when the butterfly is the right tool and when it is not. A goalie who only has one tool is predictable.',
-        voiceLabel: 'HEAR COACH MIKE: THE BUTTERFLY, WHEN IT SERVES THE GOALIE AND WHEN IT DOES NOT',
-      },
-      {
-        statement: 'FORM TECH IS WHERE THE FEEL FACTOR AND TECHNICAL EXECUTION MEET.',
-        support: 'The Feel Factor is the internal read during execution. Does it feel right before you see the result? The Technical Eye is the observation after. Form Tech is where both are trained together.',
-        voiceLabel: 'HEAR COACH MIKE: THE CONNECTION BETWEEN FORM TECH, THE FEEL FACTOR, AND THE TECHNICAL EYE',
-      },
-      {
-        statement: 'EVERY SAVE TECHNIQUE HAS A CORRECT FORM. EVERY CORRECT FORM HAS A FEELING. SMARTER GOALIE TEACHES BOTH.',
-        support: 'Most programs teach what to do. Smarter Goalie teaches what it should feel like when you do it correctly. The difference between knowing a technique and owning it is the feel.',
-        voiceLabel: 'HEAR COACH MIKE: TEACHING THE FEEL OF CORRECT TECHNIQUE AND WHY IT PRODUCES PERMANENT DEVELOPMENT',
+        statement: 'FORM IS HOW YOU LOOK. CORRECT FORM IS CONTROL. ANYTHING LESS IS SLOPPY — AND SLOPPY LETS GOALS IN.',
+        support: 'Form Tech is rated by Control Factor. Your new knowledge — your new understanding — lets you pinpoint the breakdown of any execution and isolate the correction, driving toward your highest level of Control Factor.',
+        voiceLabel: 'HEAR COACH MIKE: THE CONTROL FACTOR AND WHAT CORRECT FORM PRODUCES',
+        extra: {
+          label: 'What You\'ll Own',
+          items: [
+            'Improved insight — no wasted movement, no wasted energy, while striving to eliminate any wasted time',
+            'Self-evaluation and self-coaching principles — using your time wisely instead of standing around waiting for the team to involve you',
+            'Self-empowered — showing all that witness you: you know something. Your character and self-discipline on display for all to admire',
+          ],
+        },
       },
     ],
   },
@@ -223,80 +236,97 @@ const PILLARS: Record<string, PillarData> = {
     number: '06',
     title: 'Game & Practice Performance',
     titleGroups: [2, 1, 1],
-    subtitle: 'Where Everything Comes Together',
-    intro: 'Game and Practice Performance is where everything comes together. Reading the play. Reading the stick. Reading the breakout. Charting the game and the practice. The Development Loop. This Pillar is the measure of the entire system — it is where the goalie finds out if everything they have built actually works under game conditions.',
+    subtitle: 'Game & practice charting — the building blocks of discovering your game.',
+    intro: 'Every goalie wants the tailored experience. Few understand where it comes from. It comes from your baseline — your game as it truly is, across all 7 Pillars. Hope is not a game plan. Your charts reveal your game — the good and the areas that need attention — and together we fill the gaps.',
     accent: '#22d3ee',
     accentAlt: BLUE3,
     facts: [
       {
-        statement: 'A GOALIE WHO CANNOT READ THE PLAY IS ALWAYS REACTING. A GOALIE WHO CAN IS ALWAYS COMPETING.',
-        support: 'Reading the breakout. Reading the stick. Reading the shooter. These are trainable skills. Smarter Goalie teaches them in sequence — each one building on the last.',
-        voiceLabel: 'HEAR COACH MIKE: READING THE PLAY AS A TRAINABLE SKILL AND HOW SMARTER GOALIE DEVELOPS IT SYSTEMATICALLY',
+        statement: 'THIS IS WHERE IT ALL BEGINS — YOUR BASELINE.',
+        support: 'The more Smarter Goalie knows about you, the more you will understand your baseline profile — and the more tailored your journey becomes. Team practice gives you some. Smarter Goalie shows you how even an extra half hour to an hour a week, used with purpose, accelerates development beyond what anyone expects.\n\nWe build your template. We construct your maintenance and development loop — and it grows as the new you is created. Your journey is personal to you, and your development cycle is structured, systematic, and pointed at one thing: building a starter who is consistent in performance — game and practice.',
+        voiceLabel: 'HEAR COACH MIKE: THE BASELINE AND WHY THE TAILORED EXPERIENCE STARTS HERE',
       },
       {
-        statement: 'THE GAME CHART IS NOT A RECORD OF WHAT HAPPENED. IT IS A ROADMAP FOR WHAT COMES NEXT.',
-        support: 'Factor Ratios. Good goal versus bad goal. V.M.P. intensity read period by period. Strong Side versus Weak Side. The game chart tells the goalie exactly what to work on in the next practice. Nothing is guesswork.',
-        voiceLabel: 'HEAR COACH MIKE: THE GAME CHART, WHAT IT CAPTURES, AND HOW IT DRIVES THE NEXT PRACTICE',
+        statement: 'THE 4 TIERS — FROM YOUR FIRST CHART TO THE #1 GOALIE.',
+        support: 'The 7 Pillars are what you learn. The 4 Tiers are how you climb — the journey of self-evaluation, knowledge acquisition, and consistent performance that merges mental and physical development into one path. Each Tier is earned. Nothing is skipped, nothing is rushed — the system moves with you as your knowledge and skill solidify.',
+        voiceLabel: 'HEAR COACH MIKE: THE 4 TIERS AND HOW EACH ONE IS EARNED, NEVER RUSHED',
+        extra: {
+          label: 'The 4 Tiers',
+          items: [
+            'Tier 1: Growing Your Fundamentals Chart — your chart is a living document, the story of your journey',
+            'Tier 2: Building Your Practice Schedule for Reaffirmation — every rep reaffirms knowledge until the technique is owned',
+            'Tier 3: Knowledge Base Across the 7 Pillars — the knowledge stops living on paper and starts living in you',
+            'Tier 4: Pinnacle Routine & Lifestyle — The #1 Goalie — the Intelligent Athletic Goaltender',
+          ],
+        },
       },
       {
-        statement: 'THE DEVELOPMENT LOOP IS THE MOST POWERFUL TOOL IN GOALTENDING DEVELOPMENT. SMARTER GOALIE BUILDS IT INTO EVERY SESSION.',
-        support: 'Game Chart → Practice Index → Practice Chart → Next Game Chart. Every game informs every practice. Every practice prepares for every game. The loop never breaks. Nothing is ever lost.',
+        statement: 'CHART IT. UNDERSTAND IT. TRAIN IT. OWN IT — THEN CHART AGAIN.',
+        support: 'Game to practice to game, the gaps close and the good compounds. This works wherever you train. At team practice, you arrive with a plan — using your time wisely. In a private session, every rep has a purpose your charts chose.\n\nYou execute, you chart, you submit — and the review comes back with direction. Nobody guesses. The whole team around you — parent, coach, goalie coach — reads from the same page: yours.',
         voiceLabel: 'HEAR COACH MIKE: THE DEVELOPMENT LOOP AND HOW IT TURNS EVERY GAME INTO A DEVELOPMENT ROADMAP',
       },
       {
-        statement: 'A GOOD GOAL AND A BAD GOAL ARE NOT THE SAME THING. MOST GOALIES NEVER LEARN THE DIFFERENCE.',
-        support: 'A good goal is one the goalie could not have stopped given their position and the shot. A bad goal is one they could have stopped. Smarter Goalie teaches goalies to make that distinction honestly and use it for development.',
-        voiceLabel: 'HEAR COACH MIKE: THE GOOD GOAL AND BAD GOAL DISTINCTION AND WHY HONEST SELF-EVALUATION IS THE FOUNDATION OF DEVELOPMENT',
-      },
-      {
-        statement: 'THE PRACTICE THAT HAS NO DIRECTION IS NOT A PRACTICE. IT IS A WORKOUT. SMARTER GOALIE GIVES EVERY PRACTICE DIRECTION.',
-        support: 'One directive per practice. Derived from the game chart. Connected to the Development Loop. Every minute on the ice has a purpose. Nothing is random.',
-        voiceLabel: 'HEAR COACH MIKE: THE ONE DIRECTIVE PER PRACTICE MODEL AND HOW IT TRANSFORMS PRACTICE FROM ACTIVITY TO DEVELOPMENT',
-      },
-      {
-        statement: 'STRONG SIDE AND WEAK SIDE ARE DEVELOPED SIMULTANEOUSLY. NEITHER IS NEGLECTED. EVER.',
-        support: 'The Maintenance Program holds the Strong Side while the Weak Side develops. Both sides grow. The gap closes. The goalie becomes complete.',
-        voiceLabel: 'HEAR COACH MIKE: STRONG SIDE, WEAK SIDE, AND THE MAINTENANCE PROGRAM',
+        statement: 'YOUR JOURNEY IS PERSONAL. YOUR DEVELOPMENT CYCLE IS SYSTEMATIC.',
+        support: 'The result is a starter consistent in performance — game and practice.',
+        voiceLabel: 'HEAR COACH MIKE: THE PERFORMANCE DIFFERENCE AND WHAT IT LOOKS LIKE AT EVERY LEVEL',
+        extra: {
+          label: 'What You\'ll Own',
+          items: [
+            'Your baseline profile — the gateway to a tailored experience built from your charts and your game, never a copy of someone else\'s program',
+            'The direction — purposeful practice with one clear focus at a time, growing step by earned step toward the director\'s chair',
+            'A loop that compounds — maintenance and development working together, so what you master stays sharp while the new you keeps growing',
+          ],
+        },
       },
     ],
   },
   '7': {
     number: '07',
-    title: 'LIFE STYLE',
-    subtitle: 'The Pillar Most Programs Never Address',
-    intro: 'LIFE STYLE is the final Pillar and the one most programs never address at all. Off-ice routine. Mental preparation. Balance. Sleep. Nutrition. Recovery. The goalie who takes care of themselves off the ice is the goalie who performs on it. LIFE STYLE is not separate from goaltending. It is part of it.',
+    title: 'Lifestyle',
+    titleOneLine: true,
+    subtitle: 'The goalie you are when nobody is watching.',
+    intro: 'Six Pillars live at the rink. This one lives everywhere else — and it decides what the other six are worth. Lifestyle is the pillar that never takes a shift off: how you sleep, how you fuel, how you recover, how you carry yourself when there\'s no net in sight.',
     accent: BLUE2,
     accentAlt: BLUE,
     facts: [
       {
-        statement: 'WHAT THE GOALIE DOES BETWEEN GAMES IS AS IMPORTANT AS WHAT THEY DO DURING THEM.',
-        support: 'Sleep. Nutrition. Recovery. Mental preparation. Off-ice routine. These are not LIFE STYLE suggestions. They are performance variables. Smarter Goalie treats them as such.',
-        voiceLabel: 'HEAR COACH MIKE: LIFESTYLE AS A PERFORMANCE VARIABLE AND WHY MOST PROGRAMS IGNORE IT',
+        statement: 'SIX PILLARS LIVE AT THE RINK. THIS ONE LIVES EVERYWHERE ELSE.',
+        support: 'Sport is athletic — hockey takes athletics — and athletics are built in the other twenty-two hours of the day. The disciplines, the commitments, the dedication — they\'re not rules we hand you. They\'re choices you grow into, until the goalie and the person are the same one.\n\nTier 4 told you where this journey ends — self-awareness as an individual and an athlete, merged into a lifestyle. This is that lifestyle.',
+        voiceLabel: 'HEAR COACH MIKE: THE PILLAR THAT DECIDES WHAT ALL THE OTHERS ARE WORTH',
       },
       {
-        statement: 'THE GOALIE WHO PREPARES MENTALLY BEFORE THEY ARRIVE AT THE RINK HAS ALREADY WON HALF THE BATTLE.',
-        support: 'Pre-game routine is a trained behaviour. The mental state the goalie arrives in determines the mental state they compete in. Smarter Goalie builds the routine that produces the right state.',
-        voiceLabel: 'HEAR COACH MIKE: PRE-GAME MENTAL PREPARATION AND WHAT THE RIGHT ROUTINE PRODUCES',
+        statement: 'BUILT IN THE HOURS NOBODY SEES.',
+        support: 'Lifestyle covers what the rink can\'t: sleep that restores a body under an athlete\'s stress — and locks in what practice built. Fuel that decides whether the third period belongs to you or to fatigue. Recovery that arrives before the breakdown, not after. Off-ice movement that builds the athlete underneath the goalie. And character — because how you carry yourself away from the net travels with you into it.\n\nRoutine is more than habit — routine builds consistency, and consistency creates patterns. None of this is tracked to control you. It\'s charted so YOU see the connection — the night before, the meal before, the week before — and how each one shows up on your game chart.',
+        voiceLabel: 'HEAR COACH MIKE: THE HOURS NOBODY SEES AND WHY THEY DECIDE THE HOURS EVERYONE DOES',
+        extra: {
+          label: 'The Lifestyle Pillars',
+          items: [
+            'Sleep — restores a body under an athlete\'s stress, locks in what practice built',
+            'Fuel — decides whether the third period belongs to you or to fatigue',
+            'Recovery — arrives before the breakdown, not after',
+            'Off-Ice Training — builds the athlete underneath the goalie',
+            'Routines — build consistency, consistency creates patterns',
+            'Character — how you carry yourself away from the net travels with you into it',
+          ],
+        },
       },
       {
-        statement: 'ACCEPTANCE IS A SKILL. THE GOALIE WHO CAN ACCEPT WHAT CANNOT BE CHANGED IS FREE TO COMPETE.',
-        support: 'The Mind Vault. Acceptance Lists. Cannot-Accept Lists. The goalie learns to identify what they can control and release what they cannot. This is not philosophy. It is a trained mental practice with specific exercises.',
-        voiceLabel: 'HEAR COACH MIKE: THE MIND VAULT, ACCEPTANCE, AND WHY MENTAL FREEDOM IS THE FOUNDATION OF CONSISTENT PERFORMANCE',
+        statement: 'FROM PILLAR TO IDENTITY — THE INTELLIGENT ATHLETIC GOALTENDER.',
+        support: 'Every Pillar climbs toward the same place. Tier 4 — the Pinnacle Routine & Lifestyle — is where the knowledge, the charts, the practice discipline, and the self-awareness stop being things you do and become who you are.\n\nThe routines aren\'t assigned anymore; they\'re custom-created from knowing yourself with precision. The disciplines, the commitments, the dedication — chosen, not imposed.\n\nThe other six Pillars build your game. This one decides how long you keep it.',
+        voiceLabel: 'HEAR COACH MIKE: FROM PILLAR TO IDENTITY AND WHAT THE INTELLIGENT ATHLETIC GOALTENDER LOOKS LIKE',
       },
       {
-        statement: 'BALANCE IS NOT A LUXURY. IT IS A PERFORMANCE REQUIREMENT.',
-        support: 'The goalie who is consumed by hockey at the expense of everything else does not become a better goalie. They become a burned-out one. Smarter Goalie builds balance deliberately — school, family, rest, enjoyment alongside the development.',
-        voiceLabel: 'HEAR COACH MIKE: BALANCE AND WHY THE MOST DEVELOPED GOALIES ARE ALSO THE MOST BALANCED PEOPLE',
-      },
-      {
-        statement: 'THE MAINTENANCE PROGRAM IS NOT JUST A PRACTICE TOOL. IT IS A LIFESTYLE DISCIPLINE.',
-        support: 'The habits that maintain the Strong Side are off-ice habits as much as on-ice ones. Rest. Visualization. Routine. The Maintenance Program extends beyond the rink.',
-        voiceLabel: 'HEAR COACH MIKE: THE MAINTENANCE PROGRAM EXTENDING INTO THE GOALIE\'S LIFESTYLE',
-      },
-      {
-        statement: 'SMARTER GOALIE DOES NOT BUILD BETTER GOALIES. IT BUILDS BETTER PEOPLE WHO HAPPEN TO PLAY GOAL.',
-        support: 'The character, leadership, self-awareness, and discipline built through the Smarter Goalie system do not stay in the rink. They go everywhere the goalie goes. For the rest of their life.',
-        voiceLabel: 'HEAR COACH MIKE: THE LIFETIME VALUE OF WHAT SMARTER GOALIE BUILDS AND WHY IT MATTERS BEYOND THE GAME',
+        statement: 'THE RINK BUILDS YOUR GAME. YOUR LIFESTYLE DECIDES WHAT IT BECOMES.',
+        support: 'Think Smart. Play Smart.',
+        voiceLabel: 'HEAR COACH MIKE: THE LIFESTYLE DIFFERENCE AND WHAT IT PRODUCES FOR THE REST OF YOUR LIFE',
+        extra: {
+          label: 'What You\'ll Own',
+          items: [
+            'The connection — your charts linking the night before, the meal before, the week before to what shows up in the net',
+            'The Routine Principle — routines that build consistency, consistency that builds patterns, patterns that reinforce each other',
+            'The identity — disciplines, commitments, and dedication you chose, merged into the Intelligent Athletic Goaltender who sets the tone',
+          ],
+        },
       },
     ],
     close: {
@@ -574,33 +604,6 @@ export default function PillarPage() {
       {/* ── Origin section for Pillar 1 ── */}
       {id === '1' && (
         <>
-          {/* Six Decades */}
-          <section style={{ position: 'relative', overflow: 'hidden', padding: 'clamp(80px,10vw,130px) 0', background: 'linear-gradient(155deg, #0d2848 0%, #133050 65%, #0b2242 100%)' }}>
-            <Boxes />
-            <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 25%, #0d2848 72%)' }} />
-            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 2 }}>
-              <h2 style={{ fontSize: 'clamp(30px, 6vw, 80px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', color: '#fff', margin: '0 0 28px', maxWidth: '1000px' }}>
-                SIX DECADES OF STUDY THAT{' '}
-                <span style={{ color: BLUE2 }}>CONTINUES TO THIS DAY.</span>
-              </h2>
-              <div style={{ maxWidth: '760px', marginBottom: '40px' }}>
-                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.9)', fontStyle: 'italic', lineHeight: 1.85, marginBottom: '16px' }}>
-                  Born 1955. Living room floor. Pillow as chest protector. Hockey Night in Canada on a black and white television. No goalie coaches existed. Not one.
-                </p>
-                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.9)', fontStyle: 'italic', lineHeight: 1.85, marginBottom: '16px' }}>
-                  Michael Locicero did not inherit a system. He built one. From nothing. Asking WHY before HOW for sixty years.
-                </p>
-                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.9)', fontStyle: 'italic', lineHeight: 1.85, marginBottom: '16px' }}>
-                  He played competitively until age 32. Then he never stopped. Six decades of observation, testing, teaching, and refining. The playing gave him the foundation. The six decades gave him the depth.
-                </p>
-                <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#fff', fontStyle: 'italic', lineHeight: 1.85, fontWeight: 700, margin: 0 }}>
-                  The system is not frozen. It is still being built. Today.
-                </p>
-              </div>
-              <VoiceButton label="HEAR COACH MIKE: THE ORIGIN STORY — BORN 1955, THE LIVING ROOM FLOOR, AND THE DECISION TO BUILD IT HIMSELF" />
-            </div>
-          </section>
-
           {/* Puzzle section */}
           <section style={{ position: 'relative', overflow: 'hidden', padding: 'clamp(80px,10vw,130px) 0', background: 'linear-gradient(140deg, #1b3c7c 0%, #143270 100%)' }}>
             <div style={{ position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(100px, 14vw, 200px)', fontWeight: 900, color: 'rgba(255,255,255,0.02)', letterSpacing: '-6px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', textTransform: 'uppercase' }}>PUZZLE</div>
@@ -922,10 +925,10 @@ export default function PillarPage() {
                 { num: '01', label: 'Mind-Set', a: '#00f2ff' },
                 { num: '02', label: 'Skating Tech', a: BLUE2 },
                 { num: '03', label: '7AMS', a: BLUE },
-                { num: '04', label: '7 Point', a: BLUE3 },
+                { num: '04', label: '6 Zone Grid', a: BLUE3 },
                 { num: '05', label: 'Form Tech', a: '#38bdf8' },
                 { num: '06', label: 'Game & Practice', a: '#22d3ee' },
-                { num: '07', label: 'LIFE STYLE', a: BLUE2 },
+                { num: '07', label: 'Lifestyle', a: BLUE2 },
               ] as { num: string; label: string; a: string }[]).map((p, i) => {
                 const isCurrentPillar = String(i + 1) === id;
                 return (
