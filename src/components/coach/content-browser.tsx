@@ -37,9 +37,11 @@ interface ContentBrowserProps {
   selectedSportId?: string;
   coachId?: string;
   preSelectedSportId?: string;
+  /** Pre-select the difficulty filter — pass student's pacingLevel so the browser defaults to matching content */
+  preSelectedDifficulty?: string;
 }
 
-export function ContentBrowser({ open, onOpenChange, onSelect, selectedSportId, coachId, preSelectedSportId }: ContentBrowserProps) {
+export function ContentBrowser({ open, onOpenChange, onSelect, selectedSportId, coachId, preSelectedSportId, preSelectedDifficulty }: ContentBrowserProps) {
   const { user } = useAuth();
   const effectiveCoachId = coachId || user?.id;
 
@@ -50,14 +52,15 @@ export function ContentBrowser({ open, onOpenChange, onSelect, selectedSportId, 
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState(selectedSportId || '');
-  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState(preSelectedDifficulty || 'all');
   const [contentSource, setContentSource] = useState<'library' | 'custom'>('library');
   const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
 
   useEffect(() => {
     if (open && preSelectedSportId) setSelectedSport(preSelectedSportId);
-  }, [open, preSelectedSportId]);
+    if (open && preSelectedDifficulty) setSelectedDifficulty(preSelectedDifficulty);
+  }, [open, preSelectedSportId, preSelectedDifficulty]);
 
   useEffect(() => {
     if (open) {
@@ -281,12 +284,24 @@ export function ContentBrowser({ open, onOpenChange, onSelect, selectedSportId, 
                   className="cb-input" style={{ ...inputStyle, paddingLeft: '38px' }} />
               </div>
               {contentSource === 'library' && (
-                <select value={selectedDifficulty} onChange={e => setSelectedDifficulty(e.target.value)} className="cb-select" style={{ ...selectStyle, minWidth: '160px' }}>
-                  <option value="all">All Levels</option>
-                  <option value="introduction">Introduction</option>
-                  <option value="development">Development</option>
-                  <option value="refinement">Refinement</option>
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <select value={selectedDifficulty} onChange={e => setSelectedDifficulty(e.target.value)} className="cb-select" style={{ ...selectStyle, minWidth: '160px' }}>
+                    <option value="all">All Levels</option>
+                    <option value="introduction">Introduction</option>
+                    <option value="development">Development</option>
+                    <option value="refinement">Refinement</option>
+                  </select>
+                  {preSelectedDifficulty && selectedDifficulty === preSelectedDifficulty && (
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: GOLD, background: 'rgba(212,169,59,0.12)', border: '1px solid rgba(212,169,59,0.3)', borderRadius: '20px', padding: '3px 9px', whiteSpace: 'nowrap' }}>
+                      Student&apos;s Level
+                    </span>
+                  )}
+                  {preSelectedDifficulty && selectedDifficulty !== preSelectedDifficulty && selectedDifficulty !== 'all' && (
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: '#f87171', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '20px', padding: '3px 9px', whiteSpace: 'nowrap' }}>
+                      ⚠ Level mismatch
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
