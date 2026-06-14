@@ -30,6 +30,10 @@ export interface User {
   onboardingCompletedAt?: Timestamp;
   initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
 
+  // Coach onboarding fields
+  coachOnboardingComplete?: boolean;
+  coachOnboardingCompletedAt?: Timestamp;
+
   // Parent-Child Linking Fields (for students/goalies)
   linkedParentIds?: string[];      // Array of parent user IDs linked to this goalie
   parentLinkCode?: string;         // Code for parents to link (XXXX-XXXX format)

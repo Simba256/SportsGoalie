@@ -8,6 +8,7 @@ import {
   Brain, Footprints, Shapes, Grid3X3, Dumbbell, Heart,
   Play, Sparkles, Zap, User as UserIcon, Flame,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { onboardingService } from '@/lib/database';
@@ -20,7 +21,7 @@ import { toast } from 'sonner';
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, LucideIcon> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 const PILLAR_COLORS: Record<string, string> = {
