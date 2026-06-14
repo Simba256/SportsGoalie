@@ -43,7 +43,8 @@ export interface User {
   // Parent-Child Linking Fields (for parents)
   linkedChildIds?: string[];       // Array of goalie user IDs this parent is linked to
   parentOnboardingComplete?: boolean; // Whether parent has completed onboarding
-  coachOnboardingComplete?: boolean;  // Whether coach has completed baseline profile
+  coachOnboardingComplete?: boolean;      // Whether coach has completed baseline profile
+  coachOnboardingCompletedAt?: Timestamp; // When coach completed baseline profile
 
   // Timestamps
   createdAt: Timestamp;

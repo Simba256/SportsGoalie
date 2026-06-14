@@ -19,11 +19,7 @@ const BLUE = '#37b5ff';
 const RED = '#f87171';
 const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
 
-<<<<<<< HEAD
-const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
-=======
 const PILLAR_ICONS: Record<string, LucideIcon> = {
->>>>>>> e9f05073d0f740d46f1573caec2788d046b07e5d
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 
