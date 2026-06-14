@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, UserPlus, BarChart3, BookOpen, Trophy,
   Video, FileText, MessageSquare, Shield, Settings, LogOut,
-  ChevronLeft, Menu, X, User, BarChart2,
+  ChevronLeft, Menu, X, User, BarChart2, Dumbbell,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
@@ -54,6 +54,7 @@ const navSections: NavSection[] = [
     label: 'System',
     items: [
       { label: 'Charting', href: '/admin/charting', icon: BarChart2 },
+      { label: 'L-Index', href: '/admin/l-index', icon: Dumbbell },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
