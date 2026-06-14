@@ -142,7 +142,7 @@ export default function V2PreGamePage() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
         <SkeletonContentPage />
       </div>
     );
@@ -150,35 +150,36 @@ export default function V2PreGamePage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
         <div className="text-center space-y-3">
-          <p className="text-zinc-600">Session not found</p>
-          <Button variant="outline" onClick={() => router.push('/charting')}>Back to Sessions</Button>
+          <p className="text-white/60">Session not found</p>
+          <Button variant="outline" onClick={() => router.push('/charting')} className="border-[rgba(179,136,255,0.35)] text-white/70 hover:text-white hover:bg-[rgba(179,136,255,0.15)]">Back to Sessions</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
+      <div className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: 'rgba(0,9,26,0.92)', borderColor: 'rgba(179,136,255,0.18)' }}>
         <div className="flex items-center justify-between px-6 h-16">
           <button
             type="button"
             onClick={() => router.push(`/charting/sessions/${sessionId}`)}
-            className="flex items-center gap-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-blue-700 to-slate-900 bg-clip-text text-transparent">
+          <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#B388FF] to-white bg-clip-text text-transparent">
             Pre-Game
           </h1>
           <Button
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-4 h-9 text-sm font-semibold"
+            className="text-white rounded-lg px-4 h-9 text-sm font-semibold border-0"
+            style={{ background: '#B388FF' }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
           </Button>
@@ -190,17 +191,16 @@ export default function V2PreGamePage() {
 
         {/* Section header */}
         <div>
-          <h2 className="text-xl font-black text-zinc-900">Mind Management</h2>
-          <p className="text-sm text-zinc-500 mt-1">
+          <h2 className="text-xl font-black text-white">Mind Management</h2>
+          <p className="text-sm text-white/50 mt-1">
             Complete before leaving for the rink. Not at the rink.
           </p>
         </div>
 
-        {/* Fields grid — 2 columns on desktop, 1 on mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
 
           {/* 1. Personal Start Time */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(179,136,255,0.18)' }}>
             <ContextualHelp
               label="Personal Start Time"
               helpText="When does your Mind Management begin? This tracks how early you start preparing mentally before the game."
@@ -214,7 +214,7 @@ export default function V2PreGamePage() {
           </div>
 
           {/* 2. Mental State Check-in */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(179,136,255,0.18)' }}>
             <ContextualHelp
               label="Mental State Check-in"
               helpText="Where are you arriving from mentally? Rate how you feel right now. A low rating will prompt a voice note to capture what's on your mind."
@@ -228,8 +228,8 @@ export default function V2PreGamePage() {
 
             {/* Conditional voice for low ratings */}
             {formData.mentalStateRating <= 2 && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t border-gray-100">
-                <p className="text-xs text-zinc-600 mb-2 italic">What is on your mind?</p>
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t" style={{ borderColor: 'rgba(179,136,255,0.15)' }}>
+                <p className="text-xs text-white/60 mb-2 italic">What is on your mind?</p>
                 <VoiceRecorder
                   onTranscriptionComplete={(text) => update('mentalStateVoiceNote', text)}
                   initialText={formData.mentalStateVoiceNote}
@@ -240,7 +240,7 @@ export default function V2PreGamePage() {
           </div>
 
           {/* 3. Routine Completed */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(179,136,255,0.18)' }}>
             <ContextualHelp
               label="Routine Completed?"
               helpText="Did you complete your pre-game routine? Your routine is your anchor — it sets the stage for how you'll perform."
@@ -257,7 +257,7 @@ export default function V2PreGamePage() {
           </div>
 
           {/* 4. Anxiety Present */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(179,136,255,0.18)' }}>
             <ContextualHelp
               label="Anxiety Present?"
               helpText="If anxiety is present, this is normal. What matters is what you do with it. Your response feeds your Mind Vault — methods that work get stored."
@@ -274,7 +274,7 @@ export default function V2PreGamePage() {
           </div>
 
           {/* 5. Target State Achieved */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(179,136,255,0.18)' }}>
             <ContextualHelp
               label="Target State Achieved?"
               helpText="Excited, calm, controlled — did you get there? Your target state is the mental place you need to be before competing."
@@ -296,7 +296,8 @@ export default function V2PreGamePage() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-bold shadow-md shadow-blue-500/20 px-8"
+            className="w-full sm:w-auto h-10 text-white rounded-lg text-sm font-bold px-8 border-0"
+            style={{ background: '#B388FF', boxShadow: '0 4px 14px rgba(179,136,255,0.35)' }}
           >
             {saving ? (
               <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>

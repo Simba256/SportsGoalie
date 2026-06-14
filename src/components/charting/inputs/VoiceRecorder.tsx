@@ -113,10 +113,10 @@ export function VoiceRecorder({
             ${isRecording
               ? 'bg-red-600 text-white shadow-md shadow-red-600/30 scale-110'
               : isProcessing
-              ? 'bg-zinc-300 text-zinc-500'
+              ? 'bg-white/15 text-white/40'
               : supported
-              ? 'bg-zinc-100 text-zinc-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
-              : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+              ? 'bg-white/10 text-white/60 hover:bg-[rgba(55,181,255,0.12)] hover:text-[#37b5ff] hover:shadow-sm'
+              : 'bg-white/10 text-white/25 cursor-not-allowed'
             }
           `}
           aria-label={isRecording ? 'Stop recording' : 'Start recording'}
@@ -141,13 +141,13 @@ export function VoiceRecorder({
           {isRecording ? (
             <p className="text-red-600 font-medium">Recording... tap to stop</p>
           ) : isProcessing ? (
-            <p className="text-zinc-500">Processing...</p>
+            <p className="text-white/50">Processing...</p>
           ) : !supported ? (
-            <p className="text-zinc-400">Voice not available — type below</p>
+            <p className="text-white/40">Voice not available — type below</p>
           ) : text ? (
-            <p className="text-zinc-500">Tap mic to re-record, or edit below</p>
+            <p className="text-white/50">Tap mic to re-record, or edit below</p>
           ) : (
-            <p className="text-zinc-400">{placeholder}</p>
+            <p className="text-white/40">{placeholder}</p>
           )}
         </div>
 
@@ -159,7 +159,7 @@ export function VoiceRecorder({
               setIsEditing(true);
               setTimeout(() => textareaRef.current?.focus(), 100);
             }}
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/40 hover:text-[#37b5ff] hover:bg-[rgba(55,181,255,0.1)] transition-colors"
             aria-label="Edit transcription"
           >
             <Pencil className="w-4 h-4" />
@@ -178,7 +178,7 @@ export function VoiceRecorder({
               onBlur={() => { if (supported && text) setIsEditing(false); }}
               placeholder={placeholder}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border border-white/12 bg-white/[0.06] text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/60 resize-none transition-colors"
             />
           ) : text ? (
             <div
@@ -186,7 +186,7 @@ export function VoiceRecorder({
                 setIsEditing(true);
                 setTimeout(() => textareaRef.current?.focus(), 100);
               }}
-              className="px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm text-zinc-700 leading-relaxed cursor-pointer hover:bg-zinc-100 transition-colors"
+              className="px-4 py-3 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white/80 leading-relaxed cursor-pointer hover:bg-white/[0.08] transition-colors"
             >
               {text}
             </div>

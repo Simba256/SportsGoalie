@@ -171,6 +171,7 @@ export default function PillarDetailPage() {
   const [userLevel, setUserLevel] = useState<PacingLevel | null>(null);
   const [userScore, setUserScore] = useState<number | null>(null);
   const [levelLoading, setLevelLoading] = useState(false);
+  const [showAllLevels, setShowAllLevels] = useState(false);
 
   useEffect(() => {
     if (!pillarId) return;
@@ -246,15 +247,15 @@ export default function PillarDetailPage() {
   const slug = getPillarSlugFromDocId(pillar.id);
   void (slug ? PILLARS.find(x => x.slug === slug) : null);
 
-  const filteredSkills = userLevel ? skills.filter(s => s.difficulty === userLevel) : skills;
+  const displayedSkills = (userLevel && !showAllLevels) ? skills.filter(s => s.difficulty === userLevel) : skills;
   const skillsByDifficulty: Record<DifficultyLevel, Skill[]> = {
-    introduction: filteredSkills.filter(s => s.difficulty === 'introduction'),
-    development:  filteredSkills.filter(s => s.difficulty === 'development'),
-    refinement:   filteredSkills.filter(s => s.difficulty === 'refinement'),
+    introduction: displayedSkills.filter(s => s.difficulty === 'introduction'),
+    development:  displayedSkills.filter(s => s.difficulty === 'development'),
+    refinement:   displayedSkills.filter(s => s.difficulty === 'refinement'),
   };
-  const completedTotal = filteredSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
-  const progressPct = filteredSkills.length > 0 ? Math.round((completedTotal / filteredSkills.length) * 100) : 0;
-  const orderedDifficulties = userLevel ? [userLevel] as DifficultyLevel[] : DIFFICULTY_ORDER;
+  const completedTotal = displayedSkills.filter(s => skillProgress[s.id]?.isCompleted).length;
+  const progressPct = displayedSkills.length > 0 ? Math.round((completedTotal / displayedSkills.length) * 100) : 0;
+  const orderedDifficulties = (userLevel && !showAllLevels) ? [userLevel] as DifficultyLevel[] : DIFFICULTY_ORDER;
   const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
   return (
@@ -346,19 +347,43 @@ export default function PillarDetailPage() {
 
       {/* ── Skills ── */}
       <section style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,4vw,24px) 64px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>
-            Skills <span style={{ fontSize: '14px', fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>({filteredSkills.length})</span>
+            Skills{' '}
+            <span style={{ fontSize: '14px', fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>
+              ({displayedSkills.length}{showAllLevels && userLevel ? ` — ${skills.filter(s => s.difficulty === userLevel).length} at your level` : ''})
+            </span>
           </h2>
           {userLevel && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
-              <Star size={13} color="#fbbf24" />
-              Showing: <span style={{ fontWeight: 700, color: '#fff' }}>{userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {!showAllLevels && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
+                  <Star size={13} color="#fbbf24" />
+                  Showing: <span style={{ fontWeight: 700, color: '#fff' }}>{userLevel.charAt(0).toUpperCase() + userLevel.slice(1)}</span>
+                </div>
+              )}
+              <button
+                onClick={() => setShowAllLevels(v => !v)}
+                style={{ fontSize: '11px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', border: `1px solid ${showAllLevels ? BLUE : 'rgba(255,255,255,0.15)'}`, background: showAllLevels ? 'rgba(55,181,255,0.1)' : 'rgba(255,255,255,0.04)', color: showAllLevels ? BLUE : 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'all 0.18s' }}
+              >
+                {showAllLevels ? 'My Level Only' : 'Show All Levels'}
+              </button>
             </div>
           )}
         </div>
 
-        {filteredSkills.length === 0 ? (
+        {showAllLevels && userLevel && levelCfg && (
+          <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '12px', background: `${levelCfg.color}0d`, border: `1px solid ${levelCfg.color}28`, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Star size={14} color={levelCfg.color} />
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+              You&apos;re viewing all difficulty levels. Skills marked{' '}
+              <span style={{ fontWeight: 700, color: levelCfg.color }}>Your Level</span>{' '}
+              match your assessed <span style={{ fontWeight: 700, color: '#fff' }}>{levelCfg.label}</span> level — start there.
+            </p>
+          </div>
+        )}
+
+        {displayedSkills.length === 0 ? (
           <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '16px', padding: '48px', textAlign: 'center' }}>
             <BookOpen size={36} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />
             <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Skills coming soon</p>

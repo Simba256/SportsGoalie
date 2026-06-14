@@ -42,7 +42,7 @@ export function RotatingNumberSelector({
     <div className="w-full">
       <div
         ref={containerRef}
-        className="h-36 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 scrollbar-hide"
+        className="h-36 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.03] scrollbar-hide"
         aria-label="Scroll to browse, click to select"
       >
         {options.map((option, index) => {
@@ -54,8 +54,8 @@ export function RotatingNumberSelector({
               onClick={() => onChange(option.value)}
               className={`w-full h-12 px-3 text-sm text-left transition-colors truncate ${
                 isSelected
-                  ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-500'
-                  : 'text-zinc-500 hover:bg-white hover:text-zinc-700'
+                  ? 'bg-[rgba(55,181,255,0.12)] text-[#37b5ff] font-semibold border-l-2 border-[#37b5ff]'
+                  : 'text-white/50 hover:bg-white/[0.08] hover:text-white/80'
               }`}
             >
               {option.label}

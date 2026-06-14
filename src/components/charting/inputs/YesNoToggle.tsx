@@ -51,7 +51,7 @@ export function YesNoToggle({
             px-5 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200
             ${value === true
               ? 'bg-blue-500 text-white shadow-sm shadow-blue-500/25'
-              : 'bg-gray-100 text-zinc-500 hover:bg-gray-200'
+              : 'bg-white/10 text-white/55 hover:bg-white/15'
             }
           `}
         >
@@ -64,7 +64,7 @@ export function YesNoToggle({
             px-5 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200
             ${value === false
               ? 'bg-red-600 text-white shadow-sm shadow-red-600/25'
-              : 'bg-gray-100 text-zinc-500 hover:bg-gray-200'
+              : 'bg-white/10 text-white/55 hover:bg-white/15'
             }
           `}
         >
@@ -76,7 +76,7 @@ export function YesNoToggle({
       {showVoice && (
         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
           {voicePrompt && (
-            <p className="text-sm text-zinc-600 mb-2 italic">{voicePrompt}</p>
+            <p className="text-sm text-white/60 mb-2 italic">{voicePrompt}</p>
           )}
           <VoiceRecorder
             onTranscriptionComplete={(text) => onVoiceComplete?.(text)}

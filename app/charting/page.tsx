@@ -6,28 +6,28 @@ import { useRouter } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
 import { Session, SessionStats, DynamicChartingEntry, ChartingEntry } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, TrendingUp, Flame, CheckCircle2, X, ArrowRight } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, CheckCircle2, X, ArrowRight, BarChart2 } from 'lucide-react';
 import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
+import { NewSessionModal } from '@/components/charting/NewSessionModal';
+
+const CYAN   = '#00FFFF';
+const MINT   = '#00FF99';
+const VIOLET = '#B388FF';
+const CORAL  = '#FF6B6B';
+const MUTED  = 'rgba(255,255,255,0.38)';
+const LABEL  = 'rgba(255,255,255,0.55)';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const toDate = (value: unknown): Date | null => {
-  if (value instanceof Date) {
-    return value;
-  }
-
+  if (value instanceof Date) return value;
   if (value && typeof value === 'object' && 'toDate' in value) {
     const candidate = value as { toDate?: () => Date };
-    if (typeof candidate.toDate === 'function') {
-      return candidate.toDate();
-    }
+    if (typeof candidate.toDate === 'function') return candidate.toDate();
   }
-
   return null;
 };
 
@@ -37,202 +37,102 @@ const toDateKey = (value: unknown): string | null => {
 };
 
 const calculateSessionStats = (sessions: Session[]): SessionStats => {
-  const completedSessions = sessions.filter((session) => session.status === 'completed');
-  const gameSessions = sessions.filter((session) => session.type === 'game');
-  const practiceSessions = sessions.filter((session) => session.type === 'practice');
-
+  const completedSessions = sessions.filter(s => s.status === 'completed');
+  const gameSessions     = sessions.filter(s => s.type === 'game');
+  const practiceSessions = sessions.filter(s => s.type === 'practice');
   const now = new Date();
-  const oneWeekAgo = new Date(now.getTime() - 7 * DAY_MS);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  const thisWeekSessions = sessions.filter((session) => {
-    const date = toDate(session.date);
-    return date ? date >= oneWeekAgo : false;
-  }).length;
-
-  const thisMonthSessions = sessions.filter((session) => {
-    const date = toDate(session.date);
-    return date ? date >= monthStart : false;
-  }).length;
-
+  const oneWeekAgo  = new Date(now.getTime() - 7 * DAY_MS);
+  const monthStart  = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thisWeekSessions  = sessions.filter(s => { const d = toDate(s.date); return d ? d >= oneWeekAgo : false; }).length;
+  const thisMonthSessions = sessions.filter(s => { const d = toDate(s.date); return d ? d >= monthStart : false; }).length;
   return {
-    totalSessions: sessions.length,
-    completedSessions: completedSessions.length,
-    gameSessions: gameSessions.length,
-    practiceSessions: practiceSessions.length,
+    totalSessions: sessions.length, completedSessions: completedSessions.length,
+    gameSessions: gameSessions.length, practiceSessions: practiceSessions.length,
     completionRate: sessions.length > 0 ? (completedSessions.length / sessions.length) * 100 : 0,
-    averageSessionsPerWeek: thisWeekSessions,
-    averageSessionsPerMonth: thisMonthSessions,
-    thisWeekSessions,
-    thisMonthSessions,
+    averageSessionsPerWeek: thisWeekSessions, averageSessionsPerMonth: thisMonthSessions,
+    thisWeekSessions, thisMonthSessions,
   };
 };
 
-const calculateCurrentStreak = (
-  sessions: Session[],
-  chartingEntries: ChartingEntry[],
-  dynamicEntries: DynamicChartingEntry[]
-): number => {
+const calculateCurrentStreak = (sessions: Session[], chartingEntries: ChartingEntry[], dynamicEntries: DynamicChartingEntry[]): number => {
   const activityDateKeys = new Set<string>();
-
-  sessions
-    .filter((session) => session.status === 'completed')
-    .forEach((session) => {
-      const key = toDateKey(session.date);
-      if (key) activityDateKeys.add(key);
-    });
-
-  chartingEntries.forEach((entry) => {
-    const key = toDateKey(entry.submittedAt);
-    if (key) activityDateKeys.add(key);
-  });
-
-  dynamicEntries.forEach((entry) => {
-    const key = toDateKey(entry.submittedAt);
-    if (key) activityDateKeys.add(key);
-  });
-
+  sessions.filter(s => s.status === 'completed').forEach(s => { const k = toDateKey(s.date); if (k) activityDateKeys.add(k); });
+  chartingEntries.forEach(e => { const k = toDateKey(e.submittedAt); if (k) activityDateKeys.add(k); });
+  dynamicEntries.forEach(e => { const k = toDateKey(e.submittedAt); if (k) activityDateKeys.add(k); });
   const streakDates = Array.from(activityDateKeys).sort((a, b) => b.localeCompare(a));
-  if (streakDates.length === 0) {
-    return 0;
-  }
-
-  const today = toDateKey(new Date());
+  if (!streakDates.length) return 0;
+  const today     = toDateKey(new Date());
   const yesterday = toDateKey(new Date(Date.now() - DAY_MS));
-  if (!today || !yesterday) {
-    return 0;
-  }
-
-  if (streakDates[0] !== today && streakDates[0] !== yesterday) {
-    return 0;
-  }
-
+  if (!today || !yesterday) return 0;
+  if (streakDates[0] !== today && streakDates[0] !== yesterday) return 0;
   let streak = 1;
   for (let i = 1; i < streakDates.length; i++) {
-    const previous = new Date(`${streakDates[i - 1]}T00:00:00`);
-    const current = new Date(`${streakDates[i]}T00:00:00`);
-    const diffDays = Math.round((previous.getTime() - current.getTime()) / DAY_MS);
-
-    if (diffDays === 1) {
-      streak += 1;
-      continue;
-    }
-
-    if (diffDays > 1) {
-      break;
-    }
+    const prev = new Date(`${streakDates[i - 1]}T00:00:00`);
+    const curr = new Date(`${streakDates[i]}T00:00:00`);
+    const diff = Math.round((prev.getTime() - curr.getTime()) / DAY_MS);
+    if (diff === 1) { streak++; continue; }
+    if (diff > 1) break;
   }
-
   return streak;
 };
 
 export default function ChartingPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessions,        setSessions]        = useState<Session[]>([]);
   const [chartingEntries, setChartingEntries] = useState<ChartingEntry[]>([]);
-  const [dynamicEntries, setDynamicEntries] = useState<DynamicChartingEntry[]>([]);
+  const [dynamicEntries,  setDynamicEntries]  = useState<DynamicChartingEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const stats = useMemo<SessionStats>(() => calculateSessionStats(sessions), [sessions]);
-
-  const currentStreak = useMemo(
-    () => calculateCurrentStreak(sessions, chartingEntries, dynamicEntries),
-    [sessions, chartingEntries, dynamicEntries]
-  );
+  const stats         = useMemo<SessionStats>(() => calculateSessionStats(sessions), [sessions]);
+  const currentStreak = useMemo(() => calculateCurrentStreak(sessions, chartingEntries, dynamicEntries), [sessions, chartingEntries, dynamicEntries]);
 
   const chartedSessionIds = useMemo(() => {
     const ids = new Set<string>();
-    chartingEntries.forEach((entry) => ids.add(entry.sessionId));
-    dynamicEntries.forEach((entry) => ids.add(entry.sessionId));
+    chartingEntries.forEach(e => ids.add(e.sessionId));
+    dynamicEntries.forEach(e => ids.add(e.sessionId));
     return ids;
   }, [chartingEntries, dynamicEntries]);
 
   const chartingStats = useMemo(() => {
-    const totalSessions = sessions.length;
-    const chartedSessions = sessions.reduce((count, session) => {
-      return count + (chartedSessionIds.has(session.id) ? 1 : 0);
-    }, 0);
-
-    return {
-      totalSessions,
-      chartedSessions,
-      completionRate: totalSessions > 0 ? Math.round((chartedSessions / totalSessions) * 100) : 0,
-    };
+    const totalSessions   = sessions.length;
+    const chartedSessions = sessions.reduce((n, s) => n + (chartedSessionIds.has(s.id) ? 1 : 0), 0);
+    return { totalSessions, chartedSessions, completionRate: totalSessions > 0 ? Math.round((chartedSessions / totalSessions) * 100) : 0 };
   }, [sessions, chartedSessionIds]);
 
-  // Selected day modal state
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate,        setSelectedDate]        = useState<Date | null>(null);
   const [selectedDaySessions, setSelectedDaySessions] = useState<Session[]>([]);
+  const [showNewSession,      setShowNewSession]      = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
+  useEffect(() => { if (!authLoading && !user) router.push('/auth/login'); }, [user, authLoading, router]);
+  useEffect(() => { if (user) loadData(); }, [user]);
 
   const loadData = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
-
-      const [sessionsResult, entriesResult, dynamicEntriesResult] = await Promise.all([
+      const [sR, eR, dR] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getChartingEntriesByStudent(user.id),
         dynamicChartingService.getDynamicEntriesByStudent(user.id),
       ]);
-
-      if (sessionsResult.success && sessionsResult.data) {
-        setSessions(sessionsResult.data);
-      }
-
-      if (entriesResult.success && entriesResult.data) {
-        setChartingEntries(entriesResult.data);
-      }
-
-      if (dynamicEntriesResult.success && dynamicEntriesResult.data) {
-        setDynamicEntries(dynamicEntriesResult.data);
-      }
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDayClick = (date: Date, daySessions: Session[]) => {
-    setSelectedDate(date);
-    setSelectedDaySessions(daySessions);
-  };
-
-  const closeModal = () => {
-    setSelectedDate(null);
-    setSelectedDaySessions([]);
+      if (sR.success && sR.data) setSessions(sR.data);
+      if (eR.success && eR.data) setChartingEntries(eR.data);
+      if (dR.success && dR.data) setDynamicEntries(dR.data);
+    } catch (err) { console.error('Failed to load data:', err); }
+    finally { setLoading(false); }
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'completed':
-      case 'charted':
-        return 'default';
-      case 'in-progress':
-        return 'secondary';
-      default:
-        return 'outline';
+      case 'completed': case 'charted': return 'default';
+      case 'in-progress': return 'secondary';
+      default: return 'outline';
     }
   };
 
   const getDisplayStatus = (session: Session) => {
-    if (session.status === 'completed') {
-      return 'completed';
-    }
+    if (session.status === 'completed') return 'completed';
     return chartedSessionIds.has(session.id) ? 'charted' : session.status;
   };
 
@@ -246,254 +146,218 @@ export default function ChartingPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
-  const sparklinePath = 'M5,40 L20,25 L40,35 L60,15 L80,25 L95,5';
+  if (!user) return null;
 
   return (
-    <div className="bg-gray-50">
-      <section
-        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[430px] md:h-[450px] flex items-start justify-center text-center px-4 pt-16 md:pt-20 overflow-hidden bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/goalie.avif')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-gray-100" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
-        <div className="relative z-10 max-w-4xl w-full mx-auto flex flex-col items-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-            Chart Every
-            <br />
-            Ice Session
-          </h1>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <style>{`
+        .charting-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+        .metric-card-ch { transition: border-color .2s, transform .2s; }
+        .metric-card-ch:hover { transform: translateY(-2px); }
+      `}</style>
 
-          <p className="mt-5 max-w-3xl text-base md:text-lg text-gray-200 leading-relaxed font-light px-4">
-            Build consistency with structured tracking, daily momentum, and clear analytics from your game and practice sessions.
-          </p>
+      {/* ── HEADER CARD ── */}
+      <div style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 55%, #0d0b1c 100%)', border: '1px solid rgba(0,255,255,0.18)', overflow: 'hidden' }}>
+        {/* cyan top line */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent 0%, ${CYAN} 35%, ${MINT} 65%, transparent 100%)` }} />
 
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', padding: 'clamp(20px,3vw,32px) clamp(18px,3vw,28px)' }}>
+          <div style={{ display: 'flex', gap: '18px', alignItems: 'stretch' }}>
+            {/* accent bar */}
+            <div style={{ width: '4px', borderRadius: '99px', background: `linear-gradient(180deg, ${CYAN}, ${MINT})`, flexShrink: 0 }} />
+            <div>
+              <p style={{ fontSize: '11px', color: LABEL, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                Performance Tracking
+              </p>
+              <h1 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-.03em', lineHeight: 1, marginBottom: '12px' }}>
+                Chart Every <span style={{ color: CYAN, textShadow: `0 0 20px rgba(0,255,255,0.4)` }}>Session</span>
+              </h1>
+              <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
+                {stats.totalSessions > 0
+                  ? `${stats.totalSessions} total sessions · ${chartingStats.completionRate}% charted · ${currentStreak} day streak`
+                  : 'Start charting your game and practice sessions to track your progress.'}
+              </p>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setShowNewSession(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: `linear-gradient(135deg, ${CYAN}, ${MINT})`, border: 'none', borderRadius: '9px', padding: '9px 18px', color: '#001a0d', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 18px rgba(0,255,255,0.35)` }}
+                >
+                  <Plus size={13} /> New Session
+                </button>
+                <button
+                  onClick={() => router.push('/charting/analytics')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.14)', borderRadius: '9px', padding: '9px 18px', color: 'rgba(255,255,255,.75)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  <BarChart2 size={13} /> View Analytics
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Donut ring */}
+          <div style={{ flexShrink: 0 }}>
+            <ChartingRing pct={chartingStats.completionRate} charted={chartingStats.chartedSessions} total={chartingStats.totalSessions} />
+          </div>
         </div>
-      </section>
-
-      <main className="relative z-20 max-w-6xl mx-auto px-4 pb-6 -mt-24 space-y-6 md:space-y-7">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 md:gap-7">
-        <Card className="rounded-2xl bg-blue-50 border-blue-100 shadow-sm h-[190px] md:h-[200px]">
-          <div className="relative p-6 h-full flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">Total Sessions</p>
-              <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-5xl md:text-6xl font-extrabold text-slate-900 tabular-nums tracking-tight">
-              {stats.totalSessions}
-            </p>
-          </div>
-        </Card>
-
-        <Card className="rounded-2xl bg-white border-slate-200 shadow-sm h-[190px] md:h-[200px]">
-          <div className="relative p-6 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Charted</p>
-                <p className="text-[30px] font-extrabold text-slate-900 mt-1 tabular-nums tracking-tight leading-none">
-                  {chartingStats.chartedSessions}/{chartingStats.totalSessions}
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center ml-4">
-                <CheckCircle2 className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-
-            <div className="mt-auto self-center relative w-20 h-20">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="currentColor"
-                  className="text-slate-100"
-                  strokeWidth="4.5"
-                />
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="currentColor"
-                  className="text-blue-500"
-                  strokeWidth="4.5"
-                  strokeLinecap="round"
-                  strokeDasharray={`${chartingStats.completionRate}, 100`}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-700">
-                {chartingStats.completionRate}%
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="rounded-2xl bg-white border-slate-200 shadow-sm h-[190px] md:h-[200px]">
-          <div className="relative p-6 h-full flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight">Current Streak</p>
-              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Flame className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-[40px] font-extrabold text-slate-900 leading-none tracking-tight">
-              {currentStreak}
-              <span className="text-[28px] align-baseline ml-1">Days</span>
-            </p>
-          </div>
-        </Card>
-
-        <Card className="rounded-2xl bg-blue-50 border-blue-100 shadow-sm h-[190px] md:h-[200px] overflow-hidden">
-          <div className="relative p-6 h-full flex flex-col">
-            <div className="flex items-center justify-between z-10">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">This Month</p>
-                <p className="text-5xl font-extrabold text-slate-900 mt-1 tracking-tight">
-                  {stats.thisMonthSessions || 0}
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-lg bg-blue-100/80 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-
-            <div className="absolute bottom-4 left-0 right-0 h-20 px-2 opacity-80">
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 50" aria-hidden="true">
-                <path
-                  d={sparklinePath}
-                  fill="none"
-                  stroke="#4299E1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                />
-              </svg>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="rounded-2xl bg-white border-slate-200 shadow-sm h-[190px] md:h-[200px]">
-          <div className="relative p-6 h-full flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Quick Action</p>
-              
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center gap-2">
-              <Button
-                onClick={() => router.push('/charting/sessions/new')}
-                className="w-full h-11 bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Session
-              </Button>
-              <Button
-                onClick={() => router.push('/charting/analytics')}
-                variant="outline"
-                className="w-full h-11 rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50"
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                View Analytics
-              </Button>
-            </div>
-          </div>
-        </Card>
       </div>
 
-      <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="p-6 md:p-8 space-y-4">
-          <h2 className="text-[22px] font-bold text-slate-800 tracking-tight">Activity Calendar</h2>
+      {/* ── METRICS STRIP ── */}
+      <div className="charting-metrics">
+        <MetricCard label="Total Sessions"  value={stats.totalSessions}           sub="all time"             icon={<Calendar size={22} />}    accent={CYAN} />
+        <MetricCard label="Games"           value={stats.gameSessions}            sub="game sessions"        icon={<TrendingUp size={22} />}  accent={CORAL} />
+        <MetricCard label="Practices"       value={stats.practiceSessions}        sub="practice sessions"    icon={<CheckCircle2 size={22} />} accent={MINT} />
+        <MetricCard label="This Month"      value={stats.thisMonthSessions || 0}  sub="sessions logged"      icon={<Calendar size={22} />}    accent={VIOLET} />
+      </div>
 
+      {/* ── ACTIVITY CALENDAR ── */}
+      <div style={{ background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: '1px solid rgba(0,255,255,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '16px 20px', borderBottom: '1px solid rgba(0,255,255,0.1)' }}>
+          <Calendar size={13} color={CYAN} />
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '.01em' }}>Activity Calendar</h3>
+        </div>
+        <div style={{ padding: '20px 20px 16px' }}>
           <CalendarHeatmap
             sessions={sessions}
             chartingEntries={chartingEntries}
             dynamicEntries={dynamicEntries}
             colorScheme="blue"
-            onDayClick={handleDayClick}
+            onDayClick={(date, daySessions) => { setSelectedDate(date); setSelectedDaySessions(daySessions); }}
           />
         </div>
-      </Card>
-      </main>
+      </div>
 
+      {/* ── DAY CLICK MODAL ── */}
       {selectedDate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={closeModal}>
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto border-0 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {format(selectedDate, 'MMMM d, yyyy')}
-                  </h3>
-                  <p className="text-muted-foreground mt-1">
-                    {selectedDaySessions.length} session{selectedDaySessions.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <Button variant="outline" size="icon" onClick={closeModal} className="rounded-full">
-                  <X className="w-4 h-4" />
-                </Button>
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50 }}
+          onClick={() => { setSelectedDate(null); setSelectedDaySessions([]); }}
+        >
+          <div
+            style={{ background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: '1px solid rgba(0,255,255,0.22)', borderRadius: '20px', maxWidth: '560px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: LABEL }}>
+                  {format(selectedDate, 'EEEE')}
+                </p>
+                <button
+                  onClick={() => { setSelectedDate(null); setSelectedDaySessions([]); }}
+                  style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                >
+                  <X size={18} />
+                </button>
               </div>
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#fff' }}>
+                {format(selectedDate, 'MMMM d, yyyy')}
+              </h3>
+              <p style={{ fontSize: '13px', color: MUTED, marginTop: '4px' }}>
+                {selectedDaySessions.length} session{selectedDaySessions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
 
+            <div style={{ padding: '16px 24px 24px' }}>
               {selectedDaySessions.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-muted-foreground" />
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                    <Calendar size={20} color="rgba(255,255,255,0.3)" />
                   </div>
-                  <p className="text-foreground font-medium">No sessions on this day</p>
-                  <p className="text-sm text-muted-foreground mt-1">Tap &quot;New Session&quot; to create one</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No sessions on this day</p>
+                  <p style={{ fontSize: '12px', color: MUTED }}>Tap &quot;New Session&quot; to create one</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {selectedDaySessions.map((session) => (
-                    <Card
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {selectedDaySessions.map(session => (
+                    <div
                       key={session.id}
-                      className="p-4 border border-slate-200/80 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
                       onClick={() => router.push(`/charting/sessions/${session.id}`)}
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,255,255,0.14)', borderRadius: '12px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(0,255,255,0.35)`; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(0,255,255,0.14)`; }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-foreground">
-                              {session.type === 'game' ? 'Game' : 'Practice'}
-                              {session.opponent && ` vs ${session.opponent}`}
-                            </h4>
-                            <Badge variant={getStatusBadgeVariant(getDisplayStatus(session))}>
-                              {getDisplayStatus(session)}
-                            </Badge>
-                          </div>
-                          {session.location && (
-                            <p className="text-sm text-muted-foreground mt-1">{session.location}</p>
-                          )}
-                          {session.tags && session.tags.length > 0 && (
-                            <div className="flex gap-1 mt-2">
-                              {session.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+                            {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
+                            {session.opponent && ` vs ${session.opponent}`}
+                          </h4>
+                          <Badge variant={getStatusBadgeVariant(getDisplayStatus(session))}>
+                            {getDisplayStatus(session)}
+                          </Badge>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity border-blue-200 text-blue-700 hover:bg-blue-50"
-                        >
-                          View <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                        </Button>
+                        {session.location && (
+                          <p style={{ fontSize: '12px', color: MUTED }}>{session.location}</p>
+                        )}
+                        {session.tags && session.tags.length > 0 && (
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
+                            {session.tags.map(tag => (
+                              <span key={tag} style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(0,255,255,0.8)', background: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.22)', borderRadius: '99px', padding: '2px 8px' }}>{tag}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </Card>
+                      <ArrowRight size={14} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, marginLeft: '12px' }} />
+                    </div>
                   ))}
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         </div>
       )}
+
+      {/* New Session Modal */}
+      <NewSessionModal open={showNewSession} onClose={() => setShowNewSession(false)} />
+    </div>
+  );
+}
+
+/* ─── Sub-components ─────────────────────────────────────── */
+
+function ChartingRing({ pct, charted, total }: { pct: number; charted: number; total: number }) {
+  const size   = 108;
+  const stroke = 7;
+  const r      = (size - stroke) / 2;
+  const circ   = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+          <defs>
+            <linearGradient id="chart-ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={CYAN} />
+              <stop offset="60%" stopColor={MINT} />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.5)" />
+            </linearGradient>
+          </defs>
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="url(#chart-ring-grad)" strokeWidth={stroke}
+            strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)' }}
+          />
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: '22px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{pct}%</span>
+          <span style={{ fontSize: '10px', color: MUTED, fontWeight: 600, letterSpacing: '.04em' }}>charted</span>
+        </div>
+      </div>
+      <p style={{ fontSize: '11px', color: MUTED, textAlign: 'center' }}>{charted}/{total} sessions</p>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub: string; icon: React.ReactNode; accent: string }) {
+  return (
+    <div className="metric-card-ch" style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: `1px solid ${accent}38`, padding: '18px 18px 16px' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, ${accent}, ${accent}44, transparent)` }} />
+      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `linear-gradient(135deg, ${accent}28, ${accent}10)`, border: `1px solid ${accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, marginBottom: '14px', boxShadow: `0 4px 16px ${accent}22` }}>
+        {icon}
+      </div>
+      <p style={{ fontSize: '32px', fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: '5px', letterSpacing: '-.02em' }}>{value}</p>
+      <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,.75)', marginBottom: '3px' }}>{label}</p>
+      <p style={{ fontSize: '11px', color: MUTED, fontWeight: 500 }}>{sub}</p>
     </div>
   );
 }

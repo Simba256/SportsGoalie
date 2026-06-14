@@ -30,10 +30,16 @@ export interface User {
   onboardingCompletedAt?: Timestamp;
   initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
 
+<<<<<<< HEAD
   // Charting configuration — admin-assigned
   chartLevel?: 'basic' | 'five_pillar'; // Basic = 2-3 min entry experience; 5-Pillar = full advanced chart. Default (undefined) = five_pillar.
   chartGrowthLevel?: 'introduction' | 'development' | 'refinement'; // Chart growth path. Default (undefined) = introduction.
   livingIndex?: string[]; // Active L-index item IDs for this goalie — admin-assigned
+=======
+  // Coach onboarding fields
+  coachOnboardingComplete?: boolean;
+  coachOnboardingCompletedAt?: Timestamp;
+>>>>>>> e9f05073d0f740d46f1573caec2788d046b07e5d
 
   // Parent-Child Linking Fields (for students/goalies)
   linkedParentIds?: string[];      // Array of parent user IDs linked to this goalie

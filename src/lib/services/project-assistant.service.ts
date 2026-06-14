@@ -1,11 +1,11 @@
-import fs from 'fs/promises';
-import path from 'path';
-
 /**
  * Project Assistant Service
  *
  * Loads and manages project documentation for the AI chatbot.
  * Provides context-aware document loading and formatting for Claude API.
+ *
+ * NOTE: fs and path are dynamically imported inside async methods to prevent
+ * Turbopack from statically tracing the filesystem at build time.
  */
 
 export interface DocumentMetadata {
@@ -28,7 +28,16 @@ export class ProjectAssistantService {
   private cache: Map<string, DocumentContent> = new Map();
 
   private constructor() {
-    this.docsPath = path.join(process.cwd(), 'docs', 'client');
+    // docsPath is resolved lazily in getDocsPath() to avoid Turbopack static tracing
+    this.docsPath = '';
+  }
+
+  private async getDocsPath(): Promise<string> {
+    if (!this.docsPath) {
+      const { join } = await import('path');
+      this.docsPath = join(process.cwd(), 'docs', 'client');
+    }
+    return this.docsPath;
   }
 
   public static getInstance(): ProjectAssistantService {
@@ -42,7 +51,11 @@ export class ProjectAssistantService {
    * Get all available document metadata
    */
   async getDocumentList(): Promise<DocumentMetadata[]> {
+    const { readdir, stat } = await import('fs/promises');
+    const { join } = await import('path');
+
     const documents: DocumentMetadata[] = [];
+    const docsPath = await this.getDocsPath();
     const categories: Array<DocumentMetadata['category']> = [
       'overview',
       'features',
@@ -54,15 +67,15 @@ export class ProjectAssistantService {
     ];
 
     for (const category of categories) {
-      const categoryPath = path.join(this.docsPath, category);
+      const categoryPath = join(docsPath, category);
 
       try {
-        const files = await fs.readdir(categoryPath);
+        const files = await readdir(categoryPath);
         const mdFiles = files.filter(file => file.endsWith('.md'));
 
         for (const file of mdFiles) {
-          const filePath = path.join(categoryPath, file);
-          const stats = await fs.stat(filePath);
+          const filePath = join(categoryPath, file);
+          const stats = await stat(filePath);
 
           documents.push({
             path: filePath,
@@ -85,12 +98,14 @@ export class ProjectAssistantService {
    * Load all client documentation
    */
   async loadAllDocuments(): Promise<DocumentContent[]> {
+    const { readFile } = await import('fs/promises');
+
     const metadata = await this.getDocumentList();
     const documents: DocumentContent[] = [];
 
     for (const meta of metadata) {
       try {
-        const content = await fs.readFile(meta.path, 'utf-8');
+        const content = await readFile(meta.path, 'utf-8');
         documents.push({
           metadata: meta,
           content

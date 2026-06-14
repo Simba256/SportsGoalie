@@ -8,7 +8,7 @@ import {
 import {
   Timer, BarChart3, MessageSquare, ClipboardList,
   Flame, Sparkles, ShieldCheck, Brain, Eye, Video,
-  CheckCircle2, XCircle, Target, Mic,
+  CheckCircle2, XCircle, Target, Mic, Flag, Pencil,
 } from 'lucide-react';
 
 const BLUE = '#37b5ff';
@@ -150,31 +150,64 @@ function PeriodsSection({ periods }: { periods: NonNullable<V2Fields['v2Periods'
         {filled.map(([key, label]) => {
           const p = periods[key]!;
           const goalsAgainst = p.goalsAgainst ?? 0;
-          const goodGoals = p.goals?.filter(g => g.isGoodGoal).length ?? 0;
           return (
             <div key={key} style={{ borderRadius: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <p style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{label}</p>
+
+              {/* Stat counters grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+                {[
+                  { label: 'Shots', value: p.shots ?? 0, color: 'rgba(255,255,255,0.6)' },
+                  { label: 'Saves', value: p.saves ?? 0, color: '#4ade80' },
+                  { label: 'GA', value: goalsAgainst, color: '#f87171' },
+                  { label: 'Std Saves', value: p.standardSaves ?? 0, color: 'rgba(255,255,255,0.6)' },
+                  { label: 'Key Saves', value: p.keySaves ?? 0, color: '#4ade80' },
+                  { label: 'Weak GA', value: p.weakGoals ?? 0, color: '#f87171' },
+                  { label: 'Mid-Chall', value: p.midChallengeCount ?? 0, color: 'rgba(255,255,255,0.6)' },
+                  { label: 'Hi-Chall', value: p.highChallengeCount ?? 0, color: '#fb923c' },
+                ].map(({ label: sl, value: sv, color }) => (
+                  <div key={sl} style={{ borderRadius: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', padding: '5px 4px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '8px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '2px', letterSpacing: '0.5px' }}>{sl}</p>
+                    <p style={{ fontSize: '16px', fontWeight: 900, color, lineHeight: 1 }}>{sv}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Save % */}
+              {(p.shots ?? 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${BLUE}0a`, border: `1px solid ${BLUE}20`, borderRadius: '7px', padding: '5px 8px' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>Save %</span>
+                  <span style={{ fontSize: '13px', fontWeight: 900, color: BLUE }}>{(((p.saves ?? 0) / (p.shots ?? 1)) * 100).toFixed(1)}%</span>
+                </div>
+              )}
+
+              {/* Ratings */}
               <div>
-                <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)', marginBottom: '5px' }}>Mind Control</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)' }}>Mind Control</p>
+                  {p.mindControlChallengeLevel && (
+                    <span style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '2px 6px', borderRadius: '20px', background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171' }}>
+                      {p.mindControlChallengeLevel} challenge
+                    </span>
+                  )}
+                </div>
                 <RatingBar value={p.mindControlRating} />
-                {p.mindControlVoiceNote && <p style={{ marginTop: '4px', fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>&ldquo;{p.mindControlVoiceNote}&rdquo;</p>}
+                {p.mindControlVoiceNote && (
+                  <div style={{ marginTop: '6px', display: 'flex', alignItems: 'flex-start', gap: '5px', borderRadius: '7px', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)', padding: '6px 8px' }}>
+                    <Mic size={10} color="rgba(248,113,113,0.5)" style={{ flexShrink: 0, marginTop: '1px' }} />
+                    <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontStyle: 'italic', lineHeight: 1.5 }}>{p.mindControlVoiceNote}</p>
+                  </div>
+                )}
               </div>
               <div>
                 <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)', marginBottom: '5px' }}>Factor Ratio</p>
                 <RatingBar value={p.periodFactorRatio} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                <div style={{ borderRadius: '8px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', padding: '8px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: '#f87171', marginBottom: '3px' }}>Against</p>
-                  <p style={{ fontSize: '18px', fontWeight: 900, color: '#f87171' }}>{goalsAgainst}</p>
-                </div>
-                <div style={{ borderRadius: '8px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', padding: '8px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: '#4ade80', marginBottom: '3px' }}>Good</p>
-                  <p style={{ fontSize: '18px', fontWeight: 900, color: '#4ade80' }}>{goodGoals}</p>
-                </div>
-              </div>
+
+              {/* Goal classification */}
               {p.goals && p.goals.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)', marginBottom: '2px' }}>Goals</p>
                   {p.goals.map((g) => (
                     <div key={g.goalNumber} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                       {g.isGoodGoal
@@ -232,6 +265,41 @@ function PostGameSection({ data }: { data: V2PostGameData }) {
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{data.mindVaultEntry}</p>
           </div>
         )}
+
+        {/* Priority Improvement Area */}
+        {data.priorityImprovementArea && (
+          <div style={{ gridColumn: '1 / -1', borderRadius: '10px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', padding: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+              <Flag size={12} color="#f87171" />
+              <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#f87171' }}>Priority Improvement Area</p>
+            </div>
+            <p style={{ fontSize: '14px', fontWeight: 900, color: '#fff', marginBottom: '2px' }}>{data.priorityImprovementArea}</p>
+          </div>
+        )}
+
+        {/* Improvement focus + commitment */}
+        {(data.improvementFocus || data.whatWillYouDoDifferently) && (
+          <div style={{ gridColumn: '1 / -1', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Pencil size={12} color="rgba(255,255,255,0.35)" />
+              <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)' }}>Commitment</p>
+            </div>
+            {data.improvementFocus && (
+              <div>
+                <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: '3px' }}>Focus Area</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>
+                  {data.improvementFocus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                </p>
+              </div>
+            )}
+            {data.whatWillYouDoDifferently && (
+              <div>
+                <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: '3px' }}>What will you do differently?</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>&ldquo;{data.whatWillYouDoDifferently}&rdquo;</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -276,7 +344,14 @@ function PracticeSection({ data }: { data: NonNullable<V2Fields['v2Practice']> }
                         {worked
                           ? <CheckCircle2 size={11} color={BLUE} style={{ flexShrink: 0, marginTop: '1px' }} />
                           : <span style={{ width: '11px', height: '11px', borderRadius: '3px', border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0, marginTop: '1px', display: 'inline-block' }} />}
-                        <span style={{ fontSize: '11px', color: worked ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.35)', fontWeight: worked ? 600 : 400, lineHeight: 1.4 }}>{item.label}</span>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: '11px', color: worked ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.35)', fontWeight: worked ? 600 : 400, lineHeight: 1.4 }}>{item.label}</span>
+                          {item.pillarSlug && (
+                            <span style={{ display: 'block', marginTop: '2px', fontSize: '8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '1px 5px', width: 'fit-content' }}>
+                              {item.pillarSlug.replace('_', ' ')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

@@ -5,9 +5,14 @@ import {
   Heart, ShieldAlert, Mountain, Lightbulb, Quote,
   Wrench, Anchor, Trophy, Users, ArrowUpRight,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { MindVaultCategoryInfo, MindVaultCategorySummary } from '@/types/mind-vault';
 
+<<<<<<< HEAD
 const ICON_MAP: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
+=======
+const ICON_MAP: Record<string, LucideIcon> = {
+>>>>>>> e9f05073d0f740d46f1573caec2788d046b07e5d
   Heart, ShieldAlert, Mountain, Lightbulb, Quote,
   Wrench, Anchor, Trophy, Users,
 };

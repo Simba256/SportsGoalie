@@ -16,6 +16,7 @@ import {
   ClipboardList,
   UserCircle,
   Shield,
+  Dumbbell,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
@@ -30,6 +31,7 @@ const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Pillars', href: '/pillars', icon: BookOpen },
   { label: 'Charting', href: '/charting', icon: ClipboardList },
+  { label: 'Training', href: '/training', icon: Dumbbell },
   { label: 'Mind Vault', href: '/mind-vault', icon: Shield },
   { label: 'Analytics', href: '/progress', icon: BarChart3 },
   { label: 'Goals & Achievements', href: '/goals', icon: Award },
