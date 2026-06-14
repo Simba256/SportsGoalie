@@ -61,6 +61,7 @@ function getPageTitle(pathname: string): string {
     dashboard: 'Dashboard', pillars: 'Pillars', lessons: 'Lessons', quizzes: 'Quizzes',
     quiz: 'Quiz', progress: 'Analytics', goals: 'Goals & Achievements', messages: 'Messages',
     profile: 'Profile', charting: 'Charting', 'mind-vault': 'Mind Vault', learn: 'Learn',
+    training: 'Daily Training',
   };
   return titles[first] || 'Dashboard';
 }
@@ -68,8 +69,8 @@ function getPageTitle(pathname: string): string {
 function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSidebar: () => void }) {
   return (
     <>
-      <style>{`.tb-toggle:hover{background:rgba(55,181,255,0.1)!important;color:#37b5ff!important}`}</style>
-      <header style={{ position: 'sticky', top: 0, zIndex: 30, height: '64px', background: 'rgba(0,15,40,0.96)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(55,181,255,0.12)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: '16px', boxShadow: '0 1px 24px rgba(0,0,0,0.3)' }}>
+      <style>{`.tb-toggle:hover{background:rgba(0,255,255,0.08)!important;color:#00FFFF!important}`}</style>
+      <header style={{ position: 'sticky', top: 0, zIndex: 30, height: '64px', background: 'rgba(6,5,15,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,255,255,0.1)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: '16px', boxShadow: '0 1px 32px rgba(0,0,0,0.5)' }}>
         <button onClick={onToggleSidebar} className="lg:hidden tb-toggle"
           style={{ padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
           aria-label="Toggle sidebar">
@@ -79,13 +80,14 @@ function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSid
         </button>
         <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em' }}>{pageTitle}</span>
         <div style={{ flex: 1 }} />
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#37b5ff', boxShadow: '0 0 8px rgba(55,181,255,0.7)', flexShrink: 0 }} />
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'linear-gradient(135deg, #00FFFF, #00FF99)', boxShadow: '0 0 10px rgba(0,255,255,0.7)', flexShrink: 0 }} />
       </header>
     </>
   );
 }
 
-const appBg = 'linear-gradient(145deg, #00091a 0%, #030f25 50%, #050e20 100%)';
+const appBg = 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)';
+const adminBg = 'linear-gradient(145deg, #010b1e 0%, #020f24 50%, #010d20 100%)';
 
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -102,7 +104,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
     return (
       <>
         <Header7 />
-        <div style={{ paddingTop: '72px', height: '100dvh', overflow: 'hidden', background: 'linear-gradient(145deg, #000a1f 0%, #041530 40%, #071e42 100%)' }}>
+        <div style={{ paddingTop: '72px', height: '100dvh', overflow: 'hidden', background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
           {children}
         </div>
       </>
@@ -123,7 +125,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
 
   if (isAdminRoute(pathname)) {
     return (
-      <div style={{ minHeight: '100vh', background: appBg }}>
+      <div style={{ minHeight: '100vh', background: adminBg }}>
         <AdminSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />

@@ -43,7 +43,7 @@ const DIFF_STYLES: Record<string, { bg: string; color: string }> = {
   refinement:   { bg: 'rgba(248,113,113,0.15)', color: RED   },
 };
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell,
 };
 
@@ -233,7 +233,7 @@ function AdminSkillsContent() {
   };
 
   const displayInfo = getPillarDisplayInfo();
-  const IconComponent = displayInfo ? (PILLAR_ICONS[displayInfo.icon] || Target) : Target;
+  const IconComponent = (displayInfo ? (PILLAR_ICONS[displayInfo.icon] || Target) : Target) as React.ComponentType<{ size?: number; color?: string }>;
   const pillarGradient = displayInfo ? (PILLAR_GRADIENTS[displayInfo.color] || PILLAR_GRADIENTS.blue) : PILLAR_GRADIENTS.blue;
 
   return (
