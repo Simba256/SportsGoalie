@@ -8,7 +8,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import type { MindVaultCategoryInfo, MindVaultCategorySummary } from '@/types/mind-vault';
 
-const ICON_MAP: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   Heart, ShieldAlert, Mountain, Lightbulb, Quote,
   Wrench, Anchor, Trophy, Users,
 };

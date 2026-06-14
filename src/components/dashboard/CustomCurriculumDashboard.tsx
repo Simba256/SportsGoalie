@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
 
-const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
+const PILLAR_ICONS: Record<string, LucideIcon> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 const PILLAR_COLORS: Record<string, string> = {
