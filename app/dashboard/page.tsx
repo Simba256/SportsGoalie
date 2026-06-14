@@ -22,7 +22,7 @@ import { getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 const PILLAR_COLORS: Record<string, string> = {
@@ -490,7 +490,7 @@ function ContinueLearningCard({ pillar }: { pillar: { sport: { id: string; name:
   );
 }
 
-function QuizRow({ pct, scoreColor, pillarColor, name, IconComp }: { pct: number; scoreColor: string; pillarColor: string; name: string; IconComp: React.ElementType }) {
+function QuizRow({ pct, scoreColor, pillarColor, name, IconComp }: { pct: number; scoreColor: string; pillarColor: string; name: string; IconComp: React.ComponentType<{ size?: number; color?: string }> }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
