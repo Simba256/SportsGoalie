@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { db } from '@/lib/firebase/config';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { generateCoachV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
 import {
   COACH_BASELINE_SECTIONS,
   getCoachActiveQuestions,
@@ -289,16 +290,31 @@ export function CoachBaselineQuestionnaire({ userId, userName: _userName, onComp
     setError(null);
     try {
       const sectionKeys: CBSectionKey[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+      // Run scoring engine on raw V2 responses to produce an Intelligence Profile
+      const intelligenceProfile = generateCoachV2IntelligenceProfile(userId, state.responses);
+
       await setDoc(doc(db, 'coachBaselineProfiles', userId), {
         userId,
         submittedAt: serverTimestamp(),
         responses: state.responses,
         openExtras: state.openExtras,
         sectionsCompleted: sectionKeys,
+        intelligenceProfile: {
+          overallScore: intelligenceProfile.overallScore,
+          pacingLevel: intelligenceProfile.pacingLevel,
+          categoryScores: intelligenceProfile.categoryScores,
+          identifiedGaps: intelligenceProfile.identifiedGaps,
+          identifiedStrengths: intelligenceProfile.identifiedStrengths,
+          contentRecommendations: intelligenceProfile.contentRecommendations,
+          chartingEmphasis: intelligenceProfile.chartingEmphasis,
+        },
       });
       await updateDoc(doc(db, 'users', userId), {
         coachOnboardingComplete: true,
         coachOnboardingCompletedAt: serverTimestamp(),
+        coachPacingLevel: intelligenceProfile.pacingLevel,
+        coachOverallScore: intelligenceProfile.overallScore,
       });
       onComplete();
     } catch {
