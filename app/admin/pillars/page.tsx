@@ -13,12 +13,13 @@ import {
   Edit, Eye, Save, X, Sparkles, BookOpen, ArrowRight,
   RefreshCw, Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
 const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, LucideIcon> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 

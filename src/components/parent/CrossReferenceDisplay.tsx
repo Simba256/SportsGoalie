@@ -1,281 +1,269 @@
 'use client';
 
-import { ParentCrossReferenceView } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Info,
-  HelpCircle,
-} from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { ParentCrossReferenceView, PerceptionComparison } from '@/types';
+import { CheckCircle2, AlertTriangle, AlertCircle, Info, HelpCircle, ClipboardCheck } from 'lucide-react';
+import Link from 'next/link';
 
-interface CrossReferenceDisplayProps {
-  data: ParentCrossReferenceView;
+const BLUE   = '#37b5ff';
+const GREEN  = '#4ade80';
+const YELLOW = '#fbbf24';
+const RED    = '#f87171';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function accentFor(level: string) {
+  if (level === 'aligned')         return GREEN;
+  if (level === 'minor_gap')       return YELLOW;
+  if (level === 'significant_gap') return RED;
+  return 'rgba(255,255,255,0.3)';
 }
 
-export function CrossReferenceDisplay({ data }: CrossReferenceDisplayProps) {
-  const getAlignmentIcon = (level: string) => {
-    switch (level) {
-      case 'aligned':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'minor_gap':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case 'significant_gap':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <Minus className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
+function labelFor(level: string) {
+  if (level === 'aligned')         return 'Aligned';
+  if (level === 'minor_gap')       return 'Minor Gap';
+  if (level === 'significant_gap') return 'Gap Found';
+  return 'Unknown';
+}
 
-  const getAlignmentBadge = (level: string) => {
-    switch (level) {
-      case 'aligned':
-        return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            Aligned
-          </Badge>
-        );
-      case 'minor_gap':
-        return (
-          <Badge variant="secondary" className="bg-amber-100 text-amber-800">
-            Minor Gap
-          </Badge>
-        );
-      case 'significant_gap':
-        return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800">
-            Significant Gap
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
+function scoreWord(score: number | undefined): string {
+  if (score === undefined) return '—';
+  if (score < 1.8) return 'Low';
+  if (score < 2.4) return 'Below Average';
+  if (score < 3.0) return 'Average';
+  if (score < 3.6) return 'Good';
+  return 'High';
+}
 
-  const getDifferenceIndicator = (diff: number | undefined) => {
-    if (diff === undefined) return null;
+function scoreColor(score: number | undefined): string {
+  if (score === undefined) return 'rgba(255,255,255,0.3)';
+  if (score < 1.8) return RED;
+  if (score < 2.4) return YELLOW;
+  if (score < 3.0) return 'rgba(255,255,255,0.6)';
+  if (score < 3.6) return GREEN;
+  return '#34d399';
+}
 
-    if (Math.abs(diff) < 0.5) {
-      return (
-        <div className="flex items-center gap-1 text-green-600">
-          <Minus className="h-3 w-3" />
-          <span className="text-xs">Similar</span>
+function gapSummary(comparison: PerceptionComparison): string {
+  const diff = comparison.scoreDifference ?? 0;
+  if (diff < 0.3) return 'You both see this the same way.';
+  const parentHigh = (comparison.parentScore ?? 0) > (comparison.goalieScore ?? 0);
+  if (parentHigh) {
+    return `You see this more positively than your goalie does (${diff.toFixed(1)} pt difference).`;
+  }
+  return `Your goalie feels more confident here than you realise (${diff.toFixed(1)} pt difference).`;
+}
+
+// ─── main card ──────────────────────────────────────────────────────────────
+
+function ComparisonCard({ c }: { c: PerceptionComparison }) {
+  const accent = accentFor(c.alignmentLevel);
+  const isGap  = c.alignmentLevel !== 'aligned';
+
+  return (
+    <div style={{
+      background: 'rgba(8, 24, 52, 0.95)',
+      border: `1px solid ${accent}25`,
+      borderLeft: `4px solid ${accent}`,
+      borderRadius: '14px',
+      padding: '18px 20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '14px',
+    }}>
+
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {c.alignmentLevel === 'aligned'         && <CheckCircle2 size={15} color={GREEN} />}
+          {c.alignmentLevel === 'minor_gap'       && <AlertTriangle size={15} color={YELLOW} />}
+          {c.alignmentLevel === 'significant_gap' && <AlertCircle size={15} color={RED} />}
+          <span style={{ fontWeight: 800, fontSize: '14px', color: '#fff' }}>{c.categoryName}</span>
         </div>
-      );
-    }
-
-    if (diff > 0) {
-      return (
-        <div className="flex items-center gap-1 text-blue-600">
-          <TrendingUp className="h-3 w-3" />
-          <span className="text-xs">You rate higher</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center gap-1 text-amber-600">
-        <TrendingDown className="h-3 w-3" />
-        <span className="text-xs">Goalie rates higher</span>
+        <span style={{
+          fontSize: '11px', fontWeight: 700,
+          color: accent,
+          background: `${accent}18`,
+          border: `1px solid ${accent}30`,
+          borderRadius: '20px',
+          padding: '3px 11px',
+          whiteSpace: 'nowrap',
+        }}>
+          {labelFor(c.alignmentLevel)}
+        </span>
       </div>
-    );
-  };
 
-  const scoreToPercentage = (score: number | undefined) => {
-    if (score === undefined) return 0;
-    // Convert 1.0-4.0 scale to 0-100
-    return ((score - 1) / 3) * 100;
-  };
+      {/* Two-row comparison — the key simplification */}
+      <div style={{
+        background: 'rgba(255,255,255,0.04)',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        {/* Goalie row */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+        }}>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+            Your goalie says:
+          </span>
+          <span style={{
+            fontSize: '14px',
+            fontWeight: 800,
+            color: scoreColor(c.goalieScore),
+            background: `${scoreColor(c.goalieScore)}12`,
+            border: `1px solid ${scoreColor(c.goalieScore)}30`,
+            borderRadius: '8px',
+            padding: '4px 12px',
+          }}>
+            {scoreWord(c.goalieScore)}
+          </span>
+        </div>
+
+        {/* Parent row */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+        }}>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+            You say:
+          </span>
+          <span style={{
+            fontSize: '14px',
+            fontWeight: 800,
+            color: scoreColor(c.parentScore),
+            background: `${scoreColor(c.parentScore)}12`,
+            border: `1px solid ${scoreColor(c.parentScore)}30`,
+            borderRadius: '8px',
+            padding: '4px 12px',
+          }}>
+            {scoreWord(c.parentScore)}
+          </span>
+        </div>
+      </div>
+
+      {/* Plain-English gap sentence */}
+      <p style={{ fontSize: '13px', color: isGap ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: 0 }}>
+        {gapSummary(c)}
+      </p>
+
+      {/* Recommendation — only shown when there is a gap */}
+      {isGap && c.recommendation && (
+        <div style={{
+          background: `${accent}08`,
+          border: `1px solid ${accent}20`,
+          borderRadius: '10px',
+          padding: '12px 14px',
+        }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: accent, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Suggested action
+          </p>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0 }}>
+            {c.recommendation}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── main export ─────────────────────────────────────────────────────────────
+
+export function CrossReferenceDisplay({ data }: CrossReferenceDisplayProps) {
 
   if (!data.parentAssessmentComplete) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-blue-500" />
-            Complete Your Assessment
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <HelpCircle className="h-4 w-4" />
-            <AlertTitle>Assessment Required</AlertTitle>
-            <AlertDescription>
-              Complete your parent assessment to see how your perceptions compare with your goalie's
-              self-assessment. This helps identify areas where you can provide better support.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px', textAlign: 'center' }}>
+        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: `${BLUE}15`, border: `1px solid ${BLUE}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <HelpCircle size={26} color={BLUE} />
+        </div>
+        <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '16px', margin: 0 }}>Complete Your Assessment</h3>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', maxWidth: '360px', lineHeight: 1.7, margin: 0 }}>
+          Complete your parent assessment to see how your perceptions compare with your goalie&apos;s self-assessment.
+        </p>
+        <Link href="/onboarding?role=parent" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '11px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '13px', boxShadow: `0 4px 16px ${BLUE}40` }}>
+          <ClipboardCheck size={14} /> Take Parent Assessment
+        </Link>
+      </div>
     );
   }
 
   if (!data.goalieAssessmentComplete) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-amber-500" />
-            Waiting for Goalie Assessment
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <HelpCircle className="h-4 w-4" />
-            <AlertTitle>Goalie Assessment Pending</AlertTitle>
-            <AlertDescription>
-              Your goalie hasn't completed their self-assessment yet. Once they do, you'll be able
-              to see how your perceptions compare.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px', textAlign: 'center' }}>
+        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Info size={26} color={YELLOW} />
+        </div>
+        <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '16px', margin: 0 }}>Waiting for Goalie Assessment</h3>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', maxWidth: '360px', lineHeight: 1.7, margin: 0 }}>
+          Your goalie hasn&apos;t completed their self-assessment yet. Once they do, you&apos;ll be able to see how your perceptions compare.
+        </p>
+      </div>
     );
   }
 
+  const alignedCount = data.comparisons.filter(c => c.alignmentLevel === 'aligned').length;
+  const gapCount     = data.comparisons.filter(c => c.alignmentLevel !== 'aligned').length;
+
+  const sorted = [
+    ...data.comparisons.filter(c => c.alignmentLevel === 'significant_gap'),
+    ...data.comparisons.filter(c => c.alignmentLevel === 'minor_gap'),
+    ...data.comparisons.filter(c => c.alignmentLevel === 'aligned'),
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Overall Alignment Score */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Perception Alignment
-          </CardTitle>
-          <CardDescription>
-            Comparing your assessment with {data.childName}'s self-assessment
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Overall Alignment</span>
-                <span className="text-2xl font-bold">{data.overallAlignmentScore}%</span>
-              </div>
-              <Progress value={data.overallAlignmentScore} className="h-3" />
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* ── Summary ── */}
+      <div style={{ background: 'rgba(55,181,255,0.05)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '16px', padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div>
+            <h3 style={{ color: '#fff', fontWeight: 800, fontSize: '16px', margin: '0 0 3px' }}>Perception Check</h3>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', margin: 0 }}>
+              How your view compares to {data.childName}&apos;s across {data.comparisons.length} topics
+            </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{data.strengthAlignmentsCount}</div>
-              <div className="text-sm text-muted-foreground">Areas Aligned</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600">{data.criticalGapsCount}</div>
-              <div className="text-sm text-muted-foreground">Gaps to Discuss</div>
-            </div>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontSize: '34px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{data.overallAlignmentScore}%</span>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', margin: '2px 0 0' }}>in sync</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Category Comparisons */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Breakdown</CardTitle>
-          <CardDescription>
-            How your perceptions compare across different areas
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {data.comparisons.map((comparison) => (
-            <div
-              key={comparison.categorySlug}
-              className="p-4 rounded-lg border bg-card"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  {getAlignmentIcon(comparison.alignmentLevel)}
-                  <h4 className="font-medium">{comparison.categoryName}</h4>
-                </div>
-                {getAlignmentBadge(comparison.alignmentLevel)}
-              </div>
+        {/* Progress bar */}
+        <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: '99px', width: `${data.overallAlignmentScore}%`, background: `linear-gradient(90deg, ${BLUE}, #0ea5e9)` }} />
+        </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Goalie's Score */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground">Goalie Self-Rating</span>
-                    <span className="text-sm font-medium">
-                      {comparison.goalieScore?.toFixed(1) || '-'}
-                    </span>
-                  </div>
-                  <Progress
-                    value={scoreToPercentage(comparison.goalieScore)}
-                    className="h-2"
-                  />
-                </div>
+        {/* Counts */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div style={{ textAlign: 'center', padding: '12px', borderRadius: '10px', background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.18)' }}>
+            <p style={{ fontSize: '26px', fontWeight: 900, color: GREEN, margin: 0, lineHeight: 1 }}>{alignedCount}</p>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>Seeing eye-to-eye</p>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px', borderRadius: '10px', background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.18)' }}>
+            <p style={{ fontSize: '26px', fontWeight: 900, color: YELLOW, margin: 0, lineHeight: 1 }}>{gapCount}</p>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>Worth a conversation</p>
+          </div>
+        </div>
+      </div>
 
-                {/* Parent's Score */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground">Your Rating</span>
-                    <span className="text-sm font-medium">
-                      {comparison.parentScore?.toFixed(1) || '-'}
-                    </span>
-                  </div>
-                  <Progress
-                    value={scoreToPercentage(comparison.parentScore)}
-                    className="h-2 [&>div]:bg-blue-500"
-                  />
-                </div>
-              </div>
+      {/* ── Cards ── */}
+      {sorted.map((c) => (
+        <ComparisonCard key={c.categorySlug} c={c} />
+      ))}
 
-              {/* Difference Indicator */}
-              <div className="mt-2 flex items-center justify-between">
-                {getDifferenceIndicator(comparison.scoreDifference)}
-
-                {comparison.recommendation && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-                          <Info className="h-3 w-3" />
-                          Suggestion
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p>{comparison.recommendation}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-
-              {/* Description if there's a gap */}
-              {comparison.alignmentLevel !== 'aligned' && comparison.description && (
-                <p className="mt-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                  {comparison.description}
-                </p>
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Last Updated */}
-      <p className="text-xs text-center text-muted-foreground">
-        Last updated: {data.lastUpdated.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
+      <p style={{ fontSize: '11px', textAlign: 'center', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
+        Updated {data.lastUpdated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
       </p>
     </div>
   );
+}
+
+interface CrossReferenceDisplayProps {
+  data: ParentCrossReferenceView;
 }

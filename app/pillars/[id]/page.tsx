@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ import {
 
 const BLUE = '#37b5ff';
 
-const LEVEL_CONFIG: Record<PacingLevel, { label: string; color: string; tagline: string; range: string; icon: React.ElementType; }> = {
+const LEVEL_CONFIG: Record<PacingLevel, { label: string; color: string; tagline: string; range: string; icon: React.ComponentType<{ size?: number; color?: string }>; }> = {
   introduction: { label: 'Introduction', color: BLUE,     tagline: 'Building your foundation', range: '1.0 – 2.2', icon: BookOpen },
   development:  { label: 'Development',  color: '#a78bfa', tagline: 'Growing your skills',       range: '2.2 – 3.1', icon: TrendingUp },
   refinement:   { label: 'Refinement',   color: '#4ade80', tagline: 'Mastering your craft',      range: '3.1 – 4.0', icon: Zap },
@@ -54,7 +54,7 @@ function SkillCard({ skill, pillarId, progress }: {
   return (
     <Link href={`/pillars/${pillarId}/skills/${skill.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div
-        style={{ background: 'rgba(2,18,44,0.9)', border: `1px solid ${isCompleted ? 'rgba(74,222,128,0.3)' : isInProgress ? 'rgba(55,181,255,0.3)' : 'rgba(55,181,255,0.15)'}`, borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', height: '100%', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s', boxSizing: 'border-box', borderTopWidth: '2px', borderTopColor: isCompleted ? '#4ade80' : isInProgress ? BLUE : 'rgba(55,181,255,0.3)' }}
+        style={{ background: 'rgba(2,18,44,0.9)', borderStyle: 'solid', borderLeftWidth: '1px', borderRightWidth: '1px', borderBottomWidth: '1px', borderTopWidth: '2px', borderLeftColor: isCompleted ? 'rgba(74,222,128,0.3)' : isInProgress ? 'rgba(55,181,255,0.3)' : 'rgba(55,181,255,0.15)', borderRightColor: isCompleted ? 'rgba(74,222,128,0.3)' : isInProgress ? 'rgba(55,181,255,0.3)' : 'rgba(55,181,255,0.15)', borderBottomColor: isCompleted ? 'rgba(74,222,128,0.3)' : isInProgress ? 'rgba(55,181,255,0.3)' : 'rgba(55,181,255,0.15)', borderTopColor: isCompleted ? '#4ade80' : isInProgress ? BLUE : 'rgba(55,181,255,0.3)', borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', height: '100%', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s', boxSizing: 'border-box' }}
         onMouseEnter={e => { const el = e.currentTarget; el.style.transform = 'translateY(-3px)'; el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)'; }}
         onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none'; }}
       >
@@ -258,11 +258,11 @@ export default function PillarDetailPage() {
   const levelCfg = userLevel ? LEVEL_CONFIG[userLevel] : null;
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
 
       {/* ── Hero ── */}
       <section style={{ padding: '20px 24px 0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', borderRadius: '20px', background: 'rgba(2,18,44,0.9)', border: '1.5px solid rgba(55,181,255,0.25)', padding: '28px 32px', overflow: 'hidden', boxShadow: '0 0 60px rgba(55,181,255,0.08)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', borderRadius: '20px', background: 'rgba(2,18,44,0.9)', border: '1.5px solid rgba(55,181,255,0.25)', padding: 'clamp(16px,3vw,28px) clamp(16px,4vw,32px)', overflow: 'hidden', boxShadow: '0 0 60px rgba(55,181,255,0.08)' }}>
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '50%', height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
 
           <button onClick={() => router.push('/pillars')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '20px' }}
@@ -345,7 +345,7 @@ export default function PillarDetailPage() {
       </section>
 
       {/* ── Skills ── */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px 64px' }}>
+      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,4vw,24px) 64px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>
             Skills <span style={{ fontSize: '14px', fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>({filteredSkills.length})</span>

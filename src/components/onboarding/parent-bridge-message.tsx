@@ -1,84 +1,96 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { ChevronRight, Target, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Target, CheckCircle2 } from 'lucide-react';
+
+const BLUE = '#37b5ff';
 
 interface ParentBridgeMessageProps {
   parentName: string;
   onContinue: () => void;
 }
 
-export function ParentBridgeMessage({
-  parentName,
-  onContinue,
-}: ParentBridgeMessageProps) {
+const CHECKLIST = [
+  '7 categories covering different aspects of being a goalie parent',
+  '28 quick questions — all multiple choice',
+  'No right or wrong answers — just be honest',
+  'Your progress is saved if you need to take a break',
+];
+
+export function ParentBridgeMessage({ parentName, onContinue }: ParentBridgeMessageProps) {
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full text-center">
-        {/* Icon */}
-        <div className="mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-50 border-2 border-red-200">
-            <Sparkles className="w-10 h-10 text-red-500" />
+    <>
+      <style>{`
+        .pb-cta:hover { opacity: 0.88 !important; transform: translateY(-2px) !important; }
+        @keyframes pb-fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .pb-fade { animation: pb-fade 0.4s ease both; }
+        @media (max-width: 720px) {
+          .pb-grid { flex-direction: column !important; }
+          .pb-left { text-align: center !important; align-items: center !important; }
+        }
+      `}</style>
+
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 60px' }}>
+        <div className="pb-fade pb-grid" style={{ display: 'flex', gap: '56px', alignItems: 'center', maxWidth: '860px', width: '100%' }}>
+
+          {/* ── LEFT: Heading + CTA ── */}
+          <div className="pb-left" style={{ flex: '0 0 auto', maxWidth: '340px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0' }}>
+
+            {/* Icon */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '50%', background: `${BLUE}18`, border: `2px solid ${BLUE}40`, boxShadow: `0 0 28px ${BLUE}22`, marginBottom: '20px' }}>
+              <Target size={32} color={BLUE} />
+            </div>
+
+            {/* Heading */}
+            <h1 style={{ fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '12px' }}>
+              Thanks,{' '}
+              <span style={{ color: BLUE }}>{parentName}.</span>
+            </h1>
+
+            <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginBottom: '28px' }}>
+              Now let&apos;s understand how you see your goalie&apos;s game — and your role in their development.
+            </p>
+
+            {/* CTA */}
+            <button
+              className="pb-cta"
+              onClick={onContinue}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', color: '#000f28', padding: '15px 32px', borderRadius: '12px', fontSize: '16px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 8px 24px ${BLUE}45`, transition: 'all 0.2s' }}
+            >
+              Continue to Assessment <ChevronRight size={18} />
+            </button>
+
+            <p style={{ marginTop: '14px', fontSize: '12px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+              Your answers will be cross-referenced with your goalie&apos;s self-assessment to identify alignment.
+            </p>
           </div>
+
+          {/* ── DIVIDER ── */}
+          <div style={{ width: '1px', alignSelf: 'stretch', background: 'rgba(55,181,255,0.12)', flexShrink: 0 }} />
+
+          {/* ── RIGHT: Info Card ── */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ background: 'rgba(2,18,44,0.7)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '24px 26px' }}>
+              <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: BLUE }}>◆</span> Now for the deeper questions.
+              </p>
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', marginBottom: '18px', lineHeight: 1.65 }}>
+                The next section explores how you perceive your goalie&apos;s current state,
+                your understanding of the position, and how you communicate after games.
+                This isn&apos;t a test — we&apos;re looking for your honest perspective.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {CHECKLIST.map((item) => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <CheckCircle2 size={17} color={BLUE} style={{ flexShrink: 0, marginTop: '1px' }} />
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        {/* Greeting */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-          Thanks, {parentName}.
-        </h1>
-
-        <p className="text-lg text-gray-600 mb-8">
-          Now let&apos;s understand how you see your goalie&apos;s game — and your role in their development.
-        </p>
-
-        {/* Assessment explanation */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 text-left">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-red-500" />
-            Now for the deeper questions.
-          </h3>
-
-          <p className="text-gray-600 mb-4">
-            The next section explores how you perceive your goalie&apos;s current state,
-            your understanding of the position, and how you communicate after games.
-            This isn&apos;t a test — we&apos;re looking for your honest perspective.
-          </p>
-
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>7 categories covering different aspects of being a goalie parent</span>
-            </li>
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>28 quick questions — all multiple choice</span>
-            </li>
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>No right or wrong answers — just be honest</span>
-            </li>
-            <li className="flex items-start gap-2 text-gray-500">
-              <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>Your progress is saved if you need to take a break</span>
-            </li>
-          </ul>
-        </div>
-
-        <p className="text-gray-400 mb-8">
-          Your answers will be cross-referenced with your goalie&apos;s self-assessment to identify
-          alignment and areas where additional support may help.
-        </p>
-
-        {/* Continue button */}
-        <Button
-          size="lg"
-          onClick={onContinue}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-red-500/20 transition-all hover:scale-105"
-        >
-          Continue to Assessment
-          <ChevronRight className="ml-2 w-5 h-5" />
-        </Button>
       </div>
-    </div>
+    </>
   );
 }

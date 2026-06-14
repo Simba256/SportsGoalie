@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Building2 } from 'lucide-react';
+import { Play, Pause, Building2, ChevronLeft } from 'lucide-react';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
@@ -41,33 +41,50 @@ function AutoVoicePlayer() {
   useEffect(() => { const t = setTimeout(() => setPlaying(true), 900); return () => clearTimeout(t); }, []);
   useEffect(() => {
     if (!playing || progress >= 100) return;
-    const iv = setInterval(() => setProgress(p => Math.min(100, p + 0.5)), 450);
+    const iv = setInterval(() => setProgress(p => Math.min(100, p + 0.222)), 450);
     return () => clearInterval(iv);
   }, [playing, progress]);
   useEffect(() => { if (progress >= 100) setPlaying(false); }, [progress]);
 
-  const fmt = (pct: number) => { const s = Math.round((pct / 100) * 90); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const fmt = (pct: number) => { const s = Math.round((pct / 100) * 225); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const waveform = [0.3,0.5,0.8,0.4,0.95,0.6,0.35,0.75,1,0.55,0.4,0.85,0.65,0.3,0.9,0.7,0.45,0.5,0.8,0.35,0.6,1,0.4,0.7,0.5,0.9,0.3,0.65,0.85,0.4,0.75,0.5,1,0.35,0.8,0.6,0.45,0.9,0.5,0.3,0.7,0.55,0.8,0.35,0.65,0.95,0.4,0.7,0.5,0.85];
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(96,205,255,0.03))', border: '1px solid rgba(96,205,255,0.22)', borderRadius: '20px', padding: '28px 28px 24px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: playing ? '#22c55e' : BLUE2, boxShadow: playing ? '0 0 0 4px rgba(34,197,94,0.25)' : `0 0 0 4px rgba(96,205,255,0.2)`, transition: 'all 0.3s', flexShrink: 0 }} />
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2.5px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>AUTO-PLAYING: COACH MIKE&apos;S PERSONAL MESSAGE TO YOU</p>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button onClick={() => setPlaying(p => !p)} style={{ width: '60px', height: '60px', borderRadius: '50%', background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: playing ? '0 0 0 12px rgba(55,181,255,0.15), 0 0 0 24px rgba(55,181,255,0.06), 0 4px 16px rgba(14,165,233,0.4)' : '0 0 0 8px rgba(55,181,255,0.12), 0 4px 12px rgba(14,165,233,0.25)', transition: 'box-shadow 0.4s' }}>
-          {playing ? <Pause size={22} color="#fff" /> : <Play size={22} color="#fff" fill="#fff" />}
-        </button>
-        <div style={{ flex: 1 }}>
-          <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', marginBottom: '10px', cursor: 'pointer', overflow: 'hidden' }} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setProgress(Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100))); }}>
-            <div style={{ width: `${progress}%`, height: '100%', background: `linear-gradient(90deg, ${BLUE3}, ${BLUE2})`, borderRadius: '3px', transition: 'width 0.15s' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>{fmt(progress)}</span>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>1:30</span>
-          </div>
+    <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.45)', animation: 'player-float 6s ease-in-out infinite' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(0,240,255,0.18), rgba(0,240,255,0.06))', border: '1.5px solid rgba(0,240,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 14px rgba(0,240,255,0.2)' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </div>
-        <button onClick={() => setOn(v => !v)} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, flexShrink: 0 }}>{on ? 'ON' : 'OFF'}</button>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '9px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
+          <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>Coach Mike</p>
+        </div>
+        <div style={{ background: playing ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${playing ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '20px', padding: '4px 10px', transition: 'all 0.3s', flexShrink: 0 }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
+        </div>
+      </div>
+      <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', margin: '0 0 18px', fontStyle: 'italic', lineHeight: 1.55 }}>
+        &ldquo;Building a system that works across every level&rdquo;
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2.5px', height: '52px', marginBottom: '8px', cursor: 'pointer' }} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setProgress(Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100))); }}>
+        {waveform.map((h, i) => { const isPast = (i / waveform.length) * 100 < progress; return (<div key={i} style={{ flex: 1, height: `${h * 100}%`, background: isPast ? '#00f0ff' : 'rgba(255,255,255,0.14)', borderRadius: '2px', transition: 'background 0.08s', boxShadow: isPast ? '0 0 4px rgba(0,240,255,0.4)' : 'none' }} />); })}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '20px' }}>
+        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button onClick={() => setPlaying(p => !p)} style={{ width: '60px', height: '60px', borderRadius: '50%', background: playing ? 'rgba(0,240,255,0.12)' : '#00f0ff', border: playing ? '2px solid #00f0ff' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: playing ? '0 0 0 8px rgba(0,240,255,0.1), 0 0 24px rgba(0,240,255,0.3)' : '0 0 20px rgba(0,240,255,0.4)', transition: 'all 0.25s' }}>
+          {playing ? <Pause size={24} color="#00f0ff" /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="#051125"><path d="M8 5v14l11-7z"/></svg>}
+        </button>
+        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      </div>
+      <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(100,116,139,0.4)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
+          {[12, 20, 8, 16, 10].map((h, i) => (<div key={i} style={{ width: '3px', height: `${playing ? h : Math.round(h * 0.45)}px`, background: i === 1 ? '#00f0ff' : `rgba(0,240,255,${0.35 + i * 0.1})`, borderRadius: '1.5px', transition: `height ${0.2 + i * 0.05}s ease` }} />))}
+        </div>
       </div>
     </div>
   );
@@ -89,8 +106,8 @@ export default function OrganizationPage() {
             <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
           </button>
           <div className="hidden sm:flex gap-6 items-center">
-            {['WHO WE ARE', 'THE SYSTEM'].map((item) => (
-              <button key={item} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {(['WHO WE ARE', 'THE SYSTEM'] as const).map((item) => (
+              <button key={item} onClick={() => router.push(item === 'WHO WE ARE' ? '/explain' : '/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{item}
               </button>
             ))}
@@ -100,15 +117,37 @@ export default function OrganizationPage() {
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center gap-3">
-          <Building2 size={13} color={BLUE2} />
-          <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
-          <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fff' }}>ORGANIZATION</span>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center justify-between gap-3">
+          <button
+            onClick={() => router.push('/explain')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 10px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
+            onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
+            onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
+          >
+            <ChevronLeft size={12} />
+            Back to Roles
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Building2 size={13} color={BLUE2} />
+            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
+            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fff' }}>ORGANIZATION</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Coming Soon Banner ── */}
+      <div style={{ position: 'sticky', top: '64px', zIndex: 40, background: 'linear-gradient(90deg, rgba(2,18,44,0.97) 0%, rgba(6,35,68,0.97) 100%)', borderBottom: '1px solid rgba(96,205,255,0.35)', backdropFilter: 'blur(8px)' }}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex items-center gap-3 flex-wrap">
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(96,205,255,0.12)', border: '1px solid rgba(96,205,255,0.3)', borderRadius: '20px', padding: '3px 10px', fontSize: '10px', fontWeight: 800, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase', flexShrink: 0 }}>COMING SOON</span>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
+            This experience is being finalized. <span style={{ color: BLUE2, fontWeight: 700 }}>Coach Mike will reveal it within 30 days of launch.</span>
+          </p>
         </div>
       </div>
 
       {/* ── C: Voice Player ── */}
       <section style={{ ...sec, background: 'linear-gradient(145deg, #1e5ec4 0%, #1850b4 58%, #0f3d9e 100%)' }}>
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes player-float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }` }} />
         <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: '55vw', height: '55vw', maxWidth: '680px', maxHeight: '680px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.14) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <FloatingPaths position={1} color="rgba(96,205,255,1)" />
         <FloatingPaths position={-1} color="rgba(96,205,255,1)" />
@@ -195,7 +234,7 @@ export default function OrganizationPage() {
               ))}
               <div style={{ background: 'linear-gradient(135deg, rgba(55,181,255,0.08), rgba(55,181,255,0.04))', border: '1px solid rgba(55,181,255,0.24)', borderRadius: '12px', padding: '18px 22px', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
                 <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.6 }}>
-                  Smarter Goalie is the system that fills every gap — from first-year atom to elite level.
+                  Smarter Goalie is the system that fills every gap — from first-year atom to high performance athlete.
                 </p>
               </div>
             </div>
@@ -222,7 +261,7 @@ export default function OrganizationPage() {
             <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
 
             {[
-              { num: '01', label: 'Foundation to Refinement', desc: 'A complete development pathway from first year goalie to elite level' },
+              { num: '01', label: 'Foundation to Refinement', desc: 'A complete development pathway from first year goalie to high performance athlete' },
               { num: '02', label: 'Every Age Group Covered', desc: 'One consistent system adapted to the development stage — no gaps, no blind spots' },
               { num: '03', label: 'Organization-Wide Curriculum', desc: 'Every goalie in your program following the same proven framework' },
               { num: '04', label: 'Coach Education at Every Level', desc: 'Your coaches learn alongside your goalies' },
@@ -281,7 +320,7 @@ export default function OrganizationPage() {
           <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: '#fff', lineHeight: 1.8, marginBottom: '44px', maxWidth: '720px', fontWeight: 600 }}>
             Admin controls all permissions. Every goalie, parent, and coach in your program operates within the structure you define. Nothing goes unseen.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10" style={{ maxWidth: '840px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10" style={{ maxWidth: '840px' }}>
             {([{ n: '10', label: 'Goalies', sub: 'Local club' }, { n: '50', label: 'Goalies', sub: 'Regional program' }, { n: '200', label: 'Goalies', sub: 'Association' }, { n: '500+', label: 'Goalies', sub: 'Provincial / national' }] as { n: string; label: string; sub: string }[]).map((item, i) => (
               <TiltCard key={i} effect="gravitate" tiltLimit={10} scale={1.06} style={{ borderRadius: '16px', overflow: 'hidden', background: 'linear-gradient(180deg, rgba(11,23,45,0.96), rgba(10,18,36,0.98))', border: `2px solid rgba(55,181,255,0.45)`, boxShadow: `0 0 0 1px rgba(55,181,255,0.12), 0 0 24px rgba(55,181,255,0.15), 0 6px 22px rgba(0,0,0,0.3)` }}>
                 <div style={{ height: '3px', background: BLUE2, boxShadow: `0 0 8px ${BLUE2}` }} />

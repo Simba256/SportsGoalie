@@ -11,6 +11,9 @@ export { OnboardingProgress } from './onboarding-progress';
 export { IntelligenceProfileView } from './intelligence-profile-view';
 export { AssessmentComplete } from './assessment-complete';
 
+// Coach Onboarding Components
+export { CoachBaselineQuestionnaire } from './CoachBaselineQuestionnaire';
+
 // Parent-specific Onboarding Components
 export { ParentWelcomeScreen } from './parent-welcome-screen';
 export { ParentBridgeMessage } from './parent-bridge-message';

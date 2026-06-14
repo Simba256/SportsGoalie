@@ -1,18 +1,13 @@
 'use client';
 
-import { useRef } from 'react';
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { BookOpen, PlayCircle, ArrowRight, Video, FileText, Paperclip, Clock, ListChecks, Award } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { BookOpen, PlayCircle, ArrowRight, Video, FileText, Paperclip, Clock, ListChecks, Award, X } from 'lucide-react';
 
 export type ContentType = 'lesson' | 'quiz';
+
+const GOLD   = '#D4A93B';
+const PURPLE = '#a78bfa';
 
 interface ContentTypeSelectorProps {
   open: boolean;
@@ -20,140 +15,121 @@ interface ContentTypeSelectorProps {
   onSelect: (type: ContentType) => void;
 }
 
-export function ContentTypeSelector({
-  open,
-  onOpenChange,
-  onSelect,
-}: ContentTypeSelectorProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
+export function ContentTypeSelector({ open, onOpenChange, onSelect }: ContentTypeSelectorProps) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
+    if (open) document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onOpenChange]);
 
-  const handleSelect = (type: ContentType) => {
-    onSelect(type);
-    onOpenChange(false);
-  };
+  if (!open) return null;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        ref={contentRef}
-        showCloseButton={false}
-        tabIndex={-1}
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          requestAnimationFrame(() => contentRef.current?.focus());
-        }}
-        className="sm:max-w-2xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl"
-      >
+  const handleSelect = (type: ContentType) => { onSelect(type); onOpenChange(false); };
+
+  return createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}
+      onClick={e => { if (e.target === e.currentTarget) onOpenChange(false); }}
+    >
+      <style>{`
+        .cts-lesson:hover { border-color: rgba(212,169,59,0.48) !important; background: rgba(212,169,59,0.07) !important; transform: translateY(-3px) !important; box-shadow: 0 12px 40px rgba(212,169,59,0.14) !important; }
+        .cts-lesson:hover .cts-arrow { transform: translateX(4px); }
+        .cts-quiz:hover   { border-color: rgba(167,139,250,0.45) !important; background: rgba(167,139,250,0.07) !important; transform: translateY(-3px) !important; box-shadow: 0 12px 40px rgba(167,139,250,0.14) !important; }
+        .cts-cancel:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.22) !important; color: #fff !important; }
+      `}</style>
+
+      <div style={{
+        background: 'linear-gradient(145deg, #030e22 0%, #04213f 100%)',
+        border: `1px solid rgba(212,169,59,0.25)`,
+        borderRadius: '22px',
+        width: '100%',
+        maxWidth: '660px',
+        overflow: 'hidden',
+        boxShadow: `0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(212,169,59,0.06)`,
+      }}>
+
         {/* Header */}
-        <DialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-          <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
-          <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">
-              Content Library
+        <div style={{ position: 'relative', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 60%, #0d1f40 100%)', padding: '26px 30px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(212,169,59,0.1)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ color: GOLD, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Content Library</p>
+              <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '5px' }}>Create New Content</h2>
+              <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: '13px' }}>Choose the type of content you'd like to build</p>
+            </div>
+            <button onClick={() => onOpenChange(false)} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '7px', borderRadius: '9px', display: 'flex' }}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Cards */}
+        <div style={{ padding: '24px 30px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+
+          {/* Lesson card */}
+          <button onClick={() => handleSelect('lesson')} className="cts-lesson"
+            style={{ textAlign: 'left', background: 'rgba(212,169,59,0.04)', border: `1px solid rgba(212,169,59,0.2)`, borderRadius: '16px', padding: '22px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'rgba(212,169,59,0.15)', border: `1px solid rgba(212,169,59,0.32)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(212,169,59,0.18)' }}>
+                <BookOpen size={23} color={GOLD} />
+              </div>
+              <div>
+                <p style={{ color: '#fff', fontSize: '15px', fontWeight: 800, marginBottom: '2px' }}>Lesson</p>
+                <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px' }}>Video + Text Content</p>
+              </div>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.48)', fontSize: '12px', lineHeight: 1.65 }}>
+              Create a lesson with video, written instructions, learning objectives, and attachments.
             </p>
-            <DialogTitle className="text-2xl font-bold tracking-tight text-white">
-              Create New Content
-            </DialogTitle>
-            <DialogDescription className="text-slate-300 mt-1.5 text-sm">
-              Select the type of content you'd like to build for your students
-            </DialogDescription>
-          </div>
-        </DialogHeader>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {[{ icon: <Video size={10} />, label: 'Video' }, { icon: <FileText size={10} />, label: 'Rich Text' }, { icon: <Paperclip size={10} />, label: 'Attachments' }].map(f => (
+                <span key={f.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 600, color: GOLD, background: 'rgba(212,169,59,0.1)', border: `1px solid rgba(212,169,59,0.22)`, borderRadius: '20px', padding: '2px 8px' }}>
+                  {f.icon}{f.label}
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: GOLD, fontSize: '12px', fontWeight: 700, marginTop: '4px' }}>
+              Create Lesson <ArrowRight size={13} className="cts-arrow" style={{ transition: 'transform 0.2s' }} />
+            </div>
+          </button>
 
-        {/* Content Cards */}
-        <div className="px-8 py-8">
-          <div className="grid gap-5 md:grid-cols-2">
-            {/* Lesson Card */}
-            <button
-              onClick={() => handleSelect('lesson')}
-              className="group relative flex flex-col text-left rounded-xl border-2 border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/25">
-                  <BookOpen className="h-7 w-7" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 transition-colors">
-                    Lesson
-                  </h3>
-                  <p className="text-sm text-slate-500">Video + Text Content</p>
-                </div>
+          {/* Quiz card */}
+          <button onClick={() => handleSelect('quiz')} className="cts-quiz"
+            style={{ textAlign: 'left', background: 'rgba(167,139,250,0.04)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '16px', padding: '22px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(167,139,250,0.18)' }}>
+                <PlayCircle size={23} color={PURPLE} />
               </div>
-
-              <p className="text-sm text-slate-600 leading-relaxed mb-5 flex-1">
-                Create a lesson with video content, written instructions, learning
-                objectives, and attachments. Perfect for teaching new skills or concepts.
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-5">
-                <FeatureTag icon={<Video className="h-3 w-3" />} label="Video Upload" />
-                <FeatureTag icon={<FileText className="h-3 w-3" />} label="Rich Text" />
-                <FeatureTag icon={<Paperclip className="h-3 w-3" />} label="Attachments" />
+              <div>
+                <p style={{ color: '#fff', fontSize: '15px', fontWeight: 800, marginBottom: '2px' }}>Knowledge Check</p>
+                <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px' }}>Interactive Assessment</p>
               </div>
-
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 group-hover:text-slate-900 transition-colors">
-                Create Lesson
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </div>
-            </button>
-
-            {/* Quiz Card */}
-            <button
-              onClick={() => handleSelect('quiz')}
-              className="group relative flex flex-col text-left rounded-xl border-2 border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/25">
-                  <PlayCircle className="h-7 w-7" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 transition-colors">
-                    Video Quiz
-                  </h3>
-                  <p className="text-sm text-slate-500">Interactive Assessment</p>
-                </div>
-              </div>
-
-              <p className="text-sm text-slate-600 leading-relaxed mb-5 flex-1">
-                Create an interactive quiz with questions appearing at specific video
-                timestamps. Great for testing comprehension and engagement.
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-5">
-                <FeatureTag icon={<Clock className="h-3 w-3" />} label="Timed Questions" />
-                <FeatureTag icon={<ListChecks className="h-3 w-3" />} label="Multiple Choice" />
-                <FeatureTag icon={<Award className="h-3 w-3" />} label="Auto-grading" />
-              </div>
-
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 group-hover:text-slate-900 transition-colors">
-                Create Quiz
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </div>
-            </button>
-          </div>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.48)', fontSize: '12px', lineHeight: 1.65 }}>
+              Create an interactive knowledge check with questions at specific video timestamps.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {[{ icon: <Clock size={10} />, label: 'Timed' }, { icon: <ListChecks size={10} />, label: 'Multi Choice' }, { icon: <Award size={10} />, label: 'Auto-grade' }].map(f => (
+                <span key={f.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 600, color: PURPLE, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.22)', borderRadius: '20px', padding: '2px 8px' }}>
+                  {f.icon}{f.label}
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: PURPLE, fontSize: '12px', fontWeight: 700, marginTop: '4px' }}>
+              Create Knowledge Check <ArrowRight size={13} style={{ transition: 'transform 0.2s' }} />
+            </div>
+          </button>
         </div>
 
         {/* Footer */}
-        <div className="px-8 pb-6 flex justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg"
-          >
+        <div style={{ padding: '0 30px 24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={() => onOpenChange(false)} className="cts-cancel"
+            style={{ padding: '10px 22px', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
             Cancel
-          </Button>
+          </button>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function FeatureTag({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700">
-      {icon}
-      {label}
-    </span>
-  );
+      </div>
+    </div>
+  , document.body);
 }

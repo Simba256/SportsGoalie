@@ -64,29 +64,29 @@ export function OnboardingProgress({
   return (
     <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
       {/* Progress bar */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Progress</span>
-          <span style={{ fontSize: '12px', color: BLUE, fontWeight: 700 }}>{overallProgress}%</span>
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Progress</span>
+          <span style={{ fontSize: '11px', color: BLUE, fontWeight: 700 }}>{overallProgress}%</span>
         </div>
-        <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
+        <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${overallProgress}%`,
             background: `linear-gradient(90deg, ${BLUE}, #0ea5e9)`,
             borderRadius: '99px',
             transition: 'width 0.5s ease',
-            boxShadow: `0 0 8px rgba(55,181,255,0.4)`,
+            boxShadow: `0 0 6px rgba(55,181,255,0.4)`,
           }} />
         </div>
       </div>
 
       {/* Phase dots */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', flexWrap: 'wrap' }}>
         {/* Intake icon */}
         <div
           style={{
-            width: '40px', height: '40px', borderRadius: '50%',
+            width: '32px', height: '32px', borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.3s',
             background: intakeComplete
@@ -108,7 +108,7 @@ export function OnboardingProgress({
         </div>
 
         {/* Divider */}
-        <div style={{ width: '24px', height: '2px', borderRadius: '99px', background: intakeComplete ? `${GREEN}60` : 'rgba(255,255,255,0.08)' }} />
+        <div style={{ width: '14px', height: '2px', borderRadius: '99px', background: intakeComplete ? `${GREEN}60` : 'rgba(255,255,255,0.08)' }} />
 
         {/* Category icons */}
         {categoryOrder.map((slug, index) => {
@@ -122,7 +122,7 @@ export function OnboardingProgress({
             <div key={slug} style={{ display: 'flex', alignItems: 'center' }}>
               <div
                 style={{
-                  width: '40px', height: '40px', borderRadius: '50%',
+                  width: '32px', height: '32px', borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.3s',
                   background: isComplete ? `${GREEN}20` : isCurrent ? `${accent}20` : 'rgba(255,255,255,0.05)',
@@ -136,9 +136,9 @@ export function OnboardingProgress({
               </div>
               {index < categoryOrder.length - 1 && (
                 <div style={{
-                  width: '16px', height: '2px', borderRadius: '99px',
+                  width: '10px', height: '2px', borderRadius: '99px',
                   background: isComplete ? `${GREEN}60` : 'rgba(255,255,255,0.08)',
-                  marginLeft: '4px',
+                  marginLeft: '3px',
                 }} />
               )}
             </div>
@@ -147,7 +147,7 @@ export function OnboardingProgress({
       </div>
 
       {/* Phase label */}
-      <div style={{ marginTop: '12px', textAlign: 'center' }}>
+      <div style={{ marginTop: '6px', textAlign: 'center' }}>
         <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
           {phase === 'intake' && `Intake · Question ${currentIntakeScreen + 1}/${totalIntakeScreens}`}
           {phase === 'bridge' && 'Getting Ready for Assessment'}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { BookOpen, CheckCircle2, Flame, Target, Trophy } from 'lucide-react';
@@ -11,11 +11,11 @@ import { useAchievements } from '@/hooks/useProgress';
 const BLUE = '#37b5ff';
 
 const sampleGoals = [
-  { id: '1', title: 'Complete 5 Basketball Skills', description: 'Master fundamental basketball techniques including shooting, dribbling, and passing.', type: 'skill_completion' as const, targetValue: 5, currentValue: 3, unit: 'skills', deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), priority: 'high' as const, isCompleted: false, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-  { id: '2', title: 'Maintain 7-Day Learning Streak', description: 'Study sports skills for at least 30 minutes every day for a week.', type: 'streak' as const, targetValue: 7, currentValue: 3, unit: 'days', deadline: undefined, priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-  { id: '3', title: 'Achieve 90% Quiz Average', description: 'Improve quiz performance to maintain a 90% average score across all sports.', type: 'quiz_score' as const, targetValue: 90, currentValue: 75, unit: '%', deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
-  { id: '4', title: 'Complete Soccer Fundamentals', description: 'Finish the complete soccer learning path including all skills and assessments.', type: 'sport_completion' as const, targetValue: 1, currentValue: 1, unit: 'sport', deadline: undefined, priority: 'low' as const, isCompleted: true, createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) },
-  { id: '5', title: 'Study 20 Hours This Month', description: 'Dedicate at least 20 hours to learning sports skills this month.', type: 'time_spent' as const, targetValue: 20, currentValue: 12, unit: 'hours', deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), priority: 'low' as const, isCompleted: false, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
+  { id: '1', title: 'Complete 5 Modules in 7AMS', description: 'Work through 5 modules in the Seven Angle-Mark System pillar to build positional mastery.', type: 'skill_completion' as const, targetValue: 5, currentValue: 3, unit: 'modules', deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), priority: 'high' as const, isCompleted: false, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+  { id: '2', title: 'Maintain 7-Day Learning Streak', description: 'Show up every day for 7 consecutive days. Consistency is the foundation of every great goaltender.', type: 'streak' as const, targetValue: 7, currentValue: 3, unit: 'days', deadline: undefined, priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+  { id: '3', title: 'Achieve 95-100 CLUB Grasp Level Average', description: 'Push your Knowledge Check Grasp Level average into the 95-100 CLUB tier across all pillars.', type: 'quiz_score' as const, targetValue: 95, currentValue: 78, unit: '%', deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+  { id: '4', title: 'Complete Pillar 1 — MIND-SET', description: 'Finish every module in the MIND-SET pillar. The mental game is the foundation of everything.', type: 'sport_completion' as const, targetValue: 1, currentValue: 1, unit: 'pillar', deadline: undefined, priority: 'high' as const, isCompleted: true, createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) },
+  { id: '5', title: 'Log 20 Charting Hours This Month', description: 'Track 20 hours of game and practice charting this month to build real performance data.', type: 'time_spent' as const, targetValue: 20, currentValue: 12, unit: 'hours', deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), priority: 'low' as const, isCompleted: false, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
 ];
 
 interface Goal {
@@ -65,14 +65,16 @@ function GoalsAndAchievementsContent() {
   };
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
       <style>{`
-        .goals-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        @media (min-width: 768px) { .goals-stats { grid-template-columns: repeat(4, 1fr); } }
+        .goals-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (min-width: 640px) { .goals-stats { grid-template-columns: repeat(4, 1fr); gap: 14px; } }
+        .goals-tab-content { padding: 16px; }
+        @media (min-width: 640px) { .goals-tab-content { padding: 24px 28px; } }
       `}</style>
 
       {/* Hero */}
-      <section style={{ position: 'relative', height: '280px', display: 'flex', alignItems: 'flex-end', backgroundImage: "url('/goals-achieve.png')", backgroundSize: 'cover', backgroundPosition: 'center', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', minHeight: 'clamp(200px,35vw,280px)', display: 'flex', alignItems: 'flex-end', backgroundImage: "url('/goals-achieve.png')", backgroundSize: 'cover', backgroundPosition: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,15,40,0.92) 0%, rgba(6,35,68,0.85) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, bottom: 0, background: 'linear-gradient(to top, #000f28 0%, transparent 60%)' }} />
         <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 24px 32px' }}>
@@ -83,7 +85,7 @@ function GoalsAndAchievementsContent() {
         </div>
       </section>
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(16px,3vw,28px) clamp(14px,4vw,24px) 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Stats */}
         <div className="goals-stats">
@@ -118,7 +120,7 @@ function GoalsAndAchievementsContent() {
         </div>
 
         {/* Tab content */}
-        <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '18px', padding: '24px 28px' }}>
+        <div className="goals-tab-content" style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '18px' }}>
           {activeTab === 'goals' ? (
             <GoalsList goals={goals} onCreateGoal={handleCreateGoal} onUpdateGoal={handleUpdateGoal} onDeleteGoal={handleDeleteGoal} loading={false} />
           ) : (

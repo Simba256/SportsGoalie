@@ -1,8 +1,6 @@
 'use client';
 
 import { Trophy, Star, Clock, Target, Zap } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Achievement, UserAchievement } from '@/types';
 
 interface AchievementCardProps {
@@ -11,36 +9,34 @@ interface AchievementCardProps {
   isLocked?: boolean;
 }
 
+const BLUE = '#37b5ff';
+
 export function AchievementCard({ achievement, userAchievement, isLocked = false }: AchievementCardProps) {
   const getAchievementIcon = (type: string) => {
+    const s = { width: '24px', height: '24px' };
     switch (type) {
-      case 'progress':
-        return <Target className="h-6 w-6" />;
-      case 'quiz':
-        return <Trophy className="h-6 w-6" />;
-      case 'streak':
-        return <Zap className="h-6 w-6" />;
-      case 'time':
-        return <Clock className="h-6 w-6" />;
-      default:
-        return <Star className="h-6 w-6" />;
+      case 'progress': return <Target style={s} />;
+      case 'quiz': return <Trophy style={s} />;
+      case 'streak': return <Zap style={s} />;
+      case 'time': return <Clock style={s} />;
+      default: return <Star style={s} />;
     }
   };
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common':
-        return 'bg-slate-100 text-slate-700 border-slate-200';
-      case 'uncommon':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'rare':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'epic':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'legendary':
-        return 'bg-red-100 text-red-800 border-red-200';
+  const getRarityStyle = (rarity: string): React.CSSProperties => {
+    switch (rarity?.toUpperCase()) {
+      case 'WINS':
+        return { background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' };
+      case 'BREAKTHROUGHS':
+        return { background: 'rgba(55,181,255,0.1)', color: BLUE, border: `1px solid rgba(55,181,255,0.25)` };
+      case 'CLIMBS':
+        return { background: 'rgba(96,165,250,0.12)', color: '#93c5fd', border: '1px solid rgba(96,165,250,0.3)' };
+      case 'STREAKS':
+        return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' };
+      case 'MILESTONES':
+        return { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' };
       default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+        return { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)' };
     }
   };
 
@@ -48,75 +44,86 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
   const progress = userAchievement?.progress || 0;
 
   return (
-    <Card className={`rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-      isCompleted ? 'border-blue-200 bg-blue-50/30 hover:shadow-blue-100/50' :
-      isLocked ? 'opacity-60 border-slate-200 bg-slate-50' : 'border-slate-200 bg-white hover:shadow-slate-200/60'
-    }`}>
-      <CardContent className="p-6">
-        <div className="flex items-start space-x-4">
-          {/* Achievement Icon */}
-          <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-            isCompleted
-              ? 'bg-blue-100 text-blue-600'
-              : isLocked
-              ? 'bg-slate-100 text-slate-400'
-              : 'bg-blue-100 text-blue-600'
-          }`}>
-            {getAchievementIcon(achievement.type)}
-          </div>
+    <div style={{
+      background: isLocked ? 'rgba(2,18,44,0.5)' : 'rgba(2,18,44,0.85)',
+      border: `1px solid ${isCompleted ? 'rgba(55,181,255,0.25)' : isLocked ? 'rgba(255,255,255,0.07)' : 'rgba(55,181,255,0.14)'}`,
+      borderRadius: '14px',
+      padding: '20px',
+      opacity: isLocked ? 0.6 : 1,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+        {/* Icon */}
+        <div style={{
+          width: '48px', height: '48px', borderRadius: '10px', flexShrink: 0,
+          background: isCompleted
+            ? 'rgba(55,181,255,0.15)'
+            : isLocked
+            ? 'rgba(255,255,255,0.06)'
+            : 'rgba(55,181,255,0.12)',
+          color: isCompleted ? BLUE : isLocked ? 'rgba(255,255,255,0.3)' : BLUE,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {getAchievementIcon(achievement.type)}
+        </div>
 
-          {/* Achievement Details */}
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm">
-                {isLocked && achievement.isSecret ? '???' : achievement.name}
-              </h3>
-              <div className="flex items-center space-x-2">
-                {isCompleted && (
-                  <Badge variant="default" className="bg-blue-100 text-blue-800 border border-blue-200">
-                    Completed
-                  </Badge>
-                )}
-                <Badge className={`text-xs border ${getRarityColor(achievement.rarity)}`}>
-                  {achievement.rarity}
-                </Badge>
-              </div>
-            </div>
-
-            <p className="text-sm text-slate-600">
-              {isLocked && achievement.isSecret ? 'Hidden achievement' : achievement.description}
-            </p>
-
-            {/* Progress Bar for Progressive Achievements */}
-            {!isCompleted && progress > 0 && (
-              <div className="space-y-1">
-                <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-red-600 transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-slate-500">
-                  {progress}% complete
-                </p>
-              </div>
-            )}
-
-            {/* Achievement Meta */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{achievement.points} points</span>
-              {isCompleted && userAchievement?.unlockedAt && (
-                <span>
-                  Unlocked {new Date(userAchievement.unlockedAt.toDate()).toLocaleDateString()}
+        {/* Details */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#fff', margin: 0 }}>
+              {isLocked && achievement.isSecret ? '???' : achievement.name}
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              {isCompleted && (
+                <span style={{
+                  fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px',
+                  background: 'rgba(55,181,255,0.15)', color: BLUE, border: `1px solid rgba(55,181,255,0.3)`,
+                }}>
+                  Completed
                 </span>
               )}
-              {!isCompleted && !isLocked && (
-                <span>In Progress</span>
-              )}
+              <span style={{
+                fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px',
+                textTransform: 'capitalize', ...getRarityStyle(achievement.rarity),
+              }}>
+                {achievement.rarity}
+              </span>
             </div>
           </div>
+
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.5 }}>
+            {isLocked && achievement.isSecret ? 'Hidden achievement' : achievement.description}
+          </p>
+
+          {!isCompleted && progress > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: '3px',
+                  background: `linear-gradient(90deg, ${BLUE} 0%, #0ea5e9 100%)`,
+                  width: `${progress}%`, transition: 'width 0.5s',
+                }} />
+              </div>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                {progress}% complete
+              </p>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+              {achievement.points} Growth Points
+            </span>
+            {isCompleted && userAchievement?.unlockedAt && (
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+                Unlocked {new Date(userAchievement.unlockedAt.toDate()).toLocaleDateString()}
+              </span>
+            )}
+            {!isCompleted && !isLocked && (
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>In Progress</span>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

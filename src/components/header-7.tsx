@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-const navItems = ['Features', 'About', 'Pricing', 'Login'];
+const navItems = ['Features', 'About', 'Pricing', 'Contact Us', 'Login'];
 
 export const Header7 = () => {
   const router = useRouter();
@@ -52,21 +52,21 @@ export const Header7 = () => {
               onClick={() => {
                 if (label === 'Pricing') {
                   router.push('/pricing');
+                } else if (label === 'Contact Us') {
+                  router.push('/contact');
                 } else if (label === 'Login') {
                   router.push('/auth/login');
                 } else {
-                  // Hash scroll for Features and About
                   const element = document.getElementById(label.toLowerCase());
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                  }
+                  if (element) element.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              className={`transition-colors duration-500 font-medium text-[15px] tracking-wide cursor-pointer ${
-                label === 'Login'
-                  ? 'bg-[#37b5ff] hover:bg-[#22a7f5] text-white px-4 py-2 rounded-md transition-all duration-300'
-                  : 'text-slate-800 hover:text-slate-900'
-              }`}
+              className="transition-all duration-300 font-medium tracking-wide cursor-pointer"
+              style={
+                label === 'Login' || label === 'Contact Us'
+                  ? { background: '#37b5ff', color: '#fff', fontSize: '13px', fontWeight: 600, padding: '8px 18px', borderRadius: '6px', border: 'none' }
+                  : { color: '#1e293b', fontSize: '15px', background: 'none', border: 'none' }
+              }
             >
               {label}
             </button>

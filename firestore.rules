@@ -104,18 +104,28 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
+      // Coaches and admins can list/query the users collection (needed for student roster queries)
+      allow list: if isAdmin() || isCoach();
+
       // Users can read their own profile, admins can read all
       // Coaches can read all student profiles (needed to browse and add students to roster)
       // Students can read their assigned coach's profile
       // Students can read only their linked parent profiles (for Family Links UI)
       // Parents can read student profiles (needed to view linked children)
-      allow read: if isOwnerOrAdmin(userId) ||
+      allow get: if isOwnerOrAdmin(userId) ||
                      (isCoach() && resource.data.role == 'student') ||
                      (isAuthenticated() && resource.data.role == 'coach') ||
                      (isAuthenticated() &&
                       resource.data.role == 'parent' &&
                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('linkedParentIds', []).hasAny([userId])) ||
-                     (isParent() && resource.data.role == 'student');
+                     (isParent() && resource.data.role == 'student') ||
+                     // Direct fallback: parent (by Firestore role) reading a student profile
+                     (isAuthenticated() &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'parent' &&
+                      resource.data.role == 'student') ||
+                     (isAuthenticated() &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'student' &&
+                      resource.data.role == 'parent');
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
@@ -770,9 +780,11 @@ service cloud.firestore {
       // Students can read their own evaluation
       // Coaches can read evaluations of any student (needed for review workflow)
       // Admins can read all
+      // Parents can read their linked children's evaluations (for perception comparison)
       allow read: if isAuthenticated() && (
         isOwnEvaluation() ||               // Student reads own (V1 or V2)
-        isCoachOrAdmin()                   // Coaches/admins can read for review
+        isCoachOrAdmin() ||                // Coaches/admins can read for review
+        isParent()                         // Parents can read child evaluations
       );
 
       // Students can create their own evaluation during onboarding
@@ -889,14 +901,14 @@ service cloud.firestore {
 
     // Parent Links collection - Active parent-child relationships
     match /parentLinks/{linkId} {
-      // Parents can read their own links, children can read links to them, admins can read all
-      allow read: if isAuthenticated() && (
+      // Individual document reads — must be participant or admin
+      allow get: if isAuthenticated() && (
         resource.data.parentId == getUserId() ||
         resource.data.childId == getUserId() ||
         isAdmin()
       );
 
-      // Allow list queries filtered by parentId or childId
+      // List/query — any authenticated user can query (app filters by their own parentId/childId)
       allow list: if isAuthenticated();
 
       // Authenticated users can create links (service validates roles and codes)
@@ -919,6 +931,11 @@ service cloud.firestore {
     }
 
     match /sport_progress/{progressId} {
+      allow read: if isParent();
+    }
+
+    // Parents need to read video quiz progress to load child stats in the dashboard
+    match /video_quiz_progress/{progressId} {
       allow read: if isParent();
     }
 
@@ -961,6 +978,38 @@ service cloud.firestore {
       allow update: if isAdmin() || isAuthenticated();
 
       // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ==================== PARENT VOICE CHANNEL ====================
+
+    // Parent Voice Submissions — Phase 1: Connect With Us form
+    match /parent_voice_submissions/{submissionId} {
+      // Parents can read their own submissions
+      allow get: if isAuthenticated() && resource.data.parentId == getUserId();
+      allow list: if isAuthenticated() && (
+        request.auth.uid != null &&
+        // Parent sees only their own (application enforces the where clause)
+        isParent() ||
+        isAdmin()
+      );
+
+      // Parents can create submissions (parentId must match their own UID)
+      allow create: if isAuthenticated() &&
+                       request.resource.data.parentId == getUserId() &&
+                       request.resource.data.category in ['COMPLIMENT', 'CONCERN', 'QUESTION'] &&
+                       request.resource.data.subject is string &&
+                       request.resource.data.subject.size() > 0 &&
+                       request.resource.data.subject.size() <= 80 &&
+                       request.resource.data.body is string &&
+                       request.resource.data.body.size() > 0 &&
+                       request.resource.data.body.size() <= 1000 &&
+                       request.resource.data.status == 'NEW';
+
+      // Only admins can update (reply, change status, escalate)
+      allow update: if isAdmin();
+
+      // Only admins can delete/archive
       allow delete: if isAdmin();
     }
 

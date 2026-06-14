@@ -3,35 +3,30 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  BookOpen,
-  PlayCircle,
-  Lock,
-  CheckCircle2,
-  Trophy,
-  Target,
-  User as UserIcon,
-  ArrowRight,
-  Loader2,
-  ChevronRight,
-  MessageSquare,
-  TrendingUp,
-  Brain,
-  Footprints,
-  Shapes,
-  Grid3X3,
-  Dumbbell,
-  Heart,
+  BookOpen, PlayCircle, Lock, CheckCircle2, Trophy, Target,
+  ArrowRight, Loader2, ChevronRight, MessageSquare, TrendingUp,
+  Brain, Footprints, Shapes, Grid3X3, Dumbbell, Heart,
+  Play, Sparkles, Zap, User as UserIcon, Flame,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { onboardingService } from '@/lib/database';
+import { useProgress } from '@/hooks/useProgress';
 import { User, Sport, SportProgress, CustomCurriculum, CustomCurriculumItem, IntelligenceProfile, getPacingLevelDisplayText, PILLARS } from '@/types';
 import { enrollmentService } from '@/lib/database/services/enrollment.service';
-import { getPillarColorClasses, getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
 import { toast } from 'sonner';
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const BLUE = '#37b5ff';
+const BLUE2 = '#60a5fa';
+
+const PILLAR_ICONS: Record<string, LucideIcon> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+};
+const PILLAR_COLORS: Record<string, string> = {
+  Brain: '#a78bfa', Footprints: '#37b5ff', Shapes: '#4ade80',
+  Target: '#fb923c', Grid3X3: '#f87171', Dumbbell: '#fbbf24', Heart: '#2dd4bf',
 };
 
 interface CustomCurriculumDashboardProps {
@@ -54,12 +49,12 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   const [contentInfo, setContentInfo] = useState<Record<string, ContentInfo>>({});
   const [profile, setProfile] = useState<IntelligenceProfile | null>(null);
   const [enrolledSports, setEnrolledSports] = useState<Array<{ sport: Sport; progress: SportProgress }>>([]);
+  const { userProgress } = useProgress();
 
   useEffect(() => { loadData(); }, [user.id]);
 
   const loadContentDetails = async (items: CustomCurriculumItem[]) => {
     const sportCache = new Map<string, { name?: string; icon?: string; color?: string }>();
-
     const getSportCached = async (sportId: string) => {
       if (sportCache.has(sportId)) return sportCache.get(sportId)!;
       const result = await sportsService.getSport(sportId);
@@ -69,27 +64,26 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
       sportCache.set(sportId, data);
       return data;
     };
-
     const infoEntries = await Promise.all(
       items.map(async (item): Promise<[string, ContentInfo] | null> => {
         if (item.contentId) {
           try {
             if (item.type === 'lesson') {
-              const skillResult = await sportsService.getSkill(item.contentId);
-              if (skillResult.success && skillResult.data) {
-                const sport = await getSportCached(skillResult.data.sportId);
-                return [item.contentId, { title: skillResult.data.name, description: skillResult.data.description, sportName: sport.name, sportIcon: sport.icon, sportColor: sport.color }];
+              const r = await sportsService.getSkill(item.contentId);
+              if (r.success && r.data) {
+                const sport = await getSportCached(r.data.sportId);
+                return [item.contentId, { title: r.data.name, description: r.data.description, sportName: sport.name, sportIcon: sport.icon, sportColor: sport.color }];
               }
             } else if (item.type === 'quiz') {
-              const quizResult = await videoQuizService.getVideoQuiz(item.contentId);
-              if (quizResult.success && quizResult.data) {
-                const sport = await getSportCached(quizResult.data.sportId);
-                return [item.contentId, { title: quizResult.data.title, description: quizResult.data.description, sportName: sport.name, sportIcon: sport.icon, sportColor: sport.color }];
+              const r = await videoQuizService.getVideoQuiz(item.contentId);
+              if (r.success && r.data) {
+                const sport = await getSportCached(r.data.sportId);
+                return [item.contentId, { title: r.data.title, description: r.data.description, sportName: sport.name, sportIcon: sport.icon, sportColor: sport.color }];
               }
             } else if (item.type === 'custom_lesson' || item.type === 'custom_quiz') {
-              const contentResult = await customContentService.getContent(item.contentId);
-              if (contentResult.success && contentResult.data) {
-                return [item.contentId, { title: contentResult.data.title, description: contentResult.data.description, sportName: 'Custom Content', sportColor: '#8b5cf6', contentType: contentResult.data.type }];
+              const r = await customContentService.getContent(item.contentId);
+              if (r.success && r.data) {
+                return [item.contentId, { title: r.data.title, description: r.data.description, sportName: 'Custom Content', sportColor: '#8b5cf6', contentType: r.data.type }];
               }
             }
           } catch { /* skip */ }
@@ -99,68 +93,43 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
         return null;
       })
     );
-
     const info: Record<string, ContentInfo> = {};
-    for (const entry of infoEntries) {
-      if (entry) info[entry[0]] = entry[1];
-    }
+    for (const entry of infoEntries) { if (entry) info[entry[0]] = entry[1]; }
     setContentInfo(info);
   };
 
   const loadData = async () => {
     try {
       setLoading(true);
-
-      // Phase 1: Fetch just curriculum, evaluation, and coach in parallel
-      // This unblocks the UI render as fast as possible
       const [curriculumResult, evalResult, coachResult] = await Promise.all([
         customCurriculumService.getStudentCurriculum(user.id),
         onboardingService.getEvaluation(user.id).catch(() => null),
-        user.assignedCoachId
-          ? userService.getUser(user.assignedCoachId).catch(() => null)
-          : Promise.resolve(null),
+        user.assignedCoachId ? userService.getUser(user.assignedCoachId).catch(() => null) : Promise.resolve(null),
       ]);
-
-      if (evalResult?.success && evalResult.data?.intelligenceProfile) {
-        setProfile(evalResult.data.intelligenceProfile);
-      }
-
-      if (coachResult?.success && coachResult.data) {
-        setCoach(coachResult.data);
-      }
-
-      if (curriculumResult.success && curriculumResult.data) {
-        setCurriculum(curriculumResult.data);
-      }
+      if (evalResult?.success && evalResult.data?.intelligenceProfile) setProfile(evalResult.data.intelligenceProfile);
+      if (coachResult?.success && coachResult.data) setCoach(coachResult.data);
+      if (curriculumResult.success && curriculumResult.data) setCurriculum(curriculumResult.data);
     } catch {
       toast.error('Failed to load your curriculum');
     } finally {
-      // Unblock the UI immediately — content details load progressively below
       setLoading(false);
     }
   };
 
-  // Phase 2: Load content details and enrollment AFTER the main UI has rendered
-  useEffect(() => {
-    if (curriculum?.items.length) {
-      loadContentDetails(curriculum.items);
-    }
-  }, [curriculum]);
+  useEffect(() => { if (curriculum?.items.length) loadContentDetails(curriculum.items); }, [curriculum]);
 
   useEffect(() => {
     if (!loading && user.id) {
-      enrollmentService.getUserEnrolledSports(user.id).then((result) => {
-        if (result.success && result.data) {
-          setEnrolledSports(result.data);
-        }
+      enrollmentService.getUserEnrolledSports(user.id).then((r) => {
+        if (r.success && r.data) setEnrolledSports(r.data);
       }).catch(() => { /* non-blocking */ });
     }
   }, [loading, user.id]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(160deg, #000a1f 0%, #041530 40%, #071e42 100%)' }}>
+        <Loader2 size={28} color={BLUE} style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     );
   }
@@ -170,9 +139,8 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   const unlockedItems = curriculum?.items.filter(i => i.status === 'unlocked').length || 0;
   const progressPct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-  const nextItem = curriculum?.items
-    .sort((a, b) => a.order - b.order)
-    .find(item => item.status === 'unlocked');
+  const orderedItems = curriculum ? [...curriculum.items].sort((a, b) => a.order - b.order) : [];
+  const nextItem = orderedItems.find(item => item.status === 'unlocked');
 
   const getContentLink = (item: CustomCurriculumItem) => {
     if (item.status === 'locked') return null;
@@ -180,317 +148,485 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
     const derivedCustomType = itemInfo?.contentType;
     if (item.type === 'lesson' && item.contentId) return `/pillars/${item.pillarId}/skills/${item.contentId}`;
     if (item.type === 'quiz' && item.contentId) return `/quiz/video/${item.contentId}`;
-    if (item.type === 'custom_lesson' && item.contentId) {
-      return derivedCustomType === 'quiz'
-        ? `/quiz/video/${item.contentId}`
-        : `/learn/lesson/${item.contentId}`;
-    }
-    if (item.type === 'custom_quiz' && item.contentId) {
-      return derivedCustomType === 'lesson'
-        ? `/learn/lesson/${item.contentId}`
-        : `/quiz/video/${item.contentId}`;
-    }
+    if (item.type === 'custom_lesson' && item.contentId) return derivedCustomType === 'quiz' ? `/quiz/video/${item.contentId}` : `/learn/lesson/${item.contentId}`;
+    if (item.type === 'custom_quiz' && item.contentId) return derivedCustomType === 'lesson' ? `/learn/lesson/${item.contentId}` : `/quiz/video/${item.contentId}`;
     return null;
   };
 
-  const firstName = user.displayName?.split(' ')[0] || user.email?.split('@')[0];
+  const firstName = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Goalie';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-  const orderedItems = curriculum
-    ? [...curriculum.items].sort((a, b) => a.order - b.order)
-    : [];
+  const nextLink = nextItem ? getContentLink(nextItem) : null;
 
   return (
-    <div className="bg-gray-50">
-      <section
-        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[340px] md:h-[390px] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: "url('/goalie-dashboard.png')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-white/5 backdrop-blur-[1px]" />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-white/10 backdrop-blur-[3px]" />
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-white/15 backdrop-blur-[6px]" />
+    <div style={{ background: 'linear-gradient(160deg, #000a1f 0%, #041530 40%, #071e42 100%)', minHeight: '100vh' }}>
+      <style>{`
+        @keyframes blob { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-15px) scale(1.04)} }
+        @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-15px,20px) scale(0.96)} }
+        @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+        @keyframes pulse-ring { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.03)} }
+        @keyframes fade-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        .s1{animation:fade-up .45s .05s both}
+        .s2{animation:fade-up .45s .12s both}
+        .s3{animation:fade-up .45s .20s both}
+        .s4{animation:fade-up .45s .28s both}
+        .s5{animation:fade-up .45s .36s both}
+        .stat-lift{transition:transform .2s,box-shadow .2s,border-color .2s}
+        .stat-lift:hover{transform:translateY(-5px)}
+        .path-row{transition:background .15s,padding-left .15s}
+        .path-row:hover{background:rgba(255,255,255,0.04)!important}
+        .qa-btn{transition:transform .18s,box-shadow .18s,border-color .18s,background .18s}
+        .qa-btn:hover{transform:translateY(-3px) scale(1.02)}
+        .dash-grid{display:grid;grid-template-columns:1fr;gap:24px}
+        @media(min-width:1024px){.dash-grid{grid-template-columns:1.6fr 1fr}}
+        .continue-hover{transition:border-color .2s,box-shadow .2s}
+        .continue-hover:hover{box-shadow:0 12px 40px rgba(0,0,0,.35)!important}
+        .vault-hover{transition:border-color .2s,transform .2s}
+        .vault-hover:hover{border-color:rgba(167,139,250,.45)!important;transform:translateY(-2px)}
+        .shimmer-bar{background:linear-gradient(90deg,var(--c) 0%,var(--c2) 45%,var(--c) 100%);background-size:400px 100%;animation:shimmer 2.5s infinite linear}
+      `}</style>
 
-        <div className="relative z-10 flex flex-col items-center text-center">
-          <h1 className="text-white text-3xl md:text-5xl font-bold bg-white/10 border border-white/25 backdrop-blur-sm px-6 py-2 rounded-xl inline-block shadow-lg mb-2">
-            {greeting}, {firstName}
-          </h1>
-          <p className="text-white text-sm md:text-base font-medium drop-shadow-md max-w-2xl px-4">
-            {totalItems > 0
-              ? `You have completed ${completedItems} of ${totalItems} items, with ${unlockedItems} ready to learn.`
-              : 'Your coach will assign learning materials soon. Check back or message your coach.'}
-          </p>
+      {/* ── HERO ── */}
+      <section style={{ position: 'relative', backgroundImage: "url('/goalie-dashboard.png')", backgroundSize: 'cover', backgroundPosition: 'center top', minHeight: '420px', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(130deg,rgba(0,10,31,.95) 0%,rgba(4,21,48,.85) 50%,rgba(0,10,31,.78) 100%)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to top,#000a1f,transparent)' }} />
+        <div style={{ position: 'absolute', top: '5%', right: '12%', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(55,181,255,.1) 0%,transparent 70%)', animation: 'blob 7s ease-in-out infinite', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '30%', right: '30%', width: '240px', height: '240px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,.07) 0%,transparent 70%)', animation: 'blob2 9s ease-in-out infinite', pointerEvents: 'none' }} />
 
-          <div className="mt-4 w-full max-w-lg rounded-full bg-white/35 h-2.5 overflow-hidden">
-            <div className="h-full rounded-full bg-blue-600" style={{ width: `${progressPct}%` }} />
-          </div>
-
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 px-2">
-            <div className="flex items-center gap-3 rounded-full border border-white/30 bg-white/20 px-4 py-2 backdrop-blur-md shadow-sm">
-              <ProgressRing percentage={progressPct} size={48} />
-              <div className="text-left">
-                <p className="text-[11px] font-medium text-white/80">Curriculum Progress</p>
-                <p className="text-sm font-bold text-white">{progressPct}%</p>
-              </div>
-            </div>
-
-            {coach && (
-              <div className="flex items-center gap-3 rounded-full border border-white/35 bg-white/25 px-4 py-2 backdrop-blur-md shadow-sm">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-700 text-xs font-bold text-white">
-                  {coach.displayName.charAt(0)}
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-medium text-white/75">Your Coach</p>
-                  <p className="text-sm font-semibold text-white">{coach.displayName}</p>
-                </div>
-                <Link href="/messages" className="ml-1">
-                  <button className="flex items-center gap-1 rounded-full border border-white/35 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-white">
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    Message
-                  </button>
-                </Link>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 28px 44px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+          {/* Left text */}
+          <div style={{ flex: 1, minWidth: '260px' }}>
+            {(userProgress?.overallStats?.currentStreak ?? 0) > 0 && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)',
+                borderRadius: '30px', padding: '4px 12px', marginBottom: '10px',
+                color: '#fb923c',
+              }}>
+                <Flame size={13} color="#fb923c" />
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>{userProgress!.overallStats.currentStreak} day streak</span>
               </div>
             )}
+            <div className="s1" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '30px', padding: '5px 14px', marginBottom: '18px' }}>
+              <Sparkles size={12} color={BLUE} />
+              <span style={{ fontSize: '12px', color: BLUE, fontWeight: 700, letterSpacing: '.5px' }}>{greeting}</span>
+            </div>
+
+            <h1 className="s2" style={{ fontSize: 'clamp(44px,8vw,84px)', fontWeight: 900, lineHeight: 1, letterSpacing: '-.04em', marginBottom: '14px' }}>
+              <span style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,.5)', letterSpacing: '.02em', marginBottom: '4px' }}>Welcome back,</span>
+              <span style={{ background: `linear-gradient(135deg, #fff 30%, ${BLUE} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                {firstName}
+              </span>
+            </h1>
+
+            <p className="s3" style={{ fontSize: '15px', color: 'rgba(255,255,255,.45)', marginBottom: '28px', maxWidth: '380px', lineHeight: 1.6 }}>
+              {totalItems > 0
+                ? `You've completed ${completedItems} of ${totalItems} modules. ${progressPct >= 80 ? 'Almost there — finish strong!' : progressPct >= 40 ? 'Keep the momentum going!' : unlockedItems > 0 ? `${unlockedItems} module${unlockedItems > 1 ? 's' : ''} ready to learn.` : 'Great start — keep building!'}`
+                : 'Your coach will assign learning materials soon. Check back or message your coach.'}
+            </p>
+
+            <div className="s4" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {nextLink && (
+                <Link href={nextLink}>
+                  <button style={{ display: 'inline-flex', alignItems: 'center', gap: '9px', background: BLUE, border: 'none', borderRadius: '12px', padding: '14px 26px', color: '#000a1f', fontSize: '14px', fontWeight: 900, letterSpacing: '.3px', cursor: 'pointer', boxShadow: `0 6px 24px ${BLUE}55`, transition: 'transform .15s,box-shadow .15s' }}
+                    onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-2px)'; b.style.boxShadow = `0 10px 30px ${BLUE}66`; }}
+                    onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = ''; b.style.boxShadow = `0 6px 24px ${BLUE}55`; }}
+                  >
+                    <Play size={15} fill="#000a1f" /> Continue Learning
+                  </button>
+                </Link>
+              )}
+              <Link href="/progress">
+                <button style={{ display: 'inline-flex', alignItems: 'center', gap: '9px', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.16)', borderRadius: '12px', padding: '14px 26px', color: 'rgba(255,255,255,.7)', fontSize: '14px', fontWeight: 700, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'background .15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.13)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.08)'; }}
+                >
+                  <TrendingUp size={15} /> Analytics
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Progress ring */}
+          <div className="s4" style={{ flexShrink: 0 }}>
+            <HeroRing pct={progressPct} completed={completedItems} total={totalItems} />
           </div>
         </div>
       </section>
 
-      <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-8">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          {curriculum && curriculum.items.length > 0 ? (
-            <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 p-6">
-                <h2 className="text-xl font-bold text-slate-800">Learning Path</h2>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">{totalItems} items</span>
-              </div>
-
-              {nextItem && (
-                <div className="border-b border-slate-100 p-4">
-                  <Link href={getContentLink(nextItem) || '#'} className="flex items-center gap-4 rounded-2xl border border-blue-100 bg-slate-50 p-4 transition hover:bg-slate-100">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                      {nextItem.type === 'lesson' || nextItem.type === 'custom_lesson'
-                        ? <BookOpen className="h-6 w-6" />
-                        : <PlayCircle className="h-6 w-6" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-bold text-slate-800">
-                        {contentInfo[nextItem.contentId || nextItem.id]?.title || 'Next Item'}
-                      </h3>
-                      <p className="truncate text-xs text-slate-500">
-                        {contentInfo[nextItem.contentId || nextItem.id]?.description || 'Ready to continue your goalie development.'}
-                      </p>
-                    </div>
-                    <div className="text-slate-400">
-                      <ChevronRight className="h-5 w-5" />
-                    </div>
-                  </Link>
-                </div>
-              )}
-
-              <div className="p-4 space-y-2">
-                {orderedItems.map((item, index) => {
-                  const info = contentInfo[item.contentId || item.id];
-                  const link = getContentLink(item);
-                  const isLocked = item.status === 'locked';
-                  const isDone = item.status === 'completed';
-
-                  return (
-                    <div key={item.id} className="flex items-center justify-between rounded-xl border border-transparent p-3 pb-4 transition hover:bg-slate-50 hover:border-slate-100">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                          isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-200 text-slate-500' : 'bg-blue-500 text-white'
-                        }`}>
-                          {isDone ? <CheckCircle2 className="h-4 w-4" /> : isLocked ? <Lock className="h-3.5 w-3.5" /> : <span className="text-[10px] font-semibold">{index + 1}</span>}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="truncate font-semibold text-slate-800">{info?.title || item.customContent?.title || 'Learning Item'}</h4>
-                          <p className="text-xs text-slate-500">{info?.sportName || 'Custom Content'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded-md border px-2 py-1 text-xs font-semibold ${
-                          isDone
-                            ? 'border-green-200 bg-green-100 text-green-700'
-                            : item.status === 'unlocked'
-                              ? 'border-blue-200 bg-blue-100 text-blue-700'
-                              : item.status === 'in_progress'
-                                ? 'border-amber-200 bg-amber-100 text-amber-700'
-                                : 'border-slate-200 bg-slate-100 text-slate-500'
-                        }`}>
-                          {isDone ? 'Done' : item.status === 'unlocked' ? 'Available' : item.status === 'in_progress' ? 'Active' : 'Locked'}
-                        </span>
-                        {link && !isLocked && (
-                          <Link href={link}>
-                            <button className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
-                              {isDone ? 'Review' : (item.type === 'lesson' || item.type === 'custom_lesson') ? 'Start' : 'Quiz'}
-                            </button>
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ) : (
-            <section className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-                <BookOpen className="h-7 w-7 text-blue-400" />
-              </div>
-              <h3 className="mb-1 text-sm font-semibold text-slate-900">No Curriculum Assigned Yet</h3>
-              <p className="mx-auto mb-4 max-w-xs text-xs text-slate-500">
-                Your coach has not assigned any learning materials yet. Check back soon.
-              </p>
-              {coach && (
-                <Link href="/messages">
-                  <button className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                    <UserIcon className="mr-2 inline h-4 w-4" /> Message Coach
-                  </button>
-                </Link>
-              )}
-            </section>
-          )}
-
-          {enrolledSports.length > 0 && (
-            <section className="overflow-hidden rounded-3xl border border-blue-100/80 bg-gradient-to-br from-blue-50/70 via-white to-red-50/60 shadow-sm">
-              <div className="flex items-center justify-between border-b border-blue-100/80 p-6">
-                <h2 className="text-xl font-bold text-slate-800">Your Pillars</h2>
-                <Link href="/pillars" className="flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-red-600 transition-colors">
-                  View all
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-              <div className="space-y-2 p-4">
-                {enrolledSports.map(({ sport, progress }) => {
-                  const slug = getPillarSlugFromDocId(sport.id);
-                  const info = slug ? PILLARS.find(p => p.slug === slug) : null;
-                  const colorClasses = getPillarColorClasses(info?.color || 'blue');
-                  const Icon = PILLAR_ICONS[info?.icon || 'Target'] || Target;
-                  const pct = Math.round(progress.progressPercentage);
-
-                  return (
-                    <Link key={sport.id} href={`/pillars/${sport.id}`} className="flex items-center justify-between rounded-2xl border border-transparent p-3 transition hover:border-blue-100 hover:bg-gradient-to-r hover:from-blue-50/70 hover:to-red-50/40">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm ring-1 ring-blue-200">
-                          <Icon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-slate-800">{info?.shortName || sport.name}</h4>
-                          <p className="text-xs text-slate-500">{progress.completedSkills.length}/{progress.totalSkills} skills</p>
-                        </div>
-                      </div>
-                      <div className="flex w-1/3 items-center gap-4">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                          <div className={`h-full ${colorClasses.bg}`} style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="text-sm font-medium text-slate-600">{pct}%</span>
-                        <ChevronRight className="h-5 w-5 text-blue-400" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
-            <div className="absolute right-0 top-0 p-4 opacity-10">
-              <Brain className="h-32 w-32 text-blue-600" />
-            </div>
-            <div className="relative z-10 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-md">
-                  <Brain className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Mental Training</p>
-                  <h3 className="text-lg font-bold text-slate-800">Open Mind Vault</h3>
-                </div>
-              </div>
-              <p className="text-sm leading-relaxed text-slate-600">
-                Capture your thoughts after practice or games so your mental patterns are tracked from day one.
-              </p>
-              <Link href="/mind-vault" className="inline-flex items-center font-semibold text-blue-700 transition hover:text-blue-800">
-                Enter Mind Vault
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
-          </section>
-
-          {profile && (
-            <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-              <h2 className="mb-6 border-b border-slate-100 pb-4 text-lg font-bold text-slate-800">Assessment Profile</h2>
-              <div className="mb-6 flex items-end justify-between">
-                <div>
-                  <span className="text-4xl font-bold text-slate-800">{profile.overallScore.toFixed(1)}</span>
-                  <span className="text-sm font-medium text-slate-500"> / 4.0</span>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold text-white ${
-                  profile.pacingLevel === 'refinement' ? 'bg-green-500' :
-                  profile.pacingLevel === 'development' ? 'bg-blue-500' : 'bg-red-500'
-                }`}>
-                  {getPacingLevelDisplayText(profile.pacingLevel)}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {profile.categoryScores.slice(0, 4).map((cat) => (
-                  <div key={cat.categorySlug} className="flex items-center text-sm">
-                    <span className="w-24 capitalize text-slate-600">{cat.categorySlug.replace('_', ' ')}</span>
-                    <div className="mx-3 h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full bg-blue-500" style={{ width: `${((cat.averageScore - 1) / 3) * 100}%` }} />
-                    </div>
-                    <span className="w-8 text-right font-semibold text-slate-700">{cat.averageScore.toFixed(1)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold text-slate-800">Quick Actions</h2>
-            <div className="space-y-2">
-              <QuickAction href="/pillars" icon={<BookOpen className="h-5 w-5 text-blue-600" />} bg="bg-blue-50" label="Browse Pillars" />
-              <QuickAction href="/progress" icon={<TrendingUp className="h-5 w-5 text-red-600" />} bg="bg-red-50" label="Analytics" />
-              <QuickAction href="/achievements" icon={<Trophy className="h-5 w-5 text-blue-600" />} bg="bg-blue-50" label="Achievements" />
-              {coach && <QuickAction href="/messages" icon={<MessageSquare className="h-5 w-5 text-red-600" />} bg="bg-red-50" label="Message Coach" />}
-            </div>
-          </section>
+      {/* ── STATS STRIP ── */}
+      <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '14px' }}>
+          <StatCard label="Modules Done" value={completedItems} icon={<CheckCircle2 size={16} />} color="#4ade80" delay="0s" />
+          <StatCard label="Available" value={unlockedItems} icon={<PlayCircle size={16} />} color={BLUE} delay=".05s" />
+          <StatCard label="Total Modules" value={totalItems} icon={<BookOpen size={16} />} color="#a78bfa" delay=".10s" />
+          <StatCard label="Progress" value={`${progressPct}%`} icon={<Trophy size={16} />} color="#fb923c" delay=".15s" />
+          <StatCard label="Growth Points" value={(user as { growthPoints?: number }).growthPoints ?? 0} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
+          {coach && <CoachStrip coach={coach} />}
         </div>
       </div>
+
+      {/* ── MAIN CONTENT ── */}
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 64px' }}>
+        <div className="dash-grid">
+
+          {/* LEFT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* Learning Path */}
+            <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Your Development Path</h2>
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.35)' }}>
+                    {totalItems} {totalItems === 1 ? 'module' : 'modules'} assigned by your coach
+                  </p>
+                </div>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#4ade80', fontWeight: 700, background: 'rgba(74,222,128,.1)', border: '1px solid rgba(74,222,128,.25)', borderRadius: '10px', padding: '6px 12px' }}>
+                  {completedItems}/{totalItems} done
+                </span>
+              </div>
+
+              {totalItems === 0 ? (
+                <EmptyPath coach={coach} />
+              ) : (
+                <div>
+                  {orderedItems.map((item, index) => {
+                    const info = contentInfo[item.contentId || item.id];
+                    const link = getContentLink(item);
+                    const isLocked = item.status === 'locked';
+                    const isDone = item.status === 'completed';
+                    const isActive = item.status === 'unlocked' || item.status === 'in_progress';
+                    const statusColor = isDone ? '#4ade80' : isActive ? BLUE : 'rgba(255,255,255,.2)';
+
+                    return (
+                      <div key={item.id} className="path-row"
+                        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 24px', borderBottom: index < orderedItems.length - 1 ? '1px solid rgba(55,181,255,.07)' : 'none', borderLeft: `4px solid ${statusColor}` }}>
+                        {/* Step badge */}
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: isDone ? 'rgba(74,222,128,.15)' : isActive ? 'rgba(55,181,255,.12)' : 'rgba(255,255,255,.05)', border: `1px solid ${statusColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {isDone
+                            ? <CheckCircle2 size={16} color="#4ade80" />
+                            : isLocked
+                              ? <Lock size={14} color="rgba(255,255,255,.25)" />
+                              : item.type === 'lesson' || item.type === 'custom_lesson'
+                                ? <BookOpen size={14} color={BLUE} />
+                                : <PlayCircle size={14} color={BLUE} />
+                          }
+                        </div>
+
+                        {/* Content info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '14px', fontWeight: 700, color: isLocked ? 'rgba(255,255,255,.35)' : '#fff', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {info?.title || item.customContent?.title || `Module ${index + 1}`}
+                          </p>
+                          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)' }}>
+                            {info?.sportName || (item.type.includes('quiz') ? 'Knowledge Check' : 'Lesson')}
+                          </p>
+                        </div>
+
+                        {/* Status + action */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: statusColor, background: `${statusColor}18`, border: `1px solid ${statusColor}30`, borderRadius: '6px', padding: '3px 9px', letterSpacing: '.3px' }}>
+                            {isDone ? 'DONE' : isActive ? 'READY' : 'LOCKED'}
+                          </span>
+                          {link && !isLocked && (
+                            <Link href={link}>
+                              <button style={{ background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.25)', borderRadius: '8px', padding: '6px 14px', color: BLUE, fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'background .15s' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(55,181,255,.2)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(55,181,255,.12)')}
+                              >
+                                {isDone ? 'Review' : item.type.includes('quiz') ? 'Knowledge Check' : 'Start'}
+                              </button>
+                            </Link>
+                          )}
+                        </div>
+                        <ChevronRight size={15} color="rgba(255,255,255,.15)" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Next item "Continue" card */}
+            {nextItem && nextLink && (
+              <NextItemCard item={nextItem} link={nextLink} info={contentInfo[nextItem.contentId || nextItem.id]} />
+            )}
+
+            {/* Enrolled Pillars */}
+            {enrolledSports.length > 0 && (
+              <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
+                  <div>
+                    <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Your Pillars</h2>
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.35)' }}>{enrolledSports.length} active {enrolledSports.length === 1 ? 'course' : 'courses'}</p>
+                  </div>
+                  <Link href="/pillars" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: BLUE, fontWeight: 700, textDecoration: 'none', background: 'rgba(55,181,255,.09)', border: '1px solid rgba(55,181,255,.2)', borderRadius: '10px', padding: '7px 13px' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(55,181,255,.16)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(55,181,255,.09)'; }}
+                  >
+                    View all <ArrowRight size={13} />
+                  </Link>
+                </div>
+                <div>
+                  {enrolledSports.map(({ sport, progress }, idx) => {
+                    const slug = getPillarSlugFromDocId(sport.id);
+                    const pillarInfo = slug ? PILLARS.find(p => p.slug === slug) : null;
+                    const IconComp = PILLAR_ICONS[pillarInfo?.icon || 'Target'] || Target;
+                    const iconKey = pillarInfo?.icon || 'Target';
+                    const accent = PILLAR_COLORS[iconKey] || BLUE;
+                    const pct = Math.round(progress.progressPercentage);
+                    return (
+                      <Link key={sport.id} href={`/pillars/${sport.id}`} className="path-row"
+                        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 24px', borderBottom: idx < enrolledSports.length - 1 ? '1px solid rgba(55,181,255,.07)' : 'none', textDecoration: 'none', borderLeft: `4px solid ${accent}` }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: `${accent}1a`, border: `1px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <IconComp size={20} color={accent} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {pillarInfo?.shortName || sport.name}
+                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ flex: 1, height: '6px', borderRadius: '99px', background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                              <div className="shimmer-bar" style={{ height: '100%', borderRadius: '99px', width: `${pct}%`, '--c': accent, '--c2': `${accent}99` } as React.CSSProperties} />
+                            </div>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)', flexShrink: 0 }}>{progress.completedSkills.length}/{progress.totalSkills}</span>
+                          </div>
+                        </div>
+                        <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                          <span style={{ fontSize: '20px', fontWeight: 900, color: pct >= 80 ? '#4ade80' : pct > 0 ? accent : 'rgba(255,255,255,.25)' }}>{pct}%</span>
+                        </div>
+                        <ChevronRight size={15} color="rgba(255,255,255,.2)" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* Coach card */}
+            {coach && (
+              <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', padding: '20px' }}>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Your Coach</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                  <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '20px', fontWeight: 900, color: '#000a1f' }}>
+                    {coach.displayName.charAt(0)}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>{coach.displayName}</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.4)' }}>Assigned coach</p>
+                  </div>
+                </div>
+                <Link href="/messages" style={{ textDecoration: 'none' }}>
+                  <button style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '10px', padding: '11px 0', color: BLUE, fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'background .15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(55,181,255,.2)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(55,181,255,.12)')}
+                  >
+                    <MessageSquare size={15} /> Message Coach
+                  </button>
+                </Link>
+              </div>
+            )}
+
+            {/* Assessment Profile */}
+            {profile && (
+              <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', overflow: 'hidden' }}>
+                <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(55,181,255,.09)' }}>
+                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Assessment Profile</h3>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.3)' }}>Intelligence evaluation results</p>
+                </div>
+                <div style={{ padding: '18px 22px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <div>
+                      <span style={{ fontSize: '42px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{profile.overallScore.toFixed(1)}</span>
+                      <span style={{ fontSize: '14px', color: 'rgba(255,255,255,.35)', marginLeft: '4px' }}>/ 4.0</span>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: profile.pacingLevel === 'refinement' ? '#4ade80' : profile.pacingLevel === 'development' ? BLUE : '#f87171', background: profile.pacingLevel === 'refinement' ? 'rgba(74,222,128,.12)' : profile.pacingLevel === 'development' ? 'rgba(55,181,255,.12)' : 'rgba(248,113,113,.12)', border: `1px solid ${profile.pacingLevel === 'refinement' ? 'rgba(74,222,128,.3)' : profile.pacingLevel === 'development' ? 'rgba(55,181,255,.3)' : 'rgba(248,113,113,.3)'}`, borderRadius: '20px', padding: '4px 12px', letterSpacing: '.5px', textTransform: 'uppercase' }}>
+                      {getPacingLevelDisplayText(profile.pacingLevel)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {profile.categoryScores.slice(0, 4).map((cat) => {
+                      const pct = ((cat.averageScore - 1) / 3) * 100;
+                      const color = pct >= 66 ? '#4ade80' : pct >= 33 ? BLUE2 : '#f87171';
+                      return (
+                        <div key={cat.categorySlug}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.5)', textTransform: 'capitalize' }}>{cat.categorySlug.replace('_', ' ')}</span>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color }}>{cat.averageScore.toFixed(1)}</span>
+                          </div>
+                          <div style={{ height: '5px', background: 'rgba(255,255,255,.07)', borderRadius: '99px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: color, borderRadius: '99px', width: `${pct}%`, boxShadow: `0 0 6px ${color}66`, transition: 'width .5s' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', padding: '20px' }}>
+              <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Quick Actions</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <QuickActionCard href="/pillars" icon={<BookOpen size={22} />} label="Pillars" sub="Browse content" color={BLUE} />
+                <QuickActionCard href="/progress" icon={<TrendingUp size={22} />} label="Progress" sub="View analytics" color="#4ade80" />
+                <QuickActionCard href="/achievements" icon={<Trophy size={22} />} label="Achievements" sub="Your trophies" color="#a78bfa" />
+                {coach
+                  ? <QuickActionCard href="/messages" icon={<MessageSquare size={22} />} label="Messages" sub="Chat with coach" color="#fb923c" />
+                  : <QuickActionCard href="/charting" icon={<Target size={22} />} label="Charting" sub="Track sessions" color="#fb923c" />
+                }
+              </div>
+            </div>
+
+            {/* Mind Vault */}
+            <Link href="/mind-vault" style={{ textDecoration: 'none' }}>
+              <div className="vault-hover" style={{ background: 'linear-gradient(135deg,rgba(167,139,250,.14) 0%,rgba(2,18,44,.92) 55%,rgba(109,40,217,.1) 100%)', border: '1px solid rgba(167,139,250,.22)', borderRadius: '20px', padding: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(167,139,250,.15)', border: '1px solid rgba(167,139,250,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(167,139,250,.2)' }}>
+                  <Brain size={24} color="#a78bfa" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>Mind Vault</p>
+                  <p style={{ fontSize: '13px', color: 'rgba(167,139,250,.6)', lineHeight: 1.4 }}>Mental performance &amp; focus tools</p>
+                </div>
+                <div style={{ background: 'rgba(167,139,250,.15)', border: '1px solid rgba(167,139,250,.25)', borderRadius: '8px', padding: '6px' }}>
+                  <Zap size={16} color="#a78bfa" />
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
       </main>
     </div>
   );
 }
 
-/* ── Sub-components ──────────────────────────────── */
+/* ── Sub-components ── */
 
-function ProgressRing({ percentage, size = 110 }: { percentage: number; size?: number }) {
-  const clamped = Math.max(0, Math.min(100, percentage));
-  const compact = size < 72;
-  const ringStyle = {
-    background: `conic-gradient(#2563eb ${clamped}%, #e2e8f0 0)`,
-  };
-
+function HeroRing({ pct, completed, total }: { pct: number; completed: number; total: number }) {
+  const size = 148;
+  const stroke = 9;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
   return (
-    <div className="relative flex items-center justify-center rounded-full shadow-inner" style={{ width: size, height: size, ...ringStyle }}>
-      <div className="absolute flex items-center justify-center rounded-full bg-white/90 backdrop-blur-md" style={{ width: size - 16, height: size - 16 }}>
-        <span className={`${compact ? 'text-xs' : 'text-2xl'} font-bold text-slate-800`}>{clamped}%</span>
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <div style={{ position: 'absolute', inset: '-8px', borderRadius: '50%', background: `radial-gradient(circle,${BLUE}20 0%,transparent 70%)`, animation: 'pulse-ring 3s ease-in-out infinite' }} />
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={BLUE} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ filter: `drop-shadow(0 0 8px ${BLUE}88)`, transition: 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)' }}
+        />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+        <span style={{ fontSize: '34px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pct}%</span>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.4)', fontWeight: 600, letterSpacing: '.3px' }}>Progress</span>
+        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,.25)', marginTop: '2px' }}>{completed}/{total} modules</span>
       </div>
     </div>
   );
 }
 
-function QuickAction({ href, icon, bg, label }: { href: string; icon: React.ReactNode; bg: string; label: string }) {
+function StatCard({ label, value, icon, color, delay }: { label: string; value: string | number; icon: React.ReactNode; color: string; delay: string }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-blue-100 hover:bg-white/80 transition-colors group">
-      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg} border border-blue-100/60`}>{icon}</div>
-      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{label}</span>
-      <ChevronRight className="h-3.5 w-3.5 text-blue-400 ml-auto group-hover:text-red-500 transition-colors" />
+    <div className="stat-lift"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: 'relative', background: 'rgba(2,18,44,.85)', border: `1px solid ${hovered ? color + '44' : 'rgba(55,181,255,.14)'}`, borderRadius: '16px', padding: '18px', overflow: 'hidden', boxShadow: hovered ? `0 8px 28px ${color}22` : 'none', animation: `fade-up .45s ${delay} both` }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${color}99,transparent)` }} />
+      <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: `${color}1a`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', color, boxShadow: hovered ? `0 0 14px ${color}44` : 'none', transition: 'box-shadow .2s' }}>
+        {icon}
+      </div>
+      <p style={{ fontSize: '30px', fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: '6px' }}>{value}</p>
+      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.38)', fontWeight: 600 }}>{label}</p>
+    </div>
+  );
+}
+
+function CoachStrip({ coach }: { coach: User }) {
+  return (
+    <div style={{ background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '16px', padding: '18px', animation: 'fade-up .45s .2s both', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: `linear-gradient(135deg, ${BLUE}, #0ea5e9)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '16px', fontWeight: 900, color: '#000a1f' }}>
+        {coach.displayName.charAt(0)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,.35)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '2px' }}>Coach</p>
+        <p style={{ fontSize: '14px', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{coach.displayName}</p>
+      </div>
+    </div>
+  );
+}
+
+function NextItemCard({ item, link, info }: { item: CustomCurriculumItem; link: string; info?: ContentInfo }) {
+  const isQuiz = item.type === 'quiz' || item.type === 'custom_quiz';
+  const color = isQuiz ? '#a78bfa' : BLUE;
+  return (
+    <Link href={link} style={{ textDecoration: 'none' }}>
+      <div className="continue-hover" style={{ background: `linear-gradient(135deg,rgba(2,18,44,.95) 0%,${color}18 60%,${color}0a 100%)`, border: `1px solid ${color}30`, borderRadius: '20px', padding: '24px', cursor: 'pointer', boxShadow: `0 4px 24px rgba(0,0,0,.3)` }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px' }}>
+          <div style={{ width: '58px', height: '58px', borderRadius: '18px', background: `${color}1c`, border: `1px solid ${color}38`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 24px ${color}33` }}>
+            {isQuiz ? <PlayCircle size={26} color={color} /> : <BookOpen size={26} color={color} />}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 800, color, background: `${color}18`, border: `1px solid ${color}28`, borderRadius: '20px', padding: '3px 10px', letterSpacing: '.5px', textTransform: 'uppercase', animation: 'pulse-ring 2.5s ease-in-out infinite' }}>
+                <Play size={9} fill={color} /> Up Next
+              </span>
+            </div>
+            <p style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {info?.title || item.customContent?.title || 'Next Item'}
+            </p>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.38)' }}>
+              {info?.description || (isQuiz ? 'Complete this quiz to advance' : 'Start this lesson to progress')}
+            </p>
+          </div>
+          <ArrowRight size={18} color="rgba(255,255,255,.2)" style={{ flexShrink: 0, marginTop: '4px' }} />
+        </div>
+      </div>
     </Link>
+  );
+}
+
+function QuickActionCard({ href, icon, label, sub, color }: { href: string; icon: React.ReactNode; label: string; sub: string; color: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Link href={href} style={{ textDecoration: 'none' }}>
+      <div className="qa-btn" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+        style={{ padding: '18px 14px', borderRadius: '14px', background: hovered ? `${color}18` : `${color}0c`, border: `1px solid ${hovered ? color + '40' : color + '20'}`, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', boxShadow: hovered ? `0 6px 20px ${color}22` : 'none' }}>
+        <div style={{ color }}>{icon}</div>
+        <div>
+          <p style={{ fontSize: '14px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>{label}</p>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)' }}>{sub}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function EmptyPath({ coach }: { coach: User | null }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '52px 24px' }}>
+      <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: 'rgba(55,181,255,.09)', border: '1px solid rgba(55,181,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: `0 0 24px ${BLUE}22` }}>
+        <BookOpen size={26} color={BLUE} />
+      </div>
+      <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>No Curriculum Assigned Yet</h3>
+      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,.35)', marginBottom: '24px', maxWidth: '260px', margin: '0 auto 24px', lineHeight: 1.5 }}>
+        Your coach hasn't assigned any learning materials yet. Check back soon.
+      </p>
+      {coach && (
+        <Link href="/messages">
+          <button style={{ background: BLUE, border: 'none', borderRadius: '10px', padding: '12px 24px', color: '#000a1f', fontSize: '14px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 16px ${BLUE}44`, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <UserIcon size={16} /> Message Coach
+          </button>
+        </Link>
+      )}
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Sport, PILLARS } from '@/types';
@@ -12,7 +12,7 @@ import {
 
 const BLUE = '#37b5ff';
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 
@@ -50,7 +50,7 @@ export default function PillarsPage() {
   if (state.loading) return <SkeletonPillarsPage />;
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
 
       {/* ── Hero ── */}
       <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,96px) 24px clamp(32px,5vw,56px)', maxWidth: '720px', margin: '0 auto' }}>

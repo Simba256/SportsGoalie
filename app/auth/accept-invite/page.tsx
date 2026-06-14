@@ -357,260 +357,269 @@ function AcceptInviteContent() {
       : undefined;
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '32px 24px',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: '460px' }}>
-        {/* Header card */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: `1px solid rgba(55,181,255,0.2)`,
-            borderRadius: '16px',
-            padding: '28px 28px 24px',
-            marginBottom: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <CheckCircle size={22} color="#fff" />
-            </div>
-            <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', margin: 0 }}>
-                You're Invited!
-              </h1>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
-                Create your {label} account below
-              </p>
-            </div>
-          </div>
+    <>
+      <style>{`
+        @media (min-width: 768px) { .ai-grid { grid-template-columns: 1fr 1fr !important; } }
+      `}</style>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px 16px',
+        }}
+      >
+        <div className="ai-grid" style={{ width: '100%', maxWidth: '860px', display: 'grid', gridTemplateColumns: '1fr', gap: '16px', alignItems: 'start' }}>
 
-          {/* Invite details */}
+          {/* ── Left: Invite info ── */}
           <div
             style={{
-              background: 'rgba(55,181,255,0.08)',
-              border: '1px solid rgba(55,181,255,0.15)',
-              borderRadius: '10px',
-              padding: '14px 16px',
-              fontSize: '13px',
-              color: 'rgba(255,255,255,0.7)',
-              lineHeight: 1.7,
+              background: 'rgba(255,255,255,0.04)',
+              border: `1px solid rgba(55,181,255,0.2)`,
+              borderRadius: '16px',
+              padding: '28px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <Mail size={13} color={BLUE2} />
-              <span style={{ color: BLUE2, fontWeight: 600 }}>{email}</span>
-            </div>
-            <div>
-              Invited by <strong style={{ color: '#fff' }}>{byName}</strong>
-              {assignedCoachName && (
-                <> · Coach: <strong style={{ color: '#fff' }}>{assignedCoachName}</strong></>
-              )}
-            </div>
-            {customMsg && (
+            {/* Logo + title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div
                 style={{
-                  marginTop: '10px',
-                  paddingTop: '10px',
-                  borderTop: '1px solid rgba(96,205,255,0.1)',
-                  fontStyle: 'italic',
-                  color: 'rgba(255,255,255,0.5)',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 20px rgba(55,181,255,0.3)',
                 }}
               >
-                "{customMsg}"
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Form card */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(96,205,255,0.12)',
-            borderRadius: '16px',
-            padding: '28px',
-          }}
-        >
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {/* Display Name */}
-            <div>
-              <label style={labelStyle}>
-                Display Name <span style={{ color: BLUE }}>*</span>
-              </label>
-              <div style={{ position: 'relative' }}>
-                <IconWrap><User size={15} /></IconWrap>
-                <input
-                  type="text"
-                  placeholder="How your name appears on the platform"
-                  value={form.displayName}
-                  onChange={e => set('displayName', e.target.value)}
-                  style={inputStyle}
-                  required
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            {/* Name row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={labelStyle}>First Name</label>
-                <input
-                  type="text"
-                  placeholder="Alex"
-                  value={form.firstName}
-                  onChange={e => set('firstName', e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: '14px' }}
-                  disabled={submitting}
-                />
+                <CheckCircle size={24} color="#fff" />
               </div>
               <div>
-                <label style={labelStyle}>Last Name</label>
-                <input
-                  type="text"
-                  placeholder="Smith"
-                  value={form.lastName}
-                  onChange={e => set('lastName', e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: '14px' }}
-                  disabled={submitting}
-                />
+                <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+                  You&apos;re Invited!
+                </h1>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                  Create your {label} account below
+                </p>
               </div>
             </div>
 
-            {/* Email (locked) */}
-            <div>
-              <label style={labelStyle}>Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <IconWrap><Mail size={15} /></IconWrap>
-                <input
-                  type="email"
-                  value={email}
-                  style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
-                  disabled
-                />
-              </div>
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '5px' }}>
-                Pre-filled from your invitation — cannot be changed
-              </p>
+            {/* Role badge */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: `rgba(55,181,255,0.1)`, border: `1px solid rgba(55,181,255,0.2)`, borderRadius: '8px', padding: '6px 12px', width: 'fit-content' }}>
+              <Shield size={13} color={BLUE} />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: BLUE, letterSpacing: '0.5px' }}>{label} Account</span>
             </div>
 
-            {/* Password */}
-            <div>
-              <label style={labelStyle}>
-                Password <span style={{ color: BLUE }}>*</span>
-              </label>
-              <div style={{ position: 'relative' }}>
-                <IconWrap><Lock size={15} /></IconWrap>
-                <input
-                  type="password"
-                  placeholder="Minimum 8 characters"
-                  value={form.password}
-                  onChange={e => set('password', e.target.value)}
-                  style={inputStyle}
-                  required
-                  minLength={8}
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label style={labelStyle}>
-                Confirm Password <span style={{ color: BLUE }}>*</span>
-              </label>
-              <div style={{ position: 'relative' }}>
-                <IconWrap><Lock size={15} /></IconWrap>
-                <input
-                  type="password"
-                  placeholder="Re-enter your password"
-                  value={form.confirmPassword}
-                  onChange={e => set('confirmPassword', e.target.value)}
-                  style={inputStyle}
-                  required
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={submitting}
+            {/* Invite details */}
+            <div
               style={{
+                background: 'rgba(55,181,255,0.06)',
+                border: '1px solid rgba(55,181,255,0.15)',
+                borderRadius: '12px',
+                padding: '16px',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '13px 0',
-                borderRadius: '8px',
-                border: 'none',
-                background: submitting
-                  ? 'rgba(55,181,255,0.25)'
-                  : `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '13px',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                boxShadow: submitting ? 'none' : '0 4px 20px rgba(55,181,255,0.35)',
-                transition: 'all 0.2s',
-                marginTop: '4px',
+                flexDirection: 'column',
+                gap: '10px',
               }}
             >
-              {submitting ? (
-                <>
-                  <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
-                  Creating Account...
-                </>
-              ) : (
-                <>
-                  <Shield size={15} />
-                  Create {label} Account
-                </>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Mail size={14} color={BLUE2} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: BLUE2, fontWeight: 600 }}>{email}</span>
+              </div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                Invited by <strong style={{ color: '#fff' }}>{byName}</strong>
+                {assignedCoachName && (
+                  <> · Coach: <strong style={{ color: '#fff' }}>{assignedCoachName}</strong></>
+                )}
+              </div>
+              {customMsg && (
+                <div
+                  style={{
+                    paddingTop: '10px',
+                    borderTop: '1px solid rgba(96,205,255,0.1)',
+                    fontStyle: 'italic',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.45)',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  &ldquo;{customMsg}&rdquo;
+                </div>
               )}
-            </button>
-          </form>
+            </div>
 
+            {/* Already have account */}
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: 'auto' }}>
+              Already have an account?{' '}
+              <Link href="/auth/login" style={{ color: BLUE2, textDecoration: 'none', fontWeight: 600 }}>
+                Sign in
+              </Link>
+            </p>
+          </div>
+
+          {/* ── Right: Form ── */}
           <div
             style={{
-              marginTop: '20px',
-              textAlign: 'center',
-              fontSize: '13px',
-              color: 'rgba(255,255,255,0.35)',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(96,205,255,0.12)',
+              borderRadius: '16px',
+              padding: '24px',
             }}
           >
-            Already have an account?{' '}
-            <Link
-              href="/auth/login"
-              style={{ color: BLUE2, textDecoration: 'none', fontWeight: 600 }}
-            >
-              Sign in
-            </Link>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Display Name */}
+              <div>
+                <label style={labelStyle}>
+                  Display Name <span style={{ color: BLUE }}>*</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <IconWrap><User size={15} /></IconWrap>
+                  <input
+                    type="text"
+                    placeholder="How your name appears on the platform"
+                    value={form.displayName}
+                    onChange={e => set('displayName', e.target.value)}
+                    style={inputStyle}
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
+              {/* Name row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={labelStyle}>First Name</label>
+                  <input
+                    type="text"
+                    placeholder="Alex"
+                    value={form.firstName}
+                    onChange={e => set('firstName', e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '14px' }}
+                    disabled={submitting}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Last Name</label>
+                  <input
+                    type="text"
+                    placeholder="Smith"
+                    value={form.lastName}
+                    onChange={e => set('lastName', e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '14px' }}
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
+              {/* Email (locked) */}
+              <div>
+                <label style={labelStyle}>Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <IconWrap><Mail size={15} /></IconWrap>
+                  <input
+                    type="email"
+                    value={email}
+                    style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
+                    disabled
+                  />
+                </div>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>
+                  Pre-filled from your invitation — cannot be changed
+                </p>
+              </div>
+
+              {/* Password row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={labelStyle}>
+                    Password <span style={{ color: BLUE }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <IconWrap><Lock size={15} /></IconWrap>
+                    <input
+                      type="password"
+                      placeholder="Min. 8 characters"
+                      value={form.password}
+                      onChange={e => set('password', e.target.value)}
+                      style={inputStyle}
+                      required
+                      minLength={8}
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>
+                    Confirm Password <span style={{ color: BLUE }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <IconWrap><Lock size={15} /></IconWrap>
+                    <input
+                      type="password"
+                      placeholder="Re-enter password"
+                      value={form.confirmPassword}
+                      onChange={e => set('confirmPassword', e.target.value)}
+                      style={inputStyle}
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '13px 0',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: submitting
+                    ? 'rgba(55,181,255,0.25)'
+                    : `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  boxShadow: submitting ? 'none' : '0 4px 20px rgba(55,181,255,0.35)',
+                  transition: 'all 0.2s',
+                  marginTop: '6px',
+                }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <Shield size={15} />
+                    Create {label} Account
+                  </>
+                )}
+              </button>
+            </form>
           </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

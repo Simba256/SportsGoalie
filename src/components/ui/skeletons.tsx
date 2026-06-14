@@ -5,18 +5,12 @@ const SKELETON_CHART_BAR_HEIGHTS = [
   43, 34, 86, 61, 75, 38, 57, 60, 54, 62,
 ];
 
-/* ── Base Skeleton Pulses ────────────────────────────────────────────────── */
+/* ── Base Bone ────────────────────────────────────────────────────────────── */
 
-/** Light bone — for student/goalie pages */
 function Bone({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={cn('animate-pulse rounded-lg bg-muted', className)} style={style} />;
-}
-
-/** Dark bone — for admin pages */
-function DarkBone({ style }: { style?: React.CSSProperties }) {
   return (
     <div
-      className="animate-pulse"
+      className={cn('animate-pulse', className)}
       style={{ background: 'rgba(255,255,255,0.07)', borderRadius: '8px', ...style }}
     />
   );
@@ -28,84 +22,65 @@ const darkCard: React.CSSProperties = {
   borderRadius: '16px',
 };
 
-/* ── Page Banner Skeletons ───────────────────────────────────────────────── */
+/* ── Banner Skeletons ─────────────────────────────────────────────────────── */
 
-/** Light gradient banner — goalie/student pages */
 export function SkeletonBannerLight() {
   return (
-    <div className="relative rounded-3xl bg-gradient-to-br from-red-100/40 via-white to-blue-100/30 border border-red-200/30 p-6 md:p-8 overflow-hidden">
-      <div className="flex items-center gap-3">
-        <Bone className="h-10 w-10 rounded-xl" />
-        <div className="space-y-2 flex-1">
-          <Bone className="h-6 w-48" />
-          <Bone className="h-4 w-72" />
+    <div style={{ ...darkCard, padding: '24px 32px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Bone style={{ height: '40px', width: '40px', borderRadius: '12px', flexShrink: 0 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+          <Bone style={{ height: '24px', width: '192px' }} />
+          <Bone style={{ height: '16px', width: '288px' }} />
         </div>
       </div>
     </div>
   );
 }
 
-/** Dark gradient banner — admin/coach pages */
 export function SkeletonBannerDark() {
   return (
-    <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
-      <div className="space-y-2">
-        <div className="h-4 w-32 rounded bg-white/10 animate-pulse" />
-        <div className="h-7 w-64 rounded bg-white/10 animate-pulse" />
-        <div className="h-4 w-80 rounded bg-white/5 animate-pulse" />
-      </div>
+    <div style={{ ...darkCard, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <Bone style={{ height: '16px', width: '128px' }} />
+      <Bone style={{ height: '28px', width: '256px' }} />
+      <Bone style={{ height: '16px', width: '320px' }} />
     </div>
   );
 }
 
-/** Hero image banner — pillars page */
 export function SkeletonBannerHero() {
   return (
-    <div className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 rounded-b-none overflow-hidden bg-slate-200 animate-pulse">
-      <div className="flex flex-col items-center justify-center text-center px-6 py-16 md:py-24">
-        <Bone className="h-10 w-96 max-w-full bg-slate-300" />
-        <Bone className="h-5 w-80 max-w-full mt-4 bg-slate-300" />
-        <Bone className="h-1 w-16 mt-6 bg-slate-300" />
+    <div
+      className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 overflow-hidden animate-pulse"
+      style={{ background: 'rgba(0,8,28,0.95)' }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '64px 24px 96px', gap: '16px' }}>
+        <Bone style={{ height: '40px', width: '384px', maxWidth: '100%' }} />
+        <Bone style={{ height: '20px', width: '320px', maxWidth: '100%' }} />
+        <Bone style={{ height: '4px', width: '64px', marginTop: '8px' }} />
       </div>
     </div>
   );
 }
 
-/* ── Light Stat Cards — student pages ────────────────────────────────────── */
+/* ── Stat Cards ───────────────────────────────────────────────────────────── */
 
 export function SkeletonStatCards({ count = 4 }: { count?: number }) {
+  const colClass =
+    count === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
+    count === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+    'grid-cols-1 sm:grid-cols-2';
   return (
-    <div className={cn('grid gap-4', count === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : count === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2')}>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <Bone className="h-4 w-24" />
-              <Bone className="h-8 w-16" />
-              <Bone className="h-3 w-20" />
-            </div>
-            <Bone className="h-12 w-12 rounded-xl" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Dark Stat Cards — admin pages ───────────────────────────────────────── */
-
-function DarkStatCards({ count = 4 }: { count?: number }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+    <div className={cn('grid gap-4', colClass)}>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} style={{ ...darkCard, padding: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <DarkBone style={{ height: '14px', width: '80px' }} />
-              <DarkBone style={{ height: '32px', width: '56px' }} />
-              <DarkBone style={{ height: '12px', width: '64px' }} />
+              <Bone style={{ height: '14px', width: '96px' }} />
+              <Bone style={{ height: '32px', width: '64px' }} />
+              <Bone style={{ height: '12px', width: '80px' }} />
             </div>
-            <DarkBone style={{ height: '48px', width: '48px', borderRadius: '12px' }} />
+            <Bone style={{ height: '48px', width: '48px', borderRadius: '12px' }} />
           </div>
         </div>
       ))}
@@ -113,52 +88,26 @@ function DarkStatCards({ count = 4 }: { count?: number }) {
   );
 }
 
-/* ── Light Card Grid — student pages ─────────────────────────────────────── */
+/* ── Card Grid ────────────────────────────────────────────────────────────── */
 
 export function SkeletonCardGrid({ count = 6, cols = 3 }: { count?: number; cols?: 2 | 3 }) {
   const colClass = cols === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2';
   return (
     <div className={cn('grid gap-4', colClass)}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <Bone className="h-6 w-20 rounded-full" />
-            <Bone className="h-8 w-8 rounded-full" />
-          </div>
-          <Bone className="h-5 w-3/4" />
-          <div className="space-y-2">
-            <Bone className="h-3 w-full" />
-            <Bone className="h-3 w-5/6" />
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-border/40">
-            <Bone className="h-3 w-16" />
-            <Bone className="h-3 w-4" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Dark Card Grid — admin pages ────────────────────────────────────────── */
-
-function DarkCardGrid({ count = 6 }: { count?: number }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
-      {Array.from({ length: count }).map((_, i) => (
         <div key={i} style={{ ...darkCard, padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <DarkBone style={{ height: '24px', width: '64px', borderRadius: '20px' }} />
-            <DarkBone style={{ height: '32px', width: '32px', borderRadius: '50%' }} />
+            <Bone style={{ height: '24px', width: '80px', borderRadius: '20px' }} />
+            <Bone style={{ height: '32px', width: '32px', borderRadius: '50%' }} />
           </div>
-          <DarkBone style={{ height: '20px', width: '75%' }} />
+          <Bone style={{ height: '20px', width: '75%' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <DarkBone style={{ height: '12px', width: '100%' }} />
-            <DarkBone style={{ height: '12px', width: '83%' }} />
+            <Bone style={{ height: '12px', width: '100%' }} />
+            <Bone style={{ height: '12px', width: '83%' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <DarkBone style={{ height: '12px', width: '56px' }} />
-            <DarkBone style={{ height: '12px', width: '16px' }} />
+            <Bone style={{ height: '12px', width: '56px' }} />
+            <Bone style={{ height: '12px', width: '16px' }} />
           </div>
         </div>
       ))}
@@ -166,25 +115,25 @@ function DarkCardGrid({ count = 6 }: { count?: number }) {
   );
 }
 
-/* ── Light List — student pages ──────────────────────────────────────────── */
+/* ── List ─────────────────────────────────────────────────────────────────── */
 
 export function SkeletonList({ count = 5 }: { count?: number }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <Bone className="h-5 w-32" />
-        <Bone className="h-4 w-16" />
+    <div style={{ ...darkCard, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <Bone style={{ height: '20px', width: '128px' }} />
+        <Bone style={{ height: '16px', width: '64px' }} />
       </div>
-      <div className="divide-y divide-border/50">
+      <div>
         {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4 px-6 py-4">
-            <Bone className="h-10 w-10 rounded-xl flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Bone className="h-4 w-40" />
-              <Bone className="h-3 w-24" />
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 24px', borderBottom: i < count - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+            <Bone style={{ height: '40px', width: '40px', borderRadius: '12px', flexShrink: 0 }} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Bone style={{ height: '16px', width: '160px' }} />
+              <Bone style={{ height: '12px', width: '96px' }} />
             </div>
-            <Bone className="h-1.5 w-24 rounded-full" />
-            <Bone className="h-4 w-8" />
+            <Bone style={{ height: '6px', width: '96px', borderRadius: '20px' }} />
+            <Bone style={{ height: '16px', width: '32px' }} />
           </div>
         ))}
       </div>
@@ -192,45 +141,20 @@ export function SkeletonList({ count = 5 }: { count?: number }) {
   );
 }
 
-/* ── Light Chart — student pages ─────────────────────────────────────────── */
+/* ── Chart ────────────────────────────────────────────────────────────────── */
 
 export function SkeletonChart() {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
-      <div className="p-6 space-y-2 border-b border-border/40">
-        <Bone className="h-5 w-40" />
-        <Bone className="h-4 w-64" />
-      </div>
-      <div className="p-6">
-        <div className="h-[280px] flex items-end gap-2 px-8">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="flex-1 flex flex-col justify-end">
-              <Bone
-                className="w-full rounded-t"
-                style={{ height: `${SKELETON_CHART_BAR_HEIGHTS[i % SKELETON_CHART_BAR_HEIGHTS.length]}%` }}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Dark Chart — admin pages ────────────────────────────────────────────── */
-
-function DarkChart() {
-  return (
     <div style={{ ...darkCard, overflow: 'hidden' }}>
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <DarkBone style={{ height: '20px', width: '160px' }} />
-        <DarkBone style={{ height: '14px', width: '256px' }} />
+        <Bone style={{ height: '20px', width: '160px' }} />
+        <Bone style={{ height: '14px', width: '256px' }} />
       </div>
       <div style={{ padding: '24px' }}>
         <div style={{ height: '280px', display: 'flex', alignItems: 'flex-end', gap: '8px', paddingLeft: '32px', paddingRight: '32px' }}>
           {SKELETON_CHART_BAR_HEIGHTS.map((h, i) => (
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-              <DarkBone style={{ width: '100%', height: `${h}%`, borderRadius: '4px 4px 0 0' }} />
+              <Bone style={{ width: '100%', height: `${h}%`, borderRadius: '4px 4px 0 0' }} />
             </div>
           ))}
         </div>
@@ -239,145 +163,105 @@ function DarkChart() {
   );
 }
 
-/* ── Light Card Content — student pages ──────────────────────────────────── */
+/* ── Card Content ─────────────────────────────────────────────────────────── */
 
 function SkeletonCardContent() {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-4">
-      <div className="space-y-2">
-        <Bone className="h-5 w-40" />
-        <Bone className="h-4 w-56" />
-      </div>
-      <div className="space-y-3">
-        <Bone className="h-3 w-full rounded-full" />
-        <Bone className="h-3 w-full rounded-full" />
-        <Bone className="h-3 w-3/4 rounded-full" />
-      </div>
-    </div>
-  );
-}
-
-/* ── Dark Card Content — admin pages ─────────────────────────────────────── */
-
-function DarkCardContent() {
-  return (
     <div style={{ ...darkCard, padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <DarkBone style={{ height: '20px', width: '160px' }} />
-        <DarkBone style={{ height: '14px', width: '224px' }} />
+        <Bone style={{ height: '20px', width: '160px' }} />
+        <Bone style={{ height: '14px', width: '224px' }} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <DarkBone style={{ height: '12px', width: '100%', borderRadius: '20px' }} />
-        <DarkBone style={{ height: '12px', width: '100%', borderRadius: '20px' }} />
-        <DarkBone style={{ height: '12px', width: '75%', borderRadius: '20px' }} />
+        <Bone style={{ height: '12px', width: '100%', borderRadius: '20px' }} />
+        <Bone style={{ height: '12px', width: '100%', borderRadius: '20px' }} />
+        <Bone style={{ height: '12px', width: '75%', borderRadius: '20px' }} />
       </div>
     </div>
   );
 }
 
-/* ── Light Tabs — student pages ──────────────────────────────────────────── */
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
 export function SkeletonTabs() {
-  return (
-    <div className="space-y-6">
-      <div className="grid w-full grid-cols-4 gap-1 rounded-lg bg-muted p-1">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Bone key={i} className="h-9 rounded-md" />
-        ))}
-      </div>
-      <SkeletonChart />
-      <div className="grid gap-6 md:grid-cols-2">
-        <SkeletonCardContent />
-        <SkeletonCardContent />
-      </div>
-    </div>
-  );
-}
-
-/* ── Dark Tabs — admin analytics pages ───────────────────────────────────── */
-
-function DarkTabs() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px', padding: '4px' }}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <DarkBone key={i} style={{ height: '36px', borderRadius: '8px' }} />
+          <Bone key={i} style={{ height: '36px', borderRadius: '8px' }} />
         ))}
       </div>
-      <DarkChart />
+      <SkeletonChart />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-        <DarkCardContent />
-        <DarkCardContent />
+        <SkeletonCardContent />
+        <SkeletonCardContent />
       </div>
     </div>
   );
 }
 
-/* ── Form Skeleton ───────────────────────────────────────────────────────── */
+/* ── Form ─────────────────────────────────────────────────────────────────── */
 
 export function SkeletonForm() {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-6">
-      <div className="space-y-2">
-        <Bone className="h-5 w-40" />
-        <Bone className="h-4 w-64" />
+    <div style={{ ...darkCard, padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Bone style={{ height: '20px', width: '160px' }} />
+        <Bone style={{ height: '14px', width: '256px' }} />
       </div>
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="space-y-2">
-            <Bone className="h-4 w-24" />
-            <Bone className="h-10 w-full rounded-xl" />
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <Bone style={{ height: '14px', width: '96px' }} />
+            <Bone style={{ height: '40px', width: '100%', borderRadius: '10px' }} />
           </div>
         ))}
       </div>
-      <div className="flex justify-end">
-        <Bone className="h-10 w-32 rounded-xl" />
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Bone style={{ height: '40px', width: '128px', borderRadius: '10px' }} />
       </div>
     </div>
   );
 }
 
-/* ── Profile Skeleton ────────────────────────────────────────────────────── */
+/* ── Profile ──────────────────────────────────────────────────────────────── */
 
 export function SkeletonProfile() {
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <Bone className="h-20 w-20 rounded-full" />
-          <div className="space-y-2 flex-1">
-            <Bone className="h-4 w-32" />
-            <Bone className="h-10 w-full rounded-xl" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ ...darkCard, padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Bone style={{ height: '80px', width: '80px', borderRadius: '50%' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+            <Bone style={{ height: '16px', width: '128px' }} />
+            <Bone style={{ height: '40px', width: '100%', borderRadius: '10px' }} />
           </div>
         </div>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Bone className="h-4 w-24" />
-            <Bone className="h-10 w-full rounded-xl" />
-          </div>
-          <div className="space-y-2">
-            <Bone className="h-4 w-24" />
-            <Bone className="h-10 w-full rounded-xl" />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {[0, 1].map(i => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Bone style={{ height: '16px', width: '96px' }} />
+              <Bone style={{ height: '40px', width: '100%', borderRadius: '10px' }} />
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Composite Page Skeletons ────────────────────────────────────────────── */
+/* ── Composite Page Skeletons ─────────────────────────────────────────────── */
 
-/** Dashboard: banner + stats + pillar list + sidebar */
 export function SkeletonDashboard() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <SkeletonBannerLight />
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <SkeletonList count={4} />
           <SkeletonCardContent />
         </div>
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <SkeletonStatCards count={4} />
           <SkeletonList count={3} />
         </div>
@@ -386,37 +270,35 @@ export function SkeletonDashboard() {
   );
 }
 
-/** Pillar list page */
 export function SkeletonPillarsPage() {
   return (
-    <div className="space-y-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <SkeletonBannerHero />
-      <div className="max-w-7xl mx-auto px-1">
+      <div className="max-w-7xl mx-auto px-1 w-full">
         <SkeletonCardGrid count={6} cols={3} />
       </div>
     </div>
   );
 }
 
-/** Pillar detail page with skills */
 export function SkeletonPillarDetail() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <section className="px-5 pt-4 md:px-6 md:pt-5">
-        <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 space-y-4">
-          <Bone className="h-4 w-24 bg-white/10" />
-          <Bone className="h-10 w-96 max-w-full bg-white/10" />
-          <Bone className="h-5 w-80 max-w-full bg-white/5" />
-          <Bone className="h-2 w-48 mt-4 rounded-full bg-white/10" />
+    <div style={{ minHeight: '100vh' }}>
+      <section style={{ padding: '16px 20px' }}>
+        <div style={{ ...darkCard, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <Bone style={{ height: '16px', width: '96px' }} />
+          <Bone style={{ height: '40px', width: '384px', maxWidth: '100%' }} />
+          <Bone style={{ height: '20px', width: '320px', maxWidth: '100%' }} />
+          <Bone style={{ height: '8px', width: '192px', marginTop: '8px', borderRadius: '20px' }} />
         </div>
       </section>
-      <section className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-        <div className="flex items-center justify-between">
-          <Bone className="h-6 w-32" />
-          <Bone className="h-4 w-56" />
+      <section className="max-w-6xl mx-auto" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Bone style={{ height: '24px', width: '128px' }} />
+          <Bone style={{ height: '16px', width: '224px' }} />
         </div>
-        <div className="space-y-4">
-          <Bone className="h-16 w-full rounded-2xl" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <Bone style={{ height: '64px', width: '100%', borderRadius: '16px' }} />
           <SkeletonCardGrid count={3} cols={3} />
         </div>
       </section>
@@ -424,66 +306,61 @@ export function SkeletonPillarDetail() {
   );
 }
 
-/** Analytics page — dark admin theme */
 export function SkeletonAnalytics() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <SkeletonBannerDark />
-      <DarkStatCards count={4} />
-      <DarkTabs />
+      <SkeletonStatCards count={4} />
+      <SkeletonTabs />
     </div>
   );
 }
 
-/** Simple list page: banner + filters + card grid */
 export function SkeletonListPage({ cols = 3, count = 6 }: { cols?: 2 | 3; count?: number }) {
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <SkeletonBannerLight />
       <SkeletonCardGrid count={count} cols={cols} />
     </div>
   );
 }
 
-/** Admin page — dark banner + stats + card grid */
 export function SkeletonDarkPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <SkeletonBannerDark />
-      <DarkStatCards count={4} />
-      <DarkCardGrid count={6} />
+      <SkeletonStatCards count={4} />
+      <SkeletonCardGrid count={6} cols={3} />
     </div>
   );
 }
 
-/** Simple content page: banner + single card */
 export function SkeletonContentPage() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <SkeletonBannerLight />
       <SkeletonForm />
     </div>
   );
 }
 
-/** Message detail / single item page — dark admin theme */
 export function SkeletonDetailPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <DarkBone style={{ height: '20px', width: '96px' }} />
+      <Bone style={{ height: '20px', width: '96px' }} />
       <div style={{ ...darkCard, padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <DarkBone style={{ height: '40px', width: '40px', borderRadius: '50%' }} />
+          <Bone style={{ height: '40px', width: '40px', borderRadius: '50%' }} />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <DarkBone style={{ height: '20px', width: '192px' }} />
-            <DarkBone style={{ height: '12px', width: '128px' }} />
+            <Bone style={{ height: '20px', width: '192px' }} />
+            <Bone style={{ height: '12px', width: '128px' }} />
           </div>
-          <DarkBone style={{ height: '24px', width: '80px', borderRadius: '20px' }} />
+          <Bone style={{ height: '24px', width: '80px', borderRadius: '20px' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <DarkBone style={{ height: '16px', width: '100%' }} />
-          <DarkBone style={{ height: '16px', width: '100%' }} />
-          <DarkBone style={{ height: '16px', width: '75%' }} />
+          <Bone style={{ height: '16px', width: '100%' }} />
+          <Bone style={{ height: '16px', width: '100%' }} />
+          <Bone style={{ height: '16px', width: '75%' }} />
         </div>
       </div>
     </div>

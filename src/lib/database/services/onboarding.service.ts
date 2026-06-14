@@ -969,6 +969,78 @@ export class OnboardingService extends BaseDatabaseService {
     }
   }
 
+  // ─────────────────────────────────────────────
+  // COACH EVALUATION METHODS
+  // ─────────────────────────────────────────────
+
+  async createCoachEvaluation(userId: string): Promise<ApiResponse<OnboardingEvaluation>> {
+    try {
+      const evaluationId = `eval_coach_${userId}`;
+      try {
+        const existing = await this.getById<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId);
+        if (existing.success && existing.data) return { success: true, data: existing.data, timestamp: new Date() };
+      } catch { /* no existing eval */ }
+
+      const now = Timestamp.now();
+      const evaluationData: Omit<OnboardingEvaluation, 'id' | 'createdAt' | 'updatedAt'> = {
+        userId, role: 'coach', phase: 'intake', currentCategoryIndex: 0, currentQuestionIndex: 0, assessmentResponses: [], status: 'in_progress',
+      };
+      await this.createWithId<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId, evaluationData);
+      return { success: true, data: { id: evaluationId, ...evaluationData, createdAt: now, updatedAt: now }, timestamp: new Date() };
+    } catch (error) {
+      logger.error('Failed to create coach evaluation', 'OnboardingService', { userId, error });
+      return { success: false, error: { code: 'CREATE_COACH_EVALUATION_FAILED', message: 'Failed to create coach evaluation' }, timestamp: new Date() };
+    }
+  }
+
+  async getCoachEvaluation(userId: string): Promise<ApiResponse<OnboardingEvaluation | null>> {
+    try {
+      const result = await this.getById<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, `eval_coach_${userId}`);
+      return { success: true, data: result.data || null, timestamp: new Date() };
+    } catch (error) {
+      logger.error('Failed to get coach evaluation', 'OnboardingService', { userId, error });
+      return { success: false, error: { code: 'GET_COACH_EVALUATION_FAILED', message: 'Failed to retrieve coach evaluation' }, timestamp: new Date() };
+    }
+  }
+
+  async completeCoachIntake(evaluationId: string): Promise<ApiResponse<IntakeData>> {
+    try {
+      const evalResult = await this.getById<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId);
+      if (!evalResult.success || !evalResult.data) {
+        return { success: false, error: { code: 'EVALUATION_NOT_FOUND', message: 'Evaluation not found' }, timestamp: new Date() };
+      }
+      const evaluation = evalResult.data;
+      const completedAt = Timestamp.now();
+      const intakeData: IntakeData = { userId: evaluation.userId, role: 'coach', responses: evaluation.intakeData?.responses || [], completedAt };
+      await this.update<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId, { intakeData, intakeCompletedAt: completedAt, phase: 'bridge', currentCategoryIndex: 0, currentQuestionIndex: 0 });
+      return { success: true, data: intakeData, timestamp: new Date() };
+    } catch (error) {
+      logger.error('Failed to complete coach intake', 'OnboardingService', { evaluationId, error });
+      return { success: false, error: { code: 'COMPLETE_COACH_INTAKE_FAILED', message: 'Failed to complete coach intake' }, timestamp: new Date() };
+    }
+  }
+
+  async completeCoachEvaluation(userId: string): Promise<ApiResponse<IntelligenceProfile>> {
+    try {
+      const evaluationId = `eval_coach_${userId}`;
+      const evalResult = await this.getById<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId);
+      if (!evalResult.success || !evalResult.data) {
+        return { success: false, error: { code: 'EVALUATION_NOT_FOUND', message: 'Evaluation not found' }, timestamp: new Date() };
+      }
+      const evaluation = evalResult.data;
+      const { COACH_ASSESSMENT_QUESTIONS: coachQs } = await import('@/data/coach-assessment-questions');
+      const intelligenceProfile = generateIntelligenceProfile(userId, 'coach', evaluation.assessmentResponses, coachQs);
+      const completedAt = Timestamp.now();
+      const duration = evaluation.assessmentStartedAt ? Math.round((completedAt.toMillis() - evaluation.assessmentStartedAt.toMillis()) / 1000) : 0;
+      await this.update<OnboardingEvaluation>(this.EVALUATIONS_COLLECTION, evaluationId, { status: 'completed', phase: 'completed', completedAt, duration, intelligenceProfile, pacingLevel: intelligenceProfile.pacingLevel });
+      await this.update<User>(this.USERS_COLLECTION, userId, { coachOnboardingComplete: true } as Partial<User>);
+      return { success: true, data: intelligenceProfile, timestamp: new Date() };
+    } catch (error) {
+      logger.error('Failed to complete coach evaluation', 'OnboardingService', { userId, error });
+      return { success: false, error: { code: 'COMPLETE_COACH_EVALUATION_FAILED', message: 'Failed to complete coach evaluation' }, timestamp: new Date() };
+    }
+  }
+
 }
 
 // Export singleton instance

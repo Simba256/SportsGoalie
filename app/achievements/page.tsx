@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Flame, Sparkles, Trophy } from 'lucide-react';
 import { SkeletonCardGrid } from '@/components/ui/skeletons';
@@ -26,7 +26,7 @@ function AchievementsContent() {
 
   if (loading) {
     return (
-      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', padding: '24px' }}>
+      <div style={{ minHeight: '100vh', padding: '24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ height: '200px', background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '18px', animation: 'pulse 1.5s infinite' }} />
           <SkeletonCardGrid count={6} cols={3} />
@@ -37,7 +37,7 @@ function AchievementsContent() {
 
   if (error) {
     return (
-      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
         <div style={{ textAlign: 'center' }}>
           <Trophy size={48} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Unable to load achievements</h3>
@@ -48,7 +48,7 @@ function AchievementsContent() {
   }
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
       <style>{`
         .ach-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
         @media (max-width: 640px) { .ach-stats { grid-template-columns: 1fr; } }
@@ -63,13 +63,13 @@ function AchievementsContent() {
             Unlock Your Milestones,<br /><span style={{ color: BLUE }}>Track Every Win.</span>
           </h1>
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '28px', maxWidth: '520px' }}>
-            Keep building momentum through quizzes, consistency, and focused progress across all seven goalie pillars.
+            Keep building momentum through Knowledge Checks, consistency, and focused progress across all 7 Pillars.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', maxWidth: '600px' }}>
             {[
               { label: 'Unlocked', value: completedAchievements, color: BLUE },
               { label: 'Completion Rate', value: `${completionRate}%`, color: BLUE },
-              { label: 'Points Earned', value: totalPoints, color: 'rgba(255,255,255,0.7)' },
+              { label: 'Growth Points', value: totalPoints, color: 'rgba(255,255,255,0.7)' },
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '14px', padding: '14px 16px' }}>
                 <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>{s.label}</p>

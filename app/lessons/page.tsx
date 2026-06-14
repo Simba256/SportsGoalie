@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -79,7 +79,7 @@ function LessonsPageContent() {
   if (loading) return <SkeletonListPage cols={3} count={6} />;
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', padding: '28px 24px 48px' }}>
+    <div style={{ minHeight: '100vh', padding: '28px 24px 48px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Banner */}

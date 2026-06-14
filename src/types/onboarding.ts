@@ -816,6 +816,72 @@ export const PARENT_CATEGORIES: CategoryInfo[] = [
   },
 ];
 
+export const COACH_CATEGORIES: CategoryInfo[] = [
+  {
+    slug: 'goalie_knowledge',
+    name: 'Your Goaltending Knowledge',
+    shortName: 'Knowledge',
+    description: 'Understanding of goaltending fundamentals',
+    icon: 'Brain',
+    color: 'blue',
+    weight: 30,
+  },
+  {
+    slug: 'current_approach',
+    name: 'Your Current Approach',
+    shortName: 'Approach',
+    description: 'Current goalie development practices',
+    icon: 'Target',
+    color: 'purple',
+    weight: 25,
+  },
+  {
+    slug: 'pre_game',
+    name: 'Pre-Game Assessment',
+    shortName: 'Pre-Game',
+    description: 'Assessing goalie readiness before games',
+    icon: 'Clock',
+    color: 'cyan',
+    weight: 10,
+  },
+  {
+    slug: 'in_game',
+    name: 'In-Game Reading',
+    shortName: 'In-Game',
+    description: 'Reading goalie performance during games',
+    icon: 'Eye',
+    color: 'red',
+    weight: 15,
+  },
+  {
+    slug: 'post_game',
+    name: 'Post-Game Debrief',
+    shortName: 'Post-Game',
+    description: 'Post-game feedback and communication',
+    icon: 'MessageCircle',
+    color: 'green',
+    weight: 10,
+  },
+  {
+    slug: 'coaching_goals',
+    name: 'Your Coaching Goals',
+    shortName: 'Goals',
+    description: 'Goals for goalie development',
+    icon: 'TrendingUp',
+    color: 'orange',
+    weight: 5,
+  },
+  {
+    slug: 'preferences',
+    name: 'Communication & Preferences',
+    shortName: 'Preferences',
+    description: 'Platform engagement style',
+    icon: 'BookOpen',
+    color: 'indigo',
+    weight: 5,
+  },
+];
+
 /**
  * Get category info by slug
  */
@@ -825,6 +891,9 @@ export function getCategoryInfo(slug: string, role: QuestionnaireRole = 'goalie'
   }
   if (role === 'parent') {
     return PARENT_CATEGORIES.find(c => c.slug === slug);
+  }
+  if (role === 'coach') {
+    return COACH_CATEGORIES.find(c => c.slug === slug);
   }
   return undefined;
 }

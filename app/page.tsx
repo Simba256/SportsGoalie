@@ -3,6 +3,65 @@
 import { useRouter } from 'next/navigation';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
+import { GalleryHoverCarousel, type GalleryCarouselItem } from '@/components/ui/gallery-hover-carousel';
+import { Network, Lock, Filter, TrendingUp, Users, Trophy } from 'lucide-react';
+
+const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
+  {
+    id: 'gem-1',
+    label: 'THE FOUNDATION',
+    title: 'What is your foundation built on?',
+    quote: 'Regardless how technically strong you are — if the mind is not the strongest tool you have, then what is your foundation built on?',
+    accent: '#bde4ff',
+    bg: 'linear-gradient(145deg, #1562ea 0%, #0d44c2 55%, #0a2e9a 100%)',
+    WatermarkIcon: Network,
+  },
+  {
+    id: 'gem-2',
+    label: 'THE MIND-VAULT',
+    title: 'Where only the most valuable thoughts are kept.',
+    quote: 'The discipline of building where only the most valuable foundational thoughts and behaviors are kept. For game performance. And for life in general.',
+    accent: '#a8ecff',
+    bg: 'linear-gradient(145deg, #0892cc 0%, #0672ac 55%, #044e84 100%)',
+    WatermarkIcon: Lock,
+  },
+  {
+    id: 'gem-3',
+    label: 'YOUR FILTERS',
+    title: 'Logic. Math. Science. Every read.',
+    quote: 'Logic, Common Sense, Math, and Science become your filters — applied to every read, every shift, every decision.',
+    accent: '#c8e8ff',
+    bg: 'linear-gradient(145deg, #0c3ed6 0%, #0828ae 55%, #061a86 100%)',
+    WatermarkIcon: Filter,
+  },
+  {
+    id: 'gem-4',
+    label: 'PERFORMANCE VS OUTCOME',
+    title: 'You control one. Not the other.',
+    quote: 'Learn the difference between performance and outcome — and understand why the goalie controls one, not the other.',
+    accent: '#b8ddff',
+    bg: 'linear-gradient(145deg, #1e72e8 0%, #1452c8 55%, #0e3aa8 100%)',
+    WatermarkIcon: TrendingUp,
+  },
+  {
+    id: 'gem-5',
+    label: 'THE BENCH',
+    title: 'How the goalie goes, the bench follows.',
+    quote: 'How the goalie goes reflects on the bench. A solid goalie lifts the bench. An inconsistent goalie deflates it.',
+    accent: '#9ed8f8',
+    bg: 'linear-gradient(145deg, #067ab8 0%, #055898 55%, #033878 100%)',
+    WatermarkIcon: Users,
+  },
+  {
+    id: 'gem-6',
+    label: 'SIX DECADES OF ORIGINAL IP',
+    title: 'One foundation. Sixty years. Proven.',
+    quote: 'One foundation. Built over sixty years. Proven on every goalie it has ever touched. The MIND-VAULT is yours to build.',
+    accent: '#c0d8ff',
+    bg: 'linear-gradient(145deg, #2248c8 0%, #1630a8 55%, #102088 100%)',
+    WatermarkIcon: Trophy,
+  },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -69,28 +128,43 @@ export default function Home() {
       {/* Hero Section */}
       <section
         className="relative min-h-screen overflow-hidden flex flex-col"
-        style={{ backgroundColor: '#000f28' }}
+        style={{ backgroundColor: '#020e2e' }}
       >
-        {/* Background image — blue-tinted */}
-        <img
-          src="/quality.png"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center"
-          style={{ zIndex: 0, filter: 'brightness(0.81) saturate(1.3)' }}
+        {/* Background image — positioned right so goalie fills the right half */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url("/quality.png")',
+            backgroundSize: 'auto 90%',
+            backgroundPosition: 'right center',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 0,
+            filter: 'brightness(0.85) saturate(1.1)',
+          }}
         />
 
-        {/* Blue colour wash over the image */}
-        <div className="absolute inset-0" style={{ background: 'rgba(5,20,80,0.38)', zIndex: 1 }} />
+        {/* Left-to-right gradient — blue-tinted opaque on left, transparent on right */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background: 'linear-gradient(to right, rgba(2,18,60,1) 0%, rgba(2,15,52,0.95) 35%, rgba(2,10,38,0.18) 58%, rgba(2,6,23,0.0) 80%)',
+            zIndex: 1,
+          }}
+        />
+        {/* Mobile overlay */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{ background: 'rgba(2,18,60,0.86)', zIndex: 1 }}
+        />
 
-        {/* Bottom-up fade */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,10,30,0.65) 75%, #000f28 100%)', zIndex: 2 }} />
-
-        {/* Left-side vignette for text area */}
-        <div className="absolute inset-0 hidden md:block" style={{ background: 'linear-gradient(90deg, rgba(0,5,25,0.70) 0%, rgba(0,5,25,0.40) 40%, rgba(0,5,25,0.08) 65%, transparent 100%)', zIndex: 2 }} />
-        <div className="absolute inset-0 md:hidden" style={{ background: 'rgba(0,5,25,0.65)', zIndex: 2 }} />
+        {/* Bottom fade into next section */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(2,6,23,0.6) 85%, #000f28 100%)', zIndex: 2 }}
+        />
 
         {/* ── NAV BAR ── */}
-        <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10 }}>
           {/* Brand */}
           <div className="flex items-center gap-2">
             <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -104,24 +178,20 @@ export default function Home() {
           </div>
 
           {/* Nav links — desktop only */}
-          <div className="hidden md:flex items-center gap-6">
-            {['Features', 'For Goalies', 'For Parents'].map((item) => (
-              <span key={item} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', letterSpacing: '0.2px', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+          <div className="hidden md:flex items-center gap-8">
+            {['Features', 'About', 'Pricing'].map((item) => (
+              <span key={item} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', letterSpacing: '0.5px', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
               >{item}</span>
             ))}
-            <a href="tel:+14169390555" style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', textDecoration: 'none', letterSpacing: '0.2px', transition: 'color 0.15s' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
-            >+1 (416) 939-0555</a>
           </div>
 
           {/* Login CTA */}
           <button
             onClick={() => router.push('/auth/login')}
             className="hover:opacity-90 transition-opacity"
-            style={{ background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.45)', color: '#37b5ff', padding: '8px 20px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer' }}
+            style={{ background: '#37b5ff', color: '#000f28', padding: '8px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px', cursor: 'pointer', border: 'none' }}
           >
             Login
           </button>
@@ -129,87 +199,64 @@ export default function Home() {
 
         {/* ── HERO CONTENT ── */}
         <div className="relative flex-1 flex items-center" style={{ zIndex: 10 }}>
-          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-16">
-            <div className="max-w-full md:max-w-[680px]">
+          <div className="w-full max-w-7xl mx-auto pl-4 md:pl-6 pr-6 md:pr-16 py-12 md:py-20">
+            <div className="w-full md:max-w-[600px]">
 
-              {/* ── BRAND NAME — the dominant element ── */}
-              <div className="mb-6 md:mb-8 text-center md:text-left">
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#37b5ff', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '10px' }}>
-                  WELCOME TO
-                </p>
-                <h1
-                  className="font-black uppercase leading-none"
-                  style={{ fontSize: 'clamp(36px, 6.5vw, 72px)', letterSpacing: '-0.03em', lineHeight: 0.9 }}
-                >
-                  <span style={{
-                    display: 'block',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #a8d8ff 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    filter: 'drop-shadow(0 0 24px rgba(55,181,255,0.5))',
-                  }}>SMARTER</span>
-                  <span style={{
-                    display: 'block',
-                    color: 'transparent',
-                    WebkitTextStroke: '2.5px #37b5ff',
-                    filter: 'drop-shadow(0 0 20px rgba(55,181,255,0.8)) drop-shadow(0 0 40px rgba(55,181,255,0.4))',
-                  }}>GOALIE</span>
-                </h1>
-                {/* Blue accent line */}
-                <div style={{ width: '56px', height: '3px', background: 'linear-gradient(90deg, #37b5ff, transparent)', borderRadius: '99px', marginTop: '18px', boxShadow: '0 0 8px rgba(55,181,255,0.5)' }} className="mx-auto md:mx-0" />
-              </div>
+              {/* Eyebrow */}
+              <p style={{ fontSize: '13px', fontWeight: 700, color: '#37b5ff', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '16px' }}>
+                WELCOME TO
+              </p>
 
-              {/* Sub-headline question */}
-              <h2
-                className="font-black uppercase mb-4 text-center md:text-left"
-                style={{ fontSize: 'clamp(15px, 2.4vw, 22px)', lineHeight: 1.3, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.02em' }}
+              {/* Brand name — italic, SMARTER=blue, GOALIE=white */}
+              <h1
+                className="font-black uppercase italic leading-none mb-6"
+                style={{ fontSize: 'clamp(56px, 9vw, 108px)', letterSpacing: '-0.03em', lineHeight: 0.92, fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif' }}
               >
-                Are goalies the{' '}
-                <em style={{ color: '#37b5ff', fontStyle: 'normal' }}>worst trained</em>{' '}
-                athletes in sports?
+                <span style={{ display: 'block', color: '#42a5f5' }}>SMARTER</span>
+                <span style={{ display: 'block', color: '#ffffff' }}>GOALIE</span>
+              </h1>
+
+              {/* Full-width divider */}
+              <div style={{ width: '100%', maxWidth: '520px', height: '1px', background: 'rgba(255,255,255,0.2)', marginBottom: '32px' }} />
+
+              {/* Sub-headline — large bold */}
+              <h2
+                className="font-black uppercase leading-tight mb-4"
+                style={{ fontSize: 'clamp(22px, 3.5vw, 42px)', lineHeight: 1.1, color: '#ffffff', letterSpacing: '-0.01em' }}
+              >
+                ARE GOALIES THE WORST<br />ATHLETES IN SPORTS?
               </h2>
 
-              {/* Tagline */}
               <p
-                className="uppercase font-bold mb-8 md:mb-10 text-center md:text-left"
-                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '2.5px', fontSize: '10px' }}
+                className="uppercase font-semibold mb-12"
+                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', fontSize: '11px' }}
               >
                 HERE IS WHAT WE KNOW.
               </p>
 
-              {/* Video intro button */}
-              <button
-                className="flex items-center gap-3 mb-5 md:mb-7 cursor-pointer hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
-                style={{ background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.5)', color: '#fff', padding: '11px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}
-              >
-                <span className="flex items-center justify-center shrink-0" style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#37b5ff', color: '#000f28', fontSize: '9px', fontWeight: 900 }}>▶</span>
-                COACH MIKE — INTRODUCTION
-              </button>
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Video button */}
+                <button
+                  className="flex items-center gap-3 cursor-pointer transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '14px 24px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                >
+                  <span className="flex items-center justify-center shrink-0" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fff', color: '#020617', fontSize: '9px', fontWeight: 900 }}>▶</span>
+                  COACH MIKE
+                </button>
 
-              {/* Primary CTA */}
-              <button
-                onClick={() => router.push('/explain')}
-                className="mb-8 md:mb-10 hover:opacity-90 hover:scale-[1.02] transition-all duration-200 w-full md:w-auto text-center"
-                style={{ background: '#37b5ff', color: '#000f28', fontWeight: 800, fontSize: '12px', letterSpacing: '2px', padding: '15px 36px', textTransform: 'uppercase', display: 'block', borderRadius: '4px' }}
-              >
-                LET US EXPLAIN →
-              </button>
-
-              {/* Role pills */}
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {[
-                  { label: 'GOALIE', action: () => router.push('/auth/register') },
-                  { label: 'PARENT', action: () => router.push('/auth/register') },
-                  { label: 'COACH', action: () => router.push('/auth/register') },
-                  { label: 'GOALIE COACH', action: () => router.push('/auth/register') },
-                ].map(({ label, action }) => (
-                  <button key={label} onClick={action} className="hover:opacity-80 transition-opacity"
-                    style={{ background: 'rgba(55,181,255,0.14)', border: '1px solid rgba(55,181,255,0.45)', padding: '7px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', color: '#e6f6ff', cursor: 'pointer' }}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {/* Primary CTA */}
+                <button
+                  onClick={() => router.push('/explain')}
+                  className="transition-all duration-200"
+                  style={{ background: '#42a5f5', color: '#fff', fontWeight: 800, fontSize: '12px', letterSpacing: '0.15em', padding: '14px 32px', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 0 24px rgba(66,165,245,0.45)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 36px rgba(66,165,245,0.7)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(66,165,245,0.45)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+                >
+                  LET US EXPLAIN →
+                </button>
               </div>
             </div>
           </div>
@@ -217,7 +264,7 @@ export default function Home() {
 
         {/* Bottom brand watermark */}
         <div className="relative pb-6 flex justify-center md:justify-end md:px-12" style={{ zIndex: 2 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.18)', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.15)', letterSpacing: '3px', textTransform: 'uppercase' }}>
             © SMARTER GOALIE
           </span>
         </div>
@@ -243,7 +290,7 @@ export default function Home() {
                         <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>1/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
                         <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Learn Smart. Play Smart. Stay Consistent.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 7 Pillars — from MIND-SET and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, TEAM-PRACTICE, and LIFE STYLE.</p>
                         <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
                         <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
                       </div>
@@ -329,26 +376,34 @@ export default function Home() {
           <section className="py-6 overflow-hidden" style={{ background: '#041530', borderTop: '1px solid rgba(55,181,255,0.12)', borderBottom: '1px solid rgba(55,181,255,0.12)' }}>
             <div className="relative flex" style={{ '--duration': '30s', '--gap': '2rem' } as React.CSSProperties}>
               <div className="flex shrink-0 animate-marquee items-center gap-8">
-                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: text === 'MIND-VAULT' ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: text === 'MIND-VAULT' ? '#a78bfa' : '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
               <div className="flex shrink-0 animate-marquee items-center gap-8" aria-hidden="true">
-                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: text === 'MIND-VAULT' ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: text === 'MIND-VAULT' ? '#a78bfa' : '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
             </div>
           </section>
 
+          {/* MIND-VAULT GEM Panel */}
+          <GalleryHoverCarousel
+            eyebrow="THE MIND-VAULT — DAILY GEMS"
+            heading="Six Foundations. One Complete System."
+            subheading="The mental pillars every goalie needs — built into your game, your mindset, and your life."
+            items={MIND_VAULT_ITEMS}
+          />
+
           {/* What's In YOUR Tool Box? */}
-          <section style={{ padding: '80px 20px', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
+          <section style={{ padding: 'clamp(40px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
             <style>{`
               .toolbox-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
               .toolbox-card:hover { transform: translateY(-4px) scale(1.02); }

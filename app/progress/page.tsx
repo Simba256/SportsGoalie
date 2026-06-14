@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import {
@@ -60,7 +60,7 @@ function ProgressContent() {
 
   if (error || !data) {
     return (
-      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
         <div style={{ ...card, padding: '48px 24px', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
           <BarChart size={40} color="rgba(255,255,255,0.2)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Unable to load progress data</h3>
@@ -77,14 +77,23 @@ function ProgressContent() {
     ? Math.round((data.consistency.thisMonthDays / data.consistency.daysInCurrentMonth) * 100)
     : 0;
 
+  const PILLAR_ORDER = ['MIND-SET', 'SKATING', '7AMS', '7PTS', 'FORM', 'TEAM-PRACTICE', 'LIFE STYLE'];
+
   const scoreDistribution = [
-    { name: '90-100%', value: data.attempts.filter(a => a.percentage >= 90).length, color: BLUE },
-    { name: '70-89%', value: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 90).length, color: '#60a5fa' },
-    { name: '50-69%', value: data.attempts.filter(a => a.percentage >= 50 && a.percentage < 70).length, color: '#f87171' },
-    { name: '<50%', value: data.attempts.filter(a => a.percentage < 50).length, color: '#ef4444' },
+    { name: '95-100 CLUB', value: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },
+    { name: '80-100 CLUB', value: data.attempts.filter(a => a.percentage >= 80 && a.percentage < 95).length, color: '#60cdff' },
+    { name: 'OWNING IT', value: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length, color: BLUE },
+    { name: 'DEVELOPING', value: data.attempts.filter(a => a.percentage >= 40 && a.percentage < 70).length, color: '#93c5fd' },
+    { name: 'FOUNDATION', value: data.attempts.filter(a => a.percentage < 40).length, color: '#f59e0b' },
   ].filter(s => s.value > 0);
 
-  const radarData = data.pillarBreakdown.map(p => ({ pillar: p.pillarName, score: p.avgScore, fullMark: 100 }));
+  const sortedPillarBreakdown = [...data.pillarBreakdown].sort((a, b) => {
+    const ai = PILLAR_ORDER.findIndex(p => a.pillarName.toUpperCase().includes(p) || p.includes(a.pillarName.toUpperCase()));
+    const bi = PILLAR_ORDER.findIndex(p => b.pillarName.toUpperCase().includes(p) || p.includes(b.pillarName.toUpperCase()));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  const radarData = sortedPillarBreakdown.map(p => ({ pillar: p.pillarName, score: p.avgScore, fullMark: 100 }));
 
   const TABS: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Overview' },
@@ -94,22 +103,25 @@ function ProgressContent() {
   ];
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
 
-      {/* Hero */}
-      <section style={{ position: 'relative', height: '260px', display: 'flex', alignItems: 'flex-end', backgroundImage: "url('/progress-analytics.png')", backgroundSize: 'cover', backgroundPosition: 'center', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,15,40,0.92) 0%, rgba(6,35,68,0.85) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, bottom: 0, background: 'linear-gradient(to top, #000f28 0%, transparent 60%)' }} />
-        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 24px 32px', textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-            <TrendingUp size={22} color={BLUE} />
-          </div>
-          <h1 style={{ fontSize: 'clamp(22px,4vw,40px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Progress Analytics</h1>
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>Track your learning journey with detailed analytics and insights.</p>
+      {/* ── Hero ── */}
+      <section style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 'clamp(64px,9vw,108px) 24px clamp(48px,6vw,72px)', maxWidth: '720px', margin: '0 auto' }}>
+          <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '16px' }}>
+            YOUR PROGRESS
+          </p>
+          <h1 style={{ fontSize: 'clamp(28px,5vw,56px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '18px' }}>
+            Track Your<br />
+            <span style={{ color: BLUE }}>Learning Journey</span>
+          </h1>
+          <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto' }}>
+            Detailed analytics and insights to measure your growth across all seven pillars.
+          </p>
         </div>
       </section>
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px 48px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(16px,3vw,28px) clamp(14px,4vw,24px) 48px' }}>
         <style>{`
           .progress-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
           @media (min-width: 768px) { .progress-stats { grid-template-columns: repeat(4, 1fr); } }
@@ -124,14 +136,15 @@ function ProgressContent() {
           @media (min-width: 1024px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr 1fr; } }
           .progress-eff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
           @media (min-width: 768px) { .progress-eff-grid { grid-template-columns: repeat(5, 1fr); } }
-          .progress-hist-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+          .progress-hist-sum { display: grid; grid-template-columns: 1fr; gap: 10px; }
+          @media (min-width: 480px) { .progress-hist-sum { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
         `}</style>
 
         {/* Stat Cards */}
         <div className="progress-stats" style={{ marginBottom: '28px' }}>
           <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" icon={<Clock size={17} color={BLUE} />} />
-          <BigStatCard label="Quiz Attempts" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} icon={<Trophy size={17} color={BLUE} />} />
-          <BigStatCard label="Avg Score" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
+          <BigStatCard label="Knowledge Checks" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} icon={<Trophy size={17} color={BLUE} />} />
+          <BigStatCard label="Avg Grasp Level" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
           <BigStatCard label="Current Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
         </div>
 
@@ -158,7 +171,7 @@ function ProgressContent() {
                 <Activity size={16} color={BLUE} />
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>30-Day Activity</span>
               </div>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Your daily quiz scores over the last 30 days</p>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Your daily Grasp Levels over the last 30 days</p>
               {data.dailyProgress.some(d => d.quizzes > 0) ? (
                 <div style={{ height: '280px' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -178,7 +191,7 @@ function ProgressContent() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <EmptyState icon={<BarChart size={40} color="rgba(255,255,255,0.15)" />} title="No activity yet" message="Complete quizzes to see your 30-day progress chart" />
+                <EmptyState icon={<BarChart size={40} color="rgba(255,255,255,0.15)" />} title="No activity yet" message="Complete Knowledge Checks to see your 30-day progress chart" />
               )}
             </div>
 
@@ -187,9 +200,9 @@ function ProgressContent() {
               <div style={{ ...card, padding: '22px 24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <Calendar size={16} color={BLUE} />
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Learning Consistency</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Commitment Consistency</span>
                 </div>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '20px' }}>How regularly you&apos;re practicing</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '20px' }}>How regularly you train</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <GlowProgressBar label="This Week" current={data.consistency.thisWeekDays} total={data.consistency.daysInCurrentWeek} suffix="days" pct={weekPct} />
                   <GlowProgressBar label="This Month" current={data.consistency.thisMonthDays} total={data.consistency.daysInCurrentMonth} suffix="days" pct={monthPct} />
@@ -204,12 +217,12 @@ function ProgressContent() {
               <div style={{ ...card, padding: '22px 24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <Target size={16} color={BLUE} />
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Score Distribution</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Where Your Grasp Level Lands</span>
                 </div>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>How your quiz scores break down</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>How your Grasp Levels break down</p>
                 {data.totalQuizzes > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                    <div style={{ position: 'relative', width: '140px', height: '140px', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+                    <div style={{ position: 'relative', width: '140px', height: '140px', flexShrink: 0, margin: '0 auto' }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie data={scoreDistribution} cx="50%" cy="50%" innerRadius={46} outerRadius={66} paddingAngle={3} dataKey="value" strokeWidth={0}>
@@ -224,10 +237,11 @@ function ProgressContent() {
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {[
-                        { label: 'Excellent (90-100%)', count: data.attempts.filter(a => a.percentage >= 90).length, color: BLUE },
-                        { label: 'Good (70-89%)', count: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 90).length, color: '#60a5fa' },
-                        { label: 'Fair (50-69%)', count: data.attempts.filter(a => a.percentage >= 50 && a.percentage < 70).length, color: '#f87171' },
-                        { label: 'Needs Work (<50%)', count: data.attempts.filter(a => a.percentage < 50).length, color: '#ef4444' },
+                        { label: '95-100 CLUB (95-100%)', count: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },
+                        { label: '80-100 CLUB (80-94%)', count: data.attempts.filter(a => a.percentage >= 80 && a.percentage < 95).length, color: '#60cdff' },
+                        { label: 'OWNING IT (70-79%)', count: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length, color: BLUE },
+                        { label: 'DEVELOPING (40-69%)', count: data.attempts.filter(a => a.percentage >= 40 && a.percentage < 70).length, color: '#93c5fd' },
+                        { label: 'FOUNDATION (0-39%)', count: data.attempts.filter(a => a.percentage < 40).length, color: '#f59e0b' },
                       ].map(item => (
                         <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, flexShrink: 0 }} />
@@ -238,7 +252,7 @@ function ProgressContent() {
                     </div>
                   </div>
                 ) : (
-                  <EmptyState icon={<Target size={36} color="rgba(255,255,255,0.15)" />} title="No data" message="Take quizzes to see your score distribution" />
+                  <EmptyState icon={<Target size={36} color="rgba(255,255,255,0.15)" />} title="No data" message="Complete Knowledge Checks to see your Grasp Level breakdown" />
                 )}
               </div>
             </div>
@@ -274,16 +288,16 @@ function ProgressContent() {
                       <BarChart size={16} color={BLUE} />
                       <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Performance by Pillar</span>
                     </div>
-                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Average quiz score per pillar</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Average Grasp Level per pillar</p>
                     <div style={{ height: '280px' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <RechartsBarChart data={data.pillarBreakdown} margin={{ bottom: 50 }}>
+                        <RechartsBarChart data={sortedPillarBreakdown} margin={{ bottom: 50 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                           <XAxis dataKey="pillarName" fontSize={11} tickLine={false} axisLine={false} angle={-35} textAnchor="end" height={65} tick={{ fill: 'rgba(255,255,255,0.4)' }} />
                           <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fill: 'rgba(255,255,255,0.4)' }} />
                           <Tooltip content={<PillarTooltip />} />
                           <Bar dataKey="avgScore" radius={[8, 8, 0, 0]} maxBarSize={45}>
-                            {data.pillarBreakdown.map((entry, index) => <Cell key={index} fill={entry.color} />)}
+                            {sortedPillarBreakdown.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                           </Bar>
                         </RechartsBarChart>
                       </ResponsiveContainer>
@@ -291,12 +305,12 @@ function ProgressContent() {
                   </div>
                 </div>
                 <div className="progress-pillar-grid">
-                  {data.pillarBreakdown.map(pillar => <PillarCard key={pillar.pillarId} pillar={pillar} />)}
+                  {sortedPillarBreakdown.map(pillar => <PillarCard key={pillar.pillarId} pillar={pillar} />)}
                 </div>
               </>
             ) : (
               <div style={{ ...card, padding: '64px 24px' }}>
-                <EmptyState icon={<BookOpen size={48} color="rgba(255,255,255,0.12)" />} title="No pillar data yet" message="Complete quizzes across different pillars to see your breakdown" />
+                <EmptyState icon={<BookOpen size={48} color="rgba(255,255,255,0.12)" />} title="No pillar data yet" message="Complete Knowledge Checks across different pillars to see your breakdown" />
               </div>
             )}
           </div>
@@ -306,7 +320,7 @@ function ProgressContent() {
         {activeTab === 'performance' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="progress-perf-grid">
-              <HighlightCard icon={<Clock size={16} color={BLUE} />} label="Avg Quiz Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime} min` : '--'} />
+              <HighlightCard icon={<Clock size={16} color={BLUE} />} label="Avg KC Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime} min` : '--'} />
               <HighlightCard icon={<CheckCircle2 size={16} color={BLUE} />} label="Pass Rate" value={`${data.completionRate}%`} />
               <HighlightCard icon={<BookOpen size={16} color={BLUE} />} label="Skills Covered" value={data.uniqueSkills} />
               <HighlightCard icon={<Award size={16} color={BLUE} />} label="Best Score" value={`${data.bestScore}%`} />
@@ -346,9 +360,9 @@ function ProgressContent() {
               <div style={{ ...card, padding: '22px 24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <TrendingUp size={16} color={BLUE} />
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Score Trend</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Grasp Level Trend</span>
                 </div>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Quiz scores over time (active days only)</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Grasp Levels over time (active days only)</p>
                 {data.dailyProgress.filter(d => d.quizzes > 0).length > 0 ? (
                   <div style={{ height: '240px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -376,7 +390,7 @@ function ProgressContent() {
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <EmptyState icon={<TrendingUp size={36} color="rgba(255,255,255,0.15)" />} title="No trend data" message="Complete quizzes on multiple days to see your score trend" />
+                  <EmptyState icon={<TrendingUp size={36} color="rgba(255,255,255,0.15)" />} title="No trend data" message="Complete Knowledge Checks on multiple days to see your Grasp Level trend" />
                 )}
               </div>
             </div>
@@ -391,7 +405,7 @@ function ProgressContent() {
               <div className="progress-eff-grid">
                 <EffTile label="Total Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} icon={<Clock size={14} color={BLUE} />} />
                 <EffTile label="Avg per Quiz" value={data.avgSessionTime > 0 ? `${data.avgSessionTime}m` : '--'} icon={<Activity size={14} color={BLUE} />} />
-                <EffTile label="Total Quizzes" value={data.totalQuizzes} icon={<Trophy size={14} color={BLUE} />} />
+                <EffTile label="Knowledge Checks" value={data.totalQuizzes} icon={<Trophy size={14} color={BLUE} />} />
                 <EffTile label="Unique Skills" value={data.uniqueSkills} icon={<BookOpen size={14} color={BLUE} />} />
                 <EffTile label="Pillars" value={data.pillarBreakdown.length} icon={<Target size={14} color={BLUE} />} />
               </div>
@@ -422,7 +436,7 @@ function ProgressContent() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
                     <Calendar size={16} color={BLUE} />
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Recent Quiz Attempts</span>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Recent Knowledge Checks</span>
                   </div>
                   <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Your latest {Math.min(data.recentAttempts.length, 10)} results</p>
                 </div>
@@ -461,7 +475,7 @@ function ProgressContent() {
                   })}
                 </div>
               ) : (
-                <EmptyState icon={<Calendar size={48} color="rgba(255,255,255,0.12)" />} title="No history yet" message="Start taking quizzes to build your history" />
+                <EmptyState icon={<Calendar size={48} color="rgba(255,255,255,0.12)" />} title="No history yet" message="Start completing Knowledge Checks to build your history" />
               )}
             </div>
           </div>
@@ -556,7 +570,9 @@ function PillarCard({ pillar }: { pillar: PillarBreakdown }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
         <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>Best: {pillar.bestScore}%</span>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: pillar.avgScore >= 70 ? BLUE : '#f87171' }}>{pillar.avgScore >= 70 ? 'On Track' : 'Needs Focus'}</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: pillar.avgScore >= 95 ? '#fbbf24' : pillar.avgScore >= 80 ? '#60cdff' : pillar.avgScore >= 70 ? BLUE : pillar.avgScore >= 40 ? '#93c5fd' : '#f59e0b' }}>
+          {pillar.avgScore >= 95 ? '95-100 CLUB' : pillar.avgScore >= 80 ? '80-100 CLUB' : pillar.avgScore >= 70 ? 'OWNING IT' : pillar.avgScore >= 40 ? 'DEVELOPING' : 'FOUNDATION'}
+        </span>
       </div>
     </div>
   );
@@ -569,8 +585,8 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
     <div style={{ background: 'rgba(2,18,44,0.96)', border: '1px solid rgba(55,181,255,0.3)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', minWidth: '140px' }}>
       <p style={{ fontWeight: 700, color: '#fff', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{label}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Quizzes</span><span style={{ color: '#fff', fontWeight: 600 }}>{d.quizzes}</span></div>
-        {d.avgScore > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Avg Score</span><span style={{ color: BLUE, fontWeight: 600 }}>{d.avgScore}%</span></div>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Knowledge Checks</span><span style={{ color: '#fff', fontWeight: 600 }}>{d.quizzes}</span></div>
+        {d.avgScore > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Avg Grasp Level</span><span style={{ color: BLUE, fontWeight: 600 }}>{d.avgScore}%</span></div>}
         {d.timeSpent > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Time</span><span style={{ color: '#fff', fontWeight: 600 }}>{d.timeSpent}m</span></div>}
       </div>
     </div>
@@ -587,7 +603,7 @@ function PillarTooltip({ active, payload }: { active?: boolean; payload?: Array<
         <span style={{ fontWeight: 700, color: '#fff' }}>{d.pillarName}</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {[{ l: 'Avg Score', v: `${d.avgScore}%`, c: d.color }, { l: 'Best', v: `${d.bestScore}%`, c: '#fff' }, { l: 'Attempts', v: d.attempts, c: '#fff' }, { l: 'Time', v: `${d.timeSpent}m`, c: '#fff' }].map(r => (
+        {[{ l: 'Avg Grasp Level', v: `${d.avgScore}%`, c: d.color }, { l: 'Best', v: `${d.bestScore}%`, c: '#fff' }, { l: 'Attempts', v: d.attempts, c: '#fff' }, { l: 'Time', v: `${d.timeSpent}m`, c: '#fff' }].map(r => (
           <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
             <span style={{ color: 'rgba(255,255,255,0.5)' }}>{r.l}</span>
             <span style={{ color: r.c, fontWeight: 600 }}>{r.v}</span>

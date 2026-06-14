@@ -79,6 +79,8 @@ function toDate(ts: any): Date {
 }
 
 function dateStr(d: Date): string {
+  const t = d.getTime();
+  if (!t || isNaN(t)) return '';
   return d.toISOString().split('T')[0];
 }
 
@@ -113,8 +115,9 @@ export function useAnalytics() {
         const analytics = aggregateAnalytics(attempts);
         setData(analytics);
         setError(null);
-      } catch {
-        setError('An unexpected error occurred');
+      } catch (err) {
+        console.error('useAnalytics load error:', err);
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       } finally {
         setLoading(false);
       }
@@ -210,7 +213,8 @@ function aggregateAnalytics(
 
   for (const a of attempts) {
     const d = toDate(a.submittedAt || a.completedAt);
-    if (d.getTime() === 0) continue;
+    const dt = d.getTime();
+    if (!dt || isNaN(dt)) continue;
     const ds = dateStr(d);
     const entry = dailyMap.get(ds);
     if (entry) {

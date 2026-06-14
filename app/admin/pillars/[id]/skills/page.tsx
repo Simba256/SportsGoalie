@@ -14,6 +14,7 @@ import {
   ArrowLeft, Plus, Edit, Trash2, Save, X, Clock, BookOpen, Play, Target,
   Brain, Footprints, Shapes, Grid3X3, Dumbbell,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
 
@@ -43,7 +44,7 @@ const DIFF_STYLES: Record<string, { bg: string; color: string }> = {
   refinement:   { bg: 'rgba(248,113,113,0.15)', color: RED   },
 };
 
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, LucideIcon> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell,
 };
 

@@ -1,15 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Loader2, BarChart3, TrendingUp, TrendingDown, Minus, Flame } from 'lucide-react';
 import { chartingService } from '@/lib/database/services/charting.service';
 import type { StudentChartingAnalytics } from '@/types';
 
-interface Props {
-  studentId: string;
-}
+const BLUE = '#37b5ff';
+const GREEN = '#4ade80';
+const RED = '#f87171';
+const YELLOW = '#fbbf24';
+
+const card: React.CSSProperties = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '14px', overflow: 'hidden' };
+const sectionHeader: React.CSSProperties = { padding: '14px 16px', borderBottom: '1px solid rgba(55,181,255,0.08)' };
+
+const LEVEL_STYLE: Record<string, { color: string; border: string }> = {
+  strong:    { color: GREEN,  border: 'rgba(74,222,128,0.3)' },
+  good:      { color: BLUE,   border: 'rgba(55,181,255,0.3)' },
+  improving: { color: YELLOW, border: 'rgba(251,191,36,0.3)' },
+  weak:      { color: RED,    border: 'rgba(248,113,113,0.3)' },
+};
+
+interface Props { studentId: string; }
 
 export function StudentChartingSummary({ studentId }: Props) {
   const [analytics, setAnalytics] = useState<StudentChartingAnalytics | null>(null);
@@ -20,9 +31,7 @@ export function StudentChartingSummary({ studentId }: Props) {
       setLoading(true);
       try {
         const result = await chartingService.getStudentAnalytics(studentId);
-        if (result.success && result.data) {
-          setAnalytics(result.data);
-        }
+        if (result.success && result.data) setAnalytics(result.data);
       } catch (err) {
         console.error('Failed to load charting analytics:', err);
       } finally {
@@ -34,25 +43,27 @@ export function StudentChartingSummary({ studentId }: Props) {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <>
+        <style>{`@keyframes sc-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        <div style={{ ...card, padding: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <Loader2 size={18} color="rgba(255,255,255,0.3)" style={{ animation: 'sc-spin 1s linear infinite' }} />
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Loading charts…</p>
+        </div>
+      </>
     );
   }
 
   if (!analytics || !analytics.sessionStats) {
     return (
-      <Card>
-        <CardContent className="py-6 text-center">
-          <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm font-medium text-muted-foreground">No Game Data Yet</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Charting performance data will appear here as this student logs games and practices.
-          </p>
-        </CardContent>
-      </Card>
+      <div style={{ ...card, padding: '28px', textAlign: 'center' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+          <BarChart3 size={22} color="rgba(255,255,255,0.25)" />
+        </div>
+        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>No Game Data Yet</p>
+        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', lineHeight: 1.6 }}>
+          Performance data will appear here once the student logs games and practices.
+        </p>
+      </div>
     );
   }
 
@@ -60,87 +71,95 @@ export function StudentChartingSummary({ studentId }: Props) {
   const goals = analytics.goalsAnalytics;
 
   const TrendIcon = ({ trend }: { trend?: string }) => {
-    if (trend === 'improving') return <TrendingUp className="h-3 w-3 text-green-500" />;
-    if (trend === 'declining') return <TrendingDown className="h-3 w-3 text-red-500" />;
-    return <Minus className="h-3 w-3 text-muted-foreground" />;
+    if (trend === 'improving') return <TrendingUp size={12} color={GREEN} />;
+    if (trend === 'declining') return <TrendingDown size={12} color={RED} />;
+    return <Minus size={12} color="rgba(255,255,255,0.3)" />;
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <BarChart3 className="h-4 w-4" />
-          Game Performance
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div style={card}>
+      <div style={sectionHeader}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <BarChart3 size={14} color={BLUE} />
+          <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>Game Performance</p>
+        </div>
+      </div>
+
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
         {/* Session stats */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg bg-muted/50 p-2 text-center">
-            <p className="text-lg font-bold">{stats.totalSessions || 0}</p>
-            <p className="text-[10px] text-muted-foreground">Sessions</p>
-          </div>
-          <div className="rounded-lg bg-muted/50 p-2 text-center">
-            <p className="text-lg font-bold">{stats.completedSessions || 0}</p>
-            <p className="text-[10px] text-muted-foreground">Completed</p>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {[
+            { label: 'Sessions', value: stats.totalSessions || 0, color: BLUE },
+            { label: 'Completed', value: stats.completedSessions || 0, color: GREEN },
+          ].map(s => (
+            <div key={s.label} style={{ textAlign: 'center', padding: '12px 8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+              <p style={{ fontSize: '22px', fontWeight: 900, color: s.color, lineHeight: 1, marginBottom: '4px' }}>{s.value}</p>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* Goals analytics */}
         {goals && (
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-muted-foreground">Goals Analysis</p>
-            <div className="flex items-center justify-between text-xs">
-              <span>Good/Bad ratio</span>
-              <Badge variant={goals.goodBadRatio >= 1 ? 'default' : 'destructive'} className="text-[10px]">
-                {goals.goodBadRatio.toFixed(1)}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span>Good goals</span>
-              <span className="font-medium text-green-600">{goals.totalGoodGoals}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span>Bad goals</span>
-              <span className="font-medium text-red-600">{goals.totalBadGoals}</span>
+          <div>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>Goals Analysis</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Good/Bad ratio</span>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: goals.goodBadRatio >= 1 ? GREEN : RED, background: goals.goodBadRatio >= 1 ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)', border: `1px solid ${goals.goodBadRatio >= 1 ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`, borderRadius: '20px', padding: '2px 8px' }}>
+                  {goals.goodBadRatio.toFixed(1)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Good goals</span>
+                <span style={{ color: GREEN, fontWeight: 700, fontSize: '13px' }}>{goals.totalGoodGoals}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Bad goals</span>
+                <span style={{ color: RED, fontWeight: 700, fontSize: '13px' }}>{goals.totalBadGoals}</span>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Category performance */}
+        {/* Category trends */}
         {analytics.categoryPerformances && analytics.categoryPerformances.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-muted-foreground">Category Trends</p>
-            {analytics.categoryPerformances.slice(0, 5).map((cat) => (
-              <div key={cat.category} className="flex items-center justify-between text-xs">
-                <span className="capitalize truncate flex-1">{cat.category.replace(/_/g, ' ')}</span>
-                <div className="flex items-center gap-1">
-                  <TrendIcon trend={cat.trend} />
-                  <Badge
-                    variant="outline"
-                    className={`text-[9px] ${
-                      cat.currentLevel === 'strong' ? 'border-green-300 text-green-700' :
-                      cat.currentLevel === 'good' ? 'border-blue-300 text-blue-700' :
-                      cat.currentLevel === 'improving' ? 'border-amber-300 text-amber-700' :
-                      'border-red-300 text-red-700'
-                    }`}
-                  >
-                    {cat.currentLevel}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+          <div>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>Category Trends</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {analytics.categoryPerformances.slice(0, 5).map((cat) => {
+                const lvl = LEVEL_STYLE[cat.currentLevel] || LEVEL_STYLE.weak;
+                return (
+                  <div key={cat.category} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '12px', textTransform: 'capitalize', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cat.category.replace(/_/g, ' ')}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                      <TrendIcon trend={cat.trend} />
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: lvl.color, background: `${lvl.color}15`, border: `1px solid ${lvl.border}`, borderRadius: '20px', padding: '1px 7px' }}>
+                        {cat.currentLevel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {/* Streak */}
         {analytics.streak && analytics.streak.currentStreak > 0 && (
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-2 text-center">
-            <p className="text-sm font-bold text-amber-700">{analytics.streak.currentStreak} day streak</p>
-            <p className="text-[10px] text-amber-600">Best: {analytics.streak.longestStreak} days</p>
+          <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Flame size={14} color={YELLOW} />
+              <span style={{ color: YELLOW, fontSize: '13px', fontWeight: 800 }}>{analytics.streak.currentStreak} day streak</span>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>Best: {analytics.streak.longestStreak}d</span>
           </div>
         )}
-      </CardContent>
-    </Card>
+
+      </div>
+    </div>
   );
 }

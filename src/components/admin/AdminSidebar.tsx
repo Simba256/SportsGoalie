@@ -46,6 +46,7 @@ const navSections: NavSection[] = [
     label: 'Communication',
     items: [
       { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
+      { label: 'Voice Queue', href: '/admin/voice-queue', icon: MessageSquare },
       { label: 'Moderation', href: '/admin/moderation', icon: Shield },
     ],
   },

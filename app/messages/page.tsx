@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -88,14 +88,14 @@ export default function MessagesPage() {
 
   if (!user) {
     return (
-      <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>Please log in to view your messages</p>
       </div>
     );
   }
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
       <style>{`
         .msg-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         @media (min-width: 768px) { .msg-stats { grid-template-columns: repeat(4, 1fr); } }

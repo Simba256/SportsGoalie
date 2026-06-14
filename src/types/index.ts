@@ -30,6 +30,10 @@ export interface User {
   onboardingCompletedAt?: Timestamp;
   initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
 
+  // Coach onboarding fields
+  coachOnboardingComplete?: boolean;
+  coachOnboardingCompletedAt?: Timestamp;
+
   // Parent-Child Linking Fields (for students/goalies)
   linkedParentIds?: string[];      // Array of parent user IDs linked to this goalie
   parentLinkCode?: string;         // Code for parents to link (XXXX-XXXX format)
@@ -416,8 +420,10 @@ export interface Achievement {
   criteria: AchievementCriteria;
   points: number;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  tier?: 'FOUNDATION' | 'DEVELOPING' | 'OWNING IT' | '80-100 CLUB' | '95-100 CLUB';
+  category?: 'WINS' | 'BREAKTHROUGHS' | 'CLIMBS' | 'STREAKS' | 'MILESTONES';
   isActive: boolean;
-  isSecret: boolean; // Hidden until unlocked
+  isSecret: boolean;
   metadata: AchievementMetadata;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -912,6 +918,7 @@ export {
   pacingLevelToAssessmentLevel,
   GOALIE_CATEGORIES,
   PARENT_CATEGORIES,
+  COACH_CATEGORIES,
   getCategoryInfo,
 } from './onboarding';
 

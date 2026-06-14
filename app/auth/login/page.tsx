@@ -16,8 +16,8 @@ const BLUE = '#37b5ff';
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '11px 14px',
-  background: 'rgba(255,255,255,0.06)',
-  border: '1px solid rgba(55,181,255,0.2)',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(55,181,255,0.18)',
   borderRadius: '8px',
   color: '#fff',
   fontSize: '14px',
@@ -129,110 +129,93 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#000c1e' }}>
 
-      {/* Left — Image panel */}
-      <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center scale-105"
-          style={{ backgroundImage: 'url("/login.avif")', filter: 'blur(2px)' }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, rgba(0,15,40,0.92) 0%, rgba(6,35,68,0.82) 50%, rgba(10,49,89,0.75) 100%)',
-          }}
-        />
-        <div className="relative z-10 text-center px-12">
-          <Link href="/">
-            <img src="/logo.png" alt="Smarter Goalie" className="h-12 mx-auto mb-8" />
-          </Link>
+      {/* ── LEFT — Editorial brand panel ── */}
+      <div
+        className="hidden lg:flex"
+        style={{
+          flex: '0 0 50%',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '40px 48px',
+          background: 'linear-gradient(135deg, #000c1e 0%, #062344 40%, #1e0d14 70%, #3d1a24 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Blue glow — top right */}
+        <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(55,181,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Maroon glow — bottom left */}
+        <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '440px', height: '440px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(100,30,48,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Centre diagonal blend */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(55,181,255,0.04) 0%, transparent 45%, rgba(80,22,36,0.08) 100%)', pointerEvents: 'none' }} />
+
+        {/* Top — Logo */}
+        <Link href="/" style={{ display: 'inline-block' }}>
+          <img src="/logo.png" alt="Smarter Goalie" style={{ height: '44px' }} />
+        </Link>
+
+        {/* Bottom — Tagline */}
+        <div style={{ paddingBottom: '80px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE, textTransform: 'uppercase', marginBottom: '18px' }}>
+            ——&nbsp;&nbsp;WELCOME BACK
+          </p>
           <h2
             style={{
-              fontSize: 'clamp(28px, 3.5vw, 48px)',
+              fontSize: 'clamp(36px, 4.5vw, 58px)',
               fontWeight: 900,
               color: '#fff',
               lineHeight: 1.1,
-              letterSpacing: '-0.02em',
-              textTransform: 'uppercase',
-              marginBottom: '16px',
+              letterSpacing: '-0.03em',
+              margin: 0,
             }}
           >
-            Welcome Back,<br />
-            <span style={{ color: BLUE }}>Athlete.</span>
+            Master the crease.<br />
+            <span style={{ color: BLUE }}>Own every game.</span>
           </h2>
-          <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '340px', margin: '0 auto' }}>
-            Pick up where you left off — your drills, progress, and goals are waiting.
-          </p>
-          <div
-            style={{
-              marginTop: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-            }}
-          >
-            <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
-            <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
-              Smarter Goalie
-            </p>
-            <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
-          </div>
         </div>
       </div>
 
-      {/* Right — Form panel */}
+      {/* Vertical divider */}
+      <div className="hidden lg:block" style={{ width: '1px', background: 'rgba(55,181,255,0.1)', flexShrink: 0 }} />
+
+      {/* ── RIGHT — Form panel ── */}
       <div
         style={{
+          flex: '1',
           display: 'flex',
-          width: '100%',
-          alignItems: 'center',
+          flexDirection: 'column',
           justifyContent: 'center',
-          background: 'linear-gradient(145deg, #000f28 0%, #062344 60%, #0a3159 100%)',
+          background: '#00101f',
           padding: '48px 24px',
+          overflowY: 'auto',
         }}
-        className="lg:w-1/2"
       >
-        <div style={{ width: '100%', maxWidth: '420px' }}>
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-8 flex justify-center">
+          <Link href="/">
+            <img src="/logo.png" alt="Smarter Goalie" style={{ height: '40px' }} />
+          </Link>
+        </div>
 
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-8 flex justify-center">
-            <Link href="/">
-              <img src="/logo.png" alt="Smarter Goalie" className="h-10" />
-            </Link>
-          </div>
+        <div style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
 
           {/* Header */}
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <div style={{ width: '24px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
-              <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
-                Welcome Back
-              </p>
-            </div>
-            <h1
-              style={{
-                fontSize: '28px',
-                fontWeight: 900,
-                color: '#fff',
-                letterSpacing: '-0.02em',
-                marginBottom: '6px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Sign In
-            </h1>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>
-              Enter your credentials to access your account
+          <div style={{ marginBottom: '36px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: '10px' }}>
+              Already registered?
             </p>
+            <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>
+              Sign in
+            </h1>
           </div>
 
           <Suspense fallback={null}>
             <VerificationMessage />
           </Suspense>
 
-          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }} data-testid="login-form">
+          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} data-testid="login-form">
 
             {/* Email */}
             <div>
@@ -240,7 +223,7 @@ export default function LoginPage() {
               <input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="your@email.com"
                 {...register('email')}
                 autoComplete="email"
                 data-testid="email-input"
@@ -283,18 +266,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'rgba(255,255,255,0.35)',
-                    padding: 0,
-                    display: 'flex',
-                  }}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -327,24 +299,23 @@ export default function LoginPage() {
               data-testid="login-submit"
               style={{
                 width: '100%',
-                padding: '13px 0',
+                padding: '14px 0',
                 borderRadius: '8px',
                 border: 'none',
-                background: isLoading
-                  ? 'rgba(55,181,255,0.3)'
-                  : `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`,
+                background: isLoading ? 'rgba(55,181,255,0.3)' : `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`,
                 color: '#fff',
                 fontSize: '12px',
                 fontWeight: 800,
                 letterSpacing: '2px',
                 textTransform: 'uppercase',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: isLoading ? 'none' : '0 4px 20px rgba(55,181,255,0.3)',
+                boxShadow: isLoading ? 'none' : '0 4px 24px rgba(55,181,255,0.28)',
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
+                marginTop: '4px',
               }}
             >
               {isLoading ? (
@@ -355,60 +326,20 @@ export default function LoginPage() {
               ) : 'Sign In →'}
             </button>
 
-            {/* Root error */}
             {errors.root && (
-              <div
-                style={{
-                  borderRadius: '8px',
-                  border: '1px solid rgba(248,113,113,0.3)',
-                  background: 'rgba(248,113,113,0.08)',
-                  padding: '12px 14px',
-                }}
-                data-testid="login-error"
-              >
+              <div style={{ borderRadius: '8px', border: '1px solid rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.08)', padding: '12px 14px' }} data-testid="login-error">
                 <p style={{ fontSize: '13px', color: '#f87171' }}>{errors.root.message}</p>
               </div>
             )}
           </form>
 
-          {/* Divider */}
-          <div style={{ position: 'relative', margin: '28px 0' }}>
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)' }} />
-            <span
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                background: '#040e22',
-                padding: '0 12px',
-                fontSize: '11px',
-                color: 'rgba(255,255,255,0.3)',
-                textTransform: 'uppercase',
-                letterSpacing: '2px',
-              }}
-            >
-              Or
-            </span>
-          </div>
-
-          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>
-            Social login coming soon...
-          </p>
-
           {/* Register link */}
-          <div style={{ marginTop: '28px', textAlign: 'center' }}>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
-              Don&apos;t have an account?{' '}
-              <Link
-                href="/auth/register"
-                style={{ color: BLUE, fontWeight: 700, textDecoration: 'none' }}
-                data-testid="register-link"
-              >
-                Create an account
-              </Link>
-            </p>
-          </div>
+          <p style={{ marginTop: '28px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/register" style={{ color: BLUE, fontWeight: 700, textDecoration: 'none' }} data-testid="register-link">
+              Create an account
+            </Link>
+          </p>
         </div>
       </div>
     </div>

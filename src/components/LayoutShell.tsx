@@ -10,8 +10,9 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization'];
-const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
+const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact'];
+const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
+const PUBLIC_ROUTES = ['/', '/pricing'];
 
 function isPublicRoute(pathname: string): boolean {
   if (pathname === '/') return true;
@@ -22,6 +23,9 @@ function isBareRoute(pathname: string): boolean {
 }
 function isNakedRoute(pathname: string): boolean {
   return NAKED_ROUTES.some(route => pathname.startsWith(route));
+}
+function isOnboardingRoute(pathname: string): boolean {
+  return ONBOARDING_ROUTES.some(route => pathname.startsWith(route));
 }
 function isAdminRoute(pathname: string): boolean { return pathname.startsWith('/admin'); }
 function isCoachRoute(pathname: string): boolean { return pathname.startsWith('/coach'); }
@@ -40,7 +44,10 @@ function getPageTitle(pathname: string): string {
     return titles[segments[1]] || 'Dashboard';
   }
   if (first === 'coach') {
-    const titles: Record<string, string> = { coach: 'Dashboard', students: 'My Students', content: 'Content Library' };
+    const titles: Record<string, string> = {
+      coach: 'Dashboard', students: 'My Students', content: 'Content Library',
+      assessment: 'Baseline Assessment',
+    };
     return titles[segments[1]] || 'Dashboard';
   }
   if (first === 'parent') {
@@ -78,7 +85,7 @@ function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSid
   );
 }
 
-const appBg = 'linear-gradient(160deg, #000f28 0%, #051e3e 100%)';
+const appBg = 'linear-gradient(145deg, #00091a 0%, #030f25 50%, #050e20 100%)';
 
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -89,6 +96,18 @@ export function LayoutShell({ children }: { children: ReactNode }) {
   if (searchParams.get('embedded') === '1') return <>{children}</>;
   if (isNakedRoute(pathname)) return <>{children}</>;
   if (isBareRoute(pathname)) return <>{children}</>;
+
+  // Onboarding: Header7 navbar (fixed) + dark content below it, no footer
+  if (isOnboardingRoute(pathname)) {
+    return (
+      <>
+        <Header7 />
+        <div style={{ paddingTop: '72px', height: '100dvh', overflow: 'hidden', background: 'linear-gradient(145deg, #000a1f 0%, #041530 40%, #071e42 100%)' }}>
+          {children}
+        </div>
+      </>
+    );
+  }
 
   if (isPublicRoute(pathname)) {
     return (
@@ -121,7 +140,6 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
-          <Footer7 />
         </div>
       </div>
     );
@@ -134,7 +152,6 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
-          <Footer7 />
         </div>
       </div>
     );
@@ -146,7 +163,6 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
         <main className="p-6">{children}</main>
-        <Footer7 />
       </div>
     </div>
   );
