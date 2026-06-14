@@ -11,7 +11,6 @@ export { OnboardingProgress } from './onboarding-progress';
 export { IntelligenceProfileView } from './intelligence-profile-view';
 export { AssessmentComplete } from './assessment-complete';
 
-<<<<<<< HEAD
 // V2 Student Baseline Profile
 export { StudentBaselineQuestionnaire } from './StudentBaselineQuestionnaire';
 
@@ -21,11 +20,7 @@ export { CoachBaselineQuestionnaire } from './CoachBaselineQuestionnaire';
 // V1 Parent Baseline Profile
 export { ParentBaselineQuestionnaire } from './ParentBaselineQuestionnaire';
 
-=======
-// Coach Onboarding Components
-export { CoachBaselineQuestionnaire } from './CoachBaselineQuestionnaire';
 
->>>>>>> e9f05073d0f740d46f1573caec2788d046b07e5d
 // Parent-specific Onboarding Components
 export { ParentWelcomeScreen } from './parent-welcome-screen';
 export { ParentBridgeMessage } from './parent-bridge-message';
