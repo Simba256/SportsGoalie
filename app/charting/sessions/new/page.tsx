@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { chartingService } from '@/lib/database';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { ArrowLeft, Save, Trophy, Dumbbell, MapPin, CalendarDays, Users, Tag } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
+
+const BLUE  = '#00FFFF';
+const MUTED = 'rgba(255,255,255,0.38)';
+const LABEL = 'rgba(255,255,255,0.55)';
 
 export default function NewSessionPage() {
   const { user } = useAuth();
@@ -27,11 +29,9 @@ export default function NewSessionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
     try {
       setLoading(true);
-
-      const sessionData = {
+      const result = await chartingService.createSession({
         studentId: user.id,
         type: formData.type,
         date: Timestamp.fromDate(new Date(formData.date)),
@@ -40,10 +40,7 @@ export default function NewSessionPage() {
         tags: formData.tags,
         status: 'scheduled' as const,
         createdBy: user.id,
-      };
-
-      const result = await chartingService.createSession(sessionData);
-
+      });
       if (result.success && result.data) {
         router.push(`/charting/sessions/${result.data.id}`);
       } else {
@@ -57,223 +54,166 @@ export default function NewSessionPage() {
     }
   };
 
+  const inputStyle = {
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    color: 'white',
+    height: '38px',
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Header */}
-      <section className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 h-[250px] md:h-[290px] flex items-start justify-center px-4 pt-10 md:pt-12 overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: "url('/goalie.avif')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1748]/78 via-[#102a5d]/62 to-[#5f2033]/52" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent via-gray-100/55 to-gray-50" />
+    <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-        <div className="relative z-10 w-full max-w-3xl mx-auto">
-          <Button
-            variant="outline"
-            size="icon"
+      {/* ── SLIM HEADER ── */}
+      <div style={{ position: 'relative', borderRadius: '14px', background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 55%, #0d0b1c 100%)', border: '1px solid rgba(0,255,255,0.16)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent 0%, ${BLUE} 40%, rgba(255,255,255,0.5) 70%, transparent 100%)` }} />
+        <div style={{ position: 'absolute', top: '-30px', right: '-10px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,255,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px' }}>
+          <button
+            type="button"
             onClick={() => router.back()}
-            className="absolute left-1 md:-left-20 lg:-left-28 xl:-left-36 top-0 rounded-full border-white/35 bg-white/80 hover:bg-white backdrop-blur-sm text-slate-700"
+            style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,255,255,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'; }}
           >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-
-          <div className="mt-3 text-center">
-            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">New Session</h1>
-            <p className="text-white/85 mt-2 text-sm md:text-base">Create a new game or practice session</p>
+            <ArrowLeft size={15} />
+          </button>
+          <div style={{ width: '3px', height: '36px', borderRadius: '99px', background: `linear-gradient(180deg, ${BLUE}, rgba(255,255,255,0.3))`, flexShrink: 0 }} />
+          <div>
+            <p style={{ fontSize: '10px', color: LABEL, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '3px' }}>Charting</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#fff', letterSpacing: '-.02em', lineHeight: 1 }}>
+              New <span style={{ color: BLUE }}>Session</span>
+            </h1>
           </div>
         </div>
-      </section>
+      </div>
 
-      <main className="relative z-20 max-w-3xl mx-auto px-4 md:px-6 -mt-16 md:-mt-20 pb-10">
-        {/* Form */}
-        <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <form onSubmit={handleSubmit} className="space-y-8 p-6">
-            {/* Session Type */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold text-foreground">Session Type</Label>
-              <RadioGroup
-                value={formData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value as 'game' | 'practice' })}
-                className="grid grid-cols-2 gap-4"
-              >
-                <div
-                  className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                    formData.type === 'game'
-                      ? 'border-blue-300 bg-blue-50 shadow-md shadow-blue-500/10'
-                      : 'border-border hover:border-blue-200 hover:bg-muted/50'
-                  }`}
-                  onClick={() => setFormData({ ...formData, type: 'game' })}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      formData.type === 'game' ? 'bg-blue-100' : 'bg-muted'
-                    }`}>
-                      <Trophy className={`w-5 h-5 ${formData.type === 'game' ? 'text-blue-600' : 'text-muted-foreground'}`} />
+      {/* ── FORM CARD ── */}
+      <div style={{ background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: '1px solid rgba(0,255,255,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
+        <form onSubmit={handleSubmit}>
+
+          {/* Session Type */}
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: LABEL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Session Type</p>
+            <RadioGroup
+              value={formData.type}
+              onValueChange={(v) => setFormData({ ...formData, type: v as 'game' | 'practice' })}
+              className="grid grid-cols-2 gap-3"
+            >
+              {[
+                { value: 'game',     label: 'Game',     desc: 'Competitive match',  Icon: Trophy },
+                { value: 'practice', label: 'Practice', desc: 'Training session',   Icon: Dumbbell },
+              ].map(({ value, label, desc, Icon }) => {
+                const active = formData.type === value;
+                return (
+                  <div
+                    key={value}
+                    onClick={() => setFormData({ ...formData, type: value as 'game' | 'practice' })}
+                    style={{ border: `2px solid ${active ? BLUE : 'rgba(255,255,255,0.1)'}`, background: active ? 'rgba(0,255,255,0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <div style={{ width: '34px', height: '34px', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(0,255,255,0.18)' : 'rgba(255,255,255,0.07)', flexShrink: 0 }}>
+                      <Icon size={16} color={active ? BLUE : 'rgba(255,255,255,0.35)'} />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          value="game"
-                          checked={formData.type === 'game'}
-                          onChange={() => setFormData({ ...formData, type: 'game' })}
-                          className="accent-blue-600"
-                        />
-                        <p className="font-semibold text-foreground">Game</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">Competitive match</p>
+                    <div>
+                      <input type="radio" value={value} checked={active} onChange={() => setFormData({ ...formData, type: value as 'game' | 'practice' })} className="sr-only" />
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '1px' }}>{label}</p>
+                      <p style={{ fontSize: '11px', color: MUTED }}>{desc}</p>
                     </div>
                   </div>
-                </div>
+                );
+              })}
+            </RadioGroup>
+          </div>
 
-                <div
-                  className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                    formData.type === 'practice'
-                      ? 'border-blue-300 bg-blue-50 shadow-md shadow-blue-500/10'
-                      : 'border-border hover:border-blue-200 hover:bg-muted/50'
-                  }`}
-                  onClick={() => setFormData({ ...formData, type: 'practice' })}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      formData.type === 'practice' ? 'bg-blue-100' : 'bg-muted'
-                    }`}>
-                      <Dumbbell className={`w-5 h-5 ${formData.type === 'practice' ? 'text-blue-600' : 'text-muted-foreground'}`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          value="practice"
-                          checked={formData.type === 'practice'}
-                          onChange={() => setFormData({ ...formData, type: 'practice' })}
-                          className="accent-blue-600"
-                        />
-                        <p className="font-semibold text-foreground">Practice</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">Training session</p>
-                    </div>
-                  </div>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Date and Time + Location */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="date" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-blue-600" />
-                  Date & Time <span className="text-accent">*</span>
+          {/* Date + Location + Opponent in a compact grid */}
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: LABEL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Details</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {/* Date */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <Label htmlFor="date" style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <CalendarDays size={11} color={BLUE} /> Date & Time <span style={{ color: BLUE }}>*</span>
                 </Label>
-                <Input
-                  id="date"
-                  type="datetime-local"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
-                  className="h-10 border-border focus-visible:ring-blue-500"
-                />
+                <Input id="date" type="datetime-local" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required className="focus-visible:ring-blue-500 text-sm" style={inputStyle} />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="location" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  Location
+              {/* Location */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <Label htmlFor="location" style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <MapPin size={11} color={BLUE} /> Location
                 </Label>
-                <Input
-                  id="location"
-                  type="text"
-                  placeholder="Enter arena or rink name"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="h-10 border-border focus-visible:ring-blue-500"
-                />
+                <Input id="location" type="text" placeholder="Arena or rink" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="focus-visible:ring-blue-500 placeholder:text-white/25 text-sm" style={inputStyle} />
+              </div>
+
+              {/* Opponent / Practice Name — spans full width */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', gridColumn: '1 / -1' }}>
+                <Label htmlFor="opponent" style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  {formData.type === 'game'
+                    ? <><Users size={11} color={BLUE} /> Opponent</>
+                    : <><Tag size={11} color={BLUE} /> Practice Name</>}
+                </Label>
+                <Input id="opponent" type="text" placeholder={formData.type === 'game' ? 'Opponent team name' : 'Practice session name'} value={formData.opponent} onChange={(e) => setFormData({ ...formData, opponent: e.target.value })} className="focus-visible:ring-blue-500 placeholder:text-white/25 text-sm" style={inputStyle} />
               </div>
             </div>
+          </div>
 
-            {/* Session Name / Opponent */}
-            <div className="space-y-2">
-              <Label htmlFor="opponent" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                {formData.type === 'game' ? (
-                  <Users className="w-4 h-4 text-blue-600" />
-                ) : (
-                  <Tag className="w-4 h-4 text-blue-600" />
-                )}
-                {formData.type === 'game' ? 'Opponent' : 'Practice Name'}
-              </Label>
-              <Input
-                id="opponent"
-                type="text"
-                placeholder={formData.type === 'game' ? 'Enter opponent team name' : 'Enter practice session name'}
-                value={formData.opponent}
-                onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                className="border-border focus-visible:ring-blue-500"
-              />
+          {/* Tags */}
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: LABEL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Tags</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+              {['Home', 'Away', 'Tournament', 'League', 'Playoff'].map((tag) => {
+                const isSelected = formData.tags.includes(tag.toLowerCase());
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      const tags = isSelected
+                        ? formData.tags.filter((t) => t !== tag.toLowerCase())
+                        : [...formData.tags, tag.toLowerCase()];
+                      setFormData({ ...formData, tags });
+                    }}
+                    style={isSelected
+                      ? { background: BLUE, color: '#001a0d', border: 'none', borderRadius: '99px', padding: '5px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,255,255,0.3)' }
+                      : { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Tags */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Tag className="w-4 h-4 text-blue-600" />
-                Tags
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {['Home', 'Away', 'Tournament', 'League', 'Playoff'].map((tag) => {
-                  const isSelected = formData.tags.includes(tag.toLowerCase());
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        const tags = isSelected
-                          ? formData.tags.filter((t) => t !== tag.toLowerCase())
-                          : [...formData.tags, tag.toLowerCase()];
-                        setFormData({ ...formData, tags });
-                      }}
-                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                        isSelected
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
-                          : 'bg-muted text-muted-foreground hover:bg-blue-50 hover:text-blue-600'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          {/* Actions */}
+          <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              disabled={loading}
+              style={{ padding: '9px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '9px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '9px 20px', background: `linear-gradient(135deg, ${BLUE}, #00FF99)`, border: 'none', borderRadius: '9px', color: '#001a0d', fontSize: '13px', fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 14px rgba(0,255,255,0.3)' }}
+            >
+              {loading ? (
+                <>
+                  <div style={{ width: '13px', height: '13px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite' }} />
+                  Creating…
+                </>
+              ) : (
+                <><Save size={13} /> Create Session</>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                disabled={loading}
-                className="border-border/50 hover:bg-muted"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/25"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Create Session
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </Card>
-      </main>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

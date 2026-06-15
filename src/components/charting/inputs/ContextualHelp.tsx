@@ -32,11 +32,11 @@ export function ContextualHelp({ label, helpText, children }: ContextualHelpProp
     <div className="space-y-2">
       {/* Label row */}
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-zinc-800">{label}</span>
+        <span className="text-sm font-semibold text-white">{label}</span>
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-zinc-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+          className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-white/40 hover:text-[#37b5ff] hover:bg-[rgba(55,181,255,0.1)] transition-colors"
           aria-label={`Help for ${label}`}
         >
           <HelpCircle className="w-4 h-4" />
@@ -47,12 +47,12 @@ export function ContextualHelp({ label, helpText, children }: ContextualHelpProp
       {open && (
         <div
           ref={panelRef}
-          className="relative bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-zinc-700 leading-relaxed animate-in fade-in slide-in-from-top-1 duration-200"
+          className="relative bg-[rgba(2,18,44,0.9)] border border-[rgba(55,181,255,0.2)] rounded-xl p-3 text-sm text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-1 duration-200"
         >
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute top-2 right-2 text-zinc-400 hover:text-zinc-600"
+            className="absolute top-2 right-2 text-white/40 hover:text-white/80"
           >
             <X className="w-3.5 h-3.5" />
           </button>

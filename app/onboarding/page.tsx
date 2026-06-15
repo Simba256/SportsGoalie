@@ -18,6 +18,9 @@ import {
   ParentWelcomeScreen,
   ParentBridgeMessage,
   ParentAssessmentComplete,
+  StudentBaselineQuestionnaire,
+  CoachBaselineQuestionnaire,
+  ParentBaselineQuestionnaire,
 } from '@/components/onboarding';
 
 /**
@@ -32,6 +35,9 @@ function OnboardingPageContent() {
 
   // Determine if this is a parent onboarding flow
   const isParent = user?.role === 'parent' || searchParams.get('role') === 'parent';
+
+  // Determine if this is a coach onboarding flow
+  const isCoach = user?.role === 'coach' || searchParams.get('role') === 'coach';
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -54,19 +60,26 @@ function OnboardingPageContent() {
     }
   }, [authLoading, user, isParent, router]);
 
-  // Goalie onboarding hook
+  // Redirect if already completed onboarding (coach)
+  useEffect(() => {
+    if (!authLoading && user && isCoach && user.coachOnboardingComplete) {
+      router.push('/coach');
+    }
+  }, [authLoading, user, isCoach, router]);
+
+  // Goalie onboarding hook — disabled; V2 StudentBaselineQuestionnaire handles the goalie flow
   const goalieOnboarding = useOnboarding({
     userId: user?.id || null,
     studentName: user?.displayName || 'Student',
-    enabled: !authLoading && !!user && !isParent && !user?.onboardingCompleted,
+    enabled: false,
     onRefreshUser: refreshUser,
   });
 
-  // Parent onboarding hook
+  // Parent onboarding hook — disabled; V1 ParentBaselineQuestionnaire handles the parent flow
   const parentOnboarding = useParentOnboarding({
     userId: user?.id || null,
     parentName: user?.displayName || 'Parent',
-    enabled: !authLoading && !!user && isParent && !user?.parentOnboardingComplete,
+    enabled: false,
     onRefreshUser: refreshUser,
   });
 
@@ -116,7 +129,58 @@ function OnboardingPageContent() {
 
   const canGoBackInAssessment = currentCategoryIndex > 0 || currentQuestionIndex > 0;
 
-  // Error state
+  // Wait for auth only — the three new questionnaires are self-contained
+  // and must not be blocked by the legacy hook loading state
+  if (authLoading || !user) {
+    return (
+      <OnboardingContainer>
+        <div style={{ flex: 1, padding: '24px' }}>
+          <SkeletonContentPage />
+        </div>
+      </OnboardingContainer>
+    );
+  }
+
+  // Coach V1 flow — Coach Baseline Profile
+  if (isCoach && !user.coachOnboardingComplete) {
+    return (
+      <OnboardingContainer>
+        <CoachBaselineQuestionnaire
+          userId={user.id}
+          userName={user.displayName?.split(' ')[0] || 'Coach'}
+          onComplete={refreshUser}
+        />
+      </OnboardingContainer>
+    );
+  }
+
+  // Parent V1 flow — Parent Baseline Profile
+  if (isParent && !user.parentOnboardingComplete) {
+    return (
+      <OnboardingContainer>
+        <ParentBaselineQuestionnaire
+          userId={user.id}
+          userName={user.displayName?.split(' ')[0] || 'Parent'}
+          onComplete={refreshUser}
+        />
+      </OnboardingContainer>
+    );
+  }
+
+  // Goalie V2 flow — Student Baseline Profile
+  if (!isParent && !isCoach && !user.onboardingCompleted) {
+    return (
+      <OnboardingContainer>
+        <StudentBaselineQuestionnaire
+          userId={user.id}
+          userName={user.displayName?.split(' ')[0] || 'Student'}
+          onComplete={refreshUser}
+        />
+      </OnboardingContainer>
+    );
+  }
+
+  // Legacy error state (only reached by the old hook-based fallback below)
   if (error) {
     return (
       <OnboardingContainer>
@@ -141,8 +205,8 @@ function OnboardingPageContent() {
     );
   }
 
-  // Loading state
-  if (authLoading || (hookEnabled && (loading || phase === 'loading'))) {
+  // Legacy hook loading state
+  if (hookEnabled && (loading || phase === 'loading')) {
     return (
       <OnboardingContainer>
         <div style={{ flex: 1, padding: '24px' }}>

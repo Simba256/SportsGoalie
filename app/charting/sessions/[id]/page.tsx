@@ -8,7 +8,6 @@ import { chartingService, formTemplateService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
 import { Session, ChartingEntry, FormTemplate, DynamicChartingEntry } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft,
@@ -22,6 +21,7 @@ import {
   Brain,
   Timer,
   MessageSquare,
+  Lock,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { DynamicSessionAnalytics } from '@/components/charting/DynamicSessionAnalytics';
@@ -142,7 +142,7 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
         <SkeletonContentPage />
       </div>
     );
@@ -150,10 +150,10 @@ export default function SessionDetailPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen p-6 flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Session not found</p>
-          <Button onClick={() => router.push('/charting')}>Back to Sessions</Button>
+          <p className="text-white/60 mb-4">Session not found</p>
+          <Button onClick={() => router.push('/charting')} style={{ background: '#00FFFF' }} className="text-white border-0">Back to Sessions</Button>
         </div>
       </div>
     );
@@ -195,31 +195,39 @@ export default function SessionDetailPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.push('/charting')}>
+            {/* Back button */}
+            <button
+              type="button"
+              onClick={() => router.push('/charting')}
+              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(0,255,255,0.2)', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'; }}
+            >
               <ArrowLeft className="w-4 h-4" />
-            </Button>
+            </button>
+
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 className="text-3xl font-bold text-white">
                   {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
                   {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
                 </h1>
                 <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
                 {session.result && (
-                  <Badge variant="outline" className="capitalize">
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '99px', padding: '3px 10px', textTransform: 'capitalize' }}>
                     {session.result}
-                  </Badge>
+                  </span>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-gray-600">
+              <div className="flex items-center gap-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>
+                  <span className="text-sm">
                     {sessionDateObj
                       ? `${sessionDateObj.toLocaleDateString()} at ${sessionDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                       : 'Date unavailable'}
@@ -228,187 +236,224 @@ export default function SessionDetailPage() {
                 {session.location && (
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    <span>{session.location}</span>
+                    <span className="text-sm">{session.location}</span>
                   </div>
                 )}
               </div>
               {session.tags && session.tags.length > 0 && (
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {session.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="capitalize">
+                    <span key={tag} style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(0,255,255,0.7)', background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.2)', borderRadius: '99px', padding: '2px 10px', textTransform: 'capitalize' }}>
                       {tag}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               )}
             </div>
           </div>
+
+          {/* Action buttons */}
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" title="Edit Session">
+            <button
+              type="button"
+              title="Edit Session"
+              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(0,255,255,0.2)', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)'; }}
+            >
               <Edit className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleDeleteSession} title="Delete Session">
-              <Trash2 className="w-4 h-4 text-red-500" />
-            </Button>
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteSession}
+              title="Delete Session"
+              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fca5a5'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; }}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
         {/* V2 Practice Chart Section */}
         {session.type === 'practice' && (
-          <Card className="p-4 sm:p-6 border-2 border-blue-100">
+          <div className="p-4 sm:p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.18)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Brain className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,255,255,0.1)' }}>
+                <Brain className="w-4 h-4" style={{ color: '#00FFFF' }} />
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Practice Chart</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-white">Practice Chart</h2>
             </div>
-            <p className="text-xs sm:text-sm text-gray-500 mb-4 ml-10">
+            <p className="text-xs sm:text-sm text-white/40 mb-4 ml-10">
               Index-driven practice reflection — every minute intentional
             </p>
 
             <div
               onClick={() => router.push(`/charting/sessions/${sessionId}/v2/practice`)}
-              className={`relative p-4 sm:p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+              className="relative p-4 sm:p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md"
+              style={
                 !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-400'
-              }`}
+                  ? { borderColor: '#00FFFF', background: 'rgba(0,255,255,0.1)' }
+                  : { borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }
+              }
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={
                     !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice
-                      ? 'bg-blue-500'
-                      : 'bg-gray-100'
-                  }`}
+                      ? { background: '#00FFFF' }
+                      : { background: 'rgba(255,255,255,0.08)' }
+                  }
                 >
                   <ClipboardCheck
-                    className={`w-5 h-5 ${
-                      !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice
-                        ? 'text-white'
-                        : 'text-gray-500'
-                    }`}
+                    className="w-5 h-5 text-white"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-gray-900">Open Practice Chart</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="font-bold text-sm text-white">Open Practice Chart</p>
+                  <p className="text-xs text-white/40 mt-0.5">
                     Practice Index · Value rating · Technical eye · Mind Vault
                   </p>
                 </div>
                 {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice && (
-                  <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#00FFFF' }} />
                 )}
               </div>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* V2 Game Chart Sections */}
         {session.type === 'game' && (
-          <Card className="p-6 border-2 border-blue-100">
+          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.18)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Brain className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,255,255,0.1)' }}>
+                <Brain className="w-4 h-4" style={{ color: '#00FFFF' }} />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Game Chart</h2>
+              <h2 className="text-xl font-bold text-white">Game Chart</h2>
             </div>
-            <p className="text-sm text-gray-500 mb-4 ml-10">
+            <p className="text-sm text-white/40 mb-4 ml-10">
               Post-game self-assessment — chart from memory
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Pre-Game */}
-              <div
-                onClick={() => router.push(`/charting/sessions/${sessionId}/v2/pre-game`)}
-                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
-                  !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-400'
-                }`}
-              >
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame ? 'bg-blue-500' : 'bg-gray-100'
-                  }`}>
-                    <Timer className={`w-5 h-5 ${!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame ? 'text-white' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-gray-900">Pre-Game</p>
-                    <p className="text-xs text-gray-500">Mind management</p>
-                  </div>
-                  {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PreGame && (
-                    <CheckCircle className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
-                  )}
-                </div>
-              </div>
+            {(() => {
+              const entry = myEntry as unknown as Record<string, unknown> | undefined;
+              const preGameDone  = !!entry?.v2PreGame;
+              const periodsDone  = !!entry?.v2Periods;
+              const postGameDone = !!entry?.v2PostGame;
 
-              {/* Periods */}
-              <div
-                onClick={() => router.push(`/charting/sessions/${sessionId}/v2/periods`)}
-                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
-                  !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-400'
-                }`}
-              >
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods ? 'bg-blue-500' : 'bg-gray-100'
-                  }`}>
-                    <BarChart3 className={`w-5 h-5 ${!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods ? 'text-white' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-gray-900">Periods</p>
-                    <p className="text-xs text-gray-500">P1 · P2 · P3 · OT</p>
-                  </div>
-                  {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Periods && (
-                    <CheckCircle className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
-                  )}
-                </div>
-              </div>
+              type StepConfig = {
+                key: string;
+                label: string;
+                sub: string;
+                icon: React.ReactNode;
+                done: boolean;
+                unlocked: boolean;
+                href: string;
+                lockedHint: string;
+              };
 
-              {/* Post-Game */}
-              <div
-                onClick={() => router.push(`/charting/sessions/${sessionId}/v2/post-game`)}
-                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
-                  !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-400'
-                }`}
-              >
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame ? 'bg-blue-500' : 'bg-gray-100'
-                  }`}>
-                    <MessageSquare className={`w-5 h-5 ${!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame ? 'text-white' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-gray-900">Post-Game</p>
-                    <p className="text-xs text-gray-500">Review & Mind Vault</p>
-                  </div>
-                  {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2PostGame && (
-                    <CheckCircle className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
-                  )}
+              const steps: StepConfig[] = [
+                {
+                  key: 'pre-game',
+                  label: 'Pre-Game',
+                  sub: 'Mind management',
+                  icon: <Timer className="w-5 h-5 text-white" />,
+                  done: preGameDone,
+                  unlocked: true,
+                  href: `/charting/sessions/${sessionId}/v2/pre-game`,
+                  lockedHint: '',
+                },
+                {
+                  key: 'periods',
+                  label: 'Periods',
+                  sub: 'P1 · P2 · P3 · OT',
+                  icon: <BarChart3 className="w-5 h-5 text-white" />,
+                  done: periodsDone,
+                  unlocked: preGameDone,
+                  href: `/charting/sessions/${sessionId}/v2/periods`,
+                  lockedHint: 'Complete Pre-Game first',
+                },
+                {
+                  key: 'post-game',
+                  label: 'Post-Game',
+                  sub: 'Review & Mind Vault',
+                  icon: <MessageSquare className="w-5 h-5 text-white" />,
+                  done: postGameDone,
+                  unlocked: preGameDone && periodsDone,
+                  href: `/charting/sessions/${sessionId}/v2/post-game`,
+                  lockedHint: 'Complete Periods first',
+                },
+              ];
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {steps.map((step, idx) => (
+                    <div
+                      key={step.key}
+                      onClick={() => step.unlocked && router.push(step.href)}
+                      className="relative p-4 border-2 rounded-xl transition-all"
+                      style={
+                        step.done
+                          ? { borderColor: '#00FFFF', background: 'rgba(0,255,255,0.1)', cursor: 'pointer' }
+                          : step.unlocked
+                          ? { borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', cursor: 'pointer' }
+                          : { borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)', cursor: 'not-allowed', opacity: 0.45 }
+                      }
+                    >
+                      {/* Step number badge */}
+                      <div className="absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                        style={step.done ? { background: '#00FFFF', color: '#001a1a' } : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>
+                        {idx + 1}
+                      </div>
+
+                      {/* Done checkmark */}
+                      {step.done && (
+                        <CheckCircle className="absolute top-2 right-2 w-4 h-4" style={{ color: '#00FFFF' }} />
+                      )}
+
+                      {/* Lock icon for unavailable steps */}
+                      {!step.unlocked && (
+                        <Lock className="absolute top-2 right-2 w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                      )}
+
+                      <div className="flex flex-col items-center text-center gap-2 mt-2">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          style={step.done ? { background: '#00FFFF' } : step.unlocked ? { background: 'rgba(255,255,255,0.08)' } : { background: 'rgba(255,255,255,0.04)' }}>
+                          {step.unlocked ? step.icon : <Lock className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.25)' }} />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm" style={{ color: step.unlocked ? '#fff' : 'rgba(255,255,255,0.35)' }}>{step.label}</p>
+                          <p className="text-xs mt-0.5" style={{ color: step.unlocked ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)' }}>
+                            {step.unlocked ? step.sub : step.lockedHint}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-          </Card>
+              );
+            })()}
+
+          </div>
         )}
 
         {/* Coach/Admin Entries */}
         {adminEntries.length > 0 && (
-          <Card className="p-6">
-            <h3 className="text-lg font-bold mb-4">Coach/Admin Observations</h3>
+          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+            <h3 className="text-lg font-bold text-white mb-4">Coach/Admin Observations</h3>
             <div className="space-y-3">
               {adminEntries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-4 rounded-lg"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
                   <div>
-                    <p className="font-medium">Admin Observation</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium text-white">Admin Observation</p>
+                    <p className="text-sm text-white/40">
                       {entry.submittedAt && typeof entry.submittedAt.toDate === 'function'
                         ? formatDistanceToNow(entry.submittedAt.toDate(), { addSuffix: true })
                         : 'Recently'}
@@ -418,32 +463,33 @@ export default function SessionDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push(`/charting/sessions/${sessionId}/chart/${entry.id}`)}
+                    className="border-[rgba(0,255,255,0.2)] text-white/60 hover:text-white hover:bg-[rgba(0,255,255,0.1)]"
                   >
                     View
                   </Button>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Session Analytics - Dynamic Forms */}
         {activeTemplate && dynamicEntry && (
-          <Card className="p-6">
+          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-bold">Session Analytics</h3>
+              <BarChart3 className="w-5 h-5 text-white/50" />
+              <h3 className="text-lg font-bold text-white">Session Analytics</h3>
             </div>
             <DynamicSessionAnalytics template={activeTemplate} entry={dynamicEntry} />
-          </Card>
+          </div>
         )}
 
         {/* Session Analytics - Only show for legacy charting system */}
         {!activeTemplate && (
-          <Card className="p-6">
+          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-bold">Session Analytics</h3>
+              <BarChart3 className="w-5 h-5 text-white/50" />
+              <h3 className="text-lg font-bold text-white">Session Analytics</h3>
             </div>
 
             {myEntry ? (
@@ -451,46 +497,46 @@ export default function SessionDetailPage() {
                 {/* Game Overview Stats */}
                 {myEntry.gameOverview && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Game Overview</h4>
+                  <h4 className="font-semibold text-white mb-3">Game Overview</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Good Goals</p>
-                      <p className="text-3xl font-bold text-green-700">
+                    <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                      <p className="text-sm text-white/50 mb-1">Good Goals</p>
+                      <p className="text-3xl font-bold text-green-400">
                         {(myEntry.gameOverview.goodGoals.period1 || 0) +
                           (myEntry.gameOverview.goodGoals.period2 || 0) +
                           (myEntry.gameOverview.goodGoals.period3 || 0)}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-white/35 mt-1">
                         P1: {myEntry.gameOverview.goodGoals.period1 || 0} |
                         P2: {myEntry.gameOverview.goodGoals.period2 || 0} |
                         P3: {myEntry.gameOverview.goodGoals.period3 || 0}
                       </p>
                     </div>
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Bad Goals</p>
-                      <p className="text-3xl font-bold text-red-700">
+                    <div className="rounded-lg p-4" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                      <p className="text-sm text-white/50 mb-1">Bad Goals</p>
+                      <p className="text-3xl font-bold text-red-400">
                         {(myEntry.gameOverview.badGoals.period1 || 0) +
                           (myEntry.gameOverview.badGoals.period2 || 0) +
                           (myEntry.gameOverview.badGoals.period3 || 0)}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-white/35 mt-1">
                         P1: {myEntry.gameOverview.badGoals.period1 || 0} |
                         P2: {myEntry.gameOverview.badGoals.period2 || 0} |
                         P3: {myEntry.gameOverview.badGoals.period3 || 0}
                       </p>
                     </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Avg Challenge</p>
-                      <p className="text-3xl font-bold text-blue-700">
+                    <div className="rounded-lg p-4" style={{ background: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.18)' }}>
+                      <p className="text-sm text-white/50 mb-1">Avg Challenge</p>
+                      <p className="text-3xl font-bold" style={{ color: '#00FFFF' }}>
                         {(
                           ((myEntry.gameOverview.degreeOfChallenge.period1 || 0) +
                             (myEntry.gameOverview.degreeOfChallenge.period2 || 0) +
                             (myEntry.gameOverview.degreeOfChallenge.period3 || 0)) /
                           3
                         ).toFixed(1)}
-                        <span className="text-base">/10</span>
+                        <span className="text-base text-white/40">/10</span>
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-white/35 mt-1">
                         P1: {myEntry.gameOverview.degreeOfChallenge.period1 || 0} |
                         P2: {myEntry.gameOverview.degreeOfChallenge.period2 || 0} |
                         P3: {myEntry.gameOverview.degreeOfChallenge.period3 || 0}
@@ -503,61 +549,61 @@ export default function SessionDetailPage() {
               {/* Period Performance Summary */}
               {(myEntry.period1 || myEntry.period2 || myEntry.period3) && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Period Performance</h4>
+                  <h4 className="font-semibold text-white mb-3">Period Performance</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {myEntry.period1 && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-sm font-semibold text-gray-900 mb-2">Period 1</p>
+                      <div className="rounded-lg p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <p className="text-sm font-semibold text-white mb-2">Period 1</p>
                         <div className="space-y-1 text-xs">
                           {myEntry.period1.mindSet?.focusConsistent?.value && (
-                            <p className="text-green-600">✓ Focus: Consistent</p>
+                            <p className="text-green-400">✓ Focus: Consistent</p>
                           )}
                           {myEntry.period1.mindSet?.focusInconsistent?.value && (
-                            <p className="text-yellow-600">⚠ Focus: Inconsistent</p>
+                            <p className="text-yellow-400">⚠ Focus: Inconsistent</p>
                           )}
                           {myEntry.period1.skating?.inSync?.value && (
-                            <p className="text-green-600">✓ Skating: In Sync</p>
+                            <p className="text-green-400">✓ Skating: In Sync</p>
                           )}
                           {myEntry.period1.skating?.notInSync?.value && (
-                            <p className="text-red-600">✗ Skating: Not In Sync</p>
+                            <p className="text-red-400">✗ Skating: Not In Sync</p>
                           )}
                         </div>
                       </div>
                     )}
                     {myEntry.period2 && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-sm font-semibold text-gray-900 mb-2">Period 2</p>
+                      <div className="rounded-lg p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <p className="text-sm font-semibold text-white mb-2">Period 2</p>
                         <div className="space-y-1 text-xs">
                           {myEntry.period2.mindSet?.focusConsistent?.value && (
-                            <p className="text-green-600">✓ Focus: Consistent</p>
+                            <p className="text-green-400">✓ Focus: Consistent</p>
                           )}
                           {myEntry.period2.mindSet?.focusInconsistent?.value && (
-                            <p className="text-yellow-600">⚠ Focus: Inconsistent</p>
+                            <p className="text-yellow-400">⚠ Focus: Inconsistent</p>
                           )}
                           {myEntry.period2.skating?.inSync?.value && (
-                            <p className="text-green-600">✓ Skating: In Sync</p>
+                            <p className="text-green-400">✓ Skating: In Sync</p>
                           )}
                           {myEntry.period2.skating?.notInSync?.value && (
-                            <p className="text-red-600">✗ Skating: Not In Sync</p>
+                            <p className="text-red-400">✗ Skating: Not In Sync</p>
                           )}
                         </div>
                       </div>
                     )}
                     {myEntry.period3 && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-sm font-semibold text-gray-900 mb-2">Period 3</p>
+                      <div className="rounded-lg p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <p className="text-sm font-semibold text-white mb-2">Period 3</p>
                         <div className="space-y-1 text-xs">
                           {myEntry.period3.mindSet?.focusConsistent?.value && (
-                            <p className="text-green-600">✓ Focus: Consistent</p>
+                            <p className="text-green-400">✓ Focus: Consistent</p>
                           )}
                           {myEntry.period3.mindSet?.focusInconsistent?.value && (
-                            <p className="text-yellow-600">⚠ Focus: Inconsistent</p>
+                            <p className="text-yellow-400">⚠ Focus: Inconsistent</p>
                           )}
                           {myEntry.period3.skating?.inSync?.value && (
-                            <p className="text-green-600">✓ Skating: In Sync</p>
+                            <p className="text-green-400">✓ Skating: In Sync</p>
                           )}
                           {myEntry.period3.skating?.notInSync?.value && (
-                            <p className="text-red-600">✗ Skating: Not In Sync</p>
+                            <p className="text-red-400">✗ Skating: Not In Sync</p>
                           )}
                         </div>
                       </div>
@@ -569,44 +615,44 @@ export default function SessionDetailPage() {
               {/* Overtime & Shootout Stats */}
               {(myEntry.overtime || myEntry.shootout) && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Extended Play</h4>
+                  <h4 className="font-semibold text-white mb-3">Extended Play</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {myEntry.overtime && (
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <p className="text-sm font-semibold text-gray-900 mb-2">Overtime</p>
+                      <div className="rounded-lg p-4" style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                        <p className="text-sm font-semibold text-white mb-2">Overtime</p>
                         <div className="space-y-1 text-xs">
                           {myEntry.overtime.mindSetFocus?.good?.value && (
-                            <p className="text-green-600">✓ Focus: Good</p>
+                            <p className="text-green-400">✓ Focus: Good</p>
                           )}
                           {myEntry.overtime.mindSetFocus?.needsWork?.value && (
-                            <p className="text-yellow-600">⚠ Focus: Needs Work</p>
+                            <p className="text-yellow-400">⚠ Focus: Needs Work</p>
                           )}
                           {myEntry.overtime.skatingPerformance?.good?.value && (
-                            <p className="text-green-600">✓ Skating: Good</p>
+                            <p className="text-green-400">✓ Skating: Good</p>
                           )}
                           {myEntry.overtime.positionalGame?.good?.value && (
-                            <p className="text-green-600">✓ Positioning: Good</p>
+                            <p className="text-green-400">✓ Positioning: Good</p>
                           )}
                         </div>
                       </div>
                     )}
                     {myEntry.shootout && (
-                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                        <p className="text-sm font-semibold text-gray-900 mb-2">Shootout</p>
+                      <div className="rounded-lg p-4" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                        <p className="text-sm font-semibold text-white mb-2">Shootout</p>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600">Result:</span>
-                            <span className={`text-sm font-bold ${myEntry.shootout.result === 'won' ? 'text-green-600' : 'text-red-600'}`}>
+                            <span className="text-xs text-white/50">Result:</span>
+                            <span className={`text-sm font-bold ${myEntry.shootout.result === 'won' ? 'text-green-400' : 'text-red-400'}`}>
                               {myEntry.shootout.result?.toUpperCase()}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600">Saves:</span>
-                            <span className="text-sm font-semibold">{myEntry.shootout.shotsSaved || 0}/10</span>
+                            <span className="text-xs text-white/50">Saves:</span>
+                            <span className="text-sm font-semibold text-white">{myEntry.shootout.shotsSaved || 0}/10</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600">Save %:</span>
-                            <span className="text-sm font-semibold">
+                            <span className="text-xs text-white/50">Save %:</span>
+                            <span className="text-sm font-semibold text-white">
                               {myEntry.shootout.shotsSaved && (myEntry.shootout.shotsSaved + myEntry.shootout.shotsScored) > 0
                                 ? ((myEntry.shootout.shotsSaved / (myEntry.shootout.shotsSaved + myEntry.shootout.shotsScored)) * 100).toFixed(0)
                                 : 0}%
@@ -622,21 +668,21 @@ export default function SessionDetailPage() {
               {/* Additional Comments */}
               {myEntry.additionalComments && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Additional Notes</h4>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{myEntry.additionalComments}</p>
+                  <h4 className="font-semibold text-white mb-3">Additional Notes</h4>
+                  <div className="rounded-lg p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p className="text-sm text-white/70 whitespace-pre-wrap">{myEntry.additionalComments}</p>
                   </div>
                 </div>
               )}
             </div>
             ) : (
               <div className="text-center py-8">
-                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No charting data available yet</p>
-                <p className="text-sm text-gray-500 mt-2">Fill out the charting sections above to see analytics here</p>
+                <BarChart3 className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/50">No charting data available yet</p>
+                <p className="text-sm text-white/30 mt-2">Fill out the charting sections above to see analytics here</p>
               </div>
             )}
-          </Card>
+          </div>
         )}
       </div>
     </div>

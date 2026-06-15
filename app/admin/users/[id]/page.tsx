@@ -44,6 +44,9 @@ import { EngagementMetrics } from '@/components/admin/analytics/EngagementMetric
 import { CourseProgress } from '@/components/admin/analytics/CourseProgress';
 import { QuizAttemptHistory } from '@/components/admin/analytics/QuizAttemptHistory';
 import { GoalieChartingHistory } from '@/components/charting/GoalieChartingHistory';
+import { db } from '@/lib/firebase/config';
+import { collection, getDocs, query as fsQuery, orderBy } from 'firebase/firestore';
+import { LIndexItem } from '@/types/charting';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -87,6 +90,10 @@ function UserDetailsContent() {
   const [showMessageComposer, setShowMessageComposer] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
+  const [chartLevelSaving, setChartLevelSaving] = useState(false);
+  const [growthLevelSaving, setGrowthLevelSaving] = useState(false);
+  const [lIndexItems, setLIndexItems] = useState<LIndexItem[]>([]);
+  const [lIndexSaving, setLIndexSaving] = useState(false);
   const [analytics, setAnalytics] = useState<StudentAnalytics | null>(null);
   const [quizPerformance, setQuizPerformance] = useState<QuizPerformanceData[]>([]);
   const [progressOverTime, setProgressOverTime] = useState<ProgressOverTimeData[]>([]);
@@ -156,6 +163,39 @@ function UserDetailsContent() {
 
   useEffect(() => { if (userId) fetchUserData(); }, [userId]);
 
+  useEffect(() => {
+    if (lIndexItems.length > 0) return;
+    (async () => {
+      try {
+        const snap = await getDocs(fsQuery(collection(db, 'l_index_items'), orderBy('lIndex')));
+        setLIndexItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as LIndexItem)));
+      } catch { /* silently fail */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLivingIndexToggle = async (itemId: string) => {
+    if (lIndexSaving || !user) return;
+    setLIndexSaving(true);
+    const current: string[] = user.livingIndex ?? [];
+    const next = current.includes(itemId)
+      ? current.filter(id => id !== itemId)
+      : [...current, itemId];
+    try {
+      const result = await userService.updateUser(userId, { livingIndex: next } as Partial<UserType>);
+      if (result.success) {
+        setUser(prev => prev ? { ...prev, livingIndex: next } : null);
+        setEditedUser(prev => prev ? { ...prev, livingIndex: next } : null);
+      } else {
+        toast.error('Failed to update Living Index');
+      }
+    } catch {
+      toast.error('Failed to update Living Index');
+    } finally {
+      setLIndexSaving(false);
+    }
+  };
+
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
     const nextParams = new URLSearchParams(searchParams?.toString() || '');
@@ -194,6 +234,44 @@ function UserDetailsContent() {
   const handleCancelEdit = () => {
     setEditedUser(user);
     setIsEditing(false);
+  };
+
+  const handleChartLevelChange = async (level: 'basic' | 'five_pillar') => {
+    if (chartLevelSaving || user?.chartLevel === level) return;
+    setChartLevelSaving(true);
+    try {
+      const result = await userService.updateUser(userId, { chartLevel: level } as Partial<UserType>);
+      if (result.success) {
+        setUser(prev => prev ? { ...prev, chartLevel: level } : null);
+        setEditedUser(prev => prev ? { ...prev, chartLevel: level } : null);
+        toast.success(`Chart level set to ${level === 'basic' ? 'Basic' : '5-Pillar'}`);
+      } else {
+        toast.error('Failed to update chart level');
+      }
+    } catch {
+      toast.error('Failed to update chart level');
+    } finally {
+      setChartLevelSaving(false);
+    }
+  };
+
+  const handleGrowthLevelChange = async (level: 'introduction' | 'development' | 'refinement') => {
+    if (growthLevelSaving || user?.chartGrowthLevel === level || (!user?.chartGrowthLevel && level === 'introduction')) return;
+    setGrowthLevelSaving(true);
+    try {
+      const result = await userService.updateUser(userId, { chartGrowthLevel: level } as Partial<UserType>);
+      if (result.success) {
+        setUser(prev => prev ? { ...prev, chartGrowthLevel: level } : null);
+        setEditedUser(prev => prev ? { ...prev, chartGrowthLevel: level } : null);
+        toast.success(`Growth path set to ${level.charAt(0).toUpperCase() + level.slice(1)}`);
+      } else {
+        toast.error('Failed to update growth path');
+      }
+    } catch {
+      toast.error('Failed to update growth path');
+    } finally {
+      setGrowthLevelSaving(false);
+    }
   };
 
   if (loading) {
@@ -338,7 +416,7 @@ function UserDetailsContent() {
             {activeTab === 'profile' && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
                 {/* Basic Information */}
-                <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+                <div style={{ ...card, padding: '20px' }}>
                   <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Basic Information</h3>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>User's profile and contact details</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -377,7 +455,7 @@ function UserDetailsContent() {
                 </div>
 
                 {/* Account Settings */}
-                <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+                <div style={{ ...card, padding: '20px' }}>
                   <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Account Settings</h3>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Role, status, and configuration</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -446,7 +524,7 @@ function UserDetailsContent() {
             {activeTab === 'progress' && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
                 {/* Overall Statistics */}
-                <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+                <div style={{ ...card, padding: '20px' }}>
                   <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Overall Statistics</h3>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Learning progress and achievements</p>
                   {userProgress ? (
@@ -483,7 +561,7 @@ function UserDetailsContent() {
                 </div>
 
                 {/* Video Quiz Performance */}
-                <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+                <div style={{ ...card, padding: '20px' }}>
                   <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Video Quiz Performance</h3>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Performance metrics from video quizzes</p>
                   {analytics ? (
@@ -517,16 +595,98 @@ function UserDetailsContent() {
 
             {/* Charting Tab */}
             {activeTab === 'charting' && (
-              <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
-                <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Charting History</h3>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Every game and practice the goalie has charted. Expand a session to see full details.</p>
-                <GoalieChartingHistory studentId={userId} onOpenSession={(sessionId) => router.push(`/charting/sessions/${sessionId}`)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ ...card, padding: '20px' }}>
+                  <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Charting History</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Every game and practice the goalie has charted. Expand a session to see full details.</p>
+                  <GoalieChartingHistory studentId={userId} onOpenSession={(sessionId) => router.push(`/charting/sessions/${sessionId}`)} />
+                </div>
+
+                {/* Living Index — T2-B */}
+                <div style={{ ...card, padding: '20px' }}>
+                  <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Living Index</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>
+                    Toggle which L-index training items are <strong style={{ color: BLUE }}>active</strong> for this goalie&apos;s daily training chart. Only active items appear in their log.
+                  </p>
+                  {lIndexItems.length === 0 ? (
+                    <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px' }}>No L-index items found. Add items in L-Index Admin first.</p>
+                  ) : (
+                    (() => {
+                      const activeIds = user.livingIndex ?? [];
+                      const grouped: Record<string, LIndexItem[]> = {};
+                      lIndexItems.forEach(item => {
+                        if (!grouped[item.lIndex]) grouped[item.lIndex] = [];
+                        grouped[item.lIndex].push(item);
+                      });
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          {Object.entries(grouped).sort(([a], [b]) => {
+                            const n = (s: string) => parseInt(s.replace('L', ''), 10);
+                            return n(a) - n(b);
+                          }).map(([lIdx, items]) => (
+                            <div key={lIdx}>
+                              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                                {lIdx} — {items[0]?.name ?? lIdx}
+                              </p>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {items.map(item => {
+                                  const on = activeIds.includes(item.id);
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => handleLivingIndexToggle(item.id)}
+                                      disabled={lIndexSaving}
+                                      style={{
+                                        display: 'flex', alignItems: 'center', gap: '12px',
+                                        padding: '10px 14px', borderRadius: '10px',
+                                        border: on ? `1px solid rgba(55,181,255,0.35)` : '1px solid rgba(255,255,255,0.07)',
+                                        background: on ? 'rgba(55,181,255,0.08)' : 'rgba(255,255,255,0.02)',
+                                        cursor: lIndexSaving ? 'wait' : 'pointer', textAlign: 'left',
+                                        transition: 'all 0.18s',
+                                      }}
+                                    >
+                                      <div style={{
+                                        width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0,
+                                        border: on ? `2px solid ${BLUE}` : '2px solid rgba(255,255,255,0.15)',
+                                        background: on ? 'rgba(55,181,255,0.18)' : 'transparent',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      }}>
+                                        {on && <span style={{ color: BLUE, fontSize: '11px', fontWeight: 900 }}>✓</span>}
+                                      </div>
+                                      <div style={{ flex: 1 }}>
+                                        <p style={{ color: on ? '#fff' : 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600 }}>{item.name}</p>
+                                        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '11px' }}>
+                                          {item.topLevelCategory === 'lifestyle_foundations' ? 'Lifestyle Foundations' : 'Land/Conditioning'} · {item.levelTag}
+                                        </p>
+                                      </div>
+                                      <span style={{
+                                        fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px',
+                                        background: on ? 'rgba(55,181,255,0.15)' : 'rgba(255,255,255,0.05)',
+                                        color: on ? BLUE : 'rgba(255,255,255,0.2)',
+                                      }}>
+                                        {on ? 'ON' : 'OFF'}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                          <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', marginTop: '4px' }}>
+                            {activeIds.length} of {lIndexItems.length} items active
+                          </p>
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
               </div>
             )}
 
             {/* Messages Tab */}
             {activeTab === 'messages' && (
-              <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+              <div style={{ ...card, padding: '20px' }}>
                 <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Messages</h3>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Messages sent to this student</p>
                 {loadingMessages ? (
@@ -572,7 +732,7 @@ function UserDetailsContent() {
 
             {/* Notifications Tab */}
             {activeTab === 'notifications' && (
-              <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+              <div style={{ ...card, padding: '20px' }}>
                 <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>Recent Notifications</h3>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>User's recent notifications and alerts</p>
                 {notifications.length > 0 ? (
@@ -600,10 +760,93 @@ function UserDetailsContent() {
 
             {/* Settings Tab */}
             {activeTab === 'settings' && (
-              <div style={{ background: 'rgba(55,181,255,0.03)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '20px' }}>
+              <div style={{ ...card, padding: '20px' }}>
                 <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '17px', marginBottom: '4px' }}>User Preferences</h3>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>Application preferences and settings</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                  {/* Chart Level — admin-controlled */}
+                  <div style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px', marginBottom: '3px' }}>Chart Level</p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                        Controls which fields appear during game charting. <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Basic</strong> = entry experience (2-3 min, simplified fields).{' '}
+                        <strong style={{ color: 'rgba(255,255,255,0.65)' }}>5-Pillar</strong> = full advanced chart (5-6 min, all sections).
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {(['basic', 'five_pillar'] as const).map(level => {
+                        const isActive = user.chartLevel === level || (!user.chartLevel && level === 'five_pillar');
+                        return (
+                          <button
+                            key={level}
+                            onClick={() => handleChartLevelChange(level)}
+                            disabled={chartLevelSaving}
+                            style={{
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              border: isActive ? `2px solid ${BLUE}` : '1px solid rgba(255,255,255,0.12)',
+                              background: isActive ? `rgba(55,181,255,0.15)` : 'rgba(255,255,255,0.04)',
+                              color: isActive ? BLUE : 'rgba(255,255,255,0.45)',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              cursor: chartLevelSaving ? 'wait' : 'pointer',
+                              transition: 'all 0.18s',
+                              letterSpacing: '0.02em',
+                            }}
+                          >
+                            {level === 'basic' ? 'Basic  (2-3 min)' : '5-Pillar  (5-6 min)'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {chartLevelSaving && (
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', marginTop: '8px' }}>Saving…</p>
+                    )}
+                  </div>
+
+                  {/* Chart Growth Path — admin-controlled */}
+                  <div style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px', marginBottom: '3px' }}>Chart Growth Path</p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                        Controls the depth and complexity of charting fields as the goalie progresses.{' '}
+                        <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Introduction</strong> → <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Development</strong> → <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Refinement</strong>. Admin-assigned only.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {(['introduction', 'development', 'refinement'] as const).map(level => {
+                        const current = user.chartGrowthLevel || 'introduction';
+                        const isActive = current === level;
+                        const levelColor = level === 'introduction' ? BLUE : level === 'development' ? '#a78bfa' : '#4ade80';
+                        return (
+                          <button
+                            key={level}
+                            onClick={() => handleGrowthLevelChange(level)}
+                            disabled={growthLevelSaving}
+                            style={{
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              border: isActive ? `2px solid ${levelColor}` : '1px solid rgba(255,255,255,0.12)',
+                              background: isActive ? `${levelColor}1a` : 'rgba(255,255,255,0.04)',
+                              color: isActive ? levelColor : 'rgba(255,255,255,0.45)',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              cursor: growthLevelSaving ? 'wait' : 'pointer',
+                              transition: 'all 0.18s',
+                              letterSpacing: '0.02em',
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {level}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {growthLevelSaving && (
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', marginTop: '8px' }}>Saving…</p>
+                    )}
+                  </div>
+
                   {/* Email Notifications toggle */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <div>

@@ -1013,6 +1013,34 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // L-Index catalogue — admin-managed training items
+    match /l_index_items/{itemId} {
+      // Anyone authenticated can read (students need to load items for training logs)
+      allow read: if isAuthenticated();
+
+      // Only admins can create, update, delete
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['lIndex', 'topLevelCategory', 'name', 'definition', 'levelTag', 'isActive', 'createdBy']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.definition is string &&
+                       request.resource.data.definition.size() > 0;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Training Logs collection — daily training log entries per student
+    match /training_logs/{logId} {
+      allow read: if isOwnerOrAdmin(resource.data.studentId);
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       (isOwner(request.resource.data.studentId) || isAdmin()) &&
+                       hasRequiredFields(['studentId', 'date', 'items']);
+      allow update: if isOwnerOrAdmin(resource.data.studentId);
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections

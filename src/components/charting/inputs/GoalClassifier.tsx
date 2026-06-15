@@ -32,7 +32,7 @@ export function GoalClassifier({ goalCount, goals, onChange }: GoalClassifierPro
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+      <p className="text-xs font-semibold text-white/50 uppercase tracking-wider">
         Goal Classification
       </p>
 
@@ -41,8 +41,8 @@ export function GoalClassifier({ goalCount, goals, onChange }: GoalClassifierPro
           key={i}
           className={`rounded-xl border p-4 space-y-3 transition-colors ${
             goal.isGoodGoal
-              ? 'bg-white border-zinc-200'
-              : 'bg-red-50/50 border-red-200'
+              ? 'bg-white/[0.04] border-white/10'
+              : 'bg-red-900/10 border-red-500/25'
           }`}
         >
           {/* Goal header */}
@@ -52,13 +52,13 @@ export function GoalClassifier({ goalCount, goals, onChange }: GoalClassifierPro
             ) : (
               <ShieldAlert className="w-4 h-4 text-red-500" />
             )}
-            <span className="text-sm font-bold text-zinc-800">
+            <span className="text-sm font-bold text-white">
               Goal #{goal.goalNumber}
             </span>
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
               goal.isGoodGoal
-                ? 'bg-blue-50 text-blue-600'
-                : 'bg-red-100 text-red-600'
+                ? 'bg-[rgba(55,181,255,0.12)] text-[#37b5ff]'
+                : 'bg-red-900/20 text-red-400'
             }`}>
               {goal.isGoodGoal ? 'Good Goal' : 'Bad Goal'}
             </span>

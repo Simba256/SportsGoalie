@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams } from 'next/navigation';
@@ -10,25 +10,16 @@ import {
   V2PracticeChartEntry,
   PracticeIndexItem,
   PracticeIndexCategory,
+  ChartingEntry,
 } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowLeft,
-  Save,
-  Loader2,
-  Plus,
-  X,
-  Flame,
-  Sparkles,
-  ShieldCheck,
-  Video,
-  Eye,
-  Brain,
-  Target,
-  CheckCircle2,
-  Clock,
-  Info,
+  ArrowLeft, Save, Loader2, Plus, X,
+  Flame, Sparkles, ShieldCheck,
+  Video, Eye, Brain, Target, CheckCircle2, Clock, Info, ArrowRight,
 } from 'lucide-react';
+import { getPillarUrl } from '@/lib/utils/pillars';
+import type { PillarSlug } from '@/types';
 import {
   ContextualHelp,
   RotatingNumberSelector,
@@ -37,38 +28,40 @@ import {
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Options ─────────────────────────────────────────────────────────────────
 
 const PRACTICE_VALUE_OPTIONS = [
-  { value: 1, label: '1 — Wasted time, no designated training' },
-  { value: 2, label: '2 — Low value' },
+  { value: 1, label: '1 — Wasted time' },
+  { value: 2, label: '2 — Below average' },
   { value: 3, label: '3 — Some value' },
-  { value: 4, label: '4 — Productive' },
-  { value: 5, label: '5 — Highly productive, intentional work' },
+  { value: 4, label: '4 — High value' },
+  { value: 5, label: '5 — Elite session' },
+];
+
+const DURATION_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
+  value: (i + 1) * 5,
+  label: `${(i + 1) * 5} min`,
+}));
+
+const TECHNICAL_EYE_OPTIONS = [
+  { value: 1, label: '1 — Couldn\'t evaluate' },
+  { value: 2, label: '2 — Saw very little' },
+  { value: 3, label: '3 — Saw some things' },
+  { value: 4, label: '4 — Mostly clear' },
+  { value: 5, label: '5 — Saw everything' },
 ];
 
 const IMPROVEMENT_OPTIONS = [
-  { value: 1, label: '1 — No change or worse' },
-  { value: 2, label: '2 — Slight change' },
-  { value: 3, label: '3 — Some improvement' },
-  { value: 4, label: '4 — Noticeable progress' },
-  { value: 5, label: '5 — Significant, feels owned' },
+  { value: 1, label: '1 — Got worse / no change' },
+  { value: 2, label: '2 — Slight progress' },
+  { value: 3, label: '3 — Noticeable improvement' },
+  { value: 4, label: '4 — Strong improvement' },
+  { value: 5, label: '5 — Owned it' },
 ];
 
-const TECHNICAL_EYE_OPTIONS = [
-  { value: 1, label: '1 — Could not evaluate objectively' },
-  { value: 2, label: '2 — Mostly unclear' },
-  { value: 3, label: '3 — Saw some things clearly' },
-  { value: 4, label: '4 — Saw most things clearly' },
-  { value: 5, label: '5 — Saw everything, know exactly why' },
-];
+// ─── Category Config ──────────────────────────────────────────────────────────
 
-const DURATION_OPTIONS = Array.from({ length: 24 }, (_, i) => {
-  const minutes = (i + 1) * 5;
-  return { value: minutes, label: `${minutes} min` };
-});
-
-const CATEGORIES: Array<{
+interface CategoryConfig {
   key: PracticeIndexCategory;
   label: string;
   description: string;
@@ -76,32 +69,34 @@ const CATEGORIES: Array<{
   ring: string;
   chip: string;
   icon: React.ComponentType<{ className?: string }>;
-}> = [
+}
+
+const CATEGORIES: CategoryConfig[] = [
   {
     key: 'immediate_development',
-    label: 'Immediate Development',
-    description: 'Broke down in your last game — highest priority',
-    accent: 'text-red-600',
-    ring: 'border-red-200 bg-red-50/60',
-    chip: 'bg-red-100 text-red-700',
+    label: 'Immediate Dev',
+    description: 'Broke down — needs focused work',
+    accent: 'text-red-400',
+    ring: 'border-red-800/40 bg-red-900/20',
+    chip: 'bg-red-500/20 text-red-400',
     icon: Flame,
   },
   {
     key: 'refinement',
     label: 'Refinement',
-    description: 'Growing but not yet owned',
-    accent: 'text-blue-600',
-    ring: 'border-blue-200 bg-blue-50/60',
-    chip: 'bg-blue-100 text-blue-700',
+    description: 'Getting better — keep working',
+    accent: 'text-blue-400',
+    ring: 'border-blue-800/40 bg-blue-900/20',
+    chip: 'bg-blue-500/20 text-blue-400',
     icon: Sparkles,
   },
   {
     key: 'maintenance',
     label: 'Maintenance',
     description: 'Under control — keep sharp',
-    accent: 'text-slate-600',
-    ring: 'border-slate-200 bg-slate-50',
-    chip: 'bg-slate-100 text-slate-700',
+    accent: 'text-slate-400',
+    ring: 'border-slate-700/30 bg-slate-800/20',
+    chip: 'bg-slate-500/20 text-slate-400',
     icon: ShieldCheck,
   },
 ];
@@ -158,17 +153,16 @@ export default function V2PracticeChartPage() {
       setLoading(true);
       try {
         const sessionResult = await chartingService.getSession(sessionId);
-        if (sessionResult.success && sessionResult.data) {
-          setSession(sessionResult.data);
-        }
+        const loadedSession = sessionResult.success ? sessionResult.data : null;
+        if (loadedSession) setSession(loadedSession);
 
         const entriesResult = await chartingService.getChartingEntriesBySession(sessionId);
         if (entriesResult.success && entriesResult.data) {
           const myEntry = entriesResult.data.find((e) => e.submittedBy === user.id);
           if (myEntry) {
-            const existing = (myEntry as unknown as { v2Practice?: PracticeFormData })
-              .v2Practice;
-            if (existing) {
+            const existing = (myEntry as unknown as { v2Practice?: PracticeFormData }).v2Practice;
+            if (existing && (existing.practiceIndex ?? []).length > 0) {
+              // Already has a practice index — load it as-is
               setFormData({
                 ...createEmptyForm(),
                 ...existing,
@@ -176,6 +170,25 @@ export default function V2PracticeChartPage() {
                 indexItemsWorkedOn: existing.indexItemsWorkedOn ?? [],
                 improvementRatings: existing.improvementRatings ?? [],
               });
+              return;
+            }
+          }
+        }
+
+        // Practice index is empty — try to pre-populate from most recent game entry
+        if (loadedSession?.studentId) {
+          const recentResult = await chartingService.getChartingEntriesByStudent(
+            loadedSession.studentId,
+            10,
+          );
+          if (recentResult.success && recentResult.data) {
+            const gameEntry = recentResult.data.find((e) => {
+              const typed = e as unknown as ChartingEntry & { v2PracticeIndex?: PracticeIndexItem[] };
+              return typed.v2PracticeIndex && typed.v2PracticeIndex.length > 0;
+            });
+            if (gameEntry) {
+              const autoItems = (gameEntry as unknown as { v2PracticeIndex: PracticeIndexItem[] }).v2PracticeIndex;
+              setFormData((prev) => ({ ...prev, practiceIndex: autoItems }));
             }
           }
         }
@@ -316,7 +329,7 @@ export default function V2PracticeChartPage() {
   // ── Loading / error states ───────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="min-h-screen p-4 md:p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
         <SkeletonContentPage />
       </div>
     );
@@ -324,10 +337,10 @@ export default function V2PracticeChartPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
         <div className="text-center space-y-3">
-          <p className="text-zinc-600">Session not found</p>
-          <Button variant="outline" onClick={() => router.push('/charting')}>
+          <p className="text-white/60">Session not found</p>
+          <Button variant="outline" onClick={() => router.push('/charting')} className="border-[rgba(0,255,153,0.3)] text-white/70 hover:text-white hover:bg-[rgba(0,255,153,0.1)]">
             Back to Sessions
           </Button>
         </div>
@@ -339,25 +352,26 @@ export default function V2PracticeChartPage() {
   const totalWorkedOn = formData.indexItemsWorkedOn.length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-gray-200/60">
+      <div className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: 'rgba(0,9,26,0.92)', borderColor: 'rgba(0,255,153,0.14)' }}>
         <div className="flex items-center justify-between px-4 md:px-6 h-14 md:h-16 max-w-5xl mx-auto">
           <button
             type="button"
             onClick={() => router.push(`/charting/sessions/${sessionId}`)}
-            className="flex items-center gap-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <h1 className="text-base md:text-2xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-blue-700 to-slate-900 bg-clip-text text-transparent">
+          <h1 className="text-base md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#00FF99] to-white bg-clip-text text-transparent">
             Practice Chart
           </h1>
           <Button
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 md:px-4 h-9 text-xs md:text-sm font-semibold"
+            className="rounded-lg px-3 md:px-4 h-9 text-xs md:text-sm font-semibold border-0"
+            style={{ background: 'linear-gradient(135deg, #00FF99, #00FFFF)', color: '#001a0d' }}
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -374,40 +388,39 @@ export default function V2PracticeChartPage() {
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
         {/* Intro */}
         <div>
-          <h2 className="text-xl md:text-2xl font-black text-zinc-900">
+          <h2 className="text-xl md:text-2xl font-black text-white">
             New Practice Revolution
           </h2>
-          <p className="text-sm text-zinc-500 mt-1 max-w-2xl">
+          <p className="text-sm text-white/50 mt-1 max-w-2xl">
             The game identifies what needs work. You decide where to spend your minutes.
             Every practice is intentional.
           </p>
         </div>
 
         {/* ── Practice Index Dashboard ───────────────────────────────────── */}
-        <section className="bg-white rounded-2xl border border-gray-200 p-4 md:p-6 space-y-4 shadow-sm">
+        <section className="rounded-2xl p-4 md:p-6 space-y-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Target className="w-4 h-4 text-blue-600" />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,255,153,0.1)' }}>
+              <Target className="w-4 h-4" style={{ color: '#00FF99' }} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-zinc-900">Practice Index</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h3 className="text-lg font-bold text-white">Practice Index</h3>
+              <p className="text-xs text-white/40 mt-0.5">
                 Your priority list heading into practice. Select what you worked on today.
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-zinc-500 bg-slate-50 rounded-full px-3 py-1.5">
+            <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-white/40 rounded-full px-3 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <Clock className="w-3.5 h-3.5" />
               20 min → pick 2 · 60 min → pick 5
             </div>
           </div>
 
           {totalIndexItems === 0 && (
-            <div className="rounded-xl bg-blue-50/60 border border-blue-100 p-3 flex gap-2.5 text-xs text-zinc-700">
-              <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="rounded-xl p-3 flex gap-2.5 text-xs text-white/60" style={{ background: 'rgba(0,255,153,0.07)', border: '1px solid rgba(0,255,153,0.14)' }}>
+              <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#00FF99' }} />
               <p className="leading-relaxed">
-                Auto-generation from your last game is coming soon. For now, add items
-                manually in any category below. Items you select will feed into the
-                improvement ratings further down.
+                No items from your last game were found. Add items manually in any category below.
+                Items you select will feed into the improvement ratings further down.
               </p>
             </div>
           )}
@@ -427,32 +440,30 @@ export default function V2PracticeChartPage() {
                       {cat.label}
                     </p>
                     {items.length > 0 && (
-                      <span
-                        className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${cat.chip}`}
-                      >
+                      <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${cat.chip}`}>
                         {items.length}
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed -mt-1">
+                  <p className="text-[11px] text-white/35 leading-relaxed -mt-1">
                     {cat.description}
                   </p>
 
                   {/* Items */}
                   <div className="space-y-1.5 flex-1">
                     {items.length === 0 ? (
-                      <p className="text-[11px] text-zinc-400 italic">No items yet.</p>
+                      <p className="text-[11px] text-white/25 italic">No items yet.</p>
                     ) : (
                       items.map((item) => {
                         const isSelected = formData.indexItemsWorkedOn.includes(item.id);
                         return (
                           <div
                             key={item.id}
-                            className={`group flex items-start gap-2 rounded-lg border px-2.5 py-2 transition-colors ${
-                              isSelected
-                                ? 'border-blue-400 bg-white ring-1 ring-blue-200'
-                                : 'border-gray-200 bg-white hover:border-gray-300'
-                            }`}
+                            className="group flex items-start gap-2 rounded-lg border px-2.5 py-2 transition-colors"
+                            style={isSelected
+                              ? { background: 'rgba(0,255,153,0.1)', borderColor: '#00FF99', boxShadow: '0 0 0 1px rgba(0,255,153,0.25)' }
+                              : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }
+                            }
                           >
                             <button
                               type="button"
@@ -460,27 +471,38 @@ export default function V2PracticeChartPage() {
                               className={`flex-shrink-0 mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                                 isSelected
                                   ? 'bg-blue-500 border-blue-500'
-                                  : 'border-gray-300 bg-white hover:border-blue-400'
+                                  : 'border-white/20 bg-transparent hover:border-[#00FF99]'
                               }`}
-                              aria-label={
-                                isSelected ? 'Deselect item' : 'Mark as worked on'
-                              }
+                              aria-label={isSelected ? 'Deselect item' : 'Mark as worked on'}
                             >
                               {isSelected && (
                                 <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={3} />
                               )}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => toggleWorkedOn(item.id)}
-                              className="flex-1 text-left text-xs font-medium text-zinc-800 leading-snug"
-                            >
-                              {item.label}
-                            </button>
+                            <div className="flex-1 min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleWorkedOn(item.id)}
+                                className="w-full text-left text-xs font-medium text-white/80 leading-snug"
+                              >
+                                {item.label}
+                              </button>
+                              {item.pillarSlug && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); router.push(getPillarUrl(item.pillarSlug as PillarSlug)); }}
+                                  className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded transition-opacity hover:opacity-70"
+                                  style={{ background: 'rgba(179,136,255,0.12)', color: 'rgba(179,136,255,0.8)', border: '1px solid rgba(179,136,255,0.2)' }}
+                                >
+                                  {item.pillarSlug.replace(/_/g, ' ')}
+                                  <ArrowRight className="w-2.5 h-2.5" />
+                                </button>
+                              )}
+                            </div>
                             <button
                               type="button"
                               onClick={() => removeIndexItem(item.id)}
-                              className="flex-shrink-0 text-zinc-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                              className="flex-shrink-0 text-white/20 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                               aria-label="Remove item"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -492,7 +514,7 @@ export default function V2PracticeChartPage() {
                   </div>
 
                   {/* Add draft */}
-                  <div className="flex gap-1.5 pt-1 border-t border-gray-100">
+                  <div className="flex gap-1.5 pt-1 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
                     <input
                       type="text"
                       value={draftLabel[cat.key]}
@@ -506,13 +528,15 @@ export default function V2PracticeChartPage() {
                         }
                       }}
                       placeholder="Add item…"
-                      className="flex-1 min-w-0 text-xs bg-white border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                      className="flex-1 min-w-0 text-xs rounded-md px-2 py-1.5 focus:outline-none text-white/80 placeholder:text-white/25"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                     />
                     <button
                       type="button"
                       onClick={() => addIndexItem(cat.key)}
                       disabled={!draftLabel[cat.key].trim()}
-                      className="flex-shrink-0 w-7 h-7 rounded-md bg-blue-500 text-white flex items-center justify-center disabled:bg-gray-200 disabled:text-gray-400 hover:bg-blue-600 transition-colors"
+                      className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-30 hover:opacity-90 transition-opacity"
+                      style={{ background: '#00FF99', color: '#001a0d' }}
                       aria-label="Add item"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -524,13 +548,13 @@ export default function V2PracticeChartPage() {
           </div>
 
           {totalIndexItems > 0 && (
-            <div className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
-              <span className="text-zinc-600">
-                <span className="font-bold text-zinc-900">{totalWorkedOn}</span> of{' '}
-                <span className="font-bold text-zinc-900">{totalIndexItems}</span> items
+            <div className="flex items-center justify-between text-xs rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <span className="text-white/50">
+                <span className="font-bold text-white">{totalWorkedOn}</span> of{' '}
+                <span className="font-bold text-white">{totalIndexItems}</span> items
                 selected for today&apos;s session
               </span>
-              <span className="text-zinc-400">#3 · Index items worked on</span>
+              <span className="text-white/25">#3 · Index items worked on</span>
             </div>
           )}
         </section>
@@ -538,8 +562,8 @@ export default function V2PracticeChartPage() {
         {/* ── Core Fields ────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* #1 Practice Value Rating */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-2 block">
+          <div className="rounded-xl p-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#00FF99' }}>
               #1 · Practice Value
             </span>
             <ContextualHelp
@@ -555,8 +579,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {/* #2 Designated Training */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#00FF99' }}>
               #2 · Designated Training
             </span>
             <ContextualHelp
@@ -573,8 +597,8 @@ export default function V2PracticeChartPage() {
             </ContextualHelp>
 
             {formData.designatedTrainingReceived && (
-              <div className="pt-2 border-t border-gray-100 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                <p className="text-xs font-semibold text-zinc-700">
+              <div className="pt-2 border-t space-y-2 animate-in fade-in slide-in-from-top-1 duration-200" style={{ borderColor: 'rgba(0,255,153,0.1)' }}>
+                <p className="text-xs font-semibold text-white/70">
                   How long? (5-minute increments)
                 </p>
                 <RotatingNumberSelector
@@ -587,8 +611,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {/* #4 Video Captured */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#00FF99' }}>
               #4 · Video
             </span>
             <ContextualHelp
@@ -602,8 +626,8 @@ export default function V2PracticeChartPage() {
             </ContextualHelp>
 
             {formData.videoCaptured && (
-              <div className="pt-2 border-t border-gray-100 animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="flex items-center gap-2 rounded-lg bg-blue-50/60 border border-blue-100 px-3 py-2 text-xs text-blue-800">
+              <div className="pt-2 border-t animate-in fade-in slide-in-from-top-1 duration-200" style={{ borderColor: 'rgba(0,255,153,0.1)' }}>
+                <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: 'rgba(0,255,153,0.08)', border: '1px solid rgba(0,255,153,0.15)', color: '#00FF99' }}>
                   <Video className="w-3.5 h-3.5" />
                   Upload flow for mentor review coming soon.
                 </div>
@@ -612,8 +636,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {/* #7 Technical Eye */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-2 block">
+          <div className="rounded-xl p-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#00FF99' }}>
               #7 · Technical Eye
             </span>
             <ContextualHelp
@@ -631,16 +655,16 @@ export default function V2PracticeChartPage() {
 
         {/* ── #5 Improvement Ratings ────────────────────────────────────── */}
         {workedOnItems.length > 0 && (
-          <section className="bg-white rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm space-y-4">
+          <section className="rounded-2xl p-4 md:p-6 space-y-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <Eye className="w-4 h-4 text-blue-600" />
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,255,153,0.1)' }}>
+                <Eye className="w-4 h-4" style={{ color: '#00FF99' }} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-zinc-900">
+                <h3 className="text-lg font-bold text-white">
                   #5 · Did it improve?
                 </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <p className="text-xs text-white/40 mt-0.5">
                   Rate each item you worked on. Improving → Refinement. Owned →
                   Maintenance. Stuck → stays Immediate Development.
                 </p>
@@ -655,16 +679,15 @@ export default function V2PracticeChartPage() {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-gray-200 bg-slate-50/40 p-3 space-y-2"
+                    className="rounded-xl p-3 space-y-2"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${catMeta.chip}`}
-                      >
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${catMeta.chip}`}>
                         {catMeta.label}
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-zinc-900 leading-snug">
+                    <p className="text-sm font-semibold text-white leading-snug">
                       {item.label}
                     </p>
                     <RotatingNumberSelector
@@ -680,14 +703,14 @@ export default function V2PracticeChartPage() {
         )}
 
         {/* ── #6 Mind Vault ──────────────────────────────────────────────── */}
-        <section className="bg-white rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm">
+        <section className="rounded-2xl p-4 md:p-6" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Brain className="w-4 h-4 text-blue-600" />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,255,153,0.1)' }}>
+              <Brain className="w-4 h-4" style={{ color: '#00FF99' }} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-zinc-900">#6 · One thing for the Mind Vault</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h3 className="text-lg font-bold text-white">#6 · One thing for the Mind Vault</h3>
+              <p className="text-xs text-white/40 mt-0.5">
                 What did you confirm or discover today that belongs in your Mind Vault?
                 Every practice adds something.
               </p>
@@ -705,7 +728,8 @@ export default function V2PracticeChartPage() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto h-11 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-bold shadow-md shadow-blue-500/20 px-8"
+            className="w-full sm:w-auto h-11 rounded-lg text-sm font-bold px-8 border-0"
+            style={{ background: 'linear-gradient(135deg, #00FF99, #00FFFF)', color: '#001a0d', boxShadow: '0 4px 14px rgba(0,255,153,0.3)' }}
           >
             {saving ? (
               <>

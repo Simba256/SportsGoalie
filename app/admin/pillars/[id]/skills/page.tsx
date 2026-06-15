@@ -234,7 +234,7 @@ function AdminSkillsContent() {
   };
 
   const displayInfo = getPillarDisplayInfo();
-  const IconComponent = displayInfo ? (PILLAR_ICONS[displayInfo.icon] || Target) : Target;
+  const IconComponent = (displayInfo ? (PILLAR_ICONS[displayInfo.icon] || Target) : Target) as React.ComponentType<{ size?: number; color?: string }>;
   const pillarGradient = displayInfo ? (PILLAR_GRADIENTS[displayInfo.color] || PILLAR_GRADIENTS.blue) : PILLAR_GRADIENTS.blue;
 
   return (

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertTriangle, TrendingUp, Plus, Brain, Target, Zap } from 'lucide-react';
+import { Loader2, AlertTriangle, TrendingUp, Plus, Brain, Target, Zap, Lightbulb } from 'lucide-react';
 import { onboardingService } from '@/lib/database';
-import type { IntelligenceProfile, GapAnalysis, StrengthAnalysis } from '@/types';
+import type { IntelligenceProfile, GapAnalysis, StrengthAnalysis, ContentRecommendation } from '@/types';
 import { getPacingLevelDisplayText } from '@/types';
 import { getRecommendedPillarsFromGaps, type PillarRecommendation } from '@/lib/utils/category-pillar-mapping';
 import { getPillarByDocId } from '@/lib/utils/pillars';
@@ -211,6 +211,69 @@ export function StudentIntelligenceSidebar({ studentId, onAddContentForPillar }:
                   >
                     <Plus size={11} /> Add
                   </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Content Suggestions — from intelligence profile contentRecommendations */}
+      {profile.contentRecommendations && profile.contentRecommendations.length > 0 && (
+        <div style={card}>
+          <div style={sectionHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lightbulb size={14} color={YELLOW} />
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
+                Content Suggestions{' '}
+                <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({profile.contentRecommendations.length})</span>
+              </p>
+            </div>
+          </div>
+          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {profile.contentRecommendations.map((rec: ContentRecommendation, i: number) => {
+              const s = PRIORITY_STYLE[rec.priority] || PRIORITY_STYLE.low;
+              // Map contentArea to a recommendation to pass to onAddContentForPillar.
+              // We surface the area name and suggested modules so the coach can search the library.
+              const pillarRec = recommendations.find(r =>
+                r.reasons.some(reason => reason.toLowerCase().includes(rec.contentArea.toLowerCase()))
+              );
+              return (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <p style={{ color: '#fff', fontSize: '12px', fontWeight: 700, textTransform: 'capitalize' }}>
+                          {rec.contentArea.replace(/_/g, ' ')}
+                        </p>
+                        <span style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.6px', textTransform: 'uppercase', color: s.color, background: `${s.color}20`, border: `1px solid ${s.color}40`, borderRadius: '20px', padding: '2px 7px', flexShrink: 0 }}>
+                          {rec.priority}
+                        </span>
+                      </div>
+                      <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px', lineHeight: 1.5, marginBottom: rec.suggestedModules && rec.suggestedModules.length > 0 ? '8px' : 0 }}>
+                        {rec.reason}
+                      </p>
+                      {rec.suggestedModules && rec.suggestedModules.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {rec.suggestedModules.map((mod, j) => (
+                            <span key={j} style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '2px 7px' }}>
+                              {mod}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {onAddContentForPillar && pillarRec && (
+                      <button
+                        onClick={() => onAddContentForPillar(pillarRec.pillarId, rec.contentArea.replace(/_/g, ' '))}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, fontSize: '11px', fontWeight: 700, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap', transition: 'background 0.2s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.18)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.08)'; }}
+                      >
+                        <Plus size={11} /> Find
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
