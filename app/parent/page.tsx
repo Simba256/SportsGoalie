@@ -384,7 +384,7 @@ export default function ParentDashboardPage() {
                             <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,.85)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub.subject}</p>
                             <VoiceStatusBadge status={sub.status} />
                           </div>
-                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', marginBottom: sub.adminReply ? '8px' : 0 }}>{sub.category.replace('_', ' ')} · {formatDate(sub.createdAt)}</p>
+                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', marginBottom: sub.adminReply ? '8px' : 0 }}>{sub.category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} · {formatDate(sub.createdAt)}</p>
                           {sub.adminReply && (
                             <div style={{ marginTop: '8px', borderRadius: '8px', background: `${BLUE}0a`, border: `1px solid ${BLUE}1a`, padding: '8px 10px' }}>
                               <p style={{ fontSize: '10px', fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '3px' }}>Coach&apos;s Reply</p>

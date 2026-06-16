@@ -45,8 +45,8 @@ function getPageTitle(pathname: string): string {
   }
   if (first === 'coach') {
     const titles: Record<string, string> = {
-      coach: 'Dashboard', students: 'My Students', content: 'Content Library',
-      assessment: 'Baseline Assessment',
+      coach: 'Dashboard', students: 'My Goalies', content: 'Content Library',
+      assessment: 'Baseline Assessment', profile: 'Profile', charting: 'Charting',
     };
     return titles[segments[1]] || 'Dashboard';
   }
@@ -86,7 +86,7 @@ function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSid
   );
 }
 
-const appBg = 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)';
+const appBg = '#041830';
 const adminBg = 'linear-gradient(145deg, #010b1e 0%, #020f24 50%, #010d20 100%)';
 
 export function LayoutShell({ children }: { children: ReactNode }) {

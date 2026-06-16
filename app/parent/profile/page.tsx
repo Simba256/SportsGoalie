@@ -276,7 +276,7 @@ export default function ParentProfilePage() {
                     <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
                       <Users size={20} color="rgba(255,255,255,0.2)" />
                     </div>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', lineHeight: 1.6 }}>No linked goalies yet. Ask your goalie for their student ID.</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', lineHeight: 1.6 }}>No linked goalies yet. Ask your goalie for their goalie ID.</p>
                   </div>
                 ) : (
                   children.map((child) => {

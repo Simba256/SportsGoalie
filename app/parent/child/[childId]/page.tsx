@@ -16,7 +16,7 @@ import { redirect, useParams } from 'next/navigation';
 import { enrollmentService } from '@/lib/database/services/enrollment.service';
 import { onboardingService } from '@/lib/database/services/onboarding.service';
 import { compareGoalieAndParent, DEFAULT_CROSS_REFERENCE_RULES } from '@/lib/scoring/cross-reference-engine';
-import { PILLARS } from '@/types';
+import { PILLARS, GOALIE_CATEGORIES } from '@/types';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
 
 const BLUE = '#37b5ff';
@@ -91,7 +91,9 @@ export default function ChildDetailPage() {
                   : 'minor_gap';
                 return {
                   categorySlug: rule?.id ?? `${flag.goalieQuestionId}-${flag.parentQuestionId ?? flag.coachQuestionId}`,
-                  categoryName: rule?.name ?? flag.type.replace(/_/g, ' '),
+                  categoryName: rule?.name
+                    ?? GOALIE_CATEGORIES.find(c => c.slug === flag.type)?.shortName
+                    ?? flag.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                   goalieScore: flag.goalieScore,
                   parentScore: flag.parentScore,
                   scoreDifference: flag.scoreDifference,

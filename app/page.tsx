@@ -378,16 +378,16 @@ export default function Home() {
               <div className="flex shrink-0 animate-marquee items-center gap-8">
                 {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: text === 'MIND-VAULT' ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.55)' }}>{text}</span>
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: text === 'MIND-VAULT' ? '#a78bfa' : '#37b5ff' }}></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
               <div className="flex shrink-0 animate-marquee items-center gap-8" aria-hidden="true">
                 {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: text === 'MIND-VAULT' ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.55)' }}>{text}</span>
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: text === 'MIND-VAULT' ? '#a78bfa' : '#37b5ff' }}></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
