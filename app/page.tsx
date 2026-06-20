@@ -1,17 +1,114 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
 import { GalleryHoverCarousel, type GalleryCarouselItem } from '@/components/ui/gallery-hover-carousel';
-import { Network, Lock, Filter, TrendingUp, Users, Trophy } from 'lucide-react';
+import { ToolboxSection } from '@/components/landing/toolbox-section';
+import { Network, Lock, Filter, TrendingUp, Users, Trophy, Play, Pause } from 'lucide-react';
+
+/** Coach Mike clip — drop `7-pillars-video.mp4` into /public before go-live on THE 7 PILLARS card */
+const SEVEN_PILLARS_VIDEO_SRC = '/7-pillars-video.mp4';
+const SEVEN_PILLARS_VIDEO_POSTER = '/7-pillars.png';
+
+function FeatureVideoPanel({
+  src,
+  poster,
+  label,
+}: {
+  src: string;
+  poster: string;
+  label: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
+
+  const togglePlayback = async () => {
+    const video = videoRef.current;
+    if (!video || !videoReady) return;
+    if (video.paused) {
+      await video.play();
+      setPlaying(true);
+    } else {
+      video.pause();
+      setPlaying(false);
+    }
+  };
+
+  return (
+    <div
+      className="relative h-56 md:h-full min-h-[220px] overflow-hidden"
+      style={{ background: '#020e2e' }}
+      role="region"
+      aria-label={label}
+    >
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url("${poster}")` }}
+        aria-hidden={videoReady}
+      />
+      <video
+        ref={videoRef}
+        src={src}
+        poster={poster}
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        onLoadedData={() => setVideoReady(true)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
+      {!videoReady && (
+        <div
+          className="absolute inset-0 flex items-end justify-start p-4"
+          style={{ background: 'linear-gradient(to top, rgba(0,15,40,0.85), transparent)' }}
+        >
+          <span
+            className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
+            style={{ background: 'rgba(55,181,255,0.15)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.3)' }}
+          >
+            Coach Mike video coming soon
+          </span>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => void togglePlayback()}
+        disabled={!videoReady}
+        className="absolute inset-0 flex items-center justify-center transition-opacity"
+        style={{
+          background: playing || !videoReady ? 'transparent' : 'rgba(0,15,40,0.35)',
+          opacity: playing && videoReady ? 0 : 1,
+          cursor: videoReady ? 'pointer' : 'default',
+        }}
+        onMouseEnter={e => { if (videoReady) e.currentTarget.style.opacity = '1'; }}
+        onMouseLeave={e => { if (videoReady && playing) e.currentTarget.style.opacity = '0'; }}
+        aria-label={playing ? 'Pause video' : 'Play video'}
+      >
+        {videoReady && (
+          <span
+            className="flex h-14 w-14 items-center justify-center rounded-full"
+            style={{ background: 'rgba(55,181,255,0.9)', color: '#000f28', boxShadow: '0 4px 24px rgba(55,181,255,0.4)' }}
+          >
+            {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
 
 const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
   {
     id: 'gem-1',
     label: 'THE FOUNDATION',
     title: 'What is your foundation built on?',
-    quote: 'Regardless how technically strong you are — if the mind is not the strongest tool you have, then what is your foundation built on?',
+    quote: 'Regardless how technically strong you are. If the mind is not the strongest tool you have, then what is your foundation built on?',
     accent: '#bde4ff',
     bg: 'linear-gradient(145deg, #1562ea 0%, #0d44c2 55%, #0a2e9a 100%)',
     WatermarkIcon: Network,
@@ -29,7 +126,7 @@ const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
     id: 'gem-3',
     label: 'YOUR FILTERS',
     title: 'Logic. Math. Science. Every read.',
-    quote: 'Logic, Common Sense, Math, and Science become your filters — applied to every read, every shift, every decision.',
+    quote: 'Logic, Common Sense, Math, and Science become your filters, applied to every read, every shift, every decision.',
     accent: '#c8e8ff',
     bg: 'linear-gradient(145deg, #0c3ed6 0%, #0828ae 55%, #061a86 100%)',
     WatermarkIcon: Filter,
@@ -38,7 +135,7 @@ const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
     id: 'gem-4',
     label: 'PERFORMANCE VS OUTCOME',
     title: 'You control one. Not the other.',
-    quote: 'Learn the difference between performance and outcome — and understand why the goalie controls one, not the other.',
+    quote: 'Learn the difference between performance and outcome, and understand why the goalie controls one, not the other.',
     accent: '#b8ddff',
     bg: 'linear-gradient(145deg, #1e72e8 0%, #1452c8 55%, #0e3aa8 100%)',
     WatermarkIcon: TrendingUp,
@@ -74,7 +171,7 @@ export default function Home() {
         avatar:
           'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'The angle-mark system changed how I read plays entirely. I used to guess my positioning — now I own my crease with confidence every game.',
+      text: 'The angle-mark system changed how I read plays entirely. I used to guess my positioning. Now I own my crease with confidence every game.',
     },
     {
       author: {
@@ -92,7 +189,7 @@ export default function Home() {
         avatar:
           'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'I coach AAA midget goalies in Québec and this platform fills a gap nothing else does. The charting tools give me data I can actually coach from — not just gut feelings.',
+      text: 'I coach AAA midget goalies in Québec and this platform fills a gap nothing else does. The charting tools give me data I can actually coach from, not just gut feelings.',
     },
     {
       author: {
@@ -285,31 +382,44 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
-                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/7-pillars.png")' }}></div>
+                      <FeatureVideoPanel
+                        src={SEVEN_PILLARS_VIDEO_SRC}
+                        poster={SEVEN_PILLARS_VIDEO_POSTER}
+                        label="The 7 Pillars introduction video"
+                      />
                       <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>1/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
-                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Learn Smart. Play Smart. Stay Consistent.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 7 Pillars — from MIND-SET and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, TEAM-PRACTICE, and LIFE STYLE.</p>
-                        <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>
+                          Raw talent is one thing. Building it into a SMARTER goaltender is another.
+                        </p>
+                        <p className="text-zinc-400 text-base mb-5">Through 7 Pillars, we lay the foundation.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
+                          We build INTELLIGENT ATHLETIC GOALTENDERS through 7 Pillars. At the core are two of our UNIQUE, PROVEN Goalie Positional Systems, think GPS, the Seven Angle-Mark System (7AMS) above the icing line, and the 6 Zone System (6ZS) below it. From MIND-SET to Skating Tech to Form Tech, Game Performance, Team Practice Charting Systems, Support Systems, and LIFE STYLE. Mastering what each pillar unlocks builds consistency in performance.
+                        </p>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
-              {/* 2 — Video Learning */}
+              {/* 2 — Video Analysis */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
-                      <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>2/5</span></div>
-                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
-                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Structured lessons you can replay</p>
-                        <p className="text-zinc-300 leading-relaxed mb-8">YouTube-integrated video lessons organised into structured modules covering technique, positioning, decision-making, and game sense. Track completion per lesson, pick up where you left off, and learn at your own pace.</p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                      <div className="p-6 md:px-10 md:py-8 flex flex-col justify-center">
+                        <div className="text-right mb-2"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>2/5</span></div>
+                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">VIDEO NEVER LIES</h3>
+                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>Seeing Is Believing</p>
+                        <p className="text-zinc-400 text-sm mb-4">
+                          Improve <strong className="text-white">10%</strong>, gain <strong className="text-white">20%</strong> from seeing yourself, go <strong className="text-white">50%</strong> further, or start at <strong className="text-white">100%</strong>. <strong className="text-white">We know how.</strong> Four decades of video analysis. <strong className="text-white">Immediate Development Impact.</strong>
+                        </p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
+                          Home, in transit, at school, on laptop or phone. <strong className="text-white">That&rsquo;s the Smarter Goalie Way.</strong><sup className="text-[10px] text-zinc-400 ml-0.5">™</sup> Tech analysis reaches the cognitive mind through movement and mechanics. Once gathered, your improvement design is ready. <strong className="text-white">Accelerated Results.</strong> See it, understand it, implement it.
+                        </p>
+                        <button className="mt-2 text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -324,10 +434,11 @@ export default function Home() {
                       <div className="p-7 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>3/5</span></div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
-                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>See what others miss</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">Chart every game and practice session. Our analytics reveal your consistency patterns, good vs. bad goal ratios, and pinpoint exactly which skills need work.</p>
-                        <p className="text-zinc-400 text-sm mb-6">Nothing is left to imagination — advance with confidence knowing precisely where you stand.</p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Know what others miss.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
+                          The charting systems build your personal Baseline Profile. Your knowledge and skill base is now alive. Smarter Goalie&rsquo;s intuitive system is designed to grow your knowledge base and your tech game with methods built to accelerate your development.
+                        </p>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -339,31 +450,39 @@ export default function Home() {
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
-                      <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>4/5</span></div>
-                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
-                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Think Smart. Play Smart. Read the Play.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">Our video-questionnaire and quiz system assesses your decision-making from a goalie&rsquo;s point of view. We identify your knowledge gaps, then build your personalised &ldquo;UP YOUR GAME&rdquo; learning path.</p>
-                        <p className="text-zinc-400 text-sm mb-6">Outsmart the shooter before the puck leaves their stick.</p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                      <div className="p-6 md:px-10 md:py-8 flex flex-col justify-center">
+                        <div className="text-right mb-2"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>4/5</span></div>
+                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">THE CHESS GAME</h3>
+                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>Think Smart. Play Smarter.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-4">
+                          Knowledge is power, and Smarter Goalie is knowledge-driven. Most goalies are playing a 1000-piece puzzle with a fragmented picture and no border pieces. They&rsquo;ve got talent scattered everywhere and no frame to build it on. We hand you the borders first, then fill in the picture until the whole game comes into focus.
+                        </p>
+                        <p className="text-zinc-400 text-sm mb-5">
+                          Chess is won in the mind. So is goaltending. Anyone can move the pieces. Anyone can stop a puck. A Smarter Goalie knows the options, anticipates the play, dictates the terms and holds the cards. Everyone reacts. A Smarter Goalie decides when, why, where, and how.
+                        </p>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
-              {/* 5 — Session Charting */}
+              {/* 5 — The Mirror Never Lies */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
                       <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
-                      <div className="p-7 md:p-12 flex flex-col justify-center">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>5/5</span></div>
-                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
-                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Our flagship goalie feature</p>
-
-                        <p className="text-zinc-300 leading-relaxed mb-8">Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.</p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                      <div className="p-5 md:px-8 md:py-6 flex flex-col justify-center">
+                        <div className="text-right mb-1"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>5/5</span></div>
+                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">THE MIRROR NEVER LIES</h3>
+                        <p className="text-base md:text-lg mb-3 font-semibold" style={{ color: '#37b5ff' }}>Discover. Understand. Know. Own. Maintain.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-3">
+                          This is where it all comes together. After the layers, the principles, the systems, the reads, Smarter Goalie hands it back simplified in a single living chart. You log your game period by period and rate the factors that decide goaltending. The number isn&rsquo;t a grade. It&rsquo;s a mirror that shows exactly where you stand.
+                        </p>
+                        <p className="text-zinc-400 text-sm leading-snug mb-6">
+                          When a rating dips, the system doesn&rsquo;t scold. It opens the precise lessons that lift that gap, drawn from everything you&rsquo;ve learned. Self-aware in the moment. Self-correcting by design. Layers made simple. Foundations built layer by layer, and a starter is born.
+                        </p>
+                        <button className="mt-2 text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -396,71 +515,13 @@ export default function Home() {
 
           {/* MIND-VAULT GEM Panel */}
           <GalleryHoverCarousel
-            eyebrow="THE MIND-VAULT — DAILY GEMS"
+            eyebrow="THE MIND-VAULT, DAILY GEMS"
             heading="Six Foundations. One Complete System."
-            subheading="The mental pillars every goalie needs — built into your game, your mindset, and your life."
+            subheading="The mental pillars every goalie needs, built into your game, your mindset, and your life."
             items={MIND_VAULT_ITEMS}
           />
 
-          {/* What's In YOUR Tool Box? */}
-          <section style={{ padding: 'clamp(40px,7vw,80px) clamp(16px,3vw,20px)', background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
-            <style>{`
-              .toolbox-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-              .toolbox-card:hover { transform: translateY(-4px) scale(1.02); }
-            `}</style>
-            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-              <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: '#37b5ff', textTransform: 'uppercase', marginBottom: '16px' }}>YOUR TOOLKIT</p>
-              <h2 style={{ fontSize: 'clamp(28px,4.5vw,48px)', fontWeight: 900, color: '#fff', textAlign: 'center', marginBottom: '14px' }}>
-                What&rsquo;s In <span style={{ color: '#37b5ff' }}>YOUR</span> Tool Box?
-              </h2>
-              <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '17px', marginBottom: '56px', maxWidth: '520px', margin: '0 auto 56px' }}>
-                Three systems that separate good goalies from great ones.
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-                {/* Card 1 — Positional Systems */}
-                <div className="toolbox-card" style={{
-                  background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.35)',
-                  borderRadius: '18px', padding: '32px', cursor: 'default',
-                  boxShadow: '0 4px 32px rgba(55,181,255,0.08)',
-                }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(55,181,255,0.15)', border: '1px solid rgba(55,181,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#37b5ff" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                  </div>
-                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>Positional Systems</h3>
-                  <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>See the ice through the puck&rsquo;s eyes. Master net-crease positioning and the angle-mark system so you&rsquo;re always in the right spot before the shot.</p>
-                  <div style={{ marginTop: '24px', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, #37b5ff 0%, transparent 100%)', opacity: 0.5 }} />
-                </div>
-
-                {/* Card 2 — Game IQ */}
-                <div className="toolbox-card" style={{
-                  background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(167,139,250,0.35)',
-                  borderRadius: '18px', padding: '32px', cursor: 'default',
-                  boxShadow: '0 4px 32px rgba(167,139,250,0.08)',
-                }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#a78bfa" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                  </div>
-                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>Game IQ Assessments</h3>
-                  <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>Think two passes ahead. Measure your hockey sense through video analysis and charting — then watch your decision speed climb game after game.</p>
-                  <div style={{ marginTop: '24px', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, #a78bfa 0%, transparent 100%)', opacity: 0.5 }} />
-                </div>
-
-                {/* Card 3 — Performance Analytics */}
-                <div className="toolbox-card" style={{
-                  background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(45,212,191,0.35)',
-                  borderRadius: '18px', padding: '32px', cursor: 'default',
-                  boxShadow: '0 4px 32px rgba(45,212,191,0.08)',
-                }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#2dd4bf" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                  </div>
-                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>Performance Analytics</h3>
-                  <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>Know what you don&rsquo;t know. Track your gaps, chart your growth, and build the self-awareness to coach yourself between sessions.</p>
-                  <div style={{ marginTop: '24px', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, #2dd4bf 0%, transparent 100%)', opacity: 0.5 }} />
-                </div>
-              </div>
-            </div>
-          </section>
+          <ToolboxSection />
 
           <TestimonialsSection
             title="Voices From The Smarter Goalie Community"

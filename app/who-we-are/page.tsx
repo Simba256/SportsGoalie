@@ -9,10 +9,21 @@ const BeamsBackground = dynamic(
   { ssr: false }
 );
 
-const CYAN   = '#00FFFF';
-const MINT   = '#00FF99';
-const VIOLET = '#B388FF';
-const CORAL  = '#FF6B6B';
+const BLUE = '#37b5ff';
+const BLUE2 = '#60cdff';
+const BLUE3 = '#0ea5e9';
+const BLUE4 = '#7dd3fc';
+const NAVY = '#000f28';
+const NAVY2 = '#041530';
+const BODY_TEXT = 'rgba(200,230,255,0.84)';
+
+const ACT_ACCENTS = [BLUE, BLUE3, BLUE2, BLUE4, BLUE, BLUE3, BLUE2] as const;
+
+function actBackground(x1: number, y1: number, x2: number, y2: number) {
+  return `radial-gradient(ellipse at ${x1}% ${y1}%, rgba(55,181,255,0.14) 0%, transparent 55%),
+          radial-gradient(ellipse at ${x2}% ${y2}%, rgba(14,165,233,0.10) 0%, transparent 45%),
+          linear-gradient(160deg, ${NAVY} 0%, ${NAVY2} 100%)`;
+}
 
 function VoiceButton({ label }: { label: string }) {
   const [playing, setPlaying] = useState(false);
@@ -21,15 +32,15 @@ function VoiceButton({ label }: { label: string }) {
     <div className="flex items-center gap-3 flex-wrap">
       <button
         onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? `linear-gradient(135deg, ${VIOLET}28, ${VIOLET}12)` : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? `${VIOLET}66` : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? VIOLET : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? `0 2px 14px ${VIOLET}35` : 'none' }}
+        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
       >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${VIOLET}, #9c5fff)` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: on ? `0 0 8px ${VIOLET}88` : 'none' }}>
+        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
         </span>
         <span className="hidden sm:inline">{label}</span>
         <span className="sm:hidden">HEAR COACH MIKE</span>
       </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? VIOLET : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
         VOICE {on ? 'ON' : 'OFF'}
       </button>
     </div>
@@ -43,122 +54,119 @@ const ACTS = [
     number: 'ACT ONE',
     title: 'THE ACCIDENT',
     body: [
-      'It started without a plan. House league hockey — and the regular goalie did not show up.',
-      'Coach Mike was moved to net.',
-      'He won two championships from that crease. Nobody chose it for him. The pads chose him.',
+      'It started in Toronto. House league hockey. I was a defenseman with weak skating, and my coach saw it. He had an epiphany and moved me into net.',
+      'We won the championship that year. The next season, my coach changed organizations and brought me with him. We won it again.',
+      'Two seasons in net. Two championships. Don\'t ask me how. I just had a feel for reading and reacting. A feel for stopping a puck.',
+      'Nobody chose goaltending for me. The pads chose me.',
     ],
-    accent: CYAN,
-    bodyColor: 'rgba(200,248,255,0.84)',
-    bg: `radial-gradient(ellipse at 70% 20%, rgba(0,255,255,0.15) 0%, transparent 55%),
-         radial-gradient(ellipse at 20% 80%, rgba(0,255,255,0.07) 0%, transparent 45%),
-         linear-gradient(160deg, #001822 0%, #020810 100%)`,
+    accent: ACT_ACCENTS[0],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(70, 20, 20, 80),
   },
   {
     number: 'ACT TWO',
-    title: 'THE FIRST TRYOUT',
+    title: '"YOU CAN\'T PLAY HERE"',
     body: [
-      'AAA tryouts. Twelve goalies. One spot.',
-      'The butterflies were real — but so was the preparation. While others waited their turn, Coach Mike had already been studying. Every NHL game he could find, on grainy black-and-white footage.',
-      'He watched. He copied what worked. He adapted it to his own body. He built something of his own.',
+      'Year three. Before the season, my coach pulled me and my father aside.',
+      'My jaw dropped. My eyes went wide.',
     ],
-    accent: MINT,
-    bodyColor: 'rgba(200,255,226,0.84)',
-    bg: `radial-gradient(ellipse at 30% 70%, rgba(0,255,153,0.14) 0%, transparent 55%),
-         radial-gradient(ellipse at 75% 20%, rgba(0,255,153,0.07) 0%, transparent 45%),
-         linear-gradient(160deg, #001512 0%, #020a0c 100%)`,
+    quote: '"You can\'t play here, Michael."',
+    quoteNote: '"I\'m taking you to the Majors. AAA."',
+    accent: ACT_ACCENTS[1],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(60, 35, 25, 75),
   },
   {
     number: 'ACT THREE',
-    title: 'THE STARTER',
+    title: 'THE FIRST TRYOUT',
     body: [
-      'He won the number-one spot. And he held it.',
-      'Through AAA. Through Junior. Then nine years as a professional in Europe — competing at the highest level, every day, still studying the game that built him.',
-      'He never gave the net back.',
+      'AAA tryouts. Twelve goalies. One spot.',
+      'For the first time, this was real competition, and I felt something I\'d never felt before. Butterflies. A state I didn\'t recognize, didn\'t have a name for yet. Only later would I understand it: that\'s what it feels like to step up to the real thing. To truly compete.',
+      'Twelve goalies tried out. I made it.',
+      'And I was the starter.',
     ],
-    accent: CYAN,
-    bodyColor: 'rgba(200,248,255,0.84)',
-    bg: `radial-gradient(ellipse at 35% 60%, rgba(0,255,255,0.14) 0%, transparent 55%),
-         radial-gradient(ellipse at 80% 20%, rgba(0,255,255,0.07) 0%, transparent 40%),
-         linear-gradient(160deg, #001620 0%, #020810 100%)`,
+    accent: ACT_ACCENTS[2],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(30, 70, 75, 20),
   },
   {
     number: 'ACT FOUR',
-    title: 'AGE 14 — THE ANALYTICAL AWAKENING',
+    title: 'AGE 14: THE ANALYTICAL AWAKENING',
     body: [
-      'At fourteen, Coach Mike picked up martial arts. Not because hockey told him to — because he understood something about bilateral discipline before he had the words for it.',
-      'Train both sides. Equal strength. Equal precision.',
-      'Four questions emerged that would define the entire Smarter Goalie system:',
+      'At fourteen, I picked up martial arts. Not because hockey told me to, but because something in it spoke to me.',
+      'It trained both sides of the body, equal strength, equal precision, and in doing that, it opened my analytical mind. I began to understand the body in a more definitive, more defined training format: the left side and the right side, the left brain and the right brain, built deliberately, built equally.',
+      'That discipline became a lens. I started translating it back to the net, breaking the goaltending position down more precisely than I ever had. If the body could be trained with that kind of definition, so could the position. Every movement could be understood. Every read could be defined.',
+      'And four questions emerged, the four that would come to define the entire Smarter Goalie system:',
     ],
     highlight: 'WHERE. WHEN. WHY. HOW.',
     highlightNote: 'Every read. Every save. Every movement. In that order.',
-    accent: VIOLET,
-    bodyColor: 'rgba(222,210,255,0.84)',
-    bg: `radial-gradient(ellipse at 55% 30%, rgba(179,136,255,0.16) 0%, transparent 55%),
-         radial-gradient(ellipse at 20% 80%, rgba(179,136,255,0.08) 0%, transparent 45%),
-         linear-gradient(160deg, #0e0820 0%, #04041a 100%)`,
+    accent: ACT_ACCENTS[3],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(55, 30, 20, 80),
   },
   {
     number: 'ACT FIVE',
-    title: 'AGE 21 — THE 7AMS GENESIS',
+    title: 'AGE 21: THE 7AMS GENESIS',
     body: [
-      'Age 21. A book by Dave Dryden. An overhead photograph of the crease — the ice seen from above for the first time.',
-      'Coach Mike drew a line from the net to center ice.',
-      'He saw the geometry that no one else was talking about. In that moment, the 7 Angle-Mark System was born. Not a theory. A discovery.',
+      'I adopted an Olympic mindset early, long before Europe. As a youth, watching the Olympics, I took on the attitude that would define everything that came after: be my personal best, train with purpose.',
+      'And here\'s the truth no one tells you about coaches: the first goalie I ever taught was myself.',
+      'The milestone that made it real came at twenty-one, in Germany. I found a book on goaltending by Dave Dryden, brother of Hall of Famer Ken Dryden. One photo in that book changed my life: an overhead view of the rink, a single line drawn from the center of the net to the face-off circle at center ice.',
+      'The ice seen from above for the first time. I saw the geometry no one else was talking about.',
+      'In that moment, the 7 Angle-Mark System was born. Not a theory. A discovery. My framework stopped being personal notes that day and became a real teaching architecture. That was the moment Smarter Goalie, though it wouldn\'t carry the name for decades, was born as a system.',
     ],
-    accent: MINT,
-    bodyColor: 'rgba(200,255,226,0.84)',
-    bg: `radial-gradient(ellipse at 70% 65%, rgba(0,255,153,0.14) 0%, transparent 55%),
-         radial-gradient(ellipse at 25% 20%, rgba(0,255,153,0.07) 0%, transparent 40%),
-         linear-gradient(160deg, #001610 0%, #020a0a 100%)`,
+    accent: ACT_ACCENTS[4],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(70, 65, 25, 20),
   },
   {
     number: 'ACT SIX',
     title: 'NINE YEARS PROFESSIONAL',
     body: [
-      'Nine years in Europe. Professional hockey at the highest level.',
-      'He was still studying. Still refining. The system grew — Pillar by Pillar — built for himself first, because no one else was building it.',
-      'What did not exist, he created. What he created, he tested on himself before teaching it to anyone else.',
+      'At twenty-one, I was offered the chance to play professional hockey in Europe. I took it. Nine years.',
+      'I never gave up the starter\'s role, not in my youth, not through Junior, not in Europe. I respected my goalie partners, but that net was mine, and I wasn\'t giving it away. If they wanted it, they\'d have to beat me for it. I competed in games, and I competed in practice. Every day.',
+      'That\'s where the consistency came from, the efforts and the disciplines I held to, whether the lights were on or the rink was empty.',
+      'And through all of it, I never stopped studying. Still refining. Still applying the four questions to every goalie I could find, where, when, why, how.',
+      'The system grew the only way it could, Pillar by Pillar. Each one built from a layer of my own experience: my own development, my own mistakes, my own breakthroughs. What didn\'t exist, I created. And what I created, I tested on myself before I ever taught it to another soul.',
+      'Every Pillar in the Smarter Goalie system was designed and developed for me, by me, because no one else was building one.',
     ],
-    accent: CYAN,
-    bodyColor: 'rgba(200,248,255,0.84)',
-    bg: `radial-gradient(ellipse at 65% 30%, rgba(0,255,255,0.15) 0%, transparent 55%),
-         radial-gradient(ellipse at 15% 75%, rgba(0,255,255,0.07) 0%, transparent 40%),
-         linear-gradient(160deg, #001a24 0%, #020610 100%)`,
+    accent: ACT_ACCENTS[5],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(65, 30, 15, 75),
   },
   {
     number: 'ACT SEVEN',
     title: 'THE CALLING',
     body: [
-      'Year six of his professional career. A phone call to his best friend.',
-      'Two words arrived as a clear directive:',
+      'Year six of my professional career. A phone call to my best friend back in Canada. I told him I didn\'t know what I\'d do when I stopped playing.',
+      'He answered without hesitating:',
     ],
     quote: '"Coach. Teach your game to others."',
-    quoteNote: 'The mission became real that day. What had been built privately for sixty years now had a purpose beyond the man who built it.',
-    accent: CORAL,
-    bodyColor: 'rgba(255,218,210,0.84)',
-    bg: `radial-gradient(ellipse at 60% 35%, rgba(255,107,107,0.18) 0%, transparent 55%),
-         radial-gradient(ellipse at 25% 75%, rgba(255,107,107,0.09) 0%, transparent 45%),
-         linear-gradient(160deg, #200606 0%, #090208 100%)`,
+    quoteNote: 'The mission became real that day. What had been built privately for six decades now had a purpose beyond the man who built it.',
+    accent: ACT_ACCENTS[6],
+    bodyColor: BODY_TEXT,
+    bg: actBackground(60, 35, 25, 75),
   },
 ];
 
-const PILLARS_LIST = [
-  'MIND-SET',
-  'SKATING TECH',
-  'THE 7 ANGLE-MARK SYSTEM',
-  'THE 7 POINT SYSTEM',
-  'FORM TECH',
-  'GAME AND PRACTICE PERFORMANCE',
-  'LIFE STYLE',
-];
-
-const PILLAR_COLORS = [CYAN, MINT, VIOLET, CORAL, CYAN, MINT, VIOLET];
+const ACT_EIGHT = {
+  number: 'ACT EIGHT',
+  title: 'THE DREAM',
+  body: [
+    'I had a dream, to make a difference. To have an impact. To help develop everyone who joins in.',
+    'Not just to build goalies. To build self-aware, disciplined people, achievers who know anything is possible with the right MIND-SET. To build confidence and self-esteem that takes doubt and fear and throws them in the trash where they belong.',
+    'And to forge the rare athlete who doesn\'t flinch from the toughest seat in sport, who chooses the net, owns the pressure, and turns it into power. Because goaltending is unique in all of sport. It builds a rare kind of character: dynamic in volume, soft in approach. One that leads by example, on the ice and off of it.',
+    'That\'s what I\'m really building. Not just a goaltender. A person who can read the game, read themselves, and lead, wherever life takes them.',
+  ],
+  accent: BLUE4,
+  bodyColor: BODY_TEXT,
+  bg: actBackground(40, 25, 75, 75),
+};
 
 const STATS = [
-  { value: '60+', label: 'Years\nBuilding', color: CYAN },
-  { value: '7',   label: 'Pillars\nSystem',  color: MINT },
-  { value: '9',   label: 'Pro\nSeasons',     color: VIOLET },
-  { value: '100', label: 'Goalies\nSelected', color: CORAL },
+  { value: '60+', label: 'Years\nBuilding', color: BLUE },
+  { value: '7',   label: 'Pillars\nSystem',  color: BLUE2 },
+  { value: '9',   label: 'Pro\nSeasons',     color: BLUE3 },
+  { value: '100', label: 'Goalies\nSelected', color: BLUE4 },
 ];
 
 export default function WhoWeArePage() {
@@ -171,7 +179,7 @@ export default function WhoWeArePage() {
   } as React.CSSProperties;
 
   const dotStyle = {
-    width: '6px', height: '6px', borderRadius: '50%', background: CYAN, flexShrink: 0,
+    width: '6px', height: '6px', borderRadius: '50%', background: BLUE3, flexShrink: 0,
   } as React.CSSProperties;
 
   return (
@@ -184,13 +192,13 @@ export default function WhoWeArePage() {
             <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
           </button>
           <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ ...navBtnStyle, color: '#0ea5e9' }}>
-              <span style={{ ...dotStyle, background: '#0ea5e9' }} />WHO WE ARE
+            <button onClick={() => router.push('/who-we-are')} style={{ ...navBtnStyle, color: BLUE3 }}>
+              <span style={{ ...dotStyle, background: BLUE3 }} />WHO WE ARE
             </button>
             <button onClick={() => router.push('/the-system')} style={{ ...navBtnStyle }}>
               <span style={dotStyle} />THE SYSTEM
             </button>
-            <button onClick={() => router.push('/contact')} style={{ background: `linear-gradient(135deg, ${CORAL}, #ff4d4d)`, border: 'none', borderRadius: '50px', padding: '9px 20px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#fff', boxShadow: `0 2px 12px ${CORAL}55` }}>
+            <button onClick={() => router.push('/contact')} style={{ background: `linear-gradient(135deg, ${BLUE}, ${BLUE3})`, border: 'none', borderRadius: '50px', padding: '9px 20px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: NAVY, boxShadow: '0 2px 12px rgba(55,181,255,0.35)' }}>
               CONTACT US
             </button>
           </div>
@@ -202,14 +210,14 @@ export default function WhoWeArePage() {
       <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: 'clamp(80px,10vw,120px)', paddingBottom: 'clamp(60px,8vw,100px)' }}>
 
         {/* Base dark bg */}
-        <div style={{ position: 'absolute', inset: 0, background: '#050912', zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: NAVY, zIndex: 0 }} />
 
-        {/* Four corner color washes */}
+        {/* Blue corner washes */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 1, background:
-          `radial-gradient(ellipse at 0% 0%,   rgba(0,255,255,0.13)   0%, transparent 45%),
-           radial-gradient(ellipse at 100% 0%,  rgba(179,136,255,0.12) 0%, transparent 45%),
-           radial-gradient(ellipse at 0% 100%,  rgba(0,255,153,0.10)  0%, transparent 40%),
-           radial-gradient(ellipse at 100% 100%,rgba(255,107,107,0.11) 0%, transparent 40%)`,
+          `radial-gradient(ellipse at 0% 0%,   rgba(55,181,255,0.14) 0%, transparent 45%),
+           radial-gradient(ellipse at 100% 0%,  rgba(14,165,233,0.12) 0%, transparent 45%),
+           radial-gradient(ellipse at 0% 100%,  rgba(96,205,255,0.10) 0%, transparent 40%),
+           radial-gradient(ellipse at 100% 100%,rgba(55,181,255,0.11) 0%, transparent 40%)`,
           pointerEvents: 'none' }} />
 
         {/* Beams on top of color washes */}
@@ -218,7 +226,7 @@ export default function WhoWeArePage() {
             beamWidth={3}
             beamHeight={30}
             beamNumber={12}
-            lightColor={CYAN}
+            lightColor={BLUE}
             backgroundColor="transparent"
             speed={1.5}
             noiseIntensity={1.2}
@@ -228,13 +236,13 @@ export default function WhoWeArePage() {
         </div>
 
         {/* Readability overlay */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 3, background: 'linear-gradient(to bottom, rgba(5,9,18,0.35) 0%, rgba(5,9,18,0.1) 40%, rgba(5,9,18,0.45) 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, zIndex: 3, background: `linear-gradient(to bottom, rgba(0,15,40,0.35) 0%, rgba(0,15,40,0.1) 40%, rgba(0,15,40,0.45) 100%)`, pointerEvents: 'none' }} />
 
         {/* Back button */}
         <button
           onClick={() => router.back()}
           style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10, display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '8px', padding: '7px 13px', color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(8px)' }}
-          onMouseEnter={e => { const el = e.currentTarget; el.style.background = `${CYAN}22`; el.style.borderColor = `${CYAN}70`; el.style.color = '#fff'; }}
+          onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.14)'; el.style.borderColor = 'rgba(55,181,255,0.45)'; el.style.color = '#fff'; }}
           onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.08)'; el.style.borderColor = 'rgba(255,255,255,0.18)'; el.style.color = 'rgba(255,255,255,0.8)'; }}
         >
           <ChevronLeft size={13} />Back
@@ -242,35 +250,35 @@ export default function WhoWeArePage() {
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 4 }}>
           {/* Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: `${CYAN}14`, border: `1px solid ${CYAN}40`, borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}>
-            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: CYAN, boxShadow: `0 0 0 3px ${CYAN}30`, flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: CYAN, margin: 0, textTransform: 'uppercase' }}>BUILT BY A GOALIE. FOR MOTIVATED GOALIES.</p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}>
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>BUILT BY A GOALIE. FOR MOTIVATED GOALIES.</p>
           </div>
 
-          {/* 4-colour rule */}
+          {/* Blue accent rule */}
           <div style={{ display: 'flex', height: '3px', width: '220px', borderRadius: '4px', overflow: 'hidden', marginBottom: '28px', gap: '2px' }}>
-            {[CYAN, MINT, VIOLET, CORAL].map(c => (
+            {[BLUE, BLUE2, BLUE3, BLUE4].map(c => (
               <div key={c} style={{ flex: 1, background: c, boxShadow: `0 0 8px ${c}` }} />
             ))}
           </div>
 
           <h1 style={{ fontSize: 'clamp(36px, 7vw, 96px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', margin: '0 0 20px', color: '#fff' }}>
             THE COACH<br />
-            <span style={{ color: CYAN, textShadow: `0 0 40px ${CYAN}77, 0 0 80px ${CYAN}33` }}>MIKE</span>
+            <span style={{ color: BLUE, textShadow: '0 0 40px rgba(55,181,255,0.47), 0 0 80px rgba(55,181,255,0.2)' }}>MIKE</span>
             {' '}
             <span style={{ color: '#fff' }}>STORY</span>
           </h1>
 
-          <p style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: MINT, margin: '0 0 28px', letterSpacing: '-0.01em', textShadow: `0 0 20px ${MINT}55` }}>
+          <p style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: BLUE2, margin: '0 0 28px', letterSpacing: '-0.01em', textShadow: '0 0 20px rgba(96,205,255,0.33)' }}>
             Six decades. Seven pillars. One system built from nothing.
           </p>
-          <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, maxWidth: '480px', margin: '0 0 44px' }}>
-            No template was handed to him. No coach built it for him. What you are about to read is how a boy in a house league net became the person who built the most complete goaltending development system in the world.
+          <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, maxWidth: '560px', margin: '0 0 44px' }}>
+            No template was handed to him. No coach built it for him. What you are about to read is how a boy in a house-league net became the person who built the most complete goaltending development system in the world, and the receipts to prove it.
           </p>
 
           {/* Act dots */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            {ACTS.map((act, i) => (
+            {[...ACTS, ACT_EIGHT].map((act, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: act.accent, boxShadow: `0 0 8px ${act.accent}99, 0 0 16px ${act.accent}44` }} />
                 <span style={{ fontSize: '9px', fontWeight: 700, color: act.accent, opacity: 0.6, letterSpacing: '1.5px' }}>
@@ -346,83 +354,92 @@ export default function WhoWeArePage() {
       ))}
 
       {/* ── PUZZLE METAPHOR CLOSING ── */}
-      {/* Background blends all four colors — cyan top-left, mint bottom-right, violet mid-left */}
       <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0',
         background: `
-          radial-gradient(ellipse at 10% 15%,  rgba(0,255,255,0.13)   0%, transparent 45%),
-          radial-gradient(ellipse at 90% 85%,  rgba(0,255,153,0.12)   0%, transparent 45%),
-          radial-gradient(ellipse at 20% 80%,  rgba(179,136,255,0.10) 0%, transparent 40%),
-          radial-gradient(ellipse at 80% 10%,  rgba(255,107,107,0.08) 0%, transparent 35%),
-          linear-gradient(145deg, #051428 0%, #060c22 50%, #040a18 100%)
+          radial-gradient(ellipse at 10% 15%,  rgba(55,181,255,0.13) 0%, transparent 45%),
+          radial-gradient(ellipse at 90% 85%,  rgba(14,165,233,0.12) 0%, transparent 45%),
+          radial-gradient(ellipse at 20% 80%,  rgba(96,205,255,0.10) 0%, transparent 40%),
+          radial-gradient(ellipse at 80% 10%,  rgba(55,181,255,0.08) 0%, transparent 35%),
+          linear-gradient(145deg, ${NAVY} 0%, ${NAVY2} 50%, #020a18 100%)
         ` }}>
 
         <div style={{ position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(100px, 14vw, 200px)', fontWeight: 900, color: 'rgba(255,255,255,0.022)', letterSpacing: '-6px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', textTransform: 'uppercase' }}>PUZZLE</div>
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
 
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: VIOLET, textTransform: 'uppercase', marginBottom: '18px', textShadow: `0 0 10px ${VIOLET}66` }}>THE COMPLETE SYSTEM</p>
+          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: BLUE3, textTransform: 'uppercase', marginBottom: '18px', textShadow: '0 0 10px rgba(14,165,233,0.4)' }}>THE PUZZLE CLOSE</p>
 
           <h2 style={{ fontSize: 'clamp(22px, 4vw, 54px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.02em', margin: '0 0 36px', maxWidth: '900px' }}>
-            IN THE BEGINNING, GOALTENDING WAS LIKE A THOUSAND-PIECE PUZZLE —{' '}
-            <span style={{ color: CYAN, textShadow: `0 0 24px ${CYAN}55` }}>NO BORDERS. NO PICTURE. NO BOX.</span>
+            IN THE BEGINNING, GOALTENDING WAS LIKE A THOUSAND-PIECE PUZZLE,{' '}
+            <span style={{ color: BLUE, textShadow: '0 0 24px rgba(55,181,255,0.33)' }}>NO BORDERS. NO PICTURE. NO BOX.</span>
           </h2>
 
           <div style={{ marginBottom: '44px' }}>
-            <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, maxWidth: '680px', marginBottom: '28px', fontStyle: 'italic', borderLeft: `3px solid ${CYAN}66`, paddingLeft: '16px' }}>
-              Coach Mike did not receive the pieces. He found them. One by one, over six decades. He sorted them. Named them. Built the framework that holds them together.
+            <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, maxWidth: '720px', marginBottom: '20px', fontStyle: 'italic', borderLeft: '3px solid rgba(55,181,255,0.4)', paddingLeft: '16px' }}>
+              No goalie coaches. No systematic breakdowns in book form. Just a position, and a thousand pieces scattered everywhere. Every save a piece. Every angle a piece. Every read, every recovery, every option, a piece. And no one had built the picture to assemble them.
             </p>
 
-            <p style={{ fontSize: 'clamp(13px, 1.4vw, 15px)', fontWeight: 700, color: MINT, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px', textShadow: `0 0 10px ${MINT}55` }}>
-              THE 7 PUZZLES — IN ORDER:
+            <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, maxWidth: '720px', marginBottom: '20px', fontStyle: 'italic', borderLeft: '3px solid rgba(96,205,255,0.4)', paddingLeft: '16px' }}>
+              Coach Mike didn&apos;t receive the pieces. He found them, one by one, over six decades. He sorted them. He named them. He built the framework that holds them together: the borders first, then the picture.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '560px', marginBottom: '32px' }}>
-              {PILLARS_LIST.map((pillar, i) => {
-                const c = PILLAR_COLORS[i];
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 14px', background: `${c}0e`, border: `1px solid ${c}30`, borderRadius: '10px', borderLeft: `3px solid ${c}` }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: `${c}22`, border: `1px solid ${c}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 8px ${c}33` }}>
-                      <span style={{ fontSize: '10px', fontWeight: 900, color: c }}>{String(i + 1).padStart(2, '0')}</span>
-                    </div>
-                    <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '0.5px' }}>{pillar}</p>
-                  </div>
-                );
-              })}
-            </div>
+            <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, maxWidth: '720px', marginBottom: '28px', fontStyle: 'italic', borderLeft: '3px solid rgba(14,165,233,0.4)', paddingLeft: '16px' }}>
+              And notice, puzzles, not a puzzle. Goaltending was never one picture. It&apos;s seven, the 7 Pillars, one complete system.
+            </p>
 
-            <div style={{ maxWidth: '680px' }}>
-              <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '16px', fontStyle: 'italic', borderLeft: `3px solid ${MINT}66`, paddingLeft: '16px' }}>
-                Seven puzzles. Seven complete sections. Built in order. Assembled with purpose. Proven on the man who built them before they were taught to anyone else.
+            <div style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.22)', borderLeft: `4px solid ${BLUE}`, borderRadius: '0 16px 16px 0', padding: '28px 32px', maxWidth: '720px' }}>
+              <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(255,255,255,0.9)', lineHeight: 1.75, margin: '0 0 12px', fontStyle: 'italic' }}>
+                Built, not borrowed. Found, not given.
               </p>
-              <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '36px', fontStyle: 'italic', borderLeft: `3px solid ${VIOLET}66`, paddingLeft: '16px' }}>
-                The border was built first. Then every piece was filled in. In order. With purpose. Nothing guessed. Nothing random.
+              <p style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontWeight: 900, color: BLUE, textShadow: '0 0 24px rgba(55,181,255,0.33)', lineHeight: 1.3, margin: 0 }}>
+                Raw talent is one thing. Building it into a SMARTER goaltender is another.
               </p>
             </div>
-          </div>
-
-          {/* Closing callout */}
-          <div style={{ background: `${CORAL}10`, border: `1px solid ${CORAL}35`, borderLeft: `4px solid ${CORAL}`, borderRadius: '0 16px 16px 0', padding: '28px 32px', maxWidth: '680px', marginBottom: '44px' }}>
-            <p style={{ fontSize: 'clamp(20px, 3vw, 36px)', fontWeight: 900, color: '#fff', lineHeight: 1.2, margin: '0 0 12px', letterSpacing: '-0.01em' }}>
-              You bring the motivation.
-            </p>
-            <p style={{ fontSize: 'clamp(20px, 3vw, 36px)', fontWeight: 900, color: CORAL, textShadow: `0 0 24px ${CORAL}66`, lineHeight: 1.2, margin: 0, letterSpacing: '-0.01em' }}>
-              We bring the TOOL BOX.
-            </p>
           </div>
 
           <VoiceButton label="HEAR COACH MIKE TELL THIS STORY" />
         </div>
       </section>
 
+      {/* ── ACT EIGHT — THE DREAM ── */}
+      <section
+        style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: ACT_EIGHT.bg, borderBottom: `1px solid ${ACT_EIGHT.accent}25` }}
+      >
+        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+          08
+        </div>
+
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '32px' }}>
+            <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${ACT_EIGHT.accent}, ${ACT_EIGHT.accent}55)`, boxShadow: `0 0 20px ${ACT_EIGHT.accent}cc, 0 0 40px ${ACT_EIGHT.accent}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
+            <div>
+              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: ACT_EIGHT.accent, textTransform: 'uppercase', margin: '0 0 6px', textShadow: `0 0 12px ${ACT_EIGHT.accent}99` }}>{ACT_EIGHT.number}</p>
+              <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
+                {ACT_EIGHT.title}
+              </h2>
+            </div>
+          </div>
+
+          <div style={{ maxWidth: '720px', marginLeft: '22px' }}>
+            {ACT_EIGHT.body.map((para, pi) => (
+              <p key={pi} style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: ACT_EIGHT.bodyColor, lineHeight: 1.85, marginBottom: '16px', fontStyle: 'italic' }}>
+                {para}
+              </p>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(to right, transparent, ${ACT_EIGHT.accent}55, transparent)`, pointerEvents: 'none' }} />
+      </section>
+
       {/* ── CTA ── */}
-      {/* All four colors live in the background — coral top-right, violet bottom-left, cyan left, mint bottom-right */}
       <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', textAlign: 'center',
         background: `
-          radial-gradient(ellipse at 85% 10%,  rgba(255,107,107,0.18) 0%, transparent 45%),
-          radial-gradient(ellipse at 15% 90%,  rgba(179,136,255,0.15) 0%, transparent 45%),
-          radial-gradient(ellipse at 5%  40%,  rgba(0,255,255,0.12)   0%, transparent 40%),
-          radial-gradient(ellipse at 90% 70%,  rgba(0,255,153,0.11)   0%, transparent 40%),
-          linear-gradient(160deg, #040f24 0%, #06081e 100%)
+          radial-gradient(ellipse at 85% 10%,  rgba(55,181,255,0.16) 0%, transparent 45%),
+          radial-gradient(ellipse at 15% 90%,  rgba(14,165,233,0.14) 0%, transparent 45%),
+          radial-gradient(ellipse at 5%  40%,  rgba(96,205,255,0.12) 0%, transparent 40%),
+          radial-gradient(ellipse at 90% 70%,  rgba(55,181,255,0.10) 0%, transparent 40%),
+          linear-gradient(160deg, ${NAVY} 0%, ${NAVY2} 100%)
         ` }}>
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
@@ -437,17 +454,17 @@ export default function WhoWeArePage() {
             ))}
           </div>
 
-          {/* 4-colour divider */}
+          {/* Blue accent divider */}
           <div style={{ display: 'flex', height: '2px', width: '200px', margin: '0 auto 40px', borderRadius: '4px', overflow: 'hidden', gap: '2px' }}>
-            {[CYAN, MINT, VIOLET, CORAL].map(c => (
+            {[BLUE, BLUE2, BLUE3, BLUE4].map(c => (
               <div key={c} style={{ flex: 1, background: c, boxShadow: `0 0 6px ${c}` }} />
             ))}
           </div>
 
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: MINT, textTransform: 'uppercase', marginBottom: '20px', textShadow: `0 0 10px ${MINT}55` }}>WHAT COMES NEXT</p>
+          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px', textShadow: '0 0 10px rgba(96,205,255,0.33)' }}>WHAT COMES NEXT</p>
           <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 58px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.025em', marginBottom: '24px', maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto' }}>
             The system is ready.<br />
-            <span style={{ color: CORAL, textShadow: `0 0 28px ${CORAL}66` }}>Are you?</span>
+            <span style={{ color: BLUE, textShadow: '0 0 28px rgba(55,181,255,0.4)' }}>Are you?</span>
           </h2>
           <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(175,215,238,0.85)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto 40px' }}>
             Coach Mike is personally selecting the first one hundred goalies to join the Smarter Goalie BUILD experience. The application takes five minutes.
@@ -455,13 +472,13 @@ export default function WhoWeArePage() {
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => router.push('/explain')}
-              style={{ background: `linear-gradient(135deg, ${CORAL}, #ff4d4d)`, color: '#fff', border: 'none', padding: '16px 36px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, letterSpacing: '1.5px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: `0 4px 28px ${CORAL}66` }}
+              style={{ background: `linear-gradient(135deg, ${BLUE}, ${BLUE3})`, color: NAVY, border: 'none', padding: '16px 36px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, letterSpacing: '1.5px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 4px 28px rgba(55,181,255,0.4)' }}
             >
               SELECT YOUR ROLE →
             </button>
             <button
               onClick={() => router.push('/team-programs/pillar/1')}
-              style={{ background: `${VIOLET}20`, color: VIOLET, border: `1px solid ${VIOLET}66`, padding: '16px 36px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, letterSpacing: '1.5px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: `0 0 16px ${VIOLET}22` }}
+              style={{ background: 'rgba(55,181,255,0.12)', color: BLUE2, border: '1px solid rgba(96,205,255,0.4)', padding: '16px 36px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, letterSpacing: '1.5px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 0 16px rgba(55,181,255,0.12)' }}
             >
               EXPLORE THE SYSTEM
             </button>
@@ -470,8 +487,8 @@ export default function WhoWeArePage() {
       </section>
 
       {/* Footer */}
-      <div style={{ background: '#040e1f', padding: '28px 24px', textAlign: 'center' }}>
-        <div style={{ height: '2px', background: `linear-gradient(to right, ${CYAN}, ${MINT}, ${VIOLET}, ${CORAL})`, marginBottom: '20px', boxShadow: `0 0 12px rgba(0,255,255,0.3)` }} />
+      <div style={{ background: NAVY, padding: '28px 24px', textAlign: 'center' }}>
+        <div style={{ height: '2px', background: `linear-gradient(to right, ${BLUE}, ${BLUE2}, ${BLUE3}, ${BLUE4})`, marginBottom: '20px', boxShadow: '0 0 12px rgba(55,181,255,0.3)' }} />
         <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
           &copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER
         </p>

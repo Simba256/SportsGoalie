@@ -8,7 +8,7 @@ import {
   collection, getDocs, doc, setDoc, updateDoc, deleteDoc,
   query, orderBy, serverTimestamp,
 } from 'firebase/firestore';
-import { LIndexItem, LIndexCategory } from '@/types/charting';
+import { LIndexItem, LIndexCategory, LIndexSuggestion } from '@/types/charting';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, X, Check } from 'lucide-react';
 
@@ -157,10 +157,12 @@ function ItemCard({
 
 function ItemFormModal({
   initial,
+  prefill,
   onSave,
   onClose,
 }: {
   initial?: LIndexItem;
+  prefill?: Partial<ItemForm>;
   onSave: (form: ItemForm) => Promise<void>;
   onClose: () => void;
 }) {
@@ -177,7 +179,7 @@ function ItemFormModal({
           levelTag: initial.levelTag,
           isActive: initial.isActive,
         }
-      : EMPTY_FORM
+      : { ...EMPTY_FORM, ...prefill }
   );
   const [saving, setSaving] = useState(false);
 
@@ -363,6 +365,86 @@ function ItemFormModal({
   );
 }
 
+// ─── Suggestion Card ─────────────────────────────────────────────────────────
+
+const CAT_LABEL: Record<string, string> = {
+  ice: 'Ice', puck_machine: 'Puck Machine', land_conditioning: 'Land / Conditioning',
+  lifestyle_foundations: 'Lifestyle Foundations', games_tourneys: 'Games / Tourneys',
+};
+
+function SuggestionCard({
+  suggestion,
+  onPromote,
+  onDismiss,
+}: {
+  suggestion: LIndexSuggestion;
+  onPromote: () => void;
+  onDismiss: () => void;
+}) {
+  const isPending = suggestion.status === 'pending';
+  const ts = suggestion.createdAt as unknown as { toDate?: () => Date; seconds?: number };
+  const dateStr = ts?.toDate
+    ? ts.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : ts?.seconds
+    ? new Date(ts.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '';
+  const statusColor = suggestion.status === 'pending' ? BLUE : suggestion.status === 'approved' ? '#22c55e' : RED;
+
+  return (
+    <div style={{ ...card, borderRadius: '14px', padding: '16px 18px', border: isPending ? '1px solid rgba(55,181,255,0.25)' : '1px solid rgba(55,181,255,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
+            <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>{suggestion.suggestedName}</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, color: statusColor, background: `${statusColor}18`, border: `1px solid ${statusColor}30`, borderRadius: '20px', padding: '1px 7px', textTransform: 'capitalize' }}>
+              {suggestion.status}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {suggestion.goalieDisplayName && (
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>by {suggestion.goalieDisplayName}</span>
+            )}
+            {suggestion.suggestedCategory && (
+              <span style={{ color: 'rgba(55,181,255,0.55)', fontSize: '11px', fontWeight: 600 }}>
+                {CAT_LABEL[suggestion.suggestedCategory] ?? suggestion.suggestedCategory}
+              </span>
+            )}
+            {dateStr && <span style={{ color: 'rgba(255,255,255,0.22)', fontSize: '11px' }}>{dateStr}</span>}
+          </div>
+        </div>
+
+        {isPending && (
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={onPromote}
+              style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: `1px solid rgba(55,181,255,0.25)`, color: BLUE, fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Promote →
+            </button>
+            <button
+              type="button"
+              onClick={onDismiss}
+              style={{ padding: '7px 8px', borderRadius: '8px', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.18)', color: RED, fontSize: '12px', cursor: 'pointer', display: 'flex' }}
+              title="Dismiss suggestion"
+            >
+              <X style={{ width: '12px', height: '12px' }} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {suggestion.description && (
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.5, marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {suggestion.description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function LIndexAdminPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<LIndexItem[]>([]);
@@ -370,8 +452,12 @@ export default function LIndexAdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<LIndexItem | undefined>(undefined);
   const [filterCat, setFilterCat] = useState<LIndexCategory | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<'catalogue' | 'suggestions'>('catalogue');
+  const [suggestions, setSuggestions] = useState<LIndexSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [prefillForm, setPrefillForm] = useState<Partial<ItemForm> | undefined>(undefined);
 
-  useEffect(() => { loadItems(); }, []);
+  useEffect(() => { loadItems(); loadSuggestions(); }, []);
 
   const loadItems = async () => {
     setLoading(true);
@@ -428,8 +514,57 @@ export default function LIndexAdminPage() {
     }
   };
 
+  const loadSuggestions = async () => {
+    setSuggestionsLoading(true);
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'l_index_suggestions'), orderBy('createdAt', 'desc'))
+      );
+      setSuggestions(snap.docs.map(d => ({ id: d.id, ...d.data() } as LIndexSuggestion)));
+    } catch {
+      toast.error('Failed to load suggestions');
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const handlePromote = async (suggestion: LIndexSuggestion) => {
+    if (!user?.id) return;
+    try {
+      await updateDoc(doc(db, 'l_index_suggestions', suggestion.id), {
+        status: 'approved',
+        reviewedAt: serverTimestamp(),
+        reviewedBy: user.id,
+      });
+      setSuggestions(prev => prev.map(s => s.id === suggestion.id ? { ...s, status: 'approved' } : s));
+      setPrefillForm({ name: suggestion.suggestedName });
+      setEditingItem(undefined);
+      setShowModal(true);
+      toast.success('Opening L-Index form pre-filled with the suggestion');
+    } catch {
+      toast.error('Failed to approve suggestion');
+    }
+  };
+
+  const handleDismiss = async (suggestion: LIndexSuggestion) => {
+    if (!user?.id) return;
+    try {
+      await updateDoc(doc(db, 'l_index_suggestions', suggestion.id), {
+        status: 'rejected',
+        reviewedAt: serverTimestamp(),
+        reviewedBy: user.id,
+      });
+      setSuggestions(prev => prev.map(s => s.id === suggestion.id ? { ...s, status: 'rejected' } : s));
+      toast.success('Suggestion dismissed');
+    } catch {
+      toast.error('Failed to dismiss suggestion');
+    }
+  };
+
   const filtered = filterCat === 'all' ? items : items.filter(i => i.lIndex === filterCat);
   const activeCount = items.filter(i => i.isActive).length;
+
+  const pendingCount = suggestions.filter(s => s.status === 'pending').length;
 
   return (
     <AdminRoute>
@@ -448,66 +583,125 @@ export default function LIndexAdminPage() {
           </div>
           <button
             type="button"
-            onClick={() => { setEditingItem(undefined); setShowModal(true); }}
+            onClick={() => { setPrefillForm(undefined); setEditingItem(undefined); setShowModal(true); }}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(55,181,255,0.25)', whiteSpace: 'nowrap' }}
           >
             <Plus style={{ width: '16px', height: '16px' }} /> New Item
           </button>
         </div>
 
-        {/* Filter tabs — All uses BLUE; L1-L6, L10, L11 (land) use BLUE; L7-L9 (lifestyle) use GOLD */}
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-          <button
-            type="button"
-            onClick={() => setFilterCat('all')}
-            style={{
-              whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700,
-              border: filterCat === 'all' ? `2px solid ${BLUE}` : '1px solid rgba(55,181,255,0.15)',
-              background: filterCat === 'all' ? 'rgba(55,181,255,0.12)' : 'rgba(55,181,255,0.04)',
-              color: filterCat === 'all' ? BLUE : 'rgba(255,255,255,0.4)',
-              cursor: 'pointer',
-            }}
-          >
-            All ({items.length})
-          </button>
-          {L_INDEX_CATEGORIES.map(c => {
-            const count  = items.filter(i => i.lIndex === c.id).length;
-            const active = filterCat === c.id;
-            const color  = c.topLevel === 'lifestyle_foundations' ? GOLD : BLUE;
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '12px', background: 'rgba(55,181,255,0.05)', border: '1px solid rgba(55,181,255,0.1)', alignSelf: 'flex-start' }}>
+          {(['catalogue', 'suggestions'] as const).map(tab => {
+            const isActive = activeTab === tab;
+            const label = tab === 'catalogue'
+              ? 'Catalogue'
+              : `Suggestions${pendingCount > 0 ? ` (${pendingCount})` : ''}`;
             return (
               <button
-                key={c.id}
+                key={tab}
                 type="button"
-                onClick={() => setFilterCat(c.id)}
-                style={{
-                  whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700,
-                  border: active ? `2px solid ${color}` : '1px solid rgba(55,181,255,0.12)',
-                  background: active ? `${color}18` : 'rgba(55,181,255,0.03)',
-                  color: active ? color : 'rgba(255,255,255,0.4)',
-                  cursor: 'pointer',
-                }}
+                onClick={() => setActiveTab(tab)}
+                style={{ padding: '8px 18px', borderRadius: '9px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.18s', background: isActive ? 'rgba(55,181,255,0.15)' : 'transparent', color: isActive ? BLUE : 'rgba(255,255,255,0.4)' }}
               >
-                {c.id} ({count})
+                {label}
               </button>
             );
           })}
         </div>
 
-        {/* Items list */}
-        {loading ? (
-          <div style={{ ...card, padding: '48px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>
-            Loading…
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ ...card, padding: '48px', textAlign: 'center' }}>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', marginBottom: '4px' }}>No items yet.</p>
-            <p style={{ color: 'rgba(55,181,255,0.5)', fontSize: '12px' }}>Click &ldquo;New Item&rdquo; to add your first L-index entry.</p>
-          </div>
+        {activeTab === 'catalogue' ? (
+          <>
+            {/* Filter tabs — All uses BLUE; L1-L6, L10, L11 (land) use BLUE; L7-L9 (lifestyle) use GOLD */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setFilterCat('all')}
+                style={{
+                  whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700,
+                  border: filterCat === 'all' ? `2px solid ${BLUE}` : '1px solid rgba(55,181,255,0.15)',
+                  background: filterCat === 'all' ? 'rgba(55,181,255,0.12)' : 'rgba(55,181,255,0.04)',
+                  color: filterCat === 'all' ? BLUE : 'rgba(255,255,255,0.4)',
+                  cursor: 'pointer',
+                }}
+              >
+                All ({items.length})
+              </button>
+              {L_INDEX_CATEGORIES.map(c => {
+                const count  = items.filter(i => i.lIndex === c.id).length;
+                const active = filterCat === c.id;
+                const color  = c.topLevel === 'lifestyle_foundations' ? GOLD : BLUE;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setFilterCat(c.id)}
+                    style={{
+                      whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700,
+                      border: active ? `2px solid ${color}` : '1px solid rgba(55,181,255,0.12)',
+                      background: active ? `${color}18` : 'rgba(55,181,255,0.03)',
+                      color: active ? color : 'rgba(255,255,255,0.4)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {c.id} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Items list */}
+            {loading ? (
+              <div style={{ ...card, padding: '48px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>
+                Loading…
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ ...card, padding: '48px', textAlign: 'center' }}>
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', marginBottom: '4px' }}>No items yet.</p>
+                <p style={{ color: 'rgba(55,181,255,0.5)', fontSize: '12px' }}>Click &ldquo;New Item&rdquo; to add your first L-index entry.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filtered.map(item => (
+                  <ItemCard key={item.id} item={item} onEdit={handleEdit} onDelete={handleDelete} />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {filtered.map(item => (
-              <ItemCard key={item.id} item={item} onEdit={handleEdit} onDelete={handleDelete} />
-            ))}
+          /* Suggestions tab */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {suggestionsLoading ? (
+              <div style={{ ...card, padding: '48px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>Loading…</div>
+            ) : suggestions.length === 0 ? (
+              <div style={{ ...card, padding: '48px', textAlign: 'center' }}>
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', marginBottom: '4px' }}>No suggestions yet.</p>
+                <p style={{ color: 'rgba(55,181,255,0.4)', fontSize: '12px' }}>Goalies can suggest new items from their training log.</p>
+              </div>
+            ) : (
+              <>
+                {suggestions.filter(s => s.status === 'pending').length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ color: 'rgba(55,181,255,0.7)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Pending Review ({suggestions.filter(s => s.status === 'pending').length})
+                    </p>
+                    {suggestions.filter(s => s.status === 'pending').map(s => (
+                      <SuggestionCard key={s.id} suggestion={s} onPromote={() => handlePromote(s)} onDismiss={() => handleDismiss(s)} />
+                    ))}
+                  </div>
+                )}
+                {suggestions.filter(s => s.status !== 'pending').length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: suggestions.filter(s => s.status === 'pending').length > 0 ? '12px' : '0' }}>
+                    <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Reviewed
+                    </p>
+                    {suggestions.filter(s => s.status !== 'pending').map(s => (
+                      <SuggestionCard key={s.id} suggestion={s} onPromote={() => handlePromote(s)} onDismiss={() => handleDismiss(s)} />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -515,8 +709,9 @@ export default function LIndexAdminPage() {
       {showModal && (
         <ItemFormModal
           initial={editingItem}
+          prefill={prefillForm}
           onSave={handleSave}
-          onClose={() => { setShowModal(false); setEditingItem(undefined); }}
+          onClose={() => { setShowModal(false); setEditingItem(undefined); setPrefillForm(undefined); }}
         />
       )}
     </AdminRoute>
