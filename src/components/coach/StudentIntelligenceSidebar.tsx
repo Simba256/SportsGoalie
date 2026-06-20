@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, AlertTriangle, TrendingUp, Plus, Brain, Target, Zap, Lightbulb } from 'lucide-react';
 import { onboardingService } from '@/lib/database';
 import type { IntelligenceProfile, GapAnalysis, StrengthAnalysis, ContentRecommendation } from '@/types';
-import { getPacingLevelDisplayText } from '@/types';
+import { getPacingLevelDisplayText, GOALIE_CATEGORIES } from '@/types';
 import { getRecommendedPillarsFromGaps, type PillarRecommendation } from '@/lib/utils/category-pillar-mapping';
 import { getPillarByDocId } from '@/lib/utils/pillars';
 
@@ -78,7 +78,7 @@ export function StudentIntelligenceSidebar({ studentId, onAddContentForPillar }:
         </div>
         <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>Assessment Not Completed</p>
         <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', lineHeight: 1.6 }}>
-          Gaps and recommendations will appear here after the student completes their assessment.
+          Gaps and recommendations will appear here after the goalie completes their assessment.
         </p>
       </div>
     );
@@ -113,11 +113,13 @@ export function StudentIntelligenceSidebar({ studentId, onAddContentForPillar }:
             {profile.categoryScores.map((cat) => {
               const barColor = cat.averageScore >= 3.0 ? GREEN : cat.averageScore >= 2.0 ? BLUE : YELLOW;
               const pct = ((cat.averageScore - 1) / 3) * 100;
+              const categoryName = GOALIE_CATEGORIES.find(c => c.slug === cat.categorySlug)?.shortName
+                ?? cat.categorySlug.replace(/_/g, ' ');
               return (
                 <div key={cat.categorySlug}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', textTransform: 'capitalize' }}>
-                      {cat.categorySlug.replace('_', ' ')}
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>
+                      {categoryName}
                     </span>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: barColor }}>{cat.averageScore.toFixed(1)}</span>
                   </div>
@@ -138,7 +140,7 @@ export function StudentIntelligenceSidebar({ studentId, onAddContentForPillar }:
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertTriangle size={14} color={RED} />
               <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
-                Identified Gaps <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({profile.identifiedGaps.length})</span>
+                Growth Areas <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({profile.identifiedGaps.length})</span>
               </p>
             </div>
           </div>

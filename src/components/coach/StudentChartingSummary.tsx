@@ -61,7 +61,7 @@ export function StudentChartingSummary({ studentId }: Props) {
         </div>
         <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>No Game Data Yet</p>
         <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', lineHeight: 1.6 }}>
-          Performance data will appear here once the student logs games and practices.
+          Performance data will appear here once the goalie logs games and practices.
         </p>
       </div>
     );
@@ -106,7 +106,7 @@ export function StudentChartingSummary({ studentId }: Props) {
             <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>Goals Analysis</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Good/Bad ratio</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Good/Weak ratio</span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: goals.goodBadRatio >= 1 ? GREEN : RED, background: goals.goodBadRatio >= 1 ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)', border: `1px solid ${goals.goodBadRatio >= 1 ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`, borderRadius: '20px', padding: '2px 8px' }}>
                   {goals.goodBadRatio.toFixed(1)}
                 </span>
@@ -116,7 +116,7 @@ export function StudentChartingSummary({ studentId }: Props) {
                 <span style={{ color: GREEN, fontWeight: 700, fontSize: '13px' }}>{goals.totalGoodGoals}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Bad goals</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Weak goals</span>
                 <span style={{ color: RED, fontWeight: 700, fontSize: '13px' }}>{goals.totalBadGoals}</span>
               </div>
             </div>
