@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Users, LogOut,
-  ChevronLeft, Menu, X, User, UserCircle, Eye,
+  ChevronLeft, Menu, X, User, UserCircle, Eye, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
@@ -15,10 +15,11 @@ const borderColor = 'rgba(55,181,255,0.12)';
 interface ParentSidebarProps { isOpen: boolean; onToggle: () => void; }
 
 const navItems = [
-  { label: 'Dashboard', href: '/parent', icon: LayoutDashboard },
-  { label: 'My Goalies', href: '/parent/goalies', icon: Users },
+  { label: 'Dashboard', href: '/parent',           icon: LayoutDashboard },
+  { label: 'My Goalies', href: '/parent/goalies',  icon: Users },
+  { label: 'Charting',   href: '/parent/charting', icon: BarChart3 },
   { label: 'Perception', href: '/parent/perception', icon: Eye },
-  { label: 'Profile', href: '/parent/profile', icon: UserCircle },
+  { label: 'Profile',    href: '/parent/profile',  icon: UserCircle },
 ];
 
 export function ParentSidebar({ isOpen, onToggle }: ParentSidebarProps) {
