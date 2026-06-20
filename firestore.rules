@@ -557,8 +557,8 @@ service cloud.firestore {
 
     // Sessions collection - Game and Practice tracking
     match /sessions/{sessionId} {
-      // Students can get their own sessions, admins can get all
-      allow get: if isOwnerOrAdmin(resource.data.studentId);
+      // Students can get their own sessions, coaches/parents can get any session (needed for charting), admins can get all
+      allow get: if isOwnerOrAdmin(resource.data.studentId) || isCoachOrAdmin() || isParent();
 
       // Students can list/query their own sessions (application filters by studentId), admins can list all
       // Trust application layer to filter by studentId for students
@@ -612,6 +612,49 @@ service cloud.firestore {
       allow create, update: if isOwnerOrAdmin(studentId);
 
       // Only admins can delete analytics
+      allow delete: if isAdmin();
+    }
+
+    // Parent Charting Entries collection - Parent-authored game charts per student session
+    match /parent_charting_entries/{entryId} {
+      // Any authenticated user can read (app-layer filters by parentId/studentId; students need read for cross-reference)
+      allow read: if isAuthenticated();
+
+      // Parents can create entries where they are the author
+      allow create: if isAuthenticated() &&
+                       isParent() &&
+                       hasRequiredFields(['sessionId', 'studentId', 'parentId', 'completedSections']) &&
+                       request.resource.data.parentId == getUserId() &&
+                       request.resource.data.completedSections is list;
+
+      // Parents can update their own entries; admins can update any
+      allow update: if isAuthenticated() && (
+        (isParent() && resource.data.parentId == getUserId()) ||
+        isAdmin()
+      );
+
+      // Only admins can delete parent chart entries
+      allow delete: if isAdmin();
+    }
+
+    // Coach Charting Entries collection - Coach-authored game charts per student session
+    match /coach_charting_entries/{entryId} {
+      // Coaches can read their own entries; admins can read all
+      allow get: if isCoachOrAdmin() && (isAdmin() || resource.data.coachId == getUserId());
+
+      // Coaches can list/query entries (application filters by coachId); admins can list all
+      allow list: if isCoachOrAdmin();
+
+      // Coaches can create entries where they are the author
+      allow create: if isCoachOrAdmin() &&
+                       hasRequiredFields(['sessionId', 'studentId', 'coachId', 'completedSections']) &&
+                       request.resource.data.coachId == getUserId() &&
+                       request.resource.data.completedSections is list;
+
+      // Coaches can update their own entries; admins can update any
+      allow update: if isCoachOrAdmin() && (isAdmin() || resource.data.coachId == getUserId());
+
+      // Only admins can delete coach chart entries
       allow delete: if isAdmin();
     }
 
@@ -1032,13 +1075,23 @@ service cloud.firestore {
 
     // Training Logs collection — daily training log entries per student
     match /training_logs/{logId} {
-      allow read: if isOwnerOrAdmin(resource.data.studentId);
+      allow read: if isOwnerOrAdmin(resource.data.goalieId);
       allow list: if isAuthenticated();
       allow create: if isAuthenticated() &&
-                       (isOwner(request.resource.data.studentId) || isAdmin()) &&
-                       hasRequiredFields(['studentId', 'date', 'items']);
-      allow update: if isOwnerOrAdmin(resource.data.studentId);
-      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+                       (isOwner(request.resource.data.goalieId) || isAdmin()) &&
+                       hasRequiredFields(['goalieId', 'date', 'items']);
+      allow update: if isOwnerOrAdmin(resource.data.goalieId);
+      allow delete: if isOwnerOrAdmin(resource.data.goalieId);
+    }
+
+    // L-Index Suggestions — goalies can submit, admins can review
+    match /l_index_suggestions/{suggestionId} {
+      allow list, get: if isAdmin();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.goalieId == getUserId() &&
+                       hasRequiredFields(['goalieId', 'suggestedName', 'suggestedCategory', 'status']);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Catch-all rule for any other collections

@@ -817,6 +817,23 @@ export type {
   PracticeIndexItem,
   V2PracticeChartEntry,
   MindVaultEntry,
+  // Parent Chart Types
+  ParentEmotionalState,
+  ParentRoutineStatus,
+  ParentCarRideMood,
+  ParentTalkAboutGame,
+  ParentNoticedObservation,
+  ParentPreGameData,
+  ParentPeriodRatings,
+  ParentPostGameData,
+  ParentChartEntry,
+  // Coach Chart Types
+  CoachReadinessLevel,
+  CoachPriorityFactor,
+  CoachPreGameData,
+  CoachPeriodData,
+  CoachPostGameData,
+  CoachChartEntry,
 } from './charting';
 
 // Form Template Types - Export from form-template.ts

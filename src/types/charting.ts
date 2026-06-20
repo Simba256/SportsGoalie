@@ -690,6 +690,20 @@ export type LIndexCategory =
   | 'L1' | 'L2' | 'L3' | 'L4' | 'L5' | 'L6'
   | 'L7' | 'L8' | 'L9' | 'L10' | 'L11';
 
+/** A goalie's suggestion for a new L-Index training item — stored in l_index_suggestions collection */
+export interface LIndexSuggestion {
+  id: string;
+  goalieId: string;
+  goalieDisplayName?: string;
+  suggestedName: string;
+  suggestedCategory?: TrainingCategory;
+  description?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Timestamp;
+  reviewedAt?: Timestamp;
+  reviewedBy?: string;
+}
+
 /** L-Index catalogue item — admin-managed */
 export interface LIndexItem {
   id: string;
@@ -727,4 +741,156 @@ export interface TrainingLogEntry {
   overallNote?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+// ─── Parent Chart Types ───────────────────────────────────────────────────────
+
+export type ParentEmotionalState =
+  | 'calm_focused'
+  | 'a_bit_nervous'
+  | 'distracted'
+  | 'upset'
+  | 'not_sure';
+
+export type ParentRoutineStatus =
+  | 'yes'
+  | 'mostly'
+  | 'dont_think_so'
+  | 'dont_know_routine';
+
+export type ParentCarRideMood =
+  | 'happy'
+  | 'neutral'
+  | 'frustrated'
+  | 'didnt_want_to_talk'
+  | 'great_conversation';
+
+export type ParentTalkAboutGame =
+  | 'yes_positive'
+  | 'yes_tense'
+  | 'briefly'
+  | 'no_gave_space';
+
+export type ParentNoticedObservation =
+  | 'looked_frustrated'
+  | 'seemed_tired'
+  | 'out_of_position'
+  | 'scored_on_and_shut_down'
+  | 'not_confident'
+  | 'other';
+
+export interface ParentPreGameData {
+  emotionalState: ParentEmotionalState;
+  followedRoutine: ParentRoutineStatus;
+  offIceNote?: string;
+}
+
+export interface ParentPeriodRatings {
+  engagedRating: number;        // 1-5
+  emotionalControlRating: number; // 1-5
+  skatingInSyncRating: number;  // 1-5
+  positioningRating: number;    // 1-5
+  overallImpressionRating: number; // 1-5
+  lowStarObservations?: ParentNoticedObservation[];
+  lowStarNote?: string;
+}
+
+export interface ParentPostGameData {
+  oneWordForGame: string;
+  onePositiveThing: string;
+  oneConcern: string;
+  carRideMood: ParentCarRideMood;
+  talkedAboutGame: ParentTalkAboutGame;
+}
+
+export interface ParentChartEntry {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  parentId: string;
+  parentName?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  preGame?: ParentPreGameData;
+  periods?: {
+    period1?: ParentPeriodRatings;
+    period2?: ParentPeriodRatings;
+    period3?: ParentPeriodRatings;
+  };
+  postGame?: ParentPostGameData;
+  completedSections: ('preGame' | 'periods' | 'postGame')[];
+}
+
+// ─── Coach Chart Types ────────────────────────────────────────────────────────
+
+export type CoachReadinessLevel =
+  | 'locked_in'
+  | 'solid'
+  | 'going_through_motions'
+  | 'unfocused'
+  | 'concerning';
+
+export type CoachPriorityFactor =
+  | 'engaged'
+  | 'mental_composure'
+  | 'skating_in_sync'
+  | 'positioning_7ams'
+  | 'below_line_6zs'
+  | 'form'
+  | 'reading_play';
+
+export interface CoachPreGameData {
+  readinessLevel: CoachReadinessLevel;
+  warmupQuality: number;   // 1-5
+  concerns?: string;
+}
+
+export interface CoachPeriodData {
+  engagedRating: number;
+  engagedBreakdown?: string;
+  engagedNote?: string;
+  mentalComposureRating: number;
+  mentalComposureBreakdown?: string;
+  mentalComposureNote?: string;
+  skatingInSyncRating: number;
+  skatingBreakdown?: string;
+  skatingNote?: string;
+  positioningRating: number;    // 7AMS
+  positioningBreakdown?: string;
+  positioningNote?: string;
+  belowLineRating: number;      // 6ZS
+  belowLineBreakdown?: string;
+  belowLineNote?: string;
+  formRating: number;
+  formBreakdown?: string;
+  formNote?: string;
+  readingPlayRating: number;
+  readingPlayBreakdown?: string;
+  readingPlayNote?: string;
+}
+
+export interface CoachPostGameData {
+  overallGameRating: number;    // 1-5
+  strengthNote: string;
+  priorityFactor: CoachPriorityFactor;
+  nextSessionFocus?: string;
+}
+
+export interface CoachChartEntry {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  coachId: string;
+  coachName?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  preGame?: CoachPreGameData;
+  periods?: {
+    period1?: CoachPeriodData;
+    period2?: CoachPeriodData;
+    period3?: CoachPeriodData;
+    overtime?: CoachPeriodData;
+  };
+  postGame?: CoachPostGameData;
+  completedSections: ('preGame' | 'periods' | 'postGame')[];
 }
