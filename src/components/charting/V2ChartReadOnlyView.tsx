@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 const BLUE = '#37b5ff';
-const PURPLE = '#a78bfa';
+const PURPLE = '#7dd3fc';
 
 type V2Fields = {
   v2PreGame?: V2PreGameData;
@@ -172,14 +172,6 @@ function PeriodsSection({ periods }: { periods: NonNullable<V2Fields['v2Periods'
                   </div>
                 ))}
               </div>
-
-              {/* Save % */}
-              {(p.shots ?? 0) > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${BLUE}0a`, border: `1px solid ${BLUE}20`, borderRadius: '7px', padding: '5px 8px' }}>
-                  <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>Save %</span>
-                  <span style={{ fontSize: '13px', fontWeight: 900, color: BLUE }}>{(((p.saves ?? 0) / (p.shots ?? 1)) * 100).toFixed(1)}%</span>
-                </div>
-              )}
 
               {/* Ratings */}
               <div>

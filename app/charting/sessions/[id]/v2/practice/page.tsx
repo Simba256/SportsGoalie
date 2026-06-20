@@ -329,7 +329,7 @@ export default function V2PracticeChartPage() {
   // ── Loading / error states ───────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+      <div className="min-h-screen p-4 md:p-6" style={{ background: '#041830' }}>
         <SkeletonContentPage />
       </div>
     );
@@ -337,10 +337,10 @@ export default function V2PracticeChartPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#041830' }}>
         <div className="text-center space-y-3">
           <p className="text-white/60">Session not found</p>
-          <Button variant="outline" onClick={() => router.push('/charting')} className="border-[rgba(0,255,153,0.3)] text-white/70 hover:text-white hover:bg-[rgba(0,255,153,0.1)]">
+          <Button variant="outline" onClick={() => router.push('/charting')} className="border-[rgba(55,181,255,0.3)] text-white/70 hover:text-white hover:bg-[rgba(52,211,153,0.1)]">
             Back to Sessions
           </Button>
         </div>
@@ -352,9 +352,9 @@ export default function V2PracticeChartPage() {
   const totalWorkedOn = formData.indexItemsWorkedOn.length;
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+    <div className="min-h-screen" style={{ background: '#041830' }}>
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: 'rgba(0,9,26,0.92)', borderColor: 'rgba(0,255,153,0.14)' }}>
+      <div className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: 'rgba(6,30,58,0.97)', borderColor: 'rgba(52,211,153,0.14)' }}>
         <div className="flex items-center justify-between px-4 md:px-6 h-14 md:h-16 max-w-5xl mx-auto">
           <button
             type="button"
@@ -363,7 +363,7 @@ export default function V2PracticeChartPage() {
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <h1 className="text-base md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#00FF99] to-white bg-clip-text text-transparent">
+          <h1 className="text-base md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#34d399] to-white bg-clip-text text-transparent">
             Practice Chart
           </h1>
           <Button
@@ -371,7 +371,7 @@ export default function V2PracticeChartPage() {
             onClick={handleSave}
             disabled={saving}
             className="rounded-lg px-3 md:px-4 h-9 text-xs md:text-sm font-semibold border-0"
-            style={{ background: 'linear-gradient(135deg, #00FF99, #00FFFF)', color: '#001a0d' }}
+            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff' }}
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -398,10 +398,10 @@ export default function V2PracticeChartPage() {
         </div>
 
         {/* ── Practice Index Dashboard ───────────────────────────────────── */}
-        <section className="rounded-2xl p-4 md:p-6 space-y-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+        <section className="rounded-2xl p-4 md:p-6 space-y-4" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,255,153,0.1)' }}>
-              <Target className="w-4 h-4" style={{ color: '#00FF99' }} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(52,211,153,0.1)' }}>
+              <Target className="w-4 h-4" style={{ color: '#34d399' }} />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-bold text-white">Practice Index</h3>
@@ -416,8 +416,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {totalIndexItems === 0 && (
-            <div className="rounded-xl p-3 flex gap-2.5 text-xs text-white/60" style={{ background: 'rgba(0,255,153,0.07)', border: '1px solid rgba(0,255,153,0.14)' }}>
-              <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#00FF99' }} />
+            <div className="rounded-xl p-3 flex gap-2.5 text-xs text-white/60" style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.14)' }}>
+              <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#34d399' }} />
               <p className="leading-relaxed">
                 No items from your last game were found. Add items manually in any category below.
                 Items you select will feed into the improvement ratings further down.
@@ -461,7 +461,7 @@ export default function V2PracticeChartPage() {
                             key={item.id}
                             className="group flex items-start gap-2 rounded-lg border px-2.5 py-2 transition-colors"
                             style={isSelected
-                              ? { background: 'rgba(0,255,153,0.1)', borderColor: '#00FF99', boxShadow: '0 0 0 1px rgba(0,255,153,0.25)' }
+                              ? { background: 'rgba(52,211,153,0.1)', borderColor: '#34d399', boxShadow: '0 0 0 1px rgba(52,211,153,0.25)' }
                               : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }
                             }
                           >
@@ -471,7 +471,7 @@ export default function V2PracticeChartPage() {
                               className={`flex-shrink-0 mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                                 isSelected
                                   ? 'bg-blue-500 border-blue-500'
-                                  : 'border-white/20 bg-transparent hover:border-[#00FF99]'
+                                  : 'border-white/20 bg-transparent hover:border-[#34d399]'
                               }`}
                               aria-label={isSelected ? 'Deselect item' : 'Mark as worked on'}
                             >
@@ -492,7 +492,7 @@ export default function V2PracticeChartPage() {
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); router.push(getPillarUrl(item.pillarSlug as PillarSlug)); }}
                                   className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded transition-opacity hover:opacity-70"
-                                  style={{ background: 'rgba(179,136,255,0.12)', color: 'rgba(179,136,255,0.8)', border: '1px solid rgba(179,136,255,0.2)' }}
+                                  style={{ background: 'rgba(55,181,255,0.12)', color: 'rgba(125,211,252,0.8)', border: '1px solid rgba(55,181,255,0.2)' }}
                                 >
                                   {item.pillarSlug.replace(/_/g, ' ')}
                                   <ArrowRight className="w-2.5 h-2.5" />
@@ -536,7 +536,7 @@ export default function V2PracticeChartPage() {
                       onClick={() => addIndexItem(cat.key)}
                       disabled={!draftLabel[cat.key].trim()}
                       className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-30 hover:opacity-90 transition-opacity"
-                      style={{ background: '#00FF99', color: '#001a0d' }}
+                      style={{ background: '#34d399', color: '#fff' }}
                       aria-label="Add item"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -562,8 +562,8 @@ export default function V2PracticeChartPage() {
         {/* ── Core Fields ────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* #1 Practice Value Rating */}
-          <div className="rounded-xl p-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#00FF99' }}>
+          <div className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#34d399' }}>
               #1 · Practice Value
             </span>
             <ContextualHelp
@@ -579,8 +579,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {/* #2 Designated Training */}
-          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#00FF99' }}>
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#34d399' }}>
               #2 · Designated Training
             </span>
             <ContextualHelp
@@ -597,7 +597,7 @@ export default function V2PracticeChartPage() {
             </ContextualHelp>
 
             {formData.designatedTrainingReceived && (
-              <div className="pt-2 border-t space-y-2 animate-in fade-in slide-in-from-top-1 duration-200" style={{ borderColor: 'rgba(0,255,153,0.1)' }}>
+              <div className="pt-2 border-t space-y-2 animate-in fade-in slide-in-from-top-1 duration-200" style={{ borderColor: 'rgba(52,211,153,0.1)' }}>
                 <p className="text-xs font-semibold text-white/70">
                   How long? (5-minute increments)
                 </p>
@@ -611,8 +611,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {/* #4 Video Captured */}
-          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#00FF99' }}>
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#34d399' }}>
               #4 · Video
             </span>
             <ContextualHelp
@@ -626,8 +626,8 @@ export default function V2PracticeChartPage() {
             </ContextualHelp>
 
             {formData.videoCaptured && (
-              <div className="pt-2 border-t animate-in fade-in slide-in-from-top-1 duration-200" style={{ borderColor: 'rgba(0,255,153,0.1)' }}>
-                <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: 'rgba(0,255,153,0.08)', border: '1px solid rgba(0,255,153,0.15)', color: '#00FF99' }}>
+              <div className="pt-2 border-t animate-in fade-in slide-in-from-top-1 duration-200" style={{ borderColor: 'rgba(52,211,153,0.1)' }}>
+                <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)', color: '#34d399' }}>
                   <Video className="w-3.5 h-3.5" />
                   Upload flow for mentor review coming soon.
                 </div>
@@ -636,8 +636,8 @@ export default function V2PracticeChartPage() {
           </div>
 
           {/* #7 Technical Eye */}
-          <div className="rounded-xl p-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#00FF99' }}>
+          <div className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#34d399' }}>
               #7 · Technical Eye
             </span>
             <ContextualHelp
@@ -655,10 +655,10 @@ export default function V2PracticeChartPage() {
 
         {/* ── #5 Improvement Ratings ────────────────────────────────────── */}
         {workedOnItems.length > 0 && (
-          <section className="rounded-2xl p-4 md:p-6 space-y-4" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+          <section className="rounded-2xl p-4 md:p-6 space-y-4" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,255,153,0.1)' }}>
-                <Eye className="w-4 h-4" style={{ color: '#00FF99' }} />
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(52,211,153,0.1)' }}>
+                <Eye className="w-4 h-4" style={{ color: '#34d399' }} />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white">
@@ -703,10 +703,10 @@ export default function V2PracticeChartPage() {
         )}
 
         {/* ── #6 Mind Vault ──────────────────────────────────────────────── */}
-        <section className="rounded-2xl p-4 md:p-6" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,153,0.14)' }}>
+        <section className="rounded-2xl p-4 md:p-6" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(52,211,153,0.14)' }}>
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,255,153,0.1)' }}>
-              <Brain className="w-4 h-4" style={{ color: '#00FF99' }} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(52,211,153,0.1)' }}>
+              <Brain className="w-4 h-4" style={{ color: '#34d399' }} />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">#6 · One thing for the Mind Vault</h3>
@@ -729,7 +729,7 @@ export default function V2PracticeChartPage() {
             onClick={handleSave}
             disabled={saving}
             className="w-full sm:w-auto h-11 rounded-lg text-sm font-bold px-8 border-0"
-            style={{ background: 'linear-gradient(135deg, #00FF99, #00FFFF)', color: '#001a0d', boxShadow: '0 4px 14px rgba(0,255,153,0.3)' }}
+            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff', boxShadow: '0 4px 14px rgba(55,181,255,0.3)' }}
           >
             {saving ? (
               <>

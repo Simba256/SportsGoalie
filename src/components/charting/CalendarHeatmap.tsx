@@ -16,7 +16,6 @@ export const CalendarHeatmap = ({
   chartingEntries,
   dynamicEntries = [],
   onDayClick,
-  colorScheme = 'default',
 }: CalendarHeatmapProps) => {
   const today = startOfDay(new Date());
   const yearStart = addDays(today, -365);
@@ -32,19 +31,14 @@ export const CalendarHeatmap = ({
     ) {
       return (rawDate as { toDate: () => Date }).toDate();
     }
-    if (rawDate instanceof Date) {
-      return rawDate;
-    }
+    if (rawDate instanceof Date) return rawDate;
     if (typeof rawDate === 'string' || typeof rawDate === 'number') {
       const parsed = new Date(rawDate);
-      if (!Number.isNaN(parsed.getTime())) {
-        return parsed;
-      }
+      if (!Number.isNaN(parsed.getTime())) return parsed;
     }
     return null;
   };
 
-  // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
     const sessionDate = toJsDate((session as unknown as { date?: unknown }).date);
     if (!sessionDate) return acc;
@@ -56,37 +50,18 @@ export const CalendarHeatmap = ({
 
   const isLegacyEntryComplete = (entry: any): boolean => {
     if (!entry) return false;
-    const hasPreGame = !!entry.preGame;
-    const hasGameOverview = !!entry.gameOverview;
-    const hasPeriods = !!entry.period1 && !!entry.period2 && !!entry.period3;
-    const hasPostGame = !!entry.postGame;
-    return hasPreGame && hasGameOverview && hasPeriods && hasPostGame;
+    return !!entry.preGame && !!entry.gameOverview && !!entry.period1 && !!entry.period2 && !!entry.period3 && !!entry.postGame;
   };
 
-  const isDynamicEntryComplete = (entry: DynamicChartingEntry): boolean => {
-    if (!entry) return false;
-    return entry.isComplete === true;
-  };
+  const isDynamicEntryComplete = (entry: DynamicChartingEntry): boolean => !!entry?.isComplete;
+  const isDynamicEntryPartial  = (entry: DynamicChartingEntry): boolean => !!(entry?.completionPercentage > 0 && !entry.isComplete);
 
-  const isDynamicEntryPartial = (entry: DynamicChartingEntry): boolean => {
-    if (!entry) return false;
-    return entry.completionPercentage > 0 && !entry.isComplete;
-  };
-
-  const legacyEntriesBySession = chartingEntries.reduce((acc, entry) => {
-    acc[entry.sessionId] = entry;
-    return acc;
-  }, {} as Record<string, any>);
-
-  const dynamicEntriesBySession = dynamicEntries.reduce((acc, entry) => {
-    acc[entry.sessionId] = entry;
-    return acc;
-  }, {} as Record<string, DynamicChartingEntry>);
+  const legacyEntriesBySession  = chartingEntries.reduce((acc, e) => { acc[e.sessionId] = e; return acc; }, {} as Record<string, any>);
+  const dynamicEntriesBySession = dynamicEntries.reduce((acc, e) => { acc[e.sessionId] = e; return acc; }, {} as Record<string, DynamicChartingEntry>);
 
   const getCompletionLevel = (date: Date): number => {
     const dateKey = format(date, 'yyyy-MM-dd');
     const daySessions = sessionsByDate[dateKey];
-
     if (!daySessions || daySessions.length === 0) return 0;
 
     let fullyCompleteCount = 0;
@@ -95,125 +70,97 @@ export const CalendarHeatmap = ({
     daySessions.forEach(session => {
       const dynamicEntry = dynamicEntriesBySession[session.id];
       if (dynamicEntry) {
-        if (isDynamicEntryComplete(dynamicEntry)) {
-          fullyCompleteCount++;
-        } else if (isDynamicEntryPartial(dynamicEntry)) {
-          partiallyCompleteCount++;
-        }
+        if (isDynamicEntryComplete(dynamicEntry)) fullyCompleteCount++;
+        else if (isDynamicEntryPartial(dynamicEntry)) partiallyCompleteCount++;
         return;
       }
-
       const legacyEntry = legacyEntriesBySession[session.id];
       if (legacyEntry) {
-        if (isLegacyEntryComplete(legacyEntry)) {
-          fullyCompleteCount++;
-        } else {
-          partiallyCompleteCount++;
-        }
+        if (isLegacyEntryComplete(legacyEntry)) fullyCompleteCount++;
+        else partiallyCompleteCount++;
       }
     });
 
     const totalCount = daySessions.length;
-
-    if (fullyCompleteCount === 0 && partiallyCompleteCount === 0) {
-      return 1; // Scheduled but not charted
-    }
-
-    if (fullyCompleteCount === totalCount) {
-      return 3; // Complete
-    }
-
-    return 2; // Partial
+    if (fullyCompleteCount === 0 && partiallyCompleteCount === 0) return 1;
+    if (fullyCompleteCount === totalCount) return 3;
+    return 2;
   };
 
-  const getBackgroundColor = (level: number): string => {
-    if (colorScheme === 'blue') {
-      switch (level) {
-        case 0: return 'bg-white/10 hover:bg-white/15';
-        case 1: return 'bg-blue-900/70 hover:bg-blue-800/70';
-        case 2: return 'bg-blue-500/60 hover:bg-blue-400/70';
-        case 3: return 'bg-blue-500 hover:bg-blue-400';
-        default: return 'bg-white/10';
-      }
-    }
-
+  const getCellStyle = (level: number, isToday: boolean): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      width: '14px',
+      height: '14px',
+      borderRadius: '50%',
+      cursor: 'pointer',
+      transition: 'all 0.15s',
+      border: 'none',
+      padding: 0,
+      flexShrink: 0,
+      outline: isToday ? '2px solid rgba(55,181,255,0.85)' : undefined,
+      outlineOffset: isToday ? '2px' : undefined,
+    };
     switch (level) {
-      case 0: return 'bg-muted/50 hover:bg-muted'; // No session
-      case 1: return 'bg-primary/20 hover:bg-primary/30'; // Scheduled
-      case 2: return 'bg-primary/50 hover:bg-primary/60'; // Partial
-      case 3: return 'bg-primary hover:bg-primary/90'; // Complete
-      default: return 'bg-muted/50';
+      case 0: return { ...base, background: 'rgba(255,255,255,0.07)' };
+      case 1: return { ...base, background: 'rgba(55,181,255,0.22)', border: '1px solid rgba(55,181,255,0.35)' };
+      case 2: return { ...base, background: 'rgba(55,181,255,0.55)', boxShadow: '0 0 5px rgba(55,181,255,0.35)' };
+      case 3: return { ...base, background: '#37b5ff', boxShadow: '0 0 8px rgba(55,181,255,0.7), 0 0 2px rgba(55,181,255,0.9)' };
+      default: return { ...base, background: 'rgba(255,255,255,0.07)' };
     }
   };
 
-  // Build grid
   const firstDate = addDays(yearStart, -getDay(yearStart));
   const weeksNeeded = Math.ceil((totalDays + getDay(yearStart)) / 7);
-
   const grid: Date[][] = Array.from({ length: 7 }, () => []);
 
   for (let week = 0; week < weeksNeeded; week++) {
     for (let day = 0; day < 7; day++) {
-      const date = addDays(firstDate, week * 7 + day);
-      grid[day].push(date);
+      grid[day].push(addDays(firstDate, week * 7 + day));
     }
   }
 
   const monthLabels: { label: string; weekIndex: number }[] = [];
   let lastMonth = -1;
-
-  const textToneClass = colorScheme === 'blue' ? 'text-white/70' : 'text-muted-foreground';
-  const summaryToneClass = colorScheme === 'blue' ? 'text-white/40' : 'text-muted-foreground';
-  const todayRingClass = colorScheme === 'blue'
-    ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-[#030f25]'
-    : 'ring-2 ring-accent ring-offset-1 ring-offset-background';
-
   for (let week = 0; week < weeksNeeded; week++) {
     const date = addDays(firstDate, week * 7);
     const month = date.getMonth();
-
     if (month !== lastMonth && date >= yearStart && date <= yearEnd) {
-      monthLabels.push({
-        label: format(date, 'MMM'),
-        weekIndex: week,
-      });
+      monthLabels.push({ label: format(date, 'MMM'), weekIndex: week });
       lastMonth = month;
     }
   }
 
+  const LEGEND = [
+    { label: 'None',      style: { background: 'rgba(255,255,255,0.07)' } as React.CSSProperties },
+    { label: 'Scheduled', style: { background: 'rgba(55,181,255,0.22)', border: '1px solid rgba(55,181,255,0.35)' } as React.CSSProperties },
+    { label: 'Partial',   style: { background: 'rgba(55,181,255,0.55)', boxShadow: '0 0 5px rgba(55,181,255,0.35)' } as React.CSSProperties },
+    { label: 'Complete',  style: { background: '#37b5ff', boxShadow: '0 0 8px rgba(55,181,255,0.6)' } as React.CSSProperties },
+  ];
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      <style>{`.cal-heatmap-scroll::-webkit-scrollbar{display:none}`}</style>
+
       {/* Legend */}
-      <div className={`flex flex-wrap items-center gap-4 text-sm ${textToneClass}`}>
-        <span className="font-medium">Activity:</span>
-        <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-white/10' : 'bg-muted/50 border border-border'}`}></div>
-          <span>None</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-blue-900/70' : 'bg-primary/20'}`}></div>
-          <span>Scheduled</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-blue-500/60' : 'bg-primary/50'}`}></div>
-          <span>Partial</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className={`w-3.5 h-3.5 rounded-full ${colorScheme === 'blue' ? 'bg-blue-500' : 'bg-primary'}`}></div>
-          <span>Complete</span>
-        </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Legend</span>
+        {LEGEND.map(({ label, style }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', flexShrink: 0, ...style }} />
+            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Heatmap Grid */}
-      <div className="overflow-x-auto pb-2">
+      <div className="overflow-x-auto pb-2 cal-heatmap-scroll" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <div className="inline-flex flex-col gap-1 min-w-max">
           {/* Month labels */}
           <div className="relative h-5 ml-10 mb-1">
             {monthLabels.map((month) => (
               <div
                 key={month.weekIndex}
-                  className={`absolute text-xs font-medium ${textToneClass}`}
-                style={{ left: `${month.weekIndex * 18}px` }}
+                style={{ position: 'absolute', left: `${month.weekIndex * 20}px`, fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}
               >
                 {month.label}
               </div>
@@ -223,25 +170,23 @@ export const CalendarHeatmap = ({
           {/* Grid container with day labels */}
           <div className="flex gap-2">
             {/* Day labels */}
-            <div className="flex flex-col gap-[6px] pr-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '8px' }}>
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-                <div key={day} className={`h-3.5 flex items-center text-xs ${colorScheme === 'blue' ? 'text-white/35' : 'text-slate-400'}`}>
+                <div key={day} style={{ height: '14px', display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
                   {idx % 2 === 1 ? day[0] : ''}
                 </div>
               ))}
             </div>
 
             {/* Weeks (columns) */}
-            <div className="flex gap-[6px]">
+            <div style={{ display: 'flex', gap: '6px' }}>
               {grid[0].map((_, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-[6px]">
+                <div key={weekIndex} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {grid.map((row, dayIndex) => {
                     const date = row[weekIndex];
                     const isInRange = date >= yearStart && date <= yearEnd;
 
-                    if (!isInRange) {
-                      return <div key={dayIndex} className="w-3.5 h-3.5" />;
-                    }
+                    if (!isInRange) return <div key={dayIndex} style={{ width: '14px', height: '14px' }} />;
 
                     const level = getCompletionLevel(date);
                     const dateKey = format(date, 'yyyy-MM-dd');
@@ -252,11 +197,7 @@ export const CalendarHeatmap = ({
                       <button
                         key={dayIndex}
                         onClick={() => onDayClick(date, daySessions)}
-                        className={`
-                          w-3.5 h-3.5 rounded-full transition-all
-                          ${getBackgroundColor(level)}
-                          ${isToday ? todayRingClass : ''}
-                        `}
+                        style={getCellStyle(level, isToday)}
                         title={`${format(date, 'MMM d, yyyy')}: ${daySessions.length} session${daySessions.length !== 1 ? 's' : ''}`}
                       />
                     );
@@ -269,8 +210,8 @@ export const CalendarHeatmap = ({
       </div>
 
       {/* Summary */}
-      <div className={`text-sm pt-3 border-t ${colorScheme === 'blue' ? 'border-white/10' : 'border-slate-100'} ${summaryToneClass}`}>
-        <p>{format(yearStart, 'MMM d, yyyy')} - {format(yearEnd, 'MMM d, yyyy')} &bull; {sessions.length} sessions &bull; 1 year past &bull; Click any day for details</p>
+      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', fontWeight: 500 }}>
+        {format(yearStart, 'MMM d, yyyy')} &ndash; {format(yearEnd, 'MMM d, yyyy')} &bull; {sessions.length} total sessions
       </div>
     </div>
   );

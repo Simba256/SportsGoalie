@@ -7,8 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session, V2PeriodData, GoalEntry } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Loader2, Plus, X, Brain, Zap, Target, Layers, Crosshair, HelpCircle, ArrowRight } from 'lucide-react';
-import { getPillarUrl } from '@/lib/utils/pillars';
+import { ArrowLeft, Save, Loader2, Plus, X, Brain, Zap, Target, Layers, Crosshair, HelpCircle } from 'lucide-react';
 import {
   ContextualHelp,
   RotatingNumberSelector,
@@ -105,7 +104,7 @@ interface StatRowProps {
 
 function StatRow({ label, value, onChange, helpText }: StatRowProps) {
   const [helpOpen, setHelpOpen] = useState(false);
-  const plusBg = '#B388FF';
+  const plusBg = '#7dd3fc';
 
   return (
     <div>
@@ -116,7 +115,7 @@ function StatRow({ label, value, onChange, helpText }: StatRowProps) {
           className="flex items-center gap-2 text-left group"
         >
           <span className="text-sm font-semibold text-white group-hover:text-white/80 transition-colors">{label}</span>
-          <HelpCircle className="w-3.5 h-3.5 text-white/25 group-hover:text-[#00FFFF] transition-colors flex-shrink-0" />
+          <HelpCircle className="w-3.5 h-3.5 text-white/25 group-hover:text-[#37b5ff] transition-colors flex-shrink-0" />
         </button>
         <div className="flex items-center gap-2">
           <button
@@ -142,7 +141,7 @@ function StatRow({ label, value, onChange, helpText }: StatRowProps) {
       </div>
       {helpOpen && (
         <div className="px-4 pb-3 -mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
-          <p className="text-xs text-white/55 leading-relaxed rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,255,255,0.06)', border: '1px solid rgba(0,255,255,0.1)' }}>
+          <p className="text-xs text-white/55 leading-relaxed rounded-lg px-3 py-2.5" style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.1)' }}>
             {helpText}
           </p>
         </div>
@@ -277,7 +276,7 @@ export default function V2PeriodsPage() {
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+      <div className="min-h-screen p-6" style={{ background: '#041830' }}>
         <SkeletonContentPage />
       </div>
     );
@@ -285,19 +284,19 @@ export default function V2PeriodsPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#041830' }}>
         <div className="text-center space-y-3">
           <p className="text-white/60">Session not found</p>
-          <Button variant="outline" onClick={() => router.push('/charting')} className="border-[rgba(0,255,255,0.3)] text-white/70 hover:text-white hover:bg-[rgba(0,255,255,0.1)]">Back to Sessions</Button>
+          <Button variant="outline" onClick={() => router.push('/charting')} className="border-[rgba(55,181,255,0.3)] text-white/70 hover:text-white hover:bg-[rgba(55,181,255,0.1)]">Back to Sessions</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+    <div className="min-h-screen" style={{ background: '#041830' }}>
       {/* ── Top bar ────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: 'rgba(0,9,26,0.92)', borderColor: 'rgba(0,255,255,0.14)' }}>
+      <div className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: 'rgba(6,30,58,0.97)', borderColor: 'rgba(55,181,255,0.14)' }}>
         <div className="flex items-center justify-between px-6 h-14">
           <button
             type="button"
@@ -312,7 +311,7 @@ export default function V2PeriodsPage() {
             onClick={handleSave}
             disabled={saving}
             className="rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: 'linear-gradient(135deg, #00FFFF, #00FF99)', color: '#001a1a' }}
+            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff' }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
           </Button>
@@ -332,7 +331,7 @@ export default function V2PeriodsPage() {
                     : 'text-white/50 hover:text-white/80'
                 }`}
                 style={activeTab === tab.key
-                  ? { background: '#00FFFF', boxShadow: '0 2px 8px rgba(0,255,255,0.25)' }
+                  ? { background: '#37b5ff', boxShadow: '0 2px 8px rgba(55,181,255,0.25)' }
                   : { background: 'rgba(255,255,255,0.07)' }
                 }
               >
@@ -344,7 +343,7 @@ export default function V2PeriodsPage() {
               <button
                 type="button"
                 onClick={() => { setShowOvertime(true); setActiveTab('overtime'); }}
-                className="h-8 px-3 rounded-lg text-xs font-medium text-white/40 hover:text-[#00FFFF] transition-colors flex items-center gap-1"
+                className="h-8 px-3 rounded-lg text-xs font-medium text-white/40 hover:text-[#37b5ff] transition-colors flex items-center gap-1"
                 style={{ background: 'rgba(255,255,255,0.04)' }}
               >
                 <Plus className="w-3 h-3" /> OT
@@ -355,11 +354,11 @@ export default function V2PeriodsPage() {
       </div>
 
       {/* ── Form ─────────────────────────────────────────────────────────── */}
-      <div className="px-6 py-6 space-y-5">
+      <div className="px-8 py-6 space-y-8">
 
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-black text-white">
+            <h2 className="text-3xl font-black text-white">
               {allTabs.find(t => t.key === activeTab)?.label}
             </h2>
             <p className="text-sm text-white/50 mt-0.5">
@@ -379,7 +378,7 @@ export default function V2PeriodsPage() {
         </div>
 
         {/* ── Stat Counters ────────────────────────────────────────────────── */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
           <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <p className="text-xs font-bold uppercase tracking-wider text-white/40">Period Stats</p>
             <p className="text-[11px] text-white/30 mt-0.5">Tap any stat label to see its definition</p>
@@ -402,19 +401,11 @@ export default function V2PeriodsPage() {
             <StatRow label="Mid-Challenge" value={activePeriod.midChallengeCount} onChange={(v) => updatePeriod('midChallengeCount', v)} helpText="Shots from mid-danger positions this period — outside edge of the slot, point shots with traffic, perimeter shots through screens." />
             <StatRow label="High-Challenge" value={activePeriod.highChallengeCount} onChange={(v) => updatePeriod('highChallengeCount', v)} helpText="Shots from high-danger positions — in-tight, in-close, slot, breakaways, cross-crease passes. These test your reads and reactions most." />
           </div>
-          {activePeriod.shots > 0 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: 'rgba(0,255,255,0.12)', background: 'rgba(0,255,255,0.05)' }}>
-              <span className="text-sm font-semibold text-white/50">Save %</span>
-              <span className="text-lg font-black tabular-nums" style={{ color: '#00FFFF' }}>
-                {((activePeriod.saves / activePeriod.shots) * 100).toFixed(1)}%
-              </span>
-            </div>
-          )}
         </div>
 
         {/* ── Goal Classification ───────────────────────────────────────────── */}
         {activePeriod.goalsAgainst > 0 && (
-          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
               label="Goal Classification"
               helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Bad Goal: Breakdown in position, read, form, or mental execution within your control."
@@ -430,7 +421,7 @@ export default function V2PeriodsPage() {
 
         {/* ── Period Factor Ratio — 5-Pillar only ──────────────────────────── */}
         {!isBasic && (
-          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
               label="Period Factor Ratio"
               helpText="How challenging was this period? 1 = Low challenge, easy opposition. 5 = Maximum challenge, elite opposition, constant pressure."
@@ -453,13 +444,13 @@ export default function V2PeriodsPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
 
             {/* ── Mind-Set (Mind Control) ──────────────────────────────────── */}
             <div className="rounded-xl p-4 space-y-3 transition-colors duration-300" style={
               activePeriod.mindControlRating <= 2
                 ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }
-                : { background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }
+                : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
             }>
               <ContextualHelp
                 label="Mind Control"
@@ -546,16 +537,15 @@ export default function V2PeriodsPage() {
                   </div>
 
                   {/* Step 3 — Pillar connection indicator */}
-                  <button type="button" onClick={() => router.push(getPillarUrl('mindset'))} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-opacity hover:opacity-80 active:opacity-60" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                  <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.12)' }}>
                       <Brain className="w-3.5 h-3.5 text-red-400" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Connects to Pillar</p>
-                      <p className="text-xs font-semibold text-white/70">Mindset — Mind-Set Development</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
+                      <p className="text-xs font-semibold text-white/70">Work on Mindset — Mind-Set Development</p>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-red-400/60 flex-shrink-0" />
-                  </button>
+                  </div>
 
                 </div>
               )}
@@ -569,7 +559,7 @@ export default function V2PeriodsPage() {
               <div className="rounded-xl p-4 space-y-3 transition-colors duration-300" style={
                 activePeriod.skatingRating !== undefined && activePeriod.skatingRating <= 2
                   ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }
-                  : { background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }
+                  : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
               }>
                 <ContextualHelp
                   label="Skating"
@@ -600,16 +590,15 @@ export default function V2PeriodsPage() {
                       initialText={activePeriod.skatingVoiceNote}
                       placeholder="Describe the skating breakdown this period..."
                     />
-                    <button type="button" onClick={() => router.push(getPillarUrl('skating'))} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-opacity hover:opacity-80 active:opacity-60" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                    <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.12)' }}>
                         <Zap className="w-3.5 h-3.5 text-red-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Connects to Pillar</p>
-                        <p className="text-xs font-semibold text-white/70">Skating — Athletic Foundation</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
+                        <p className="text-xs font-semibold text-white/70">Work on Skating — Athletic Foundation</p>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-red-400/60 flex-shrink-0" />
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -618,7 +607,7 @@ export default function V2PeriodsPage() {
               <div className="rounded-xl p-4 space-y-3 transition-colors duration-300" style={
                 activePeriod.sevenAMSRating !== undefined && activePeriod.sevenAMSRating <= 2
                   ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }
-                  : { background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }
+                  : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
               }>
                 <ContextualHelp
                   label="7AMS — Angle Marks"
@@ -649,16 +638,15 @@ export default function V2PeriodsPage() {
                       initialText={activePeriod.sevenAMSVoiceNote}
                       placeholder="Describe the angle or positioning breakdown..."
                     />
-                    <button type="button" onClick={() => router.push(getPillarUrl('positioning'))} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-opacity hover:opacity-80 active:opacity-60" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                    <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.12)' }}>
                         <Target className="w-3.5 h-3.5 text-red-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Connects to Pillar</p>
-                        <p className="text-xs font-semibold text-white/70">7AMS — Seven Angle-Mark System</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
+                        <p className="text-xs font-semibold text-white/70">Work on 7AMS — Seven Angle-Mark System</p>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-red-400/60 flex-shrink-0" />
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -667,7 +655,7 @@ export default function V2PeriodsPage() {
               <div className="rounded-xl p-4 space-y-3 transition-colors duration-300" style={
                 activePeriod.sixZSRating !== undefined && activePeriod.sixZSRating <= 2
                   ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }
-                  : { background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }
+                  : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
               }>
                 <ContextualHelp
                   label="6ZS — Zone Command"
@@ -698,16 +686,15 @@ export default function V2PeriodsPage() {
                       initialText={activePeriod.sixZSVoiceNote}
                       placeholder="Describe the zone read or positioning breakdown..."
                     />
-                    <button type="button" onClick={() => router.push(getPillarUrl('seven_point'))} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-opacity hover:opacity-80 active:opacity-60" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                    <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.12)' }}>
                         <Layers className="w-3.5 h-3.5 text-red-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Connects to Pillar</p>
-                        <p className="text-xs font-semibold text-white/70">6ZS — Six Zone System</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
+                        <p className="text-xs font-semibold text-white/70">Work on 6ZS — Six Zone System</p>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-red-400/60 flex-shrink-0" />
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -716,7 +703,7 @@ export default function V2PeriodsPage() {
               <div className="rounded-xl p-4 space-y-3 transition-colors duration-300" style={
                 activePeriod.formRating !== undefined && activePeriod.formRating <= 2
                   ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }
-                  : { background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }
+                  : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
               }>
                 <ContextualHelp
                   label="Form"
@@ -747,16 +734,15 @@ export default function V2PeriodsPage() {
                       initialText={activePeriod.formVoiceNote}
                       placeholder="Describe where the cross or equilibrium broke down..."
                     />
-                    <button type="button" onClick={() => router.push(getPillarUrl('form'))} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-opacity hover:opacity-80 active:opacity-60" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                    <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.12)' }}>
                         <Crosshair className="w-3.5 h-3.5 text-red-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Connects to Pillar</p>
-                        <p className="text-xs font-semibold text-white/70">Form — Cross Theory & Equilibrium</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
+                        <p className="text-xs font-semibold text-white/70">Work on Form — Cross Theory & Equilibrium</p>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-red-400/60 flex-shrink-0" />
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -773,7 +759,7 @@ export default function V2PeriodsPage() {
             onClick={handleSave}
             disabled={saving}
             className="w-full sm:w-auto h-10 rounded-lg text-sm font-bold px-8 border-0"
-            style={{ background: 'linear-gradient(135deg, #00FFFF, #00FF99)', color: '#001a1a', boxShadow: '0 4px 14px rgba(0,255,255,0.3)' }}
+            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff', boxShadow: '0 4px 14px rgba(55,181,255,0.3)' }}
           >
             {saving ? (
               <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>
