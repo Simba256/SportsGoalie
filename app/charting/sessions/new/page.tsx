@@ -10,7 +10,7 @@ import { RadioGroup } from '@/components/ui/radio-group';
 import { ArrowLeft, Save, Trophy, Dumbbell, MapPin, CalendarDays, Users, Tag } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 
-const BLUE  = '#00FFFF';
+const BLUE  = '#37b5ff';
 const MUTED = 'rgba(255,255,255,0.38)';
 const LABEL = 'rgba(255,255,255,0.55)';
 
@@ -65,16 +65,16 @@ export default function NewSessionPage() {
     <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
       {/* ── SLIM HEADER ── */}
-      <div style={{ position: 'relative', borderRadius: '14px', background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 55%, #0d0b1c 100%)', border: '1px solid rgba(0,255,255,0.16)', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', borderRadius: '14px', background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.16)', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent 0%, ${BLUE} 40%, rgba(255,255,255,0.5) 70%, transparent 100%)` }} />
-        <div style={{ position: 'absolute', top: '-30px', right: '-10px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,255,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-30px', right: '-10px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(55,181,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px' }}>
           <button
             type="button"
             onClick={() => router.back()}
             style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,255,255,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'; }}
           >
             <ArrowLeft size={15} />
@@ -90,7 +90,7 @@ export default function NewSessionPage() {
       </div>
 
       {/* ── FORM CARD ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: '1px solid rgba(0,255,255,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
+      <div style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
         <form onSubmit={handleSubmit}>
 
           {/* Session Type */}
@@ -110,9 +110,9 @@ export default function NewSessionPage() {
                   <div
                     key={value}
                     onClick={() => setFormData({ ...formData, type: value as 'game' | 'practice' })}
-                    style={{ border: `2px solid ${active ? BLUE : 'rgba(255,255,255,0.1)'}`, background: active ? 'rgba(0,255,255,0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '10px' }}
+                    style={{ border: `2px solid ${active ? BLUE : 'rgba(255,255,255,0.1)'}`, background: active ? 'rgba(55,181,255,0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '10px' }}
                   >
-                    <div style={{ width: '34px', height: '34px', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(0,255,255,0.18)' : 'rgba(255,255,255,0.07)', flexShrink: 0 }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(55,181,255,0.18)' : 'rgba(255,255,255,0.07)', flexShrink: 0 }}>
                       <Icon size={16} color={active ? BLUE : 'rgba(255,255,255,0.35)'} />
                     </div>
                     <div>
@@ -175,7 +175,7 @@ export default function NewSessionPage() {
                       setFormData({ ...formData, tags });
                     }}
                     style={isSelected
-                      ? { background: BLUE, color: '#001a0d', border: 'none', borderRadius: '99px', padding: '5px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,255,255,0.3)' }
+                      ? { background: BLUE, color: '#fff', border: 'none', borderRadius: '99px', padding: '5px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(55,181,255,0.3)' }
                       : { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                   >
                     {tag}
@@ -198,7 +198,7 @@ export default function NewSessionPage() {
             <button
               type="submit"
               disabled={loading}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '9px 20px', background: `linear-gradient(135deg, ${BLUE}, #00FF99)`, border: 'none', borderRadius: '9px', color: '#001a0d', fontSize: '13px', fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 14px rgba(0,255,255,0.3)' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '9px 20px', background: `linear-gradient(135deg, ${BLUE}, #34d399)`, border: 'none', borderRadius: '9px', color: '#fff', fontSize: '13px', fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 14px rgba(55,181,255,0.3)' }}
             >
               {loading ? (
                 <>

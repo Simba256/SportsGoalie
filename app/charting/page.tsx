@@ -7,16 +7,16 @@ import { chartingService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
 import { Session, SessionStats, DynamicChartingEntry, ChartingEntry } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, TrendingUp, CheckCircle2, X, ArrowRight, BarChart2 } from 'lucide-react';
+import { Plus, Calendar, X, ArrowRight, BarChart2 } from 'lucide-react';
 import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import { NewSessionModal } from '@/components/charting/NewSessionModal';
 
-const CYAN   = '#00FFFF';
-const MINT   = '#00FF99';
-const VIOLET = '#B388FF';
-const CORAL  = '#FF6B6B';
+const CYAN   = '#37b5ff';
+const MINT   = '#34d399';
+const VIOLET = '#7dd3fc';
+const CORAL  = '#f87171';
 const MUTED  = 'rgba(255,255,255,0.38)';
 const LABEL  = 'rgba(255,255,255,0.55)';
 
@@ -149,7 +149,7 @@ export default function ChartingPage() {
   if (!user) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
       <style>{`
         .charting-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
         .metric-card-ch { transition: border-color .2s, transform .2s; }
@@ -157,7 +157,7 @@ export default function ChartingPage() {
       `}</style>
 
       {/* ── HEADER CARD ── */}
-      <div style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 55%, #0d0b1c 100%)', border: '1px solid rgba(0,255,255,0.18)', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)', overflow: 'hidden' }}>
         {/* cyan top line */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, transparent 0%, ${CYAN} 35%, ${MINT} 65%, transparent 100%)` }} />
 
@@ -170,7 +170,7 @@ export default function ChartingPage() {
                 Performance Tracking
               </p>
               <h1 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-.03em', lineHeight: 1, marginBottom: '12px' }}>
-                Chart Every <span style={{ color: CYAN, textShadow: `0 0 20px rgba(0,255,255,0.4)` }}>Session</span>
+                Chart Every <span style={{ color: CYAN, textShadow: `0 0 20px rgba(55,181,255,0.4)` }}>Session</span>
               </h1>
               <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
                 {stats.totalSessions > 0
@@ -180,7 +180,7 @@ export default function ChartingPage() {
               <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => setShowNewSession(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: `linear-gradient(135deg, ${CYAN}, ${MINT})`, border: 'none', borderRadius: '9px', padding: '9px 18px', color: '#001a0d', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 18px rgba(0,255,255,0.35)` }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: `linear-gradient(135deg, ${CYAN}, ${MINT})`, border: 'none', borderRadius: '9px', padding: '9px 18px', color: '#fff', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 18px rgba(55,181,255,0.35)` }}
                 >
                   <Plus size={13} /> New Session
                 </button>
@@ -203,19 +203,34 @@ export default function ChartingPage() {
 
       {/* ── METRICS STRIP ── */}
       <div className="charting-metrics">
-        <MetricCard label="Total Sessions"  value={stats.totalSessions}           sub="all time"             icon={<Calendar size={22} />}    accent={CYAN} />
-        <MetricCard label="Games"           value={stats.gameSessions}            sub="game sessions"        icon={<TrendingUp size={22} />}  accent={CORAL} />
-        <MetricCard label="Practices"       value={stats.practiceSessions}        sub="practice sessions"    icon={<CheckCircle2 size={22} />} accent={MINT} />
-        <MetricCard label="This Month"      value={stats.thisMonthSessions || 0}  sub="sessions logged"      icon={<Calendar size={22} />}    accent={VIOLET} />
+        <MetricCard label="Total Sessions"  value={stats.totalSessions}           sub="all time"             icon={<IconSessions color={CYAN}   />} accent={CYAN} />
+        <MetricCard label="Games"           value={stats.gameSessions}            sub="game sessions"        icon={<IconGames    color={CORAL}  />} accent={CORAL} />
+        <MetricCard label="Practices"       value={stats.practiceSessions}        sub="practice sessions"    icon={<IconPractice color={MINT}   />} accent={MINT} />
+        <MetricCard label="This Month"      value={stats.thisMonthSessions || 0}  sub="sessions logged"      icon={<IconMonth    color={VIOLET} />} accent={VIOLET} />
       </div>
 
       {/* ── ACTIVITY CALENDAR ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: '1px solid rgba(0,255,255,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '16px 20px', borderBottom: '1px solid rgba(0,255,255,0.1)' }}>
-          <Calendar size={13} color={CYAN} />
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '.01em' }}>Activity Calendar</h3>
+      <div style={{ position: 'relative', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+        {/* Top accent line */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent 0%, #37b5ff 40%, #34d399 70%, transparent 100%)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px 16px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Calendar size={15} color={CYAN} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-.01em' }}>Activity Calendar</h3>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)', fontWeight: 500, marginTop: '1px' }}>Tap any day to view sessions</p>
+            </div>
+          </div>
+          {currentStreak > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '99px', padding: '5px 12px' }}>
+              <span style={{ fontSize: '14px' }}>🔥</span>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc' }}>{currentStreak} day streak</span>
+            </div>
+          )}
         </div>
-        <div style={{ padding: '20px 20px 16px' }}>
+        <div style={{ padding: '22px 22px 18px' }}>
           <CalendarHeatmap
             sessions={sessions}
             chartingEntries={chartingEntries}
@@ -233,7 +248,7 @@ export default function ChartingPage() {
           onClick={() => { setSelectedDate(null); setSelectedDaySessions([]); }}
         >
           <div
-            style={{ background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: '1px solid rgba(0,255,255,0.22)', borderRadius: '20px', maxWidth: '560px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
+            style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '20px', maxWidth: '560px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -271,9 +286,9 @@ export default function ChartingPage() {
                     <div
                       key={session.id}
                       onClick={() => router.push(`/charting/sessions/${session.id}`)}
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,255,255,0.14)', borderRadius: '12px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.15s' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(0,255,255,0.35)`; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(0,255,255,0.14)`; }}
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '12px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(55,181,255,0.35)`; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(55,181,255,0.14)`; }}
                     >
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -291,7 +306,7 @@ export default function ChartingPage() {
                         {session.tags && session.tags.length > 0 && (
                           <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                             {session.tags.map(tag => (
-                              <span key={tag} style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(0,255,255,0.8)', background: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.22)', borderRadius: '99px', padding: '2px 8px' }}>{tag}</span>
+                              <span key={tag} style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(55,181,255,0.8)', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '99px', padding: '2px 8px' }}>{tag}</span>
                             ))}
                           </div>
                         )}
@@ -309,6 +324,51 @@ export default function ChartingPage() {
       {/* New Session Modal */}
       <NewSessionModal open={showNewSession} onClose={() => setShowNewSession(false)} />
     </div>
+  );
+}
+
+/* ─── Metric Icons ───────────────────────────────────────── */
+
+function IconSessions({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect x="1.5" y="12" width="5" height="8.5" rx="1.5" fill={color} opacity="0.4"/>
+      <rect x="8.5" y="7" width="5" height="13.5" rx="1.5" fill={color} opacity="0.7"/>
+      <rect x="15.5" y="2" width="5" height="18.5" rx="1.5" fill={color}/>
+    </svg>
+  );
+}
+
+function IconGames({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <circle cx="11" cy="11" r="9" stroke={color} strokeWidth="1.5" opacity="0.35"/>
+      <circle cx="11" cy="11" r="5.5" stroke={color} strokeWidth="1.5" opacity="0.65"/>
+      <circle cx="11" cy="11" r="2.5" fill={color}/>
+    </svg>
+  );
+}
+
+function IconPractice({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M13.5 2L4 13.5h6.5L8 20l10-11H12L13.5 2z" fill={color}/>
+    </svg>
+  );
+}
+
+function IconMonth({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect x="2" y="5" width="18" height="15" rx="3" fill={color} opacity="0.2"/>
+      <rect x="2" y="5" width="18" height="6.5" rx="3" fill={color} opacity="0.55"/>
+      <rect x="2" y="8" width="18" height="3.5" fill={color} opacity="0.55"/>
+      <rect x="7" y="2.5" width="2.5" height="5" rx="1.25" fill={color}/>
+      <rect x="12.5" y="2.5" width="2.5" height="5" rx="1.25" fill={color}/>
+      <circle cx="7.5" cy="15.5" r="1.5" fill={color}/>
+      <circle cx="11" cy="15.5" r="1.5" fill={color}/>
+      <circle cx="14.5" cy="15.5" r="1.5" fill={color}/>
+    </svg>
   );
 }
 
@@ -350,14 +410,35 @@ function ChartingRing({ pct, charted, total }: { pct: number; charted: number; t
 
 function MetricCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub: string; icon: React.ReactNode; accent: string }) {
   return (
-    <div className="metric-card-ch" style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', background: 'linear-gradient(135deg, #0f0d20 0%, #1a1830 100%)', border: `1px solid ${accent}38`, padding: '18px 18px 16px' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, ${accent}, ${accent}44, transparent)` }} />
-      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `linear-gradient(135deg, ${accent}28, ${accent}10)`, border: `1px solid ${accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, marginBottom: '14px', boxShadow: `0 4px 16px ${accent}22` }}>
-        {icon}
+    <div className="metric-card-ch" style={{
+      position: 'relative',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)',
+      border: `1px solid ${accent}40`,
+      padding: '20px 20px 18px',
+      boxShadow: `0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 0 ${accent}`,
+    }}>
+      {/* Top accent line */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent 0%, ${accent} 40%, ${accent}55 70%, transparent 100%)` }} />
+      {/* Subtle corner glow */}
+      <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', background: `radial-gradient(circle at top right, ${accent}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          width: '44px', height: '44px', borderRadius: '12px',
+          background: `linear-gradient(135deg, ${accent}22, ${accent}0d)`,
+          border: `1px solid ${accent}44`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: accent, marginBottom: '16px',
+          boxShadow: `0 4px 16px ${accent}25, inset 0 1px 0 ${accent}30`,
+        }}>
+          {icon}
+        </div>
+        <p style={{ fontSize: '36px', fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: '6px', letterSpacing: '-.03em' }}>{value}</p>
+        <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,.8)', marginBottom: '3px' }}>{label}</p>
+        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)', fontWeight: 500 }}>{sub}</p>
       </div>
-      <p style={{ fontSize: '32px', fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: '5px', letterSpacing: '-.02em' }}>{value}</p>
-      <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,.75)', marginBottom: '3px' }}>{label}</p>
-      <p style={{ fontSize: '11px', color: MUTED, fontWeight: 500 }}>{sub}</p>
     </div>
   );
 }

@@ -142,7 +142,7 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+      <div className="min-h-screen p-6" style={{ background: '#041830' }}>
         <SkeletonContentPage />
       </div>
     );
@@ -150,10 +150,10 @@ export default function SessionDetailPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen p-6 flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+      <div className="min-h-screen p-6 flex items-center justify-center" style={{ background: '#041830' }}>
         <div className="text-center">
           <p className="text-white/60 mb-4">Session not found</p>
-          <Button onClick={() => router.push('/charting')} style={{ background: '#00FFFF' }} className="text-white border-0">Back to Sessions</Button>
+          <Button onClick={() => router.push('/charting')} style={{ background: '#37b5ff' }} className="text-white border-0">Back to Sessions</Button>
         </div>
       </div>
     );
@@ -195,7 +195,7 @@ export default function SessionDetailPage() {
   })();
 
   return (
-    <div className="min-h-screen p-6" style={{ background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+    <div className="min-h-screen p-6" style={{ background: '#041830' }}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -204,8 +204,8 @@ export default function SessionDetailPage() {
             <button
               type="button"
               onClick={() => router.push('/charting')}
-              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(0,255,255,0.2)', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(55,181,255,0.2)', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'; }}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -243,7 +243,7 @@ export default function SessionDetailPage() {
               {session.tags && session.tags.length > 0 && (
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {session.tags.map((tag) => (
-                    <span key={tag} style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(0,255,255,0.7)', background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.2)', borderRadius: '99px', padding: '2px 10px', textTransform: 'capitalize' }}>
+                    <span key={tag} style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(55,181,255,0.7)', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '99px', padding: '2px 10px', textTransform: 'capitalize' }}>
                       {tag}
                     </span>
                   ))}
@@ -257,8 +257,8 @@ export default function SessionDetailPage() {
             <button
               type="button"
               title="Edit Session"
-              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(0,255,255,0.2)', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+              style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(55,181,255,0.2)', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)'; }}
             >
               <Edit className="w-4 h-4" />
@@ -278,10 +278,10 @@ export default function SessionDetailPage() {
 
         {/* V2 Practice Chart Section */}
         {session.type === 'practice' && (
-          <div className="p-4 sm:p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.18)' }}>
+          <div className="p-4 sm:p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,255,255,0.1)' }}>
-                <Brain className="w-4 h-4" style={{ color: '#00FFFF' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(55,181,255,0.1)' }}>
+                <Brain className="w-4 h-4" style={{ color: '#37b5ff' }} />
               </div>
               <h2 className="text-lg sm:text-xl font-bold text-white">Practice Chart</h2>
             </div>
@@ -294,7 +294,7 @@ export default function SessionDetailPage() {
               className="relative p-4 sm:p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md"
               style={
                 !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice
-                  ? { borderColor: '#00FFFF', background: 'rgba(0,255,255,0.1)' }
+                  ? { borderColor: '#37b5ff', background: 'rgba(55,181,255,0.1)' }
                   : { borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }
               }
             >
@@ -303,7 +303,7 @@ export default function SessionDetailPage() {
                   className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={
                     !!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice
-                      ? { background: '#00FFFF' }
+                      ? { background: '#37b5ff' }
                       : { background: 'rgba(255,255,255,0.08)' }
                   }
                 >
@@ -318,7 +318,7 @@ export default function SessionDetailPage() {
                   </p>
                 </div>
                 {!!(myEntry as unknown as Record<string, unknown> | undefined)?.v2Practice && (
-                  <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#00FFFF' }} />
+                  <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#37b5ff' }} />
                 )}
               </div>
             </div>
@@ -327,10 +327,10 @@ export default function SessionDetailPage() {
 
         {/* V2 Game Chart Sections */}
         {session.type === 'game' && (
-          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.18)' }}>
+          <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,255,255,0.1)' }}>
-                <Brain className="w-4 h-4" style={{ color: '#00FFFF' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(55,181,255,0.1)' }}>
+                <Brain className="w-4 h-4" style={{ color: '#37b5ff' }} />
               </div>
               <h2 className="text-xl font-bold text-white">Game Chart</h2>
             </div>
@@ -397,7 +397,7 @@ export default function SessionDetailPage() {
                       className="relative p-4 border-2 rounded-xl transition-all"
                       style={
                         step.done
-                          ? { borderColor: '#00FFFF', background: 'rgba(0,255,255,0.1)', cursor: 'pointer' }
+                          ? { borderColor: '#37b5ff', background: 'rgba(55,181,255,0.1)', cursor: 'pointer' }
                           : step.unlocked
                           ? { borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', cursor: 'pointer' }
                           : { borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)', cursor: 'not-allowed', opacity: 0.45 }
@@ -405,13 +405,13 @@ export default function SessionDetailPage() {
                     >
                       {/* Step number badge */}
                       <div className="absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                        style={step.done ? { background: '#00FFFF', color: '#001a1a' } : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>
+                        style={step.done ? { background: '#37b5ff', color: '#fff' } : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>
                         {idx + 1}
                       </div>
 
                       {/* Done checkmark */}
                       {step.done && (
-                        <CheckCircle className="absolute top-2 right-2 w-4 h-4" style={{ color: '#00FFFF' }} />
+                        <CheckCircle className="absolute top-2 right-2 w-4 h-4" style={{ color: '#37b5ff' }} />
                       )}
 
                       {/* Lock icon for unavailable steps */}
@@ -421,7 +421,7 @@ export default function SessionDetailPage() {
 
                       <div className="flex flex-col items-center text-center gap-2 mt-2">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                          style={step.done ? { background: '#00FFFF' } : step.unlocked ? { background: 'rgba(255,255,255,0.08)' } : { background: 'rgba(255,255,255,0.04)' }}>
+                          style={step.done ? { background: '#37b5ff' } : step.unlocked ? { background: 'rgba(255,255,255,0.08)' } : { background: 'rgba(255,255,255,0.04)' }}>
                           {step.unlocked ? step.icon : <Lock className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.25)' }} />}
                         </div>
                         <div>
@@ -442,7 +442,7 @@ export default function SessionDetailPage() {
 
         {/* Coach/Admin Entries */}
         {adminEntries.length > 0 && (
-          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+          <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.14)' }}>
             <h3 className="text-lg font-bold text-white mb-4">Coach/Admin Observations</h3>
             <div className="space-y-3">
               {adminEntries.map((entry) => (
@@ -463,7 +463,7 @@ export default function SessionDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push(`/charting/sessions/${sessionId}/chart/${entry.id}`)}
-                    className="border-[rgba(0,255,255,0.2)] text-white/60 hover:text-white hover:bg-[rgba(0,255,255,0.1)]"
+                    className="border-[rgba(55,181,255,0.2)] text-white/60 hover:text-white hover:bg-[rgba(55,181,255,0.1)]"
                   >
                     View
                   </Button>
@@ -475,7 +475,7 @@ export default function SessionDetailPage() {
 
         {/* Session Analytics - Dynamic Forms */}
         {activeTemplate && dynamicEntry && (
-          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+          <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.14)' }}>
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-white/50" />
               <h3 className="text-lg font-bold text-white">Session Analytics</h3>
@@ -486,7 +486,7 @@ export default function SessionDetailPage() {
 
         {/* Session Analytics - Only show for legacy charting system */}
         {!activeTemplate && (
-          <div className="p-6 rounded-2xl" style={{ background: 'rgba(15,13,30,0.92)', border: '1px solid rgba(0,255,255,0.14)' }}>
+          <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.14)' }}>
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-white/50" />
               <h3 className="text-lg font-bold text-white">Session Analytics</h3>
@@ -525,9 +525,9 @@ export default function SessionDetailPage() {
                         P3: {myEntry.gameOverview.badGoals.period3 || 0}
                       </p>
                     </div>
-                    <div className="rounded-lg p-4" style={{ background: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.18)' }}>
+                    <div className="rounded-lg p-4" style={{ background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.18)' }}>
                       <p className="text-sm text-white/50 mb-1">Avg Challenge</p>
-                      <p className="text-3xl font-bold" style={{ color: '#00FFFF' }}>
+                      <p className="text-3xl font-bold" style={{ color: '#37b5ff' }}>
                         {(
                           ((myEntry.gameOverview.degreeOfChallenge.period1 || 0) +
                             (myEntry.gameOverview.degreeOfChallenge.period2 || 0) +
