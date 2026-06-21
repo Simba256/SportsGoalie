@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-const navItems = ['Features', 'About', 'Pricing', 'Contact Us', 'Login'];
+const navItems = ['Features', 'About', "Who It's For", 'Pricing', 'Contact Us', 'Login'];
 
 export const Header7 = () => {
   const router = useRouter();
@@ -56,6 +56,8 @@ export const Header7 = () => {
                   router.push('/contact');
                 } else if (label === 'Login') {
                   router.push('/auth/login');
+                } else if (label === "Who It's For") {
+                  router.push('/bridge');
                 } else {
                   const element = document.getElementById(label.toLowerCase());
                   if (element) element.scrollIntoView({ behavior: 'smooth' });
@@ -65,6 +67,8 @@ export const Header7 = () => {
               style={
                 label === 'Login' || label === 'Contact Us'
                   ? { background: '#37b5ff', color: '#fff', fontSize: '13px', fontWeight: 600, padding: '8px 18px', borderRadius: '6px', border: 'none' }
+                  : label === "Who It's For" && pathname === '/bridge'
+                  ? { color: '#37b5ff', fontSize: '15px', background: 'none', border: 'none', fontWeight: 700 }
                   : { color: '#1e293b', fontSize: '15px', background: 'none', border: 'none' }
               }
             >

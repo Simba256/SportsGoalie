@@ -12,6 +12,15 @@ interface MeshGradientBgProps {
   veilOpacity?: number;
 }
 
+function checkWebGL(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+  } catch {
+    return false;
+  }
+}
+
 export function MeshGradientBg({
   colors = [
     '#060f28',
@@ -29,8 +38,10 @@ export function MeshGradientBg({
 }: MeshGradientBgProps) {
   const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
   const [mounted, setMounted] = useState(false);
+  const [webglSupported, setWebglSupported] = useState(true);
 
   useEffect(() => {
+    setWebglSupported(checkWebGL());
     setMounted(true);
     const update = () =>
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
@@ -40,6 +51,19 @@ export function MeshGradientBg({
   }, []);
 
   if (!mounted) return null;
+
+  if (!webglSupported) {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `linear-gradient(145deg, ${colors[0] ?? '#060f28'} 0%, ${colors[2] ?? '#1F3864'} 50%, ${colors[0] ?? '#060f28'} 100%)`,
+          pointerEvents: 'none',
+        }}
+      />
+    );
+  }
 
   return (
     <>

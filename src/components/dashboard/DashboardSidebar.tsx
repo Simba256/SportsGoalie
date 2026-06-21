@@ -39,7 +39,7 @@ const navItems = [
   { label: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
-const sidebarBg = 'linear-gradient(180deg, #000f28 0%, #051e3e 60%, #062344 100%)';
+const sidebarBg = 'linear-gradient(180deg, #031f45 0%, #0a2d58 60%, #0d3460 100%)';
 const borderColor = 'rgba(55,181,255,0.12)';
 
 export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {

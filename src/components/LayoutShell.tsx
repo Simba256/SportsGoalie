@@ -10,7 +10,7 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact'];
+const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact', '/bridge'];
 const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
 const PUBLIC_ROUTES = ['/', '/pricing'];
 
@@ -30,6 +30,9 @@ function isOnboardingRoute(pathname: string): boolean {
 function isAdminRoute(pathname: string): boolean { return pathname.startsWith('/admin'); }
 function isCoachRoute(pathname: string): boolean { return pathname.startsWith('/coach'); }
 function isParentRoute(pathname: string): boolean { return pathname.startsWith('/parent'); }
+function isFullscreenRoute(pathname: string): boolean {
+  return pathname.startsWith('/charting/sessions/') || pathname.startsWith('/charting/analytics') || pathname.startsWith('/training/log');
+}
 
 function getPageTitle(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
@@ -159,12 +162,14 @@ export function LayoutShell({ children }: { children: ReactNode }) {
     );
   }
 
+  const fullscreen = isFullscreenRoute(pathname);
+
   return (
     <div style={{ minHeight: '100vh', background: appBg }}>
       <DashboardSidebar isOpen={sidebarOpen} onToggle={toggle} />
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-        <main className="p-6">{children}</main>
+        {!fullscreen && <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />}
+        <main className={fullscreen ? '' : 'p-6'}>{children}</main>
       </div>
     </div>
   );
