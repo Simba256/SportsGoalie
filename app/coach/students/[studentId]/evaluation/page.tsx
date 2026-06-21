@@ -36,9 +36,27 @@ const pacingOptions: PacingLevel[] = ['introduction', 'development', 'refinement
 function toDate(timestamp: unknown): Date | null {
   if (!timestamp) return null;
   if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof (timestamp as { toDate: unknown }).toDate === 'function') return (timestamp as { toDate: () => Date }).toDate();
-  if (typeof timestamp === 'object' && 'seconds' in timestamp) return new Date((timestamp as { seconds: number }).seconds * 1000);
+  if (typeof timestamp === 'object' && 'seconds' in timestamp) {
+    const raw = (timestamp as { seconds: number }).seconds;
+    // If value exceeds year 2200 in seconds it was stored in milliseconds — use directly
+    const ms = raw > 7_258_118_400 ? raw : raw * 1000;
+    return new Date(ms);
+  }
   if (timestamp instanceof Date) return timestamp;
   return null;
+}
+
+function formatIntakeValue(value: string): string {
+  const overrides: Record<string, string> = {
+    house_league: 'House League',
+    less_than_1_season: 'Less than 1 season',
+    'reason-struggling': 'Struggling',
+    'reason-improve': 'Looking to Improve',
+    'reason-fun': 'Playing for Fun',
+    aaa: 'AAA',
+    aa: 'AA',
+  };
+  return overrides[value] ?? value.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function fmt(score: number) { return score.toFixed(1); }
@@ -93,7 +111,7 @@ export default function CoachEvaluationPage() {
     try {
       setLoading(true);
       const studentResult = await userService.getUser(studentId);
-      if (!studentResult.success || !studentResult.data) { toast.error('Student not found'); router.push('/coach/students'); return; }
+      if (!studentResult.success || !studentResult.data) { toast.error('Goalie not found'); router.push('/coach/students'); return; }
       if (coach?.role !== 'admin' && coach?.role !== 'coach') { toast.error('Unauthorized'); router.push('/coach/students'); return; }
       setStudent(studentResult.data);
       const evalResult = await onboardingService.getEvaluation(studentId);
@@ -123,7 +141,7 @@ export default function CoachEvaluationPage() {
     return (
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <Link href="/coach/students" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, padding: '6px 10px', borderRadius: '8px' }}>
-          <ArrowLeft size={15} /> Back to Students
+          <ArrowLeft size={15} /> Back to Goalies
         </Link>
         <div style={{ background: cardBg, border, borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
           <AlertCircle size={48} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 16px' }} />
@@ -161,7 +179,7 @@ export default function CoachEvaluationPage() {
       `}</style>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,3vw,24px) 56px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <Link href="/coach/students" className="ev-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
-          <ArrowLeft size={15} /> Back to Students
+          <ArrowLeft size={15} /> Back to Goalies
         </Link>
 
         {/* Page title + status */}
@@ -186,7 +204,7 @@ export default function CoachEvaluationPage() {
             {/* Intelligence Profile */}
             <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', padding: '20px', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
-              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Intelligence Profile</h2>
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Goalie Intelligence Profile</h2>
               <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '20px' }}>
                 Completed {evaluation.completedAt ? toDate(evaluation.completedAt)?.toLocaleDateString() ?? 'Unknown' : 'Unknown'}
                 {evaluation.duration && ` · ${Math.round(evaluation.duration / 60)} minutes`}
@@ -243,7 +261,7 @@ export default function CoachEvaluationPage() {
                       {result && (result.strengths.length > 0 || result.gaps.length > 0) && (
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           {result.strengths.length > 0 && <span style={{ background: 'rgba(34,197,94,0.1)', color: GREEN, padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700 }}>{result.strengths.length} strength{result.strengths.length > 1 ? 's' : ''}</span>}
-                          {result.gaps.length > 0 && <span style={{ background: 'rgba(251,191,36,0.1)', color: YELLOW, padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700 }}>{result.gaps.length} gap{result.gaps.length > 1 ? 's' : ''}</span>}
+                          {result.gaps.length > 0 && <span style={{ background: 'rgba(251,191,36,0.1)', color: YELLOW, padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700 }}>{result.gaps.length} growth area{result.gaps.length > 1 ? 's' : ''}</span>}
                         </div>
                       )}
                     </div>
@@ -311,7 +329,7 @@ export default function CoachEvaluationPage() {
               ) : (
                 <div style={{ padding: '20px' }}>
                   <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Assessment Responses</p>
-                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', lineHeight: 1.6 }}>Detailed response data is not available for this evaluation. This student may have completed onboarding before detailed response tracking was added.</p>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', lineHeight: 1.6 }}>Detailed response data is not available for this evaluation. This goalie may have completed onboarding before detailed response tracking was added.</p>
                 </div>
               )}
             </div>
@@ -358,15 +376,15 @@ export default function CoachEvaluationPage() {
             {/* Intake Data */}
             {evaluation.intakeData && (
               <div style={{ background: cardBg, border, borderRadius: '14px', padding: '18px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Student Background</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Goalie Background</p>
                 <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '16px' }}>Information from intake questionnaire</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
-                  {evaluation.intakeData.ageRange && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Age Range</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.ageRange}</p></div>}
-                  {evaluation.intakeData.experienceLevel && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Experience</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.experienceLevel}</p></div>}
-                  {evaluation.intakeData.playingLevel && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Playing Level</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.playingLevel}</p></div>}
+                  {evaluation.intakeData.ageRange && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Age Range</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{formatIntakeValue(evaluation.intakeData.ageRange)}</p></div>}
+                  {evaluation.intakeData.experienceLevel && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Experience</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{formatIntakeValue(evaluation.intakeData.experienceLevel)}</p></div>}
+                  {evaluation.intakeData.playingLevel && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Playing Level</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{formatIntakeValue(evaluation.intakeData.playingLevel)}</p></div>}
                   {evaluation.intakeData.hasGoalieCoach !== undefined && <div><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Has Goalie Coach</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.hasGoalieCoach ? 'Yes' : 'No'}</p></div>}
                   {evaluation.intakeData.primaryReasons && evaluation.intakeData.primaryReasons.length > 0 && (
-                    <div style={{ gridColumn: 'span 2' }}><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Primary Reasons</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.primaryReasons.join(', ')}</p></div>
+                    <div style={{ gridColumn: 'span 2' }}><p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginBottom: '4px' }}>Primary Reasons</p><p style={{ color: '#fff', fontWeight: 600, fontSize: '13px' }}>{evaluation.intakeData.primaryReasons.map(formatIntakeValue).join(', ')}</p></div>
                   )}
                 </div>
               </div>
@@ -389,7 +407,7 @@ export default function CoachEvaluationPage() {
                     <option value="none">Keep assessed level</option>
                     {pacingOptions.map(level => <option key={level} value={level}>{getPacingLevelDisplayText(level)}</option>)}
                   </select>
-                  {adjustedPacingLevel && (
+                  {adjustedPacingLevel && adjustedPacingLevel !== pacingLevel && (
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', marginTop: '6px' }}>
                       Will change from {getPacingLevelDisplayText(pacingLevel)} to {getPacingLevelDisplayText(adjustedPacingLevel)}
                     </p>
@@ -399,7 +417,7 @@ export default function CoachEvaluationPage() {
                 {/* Notes */}
                 <div>
                   <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Coach Notes</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={6} placeholder="Add observations, recommendations, or context about the student's assessment..."
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={6} placeholder="Add observations, recommendations, or context about the goalie's assessment..."
                     style={{ background: 'rgba(2,18,44,0.9)', border: '1px solid rgba(55,181,255,0.18)', color: '#fff', padding: '10px 12px', borderRadius: '8px', width: '100%', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
                 </div>
 

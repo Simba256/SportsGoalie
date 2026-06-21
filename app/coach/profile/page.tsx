@@ -236,7 +236,7 @@ export default function CoachProfilePage() {
               </div>
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
-                  { href: '/coach/students', icon: <Users size={15} color={BLUE} />, label: 'My Students', desc: 'View and manage your roster' },
+                  { href: '/coach/students', icon: <Users size={15} color={BLUE} />, label: 'My Goalies', desc: 'View and manage your roster' },
                   { href: '/coach/content', icon: <BookOpen size={15} color="#a78bfa" />, label: 'Content Library', desc: 'Create lessons and quizzes' },
                   { href: '/coach', icon: <Shield size={15} color="#4ade80" />, label: 'Dashboard', desc: 'Overview and stats' },
                 ].map(link => (

@@ -120,14 +120,14 @@ export default function CoachDashboardPage() {
               </h1>
               <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
                 {stats.totalStudents > 0
-                  ? `${stats.totalStudents} athlete${stats.totalStudents !== 1 ? 's' : ''} in your program · ${stats.averageProgress}% average completion`
-                  : 'No athletes assigned yet. Students appear here once linked through admin.'}
+                  ? `${stats.totalStudents} goalie${stats.totalStudents !== 1 ? 's' : ''} in your program · ${stats.averageProgress}% average completion`
+                  : 'No goalies assigned yet. Goalies appear here once linked through admin.'}
               </p>
               {/* quick nav buttons */}
               <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
                 <Link href="/coach/students">
                   <button style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: `linear-gradient(135deg,${GOLD},#B8891E)`, border: 'none', borderRadius: '9px', padding: '9px 18px', color: '#0c0800', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 14px rgba(212,169,59,.3)` }}>
-                    <Users size={13} /> View Athletes
+                    <Users size={13} /> View Goalies
                   </button>
                 </Link>
                 <Link href="/coach/content">
@@ -148,7 +148,7 @@ export default function CoachDashboardPage() {
       {/* ── METRICS STRIP ── */}
       <div className="s3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '14px', marginBottom: '24px' }}>
         <MetricCard
-          label="Total Athletes"   value={stats.totalStudents}
+          label="Total Goalies"    value={stats.totalStudents}
           sub="on your roster"     icon={<ShieldCheck size={22} />}
           accent={GOLD}
         />
@@ -164,7 +164,7 @@ export default function CoachDashboardPage() {
         />
         <MetricCard
           label="Avg Completion"   value={`${stats.averageProgress}%`}
-          sub="across all athletes" icon={<Activity size={22} />}
+          sub="across all goalies"  icon={<Activity size={22} />}
           accent={GOLD}
         />
       </div>
@@ -179,7 +179,7 @@ export default function CoachDashboardPage() {
             {/* Roster header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgba(91,141,184,.1)' }}>
               <div>
-                <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '.01em', marginBottom: '2px' }}>Athlete Roster</h2>
+                <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '.01em', marginBottom: '2px' }}>Goalie Roster</h2>
                 <p style={{ fontSize: '12px', color: MUTED }}>
                   {loading ? 'Loading…' : `${stats.totalStudents} assigned`}
                 </p>
@@ -191,7 +191,7 @@ export default function CoachDashboardPage() {
 
             {/* Column headers */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 56px', padding: '8px 20px', borderBottom: '1px solid rgba(91,141,184,.07)', background: 'rgba(91,141,184,.04)' }}>
-              {['Athlete', 'Progress', 'Pct'].map(h => (
+              {['Goalie', 'Progress', 'Pct'].map(h => (
                 <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,.22)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: h === 'Pct' ? 'right' : 'left' }}>{h}</span>
               ))}
             </div>
@@ -254,7 +254,7 @@ export default function CoachDashboardPage() {
           <div style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(91,141,184,.16)', borderRadius: '14px', padding: '16px' }}>
             <p style={{ fontSize: '10px', fontWeight: 700, color: GOLD, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '12px' }}>TEAM Tools</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <ToolTile href="/coach/students"  icon={<Users size={17} />}         label="Roster"    sub="Manage athletes" accent={TEAL}   />
+              <ToolTile href="/coach/students"  icon={<Users size={17} />}         label="Roster"    sub="Manage goalies"  accent={TEAL}   />
               <ToolTile href="/coach/content"   icon={<BookOpen size={17} />}      label="Library"   sub="Browse content"  accent={GOLD}   />
               <ToolTile href="/coach/students"  icon={<ClipboardList size={17} />} label="Curricula" sub="Build programs"  accent={PURPLE} />
               <ToolTile href="/coach/students"  icon={<BarChart2 size={17} />}     label="Analytics" sub="Track results"   accent={GREEN}  />
@@ -300,7 +300,7 @@ export default function CoachDashboardPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Content Library</p>
-                <p style={{ fontSize: '12px', color: 'rgba(201,168,76,.55)', lineHeight: 1.4 }}>Create and assign lessons to athletes</p>
+                <p style={{ fontSize: '12px', color: 'rgba(201,168,76,.55)', lineHeight: 1.4 }}>Create and assign lessons to goalies</p>
               </div>
               <ArrowRight size={14} color={GOLD} />
             </div>
@@ -313,7 +313,7 @@ export default function CoachDashboardPage() {
             </div>
             <div>
               <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Evaluation Reviews</p>
-              <p style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>Review pending athlete evaluations and set pacing levels from the full roster.</p>
+              <p style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>Review pending goalie evaluations and set pacing levels from the full roster.</p>
               <Link href="/coach/students" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '8px', fontSize: '12px', color: STEEL, fontWeight: 700, textDecoration: 'none' }}>
                 Review roster <ChevronRight size={11} />
               </Link>
@@ -413,7 +413,7 @@ function ProgramHealthCard({ stats }: { stats: { totalStudents: number; students
         <div style={{ flex: 1, background: 'rgba(255,255,255,.07)', borderRadius: '0 99px 99px 0' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ fontSize: '12px', color: MUTED }}>{stats.studentsWithCurriculum} of {stats.totalStudents} athletes have curricula assigned</p>
+        <p style={{ fontSize: '12px', color: MUTED }}>{stats.studentsWithCurriculum} of {stats.totalStudents} goalies have curricula assigned</p>
         <span style={{ fontSize: '13px', fontWeight: 700, color: GREEN }}>{readyPct}%</span>
       </div>
     </div>
@@ -446,9 +446,9 @@ function EmptyRoster() {
       <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(91,141,184,.08)', border: '1px solid rgba(91,141,184,.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
         <Users size={20} color={STEEL} />
       </div>
-      <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No athletes assigned</h3>
+      <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>No goalies assigned</h3>
       <p style={{ fontSize: '12px', color: MUTED, maxWidth: '220px', margin: '0 auto', lineHeight: 1.5 }}>
-        Athletes will appear here once assigned by an admin.
+        Goalies will appear here once assigned by an admin.
       </p>
     </div>
   );

@@ -39,7 +39,7 @@ export default function CoachStudentsPage() {
     try {
       setLoading(true);
       const studentsResult = await userService.getAllUsers({ role: 'student' });
-      if (!studentsResult.success || !studentsResult.data) { toast.error('Failed to load students'); return; }
+      if (!studentsResult.success || !studentsResult.data) { toast.error('Failed to load goalies'); return; }
 
       if (user?.role === 'coach') {
         studentsResult.data.items = studentsResult.data.items.filter(s => s.assignedCoachId === user.id);
@@ -63,7 +63,7 @@ export default function CoachStudentsPage() {
         })
       );
       setAllStudents(studentsWithData);
-    } catch { toast.error('Failed to load students'); }
+    } catch { toast.error('Failed to load goalies'); }
     finally { setLoading(false); }
   };
 
@@ -84,8 +84,8 @@ export default function CoachStudentsPage() {
       setRemoving(true);
       const result = await userService.removeStudentFromCoach(studentToRemove.id, user.id);
       if (result.success) { toast.success(`${studentToRemove.displayName} removed from your roster`); loadStudents(); }
-      else toast.error(result.error?.message || 'Failed to remove student');
-    } catch { toast.error('Failed to remove student from roster'); }
+      else toast.error(result.error?.message || 'Failed to remove goalie');
+    } catch { toast.error('Failed to remove goalie from roster'); }
     finally { setRemoving(false); setRemoveDialogOpen(false); setStudentToRemove(null); }
   };
 
@@ -303,7 +303,7 @@ export default function CoachStudentsPage() {
             <div style={{ display: 'flex', gap: '10px', padding: '16px 28px', justifyContent: 'flex-end' }}>
               <button onClick={() => setRemoveDialogOpen(false)} disabled={removing} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
               <button onClick={handleRemoveStudent} disabled={removing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: '#dc2626', border: 'none', borderRadius: '10px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.7 : 1 }}>
-                {removing ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />Removing...</> : 'Remove Student'}
+                {removing ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />Removing...</> : 'Remove Goalie'}
               </button>
             </div>
           </div>
