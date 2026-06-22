@@ -247,7 +247,7 @@ export default function ParentPreGamePage() {
               <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
                 <ContextualHelp
                   label="How does your Goalie seem emotionally before the game?"
-                  helpText="You're not judging — you're observing. Your Goalie's mental state before the game directly impacts performance. This helps the platform see patterns over time."
+                  helpText="You're not judging — you're observing. Your Goalie's mental state before the game directly impacts performance. This helps Smarter Goalie see patterns over time."
                 >
                   <RadioGroup<ParentEmotionalState>
                     value={formData.emotionalState ?? null}
@@ -281,7 +281,7 @@ export default function ParentPreGamePage() {
               <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
                 <ContextualHelp
                   label="Anything off-ice that might affect them today?"
-                  helpText="School stress, sleep, something that happened at home — context the coaching team wouldn't otherwise know. Optional, and it stays private to the platform."
+                  helpText="School stress, sleep, something that happened at home — context the coaching team wouldn't otherwise know. Optional, and it stays private to Smarter Goalie."
                 >
                   <textarea
                     value={formData.offIceNote ?? ''}

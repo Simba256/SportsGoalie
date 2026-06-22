@@ -8,7 +8,7 @@ import { chartingService } from '@/lib/database';
 import { Session, ChartingEntry, PeriodData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { createEmptyYesNo } from '@/components/charting/YesNoField';
 import { RadioSelectField } from '@/components/charting/RadioSelectField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

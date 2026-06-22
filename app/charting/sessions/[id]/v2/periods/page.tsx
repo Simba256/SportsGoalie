@@ -400,7 +400,7 @@ export default function V2PeriodsPage() {
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
               label="Goal Classification"
-              helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Bad Goal: Breakdown in position, read, form, or mental execution within your control."
+              helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Weak Goal: Breakdown in position, read, form, or mental execution within your control."
             >
               <GoalClassifier
                 goalCount={activePeriod.goalsAgainst}

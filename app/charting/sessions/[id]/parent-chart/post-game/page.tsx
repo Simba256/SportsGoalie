@@ -372,7 +372,7 @@ export default function ParentPostGamePage() {
           <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
             <ContextualHelp
               label="Car-ride-home mood?"
-              helpText="The mood in the car after a game tells the platform a lot about how your Goalie processes performance. No judgment — just data."
+              helpText="The mood in the car after a game tells Smarter Goalie a lot about how your Goalie processes performance. No judgment — just data."
             >
               <EmojiRadioGroup<ParentCarRideMood>
                 value={formData.carRideMood ?? null}
@@ -476,7 +476,7 @@ export default function ParentPostGamePage() {
               <div className="space-y-4">
                 {[
                   { label: 'Your Word', tip: "One word captures your gut sense. No wrong answers — patterns emerge across games over time." },
-                  { label: 'Car Ride', tip: "The drive home is for connection, not coaching. Your mood read here shapes how the platform guides you." },
+                  { label: 'Car Ride', tip: "The drive home is for connection, not coaching. Your mood read here shapes how Smarter Goalie guides you." },
                   { label: 'Debrief Style', tip: "Even silence or space is data — it tells us where your Goalie is mentally after competing." },
                 ].map(item => (
                   <div key={item.label}>

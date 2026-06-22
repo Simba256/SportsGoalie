@@ -554,7 +554,7 @@ export default function ChartingAnalyticsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <StatTile label="Mind Control Avg" value={v2GameStats.avgMindControl.toFixed(1)} unit="/ 5" sub={`${v2GameStats.periodSamples} periods`} accent={VIOLET} />
                   <StatTile label="Factor Ratio Avg" value={v2GameStats.avgFactorRatio.toFixed(1)} unit="/ 5" sub="Across periods" accent={CORAL} />
-                  <StatTile label="Good / Bad Goals" value={`${v2GameStats.goodGoals} / ${v2GameStats.badGoals}`} sub={`Ratio ${v2GameStats.goodBadRatio.toFixed(2)}:1`} accent={MINT} />
+                  <StatTile label="Good / Weak Goals" value={`${v2GameStats.goodGoals} / ${v2GameStats.badGoals}`} sub={`Ratio ${v2GameStats.goodBadRatio.toFixed(2)}:1`} accent={MINT} />
                   <StatTile label="Goals Against" value={v2GameStats.goalsAgainst} sub="Total across sessions" accent={CORAL} />
                 </div>
 
@@ -732,13 +732,13 @@ export default function ChartingAnalyticsPage() {
                   <StatTile label="Avg Good Goals / Game" value={goalsStats.avgGoodGoals} sub={`Across ${goalsStats.totalGames} games`} />
                   <div className="rounded-xl p-4" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Avg Bad Goals / Game</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Avg Weak Goals / Game</p>
                       {getTrendIcon(goalsStats.trend)}
                     </div>
                     <p className="text-3xl font-black tabular-nums text-white">{goalsStats.avgBadGoals}</p>
                     <p className="text-[11px] text-white/35 mt-1">{goalsStats.improvement}% vs earlier period</p>
                   </div>
-                  <StatTile label="Good / Bad Ratio" value={`${(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1`} sub={parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals) ? 'More good than bad' : 'Work on reducing bad goals'} />
+                  <StatTile label="Good / Weak Ratio" value={`${(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1`} sub={parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals) ? 'More good than weak' : 'Work on reducing weak goals'} />
                 </div>
               </SectionCard>
             )}

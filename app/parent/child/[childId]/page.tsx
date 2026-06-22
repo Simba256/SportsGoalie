@@ -12,7 +12,7 @@ import {
   ClipboardCheck, BarChart3, Scale, LineChart, BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
-import { redirect, useParams } from 'next/navigation';
+import { redirect, useParams, useSearchParams } from 'next/navigation';
 import { enrollmentService } from '@/lib/database/services/enrollment.service';
 import { onboardingService } from '@/lib/database/services/onboarding.service';
 import { compareGoalieAndParent, DEFAULT_CROSS_REFERENCE_RULES } from '@/lib/scoring/cross-reference-engine';
@@ -24,14 +24,15 @@ const cardBg = 'rgba(2,18,44,0.82)';
 const border = '1px solid rgba(55,181,255,0.18)';
 
 const TABS = [
-  { id: 'comparison', label: 'Perception', icon: Scale },
   { id: 'charting', label: 'Game Charts', icon: LineChart },
   { id: 'progress', label: 'Progress', icon: BarChart3 },
+  { id: 'comparison', label: 'Perception', icon: Scale },
 ];
 
 export default function ChildDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const params = useParams();
+  const searchParams = useSearchParams();
   const childId = params.childId as string;
 
   const [childData, setChildData] = useState<LinkedChildSummary | null>(null);
@@ -39,7 +40,7 @@ export default function ChildDetailPage() {
   const [enrollments, setEnrollments] = useState<{ sport: { id: string; name: string }; progress: { totalSkills: number; completedSkills: string[]; progressPercentage: number; status: string } }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('comparison');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'charting');
 
   useEffect(() => {
     if (!user || !childId) return;
@@ -147,8 +148,8 @@ export default function ChildDetailPage() {
           <p style={{ color: 'rgba(248,113,113,0.7)', fontSize: '13px' }}>{msg}</p>
         </div>
       </div>
-      <Link href="/parent" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
-        <ChevronLeft size={16} /> Back to Dashboard
+      <Link href="/parent/goalies" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+        <ChevronLeft size={16} /> Back
       </Link>
     </div>
   );
@@ -194,8 +195,8 @@ export default function ChildDetailPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* Back */}
-        <Link href="/parent" className="cd-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
-          <ChevronLeft size={16} /> Back to Dashboard
+        <Link href="/parent/goalies" className="cd-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
+          <ChevronLeft size={16} /> Back
         </Link>
 
         {/* Child Header Card */}

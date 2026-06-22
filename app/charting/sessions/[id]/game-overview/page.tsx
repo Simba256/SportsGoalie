@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const createEmptyGoalsByPeriod = (): GoalsByPeriod => ({
@@ -224,10 +224,10 @@ export default function GameOverviewPage() {
           </p>
         </Card>
 
-        {/* Bad Goals */}
+        {/* Weak Goals */}
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Bad Goals Against{session.opponent ? ` ${session.opponent}` : ''}
+            Weak Goals Against{session.opponent ? ` ${session.opponent}` : ''}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>

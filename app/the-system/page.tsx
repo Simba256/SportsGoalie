@@ -222,7 +222,7 @@ export default function TheSystemPage() {
               {
                 num: '01',
                 title: 'Game Charting',
-                desc: 'Factor Ratios, good goal / bad goal, V.M.P. intensity, period by period',
+                desc: 'Factor Ratios, good goal / weak goal, V.M.P. intensity, period by period',
                 metric: 'Factor Ratio',
                 color: BLUE2,
                 icon: (

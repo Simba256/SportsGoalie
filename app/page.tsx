@@ -395,7 +395,7 @@ export default function Home() {
                         </p>
                         <p className="text-zinc-400 text-base mb-5">Through 7 Pillars, we lay the foundation.</p>
                         <p className="text-zinc-300 leading-relaxed mb-6">
-                          We build INTELLIGENT ATHLETIC GOALTENDERS through 7 Pillars. At the core are two of our UNIQUE, PROVEN Goalie Positional Systems, think GPS, the Seven Angle-Mark System (7AMS) above the icing line, and the 6 Zone System (6ZS) below it. From MIND-SET to Skating Tech to Form Tech, Game Performance, Team Practice Charting Systems, Support Systems, and LIFE STYLE. Mastering what each pillar unlocks builds consistency in performance.
+                          We build INTELLIGENT ATHLETIC GOALTENDERS through 7 Pillars — anchored by two UNIQUE, PROVEN positional systems: the Seven Angle-Mark System (7AMS) above the icing line and the 6 Zone System (6ZS) below it. From MIND-SET to Skating Tech, Form Tech, Game Performance, and LIFE STYLE — mastering each pillar builds lasting consistency.
                         </p>
                         <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>

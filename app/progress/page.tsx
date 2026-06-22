@@ -77,7 +77,7 @@ function ProgressContent() {
     ? Math.round((data.consistency.thisMonthDays / data.consistency.daysInCurrentMonth) * 100)
     : 0;
 
-  const PILLAR_ORDER = ['MIND-SET', 'SKATING', '7AMS', '7PTS', 'FORM', 'TEAM-PRACTICE', 'LIFE STYLE'];
+  const PILLAR_ORDER = ['MIND-SET', 'SKATING', '7AMS', '6ZS', 'FORM', 'TEAM-PRACTICE', 'LIFE STYLE'];
 
   const scoreDistribution = [
     { name: '95-100 CLUB', value: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },

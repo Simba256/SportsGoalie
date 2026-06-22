@@ -413,7 +413,7 @@ export default function TeamProgramsPage() {
               { accent: '#00f2ff', label: 'Mind-Set' },
               { accent: BLUE2, label: 'Skating Tech' },
               { accent: BLUE, label: '7AMS' },
-              { accent: BLUE3, label: '7 Point' },
+              { accent: BLUE3, label: '6 Zone Grid' },
               { accent: '#38bdf8', label: 'Form Tech' },
               { accent: '#22d3ee', label: 'Game & Practice' },
               { accent: BLUE2, label: 'Lifestyle' },

@@ -63,7 +63,7 @@ function IntroOverlay({ onStart }: { onStart: () => void }) {
             {[
               { icon: '📍', title: 'Where you align', body: "When your read matches your Goalie's self-eval, it confirms the signal — data the coach can act on." },
               { icon: '⚡', title: 'Where you diverge', body: "Mismatches are the most valuable data. They reveal blind spots — yours or theirs — and that's where growth begins." },
-              { icon: '🔒', title: 'Your data stays private', body: "Your observations are shared with the platform and coaching team, not your Goalie directly." },
+              { icon: '🔒', title: 'Your data stays private', body: "Your observations are shared with Smarter Goalie and the coaching team, not your Goalie directly." },
             ].map(item => (
               <div key={item.title} className="flex gap-3.5 items-start">
                 <span className="text-xl flex-shrink-0 leading-none mt-0.5">{item.icon}</span>

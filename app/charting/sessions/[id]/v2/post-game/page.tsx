@@ -44,10 +44,10 @@ const IMPROVEMENT_FOCUS_OPTIONS = [
   { value: 'positioning',          label: 'Positioning',             detail: 'Angle play, depth & reads',                pillar: 'Positioning' },
   { value: 'form',                 label: 'Form & Structure',        detail: 'Mechanics, technique & fundamentals',      pillar: 'Form' },
   { value: 'skating',              label: 'Skating',                 detail: 'Edge work, recovery & movement',           pillar: 'Skating' },
-  { value: 'seven_point',          label: '7 Point System',          detail: 'Below icing line — angles & reads',        pillar: '7 Point System' },
+  { value: 'seven_point',          label: '6 Zone Grid',             detail: 'Below icing line — angles & reads',        pillar: '6 Zone Grid' },
   { value: 'game_retention',       label: 'Game Retention',          detail: 'Recall, replay & self-review',             pillar: 'Mindset' },
   { value: 'pressure_performance', label: 'Pressure Performance',    detail: 'High-challenge, breakaway, 2-on-1',        pillar: 'Mindset' },
-  { value: 'goal_decisions',       label: 'Goal Decision-Making',    detail: 'Read → position → execute under pressure', pillar: 'Positioning' },
+  { value: 'goal_decisions',       label: 'Reading the Play',        detail: 'Read → position → execute under pressure', pillar: 'Positioning' },
   { value: 'training',             label: 'Training Quality',        detail: 'Designated training & intentional reps',   pillar: 'Training' },
   { value: 'lifestyle',            label: 'Lifestyle Foundations',   detail: 'Sleep, fuel & recovery habits',            pillar: 'Lifestyle' },
 ];
@@ -91,10 +91,10 @@ function derivePriorityArea(
     const goodPct = (goodGoals / totalGoals) * 100;
     candidates.push({
       score: goodPct,
-      label: 'Goal Decision-Making',
+      label: 'Reading the Play',
       pillarLabel: 'Positioning — Positional Systems',
       pillarSlug: 'positioning',
-      reason: `${badGoals} bad goal${badGoals !== 1 ? 's' : ''} — ${(100 - goodPct).toFixed(0)}% error rate on goals`,
+      reason: `${badGoals} weak goal${badGoals !== 1 ? 's' : ''} — ${(100 - goodPct).toFixed(0)}% error rate on goals`,
       urgency: goodPct < 40 ? 'critical' : goodPct < 70 ? 'high' : 'moderate',
     });
   }

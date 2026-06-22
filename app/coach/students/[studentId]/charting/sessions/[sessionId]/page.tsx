@@ -903,7 +903,7 @@ export default function CoachChartPage() {
                 ONE priority to work on
               </p>
               <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)', marginBottom: '10px', lineHeight: 1.5 }}>
-                Your flag feeds the goalie's development path — the platform serves the matching Pillar content for the priority you select.
+                Your flag feeds the goalie's development path — Smarter Goalie's intuitive system serves the matching Pillar content for the priority you select.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {(Object.entries(PRIORITY_FACTOR_LABELS) as [CoachPriorityFactor, string][]).map(([key, label]) => (

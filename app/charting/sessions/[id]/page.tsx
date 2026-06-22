@@ -513,7 +513,7 @@ export default function SessionDetailPage() {
                       </p>
                     </div>
                     <div className="rounded-lg p-4" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                      <p className="text-sm text-white/50 mb-1">Bad Goals</p>
+                      <p className="text-sm text-white/50 mb-1">Weak Goals</p>
                       <p className="text-3xl font-bold text-red-400">
                         {(myEntry.gameOverview.badGoals.period1 || 0) +
                           (myEntry.gameOverview.badGoals.period2 || 0) +

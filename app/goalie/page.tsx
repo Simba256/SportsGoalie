@@ -525,7 +525,7 @@ export default function GoaliePage() {
             <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
 
             {[
-              { num: '01', label: 'Game Charting', desc: 'Period by period, Factor Ratios, good goal / bad goal, V.M.P. intensity read' },
+              { num: '01', label: 'Game Charting', desc: 'Period by period, Factor Ratios, good goal / weak goal, V.M.P. intensity read' },
               { num: '02', label: 'Practice Charting', desc: 'Designated training, what was worked, did it improve, Maintenance Program' },
               { num: '03', label: 'Self-Evaluation Charting', desc: 'Technical Eye and Feel Factor: feel during execution and observe through video review' },
               { num: '04', label: 'Skill Charting', desc: 'Strong Side / Weak Side: both built simultaneously' },
