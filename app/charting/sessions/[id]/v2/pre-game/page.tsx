@@ -125,7 +125,7 @@ export default function V2PreGamePage() {
       }
 
       toast.success('Pre-Game section saved!');
-      router.push(`/charting/sessions/${sessionId}`);
+      router.push(`/charting/sessions/${sessionId}/v2/periods`);
     } catch (error) {
       console.error('Failed to save:', error);
       toast.error('Failed to save data');
@@ -174,15 +174,7 @@ export default function V2PreGamePage() {
           <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#7dd3fc] to-white bg-clip-text text-transparent">
             Pre-Game
           </h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="text-white rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: '#7dd3fc' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
       </div>
 

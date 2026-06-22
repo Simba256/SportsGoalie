@@ -177,16 +177,6 @@ export default function GameOverviewPage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Overview
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Good Goals */}

@@ -169,16 +169,6 @@ export default function PostGamePage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Post-Game
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Post-Game Review */}

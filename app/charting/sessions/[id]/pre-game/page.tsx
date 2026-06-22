@@ -106,7 +106,7 @@ export default function PreGamePage() {
 
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
         toast.success('Pre-Game section saved successfully!');
-        router.push(`/charting/sessions/${sessionId}`);
+        router.push(`/charting/sessions/${sessionId}/periods`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
         if (result.success && result.data) {
@@ -116,7 +116,7 @@ export default function PreGamePage() {
           }
         }
         toast.success('Pre-Game section created successfully!');
-        router.push(`/charting/sessions/${sessionId}`);
+        router.push(`/charting/sessions/${sessionId}/periods`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
@@ -172,16 +172,6 @@ export default function PreGamePage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Pre-Game
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Game Readiness */}

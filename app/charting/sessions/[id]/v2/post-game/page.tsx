@@ -358,15 +358,7 @@ export default function V2PostGamePage() {
           <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#FF6B6B] to-white bg-clip-text text-transparent">
             Post-Game
           </h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="text-white rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: '#FF6B6B' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
       </div>
 

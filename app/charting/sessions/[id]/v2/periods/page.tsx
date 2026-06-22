@@ -245,7 +245,7 @@ export default function V2PeriodsPage() {
       }
 
       toast.success('Period charting saved!');
-      router.push(`/charting/sessions/${sessionId}`);
+      router.push(`/charting/sessions/${sessionId}/v2/post-game`);
     } catch (error) {
       console.error('Failed to save:', error);
       toast.error('Failed to save data');
@@ -306,15 +306,7 @@ export default function V2PeriodsPage() {
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <h1 className="text-sm font-bold text-white">Period Charting</h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
 
         {/* Period tabs */}

@@ -177,7 +177,7 @@ export default function PeriodsPage() {
 
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
         toast.success('Periods data saved successfully!');
-        router.push(`/charting/sessions/${sessionId}`);
+        router.push(`/charting/sessions/${sessionId}/post-game`);
       } else {
         const result = await chartingService.createChartingEntry(entryData);
         if (result.success && result.data) {
@@ -187,7 +187,7 @@ export default function PeriodsPage() {
           }
         }
         toast.success('Periods data created successfully!');
-        router.push(`/charting/sessions/${sessionId}`);
+        router.push(`/charting/sessions/${sessionId}/post-game`);
       }
     } catch (error) {
       console.error('Failed to save:', error);
@@ -417,16 +417,6 @@ export default function PeriodsPage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save All Periods
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Tabs for Each Period */}

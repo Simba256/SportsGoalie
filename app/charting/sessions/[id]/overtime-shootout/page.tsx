@@ -236,16 +236,6 @@ export default function OvertimeShootoutPage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Data
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Tabs for Overtime and Shootout */}
