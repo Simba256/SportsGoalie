@@ -16,6 +16,8 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 import { generatePracticeIndex } from '@/lib/scoring/practice-index-generator';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -299,6 +301,9 @@ export default function V2PostGamePage() {
       }
 
       await chartingService.updateSession(sessionId, { status: 'completed' });
+      growthPointsService.awardPointsOnce(
+        user!.id, 'CHART_LOGGED', GROWTH_POINTS.CHART_LOGGED, 'Chart Logged', `chart_${sessionId}`
+      ).catch(() => {});
 
       toast.success('Post-Game section saved!');
       router.push(`/charting/sessions/${sessionId}`);

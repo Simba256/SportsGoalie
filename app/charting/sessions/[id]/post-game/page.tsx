@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { YesNoField, createEmptyYesNo } from '@/components/charting/YesNoField';
 import { toast } from 'sonner';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 
 export default function PostGamePage() {
   const { user } = useAuth();
@@ -96,6 +98,9 @@ export default function PostGamePage() {
 
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
         await chartingService.updateSession(sessionId, { status: 'completed' });
+        growthPointsService.awardPointsOnce(
+          user.id, 'CHART_LOGGED', GROWTH_POINTS.CHART_LOGGED, 'Chart Logged', `chart_${sessionId}`
+        ).catch(() => {});
         toast.success('Post-Game section saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
@@ -107,6 +112,9 @@ export default function PostGamePage() {
           }
         }
         await chartingService.updateSession(sessionId, { status: 'completed' });
+        growthPointsService.awardPointsOnce(
+          user.id, 'CHART_LOGGED', GROWTH_POINTS.CHART_LOGGED, 'Chart Logged', `chart_${sessionId}`
+        ).catch(() => {});
         toast.success('Post-Game section created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }

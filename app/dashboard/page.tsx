@@ -19,6 +19,7 @@ import { useRecentQuizzes } from '@/hooks/useRecentQuizzes';
 import { CustomCurriculumDashboard } from '@/components/dashboard/CustomCurriculumDashboard';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
+import { useGrowthPoints } from '@/hooks/useGrowthPoints';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
@@ -52,6 +53,7 @@ function StandardDashboard() {
   const { userProgress, loading } = useProgress();
   const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
   const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(14);
+  const { currentPoints } = useGrowthPoints();
 
   if (loading || enrollmentsLoading) return <SkeletonDashboard />;
 
@@ -184,7 +186,7 @@ function StandardDashboard() {
           <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
           <StatCard label="Avg Grasp Level" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
           <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
-          <StatCard label="Growth Points" value={(user as unknown as { growthPoints?: number })?.growthPoints ?? 0} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
+          <StatCard label="Growth Points" value={currentPoints} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
           <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
       </div>
