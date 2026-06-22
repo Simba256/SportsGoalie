@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useParentOnboarding } from '@/hooks/useParentOnboarding';
@@ -18,6 +18,9 @@ import {
   ParentWelcomeScreen,
   ParentBridgeMessage,
   ParentAssessmentComplete,
+  StudentBaselineQuestionnaire,
+  CoachBaselineQuestionnaire,
+  ParentBaselineQuestionnaire,
 } from '@/components/onboarding';
 
 /**
@@ -32,6 +35,9 @@ function OnboardingPageContent() {
 
   // Determine if this is a parent onboarding flow
   const isParent = user?.role === 'parent' || searchParams.get('role') === 'parent';
+
+  // Determine if this is a coach onboarding flow
+  const isCoach = user?.role === 'coach' || searchParams.get('role') === 'coach';
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -54,19 +60,26 @@ function OnboardingPageContent() {
     }
   }, [authLoading, user, isParent, router]);
 
-  // Goalie onboarding hook
+  // Redirect if already completed onboarding (coach)
+  useEffect(() => {
+    if (!authLoading && user && isCoach && user.coachOnboardingComplete) {
+      router.push('/coach');
+    }
+  }, [authLoading, user, isCoach, router]);
+
+  // Goalie onboarding hook — disabled; V2 StudentBaselineQuestionnaire handles the goalie flow
   const goalieOnboarding = useOnboarding({
     userId: user?.id || null,
     studentName: user?.displayName || 'Student',
-    enabled: !authLoading && !!user && !isParent && !user?.onboardingCompleted,
+    enabled: false,
     onRefreshUser: refreshUser,
   });
 
-  // Parent onboarding hook
+  // Parent onboarding hook — disabled; V1 ParentBaselineQuestionnaire handles the parent flow
   const parentOnboarding = useParentOnboarding({
     userId: user?.id || null,
     parentName: user?.displayName || 'Parent',
-    enabled: !authLoading && !!user && isParent && !user?.parentOnboardingComplete,
+    enabled: false,
     onRefreshUser: refreshUser,
   });
 
@@ -116,22 +129,73 @@ function OnboardingPageContent() {
 
   const canGoBackInAssessment = currentCategoryIndex > 0 || currentQuestionIndex > 0;
 
-  // Error state - check BEFORE loading to show errors properly
+  // Wait for auth only — the three new questionnaires are self-contained
+  // and must not be blocked by the legacy hook loading state
+  if (authLoading || !user) {
+    return (
+      <OnboardingContainer>
+        <div style={{ flex: 1, padding: '24px' }}>
+          <SkeletonContentPage />
+        </div>
+      </OnboardingContainer>
+    );
+  }
+
+  // Coach V1 flow — Coach Baseline Profile
+  if (isCoach && !user.coachOnboardingComplete) {
+    return (
+      <OnboardingContainer>
+        <CoachBaselineQuestionnaire
+          userId={user.id}
+          userName={user.displayName?.split(' ')[0] || 'Coach'}
+          onComplete={refreshUser}
+        />
+      </OnboardingContainer>
+    );
+  }
+
+  // Parent V1 flow — Parent Baseline Profile
+  if (isParent && !user.parentOnboardingComplete) {
+    return (
+      <OnboardingContainer>
+        <ParentBaselineQuestionnaire
+          userId={user.id}
+          userName={user.displayName?.split(' ')[0] || 'Parent'}
+          onComplete={refreshUser}
+        />
+      </OnboardingContainer>
+    );
+  }
+
+  // Goalie V2 flow — Student Baseline Profile
+  if (!isParent && !isCoach && !user.onboardingCompleted) {
+    return (
+      <OnboardingContainer>
+        <StudentBaselineQuestionnaire
+          userId={user.id}
+          userName={user.displayName?.split(' ')[0] || 'Student'}
+          onComplete={refreshUser}
+        />
+      </OnboardingContainer>
+    );
+  }
+
+  // Legacy error state (only reached by the old hook-based fallback below)
   if (error) {
     return (
       <OnboardingContainer>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto p-6">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ textAlign: 'center', maxWidth: '420px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#f87171">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-            <p className="text-gray-500 mb-6">{error}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Something went wrong</h2>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px' }}>{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              style={{ padding: '11px 24px', background: 'linear-gradient(135deg, #f87171, #ef4444)', border: 'none', color: '#fff', borderRadius: '10px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
             >
               Try Again
             </button>
@@ -141,15 +205,12 @@ function OnboardingPageContent() {
     );
   }
 
-  // Loading state
-  if (authLoading || (hookEnabled && (loading || phase === 'loading'))) {
+  // Legacy hook loading state
+  if (hookEnabled && (loading || phase === 'loading')) {
     return (
       <OnboardingContainer>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-red-500 mx-auto mb-4" />
-            <p className="text-gray-400">Loading your evaluation...</p>
-          </div>
+        <div style={{ flex: 1, padding: '24px' }}>
+          <SkeletonContentPage />
         </div>
       </OnboardingContainer>
     );
@@ -159,7 +220,7 @@ function OnboardingPageContent() {
     <OnboardingContainer>
       {/* Progress bar (shown during intake and assessment phases) */}
       {(phase === 'intake' || phase === 'question' || phase === 'category_intro') && (
-        <div className="p-4 sm:p-6">
+        <div style={{ padding: '24px 24px 12px' }}>
           <OnboardingProgress
             phase={phase === 'category_intro' || phase === 'question' ? 'assessment' : phase}
             currentIntakeScreen={currentIntakeScreen}
@@ -171,8 +232,8 @@ function OnboardingPageContent() {
         </div>
       )}
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col">
+      {/* Main content area — minHeight:0 completes the flex chain so children can constrain their height */}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* Welcome Screen */}
         {phase === 'welcome' && user && (
           isParent ? (
@@ -237,7 +298,7 @@ function OnboardingPageContent() {
 
         {/* Assessment Question */}
         {phase === 'question' && currentQuestion && currentCategory && (
-          <div className="flex-1 flex items-center justify-center p-6">
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 40px 20px', overflow: 'hidden', justifyContent: 'center' }}>
             <AssessmentQuestion
               key={currentQuestion.id}
               question={currentQuestion}
@@ -278,11 +339,8 @@ export default function OnboardingPage() {
     <Suspense
       fallback={
         <OnboardingContainer>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-red-500 mx-auto mb-4" />
-              <p className="text-gray-400">Loading your evaluation...</p>
-            </div>
+          <div className="flex-1 p-6">
+            <SkeletonContentPage />
           </div>
         </OnboardingContainer>
       }

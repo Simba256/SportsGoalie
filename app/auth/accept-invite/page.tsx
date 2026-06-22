@@ -2,29 +2,101 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CoachInvitation } from '@/types/auth';
-import { coachInvitationService } from '@/lib/services/coach-invitation.service';
-import { useAuth } from '@/lib/auth/context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, CheckCircle, XCircle, Mail, Lock, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Loader2,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Mail,
-  Lock,
-  User,
-} from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import { invitationService } from '@/lib/services/invitation.service';
+import { coachInvitationService } from '@/lib/services/coach-invitation.service';
+import { Invitation } from '@/types/invitation';
+import { CoachInvitation } from '@/types/auth';
+import { useAuth } from '@/lib/auth/context';
 import Link from 'next/link';
 
-/**
- * Accept Coach Invitation Page Content
- */
+const BLUE = '#37b5ff';
+const BLUE2 = '#60cdff';
+const BLUE3 = '#0ea5e9';
+
+type AnyInvitation =
+  | { kind: 'generic'; data: Invitation }
+  | { kind: 'coach_legacy'; data: CoachInvitation };
+
+function roleLabel(inv: AnyInvitation): string {
+  if (inv.kind === 'coach_legacy') return 'Coach';
+  const roleMap: Record<string, string> = {
+    student: 'Goalie',
+    coach: 'Coach',
+    goalie_coach: 'Goalie Coach',
+    parent: 'Parent',
+  };
+  return roleMap[inv.data.role] ?? 'Member';
+}
+
+function invitedByName(inv: AnyInvitation): string {
+  return inv.data.invitedByName ?? 'your administrator';
+}
+
+function invitationEmail(inv: AnyInvitation): string {
+  return inv.data.email;
+}
+
+function invitationId(inv: AnyInvitation): string {
+  return inv.data.id;
+}
+
+function metaFirstName(inv: AnyInvitation): string {
+  return inv.data.metadata?.firstName ?? '';
+}
+
+function metaLastName(inv: AnyInvitation): string {
+  return inv.data.metadata?.lastName ?? '';
+}
+
+function metaCustomMessage(inv: AnyInvitation): string | undefined {
+  return inv.data.metadata?.customMessage;
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(96,205,255,0.25)',
+  borderRadius: '8px',
+  padding: '11px 14px 11px 40px',
+  color: '#fff',
+  fontSize: '14px',
+  outline: 'none',
+  transition: 'border-color 0.2s',
+  boxSizing: 'border-box',
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '11px',
+  fontWeight: 700,
+  letterSpacing: '1.5px',
+  color: 'rgba(255,255,255,0.55)',
+  textTransform: 'uppercase',
+  marginBottom: '6px',
+  display: 'block',
+};
+
+function IconWrap({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: '13px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        color: 'rgba(255,255,255,0.35)',
+        display: 'flex',
+        alignItems: 'center',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function AcceptInviteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,79 +105,88 @@ function AcceptInviteContent() {
 
   const [validating, setValidating] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [invitation, setInvitation] = useState<CoachInvitation | null>(null);
+  const [invitation, setInvitation] = useState<AnyInvitation | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: '',
+  const [form, setForm] = useState({
     displayName: '',
     firstName: '',
     lastName: '',
+    password: '',
+    confirmPassword: '',
   });
 
-  // Validate token on mount
   useEffect(() => {
     if (!token) {
       setValidationError('Invalid invitation link. No token provided.');
       setValidating(false);
       return;
     }
-
     validateToken(token);
   }, [token]);
 
-  const validateToken = async (token: string) => {
+  const validateToken = async (t: string) => {
     try {
       setValidating(true);
-      const result = await coachInvitationService.validateInvitation(token);
 
-      if (!result.valid) {
-        setValidationError(result.error || 'Invalid invitation');
+      // Try the generic invitations collection first
+      const result = await invitationService.validateInvitation(t);
+      if (result.valid && result.invitation) {
+        const inv: AnyInvitation = { kind: 'generic', data: result.invitation };
+        setInvitation(inv);
+        prefillForm(inv);
         setValidating(false);
         return;
       }
 
-      setInvitation(result.invitation!);
-
-      // Pre-fill form with invitation metadata
-      if (result.invitation?.metadata) {
-        setFormData(prev => ({
-          ...prev,
-          firstName: result.invitation!.metadata?.firstName || '',
-          lastName: result.invitation!.metadata?.lastName || '',
-          displayName:
-            result.invitation!.metadata?.firstName && result.invitation!.metadata?.lastName
-              ? `${result.invitation!.metadata.firstName} ${result.invitation!.metadata.lastName}`
-              : '',
-        }));
+      // Fall back to legacy coach_invitations collection
+      const legacyResult = await coachInvitationService.validateInvitation(t);
+      if (legacyResult.valid && legacyResult.invitation) {
+        const inv: AnyInvitation = { kind: 'coach_legacy', data: legacyResult.invitation };
+        setInvitation(inv);
+        prefillForm(inv);
+        setValidating(false);
+        return;
       }
 
+      // Neither found
+      setValidationError(
+        result.error ?? legacyResult.error ?? 'Invalid or expired invitation link.'
+      );
       setValidating(false);
-    } catch (error) {
-      console.error('Token validation failed:', error);
-      setValidationError('Failed to validate invitation');
+    } catch {
+      setValidationError('Failed to validate your invitation. Please try again.');
       setValidating(false);
     }
   };
 
+  const prefillForm = (inv: AnyInvitation) => {
+    const first = metaFirstName(inv);
+    const last = metaLastName(inv);
+    setForm(prev => ({
+      ...prev,
+      firstName: first,
+      lastName: last,
+      displayName: first && last ? `${first} ${last}` : first || last,
+    }));
+  };
+
+  const set = (field: string, value: string) =>
+    setForm(prev => ({ ...prev, [field]: value }));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!invitation || !token) return;
 
-    // Validate passwords
-    if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
+    if (form.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
-
-    if (formData.password !== formData.confirmPassword) {
+    if (form.password !== form.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-
-    if (!formData.displayName.trim()) {
+    if (!form.displayName.trim()) {
       toast.error('Display name is required');
       return;
     }
@@ -113,260 +194,449 @@ function AcceptInviteContent() {
     try {
       setSubmitting(true);
 
-      // Register the coach using the auth context (same code path as student registration)
-      // Skip email verification - clicking the invitation link IS the verification
+      if (invitation.kind === 'coach_legacy') {
+        // Legacy path: register as coach, mark legacy invitation accepted
+        const { userId } = await register({
+          email: invitation.data.email,
+          password: form.password,
+          displayName: form.displayName.trim(),
+          role: 'coach',
+          skipEmailVerification: true,
+        });
+        await coachInvitationService.acceptInvitation(invitationId(invitation), userId);
+        toast.success('Coach account created!');
+        router.push(`/auth/login?email=${encodeURIComponent(invitation.data.email)}&verified=pending`);
+        return;
+      }
+
+      // Generic invitation path
+      const inv = invitation.data as Invitation;
+      const role = inv.role;
+
+      // Map InvitableRole → RegisterCredentials role
+      // goalie_coach doesn't exist in RegisterCredentials so register as 'coach' and patch Firestore
+      const registerRole: 'student' | 'coach' | 'parent' =
+        role === 'student' ? 'student'
+        : role === 'parent' ? 'parent'
+        : 'coach'; // covers 'coach' and 'goalie_coach'
+
       const { userId } = await register({
-        email: invitation.email,
-        password: formData.password,
-        displayName: formData.displayName.trim(),
-        role: 'coach',
+        email: inv.email,
+        password: form.password,
+        displayName: form.displayName.trim(),
+        role: registerRole,
         skipEmailVerification: true,
+        ...(registerRole === 'student' && { workflowType: inv.metadata?.tier ?? 'automated' }),
       });
 
-      // Mark invitation as accepted
-      await coachInvitationService.acceptInvitation(invitation.id, userId);
+      // Post-registration Firestore patches
+      const userRef = doc(db, 'users', userId);
+      const patches: Record<string, unknown> = {};
 
-      toast.success('Coach account created successfully!', {
-        description: 'Please verify your email to complete the registration.',
-      });
+      if (role === 'student' && inv.metadata?.assignedCoachId) {
+        patches.assignedCoachId = inv.metadata.assignedCoachId;
+        patches.assignedCoachName = inv.metadata.assignedCoachName ?? null;
+      }
 
-      // Redirect to login page with email pre-filled
-      router.push(`/auth/login?email=${encodeURIComponent(invitation.email)}&verified=pending`);
+      if (role === 'goalie_coach') {
+        patches.role = 'goalie_coach';
+      }
+
+      if (Object.keys(patches).length > 0) {
+        await updateDoc(userRef, patches);
+      }
+
+      // Mark invitation accepted in the generic collection
+      await invitationService.acceptInvitation(invitationId(invitation), userId);
+
+      toast.success(`${roleLabel(invitation)} account created!`);
+      router.push(`/auth/login?email=${encodeURIComponent(inv.email)}&verified=pending`);
     } catch (error: any) {
-      console.error('Registration failed:', error);
-      toast.error('Failed to create coach account', {
-        description: error.message || 'An error occurred during registration',
-      });
+      toast.error(error.message || 'Failed to create account');
       setSubmitting(false);
     }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  // Loading state
+  // ─── Loading state ────────────────────────────────────────────────────────
   if (validating) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-accent/20">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Validating invitation...</p>
-          </CardContent>
-        </Card>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '16px',
+          color: 'rgba(255,255,255,0.5)',
+        }}
+      >
+        <Loader2 size={28} color={BLUE} style={{ animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: '14px', letterSpacing: '0.5px' }}>Validating your invite...</span>
       </div>
     );
   }
 
-  // Error state
+  // ─── Error state ──────────────────────────────────────────────────────────
   if (validationError || !invitation) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-accent/20 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center gap-2 mb-2">
-              <XCircle className="h-6 w-6 text-destructive" />
-              <CardTitle>Invalid Invitation</CardTitle>
-            </div>
-            <CardDescription>{validationError}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This invitation link is invalid, expired, or has already been used.
-                Please contact your administrator for a new invitation.
-              </AlertDescription>
-            </Alert>
-            <div className="mt-6">
-              <Button asChild className="w-full">
-                <Link href="/auth/login">Go to Login</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '420px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(248,113,113,0.25)',
+            borderRadius: '16px',
+            padding: '36px 32px',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(248,113,113,0.12)',
+              border: '1px solid rgba(248,113,113,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+            }}
+          >
+            <XCircle size={26} color="#f87171" />
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>
+            Invalid Invitation
+          </h2>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '28px', lineHeight: 1.6 }}>
+            {validationError ?? 'This invitation link is invalid, expired, or has already been used.'}
+          </p>
+          <Link
+            href="/auth/login"
+            style={{
+              display: 'inline-block',
+              padding: '11px 28px',
+              borderRadius: '8px',
+              background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '13px',
+              textDecoration: 'none',
+              letterSpacing: '0.5px',
+            }}
+          >
+            Go to Login
+          </Link>
+        </div>
       </div>
     );
   }
 
-  // Valid invitation - show registration form
+  // ─── Registration form ────────────────────────────────────────────────────
+  const label = roleLabel(invitation);
+  const byName = invitedByName(invitation);
+  const email = invitationEmail(invitation);
+  const customMsg = metaCustomMessage(invitation);
+
+  // For goalie: show assigned coach
+  const assignedCoachName =
+    invitation.kind === 'generic'
+      ? (invitation.data as Invitation).metadata?.assignedCoachName
+      : undefined;
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-accent/20 px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="h-6 w-6 text-green-500" />
-            <CardTitle>Accept Coach Invitation</CardTitle>
+    <>
+      <style>{`
+        @media (min-width: 768px) { .ai-grid { grid-template-columns: 1fr 1fr !important; } }
+      `}</style>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px 16px',
+        }}
+      >
+        <div className="ai-grid" style={{ width: '100%', maxWidth: '860px', display: 'grid', gridTemplateColumns: '1fr', gap: '16px', alignItems: 'start' }}>
+
+          {/* ── Left: Invite info ── */}
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: `1px solid rgba(55,181,255,0.2)`,
+              borderRadius: '16px',
+              padding: '28px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}
+          >
+            {/* Logo + title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 20px rgba(55,181,255,0.3)',
+                }}
+              >
+                <CheckCircle size={24} color="#fff" />
+              </div>
+              <div>
+                <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+                  You&apos;re Invited!
+                </h1>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                  Create your {label} account below
+                </p>
+              </div>
+            </div>
+
+            {/* Role badge */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: `rgba(55,181,255,0.1)`, border: `1px solid rgba(55,181,255,0.2)`, borderRadius: '8px', padding: '6px 12px', width: 'fit-content' }}>
+              <Shield size={13} color={BLUE} />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: BLUE, letterSpacing: '0.5px' }}>{label} Account</span>
+            </div>
+
+            {/* Invite details */}
+            <div
+              style={{
+                background: 'rgba(55,181,255,0.06)',
+                border: '1px solid rgba(55,181,255,0.15)',
+                borderRadius: '12px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Mail size={14} color={BLUE2} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: BLUE2, fontWeight: 600 }}>{email}</span>
+              </div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                Invited by <strong style={{ color: '#fff' }}>{byName}</strong>
+                {assignedCoachName && (
+                  <> · Coach: <strong style={{ color: '#fff' }}>{assignedCoachName}</strong></>
+                )}
+              </div>
+              {customMsg && (
+                <div
+                  style={{
+                    paddingTop: '10px',
+                    borderTop: '1px solid rgba(96,205,255,0.1)',
+                    fontStyle: 'italic',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.45)',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  &ldquo;{customMsg}&rdquo;
+                </div>
+              )}
+            </div>
+
+            {/* Already have account */}
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: 'auto' }}>
+              Already have an account?{' '}
+              <Link href="/auth/login" style={{ color: BLUE2, textDecoration: 'none', fontWeight: 600 }}>
+                Sign in
+              </Link>
+            </p>
           </div>
-          <CardDescription>
-            You've been invited to join as a coach by {invitation.invitedByName}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Invitation Details */}
-          <Alert className="mb-6">
-            <Mail className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Email:</strong> {invitation.email}
-              {invitation.metadata?.organizationName && (
-                <>
-                  <br />
-                  <strong>Organization:</strong> {invitation.metadata.organizationName}
-                </>
-              )}
-              {invitation.metadata?.customMessage && (
-                <>
-                  <br />
-                  <br />
-                  <em>"{invitation.metadata.customMessage}"</em>
-                </>
-              )}
-            </AlertDescription>
-          </Alert>
 
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Display Name */}
-            <div className="space-y-2">
-              <Label htmlFor="displayName">
-                Display Name <span className="text-destructive">*</span>
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="displayName"
-                  type="text"
-                  placeholder="John Doe"
-                  value={formData.displayName}
-                  onChange={e => handleChange('displayName', e.target.value)}
-                  className="pl-10"
-                  required
-                  disabled={submitting}
-                />
+          {/* ── Right: Form ── */}
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(96,205,255,0.12)',
+              borderRadius: '16px',
+              padding: '24px',
+            }}
+          >
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Display Name */}
+              <div>
+                <label style={labelStyle}>
+                  Display Name <span style={{ color: BLUE }}>*</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <IconWrap><User size={15} /></IconWrap>
+                  <input
+                    type="text"
+                    placeholder="How your name appears on the platform"
+                    value={form.displayName}
+                    onChange={e => set('displayName', e.target.value)}
+                    style={inputStyle}
+                    required
+                    disabled={submitting}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* First Name */}
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name (Optional)</Label>
-              <Input
-                id="firstName"
-                type="text"
-                placeholder="John"
-                value={formData.firstName}
-                onChange={e => handleChange('firstName', e.target.value)}
+              {/* Name row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={labelStyle}>First Name</label>
+                  <input
+                    type="text"
+                    placeholder="Alex"
+                    value={form.firstName}
+                    onChange={e => set('firstName', e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '14px' }}
+                    disabled={submitting}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Last Name</label>
+                  <input
+                    type="text"
+                    placeholder="Smith"
+                    value={form.lastName}
+                    onChange={e => set('lastName', e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '14px' }}
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
+              {/* Email (locked) */}
+              <div>
+                <label style={labelStyle}>Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <IconWrap><Mail size={15} /></IconWrap>
+                  <input
+                    type="email"
+                    value={email}
+                    style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
+                    disabled
+                  />
+                </div>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>
+                  Pre-filled from your invitation — cannot be changed
+                </p>
+              </div>
+
+              {/* Password row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={labelStyle}>
+                    Password <span style={{ color: BLUE }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <IconWrap><Lock size={15} /></IconWrap>
+                    <input
+                      type="password"
+                      placeholder="Min. 8 characters"
+                      value={form.password}
+                      onChange={e => set('password', e.target.value)}
+                      style={inputStyle}
+                      required
+                      minLength={8}
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>
+                    Confirm Password <span style={{ color: BLUE }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <IconWrap><Lock size={15} /></IconWrap>
+                    <input
+                      type="password"
+                      placeholder="Re-enter password"
+                      value={form.confirmPassword}
+                      onChange={e => set('confirmPassword', e.target.value)}
+                      style={inputStyle}
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
                 disabled={submitting}
-              />
-            </div>
-
-            {/* Last Name */}
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name (Optional)</Label>
-              <Input
-                id="lastName"
-                type="text"
-                placeholder="Doe"
-                value={formData.lastName}
-                onChange={e => handleChange('lastName', e.target.value)}
-                disabled={submitting}
-              />
-            </div>
-
-            {/* Email (disabled, pre-filled) */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={invitation.email}
-                  className="pl-10 bg-muted"
-                  disabled
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Email is pre-filled from your invitation
-              </p>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                Password <span className="text-destructive">*</span>
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Minimum 8 characters"
-                  value={formData.password}
-                  onChange={e => handleChange('password', e.target.value)}
-                  className="pl-10"
-                  required
-                  minLength={8}
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">
-                Confirm Password <span className="text-destructive">*</span>
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Re-enter your password"
-                  value={formData.confirmPassword}
-                  onChange={e => handleChange('confirmPassword', e.target.value)}
-                  className="pl-10"
-                  required
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Account...
-                </>
-              ) : (
-                'Create Coach Account'
-              )}
-            </Button>
-          </form>
-
-          {/* Already have account link */}
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary hover:underline">
-              Sign in
-            </Link>
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '13px 0',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: submitting
+                    ? 'rgba(55,181,255,0.25)'
+                    : `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  boxShadow: submitting ? 'none' : '0 4px 20px rgba(55,181,255,0.35)',
+                  transition: 'all 0.2s',
+                  marginTop: '6px',
+                }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <Shield size={15} />
+                    Create {label} Account
+                  </>
+                )}
+              </button>
+            </form>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+        </div>
+      </div>
+    </>
   );
 }
 
-/**
- * Accept Coach Invitation Page (with Suspense boundary)
- */
 export default function AcceptInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div
+          style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 50%, #0d1b3a 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Loader2 size={28} color="#37b5ff" style={{ animation: 'spin 1s linear infinite' }} />
         </div>
       }
     >

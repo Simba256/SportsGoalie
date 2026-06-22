@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
-
 export interface SelectorOption {
   value: string | number;
   label: string;
@@ -20,45 +18,43 @@ export function RotatingNumberSelector({
   onChange,
   options,
 }: RotatingNumberSelectorProps) {
-  const itemHeight = 48;
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  const selectedIndex = useMemo(
-    () => (value !== null ? options.findIndex((o) => o.value === value) : -1),
-    [options, value]
-  );
-
-  // Scroll to selected item on mount / value change
-  useEffect(() => {
-    if (!containerRef.current || selectedIndex < 0) return;
-
-    const targetScroll = selectedIndex * itemHeight;
-    if (Math.abs(containerRef.current.scrollTop - targetScroll) > 1) {
-      containerRef.current.scrollTo({ top: targetScroll, behavior: 'smooth' });
-    }
-  }, [selectedIndex]);
+  const effectiveValue = value !== null ? value : (options[0]?.value ?? null);
 
   return (
-    <div className="w-full">
-      <div
-        ref={containerRef}
-        className="h-36 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 scrollbar-hide"
-        aria-label="Scroll to browse, click to select"
-      >
-        {options.map((option, index) => {
-          const isSelected = index === (selectedIndex >= 0 ? selectedIndex : 0);
+    <div className="w-full overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2">
+        {options.map((option) => {
+          const isSelected = option.value === effectiveValue;
           return (
             <button
               key={String(option.value)}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => onChange(option.value)}
-              className={`w-full h-12 px-3 text-sm text-left transition-colors truncate ${
-                isSelected
-                  ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-500'
-                  : 'text-zinc-500 hover:bg-white hover:text-zinc-700'
-              }`}
+              className="relative flex-shrink-0 rounded-xl px-4 py-2.5 text-sm text-left transition-all duration-200 active:scale-[0.97] whitespace-nowrap"
+              style={isSelected ? {
+                background: 'rgba(55,181,255,0.13)',
+                border: '1.5px solid rgba(55,181,255,0.55)',
+                color: '#7dd3fc',
+                fontWeight: 600,
+                boxShadow: '0 2px 12px rgba(55,181,255,0.1)',
+              } : {
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.55)',
+              }}
             >
               {option.label}
+              {isSelected && (
+                <span
+                  className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(55,181,255,0.35)' }}
+                >
+                  <svg width="7" height="5.5" viewBox="0 0 7 5.5" fill="none">
+                    <path d="M0.75 2.75L2.5 4.5L6.25 0.75" stroke="#7dd3fc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              )}
             </button>
           );
         })}

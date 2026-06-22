@@ -1,14 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { chartingService, userService } from '@/lib/database';
 import { ChartingEntry, Session, User } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import {
@@ -24,9 +20,19 @@ import {
   Target,
   Activity,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { startOfWeek, startOfMonth, subMonths, isAfter, format } from 'date-fns';
+
+const BLUE  = '#37b5ff';
+const RED   = '#f87171';
+const GREEN = '#22c55e';
+const AMBER = '#fbbf24';
+
+const card = {
+  background: 'rgba(2,18,44,0.85)',
+  border: '1px solid rgba(55,181,255,0.14)',
+  borderRadius: '16px',
+} as const;
 
 type TimeRange = 'week' | 'month' | '3months' | 'all';
 
@@ -48,50 +54,37 @@ function AdminChartingContent() {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'entries'>('overview');
 
-  // For All Entries tab
   const [entriesTabStudent, setEntriesTabStudent] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDateSessions, setSelectedDateSessions] = useState<Session[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [timeRange, searchQuery, selectedStudent, allEntries]);
+  useEffect(() => { loadData(); }, []);
+  useEffect(() => { applyFilters(); }, [timeRange, searchQuery, selectedStudent, allEntries]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-
       const [sessionsResult, entriesResult] = await Promise.all([
         chartingService.getAllSessions({ limit: 1000 }),
         chartingService.getAllChartingEntries({ limit: 1000 }),
       ]);
 
-      if (sessionsResult.success && sessionsResult.data) {
-        setAllSessions(sessionsResult.data);
-      }
+      if (sessionsResult.success && sessionsResult.data) setAllSessions(sessionsResult.data);
 
       if (entriesResult.success && entriesResult.data) {
         setAllEntries(entriesResult.data);
         setFilteredEntries(entriesResult.data);
 
-        // Load user data for all unique students
-        const uniqueStudentIds = Array.from(new Set(entriesResult.data.map((e) => e.studentId)));
+        const uniqueStudentIds = Array.from(new Set(entriesResult.data.map(e => e.studentId)));
         const userMap = new Map<string, User>();
-
         await Promise.all(
-          uniqueStudentIds.map(async (studentId) => {
+          uniqueStudentIds.map(async studentId => {
             const userResult = await userService.getUser(studentId);
-            if (userResult.success && userResult.data) {
-              userMap.set(studentId, userResult.data);
-            }
+            if (userResult.success && userResult.data) userMap.set(studentId, userResult.data);
           })
         );
-
         setUsers(userMap);
       }
     } catch (error) {
@@ -104,42 +97,27 @@ function AdminChartingContent() {
 
   const applyFilters = () => {
     let filtered = [...allEntries];
+    if (selectedStudent !== 'all') filtered = filtered.filter(e => e.studentId === selectedStudent);
 
-    // Student filter
-    if (selectedStudent !== 'all') {
-      filtered = filtered.filter((entry) => entry.studentId === selectedStudent);
-    }
-
-    // Time filter
     if (timeRange !== 'all') {
       const now = new Date();
       let startDate: Date;
-
       switch (timeRange) {
-        case 'week':
-          startDate = startOfWeek(now);
-          break;
-        case 'month':
-          startDate = startOfMonth(now);
-          break;
-        case '3months':
-          startDate = subMonths(now, 3);
-          break;
-        default:
-          startDate = new Date(0);
+        case 'week':     startDate = startOfWeek(now); break;
+        case 'month':    startDate = startOfMonth(now); break;
+        case '3months':  startDate = subMonths(now, 3); break;
+        default:         startDate = new Date(0);
       }
-
-      filtered = filtered.filter((entry) => {
+      filtered = filtered.filter(entry => {
         const entryDate = entry.submittedAt?.toDate?.() ?? new Date();
         return isAfter(entryDate, startDate);
       });
     }
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((entry) => {
-        const session = allSessions.find((s) => s.id === entry.sessionId);
+      filtered = filtered.filter(entry => {
+        const session = allSessions.find(s => s.id === entry.sessionId);
         return (
           session?.opponent?.toLowerCase().includes(query) ||
           session?.location?.toLowerCase().includes(query) ||
@@ -147,1106 +125,621 @@ function AdminChartingContent() {
         );
       });
     }
-
     setFilteredEntries(filtered);
   };
 
-  // Get unique students
-  const uniqueStudents = Array.from(new Set(allEntries.map((e) => e.studentId)));
+  const uniqueStudents = Array.from(new Set(allEntries.map(e => e.studentId)));
 
-  // Helper to get student display name
   const getStudentName = (studentId: string): string => {
     const user = users.get(studentId);
-    if (user) {
-      return user.displayName || user.email || `Student ${studentId.slice(-6)}`;
-    }
+    if (user) return user.displayName || user.email || `Student ${studentId.slice(-6)}`;
     return `Student ${studentId.slice(-6)}`;
   };
 
-  // Get sessions and entries for selected student in entries tab
   const getEntriesTabData = () => {
-    if (!entriesTabStudent) {
-      return { sessions: [], entries: [] };
-    }
-
-    const studentSessions = allSessions.filter((s) => s.studentId === entriesTabStudent);
-    const studentEntries = allEntries.filter((e) => e.studentId === entriesTabStudent);
-
-    return { sessions: studentSessions, entries: studentEntries };
+    if (!entriesTabStudent) return { sessions: [], entries: [] };
+    return {
+      sessions: allSessions.filter(s => s.studentId === entriesTabStudent),
+      entries:  allEntries.filter(e => e.studentId === entriesTabStudent),
+    };
   };
 
-  // Handle day click on heatmap
   const handleDayClick = (date: Date, sessions: Session[]) => {
     setSelectedDate(date);
     setSelectedDateSessions(sessions);
   };
 
-  // Calculate comprehensive stats
+  // ---- Stats Calculators (unchanged logic) ----
   const calculateGoalsStats = () => {
-    const withOverview = filteredEntries.filter((e) => e.gameOverview);
+    const withOverview = filteredEntries.filter(e => e.gameOverview);
     if (withOverview.length === 0) return null;
-
-    const totalGoodGoals = withOverview.reduce((sum, e) => {
-      return sum + (e.gameOverview?.goodGoals.period1 || 0) + (e.gameOverview?.goodGoals.period2 || 0) + (e.gameOverview?.goodGoals.period3 || 0);
-    }, 0);
-
-    const totalBadGoals = withOverview.reduce((sum, e) => {
-      return sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0);
-    }, 0);
-
+    const totalGoodGoals = withOverview.reduce((sum, e) =>
+      sum + (e.gameOverview?.goodGoals.period1 || 0) + (e.gameOverview?.goodGoals.period2 || 0) + (e.gameOverview?.goodGoals.period3 || 0), 0);
+    const totalBadGoals = withOverview.reduce((sum, e) =>
+      sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0);
     const avgGoodGoals = totalGoodGoals / withOverview.length;
     const avgBadGoals = totalBadGoals / withOverview.length;
-
-    // Calculate trend
-    const midPoint = Math.floor(withOverview.length / 2);
-    const firstHalf = withOverview.slice(0, midPoint);
-    const secondHalf = withOverview.slice(midPoint);
-
-    const firstHalfBadGoals =
-      firstHalf.reduce((sum, e) => sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0) /
-      (firstHalf.length || 1);
-    const secondHalfBadGoals =
-      secondHalf.reduce((sum, e) => sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0) /
-      (secondHalf.length || 1);
-
-    const improvement = ((firstHalfBadGoals - secondHalfBadGoals) / (firstHalfBadGoals || 1)) * 100;
-
-    return {
-      avgGoodGoals: avgGoodGoals.toFixed(1),
-      avgBadGoals: avgBadGoals.toFixed(1),
-      totalGames: withOverview.length,
-      improvement: improvement.toFixed(0),
-      trend: improvement > 5 ? 'up' : improvement < -5 ? 'down' : 'stable',
-    };
+    const mid = Math.floor(withOverview.length / 2);
+    const firstHalf = withOverview.slice(0, mid);
+    const secondHalf = withOverview.slice(mid);
+    const firstHalfBad = firstHalf.reduce((sum, e) => sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0) / (firstHalf.length || 1);
+    const secondHalfBad = secondHalf.reduce((sum, e) => sum + (e.gameOverview?.badGoals.period1 || 0) + (e.gameOverview?.badGoals.period2 || 0) + (e.gameOverview?.badGoals.period3 || 0), 0) / (secondHalf.length || 1);
+    const improvement = ((firstHalfBad - secondHalfBad) / (firstHalfBad || 1)) * 100;
+    return { avgGoodGoals: avgGoodGoals.toFixed(1), avgBadGoals: avgBadGoals.toFixed(1), totalGames: withOverview.length, improvement: improvement.toFixed(0), trend: improvement > 5 ? 'up' : improvement < -5 ? 'down' : 'stable' };
   };
 
   const calculateChallengeStats = () => {
-    const withOverview = filteredEntries.filter((e) => e.gameOverview);
+    const withOverview = filteredEntries.filter(e => e.gameOverview);
     if (withOverview.length === 0) return null;
-
-    const avgChallenge =
-      withOverview.reduce((sum, e) => {
-        return (
-          sum +
-          ((e.gameOverview?.degreeOfChallenge.period1 || 0) +
-            (e.gameOverview?.degreeOfChallenge.period2 || 0) +
-            (e.gameOverview?.degreeOfChallenge.period3 || 0)) /
-            3
-        );
-      }, 0) / withOverview.length;
-
-    // Calculate consistency (standard deviation)
-    const challenges = withOverview.map(
-      (e) =>
-        ((e.gameOverview?.degreeOfChallenge.period1 || 0) +
-          (e.gameOverview?.degreeOfChallenge.period2 || 0) +
-          (e.gameOverview?.degreeOfChallenge.period3 || 0)) /
-        3
-    );
-
-    const variance =
-      challenges.reduce((sum, c) => sum + Math.pow(c - avgChallenge, 2), 0) /
-      challenges.length;
+    const avgChallenge = withOverview.reduce((sum, e) => sum + ((e.gameOverview?.degreeOfChallenge.period1 || 0) + (e.gameOverview?.degreeOfChallenge.period2 || 0) + (e.gameOverview?.degreeOfChallenge.period3 || 0)) / 3, 0) / withOverview.length;
+    const challenges = withOverview.map(e => ((e.gameOverview?.degreeOfChallenge.period1 || 0) + (e.gameOverview?.degreeOfChallenge.period2 || 0) + (e.gameOverview?.degreeOfChallenge.period3 || 0)) / 3);
+    const variance = challenges.reduce((sum, c) => sum + Math.pow(c - avgChallenge, 2), 0) / challenges.length;
     const stdDev = Math.sqrt(variance);
-
-    return {
-      avgChallenge: avgChallenge.toFixed(1),
-      consistency: stdDev < 1 ? 'High' : stdDev < 2 ? 'Medium' : 'Low',
-      stdDev: stdDev.toFixed(1),
-    };
+    return { avgChallenge: avgChallenge.toFixed(1), consistency: stdDev < 1 ? 'High' : stdDev < 2 ? 'Medium' : 'Low', stdDev: stdDev.toFixed(1) };
   };
 
   const calculateFocusConsistency = () => {
-    const periods = [
-      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
-    ];
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const consistentCount = periods.filter(
-      (p: any) => p?.mindSet?.focusConsistent?.value
-    ).length;
-    const inconsistentCount = periods.filter(
-      (p: any) => p?.mindSet?.focusInconsistent?.value
-    ).length;
-
+    const consistentCount = periods.filter(p => p?.mindSet?.focusConsistent?.value).length;
+    const inconsistentCount = periods.filter(p => p?.mindSet?.focusInconsistent?.value).length;
     const total = consistentCount + inconsistentCount;
     const percentage = total > 0 ? (consistentCount / total) * 100 : 0;
-
-    // Calculate trend
-    const midPoint = Math.floor(periods.length / 2);
-    const firstHalf = periods.slice(0, midPoint);
-    const secondHalf = periods.slice(midPoint);
-
-    const firstHalfConsistent =
-      firstHalf.filter((p: any) => p?.mindSet?.focusConsistent?.value).length /
-      (firstHalf.length || 1);
-    const secondHalfConsistent =
-      secondHalf.filter((p: any) => p?.mindSet?.focusConsistent?.value).length /
-      (secondHalf.length || 1);
-
-    const trend =
-      secondHalfConsistent > firstHalfConsistent + 0.1
-        ? 'up'
-        : secondHalfConsistent < firstHalfConsistent - 0.1
-        ? 'down'
-        : 'stable';
-
-    return {
-      percentage: percentage.toFixed(0),
-      consistentCount,
-      inconsistentCount,
-      trend,
-    };
+    const mid = Math.floor(periods.length / 2);
+    const firstHalf = periods.slice(0, mid);
+    const secondHalf = periods.slice(mid);
+    const fhC = firstHalf.filter(p => p?.mindSet?.focusConsistent?.value).length / (firstHalf.length || 1);
+    const shC = secondHalf.filter(p => p?.mindSet?.focusConsistent?.value).length / (secondHalf.length || 1);
+    const trend = shC > fhC + 0.1 ? 'up' : shC < fhC - 0.1 ? 'down' : 'stable';
+    return { percentage: percentage.toFixed(0), consistentCount, inconsistentCount, trend };
   };
 
   const calculateSkatingPerformance = () => {
-    const periods = [
-      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
-    ];
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const inSyncCount = periods.filter((p: any) => p?.skating?.inSync?.value).length;
-    const notInSyncCount = periods.filter(
-      (p: any) => p?.skating?.notInSync?.value
-    ).length;
-
+    const inSyncCount = periods.filter(p => p?.skating?.inSync?.value).length;
+    const notInSyncCount = periods.filter(p => p?.skating?.notInSync?.value).length;
     const total = inSyncCount + notInSyncCount;
     const percentage = total > 0 ? (inSyncCount / total) * 100 : 0;
-
-    // Calculate trend
-    const midPoint = Math.floor(periods.length / 2);
-    const firstHalf = periods.slice(0, midPoint);
-    const secondHalf = periods.slice(midPoint);
-
-    const firstHalfInSync =
-      firstHalf.filter((p: any) => p?.skating?.inSync?.value).length /
-      (firstHalf.length || 1);
-    const secondHalfInSync =
-      secondHalf.filter((p: any) => p?.skating?.inSync?.value).length /
-      (secondHalf.length || 1);
-
-    const trend =
-      secondHalfInSync > firstHalfInSync + 0.1
-        ? 'up'
-        : secondHalfInSync < firstHalfInSync - 0.1
-        ? 'down'
-        : 'stable';
-
-    return {
-      percentage: percentage.toFixed(0),
-      inSyncCount,
-      notInSyncCount,
-      trend,
-    };
+    const mid = Math.floor(periods.length / 2);
+    const fhIs = periods.slice(0, mid).filter(p => p?.skating?.inSync?.value).length / (mid || 1);
+    const shIs = periods.slice(mid).filter(p => p?.skating?.inSync?.value).length / ((periods.length - mid) || 1);
+    const trend = shIs > fhIs + 0.1 ? 'up' : shIs < fhIs - 0.1 ? 'down' : 'stable';
+    return { percentage: percentage.toFixed(0), inSyncCount, notInSyncCount, trend };
   };
 
   const calculatePositionalPerformance = () => {
-    const periods = [
-      ...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean),
-    ];
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const goodCount = periods.filter(
-      (p: any) =>
-        p?.positionalAboveIcing?.good?.value || p?.positionalBelowIcing?.good?.value || p?.positionalBelowIcing?.strong?.value
-    ).length;
-
-    const needsWorkCount = periods.filter(
-      (p: any) =>
-        p?.positionalAboveIcing?.poor?.value ||
-        p?.positionalAboveIcing?.improving?.value ||
-        p?.positionalBelowIcing?.poor?.value ||
-        p?.positionalBelowIcing?.improving?.value
-    ).length;
-
+    const goodCount = periods.filter(p => p?.positionalAboveIcing?.good?.value || p?.positionalBelowIcing?.good?.value || p?.positionalBelowIcing?.strong?.value).length;
+    const needsWorkCount = periods.filter(p => p?.positionalAboveIcing?.poor?.value || p?.positionalAboveIcing?.improving?.value || p?.positionalBelowIcing?.poor?.value || p?.positionalBelowIcing?.improving?.value).length;
     const total = goodCount + needsWorkCount;
-    const percentage = total > 0 ? (goodCount / total) * 100 : 0;
-
-    return {
-      percentage: percentage.toFixed(0),
-      goodCount,
-      needsWorkCount,
-    };
+    return { percentage: (total > 0 ? (goodCount / total) * 100 : 0).toFixed(0), goodCount, needsWorkCount };
   };
 
   const calculateTeamPlay = () => {
-    const period3s = filteredEntries.map((e) => e.period3).filter(Boolean);
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const period3s = filteredEntries.map(e => e.period3).filter(Boolean) as any[];
     if (period3s.length === 0) return null;
-
-    const defenseGoodCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpDefense?.good?.value
-    ).length;
-    const defenseImprovingCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpDefense?.improving?.value
-    ).length;
-    const defensePoorCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpDefense?.poor?.value
-    ).length;
-
-    const forwardsGoodCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpForwards?.good?.value
-    ).length;
-    const forwardsImprovingCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpForwards?.improving?.value
-    ).length;
-    const forwardsPoorCount = period3s.filter(
-      (p: any) => p?.teamPlay?.settingUpForwards?.poor?.value
-    ).length;
-
-    const defenseTotal = defenseGoodCount + defenseImprovingCount + defensePoorCount;
-    const forwardsTotal = forwardsGoodCount + forwardsImprovingCount + forwardsPoorCount;
-
-    const defensePercentage = defenseTotal > 0 ? (defenseGoodCount / defenseTotal) * 100 : 0;
-    const forwardsPercentage = forwardsTotal > 0 ? (forwardsGoodCount / forwardsTotal) * 100 : 0;
-
-    return {
-      defensePercentage: defensePercentage.toFixed(0),
-      forwardsPercentage: forwardsPercentage.toFixed(0),
-      defenseGoodCount,
-      defenseImprovingCount,
-      defensePoorCount,
-      forwardsGoodCount,
-      forwardsImprovingCount,
-      forwardsPoorCount,
-    };
+    const defG = period3s.filter(p => p?.teamPlay?.settingUpDefense?.good?.value).length;
+    const defI = period3s.filter(p => p?.teamPlay?.settingUpDefense?.improving?.value).length;
+    const defP = period3s.filter(p => p?.teamPlay?.settingUpDefense?.poor?.value).length;
+    const fwdG = period3s.filter(p => p?.teamPlay?.settingUpForwards?.good?.value).length;
+    const fwdI = period3s.filter(p => p?.teamPlay?.settingUpForwards?.improving?.value).length;
+    const fwdP = period3s.filter(p => p?.teamPlay?.settingUpForwards?.poor?.value).length;
+    const defT = defG + defI + defP; const fwdT = fwdG + fwdI + fwdP;
+    return { defensePercentage: (defT > 0 ? (defG / defT) * 100 : 0).toFixed(0), forwardsPercentage: (fwdT > 0 ? (fwdG / fwdT) * 100 : 0).toFixed(0), defenseGoodCount: defG, defenseImprovingCount: defI, defensePoorCount: defP, forwardsGoodCount: fwdG, forwardsImprovingCount: fwdI, forwardsPoorCount: fwdP };
   };
 
   const calculateDecisionMaking = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const strongCount = periods.filter((p: any) => p?.mindSet?.decisionMakingStrong?.value).length;
-    const improvingCount = periods.filter((p: any) => p?.mindSet?.decisionMakingImproving?.value).length;
-    const needsWorkCount = periods.filter((p: any) => p?.mindSet?.decisionMakingNeedsWork?.value).length;
+    const strongCount = periods.filter(p => p?.mindSet?.decisionMakingStrong?.value).length;
+    const improvingCount = periods.filter(p => p?.mindSet?.decisionMakingImproving?.value).length;
+    const needsWorkCount = periods.filter(p => p?.mindSet?.decisionMakingNeedsWork?.value).length;
     const total = strongCount + improvingCount + needsWorkCount;
-
-    return {
-      strongPercentage: total > 0 ? ((strongCount / total) * 100).toFixed(0) : '0',
-      improvingPercentage: total > 0 ? ((improvingCount / total) * 100).toFixed(0) : '0',
-      needsWorkPercentage: total > 0 ? ((needsWorkCount / total) * 100).toFixed(0) : '0',
-      strongCount,
-      improvingCount,
-      needsWorkCount,
-      total,
-    };
+    return { strongPercentage: total > 0 ? ((strongCount / total) * 100).toFixed(0) : '0', improvingPercentage: total > 0 ? ((improvingCount / total) * 100).toFixed(0) : '0', needsWorkPercentage: total > 0 ? ((needsWorkCount / total) * 100).toFixed(0) : '0', strongCount, improvingCount, needsWorkCount, total };
   };
 
   const calculateBodyLanguage = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const consistentCount = periods.filter((p: any) => p?.mindSet?.bodyLanguageConsistent?.value).length;
-    const inconsistentCount = periods.filter((p: any) => p?.mindSet?.bodyLanguageInconsistent?.value).length;
+    const consistentCount = periods.filter(p => p?.mindSet?.bodyLanguageConsistent?.value).length;
+    const inconsistentCount = periods.filter(p => p?.mindSet?.bodyLanguageInconsistent?.value).length;
     const total = consistentCount + inconsistentCount;
-
-    return {
-      consistentPercentage: total > 0 ? ((consistentCount / total) * 100).toFixed(0) : '0',
-      inconsistentPercentage: total > 0 ? ((inconsistentCount / total) * 100).toFixed(0) : '0',
-      consistentCount,
-      inconsistentCount,
-      total,
-    };
+    return { consistentPercentage: total > 0 ? ((consistentCount / total) * 100).toFixed(0) : '0', inconsistentPercentage: total > 0 ? ((inconsistentCount / total) * 100).toFixed(0) : '0', consistentCount, inconsistentCount, total };
   };
 
   const calculateReboundControl = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const poorCount = periods.filter((p: any) => p?.reboundControl?.poor?.value).length;
-    const improvingCount = periods.filter((p: any) => p?.reboundControl?.improving?.value).length;
-    const goodCount = periods.filter((p: any) => p?.reboundControl?.good?.value).length;
-    const qualityTotal = poorCount + improvingCount + goodCount;
-
-    const consistentCount = periods.filter((p: any) => p?.reboundControl?.consistent?.value).length;
-    const inconsistentCount = periods.filter((p: any) => p?.reboundControl?.inconsistent?.value).length;
+    const poorQ = periods.filter(p => p?.reboundControl?.poor?.value).length;
+    const improvQ = periods.filter(p => p?.reboundControl?.improving?.value).length;
+    const goodQ = periods.filter(p => p?.reboundControl?.good?.value).length;
+    const qualityTotal = poorQ + improvQ + goodQ;
+    const consistentCount = periods.filter(p => p?.reboundControl?.consistent?.value).length;
+    const inconsistentCount = periods.filter(p => p?.reboundControl?.inconsistent?.value).length;
     const consistencyTotal = consistentCount + inconsistentCount;
-
-    return {
-      qualityGood: qualityTotal > 0 ? ((goodCount / qualityTotal) * 100).toFixed(0) : '0',
-      consistencyPercentage: consistencyTotal > 0 ? ((consistentCount / consistencyTotal) * 100).toFixed(0) : '0',
-      goodCount,
-      consistentCount,
-      totalQuality: qualityTotal,
-      totalConsistency: consistencyTotal,
-    };
+    return { qualityGood: (qualityTotal > 0 ? (goodQ / qualityTotal) * 100 : 0).toFixed(0), consistencyPercentage: (consistencyTotal > 0 ? (consistentCount / consistencyTotal) * 100 : 0).toFixed(0), goodCount: goodQ, consistentCount, totalQuality: qualityTotal, totalConsistency: consistencyTotal };
   };
 
   const calculateFreezingPuck = () => {
-    const periods = [...filteredEntries.flatMap((e) => [e.period1, e.period2, e.period3]).filter(Boolean)];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const periods = [...filteredEntries.flatMap(e => [e.period1, e.period2, e.period3]).filter(Boolean)] as any[];
     if (periods.length === 0) return null;
-
-    const poorCount = periods.filter((p: any) => p?.freezingPuck?.poor?.value).length;
-    const improvingCount = periods.filter((p: any) => p?.freezingPuck?.improving?.value).length;
-    const goodCount = periods.filter((p: any) => p?.freezingPuck?.good?.value).length;
-    const qualityTotal = poorCount + improvingCount + goodCount;
-
-    const consistentCount = periods.filter((p: any) => p?.freezingPuck?.consistent?.value).length;
-    const inconsistentCount = periods.filter((p: any) => p?.freezingPuck?.inconsistent?.value).length;
+    const poorQ = periods.filter(p => p?.freezingPuck?.poor?.value).length;
+    const improvQ = periods.filter(p => p?.freezingPuck?.improving?.value).length;
+    const goodQ = periods.filter(p => p?.freezingPuck?.good?.value).length;
+    const qualityTotal = poorQ + improvQ + goodQ;
+    const consistentCount = periods.filter(p => p?.freezingPuck?.consistent?.value).length;
+    const inconsistentCount = periods.filter(p => p?.freezingPuck?.inconsistent?.value).length;
     const consistencyTotal = consistentCount + inconsistentCount;
-
-    return {
-      qualityGood: qualityTotal > 0 ? ((goodCount / qualityTotal) * 100).toFixed(0) : '0',
-      consistencyPercentage: consistencyTotal > 0 ? ((consistentCount / consistencyTotal) * 100).toFixed(0) : '0',
-      goodCount,
-      consistentCount,
-      totalQuality: qualityTotal,
-      totalConsistency: consistencyTotal,
-    };
+    return { qualityGood: (qualityTotal > 0 ? (goodQ / qualityTotal) * 100 : 0).toFixed(0), consistencyPercentage: (consistencyTotal > 0 ? (consistentCount / consistencyTotal) * 100 : 0).toFixed(0), goodCount: goodQ, consistentCount, totalQuality: qualityTotal, totalConsistency: consistencyTotal };
   };
 
   const calculatePreGameStats = () => {
-    const preGames = filteredEntries.filter((e) => e.preGame).map((e) => e.preGame!);
+    const preGames = filteredEntries.filter(e => e.preGame).map(e => e.preGame!);
     if (preGames.length === 0) return null;
-
-    const equipmentReady = preGames.filter((p) => p.gameReadiness?.wellRested?.value && p.gameReadiness?.fueledForGame?.value).length;
-    const mentalPrep = preGames.filter((p) => p.mindSet?.mindCleared?.value && p.mindSet?.mentalImagery?.value).length;
-    const warmup = preGames.filter((p) => p.warmUp?.lookedEngaged?.value && !p.warmUp?.lackedFocus?.value).length;
-    const physical = preGames.filter((p) => p.preGameRoutine?.ballExercises?.value && p.preGameRoutine?.stretching?.value).length;
-
-    return {
-      equipment: ((equipmentReady / preGames.length) * 100).toFixed(0),
-      mental: ((mentalPrep / preGames.length) * 100).toFixed(0),
-      warmup: ((warmup / preGames.length) * 100).toFixed(0),
-      physical: ((physical / preGames.length) * 100).toFixed(0),
-      total: preGames.length,
-    };
+    const equipmentReady = preGames.filter(p => p.gameReadiness?.wellRested?.value && p.gameReadiness?.fueledForGame?.value).length;
+    const mentalPrep = preGames.filter(p => p.mindSet?.mindCleared?.value && p.mindSet?.mentalImagery?.value).length;
+    const warmup = preGames.filter(p => p.warmUp?.lookedEngaged?.value && !p.warmUp?.lackedFocus?.value).length;
+    const physical = preGames.filter(p => p.preGameRoutine?.ballExercises?.value && p.preGameRoutine?.stretching?.value).length;
+    return { equipment: ((equipmentReady / preGames.length) * 100).toFixed(0), mental: ((mentalPrep / preGames.length) * 100).toFixed(0), warmup: ((warmup / preGames.length) * 100).toFixed(0), physical: ((physical / preGames.length) * 100).toFixed(0), total: preGames.length };
   };
 
   const calculatePostGameStats = () => {
-    const postGames = filteredEntries.filter((e) => e.postGame);
+    const postGames = filteredEntries.filter(e => e.postGame);
     if (postGames.length === 0) return null;
-
-    const completed = postGames.filter((e) => e.postGame?.reviewCompleted?.value).length;
-    return {
-      completionRate: ((completed / postGames.length) * 100).toFixed(0),
-      completed,
-      total: postGames.length,
-    };
+    const completed = postGames.filter(e => e.postGame?.reviewCompleted?.value).length;
+    return { completionRate: ((completed / postGames.length) * 100).toFixed(0), completed, total: postGames.length };
   };
 
-  const goalsStats = calculateGoalsStats();
+  const goalsStats     = calculateGoalsStats();
   const challengeStats = calculateChallengeStats();
-  const focusStats = calculateFocusConsistency();
-  const skatingStats = calculateSkatingPerformance();
+  const focusStats     = calculateFocusConsistency();
+  const skatingStats   = calculateSkatingPerformance();
   const positionalStats = calculatePositionalPerformance();
-  const teamPlayStats = calculateTeamPlay();
+  const teamPlayStats  = calculateTeamPlay();
   const decisionMaking = calculateDecisionMaking();
-  const bodyLanguage = calculateBodyLanguage();
+  const bodyLanguage   = calculateBodyLanguage();
   const reboundControl = calculateReboundControl();
-  const freezingPuck = calculateFreezingPuck();
-  const preGameStats = calculatePreGameStats();
-  const postGameStats = calculatePostGameStats();
+  const freezingPuck   = calculateFreezingPuck();
+  const preGameStats   = calculatePreGameStats();
+  const postGameStats  = calculatePostGameStats();
 
-  const totalSessions = new Set(filteredEntries.map((e) => e.sessionId)).size;
-  const completeEntries = filteredEntries.filter((e) => e.preGame && e.gameOverview && e.period1 && e.period2 && e.period3 && e.postGame).length;
-  const completionRate = filteredEntries.length > 0 ? (completeEntries / filteredEntries.length) * 100 : 0;
+  const totalSessions  = new Set(filteredEntries.map(e => e.sessionId)).size;
+  const completeEntries = filteredEntries.filter(e => e.preGame && e.gameOverview && e.period1 && e.period2 && e.period3 && e.postGame).length;
+  const completionRate  = filteredEntries.length > 0 ? (completeEntries / filteredEntries.length) * 100 : 0;
 
   const getTrendIcon = (trend: string) => {
-    if (trend === 'up') return <TrendingUp className="w-5 h-5 text-green-600" />;
-    if (trend === 'down') return <TrendingDown className="w-5 h-5 text-red-600" />;
-    return <Minus className="w-5 h-5 text-gray-600" />;
+    if (trend === 'up')   return <TrendingUp  size={18} color={GREEN} />;
+    if (trend === 'down') return <TrendingDown size={18} color={RED} />;
+    return <Minus size={18} color="rgba(255,255,255,0.4)" />;
   };
+
+  // ---- Dark progress bar helper ----
+  const ProgressBar = ({ value, color }: { value: string | number; color: string }) => (
+    <div style={{ width: '100%', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${value}%`, background: color, borderRadius: '4px', transition: 'width 0.5s' }} />
+    </div>
+  );
+
+  // ---- Dark metric panel ----
+  const MetricPanel = ({ title, value, label, color, detail, trend }: { title: string; value: string; label: string; color: string; detail: string; trend?: string }) => (
+    <div style={{ background: `${color}0d`, border: `1px solid ${color}30`, borderRadius: '12px', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px', fontWeight: 600, margin: 0 }}>{title}</p>
+        {trend && getTrendIcon(trend)}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '10px' }}>
+        <p style={{ fontSize: '36px', fontWeight: 700, color, margin: 0 }}>{value}</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', marginBottom: '4px' }}>{label}</p>
+      </div>
+      <ProgressBar value={value} color={color} />
+      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginTop: '6px' }}>{detail}</p>
+    </div>
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading admin charting analytics...</p>
+      <div className="min-h-screen p-6">
+        <SkeletonDarkPage />
       </div>
     );
   }
 
+  const TABS = [
+    { id: 'overview' as const,     label: 'Overview' },
+    { id: 'performance' as const,  label: 'Performance Metrics' },
+    { id: 'entries' as const,      label: 'All Entries' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Charting Analytics (Admin)</h1>
-            <p className="text-gray-600">Comprehensive charting statistics and student performance data</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={loadData}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export Data
-            </Button>
-          </div>
-        </div>
+    <>
+      <style>{`
+        .ach-search::placeholder { color: rgba(255,255,255,0.3); }
+        .ach-search { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px 10px 36px; width: 100%; outline: none; }
+        .ach-search:focus { border-color: rgba(55,181,255,0.45); }
+        .ach-sel { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px; outline: none; width: 100%; }
+        .ach-sel:focus { border-color: rgba(55,181,255,0.45); }
+        .ach-sel option { background: #0a1628; color: #fff; }
+        .ach-btn:hover { background: rgba(55,181,255,0.15) !important; }
+        .ach-btn-outline:hover { background: rgba(255,255,255,0.08) !important; }
+        .ach-row:hover { border-color: rgba(55,181,255,0.35) !important; background: rgba(55,181,255,0.04) !important; }
+        .ach-view-btn:hover { background: rgba(55,181,255,0.18) !important; }
+      `}</style>
 
-        {/* Filters */}
-        <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div style={{ minHeight: '100vh', padding: '32px 24px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '28px' }}>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Student</label>
-              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Students" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Students ({uniqueStudents.length})</SelectItem>
-                  {uniqueStudents.map((studentId) => (
-                    <SelectItem key={studentId} value={studentId}>
-                      {getStudentName(studentId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#fff', margin: 0 }}>Charting Analytics</h1>
+              <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '6px', fontSize: '15px' }}>Comprehensive charting statistics and student performance data</p>
             </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Time Period</label>
-              <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Last Week</SelectItem>
-                  <SelectItem value="month">Last Month</SelectItem>
-                  <SelectItem value="3months">Last 3 Months</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                </SelectContent>
-              </Select>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="ach-btn" onClick={loadData} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(55,181,255,0.25)', background: 'rgba(55,181,255,0.08)', color: BLUE, fontWeight: 600, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <RefreshCw size={14} /> Refresh
+              </button>
+              <button className="ach-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <Download size={14} /> Export Data
+              </button>
             </div>
+          </div>
 
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search by opponent, location, or comments..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Filters Card */}
+          <div style={{ ...card, padding: '20px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '16px' }}>
+              <div>
+                <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student</label>
+                <select className="ach-sel" value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)}>
+                  <option value="all">All Students ({uniqueStudents.length})</option>
+                  {uniqueStudents.map(sid => <option key={sid} value={sid}>{getStudentName(sid)}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time Period</label>
+                <select className="ach-sel" value={timeRange} onChange={e => setTimeRange(e.target.value as TimeRange)}>
+                  <option value="week">Last Week</option>
+                  <option value="month">Last Month</option>
+                  <option value="3months">Last 3 Months</option>
+                  <option value="all">All Time</option>
+                </select>
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Search</label>
+                <div style={{ position: 'relative' }}>
+                  <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }} />
+                  <input className="ach-search" placeholder="Search by opponent, location, or comments..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                </div>
               </div>
             </div>
           </div>
-        </Card>
 
-        {/* Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
-            <TabsTrigger value="entries">All Entries</TabsTrigger>
-          </TabsList>
+          {/* Tab Buttons */}
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0' }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{ padding: '10px 20px', background: 'none', border: 'none', cursor: 'pointer', color: activeTab === tab.id ? BLUE : 'rgba(255,255,255,0.45)', fontWeight: activeTab === tab.id ? 700 : 500, fontSize: '15px', borderBottom: activeTab === tab.id ? `2px solid ${BLUE}` : '2px solid transparent', marginBottom: '-1px', transition: 'all 0.2s' }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-600">Total Sessions</p>
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                </div>
-                <p className="text-3xl font-bold text-gray-900">{totalSessions}</p>
-                <p className="text-sm text-gray-500 mt-1">{filteredEntries.length} charting entries</p>
-              </Card>
+          {/* ===== OVERVIEW TAB ===== */}
+          {activeTab === 'overview' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Summary Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '16px' }}>
+                {[
+                  { label: 'Total Sessions', value: totalSessions, sub: `${filteredEntries.length} charting entries`, icon: <Calendar size={16} />, color: BLUE },
+                  { label: 'Completion Rate', value: `${completionRate.toFixed(1)}%`, sub: `${completeEntries} complete entries`, icon: <Activity size={16} />, color: GREEN },
+                  goalsStats ? { label: 'Avg Goals/Game', value: `${goalsStats.avgGoodGoals}/${goalsStats.avgBadGoals}`, sub: 'Good / Bad', icon: <Target size={16} />, color: AMBER } : null,
+                  goalsStats ? { label: 'Improvement', value: `${goalsStats.improvement}%`, sub: 'Bad goals reduction', icon: getTrendIcon(goalsStats.trend), color: goalsStats.trend === 'up' ? GREEN : goalsStats.trend === 'down' ? RED : 'rgba(255,255,255,0.4)' } : null,
+                ].filter(Boolean).map((s, i) => s && (
+                  <div key={i} style={{ ...card, padding: '20px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${s.color}66,transparent)` }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', margin: 0 }}>{s.label}</p>
+                      <span style={{ color: s.color, opacity: 0.7 }}>{s.icon}</span>
+                    </div>
+                    <p style={{ fontSize: '26px', fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{s.value}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', margin: 0 }}>{s.sub}</p>
+                  </div>
+                ))}
+              </div>
 
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-600">Completion Rate</p>
-                  <Activity className="w-4 h-4 text-gray-400" />
-                </div>
-                <p className="text-3xl font-bold text-gray-900">{completionRate.toFixed(1)}%</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {completeEntries} complete entries
-                </p>
-              </Card>
-
+              {/* Goals Performance */}
               {goalsStats && (
-                <>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Avg Goals/Game</p>
-                      <Target className="w-4 h-4 text-gray-400" />
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Goals Performance</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '14px' }}>
+                    <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: '0 0 6px' }}>Avg Good Goals/Game</p>
+                      <p style={{ fontSize: '32px', fontWeight: 700, color: GREEN, margin: '0 0 4px' }}>{goalsStats.avgGoodGoals}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', margin: 0 }}>Across {goalsStats.totalGames} games</p>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">
-                      <span className="text-green-600">{goalsStats.avgGoodGoals}</span> /{' '}
-                      <span className="text-red-600">{goalsStats.avgBadGoals}</span>
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">Good / Bad</p>
-                  </Card>
+                    <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: 0 }}>Avg Bad Goals/Game</p>
+                        {getTrendIcon(goalsStats.trend)}
+                      </div>
+                      <p style={{ fontSize: '32px', fontWeight: 700, color: RED, margin: '0 0 4px' }}>{goalsStats.avgBadGoals}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', margin: 0 }}>{goalsStats.improvement}% vs earlier period</p>
+                    </div>
+                    <div style={{ background: `rgba(55,181,255,0.08)`, border: `1px solid rgba(55,181,255,0.2)`, borderRadius: '12px', padding: '16px' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: '0 0 6px' }}>Good/Bad Ratio</p>
+                      <p style={{ fontSize: '32px', fontWeight: 700, color: BLUE, margin: '0 0 4px' }}>
+                        {(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', margin: 0 }}>
+                        {parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals) ? '✓ More good than bad' : '⚠ Work on reducing bad goals'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Improvement</p>
-                      {getTrendIcon(goalsStats.trend)}
+              {/* Challenge & Consistency */}
+              {challengeStats && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Challenge Level & Consistency</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                    <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: '0 0 6px' }}>Average Challenge Rating</p>
+                      <p style={{ fontSize: '32px', fontWeight: 700, color: '#818cf8', margin: '0 0 4px' }}>{challengeStats.avgChallenge}<span style={{ fontSize: '15px' }}>/10</span></p>
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', margin: 0 }}>
+                        {parseFloat(challengeStats.avgChallenge) < 4 ? 'Easier games' : parseFloat(challengeStats.avgChallenge) < 7 ? 'Moderate difficulty' : 'High difficulty games'}
+                      </p>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {goalsStats.improvement}%
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">Bad goals reduction</p>
-                  </Card>
-                </>
+                    <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: '0 0 6px' }}>Challenge Consistency</p>
+                      <p style={{ fontSize: '32px', fontWeight: 700, color: '#c084fc', margin: '0 0 4px' }}>{challengeStats.consistency}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', margin: 0 }}>σ = {challengeStats.stdDev} (standard deviation)</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mind-Set Performance */}
+              {focusStats && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Mind-Set Performance</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                    <MetricPanel title="Focus Consistency" value={focusStats.percentage} label="consistent" color="#14b8a6" detail={`${focusStats.consistentCount} consistent / ${focusStats.inconsistentCount} inconsistent periods`} trend={focusStats.trend} />
+                    {skatingStats && (
+                      <MetricPanel title="Skating In Sync" value={skatingStats.percentage} label="in sync" color="#06b6d4" detail={`${skatingStats.inSyncCount} in sync / ${skatingStats.notInSyncCount} not in sync periods`} trend={skatingStats.trend} />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Positional Performance */}
+              {positionalStats && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Positional Performance</h2>
+                  <MetricPanel title="Strong Positioning" value={positionalStats.percentage} label="good/strong" color={AMBER} detail={`${positionalStats.goodCount} good/strong / ${positionalStats.needsWorkCount} needs work periods`} />
+                </div>
+              )}
+
+              {/* Pre-Game Preparation */}
+              {preGameStats && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '6px' }}>Pre-Game Preparation</h2>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', marginBottom: '20px' }}>Adherence rates across {preGameStats.total} sessions</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '16px' }}>
+                    {[
+                      { label: 'Equipment Ready', value: preGameStats.equipment, color: BLUE },
+                      { label: 'Mental Prep',     value: preGameStats.mental,    color: '#a78bfa' },
+                      { label: 'Warm-Up',         value: preGameStats.warmup,    color: AMBER },
+                      { label: 'Physical',        value: preGameStats.physical,  color: GREEN },
+                    ].map(item => (
+                      <div key={item.label}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, margin: 0 }}>{item.label}</p>
+                          <span style={{ background: `${item.color}1a`, color: item.color, border: `1px solid ${item.color}40`, borderRadius: '10px', padding: '1px 8px', fontSize: '12px', fontWeight: 600 }}>{item.value}%</span>
+                        </div>
+                        <ProgressBar value={item.value} color={item.color} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Post-Game Review */}
+              {postGameStats && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Post-Game Review</h2>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', marginBottom: '4px' }}>Review Completion Rate</p>
+                      <p style={{ fontSize: '36px', fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{postGameStats.completionRate}%</p>
+                      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', margin: 0 }}>{postGameStats.completed} of {postGameStats.total} sessions reviewed</p>
+                    </div>
+                    <div style={{ width: '100px', height: '100px' }}>
+                      <svg width="100" height="100" viewBox="0 0 128 128" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.07)" strokeWidth="8" fill="none" />
+                        <circle cx="64" cy="64" r="56" stroke={BLUE} strokeWidth="8" fill="none"
+                          strokeDasharray={`${(parseFloat(postGameStats.completionRate) / 100) * 352} 352`} strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
+          )}
 
-            {/* Goals Performance */}
-            {goalsStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Goals Performance</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Avg Good Goals/Game</p>
-                    </div>
-                    <p className="text-3xl font-bold text-green-700">
-                      {goalsStats.avgGoodGoals}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Across {goalsStats.totalGames} games
-                    </p>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Avg Bad Goals/Game</p>
-                      {getTrendIcon(goalsStats.trend)}
-                    </div>
-                    <p className="text-3xl font-bold text-red-700">{goalsStats.avgBadGoals}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {goalsStats.trend === 'up' && '📈 Improving! '}
-                      {goalsStats.trend === 'down' && '📉 Needs attention '}
-                      {goalsStats.improvement}% vs earlier period
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-2">Good/Bad Ratio</p>
-                    <p className="text-3xl font-bold text-blue-700">
-                      {(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals)
-                        ? '✓ More good than bad'
-                        : '⚠ Work on reducing bad goals'}
-                    </p>
+          {/* ===== PERFORMANCE METRICS TAB ===== */}
+          {activeTab === 'performance' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {(decisionMaking || bodyLanguage) && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Decision Making & Body Language</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                    {decisionMaking && <MetricPanel title="Decision Making — Strong" value={decisionMaking.strongPercentage} label="strong" color="#10b981" detail={`${decisionMaking.strongCount} strong / ${decisionMaking.improvingCount} improving / ${decisionMaking.needsWorkCount} needs work`} />}
+                    {bodyLanguage && <MetricPanel title="Body Language" value={bodyLanguage.consistentPercentage} label="consistent" color="#84cc16" detail={`${bodyLanguage.consistentCount} consistent / ${bodyLanguage.inconsistentCount} inconsistent`} />}
                   </div>
                 </div>
-              </Card>
-            )}
+              )}
 
-            {/* Challenge & Consistency */}
-            {challengeStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Challenge Level & Consistency</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-2">Average Challenge Rating</p>
-                    <p className="text-3xl font-bold text-indigo-700">
-                      {challengeStats.avgChallenge}<span className="text-base">/10</span>
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {parseFloat(challengeStats.avgChallenge) < 4 && 'Easier games'}
-                      {parseFloat(challengeStats.avgChallenge) >= 4 && parseFloat(challengeStats.avgChallenge) < 7 && 'Moderate difficulty'}
-                      {parseFloat(challengeStats.avgChallenge) >= 7 && 'High difficulty games'}
-                    </p>
-                  </div>
-
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-2">Challenge Consistency</p>
-                    <p className="text-3xl font-bold text-purple-700">
-                      {challengeStats.consistency}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      σ = {challengeStats.stdDev} (standard deviation)
-                    </p>
+              {reboundControl && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Rebound Control</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                    <MetricPanel title="Quality" value={reboundControl.qualityGood} label="good" color="#8b5cf6" detail={`${reboundControl.goodCount} good / ${reboundControl.totalQuality} total`} />
+                    <MetricPanel title="Consistency" value={reboundControl.consistencyPercentage} label="consistent" color="#d946ef" detail={`${reboundControl.consistentCount} consistent / ${reboundControl.totalConsistency} total`} />
                   </div>
                 </div>
-              </Card>
-            )}
+              )}
 
-            {/* Mind-Set Performance */}
-            {focusStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Mind-Set Performance</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-semibold text-gray-900">Focus Consistency</p>
-                      {getTrendIcon(focusStats.trend)}
-                    </div>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-teal-700">{focusStats.percentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">consistent</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-teal-600 h-3 rounded-full transition-all"
-                        style={{ width: `${focusStats.percentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {focusStats.consistentCount} consistent / {focusStats.inconsistentCount} inconsistent periods
-                    </p>
-                  </div>
-
-                  {skatingStats && (
-                    <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-gray-900">Skating In Sync</p>
-                        {getTrendIcon(skatingStats.trend)}
-                      </div>
-                      <div className="flex items-end gap-2 mb-2">
-                        <p className="text-4xl font-bold text-cyan-700">{skatingStats.percentage}%</p>
-                        <p className="text-sm text-gray-600 mb-1">in sync</p>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                        <div
-                          className="bg-cyan-600 h-3 rounded-full transition-all"
-                          style={{ width: `${skatingStats.percentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {skatingStats.inSyncCount} in sync / {skatingStats.notInSyncCount} not in sync periods
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Positional Performance */}
-            {positionalStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Positional Performance</h2>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                  <p className="text-sm font-semibold text-gray-900 mb-3">Strong Positioning</p>
-                  <div className="flex items-end gap-2 mb-2">
-                    <p className="text-4xl font-bold text-amber-700">{positionalStats.percentage}%</p>
-                    <p className="text-sm text-gray-600 mb-1">good/strong</p>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                    <div
-                      className="bg-amber-600 h-3 rounded-full transition-all"
-                      style={{ width: `${positionalStats.percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    {positionalStats.goodCount} good/strong / {positionalStats.needsWorkCount} needs work periods
-                  </p>
-                </div>
-              </Card>
-            )}
-
-            {/* Pre-Game Preparation */}
-            {preGameStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Pre-Game Preparation</h2>
-                <p className="text-sm text-gray-600 mb-4">Adherence rates across {preGameStats.total} sessions</p>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Equipment Ready</p>
-                      <Badge>{preGameStats.equipment}%</Badge>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${preGameStats.equipment}%` }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Mental Prep</p>
-                      <Badge>{preGameStats.mental}%</Badge>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${preGameStats.mental}%` }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Warm-Up</p>
-                      <Badge>{preGameStats.warmup}%</Badge>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${preGameStats.warmup}%` }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-gray-700">Physical</p>
-                      <Badge>{preGameStats.physical}%</Badge>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{ width: `${preGameStats.physical}%` }} />
-                    </div>
+              {freezingPuck && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Freezing Puck</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                    <MetricPanel title="Quality" value={freezingPuck.qualityGood} label="good" color="#ec4899" detail={`${freezingPuck.goodCount} good / ${freezingPuck.totalQuality} total`} />
+                    <MetricPanel title="Consistency" value={freezingPuck.consistencyPercentage} label="consistent" color="#f43f5e" detail={`${freezingPuck.consistentCount} consistent / ${freezingPuck.totalConsistency} total`} />
                   </div>
                 </div>
-              </Card>
-            )}
+              )}
 
-            {/* Post-Game Review */}
-            {postGameStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Post-Game Review</h2>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Review Completion Rate</p>
-                    <p className="text-3xl font-bold text-gray-900">{postGameStats.completionRate}%</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {postGameStats.completed} of {postGameStats.total} sessions reviewed
-                    </p>
-                  </div>
-                  <div className="w-32 h-32">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="#e5e7eb"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="#3b82f6"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${(parseFloat(postGameStats.completionRate) / 100) * 352} 352`}
-                      />
-                    </svg>
+              {teamPlayStats && (
+                <div style={{ ...card, padding: '24px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Team Play (Period 3)</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                    <MetricPanel title="Setting Up Defense" value={teamPlayStats.defensePercentage} label="good" color="#0ea5e9" detail={`${teamPlayStats.defenseGoodCount} good / ${teamPlayStats.defenseImprovingCount} improving / ${teamPlayStats.defensePoorCount} poor`} />
+                    <MetricPanel title="Setting Up Forwards" value={teamPlayStats.forwardsPercentage} label="good" color="#64748b" detail={`${teamPlayStats.forwardsGoodCount} good / ${teamPlayStats.forwardsImprovingCount} improving / ${teamPlayStats.forwardsPoorCount} poor`} />
                   </div>
                 </div>
-              </Card>
-            )}
-          </TabsContent>
+              )}
 
-          {/* Performance Metrics Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            {/* Decision Making & Body Language */}
-            {(decisionMaking || bodyLanguage) && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Decision Making & Body Language</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {decisionMaking && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">Decision Making - Strong</p>
-                      <div className="flex items-end gap-2 mb-2">
-                        <p className="text-4xl font-bold text-emerald-700">{decisionMaking.strongPercentage}%</p>
-                        <p className="text-sm text-gray-600 mb-1">strong</p>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                        <div
-                          className="bg-emerald-600 h-3 rounded-full transition-all"
-                          style={{ width: `${decisionMaking.strongPercentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {decisionMaking.strongCount} strong / {decisionMaking.improvingCount} improving / {decisionMaking.needsWorkCount} needs work
-                      </p>
-                    </div>
-                  )}
-                  {bodyLanguage && (
-                    <div className="bg-lime-50 border border-lime-200 rounded-lg p-6">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">Body Language</p>
-                      <div className="flex items-end gap-2 mb-2">
-                        <p className="text-4xl font-bold text-lime-700">{bodyLanguage.consistentPercentage}%</p>
-                        <p className="text-sm text-gray-600 mb-1">consistent</p>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                        <div
-                          className="bg-lime-600 h-3 rounded-full transition-all"
-                          style={{ width: `${bodyLanguage.consistentPercentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {bodyLanguage.consistentCount} consistent / {bodyLanguage.inconsistentCount} inconsistent
-                      </p>
-                    </div>
-                  )}
+              {!decisionMaking && !bodyLanguage && !reboundControl && !freezingPuck && !teamPlayStats && (
+                <div style={{ ...card, padding: '64px', textAlign: 'center' }}>
+                  <BarChart3 size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>No performance data available for the selected filters.</p>
                 </div>
-              </Card>
-            )}
+              )}
+            </div>
+          )}
 
-            {/* Rebound Control */}
-            {reboundControl && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Rebound Control</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-violet-50 border border-violet-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-violet-700">{reboundControl.qualityGood}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-violet-600 h-3 rounded-full transition-all"
-                        style={{ width: `${reboundControl.qualityGood}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {reboundControl.goodCount} good / {reboundControl.totalQuality} total
-                    </p>
-                  </div>
-                  <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-fuchsia-700">{reboundControl.consistencyPercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">consistent</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-fuchsia-600 h-3 rounded-full transition-all"
-                        style={{ width: `${reboundControl.consistencyPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {reboundControl.consistentCount} consistent / {reboundControl.totalConsistency} total
-                    </p>
-                  </div>
+          {/* ===== ALL ENTRIES TAB ===== */}
+          {activeTab === 'entries' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Select Student */}
+              <div style={{ ...card, padding: '24px' }}>
+                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Select Student</h2>
+                <div style={{ maxWidth: '400px' }}>
+                  <select className="ach-sel" value={entriesTabStudent} onChange={e => setEntriesTabStudent(e.target.value)}>
+                    <option value="">Choose a student to view their sessions...</option>
+                    {uniqueStudents.map(sid => <option key={sid} value={sid}>{getStudentName(sid)}</option>)}
+                  </select>
                 </div>
-              </Card>
-            )}
-
-            {/* Freezing Puck */}
-            {freezingPuck && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Freezing Puck</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Quality</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-pink-700">{freezingPuck.qualityGood}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-pink-600 h-3 rounded-full transition-all"
-                        style={{ width: `${freezingPuck.qualityGood}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {freezingPuck.goodCount} good / {freezingPuck.totalQuality} total
-                    </p>
-                  </div>
-                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Consistency</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-rose-700">{freezingPuck.consistencyPercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">consistent</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-rose-600 h-3 rounded-full transition-all"
-                        style={{ width: `${freezingPuck.consistencyPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {freezingPuck.consistentCount} consistent / {freezingPuck.totalConsistency} total
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Team Play (Period 3 only) */}
-            {teamPlayStats && (
-              <Card className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Team Play (Period 3)</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-sky-50 border border-sky-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Defense</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-sky-700">{teamPlayStats.defensePercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-sky-600 h-3 rounded-full transition-all"
-                        style={{ width: `${teamPlayStats.defensePercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {teamPlayStats.defenseGoodCount} good / {teamPlayStats.defenseImprovingCount} improving / {teamPlayStats.defensePoorCount} poor
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-                    <p className="text-sm font-semibold text-gray-900 mb-3">Setting Up Forwards</p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <p className="text-4xl font-bold text-slate-700">{teamPlayStats.forwardsPercentage}%</p>
-                      <p className="text-sm text-gray-600 mb-1">good</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div
-                        className="bg-slate-600 h-3 rounded-full transition-all"
-                        style={{ width: `${teamPlayStats.forwardsPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {teamPlayStats.forwardsGoodCount} good / {teamPlayStats.forwardsImprovingCount} improving / {teamPlayStats.forwardsPoorCount} poor
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* All Entries Tab */}
-          <TabsContent value="entries" className="space-y-6">
-            {/* Step 1: Select Student */}
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Select Student</h2>
-              <div className="max-w-md">
-                <Select value={entriesTabStudent} onValueChange={setEntriesTabStudent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a student to view their sessions..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueStudents.map((studentId) => (
-                      <SelectItem key={studentId} value={studentId}>
-                        {getStudentName(studentId)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
-            </Card>
 
-            {/* Step 2: Show Calendar and Sessions */}
-            {entriesTabStudent && (
-              <>
-                {/* Calendar Heatmap */}
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">
-                    Session Calendar - {getStudentName(entriesTabStudent)}
-                  </h2>
-                  <CalendarHeatmap
-                    sessions={getEntriesTabData().sessions}
-                    chartingEntries={getEntriesTabData().entries}
-                    onDayClick={handleDayClick}
-                  />
-                </Card>
-
-                {/* Sessions for Selected Date */}
-                {selectedDate && selectedDateSessions.length > 0 && (
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
-                      Sessions on {format(selectedDate, 'MMMM d, yyyy')}
+              {entriesTabStudent && (
+                <>
+                  {/* Calendar Heatmap */}
+                  <div style={{ ...card, padding: '24px' }}>
+                    <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>
+                      Session Calendar — {getStudentName(entriesTabStudent)}
                     </h2>
-                    <div className="space-y-3">
-                      {selectedDateSessions.map((session) => {
-                        const entry = allEntries.find((e) => e.sessionId === session.id);
-                        const isComplete = entry && !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
+                    <CalendarHeatmap
+                      sessions={getEntriesTabData().sessions}
+                      chartingEntries={getEntriesTabData().entries}
+                      onDayClick={handleDayClick}
+                    />
+                  </div>
 
-                        return (
-                          <div
-                            key={session.id}
-                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-semibold text-gray-900">
-                                  {session.type === 'game' ? '🥅' : '🏒'}{' '}
-                                  {session.opponent || 'Practice Session'}
-                                </h3>
-                                {entry ? (
-                                  <Badge variant={isComplete ? 'default' : 'secondary'}>
-                                    {isComplete ? 'Complete' : 'Partial'}
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline">Not Charted</Badge>
-                                )}
-                                {entry?.submitterRole === 'admin' && (
-                                  <Badge variant="outline">Admin Entry</Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
-                                {session.location && <span>📍 {session.location}</span>}
-                                {entry && (
-                                  <span>
-                                    Submitted{' '}
-                                    {entry.submittedAt?.toDate
-                                      ? entry.submittedAt.toDate().toLocaleDateString()
-                                      : 'Unknown'}
-                                  </span>
-                                )}
-                              </div>
-                              {entry?.gameOverview && (
-                                <div className="flex items-center gap-4 text-sm mt-2">
-                                  <span className="text-green-600">
-                                    ✅ Good Goals:{' '}
-                                    {(entry.gameOverview.goodGoals.period1 || 0) +
-                                      (entry.gameOverview.goodGoals.period2 || 0) +
-                                      (entry.gameOverview.goodGoals.period3 || 0)}
-                                  </span>
-                                  <span className="text-red-600">
-                                    ❌ Bad Goals:{' '}
-                                    {(entry.gameOverview.badGoals.period1 || 0) +
-                                      (entry.gameOverview.badGoals.period2 || 0) +
-                                      (entry.gameOverview.badGoals.period3 || 0)}
-                                  </span>
+                  {/* Sessions for Selected Date */}
+                  {selectedDate && selectedDateSessions.length > 0 && (
+                    <div style={{ ...card, padding: '24px' }}>
+                      <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>
+                        Sessions on {format(selectedDate, 'MMMM d, yyyy')}
+                      </h2>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {selectedDateSessions.map(session => {
+                          const entry = allEntries.find(e => e.sessionId === session.id);
+                          const isComplete = entry && !!(entry.preGame && entry.gameOverview && entry.period1 && entry.period2 && entry.period3 && entry.postGame);
+                          return (
+                            <div key={session.id} className="ach-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', transition: 'all 0.2s', cursor: 'default' }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                                  <h3 style={{ color: '#fff', fontSize: '15px', fontWeight: 600, margin: 0 }}>
+                                    {session.type === 'game' ? '🥅' : '🏒'} {session.opponent || 'Practice Session'}
+                                  </h3>
+                                  {entry ? (
+                                    <span style={{ background: isComplete ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.07)', color: isComplete ? GREEN : 'rgba(255,255,255,0.5)', border: `1px solid ${isComplete ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.12)'}`, borderRadius: '10px', padding: '1px 8px', fontSize: '12px', fontWeight: 600 }}>
+                                      {isComplete ? 'Complete' : 'Partial'}
+                                    </span>
+                                  ) : (
+                                    <span style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '1px 8px', fontSize: '12px' }}>Not Charted</span>
+                                  )}
+                                  {entry?.submitterRole === 'admin' && (
+                                    <span style={{ background: `rgba(55,181,255,0.1)`, color: BLUE, border: `1px solid rgba(55,181,255,0.25)`, borderRadius: '10px', padding: '1px 8px', fontSize: '12px' }}>Admin Entry</span>
+                                  )}
                                 </div>
+                                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                                  {session.location && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>📍 {session.location}</span>}
+                                  {entry && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Submitted {entry.submittedAt?.toDate ? entry.submittedAt.toDate().toLocaleDateString() : 'Unknown'}</span>}
+                                </div>
+                                {entry?.gameOverview && (
+                                  <div style={{ display: 'flex', gap: '16px', marginTop: '6px' }}>
+                                    <span style={{ color: GREEN, fontSize: '13px' }}>✅ Good Goals: {(entry.gameOverview.goodGoals.period1 || 0) + (entry.gameOverview.goodGoals.period2 || 0) + (entry.gameOverview.goodGoals.period3 || 0)}</span>
+                                    <span style={{ color: RED, fontSize: '13px' }}>❌ Bad Goals: {(entry.gameOverview.badGoals.period1 || 0) + (entry.gameOverview.badGoals.period2 || 0) + (entry.gameOverview.badGoals.period3 || 0)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {entry && (
+                                <button className="ach-view-btn" onClick={() => router.push(`/admin/charting/entries/${entry.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: `1px solid rgba(55,181,255,0.25)`, background: `rgba(55,181,255,0.08)`, color: BLUE, fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap', marginLeft: '12px' }}>
+                                  <Eye size={14} /> View Details
+                                </button>
                               )}
                             </div>
-                            {entry && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.push(`/admin/charting/entries/${entry.id}`)}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </Card>
-                )}
+                  )}
 
-                {/* Empty state when date selected but no sessions */}
-                {selectedDate && selectedDateSessions.length === 0 && (
-                  <Card className="p-12 text-center">
-                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Sessions</h3>
-                    <p className="text-gray-600">
-                      No sessions found for {format(selectedDate, 'MMMM d, yyyy')}
-                    </p>
-                  </Card>
-                )}
+                  {selectedDate && selectedDateSessions.length === 0 && (
+                    <div style={{ ...card, padding: '64px', textAlign: 'center' }}>
+                      <Calendar size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+                      <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>No Sessions</h3>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', margin: 0 }}>No sessions found for {format(selectedDate, 'MMMM d, yyyy')}</p>
+                    </div>
+                  )}
 
-                {/* Helper text when no date selected */}
-                {!selectedDate && (
-                  <Card className="p-12 text-center">
-                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a Date</h3>
-                    <p className="text-gray-600">
-                      Click on a day in the calendar above to view sessions for that date
-                    </p>
-                  </Card>
-                )}
-              </>
-            )}
+                  {!selectedDate && (
+                    <div style={{ ...card, padding: '64px', textAlign: 'center' }}>
+                      <Calendar size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+                      <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Select a Date</h3>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', margin: 0 }}>Click on a day in the calendar above to view sessions for that date</p>
+                    </div>
+                  )}
+                </>
+              )}
 
-            {/* Empty state when no student selected */}
-            {!entriesTabStudent && (
-              <Card className="p-12 text-center">
-                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Started</h3>
-                <p className="text-gray-600 mb-4">
-                  Select a student above to view their charting calendar and sessions
-                </p>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+              {!entriesTabStudent && (
+                <div style={{ ...card, padding: '64px', textAlign: 'center' }}>
+                  <BarChart3 size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+                  <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Get Started</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', margin: 0 }}>Select a student above to view their charting calendar and sessions</p>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
       </div>
-    </div>
+    </>
   );
 }

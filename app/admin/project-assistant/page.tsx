@@ -1,8 +1,6 @@
 import { Metadata } from 'next';
 import { ChatInterface } from '@/components/admin/chat-interface';
 import { SessionStatsPanel } from '@/components/admin/session-stats';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Bot, MessageCircle, Zap, Shield, Info } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -10,127 +8,96 @@ export const metadata: Metadata = {
   description: 'Your AI assistant for the Smarter Goalie platform',
 };
 
+const BLUE = '#37b5ff';
+const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
+
 export default function ProjectAssistantPage() {
   return (
-    <div className="container mx-auto p-6 max-w-6xl space-y-6">
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <style>{`@media (max-width: 1024px) { .pa-layout { grid-template-columns: 1fr !important; } }`}</style>
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Project Assistant</h1>
-        <p className="text-muted-foreground">
-          Your AI helper for understanding the platform and tracking progress
-        </p>
+      <div>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#fff', marginBottom: '6px' }}>Project Assistant</h1>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px' }}>Your AI helper for understanding the platform and tracking progress</p>
       </div>
 
       {/* Info Alert */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          Ask me anything about what the platform can do, how to use different features,
-          or check on the project progress. I&apos;m here to help!
-        </AlertDescription>
-      </Alert>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '12px', padding: '16px' }}>
+        <Info size={16} color={BLUE} style={{ flexShrink: 0, marginTop: '2px' }} />
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>
+          Ask me anything about what the platform can do, how to use different features, or check on the project progress. I&apos;m here to help!
+        </p>
+      </div>
 
-      {/* Main Chat Interface */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      {/* Main layout */}
+      <div className="pa-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start' }}>
+        <div>
           <ChatInterface />
         </div>
 
-        {/* Sidebar - Sessions & Capabilities */}
-        <div className="space-y-4">
-          {/* Development Sessions */}
+        {/* Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <SessionStatsPanel />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Zap className="h-5 w-5" />
-                What I Can Help With
-              </CardTitle>
-              <CardDescription>Just ask!</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-medium">Platform Features</p>
-                  <p className="text-muted-foreground text-xs">
-                    What you can do and where to find things
-                  </p>
+          {/* What I Can Help With */}
+          <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}66, transparent)` }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <Zap size={15} color={BLUE} />
+              <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>What I Can Help With</h3>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', marginBottom: '16px' }}>Just ask!</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[
+                { title: 'Platform Features', sub: 'What you can do and where to find things' },
+                { title: 'Project Progress', sub: "What's been built and what's coming next" },
+                { title: 'Navigation Help', sub: 'Find the right page for what you need' },
+                { title: 'How-To Guides', sub: 'Step-by-step help for common tasks' },
+              ].map(({ title, sub }) => (
+                <div key={title} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <MessageCircle size={14} color={`${BLUE}88`} style={{ flexShrink: 0, marginTop: '3px' }} />
+                  <div>
+                    <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>{title}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>{sub}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-medium">Project Progress</p>
-                  <p className="text-muted-foreground text-xs">
-                    What&apos;s been built and what&apos;s coming next
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-medium">Navigation Help</p>
-                  <p className="text-muted-foreground text-xs">
-                    Find the right page for what you need
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <MessageCircle className="h-4 w-4 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-medium">How-To Guides</p>
-                  <p className="text-muted-foreground text-xs">
-                    Step-by-step help for common tasks
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                Tips
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>• Ask &quot;What can I do?&quot; for a quick overview</p>
-              <p>• Ask &quot;Where do I...?&quot; to find pages</p>
-              <p>• Ask &quot;How is progress?&quot; for updates</p>
-              <p>• Be specific for better answers</p>
-            </CardContent>
-          </Card>
+          {/* Tips */}
+          <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}66, transparent)` }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Bot size={15} color={BLUE} />
+              <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Tips</h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {['Ask "What can I do?" for a quick overview', 'Ask "Where do I...?" to find pages', 'Ask "How is progress?" for updates', 'Be specific for better answers'].map((tip) => (
+                <p key={tip} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>• {tip}</p>
+              ))}
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Private & Secure
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                Only admins can access this assistant. Your conversations are private
-                and not stored.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Private & Secure */}
+          <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}66, transparent)` }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Shield size={15} color={BLUE} />
+              <h3 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Private &amp; Secure</h3>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Only admins can access this assistant. Your conversations are private and not stored.</p>
+          </div>
 
-          <Card className="bg-primary/5 border-primary/20">
-            <CardHeader>
-              <CardTitle className="text-sm">Try Asking</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1 text-xs text-muted-foreground">
-              <p className="italic">&quot;What can I do as an admin?&quot;</p>
-              <p className="italic">&quot;How do I invite a new coach?&quot;</p>
-              <p className="italic">&quot;Where can I see student progress?&quot;</p>
-              <p className="italic">&quot;What features are ready?&quot;</p>
-              <p className="italic">&quot;How is the project going?&quot;</p>
-            </CardContent>
-          </Card>
+          {/* Try Asking */}
+          <div style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ color: BLUE, fontWeight: 700, fontSize: '13px', marginBottom: '8px' }}>Try Asking</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              {['"What can I do as an admin?"', '"How do I invite a new coach?"', '"Where can I see student progress?"', '"What features are ready?"', '"How is the project going?"'].map((q) => (
+                <p key={q} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontStyle: 'italic' }}>{q}</p>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,248 +1,425 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollStack';
-import ClubIntroSection from '@/components/ClubIntroSection/ClubIntroSection';
 import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
+import { GalleryHoverCarousel, type GalleryCarouselItem } from '@/components/ui/gallery-hover-carousel';
+import { ToolboxSection } from '@/components/landing/toolbox-section';
+import { Network, Lock, Filter, TrendingUp, Users, Trophy, Play, Pause } from 'lucide-react';
+
+/** Coach Mike clip — drop `7-pillars-video.mp4` into /public before go-live on THE 7 PILLARS card */
+const SEVEN_PILLARS_VIDEO_SRC = '/7-pillars-video.mp4';
+const SEVEN_PILLARS_VIDEO_POSTER = '/7-pillars.png';
+
+function FeatureVideoPanel({
+  src,
+  poster,
+  label,
+}: {
+  src: string;
+  poster: string;
+  label: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
+
+  const togglePlayback = async () => {
+    const video = videoRef.current;
+    if (!video || !videoReady) return;
+    if (video.paused) {
+      await video.play();
+      setPlaying(true);
+    } else {
+      video.pause();
+      setPlaying(false);
+    }
+  };
+
+  return (
+    <div
+      className="relative h-56 md:h-full min-h-[220px] overflow-hidden"
+      style={{ background: '#020e2e' }}
+      role="region"
+      aria-label={label}
+    >
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url("${poster}")` }}
+        aria-hidden={videoReady}
+      />
+      <video
+        ref={videoRef}
+        src={src}
+        poster={poster}
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        onLoadedData={() => setVideoReady(true)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
+      {!videoReady && (
+        <div
+          className="absolute inset-0 flex items-end justify-start p-4"
+          style={{ background: 'linear-gradient(to top, rgba(0,15,40,0.85), transparent)' }}
+        >
+          <span
+            className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
+            style={{ background: 'rgba(55,181,255,0.15)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.3)' }}
+          >
+            Coach Mike video coming soon
+          </span>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => void togglePlayback()}
+        disabled={!videoReady}
+        className="absolute inset-0 flex items-center justify-center transition-opacity"
+        style={{
+          background: playing || !videoReady ? 'transparent' : 'rgba(0,15,40,0.35)',
+          opacity: playing && videoReady ? 0 : 1,
+          cursor: videoReady ? 'pointer' : 'default',
+        }}
+        onMouseEnter={e => { if (videoReady) e.currentTarget.style.opacity = '1'; }}
+        onMouseLeave={e => { if (videoReady && playing) e.currentTarget.style.opacity = '0'; }}
+        aria-label={playing ? 'Pause video' : 'Play video'}
+      >
+        {videoReady && (
+          <span
+            className="flex h-14 w-14 items-center justify-center rounded-full"
+            style={{ background: 'rgba(55,181,255,0.9)', color: '#000f28', boxShadow: '0 4px 24px rgba(55,181,255,0.4)' }}
+          >
+            {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
+  {
+    id: 'gem-1',
+    label: 'THE FOUNDATION',
+    title: 'What is your foundation built on?',
+    quote: 'Regardless how technically strong you are. If the mind is not the strongest tool you have, then what is your foundation built on?',
+    accent: '#bde4ff',
+    bg: 'linear-gradient(145deg, #1562ea 0%, #0d44c2 55%, #0a2e9a 100%)',
+    WatermarkIcon: Network,
+  },
+  {
+    id: 'gem-2',
+    label: 'THE MIND-VAULT',
+    title: 'Where only the most valuable thoughts are kept.',
+    quote: 'The discipline of building where only the most valuable foundational thoughts and behaviors are kept. For game performance. And for life in general.',
+    accent: '#a8ecff',
+    bg: 'linear-gradient(145deg, #0892cc 0%, #0672ac 55%, #044e84 100%)',
+    WatermarkIcon: Lock,
+  },
+  {
+    id: 'gem-3',
+    label: 'YOUR FILTERS',
+    title: 'Logic. Math. Science. Every read.',
+    quote: 'Logic, Common Sense, Math, and Science become your filters, applied to every read, every shift, every decision.',
+    accent: '#c8e8ff',
+    bg: 'linear-gradient(145deg, #0c3ed6 0%, #0828ae 55%, #061a86 100%)',
+    WatermarkIcon: Filter,
+  },
+  {
+    id: 'gem-4',
+    label: 'PERFORMANCE VS OUTCOME',
+    title: 'You control one. Not the other.',
+    quote: 'Learn the difference between performance and outcome, and understand why the goalie controls one, not the other.',
+    accent: '#b8ddff',
+    bg: 'linear-gradient(145deg, #1e72e8 0%, #1452c8 55%, #0e3aa8 100%)',
+    WatermarkIcon: TrendingUp,
+  },
+  {
+    id: 'gem-5',
+    label: 'THE BENCH',
+    title: 'How the goalie goes, the bench follows.',
+    quote: 'How the goalie goes reflects on the bench. A solid goalie lifts the bench. An inconsistent goalie deflates it.',
+    accent: '#9ed8f8',
+    bg: 'linear-gradient(145deg, #067ab8 0%, #055898 55%, #033878 100%)',
+    WatermarkIcon: Users,
+  },
+  {
+    id: 'gem-6',
+    label: 'SIX DECADES OF ORIGINAL IP',
+    title: 'One foundation. Sixty years. Proven.',
+    quote: 'One foundation. Built over sixty years. Proven on every goalie it has ever touched. The MIND-VAULT is yours to build.',
+    accent: '#c0d8ff',
+    bg: 'linear-gradient(145deg, #2248c8 0%, #1630a8 55%, #102088 100%)',
+    WatermarkIcon: Trophy,
+  },
+];
 
 export default function Home() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<'goalie' | 'parent' | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const testimonials = [
     {
       author: {
-        name: 'Aarav Singh',
-        handle: '@goalieaarav',
+        name: 'Tyler Bouchard',
+        handle: '@tylerbouchard_g',
         avatar:
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'The goalie drills are super practical. I can see my reaction speed improving every week with clear feedback after each session.',
+      text: 'The angle-mark system changed how I read plays entirely. I used to guess my positioning. Now I own my crease with confidence every game.',
     },
     {
       author: {
-        name: 'Maya Patel',
-        handle: '@parentmaya',
+        name: 'Sandra Lafleur',
+        handle: '@sandraL_hockeymom',
         avatar:
-          'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'As a parent, I finally understand my child\'s progress. The weekly reports and coach notes make it easy to support training at home.',
+      text: 'My son used to come off the ice frustrated with no idea what went wrong. Now he logs his sessions, reviews the feedback, and shows up next practice with a real plan.',
     },
     {
       author: {
-        name: 'Coach Leo Martins',
-        handle: '@coachleo',
+        name: 'Coach Rémi Tremblay',
+        handle: '@remitremblay_goalie',
         avatar:
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'Smarter Goalie helps me assign the right drills to each athlete. Personalized learning paths save time and improve outcomes fast.',
+      text: 'I coach AAA midget goalies in Québec and this platform fills a gap nothing else does. The charting tools give me data I can actually coach from, not just gut feelings.',
     },
     {
       author: {
-        name: 'Zoya Khan',
-        handle: '@zoyasaves',
+        name: 'Kaitlyn MacPherson',
+        handle: '@kaitlyn_saves',
         avatar:
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face',
       },
-      text: 'I love that everything is in one place: training plans, quizzes, and progress charts. It feels like having a full academy in my pocket.',
+      text: 'As a female goalie in a program that rarely focuses on us specifically, Smarter Goalie finally feels like it was built for me. The seven-point system alone is worth it.',
+    },
+    {
+      author: {
+        name: 'Derek Kowalski',
+        handle: '@dkowalski_pads',
+        avatar:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+      },
+      text: 'I\'ve been playing rep hockey in Ontario for six years. Nothing has improved my rebound control and breakout reading faster than the video quizzes on this platform.',
+    },
+    {
+      author: {
+        name: 'Lucie Gagnon',
+        handle: '@lucieg_parentBC',
+        avatar:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      },
+      text: 'The coach sends weekly notes through the app and I can actually follow along with my daughter\'s development. For the first time I feel like part of her training, not just a driver.',
     },
   ];
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section — full background image */}
+      {/* Hero Section */}
       <section
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-end"
-        style={{ backgroundImage: "url('/hero-section-icehockey.png')" }}
+        className="relative min-h-screen overflow-hidden flex flex-col"
+        style={{ backgroundColor: '#020e2e' }}
       >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+        {/* Background image — positioned right so goalie fills the right half */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url("/quality.png")',
+            backgroundSize: 'auto 90%',
+            backgroundPosition: 'right center',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 0,
+            filter: 'brightness(0.85) saturate(1.1)',
+          }}
+        />
 
-        {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-8 pb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-10">
-          {/* Heading */}
-          <div className="max-w-3xl">
-            <div className="mb-6">
-              <p className="text-sm md:text-base font-semibold text-red-300 uppercase tracking-widest mb-4">
-                Smarter Goalie Academy
+        {/* Left-to-right gradient — blue-tinted opaque on left, transparent on right */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background: 'linear-gradient(to right, rgba(2,18,60,1) 0%, rgba(2,15,52,0.95) 35%, rgba(2,10,38,0.18) 58%, rgba(2,6,23,0.0) 80%)',
+            zIndex: 1,
+          }}
+        />
+        {/* Mobile overlay */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{ background: 'rgba(2,18,60,0.86)', zIndex: 1 }}
+        />
+
+        {/* Bottom fade into next section */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(2,6,23,0.6) 85%, #000f28 100%)', zIndex: 2 }}
+        />
+
+        {/* ── NAV BAR ── */}
+        <nav className="relative flex items-center justify-between px-6 md:px-12 py-5" style={{ zIndex: 10 }}>
+          {/* Brand */}
+          <div className="flex items-center gap-2">
+            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" fill="#000f28" />
+              </svg>
+            </div>
+            <span style={{ fontSize: '18px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>
+              SMARTER <span style={{ color: '#37b5ff' }}>GOALIE</span>
+            </span>
+          </div>
+
+          {/* Nav links — desktop only */}
+          <div className="hidden md:flex items-center gap-8">
+            {['Features', 'About', 'Pricing'].map((item) => (
+              <span key={item} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', letterSpacing: '0.5px', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#37b5ff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
+              >{item}</span>
+            ))}
+          </div>
+
+          {/* Login CTA */}
+          <button
+            onClick={() => router.push('/auth/login')}
+            className="hover:opacity-90 transition-opacity"
+            style={{ background: '#37b5ff', color: '#000f28', padding: '8px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px', cursor: 'pointer', border: 'none' }}
+          >
+            Login
+          </button>
+        </nav>
+
+        {/* ── HERO CONTENT ── */}
+        <div className="relative flex-1 flex items-center" style={{ zIndex: 10 }}>
+          <div className="w-full max-w-7xl mx-auto pl-4 md:pl-6 pr-6 md:pr-16 py-12 md:py-20">
+            <div className="w-full md:max-w-[600px]">
+
+              {/* Eyebrow */}
+              <p style={{ fontSize: '13px', fontWeight: 700, color: '#37b5ff', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '16px' }}>
+                WELCOME TO
               </p>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] uppercase tracking-tight mb-6">
-                Where Mind Meets Body
-              </h1>
-            </div>
-            <p className="text-base md:text-lg text-white/85 max-w-2xl leading-relaxed">
-              The only platform built for goalies who think as much as they react. Master positioning systems, decision-making frameworks, and technical mastery.
-            </p>
-          </div>
 
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 md:pb-2">
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="bg-red-600 hover:bg-red-500 text-white font-semibold px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/30"
-            >
-              Start Your Journey
-            </button>
-            <button
-              onClick={() => {
-                const el = document.getElementById('features');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="border-2 border-white text-white font-semibold px-6 py-3 hover:bg-white hover:text-gray-900 transition-all duration-300"
-            >
-              See How It Works
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <ClubIntroSection />
-
-      {/* Choose Your Role Section */}
-      <section className="py-32 px-6 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-red-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-        
-        <div className="max-w-6xl mx-auto relative z-10">
-         
-          <div className="mb-20">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
-              Choose Your Role
-            </h2>
-            <p className="text-lg md:text-xl text-gray-500 font-medium">
-              Goalies build skills. Parents support the journey. Start here.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-10 mt-20 max-w-3xl mx-auto">
-            {/* Card 1 - Goalie Role */}
-            <button
-              onClick={() => {
-                setSelectedRole('goalie');
-                setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-              }}
-              className={`group relative h-[380px] rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] text-left bg-red-500 ${
-                selectedRole === 'parent' ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'
-              }`}
-            >
-              {/* Hover background image */}
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ backgroundImage: 'url("/goalie_card_hover.png")' }}
-              />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative h-full flex flex-col justify-between p-7 z-10">
-                <span className="text-lg font-semibold text-white/80">(01)</span>
-                <div>
-                  <h3 className="text-3xl font-bold text-white mb-4">
-                    I&rsquo;m a Goalie
-                  </h3>
-                  <p className="text-white/80 leading-relaxed">
-                    Access role-based drills, smart feedback, and progress tracking designed to improve your saves, reactions, and game confidence.
-                  </p>
-                  <span className="inline-block mt-5 rounded-full bg-white text-red-500 px-5 py-2 text-sm font-semibold">
-                    Enter as Goalie
-                  </span>
-                </div>
-              </div>
-            </button>
-
-            {/* Card 2 - Parent Role */}
-            <button
-              onClick={() => {
-                setSelectedRole('parent');
-                setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-              }}
-              className={`group relative h-[380px] rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] text-left bg-zinc-800 ${
-                selectedRole === 'goalie' ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'
-              }`}
-            >
-              {/* Hover background image */}
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ backgroundImage: 'url("/parent_card_hover.png")' }}
-              />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative h-full flex flex-col justify-between p-7 z-10">
-                <span className="text-lg font-semibold text-white/80">(02)</span>
-                <div>
-                  <h3 className="text-3xl font-bold text-white mb-4">
-                    I&rsquo;m a Parent
-                  </h3>
-                  <p className="text-zinc-300 leading-relaxed">
-                    Stay informed with clear progress updates, coach notes, and learning milestones so you can confidently support your child&rsquo;s development.
-                  </p>
-                  <span className="inline-block mt-5 rounded-full bg-white text-zinc-800 px-5 py-2 text-sm font-semibold">
-                    Enter as Parent
-                  </span>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          {/* Change role link */}
-          {selectedRole && (
-            <div className="mt-8 max-w-3xl mx-auto">
-              <button
-                onClick={() => setSelectedRole(null)}
-                className="text-sm text-gray-400 hover:text-gray-700 transition-colors duration-200 underline underline-offset-4"
+              {/* Brand name — italic, SMARTER=blue, GOALIE=white */}
+              <h1
+                className="font-black uppercase italic leading-none mb-6"
+                style={{ fontSize: 'clamp(56px, 9vw, 108px)', letterSpacing: '-0.03em', lineHeight: 0.92, fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif' }}
               >
-                ← Change role
-              </button>
+                <span style={{ display: 'block', color: '#42a5f5' }}>SMARTER</span>
+                <span style={{ display: 'block', color: '#ffffff' }}>GOALIE</span>
+              </h1>
+
+              {/* Full-width divider */}
+              <div style={{ width: '100%', maxWidth: '520px', height: '1px', background: 'rgba(255,255,255,0.2)', marginBottom: '32px' }} />
+
+              {/* Sub-headline — large bold */}
+              <h2
+                className="font-black uppercase leading-tight mb-4"
+                style={{ fontSize: 'clamp(22px, 3.5vw, 42px)', lineHeight: 1.1, color: '#ffffff', letterSpacing: '-0.01em' }}
+              >
+                ARE GOALIES THE WORST<br />ATHLETES IN SPORTS?
+              </h2>
+
+              <p
+                className="uppercase font-semibold mb-12"
+                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', fontSize: '11px' }}
+              >
+                HERE IS WHAT WE KNOW.
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Video button */}
+                <button
+                  className="flex items-center gap-3 cursor-pointer transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '14px 24px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                >
+                  <span className="flex items-center justify-center shrink-0" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fff', color: '#020617', fontSize: '9px', fontWeight: 900 }}>▶</span>
+                  COACH MIKE
+                </button>
+
+                {/* Primary CTA */}
+                <button
+                  onClick={() => router.push('/explain')}
+                  className="transition-all duration-200"
+                  style={{ background: '#42a5f5', color: '#fff', fontWeight: 800, fontSize: '12px', letterSpacing: '0.15em', padding: '14px 32px', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 0 24px rgba(66,165,245,0.45)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 36px rgba(66,165,245,0.7)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(66,165,245,0.45)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+                >
+                  LET US EXPLAIN →
+                </button>
+              </div>
             </div>
-          )}
-         
+          </div>
+        </div>
+
+        {/* Bottom brand watermark */}
+        <div className="relative pb-6 flex justify-center md:justify-end md:px-12" style={{ zIndex: 2 }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.15)', letterSpacing: '3px', textTransform: 'uppercase' }}>
+            © SMARTER GOALIE
+          </span>
         </div>
       </section>
 
-      {/* Role-conditional content anchor */}
-      <div ref={contentRef} />
-
-      {/* ── GENERAL (no role selected) ── */}
-      {!selectedRole && (
-        <>
-          <section id="features" className="pt-20 pb-0 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6 mb-12">
+      {/* ── MAIN CONTENT ── */}
+      <>
+          <section id="features" className="pt-20 pb-0" style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-12">
               <div className="flex justify-between items-center">
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900">WHAT WE DO</h2>
-                <span className="text-xl font-semibold text-gray-600">1/5</span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">WHAT WE DO</h2>
+                <span className="text-xl font-semibold" style={{ color: '#37b5ff' }}>1/5</span>
               </div>
             </div>
             <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="20%" scaleEndPosition="15%" baseScale={0.95}>
               {/* 1 — The 7 Pillars of Intelligent Goaltending */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_1.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">1/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
-                        <p className="text-xl text-red-400 mb-6">Learn Smart. Play Smart. Stay Consistent.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">We build Intelligent Athletic Goaltenders through 6 core skill pillars — from Mind-Set and Skating Tech to our Seven Angle-Mark System, Seven Point System, Form Tech, and Performance Charting.</p>
-                        <p className="text-zinc-400 text-sm mb-6">Master each pillar and unlock consistency you can repeat every game.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <FeatureVideoPanel
+                        src={SEVEN_PILLARS_VIDEO_SRC}
+                        poster={SEVEN_PILLARS_VIDEO_POSTER}
+                        label="The 7 Pillars introduction video"
+                      />
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>1/5</span></div>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
+                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>
+                          Raw talent is one thing. Building it into a SMARTER goaltender is another.
+                        </p>
+                        <p className="text-zinc-400 text-base mb-5">Through 7 Pillars, we lay the foundation.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
+                          We build INTELLIGENT ATHLETIC GOALTENDERS through 7 Pillars. At the core are two of our UNIQUE, PROVEN Goalie Positional Systems, think GPS, the Seven Angle-Mark System (7AMS) above the icing line, and the 6 Zone System (6ZS) below it. From MIND-SET to Skating Tech to Form Tech, Game Performance, Team Practice Charting Systems, Support Systems, and LIFE STYLE. Mastering what each pillar unlocks builds consistency in performance.
+                        </p>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
-              {/* 2 — Video Learning */}
+              {/* 2 — Video Analysis */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">2/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">VIDEO LEARNING</h3>
-                        <p className="text-xl text-red-400 mb-6">Structured lessons you can replay</p>
-                        <p className="text-zinc-300 leading-relaxed mb-8">YouTube-integrated video lessons organised into structured modules covering technique, positioning, decision-making, and game sense. Track completion per lesson, pick up where you left off, and learn at your own pace.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
+                      <div className="p-6 md:px-10 md:py-8 flex flex-col justify-center">
+                        <div className="text-right mb-2"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>2/5</span></div>
+                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">VIDEO NEVER LIES</h3>
+                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>Seeing Is Believing</p>
+                        <p className="text-zinc-400 text-sm mb-4">
+                          Improve <strong className="text-white">10%</strong>, gain <strong className="text-white">20%</strong> from seeing yourself, go <strong className="text-white">50%</strong> further, or start at <strong className="text-white">100%</strong>. <strong className="text-white">We know how.</strong> Four decades of video analysis. <strong className="text-white">Immediate Development Impact.</strong>
+                        </p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
+                          Home, in transit, at school, on laptop or phone. <strong className="text-white">That&rsquo;s the Smarter Goalie Way.</strong><sup className="text-[10px] text-zinc-400 ml-0.5">™</sup> Tech analysis reaches the cognitive mind through movement and mechanics. Once gathered, your improvement design is ready. <strong className="text-white">Accelerated Results.</strong> See it, understand it, implement it.
+                        </p>
+                        <button className="mt-2 text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -250,17 +427,18 @@ export default function Home() {
               </ScrollStackItem>
               {/* 3 — Performance Analytics & Gap Management */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">3/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
-                        <p className="text-xl text-red-400 mb-6">See what others miss</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">Chart every game and practice session. Our analytics reveal your consistency patterns, good vs. bad goal ratios, and pinpoint exactly which skills need work.</p>
-                        <p className="text-zinc-400 text-sm mb-6">Nothing is left to imagination — advance with confidence knowing precisely where you stand.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
+                      <div className="p-7 md:p-12 flex flex-col justify-center">
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>3/5</span></div>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
+                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Know what others miss.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
+                          The charting systems build your personal Baseline Profile. Your knowledge and skill base is now alive. Smarter Goalie&rsquo;s intuitive system is designed to grow your knowledge base and your tech game with methods built to accelerate your development.
+                        </p>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -268,34 +446,43 @@ export default function Home() {
               </ScrollStackItem>
               {/* 4 — Goaltending: A Chess Game */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">4/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">THE CHESS GAME</h3>
-                        <p className="text-xl text-red-400 mb-6">Think Smart. Play Smart. Read the Play.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-5">Our video-questionnaire and quiz system assesses your decision-making from a goalie&rsquo;s point of view. We identify your knowledge gaps, then build your personalised &ldquo;UP YOUR GAME&rdquo; learning path.</p>
-                        <p className="text-zinc-400 text-sm mb-6">Outsmart the shooter before the puck leaves their stick.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_4.png")' }}></div>
+                      <div className="p-6 md:px-10 md:py-8 flex flex-col justify-center">
+                        <div className="text-right mb-2"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>4/5</span></div>
+                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">THE CHESS GAME</h3>
+                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>Think Smart. Play Smarter.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-4">
+                          Knowledge is power, and Smarter Goalie is knowledge-driven. Most goalies are playing a 1000-piece puzzle with a fragmented picture and no border pieces. They&rsquo;ve got talent scattered everywhere and no frame to build it on. We hand you the borders first, then fill in the picture until the whole game comes into focus.
+                        </p>
+                        <p className="text-zinc-400 text-sm mb-5">
+                          Chess is won in the mind. So is goaltending. Anyone can move the pieces. Anyone can stop a puck. A Smarter Goalie knows the options, anticipates the play, dictates the terms and holds the cards. Everyone reacts. A Smarter Goalie decides when, why, where, and how.
+                        </p>
+                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollStackItem>
-              {/* 5 — Session Charting */}
+              {/* 5 — The Mirror Never Lies */}
               <ScrollStackItem>
-                <div className="max-w-7xl mx-auto px-6">
-                  <div className="bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="grid md:grid-cols-2 gap-0 items-center h-[560px]">
-                      <div className="h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
-                      <div className="p-12 flex flex-col justify-center h-full">
-                        <div className="text-right mb-4"><span className="text-lg font-semibold text-red-400">5/5</span></div>
-                        <h3 className="text-5xl md:text-6xl font-bold text-white mb-4">SESSION CHARTING</h3>
-                        <p className="text-xl text-red-400 mb-6">Our flagship goalie feature</p>
-                        <p className="text-zinc-300 leading-relaxed mb-8">Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.</p>
-                        <button className="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit"><span className="w-2 h-2 bg-white rounded-full"></span>More about this</button>
+                <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(6,30,70,0.98)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
+                    <div className="grid md:grid-cols-2 gap-0 items-center min-h-[420px] md:h-[560px]">
+                      <div className="h-56 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
+                      <div className="p-5 md:px-8 md:py-6 flex flex-col justify-center">
+                        <div className="text-right mb-1"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>5/5</span></div>
+                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">THE MIRROR NEVER LIES</h3>
+                        <p className="text-base md:text-lg mb-3 font-semibold" style={{ color: '#37b5ff' }}>Discover. Understand. Know. Own. Maintain.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-3">
+                          This is where it all comes together. After the layers, the principles, the systems, the reads, Smarter Goalie hands it back simplified in a single living chart. You log your game period by period and rate the factors that decide goaltending. The number isn&rsquo;t a grade. It&rsquo;s a mirror that shows exactly where you stand.
+                        </p>
+                        <p className="text-zinc-400 text-sm leading-snug mb-6">
+                          When a rating dips, the system doesn&rsquo;t scold. It opens the precise lessons that lift that gap, drawn from everything you&rsquo;ve learned. Self-aware in the moment. Self-correcting by design. Layers made simple. Foundations built layer by layer, and a starter is born.
+                        </p>
+                        <button className="mt-2 text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -305,269 +492,47 @@ export default function Home() {
           </section>
 
           {/* Scrolling Marquee */}
-          <section className="py-6 bg-gray-50 overflow-hidden border-y border-gray-100">
+          <section className="py-6 overflow-hidden" style={{ background: '#041530', borderTop: '1px solid rgba(55,181,255,0.12)', borderBottom: '1px solid rgba(55,181,255,0.12)' }}>
             <div className="relative flex" style={{ '--duration': '30s', '--gap': '2rem' } as React.CSSProperties}>
               <div className="flex shrink-0 animate-marquee items-center gap-8">
-                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide text-gray-800 hover:text-gray-900 transition-colors duration-300 cursor-default">{text}</span>
-                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
               <div className="flex shrink-0 animate-marquee items-center gap-8" aria-hidden="true">
-                {['MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
+                {['MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ', 'MIND-SET', 'MIND-VAULT', 'SKATING TECH', 'ANGLE-MARK SYSTEM', 'SEVEN POINT SYSTEM', 'FORM TECH', 'PERFORMANCE CHARTING', 'GAME IQ'].map((text, i) => (
                   <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                    <span className="text-xl md:text-2xl font-bold tracking-wide text-gray-800 hover:text-gray-900 transition-colors duration-300 cursor-default">{text}</span>
-                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+                    <span className="text-xl md:text-2xl font-bold tracking-wide transition-colors duration-300 cursor-default" style={{ color: 'rgba(255,255,255,0.55)' }}>{text}</span>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#37b5ff' }}></span>
                   </span>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* What's In YOUR Tool Box? */}
-          <section className="py-24 px-6 bg-white">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
-                What&rsquo;s In YOUR Tool Box?
-              </h2>
-              <p className="text-center text-gray-500 text-lg mb-14 max-w-2xl mx-auto">Three systems that separate good goalies from great ones.</p>
-              <div className="grid md:grid-cols-3 gap-8 items-stretch">
-                {/* Card 1 — Positional Systems */}
-                <BackgroundGradient
-                  containerClassName="rounded-[22px] h-full"
-                  className="rounded-[18px] h-full"
-                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#b91c1c,transparent),radial-gradient(circle_farthest-side_at_100%_0,#ef4444,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#7f1d1d,transparent),radial-gradient(circle_farthest-side_at_0_0,#dc2626,#1c0505)]"
-                >
-                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-red-700 rounded-[18px] h-full">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-5 group-hover:bg-white/30 transition-colors duration-300">
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Positional Systems</h3>
-                    <p className="text-white/85 leading-relaxed mb-4">See the ice through the puck&rsquo;s eyes. Master net-crease positioning and the angle-mark system so you&rsquo;re always in the right spot before the shot.</p>
-                  </div>
-                </BackgroundGradient>
+          {/* MIND-VAULT GEM Panel */}
+          <GalleryHoverCarousel
+            eyebrow="THE MIND-VAULT, DAILY GEMS"
+            heading="Six Foundations. One Complete System."
+            subheading="The mental pillars every goalie needs, built into your game, your mindset, and your life."
+            items={MIND_VAULT_ITEMS}
+          />
 
-                {/* Card 2 — Game IQ */}
-                <BackgroundGradient
-                  containerClassName="rounded-[22px] h-full"
-                  className="rounded-[18px] h-full"
-                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#374151,transparent),radial-gradient(circle_farthest-side_at_100%_0,#6b7280,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#111827,transparent),radial-gradient(circle_farthest-side_at_0_0,#4b5563,#030712)]"
-                >
-                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-black rounded-[18px] h-full">
-                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5 group-hover:bg-white/20 transition-colors duration-300">
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Game IQ Assessments</h3>
-                    <p className="text-white/85 leading-relaxed mb-4">Think two passes ahead. Measure your hockey sense through video analysis and charting — then watch your decision speed climb game after game.</p>
-                  </div>
-                </BackgroundGradient>
-
-                {/* Card 3 — Performance Analytics */}
-                <BackgroundGradient
-                  containerClassName="rounded-[22px] h-full"
-                  className="rounded-[18px] h-full"
-                  gradientClassName="bg-[radial-gradient(circle_farthest-side_at_0_100%,#1d4ed8,transparent),radial-gradient(circle_farthest-side_at_100%_0,#3b82f6,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#1e3a8a,transparent),radial-gradient(circle_farthest-side_at_0_0,#2563eb,#030712)]"
-                >
-                  <div className="group p-8 text-white cursor-pointer transition-all duration-500 hover:scale-[1.02] bg-blue-600 rounded-[18px] h-full">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-5 group-hover:bg-white/30 transition-colors duration-300">
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Performance Analytics</h3>
-                    <p className="text-white/85 leading-relaxed mb-4">Know what you don&rsquo;t know. Track your gaps, chart your growth, and build the self-awareness to coach yourself between sessions.</p>
-                  </div>
-                </BackgroundGradient>
-              </div>
-            </div>
-          </section>
+          <ToolboxSection />
 
           <TestimonialsSection
             title="Voices From The Smarter Goalie Community"
-            description="Goalkeepers, parents, and coaches trust our sports LMS to build skills, confidence, and consistent match performance."
+            description="Goalies, parents, and coaches trust Smarter Goalie to sharpen their game, track real progress, and train with purpose."
             testimonials={testimonials}
+            className="!bg-[#000f28]"
+            dark={true}
+            gradientColor="#000f28"
           />
-        </>
-      )}
+      </>
 
-      {/* ── GOALIE ── */}
-      {selectedRole === 'goalie' && (
-        <section className="py-24 px-6 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Everything built for you</h2>
-              <p className="text-lg text-gray-500 max-w-2xl mx-auto">Every tool, drill, and insight in one place — designed specifically for goalies who want to improve.</p>
-            </div>
-
-            <div className="space-y-24">
-              {[
-                {
-                  title: 'Session Charting',
-                  desc: 'The most complete in-game tracking tool for goalies. Log every shot, save, and goal against — period by period. Rate yourself across 8 performance factors like Intensity, Positional Play, and Reading the Breakout. Low ratings trigger a personalised growth menu that connects you to the exact lessons you need.',
-                  image: '/goalie_feature_1.png',
-                  badge: 'Flagship Feature',
-                },
-                {
-                  title: 'Two Learning Paths',
-                  desc: 'Choose between Automated self-paced progression driven by the algorithm, or a Custom coach-guided curriculum where content is unlocked by your coach. Both paths adapt to your skill level and keep you moving forward.',
-                  image: '/goalie_feature_2.png',
-                },
-                {
-                  title: 'Sports Catalog & Video Learning',
-                  desc: 'Browse all available lessons and quizzes across every skill category. YouTube-integrated video lessons are organised into structured modules covering technique, positioning, decision-making, and game sense — with built-in progress tracking per lesson.',
-                  image: '/goalie_feature_3.png',
-                },
-                {
-                  title: 'Progress Tracking & Achievements',
-                  desc: 'Visual charts show your skill-level and sport-level progress over time. Earn badges, hit milestones, and maintain streaks — every improvement is tracked and celebrated to keep you motivated.',
-                  image: '/goalie_feature_4.png',
-                },
-                {
-                  title: 'Interactive Quizzes',
-                  desc: 'Multiple question types — multiple-choice, true/false, scenario-based — with instant feedback after every answer. Quizzes are tied directly to video lessons so you prove your understanding before moving on.',
-                  image: '/goalie_feature_5.png',
-                },
-                {
-                  title: 'Goal Setting & Profile',
-                  desc: 'Set personal development goals and track how close you are to hitting them. Your unique Student ID (SG-XXXX-XXXX) lets you share your profile with parents and coaches, keeping everyone connected.',
-                  image: '/goalie_feature_6.png',
-                },
-                {
-                  title: 'Messages & Notifications',
-                  desc: 'Stay connected with your coach and team through a built-in inbox. Receive notifications about new lessons, quiz results, coach feedback, and milestone achievements — all in one place.',
-                  image: '/goalie_feature_7.png',
-                },
-              ].map((feature, i) => (
-                <div key={feature.title} className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-16`}>
-                  {/* Text */}
-                  <div className="flex-1">
-                    {feature.badge && (
-                      <span className="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4">{feature.badge}</span>
-                    )}
-                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                    <p className="text-gray-500 text-base md:text-lg leading-relaxed">{feature.desc}</p>
-                  </div>
-                  {/* Image */}
-                  <div className="flex-1 w-full">
-                    <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-[4/3]">
-                      <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Goalie CTA */}
-            <div className="mt-24 flex justify-center">
-              <div className="w-full max-w-2xl relative bg-gradient-to-br from-red-50 to-white border border-red-100 rounded-2xl p-8 md:p-10 text-center overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-red-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-red-50/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-                <div className="relative z-10">
-                  <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-3">Your journey starts here</p>
-                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ready to Play Smarter?</h3>
-                  <p className="text-gray-600 mb-8 leading-relaxed">Join the academy and get access to every drill, lesson, quiz, and analytics tool — built for goalies who want to level up.</p>
-                  <button
-                    onClick={() => router.push('/auth/register')}
-                    className="group bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
-                  >
-                    Register Now
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── PARENT ── */}
-      {selectedRole === 'parent' && (
-        <section className="py-24 px-6 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Stay close to the journey</h2>
-              <p className="text-lg text-gray-500 max-w-2xl mx-auto">Everything you need to support your child — progress reports, coach notes, achievements, and more.</p>
-            </div>
-
-            <div className="space-y-24">
-              {[
-                {
-                  title: 'Monitor Progress',
-                  desc: 'Link to your child via their unique Student ID and track their full learning journey from your own dashboard. See skill levels, completion rates, and growth trends at a glance.',
-                  image: '/parent_feature_1.png',
-                },
-                {
-                  title: 'Learning Activity',
-                  desc: 'See exactly what your child is working on — active lessons, quizzes attempted, and time spent training. Stay informed about their daily engagement without needing to ask.',
-                  image: '/parent_feature_2.png',
-                },
-                {
-                  title: 'Achievements & Badges',
-                  desc: 'View every badge earned and milestone reached. Celebrate their wins as they happen and use achievements as conversation starters to encourage continued growth.',
-                  image: '/parent_feature_3.png',
-                },
-                {
-                  title: 'Session Review',
-                  desc: "Browse your child's charting session history — shot counts, save rates, and period-by-period factor ratings. Understand how they performed on game day without being on the bench.",
-                  image: '/parent_feature_4.png',
-                },
-                {
-                  title: 'Child Messages',
-                  desc: "Monitor your child's coach communications with privacy controls so you're informed without being intrusive. Know what feedback they're receiving and how they're responding.",
-                  image: '/parent_feature_5.png',
-                },
-                {
-                  title: 'Multi-child Support',
-                  desc: 'Link and manage multiple children from a single parent account — each with their own independent progress view. Switch between profiles effortlessly.',
-                  image: '/parent_feature_6.png',
-                },
-              ].map((feature, i) => (
-                <div key={feature.title} className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-16`}>
-                  {/* Text */}
-                  <div className="flex-1">
-                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                    <p className="text-gray-500 text-base md:text-lg leading-relaxed">{feature.desc}</p>
-                  </div>
-                  {/* Image */}
-                  <div className="flex-1 w-full">
-                    <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-[4/3]">
-                      <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Parent CTA */}
-            <div className="mt-24 flex justify-center">
-              <div className="w-full max-w-2xl relative bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-8 md:p-10 text-center overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-50/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-                <div className="relative z-10">
-                  <p className="text-blue-500 font-semibold tracking-widest uppercase text-xs mb-3">Stay connected to their growth</p>
-                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Support Starts Here</h3>
-                  <p className="text-gray-600 mb-8 leading-relaxed">Create your parent account and link to your child&rsquo;s profile. Track progress, celebrate wins, and stay informed — all from one dashboard.</p>
-                  <button
-                    onClick={() => router.push('/auth/register')}
-                    className="group bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
-                  >
-                    Register Now
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-24">
-              <TestimonialsSection
-                title="What Parents Are Saying"
-                description="Parents across the community trust Smarter Goalie to keep them informed and connected to their child's development."
-                testimonials={testimonials.filter((_, i) => [1, 2, 3].includes(i))}
-              />
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

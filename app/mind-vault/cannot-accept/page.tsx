@@ -1,19 +1,18 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronDown, ShieldAlert, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, ChevronDown, ShieldAlert } from 'lucide-react';
+import { SkeletonListPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 import { AcceptancePromptItem } from '@/components/mind-vault/AcceptancePromptItem';
 import { MindVaultEntryForm } from '@/components/mind-vault/MindVaultEntryForm';
 import { MindVaultEntryCard } from '@/components/mind-vault/MindVaultEntryCard';
-import {
-  CANNOT_ACCEPT_SUBCATEGORIES,
-  CANNOT_ACCEPT_PROMPTS,
-  type MindVaultEntry,
-} from '@/types/mind-vault';
+import { CANNOT_ACCEPT_SUBCATEGORIES, CANNOT_ACCEPT_PROMPTS, type MindVaultEntry } from '@/types/mind-vault';
+import { toast } from 'sonner';
+
+const RED = '#f87171';
 
 export default function CannotAcceptListPage() {
   const router = useRouter();
@@ -21,10 +20,7 @@ export default function CannotAcceptListPage() {
   const [entries, setEntries] = useState<MindVaultEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>(() =>
-    CANNOT_ACCEPT_SUBCATEGORIES.reduce<Record<string, boolean>>((acc, sub) => {
-      acc[sub.slug] = true;
-      return acc;
-    }, {})
+    CANNOT_ACCEPT_SUBCATEGORIES.reduce<Record<string, boolean>>((acc, sub) => { acc[sub.slug] = true; return acc; }, {})
   );
 
   useEffect(() => {
@@ -32,191 +28,132 @@ export default function CannotAcceptListPage() {
     const load = async () => {
       setLoading(true);
       const result = await mindVaultService.getEntriesByCategory(user.id, 'cannot_accept');
-      if (result.success && result.data) {
-        setEntries(result.data);
-      }
+      if (result.success && result.data) setEntries(result.data);
+      else toast.error(result.error?.message || 'Failed to load Cannot Accept List');
       setLoading(false);
     };
     load();
   }, [user?.id]);
 
-  const acceptedTexts = new Set(entries.map((e) => e.content));
+  const acceptedTexts = new Set(entries.map(e => e.content));
 
   const handleAcceptPrompt = async (text: string, subcategory: string) => {
-    if (!user?.id) {
-      console.error('[MindVault] No user ID available');
-      return;
-    }
-    console.log('[MindVault] Adding cannot-accept entry:', { subcategory, text: text.substring(0, 40) });
+    if (!user?.id) return;
     try {
-      const result = await mindVaultService.addEntry({
-        studentId: user.id,
-        category: 'cannot_accept',
-        subcategory,
-        content: text,
-        isVoiceEntry: false,
-        source: 'manual',
-      });
-      console.log('[MindVault] addEntry result:', result);
+      const result = await mindVaultService.addEntry({ studentId: user.id, category: 'cannot_accept', subcategory, content: text, isVoiceEntry: false, source: 'manual' });
       if (result.success) {
         const reload = await mindVaultService.getEntriesByCategory(user.id, 'cannot_accept');
         if (reload.success && reload.data) setEntries(reload.data);
-      } else {
-        console.error('[MindVault] addEntry failed:', result.error);
-      }
+      } else toast.error(result.error?.message || result.message || 'Failed to add entry');
     } catch (error) {
-      console.error('[MindVault] addEntry threw:', error);
+      toast.error(error instanceof Error ? error.message : String(error));
     }
   };
 
   const handleAddCustom = async (content: string, isVoice: boolean) => {
     if (!user?.id) return;
-    const result = await mindVaultService.addEntry({
-      studentId: user.id,
-      category: 'cannot_accept',
-      content,
-      isVoiceEntry: isVoice,
-      source: 'manual',
-    });
+    const result = await mindVaultService.addEntry({ studentId: user.id, category: 'cannot_accept', content, isVoiceEntry: isVoice, source: 'manual' });
     if (result.success) {
       const reload = await mindVaultService.getEntriesByCategory(user.id, 'cannot_accept');
       if (reload.success && reload.data) setEntries(reload.data);
-    }
+    } else toast.error(result.error?.message || result.message || 'Failed to add entry');
   };
 
   const handleDeleteEntry = async (id: string) => {
     await mindVaultService.deleteEntry(id);
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEntries(prev => prev.filter(e => e.id !== id));
   };
 
-  const toggleSubcategory = (slug: string) => {
-    setExpandedSubcategories((prev) => ({
-      ...prev,
-      [slug]: !prev[slug],
-    }));
-  };
+  const toggleSubcategory = (slug: string) => setExpandedSubcategories(prev => ({ ...prev, [slug]: !prev[slug] }));
 
-  const promptTexts = new Set(CANNOT_ACCEPT_PROMPTS.map((p) => p.text));
-  const customEntries = entries.filter((e) => !promptTexts.has(e.content));
+  const promptTexts = new Set(CANNOT_ACCEPT_PROMPTS.map(p => p.text));
+  const customEntries = entries.filter(e => !promptTexts.has(e.content));
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
+  if (loading) return <div style={{ padding: '16px' }}><SkeletonListPage cols={2} count={4} /></div>;
 
   return (
-    <div className="relative max-w-6xl mx-auto overflow-hidden rounded-3xl border border-red-100/80 bg-gradient-to-b from-white via-red-50/15 to-white p-5 shadow-[0_24px_60px_-40px_rgba(239,68,68,0.35)] sm:p-8">
-      <div className="pointer-events-none absolute -top-24 -right-20 h-52 w-52 rounded-full bg-red-400/15 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-20 h-52 w-52 rounded-full bg-blue-400/10 blur-3xl" />
+    <div style={{ minHeight: '100vh', padding: '24px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* Header */}
-      <div className="relative z-10 mb-6 rounded-2xl border border-red-200/70 bg-white/90 p-5 backdrop-blur">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-3 rounded-full border border-red-200 bg-red-50 px-4 text-red-700 hover:border-red-300 hover:bg-red-100 hover:text-red-800"
-          onClick={() => router.push('/mind-vault')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Mind Vault
-        </Button>
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-md shadow-red-500/25">
-            <ShieldAlert className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Cannot Accept List</h1>
-            <p className="text-sm text-slate-600">
-              Your psychological firewall — what you consciously refuse to surrender to.
-            </p>
-          </div>
-        </div>
-        <p className="mt-3 ml-[52px] inline-flex rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
-          These are your non-negotiables. Tap to claim them, or add your own.
-        </p>
-      </div>
-
-      <div className="relative z-10 mb-6 rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-red-900">Expandable Index</h2>
-        <p className="mt-1 text-sm leading-relaxed text-red-900/90">
-          Your psychological firewall grows as new pressure points appear. Add entries after
-          difficult games, practices, or personal moments so your non-negotiables stay clear,
-          specific, and strong.
-        </p>
-      </div>
-
-      {/* Sub-categories with prompts */}
-      <div className="relative z-10 space-y-6">
-        {CANNOT_ACCEPT_SUBCATEGORIES.map((sub) => {
-          const prompts = CANNOT_ACCEPT_PROMPTS.filter((p) => p.subcategory === sub.slug);
-          const isExpanded = expandedSubcategories[sub.slug];
-          const acceptedCount = prompts.filter((prompt) => acceptedTexts.has(prompt.text)).length;
-          return (
-            <div key={sub.slug} className="rounded-2xl border border-red-100 bg-white/90 p-4 shadow-sm">
-              <button
-                type="button"
-                onClick={() => toggleSubcategory(sub.slug)}
-                className="mb-2 flex w-full items-center justify-between rounded-xl border border-red-200 bg-gradient-to-r from-red-50/80 to-white px-4 py-3 text-left hover:border-red-300"
-                aria-expanded={isExpanded}
-              >
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-900">{sub.name}</h2>
-                  <p className="text-xs text-slate-500">{sub.description}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full border border-red-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-red-700">
-                    {acceptedCount}/{prompts.length}
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-red-600 transition-transform ${
-                      isExpanded ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-              </button>
-              {isExpanded && (
-                <div className="space-y-2">
-                  {prompts.map((prompt) => (
-                    <AcceptancePromptItem
-                      key={prompt.id}
-                      promptText={prompt.text}
-                      isAccepted={acceptedTexts.has(prompt.text)}
-                      variant="red"
-                      onAccept={(text) => handleAcceptPrompt(text, sub.slug)}
-                    />
-                  ))}
-                </div>
-              )}
+        {/* Header */}
+        <div style={{ background: 'rgba(2,18,44,0.9)', border: `1.5px solid rgba(248,113,113,0.3)`, borderRadius: '16px', padding: '22px 24px' }}>
+          <button
+            onClick={() => router.push('/mind-vault')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: RED, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '20px', padding: '5px 14px', cursor: 'pointer', fontWeight: 700, marginBottom: '16px' }}
+          >
+            <ArrowLeft size={12} /> Mind Vault
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ShieldAlert size={20} color={RED} />
             </div>
-          );
-        })}
-      </div>
-
-      {/* Custom entries */}
-      {customEntries.length > 0 && (
-        <div className="relative z-10 mt-8 rounded-2xl border border-red-100 bg-white/90 p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-900">Your Custom Entries</h2>
-          <div className="space-y-3">
-            {customEntries.map((entry) => (
-              <MindVaultEntryCard
-                key={entry.id}
-                entry={entry}
-                onDelete={handleDeleteEntry}
-              />
-            ))}
+            <div>
+              <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>Cannot Accept List</h1>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Your psychological firewall — what you consciously refuse to surrender to.</p>
+            </div>
           </div>
+          <p style={{ marginTop: '12px', display: 'inline-flex', alignItems: 'center', fontSize: '11px', color: RED, background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '20px', padding: '4px 12px', fontWeight: 600 }}>
+            These are your non-negotiables. Tap to claim them, or add your own.
+          </p>
         </div>
-      )}
 
-      {/* Add custom entry */}
-      <div className="relative z-10 mt-6">
-        <MindVaultEntryForm
-          onSubmit={handleAddCustom}
-          placeholder="Add your own non-negotiable in your own words..."
-        />
+        {/* Expandable Index info */}
+        <div style={{ background: 'rgba(248,113,113,0.05)', border: '1px solid rgba(248,113,113,0.18)', borderRadius: '14px', padding: '18px 20px' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 700, color: RED, marginBottom: '6px' }}>Expandable Index</h2>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>
+            Your psychological firewall grows as new pressure points appear. Add entries after difficult games, practices, or personal moments so your non-negotiables stay clear, specific, and strong.
+          </p>
+        </div>
+
+        {/* Sub-categories */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {CANNOT_ACCEPT_SUBCATEGORIES.map(sub => {
+            const prompts = CANNOT_ACCEPT_PROMPTS.filter(p => p.subcategory === sub.slug);
+            const isExpanded = expandedSubcategories[sub.slug];
+            const acceptedCount = prompts.filter(p => acceptedTexts.has(p.text)).length;
+            return (
+              <div key={sub.slug} style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(248,113,113,0.12)', borderRadius: '14px', padding: '14px', overflow: 'hidden' }}>
+                <button
+                  type="button"
+                  onClick={() => toggleSubcategory(sub.slug)}
+                  aria-expanded={isExpanded}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(248,113,113,0.05)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '10px', padding: '12px 14px', cursor: 'pointer', textAlign: 'left', marginBottom: '10px' }}
+                >
+                  <div>
+                    <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{sub.name}</h2>
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{sub.description}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '20px', padding: '2px 8px' }}>
+                      {acceptedCount}/{prompts.length}
+                    </span>
+                    <ChevronDown size={15} color={RED} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </div>
+                </button>
+                {isExpanded && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {prompts.map(prompt => (
+                      <AcceptancePromptItem key={prompt.id} promptText={prompt.text} isAccepted={acceptedTexts.has(prompt.text)} variant="red" onAccept={text => handleAcceptPrompt(text, sub.slug)} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Custom entries */}
+        {customEntries.length > 0 && (
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(248,113,113,0.12)', borderRadius: '14px', padding: '18px 20px' }}>
+            <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '12px' }}>Your Custom Entries</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {customEntries.map(entry => <MindVaultEntryCard key={entry.id} entry={entry} onDelete={handleDeleteEntry} />)}
+            </div>
+          </div>
+        )}
+
+        {/* Add custom entry */}
+        <MindVaultEntryForm onSubmit={handleAddCustom} placeholder="Add your own non-negotiable in your own words..." />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session, ChartingEntry } from '@/types';
@@ -94,6 +95,7 @@ export default function PostGamePage() {
         if (existingEntry.shootout) entryData.shootout = existingEntry.shootout;
 
         await chartingService.updateChartingEntry(existingEntry.id, entryData);
+        await chartingService.updateSession(sessionId, { status: 'completed' });
         toast.success('Post-Game section saved successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       } else {
@@ -104,6 +106,7 @@ export default function PostGamePage() {
             setExistingEntry(newEntryResult.data);
           }
         }
+        await chartingService.updateSession(sessionId, { status: 'completed' });
         toast.success('Post-Game section created successfully!');
         router.push(`/charting/sessions/${sessionId}`);
       }
@@ -127,8 +130,8 @@ export default function PostGamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonContentPage />
       </div>
     );
   }
@@ -154,7 +157,7 @@ export default function PostGamePage() {
               <h1 className="text-3xl font-bold text-gray-900">Post-Game Review</h1>
               <p className="text-gray-600">
                 {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
-                {session.opponent && ` vs ${session.opponent}`}
+                {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
               </p>
             </div>
           </div>

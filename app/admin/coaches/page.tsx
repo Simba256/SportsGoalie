@@ -1,25 +1,28 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { CoachInvitation } from '@/types/auth';
 import { coachInvitationService } from '@/lib/services/coach-invitation.service';
 import { InvitationForm } from './components/InvitationForm';
 import { InvitationList } from './components/InvitationList';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { UserPlus, Mail, CheckCircle, Clock, XCircle } from 'lucide-react';
 
-/**
- * Admin Coach Invitations Management Page
- *
- * Allows admins to:
- * - Invite new coaches via email
- * - View all invitations (pending, accepted, expired, revoked)
- * - Resend or revoke invitations
- */
+const BLUE = '#37b5ff';
+const RED = '#f87171';
+const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
+
+const TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'accepted', label: 'Accepted' },
+  { id: 'expired', label: 'Expired' },
+  { id: 'revoked', label: 'Revoked' },
+];
+
 export default function CoachInvitationsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -27,14 +30,12 @@ export default function CoachInvitationsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
 
-  // Protect admin route
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
       router.push('/');
     }
   }, [user, authLoading, router]);
 
-  // Load invitations
   useEffect(() => {
     if (user?.role === 'admin') {
       loadInvitations();
@@ -62,9 +63,7 @@ export default function CoachInvitationsPage() {
   const handleResend = async (invitation: CoachInvitation) => {
     try {
       const updated = await coachInvitationService.resendInvitation(invitation.id);
-      setInvitations(prev =>
-        prev.map(inv => (inv.id === updated.id ? updated : inv))
-      );
+      setInvitations(prev => prev.map(inv => (inv.id === updated.id ? updated : inv)));
       toast.success(`Invitation resent to ${invitation.email}`);
     } catch (error) {
       console.error('Failed to resend invitation:', error);
@@ -74,7 +73,6 @@ export default function CoachInvitationsPage() {
 
   const handleRevoke = async (invitation: CoachInvitation) => {
     if (!user) return;
-
     try {
       await coachInvitationService.revokeInvitation(invitation.id, user.id);
       setInvitations(prev =>
@@ -89,7 +87,6 @@ export default function CoachInvitationsPage() {
     }
   };
 
-  // Filter invitations by status
   const filterInvitations = (status?: string) => {
     if (!status || status === 'all') return invitations;
     return invitations.filter(inv => inv.status === status);
@@ -100,123 +97,93 @@ export default function CoachInvitationsPage() {
   const expiredCount = invitations.filter(inv => inv.status === 'expired').length;
   const revokedCount = invitations.filter(inv => inv.status === 'revoked').length;
 
-  if (authLoading || (user?.role !== 'admin')) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  if (authLoading || user?.role !== 'admin') {
+    return <div style={{ padding: '48px' }}><SkeletonDarkPage /></div>;
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Coach Invitations</h1>
-        <p className="text-muted-foreground">
-          Invite coaches to join your platform and manage existing invitations
-        </p>
-      </div>
+    <>
+      <style>{`
+        .ci-tab { transition: all 0.2s !important; }
+        .ci-tab:hover { background: rgba(55,181,255,0.06) !important; }
+        @media (max-width: 768px) { .ci-layout { grid-template-columns: 1fr !important; } .ci-stats { grid-template-columns: repeat(2, 1fr) !important; } }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Invitation Form */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invite New Coach</CardTitle>
-              <CardDescription>
-                Send an invitation email to a new coach
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user && (
-                <InvitationForm
-                  invitedBy={user.id}
-                  invitedByName={user.displayName}
-                  onInvitationCreated={handleInvitationCreated}
-                />
-              )}
-            </CardContent>
-          </Card>
+        {/* Header */}
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>Coach Invitations</h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px' }}>Invite coaches to join your platform and manage existing invitations</p>
         </div>
 
-        {/* Invitations List */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invitations</CardTitle>
-              <CardDescription>
-                View and manage all coach invitations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="all">
-                    All ({invitations.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="pending">
-                    Pending ({pendingCount})
-                  </TabsTrigger>
-                  <TabsTrigger value="accepted">
-                    Accepted ({acceptedCount})
-                  </TabsTrigger>
-                  <TabsTrigger value="expired">
-                    Expired ({expiredCount})
-                  </TabsTrigger>
-                  <TabsTrigger value="revoked">
-                    Revoked ({revokedCount})
-                  </TabsTrigger>
-                </TabsList>
+        {/* Stat Cards */}
+        <div className="ci-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {[
+            { label: 'Total', value: invitations.length, icon: Mail, color: BLUE },
+            { label: 'Pending', value: pendingCount, icon: Clock, color: '#fbbf24' },
+            { label: 'Accepted', value: acceptedCount, icon: CheckCircle, color: '#22c55e' },
+            { label: 'Revoked', value: revokedCount, icon: XCircle, color: RED },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} style={{ position: 'relative', ...card, padding: '16px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}66, transparent)` }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600 }}>{label}</p>
+                <Icon size={14} color={`${color}88`} />
+              </div>
+              <p style={{ color: '#fff', fontWeight: 800, fontSize: '26px', lineHeight: 1 }}>{value}</p>
+            </div>
+          ))}
+        </div>
 
-                <TabsContent value="all" className="mt-6">
-                  <InvitationList
-                    invitations={filterInvitations('all')}
-                    loading={loading}
-                    onResend={handleResend}
-                    onRevoke={handleRevoke}
-                  />
-                </TabsContent>
+        {/* Main Layout */}
+        <div className="ci-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', alignItems: 'start' }}>
 
-                <TabsContent value="pending" className="mt-6">
-                  <InvitationList
-                    invitations={filterInvitations('pending')}
-                    loading={loading}
-                    onResend={handleResend}
-                    onRevoke={handleRevoke}
-                  />
-                </TabsContent>
+          {/* Invite Form */}
+          <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <UserPlus size={16} color={RED} />
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Invite New Coach</h2>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', marginBottom: '18px' }}>Send an invitation email to a new coach</p>
+            {user && (
+              <InvitationForm
+                invitedBy={user.id}
+                invitedByName={user.displayName}
+                onInvitationCreated={handleInvitationCreated}
+              />
+            )}
+          </div>
 
-                <TabsContent value="accepted" className="mt-6">
-                  <InvitationList
-                    invitations={filterInvitations('accepted')}
-                    loading={loading}
-                    onResend={handleResend}
-                    onRevoke={handleRevoke}
-                  />
-                </TabsContent>
+          {/* Invitations List */}
+          <div style={{ position: 'relative', ...card, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
 
-                <TabsContent value="expired" className="mt-6">
-                  <InvitationList
-                    invitations={filterInvitations('expired')}
-                    loading={loading}
-                    onResend={handleResend}
-                    onRevoke={handleRevoke}
-                  />
-                </TabsContent>
+            {/* Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid rgba(55,181,255,0.1)', overflowX: 'auto' }}>
+              {TABS.map(tab => {
+                const active = activeTab === tab.id;
+                const count = tab.id === 'all' ? invitations.length : tab.id === 'pending' ? pendingCount : tab.id === 'accepted' ? acceptedCount : tab.id === 'expired' ? expiredCount : revokedCount;
+                return (
+                  <button key={tab.id} className={!active ? 'ci-tab' : ''} onClick={() => setActiveTab(tab.id)}
+                    style={{ flex: 1, minWidth: '80px', padding: '13px 6px', background: active ? 'rgba(55,181,255,0.08)' : 'transparent', border: 'none', borderBottom: active ? `2px solid ${BLUE}` : '2px solid transparent', color: active ? BLUE : 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {tab.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
 
-                <TabsContent value="revoked" className="mt-6">
-                  <InvitationList
-                    invitations={filterInvitations('revoked')}
-                    loading={loading}
-                    onResend={handleResend}
-                    onRevoke={handleRevoke}
-                  />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+            <div style={{ padding: '20px' }}>
+              <InvitationList
+                invitations={filterInvitations(activeTab)}
+                loading={loading}
+                onResend={handleResend}
+                onRevoke={handleRevoke}
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,31 +1,13 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import {
-  MessageSquare,
-  Mail,
-  User,
-  Calendar,
-  Search,
-  Eye,
-  FileText,
-  Image as ImageIcon,
-  Video,
+  MessageSquare, Mail, User, Calendar, Search,
+  Eye, FileText, Image as ImageIcon, Video,
 } from 'lucide-react';
 import Link from 'next/link';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { messageService } from '@/lib/database/services/message.service';
 import { userService } from '@/lib/database/services/user.service';
@@ -34,18 +16,24 @@ import { Message, MessageType } from '@/types/message';
 import { User as UserType } from '@/types';
 import { toast } from 'sonner';
 
+const BLUE = '#37b5ff';
+const RED = '#f87171';
+const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
+
+const TYPE_STYLES: Record<string, { bg: string; color: string }> = {
+  general:     { bg: `rgba(55,181,255,0.12)`, color: BLUE },
+  instruction: { bg: 'rgba(34,197,94,0.12)',  color: '#22c55e' },
+  feedback:    { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+  video_review:{ bg: 'rgba(248,113,113,0.15)', color: RED },
+};
+
 export default function AdminMessagesPage() {
-  return (
-    <AdminRoute>
-      <MessagesContent />
-    </AdminRoute>
-  );
+  return <AdminRoute><MessagesContent /></AdminRoute>;
 }
 
 function MessagesContent() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
-
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<Record<string, UserType>>({});
   const [loading, setLoading] = useState(true);
@@ -55,28 +43,17 @@ function MessagesContent() {
 
   const fetchMessages = async () => {
     if (!currentUser) return;
-
     try {
       setLoading(true);
-
-      // Fetch messages sent by admin
       const result = await messageService.getAdminSentMessages(currentUser.id, { limit: 100 });
-
       if (result.success && result.data) {
         setMessages(result.data.items);
-
-        // Fetch user details for all recipients
         const userIds = [...new Set(result.data.items.map(m => m.toUserId))];
-        const userPromises = userIds.map(id => userService.getUser(id));
-        const userResults = await Promise.all(userPromises);
-
+        const userResults = await Promise.all(userIds.map(id => userService.getUser(id)));
         const usersMap: Record<string, UserType> = {};
         userResults.forEach((res, idx) => {
-          if (res.success && res.data) {
-            usersMap[userIds[idx]] = res.data;
-          }
+          if (res.success && res.data) usersMap[userIds[idx]] = res.data;
         });
-
         setUsers(usersMap);
       }
     } catch (error) {
@@ -87,330 +64,198 @@ function MessagesContent() {
     }
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, [currentUser]);
+  useEffect(() => { fetchMessages(); }, [currentUser]);
 
-  // Filter messages based on search and filters
   const filteredMessages = messages.filter(message => {
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSubject = message.subject.toLowerCase().includes(query);
       const matchesMessage = message.message.toLowerCase().includes(query);
       const matchesRecipient = users[message.toUserId]?.displayName?.toLowerCase().includes(query);
-
-      if (!matchesSubject && !matchesMessage && !matchesRecipient) {
-        return false;
-      }
+      if (!matchesSubject && !matchesMessage && !matchesRecipient) return false;
     }
-
-    // Type filter
-    if (filterType !== 'all' && message.type !== filterType) {
-      return false;
-    }
-
-    // Read/unread filter
-    if (filterRead === 'read' && !message.isRead) {
-      return false;
-    }
-    if (filterRead === 'unread' && message.isRead) {
-      return false;
-    }
-
+    if (filterType !== 'all' && message.type !== filterType) return false;
+    if (filterRead === 'read' && !message.isRead) return false;
+    if (filterRead === 'unread' && message.isRead) return false;
     return true;
   });
 
-  // Calculate statistics
   const stats = {
     total: messages.length,
     unread: messages.filter(m => !m.isRead).length,
-    read: messages.filter(m => m.isRead).length,
-    general: messages.filter(m => m.type === 'general').length,
-    instruction: messages.filter(m => m.type === 'instruction').length,
-    feedback: messages.filter(m => m.type === 'feedback').length,
     videoReview: messages.filter(m => m.type === 'video_review').length,
+    general: messages.filter(m => m.type === 'general').length,
   };
 
   const getTypeIcon = (type: MessageType) => {
     switch (type) {
-      case 'general':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'instruction':
-        return <FileText className="h-4 w-4" />;
-      case 'feedback':
-        return <Mail className="h-4 w-4" />;
-      case 'video_review':
-        return <Video className="h-4 w-4" />;
-      default:
-        return <MessageSquare className="h-4 w-4" />;
+      case 'general': return <MessageSquare size={13} />;
+      case 'instruction': return <FileText size={13} />;
+      case 'feedback': return <Mail size={13} />;
+      case 'video_review': return <Video size={13} />;
+      default: return <MessageSquare size={13} />;
     }
   };
 
-  const getTypeBadgeVariant = (type: MessageType) => {
-    switch (type) {
-      case 'general':
-        return 'default';
-      case 'instruction':
-        return 'secondary';
-      case 'feedback':
-        return 'outline';
-      case 'video_review':
-        return 'destructive';
-      default:
-        return 'default';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading messages...</div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div style={{ padding: '48px' }}><SkeletonDarkPage /></div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
+    <>
+      <style>{`
+        .am-inp { background: rgba(2,18,44,0.7) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: #fff !important; border-radius: 10px !important; padding: 10px 12px 10px 38px !important; width: 100% !important; font-size: 13px !important; outline: none !important; }
+        .am-inp:focus { border-color: rgba(55,181,255,0.45) !important; }
+        .am-inp::placeholder { color: rgba(255,255,255,0.25) !important; }
+        .am-sel { background: rgba(2,18,44,0.7) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: rgba(255,255,255,0.7) !important; border-radius: 10px !important; padding: 10px 12px !important; font-size: 13px !important; outline: none !important; cursor: pointer !important; }
+        .am-sel:focus { border-color: rgba(55,181,255,0.45) !important; }
+        .am-row { cursor: pointer; transition: background 0.2s; }
+        .am-row:hover { background: rgba(55,181,255,0.05) !important; }
+        .am-view { transition: all 0.2s !important; }
+        .am-view:hover { background: rgba(55,181,255,0.12) !important; color: ${BLUE} !important; }
+        @media (max-width: 1024px) { .am-stats { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 640px) { .am-stats { grid-template-columns: repeat(2, 1fr) !important; } }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Sent Messages</h1>
-          <p className="text-muted-foreground">
-            View and manage messages sent to students
-          </p>
+          <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>Sent Messages</h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px' }}>View and manage messages sent to students</p>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unread</CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.unread}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.total > 0 ? Math.round((stats.unread / stats.total) * 100) : 0}% of total
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Video Reviews</CardTitle>
-              <Video className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.videoReview}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">General Messages</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.general}</div>
-            </CardContent>
-          </Card>
+        {/* Stat Cards */}
+        <div className="am-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {[
+            { label: 'Total Messages', value: stats.total, icon: MessageSquare, color: BLUE },
+            { label: 'Unread', value: stats.unread, icon: Mail, color: RED, sub: stats.total > 0 ? `${Math.round((stats.unread / stats.total) * 100)}% of total` : '0% of total' },
+            { label: 'Video Reviews', value: stats.videoReview, icon: Video, color: '#22c55e' },
+            { label: 'General', value: stats.general, icon: FileText, color: '#fbbf24' },
+          ].map(({ label, value, icon: Icon, color, sub }) => (
+            <div key={label} style={{ position: 'relative', ...card, padding: '16px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}66, transparent)` }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600 }}>{label}</p>
+                <Icon size={14} color={`${color}88`} />
+              </div>
+              <p style={{ color: '#fff', fontWeight: 800, fontSize: '26px', lineHeight: 1, marginBottom: sub ? '4px' : 0 }}>{value}</p>
+              {sub && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>{sub}</p>}
+            </div>
+          ))}
         </div>
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filter Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              {/* Search */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search messages..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-
-              {/* Type Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Message Type</label>
-                <Select
-                  value={filterType}
-                  onValueChange={(value) => setFilterType(value as MessageType | 'all')}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="instruction">Instruction</SelectItem>
-                    <SelectItem value="feedback">Feedback</SelectItem>
-                    <SelectItem value="video_review">Video Review</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Read Status Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Read Status</label>
-                <Select
-                  value={filterRead}
-                  onValueChange={(value) => setFilterRead(value as 'all' | 'read' | 'unread')}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Messages</SelectItem>
-                    <SelectItem value="unread">Unread Only</SelectItem>
-                    <SelectItem value="read">Read Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div style={{ ...card, padding: '18px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+            <Search size={15} color="rgba(255,255,255,0.3)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input className="am-inp" placeholder="Search messages, subjects, recipients…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          </div>
+          <select className="am-sel" value={filterType} onChange={e => setFilterType(e.target.value as MessageType | 'all')} style={{ minWidth: '160px' }}>
+            <option value="all">All Types</option>
+            <option value="general">General</option>
+            <option value="instruction">Instruction</option>
+            <option value="feedback">Feedback</option>
+            <option value="video_review">Video Review</option>
+          </select>
+          <select className="am-sel" value={filterRead} onChange={e => setFilterRead(e.target.value as 'all' | 'read' | 'unread')} style={{ minWidth: '160px' }}>
+            <option value="all">All Messages</option>
+            <option value="unread">Unread Only</option>
+            <option value="read">Read Only</option>
+          </select>
+        </div>
 
         {/* Messages List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Messages ({filteredMessages.length})</CardTitle>
-            <CardDescription>
-              {filterType !== 'all' && `Showing ${filterType} messages`}
-              {filterRead !== 'all' && ` • ${filterRead}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredMessages.length > 0 ? (
-              <div className="space-y-4">
-                {filteredMessages.map((message) => {
-                  const recipient = users[message.toUserId];
+        <div style={{ position: 'relative', ...card, overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(55,181,255,0.08)' }}>
+            <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Messages ({filteredMessages.length})</h2>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', marginTop: '2px' }}>
+              {filterType !== 'all' ? `Showing ${filterType.replace('_', ' ')} messages` : 'All sent messages'}
+              {filterRead !== 'all' ? ` · ${filterRead} only` : ''}
+            </p>
+          </div>
 
-                  return (
-                    <div
-                      key={message.id}
-                      className={`p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
-                        !message.isRead ? 'border-primary/50 bg-primary/5' : ''
-                      }`}
-                      onClick={() => router.push(`/admin/users/${message.toUserId}?tab=messages`)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 space-y-2">
-                          {/* Header */}
-                          <div className="flex items-center space-x-2">
-                            <div className="flex items-center space-x-2">
-                              {getTypeIcon(message.type)}
-                              <h4 className="font-medium">{message.subject}</h4>
-                            </div>
-                            <Badge variant={getTypeBadgeVariant(message.type)} className="text-xs">
-                              {message.type.replace('_', ' ')}
-                            </Badge>
-                            {!message.isRead && (
-                              <Badge variant="default" className="text-xs">
-                                Unread
-                              </Badge>
-                            )}
+          {filteredMessages.length === 0 ? (
+            <div style={{ padding: '48px', textAlign: 'center' }}>
+              <MessageSquare size={44} color="rgba(255,255,255,0.1)" style={{ margin: '0 auto 12px' }} />
+              <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px', marginBottom: '6px' }}>No messages found</p>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '15px', marginBottom: '16px' }}>
+                {searchQuery || filterType !== 'all' || filterRead !== 'all' ? 'Try adjusting your filters' : "You haven't sent any messages yet"}
+              </p>
+              {!searchQuery && filterType === 'all' && filterRead === 'all' && (
+                <Link href="/admin/users" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: `linear-gradient(135deg, ${RED} 0%, #dc2626 100%)`, color: '#fff', padding: '9px 18px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '15px' }}>
+                  <User size={14} /> Go to Users
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div>
+              {filteredMessages.map((message, i) => {
+                const recipient = users[message.toUserId];
+                const ts = TYPE_STYLES[message.type] || TYPE_STYLES.general;
+                return (
+                  <div key={message.id} className="am-row"
+                    style={{ padding: '16px 20px', borderBottom: i < filteredMessages.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: !message.isRead ? 'rgba(55,181,255,0.03)' : 'transparent' }}
+                    onClick={() => router.push(`/admin/users/${message.toUserId}?tab=messages`)}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Subject + badges */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.7)', fontSize: '15px', fontWeight: 600 }}>
+                            <span style={{ color: ts.color }}>{getTypeIcon(message.type)}</span>
+                            {message.subject}
                           </div>
-
-                          {/* Recipient */}
-                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                            <User className="h-3 w-3" />
-                            <span>
-                              To: {recipient?.displayName || 'Unknown User'}
-                            </span>
-                          </div>
-
-                          {/* Message Preview */}
-                          <p className="text-sm text-muted-foreground">
-                            {message.message.length > 200
-                              ? message.message.substring(0, 200) + '...'
-                              : message.message}
-                          </p>
-
-                          {/* Attachments */}
-                          {message.attachments && message.attachments.length > 0 && (
-                            <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-                              {message.attachments.some(a => a.type === 'image') && (
-                                <div className="flex items-center space-x-1">
-                                  <ImageIcon className="h-3 w-3" />
-                                  <span>{message.attachments.filter(a => a.type === 'image').length} image(s)</span>
-                                </div>
-                              )}
-                              {message.attachments.some(a => a.type === 'video') && (
-                                <div className="flex items-center space-x-1">
-                                  <Video className="h-3 w-3" />
-                                  <span>{message.attachments.filter(a => a.type === 'video').length} video(s)</span>
-                                </div>
-                              )}
-                              {message.attachments.some(a => a.type === 'document') && (
-                                <div className="flex items-center space-x-1">
-                                  <FileText className="h-3 w-3" />
-                                  <span>{message.attachments.filter(a => a.type === 'document').length} document(s)</span>
-                                </div>
-                              )}
-                            </div>
+                          <span style={{ background: ts.bg, color: ts.color, padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                            {message.type.replace('_', ' ')}
+                          </span>
+                          {!message.isRead && (
+                            <span style={{ background: `rgba(55,181,255,0.15)`, color: BLUE, padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>Unread</span>
                           )}
-
-                          {/* Date */}
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            <span>Sent {(message.createdAt?.toDate?.() ?? new Date()).toLocaleString()}</span>
-                            {message.readAt && (
-                              <span>• Read {(message.readAt?.toDate?.() ?? new Date()).toLocaleString()}</span>
+                        </div>
+                        {/* Recipient */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '6px' }}>
+                          <User size={12} /> To: {recipient?.displayName || 'Unknown User'}
+                        </div>
+                        {/* Preview */}
+                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', marginBottom: '8px', lineHeight: 1.5 }}>
+                          {message.message.length > 160 ? message.message.substring(0, 160) + '…' : message.message}
+                        </p>
+                        {/* Attachments */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div style={{ display: 'flex', gap: '12px', marginBottom: '6px' }}>
+                            {message.attachments.some(a => a.type === 'image') && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
+                                <ImageIcon size={11} /> {message.attachments.filter(a => a.type === 'image').length} image(s)
+                              </span>
+                            )}
+                            {message.attachments.some(a => a.type === 'video') && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
+                                <Video size={11} /> {message.attachments.filter(a => a.type === 'video').length} video(s)
+                              </span>
+                            )}
+                            {message.attachments.some(a => a.type === 'document') && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
+                                <FileText size={11} /> {message.attachments.filter(a => a.type === 'document').length} doc(s)
+                              </span>
                             )}
                           </div>
+                        )}
+                        {/* Date */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.25)', fontSize: '12px' }}>
+                          <Calendar size={11} /> Sent {(message.createdAt?.toDate?.() ?? new Date()).toLocaleString()}
+                          {message.readAt && <span>· Read {(message.readAt?.toDate?.() ?? new Date()).toLocaleString()}</span>}
                         </div>
-
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
                       </div>
+                      <button className="am-view" onClick={e => { e.stopPropagation(); router.push(`/admin/users/${message.toUserId}?tab=messages`); }}
+                        style={{ flexShrink: 0, padding: '7px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <Eye size={15} />
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No messages found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchQuery || filterType !== 'all' || filterRead !== 'all'
-                    ? 'Try adjusting your filters'
-                    : 'You haven\'t sent any messages yet'}
-                </p>
-                {!searchQuery && filterType === 'all' && filterRead === 'all' && (
-                  <Link href="/admin/users">
-                    <Button className="bg-red-600 hover:bg-red-700">
-                      <User className="mr-2 h-4 w-4" />
-                      Go to Users
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -30,6 +30,11 @@ export interface User {
   onboardingCompletedAt?: Timestamp;
   initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
 
+  // Charting configuration — admin-assigned
+  chartLevel?: 'basic' | 'five_pillar'; // Basic = 2-3 min entry experience; 5-Pillar = full advanced chart. Default (undefined) = five_pillar.
+  chartGrowthLevel?: 'introduction' | 'development' | 'refinement'; // Chart growth path. Default (undefined) = introduction.
+  livingIndex?: string[]; // Active L-index item IDs for this goalie — admin-assigned
+
   // Parent-Child Linking Fields (for students/goalies)
   linkedParentIds?: string[];      // Array of parent user IDs linked to this goalie
   parentLinkCode?: string;         // Code for parents to link (XXXX-XXXX format)
@@ -38,6 +43,8 @@ export interface User {
   // Parent-Child Linking Fields (for parents)
   linkedChildIds?: string[];       // Array of goalie user IDs this parent is linked to
   parentOnboardingComplete?: boolean; // Whether parent has completed onboarding
+  coachOnboardingComplete?: boolean;      // Whether coach has completed baseline profile
+  coachOnboardingCompletedAt?: Timestamp; // When coach completed baseline profile
 
   // Timestamps
   createdAt: Timestamp;
@@ -416,8 +423,10 @@ export interface Achievement {
   criteria: AchievementCriteria;
   points: number;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  tier?: 'FOUNDATION' | 'DEVELOPING' | 'OWNING IT' | '80-100 CLUB' | '95-100 CLUB';
+  category?: 'WINS' | 'BREAKTHROUGHS' | 'CLIMBS' | 'STREAKS' | 'MILESTONES';
   isActive: boolean;
-  isSecret: boolean; // Hidden until unlocked
+  isSecret: boolean;
   metadata: AchievementMetadata;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -786,6 +795,9 @@ export type {
   PreGameRoutineAdherence,
   PeriodPerformanceAnalytics,
   ShootoutAnalytics,
+  V2PeriodAverage,
+  V2GameAnalytics,
+  V2PracticeAnalytics,
   StudentChartingAnalytics,
   PerformanceInsight,
   SessionFormData,
@@ -805,6 +817,23 @@ export type {
   PracticeIndexItem,
   V2PracticeChartEntry,
   MindVaultEntry,
+  // Parent Chart Types
+  ParentEmotionalState,
+  ParentRoutineStatus,
+  ParentCarRideMood,
+  ParentTalkAboutGame,
+  ParentNoticedObservation,
+  ParentPreGameData,
+  ParentPeriodRatings,
+  ParentPostGameData,
+  ParentChartEntry,
+  // Coach Chart Types
+  CoachReadinessLevel,
+  CoachPriorityFactor,
+  CoachPreGameData,
+  CoachPeriodData,
+  CoachPostGameData,
+  CoachChartEntry,
 } from './charting';
 
 // Form Template Types - Export from form-template.ts
@@ -909,6 +938,7 @@ export {
   pacingLevelToAssessmentLevel,
   GOALIE_CATEGORIES,
   PARENT_CATEGORIES,
+  COACH_CATEGORIES,
   getCategoryInfo,
 } from './onboarding';
 

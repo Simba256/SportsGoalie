@@ -683,8 +683,8 @@ export interface CategoryInfo {
 export const GOALIE_CATEGORIES: CategoryInfo[] = [
   {
     slug: 'feelings',
-    name: 'How You Feel About Being a Goalie',
-    shortName: 'Feelings',
+    name: 'Emotional State',
+    shortName: 'Emotional State',
     description: 'Mental resilience, confidence, and emotional response to the position',
     icon: 'Heart',
     color: 'purple',
@@ -692,8 +692,8 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
   },
   {
     slug: 'knowledge',
-    name: 'What You Know About Your Position',
-    shortName: 'Knowledge',
+    name: 'Goalie IQ',
+    shortName: 'Goalie IQ',
     description: 'Understanding of goaltending fundamentals and self-awareness',
     icon: 'Brain',
     color: 'blue',
@@ -701,7 +701,7 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
   },
   {
     slug: 'pre_game',
-    name: 'Before the Game',
+    name: 'Pre-Game',
     shortName: 'Pre-Game',
     description: 'Pre-game routines, preparation, and mental readiness',
     icon: 'Clock',
@@ -710,7 +710,7 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
   },
   {
     slug: 'in_game',
-    name: 'During the Game',
+    name: 'In-Game',
     shortName: 'In-Game',
     description: 'In-game awareness, tracking, and competitive response',
     icon: 'Target',
@@ -719,7 +719,7 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
   },
   {
     slug: 'post_game',
-    name: 'After the Game',
+    name: 'Post-Game',
     shortName: 'Post-Game',
     description: 'Self-evaluation, reflection, and processing performance',
     icon: 'MessageCircle',
@@ -728,8 +728,8 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
   },
   {
     slug: 'training',
-    name: 'Your Training and Development',
-    shortName: 'Training',
+    name: 'Self-Training Habits',
+    shortName: 'Self-Training Habits',
     description: 'Training habits, practice engagement, and commitment',
     icon: 'Dumbbell',
     color: 'orange',
@@ -737,8 +737,8 @@ export const GOALIE_CATEGORIES: CategoryInfo[] = [
   },
   {
     slug: 'learning',
-    name: 'How You Want to Learn',
-    shortName: 'Learning',
+    name: 'Learning Attitude',
+    shortName: 'Learning Attitude',
     description: 'Learning preferences and platform engagement style',
     icon: 'BookOpen',
     color: 'indigo',
@@ -816,6 +816,72 @@ export const PARENT_CATEGORIES: CategoryInfo[] = [
   },
 ];
 
+export const COACH_CATEGORIES: CategoryInfo[] = [
+  {
+    slug: 'goalie_knowledge',
+    name: 'Your Goaltending Knowledge',
+    shortName: 'Knowledge',
+    description: 'Understanding of goaltending fundamentals',
+    icon: 'Brain',
+    color: 'blue',
+    weight: 30,
+  },
+  {
+    slug: 'current_approach',
+    name: 'Your Current Approach',
+    shortName: 'Approach',
+    description: 'Current goalie development practices',
+    icon: 'Target',
+    color: 'purple',
+    weight: 25,
+  },
+  {
+    slug: 'pre_game',
+    name: 'Pre-Game Assessment',
+    shortName: 'Pre-Game',
+    description: 'Assessing goalie readiness before games',
+    icon: 'Clock',
+    color: 'cyan',
+    weight: 10,
+  },
+  {
+    slug: 'in_game',
+    name: 'In-Game Reading',
+    shortName: 'In-Game',
+    description: 'Reading goalie performance during games',
+    icon: 'Eye',
+    color: 'red',
+    weight: 15,
+  },
+  {
+    slug: 'post_game',
+    name: 'Post-Game Debrief',
+    shortName: 'Post-Game',
+    description: 'Post-game feedback and communication',
+    icon: 'MessageCircle',
+    color: 'green',
+    weight: 10,
+  },
+  {
+    slug: 'coaching_goals',
+    name: 'Your Coaching Goals',
+    shortName: 'Goals',
+    description: 'Goals for goalie development',
+    icon: 'TrendingUp',
+    color: 'orange',
+    weight: 5,
+  },
+  {
+    slug: 'preferences',
+    name: 'Communication & Preferences',
+    shortName: 'Preferences',
+    description: 'Platform engagement style',
+    icon: 'BookOpen',
+    color: 'indigo',
+    weight: 5,
+  },
+];
+
 /**
  * Get category info by slug
  */
@@ -825,6 +891,9 @@ export function getCategoryInfo(slug: string, role: QuestionnaireRole = 'goalie'
   }
   if (role === 'parent') {
     return PARENT_CATEGORIES.find(c => c.slug === slug);
+  }
+  if (role === 'coach') {
+    return COACH_CATEGORIES.find(c => c.slug === slug);
   }
   return undefined;
 }

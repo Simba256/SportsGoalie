@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/context';
 import { UserRole } from '@/types';
+import {
+  SkeletonContentPage,
+  SkeletonDashboard,
+  SkeletonDarkPage,
+} from '@/components/ui/skeletons';
 
 /**
  * Get the default redirect path for a user based on their role
@@ -61,17 +65,38 @@ export function ProtectedRoute({
     }
   }, [loading, isAuthenticated, user, requiredRole, router, redirectTo]);
 
+  const renderDefaultFallback = () => {
+    // Use requiredRole first to keep SSR and initial client render deterministic.
+    if (requiredRole === 'admin' || requiredRole === 'coach' || requiredRole === 'parent') {
+      return <SkeletonDarkPage />;
+    }
+
+    if (requiredRole === 'student') {
+      return <SkeletonDashboard />;
+    }
+
+    // Fallback to resolved role only for routes without explicit role requirements.
+    if (user?.role === 'student') {
+      return <SkeletonDashboard />;
+    }
+
+    if (user?.role === 'admin' || user?.role === 'coach' || user?.role === 'parent') {
+      return <SkeletonDarkPage />;
+    }
+
+    // Before role resolution, use a neutral skeleton shell.
+    return <SkeletonContentPage />;
+  };
+
+  // During initial hydration or while auth is loading, render a
+  // neutral, deterministic skeleton to avoid server/client markup
+  // mismatches. If a custom `fallback` was provided, prefer it.
   if (!isHydrated || loading) {
-    return (
-      fallback || (
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-            <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      )
-    );
+    if (fallback) {
+      return <>{fallback}</>;
+    }
+
+    return renderDefaultFallback();
   }
 
   if (!isAuthenticated) {

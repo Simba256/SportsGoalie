@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import { PillarSlug } from './onboarding';
 
 // Session Types
 export type SessionType = 'game' | 'practice';
@@ -315,6 +316,78 @@ export interface ShootoutAnalytics {
   totalGoalsAgainst: number;
 }
 
+/** V2 per-period averages used inside V2GameAnalytics */
+export interface V2PeriodAverage {
+  period: 'period1' | 'period2' | 'period3' | 'overtime';
+  sampleSize: number;
+  avgMindControl: number; // 1-5
+  avgFactorRatio: number; // 1-5
+  totalGoalsAgainst: number;
+  totalGoodGoals: number;
+  totalBadGoals: number;
+}
+
+/** Aggregates sourced from v2 game chart entries (v2PreGame/v2Periods/v2PostGame) */
+export interface V2GameAnalytics {
+  totalV2Games: number; // entries with any v2 game field populated
+
+  // Mind Management (from v2PreGame)
+  mindManagement: {
+    sampleSize: number;
+    routineCompletedRate: number; // 0-100
+    anxietyPresentRate: number; // 0-100
+    targetStateAchievedRate: number; // 0-100
+    avgMentalStateRating: number; // 1-5
+  };
+
+  // Period aggregates (from v2Periods)
+  periods: V2PeriodAverage[];
+  overallAvgMindControl: number; // averaged across all periods seen
+  overallAvgFactorRatio: number; // averaged across all periods seen
+
+  // Goal aggregates (from v2Periods[*].goals[] + goalsAgainst)
+  totalGoalsAgainst: number;
+  totalGoodGoals: number;
+  totalBadGoals: number;
+  goodBadRatio: number;
+
+  // Post-Game summaries (from v2PostGame)
+  postGame: {
+    sampleSize: number;
+    avgOverallGameFactor: number; // 1-5
+    avgGameRetention: number; // 1-5
+    avgGoodDecisionRate: number; // percentage already in the data (0-100)
+    mindVaultEntriesCaptured: number;
+  };
+}
+
+/** Aggregates sourced from v2Practice entries */
+export interface V2PracticeAnalytics {
+  totalV2Practices: number;
+
+  avgPracticeValue: number; // 1-5
+  avgTechnicalEye: number; // 1-5
+
+  designatedTrainingRate: number; // 0-100, % of practices with designated training
+  totalDesignatedTrainingMinutes: number;
+  avgDesignatedTrainingMinutes: number; // averaged across practices that had it
+
+  videoCapturedRate: number; // 0-100
+
+  // Practice Index breakdown across all practices (item-occurrences, not unique)
+  indexCounts: {
+    immediate_development: number;
+    refinement: number;
+    maintenance: number;
+  };
+  totalIndexItemsWorkedOn: number;
+
+  // Improvement ratings
+  avgImprovementRating: number; // 1-5
+  improvementRatingsCount: number;
+  mindVaultEntriesCaptured: number;
+}
+
 export interface StudentChartingAnalytics {
   studentId: string;
   sessionStats: SessionStats;
@@ -324,6 +397,10 @@ export interface StudentChartingAnalytics {
   preGameRoutineAdherence: PreGameRoutineAdherence;
   periodPerformance: PeriodPerformanceAnalytics;
   shootoutAnalytics: ShootoutAnalytics;
+  // V2 analytics — populated from v2 chart entries. Optional for back-compat
+  // with historical analytics docs that predate the v2 migration.
+  v2GameAnalytics?: V2GameAnalytics;
+  v2PracticeAnalytics?: V2PracticeAnalytics;
   lastCalculated: Timestamp;
 }
 
@@ -434,12 +511,32 @@ export interface GoalEntry {
 
 /** V2 Per-Period Section — completed post-game from memory */
 export interface V2PeriodData {
-  mindControlRating: number; // 1-5 stars
-  mindControlVoiceNote?: string; // captured if 1-2
-  periodFactorRatio: number; // 1-5
+  // ── 8 Stat Counters ───────────────────────────────────────────────────────
+  shots: number;
+  saves: number;
   goalsAgainst: number;
+  standardSaves: number;
+  keySaves: number;
+  weakGoals: number;
+  midChallengeCount: number;
+  highChallengeCount: number;
+  // ── Goal Classification ───────────────────────────────────────────────────
   goals: GoalEntry[];
-  // Architecture placeholder for 8 additional factor ratio fields (PENDING)
+  // ── Ratings ───────────────────────────────────────────────────────────────
+  mindControlRating: number; // 1-5 stars
+  mindControlChallengeLevel?: 'low' | 'mid' | 'high'; // specificity flow: captured if 1-2
+  mindControlVoiceNote?: string; // situation notes: captured if 1-2
+  periodFactorRatio: number; // 1-5
+  // ── 4 Pillar Ratings (Skating · 7AMS · 6ZS · Form) ───────────────────────
+  skatingRating?: number; // 1-5
+  skatingVoiceNote?: string;
+  sevenAMSRating?: number; // 1-5
+  sevenAMSVoiceNote?: string;
+  sixZSRating?: number; // 1-5
+  sixZSVoiceNote?: string;
+  formRating?: number; // 1-5
+  formVoiceNote?: string;
+  // ── Remaining Factor Ratios (coming from Coach Mike) ─────────────────────
   factorRatios?: Record<string, number>;
 }
 
@@ -456,6 +553,9 @@ export interface V2PostGameData {
   gameRetentionVoiceNote?: string;
   mindVaultEntry: string; // voice transcription
   factorRatioSummary: number; // auto-calculated average of period factor ratios
+  priorityImprovementArea?: string; // auto-derived label, stored on save
+  improvementFocus?: string; // self-selected focus for next practice
+  whatWillYouDoDifferently?: string; // voice/text commitment
 }
 
 /** Complete V2 Game Chart Entry */
@@ -492,6 +592,8 @@ export interface PracticeIndexItem {
   sourceGameSessionId?: string;
   sourceField?: string; // which game chart field generated this
   priority: number; // 1 = highest
+  pillarSlug?: PillarSlug; // which of the 7 Pillars this item connects to
+  autoGenerated?: boolean; // true when created by the practice index generator
 }
 
 /** V2 Practice Chart Entry */
@@ -523,4 +625,272 @@ export interface MindVaultEntry {
   source: 'pre_game_anxiety' | 'post_game' | 'practice';
   content: string; // voice transcription
   createdAt: Timestamp;
+}
+
+// ─── Milestone Notifications ──────────────────────────────────────────────────
+
+export interface NotificationRecipient {
+  userId: string;
+  role: 'parent' | 'coach';
+  email: string;
+  channel: 'in_app' | 'email';
+  optedIn: boolean;
+  sentAt?: Timestamp;
+}
+
+export interface NotificationRecord {
+  id: string;
+  goalieId: string;
+  goalieDisplayName?: string;
+  type: 'milestone' | 'mastery_increment' | 'kac_complete' | 'level_advance';
+  label: string;
+  description: string;
+  triggeredAt: Timestamp;
+  masteryPercent?: number;
+  recipients: NotificationRecipient[];
+  status: 'pending' | 'sent' | 'failed';
+}
+
+// ─── Cross-Reference View ─────────────────────────────────────────────────────
+
+export interface CrossReferenceGap {
+  field: string;
+  fieldLabel: string;
+  goalieRating: number;
+  observerRating: number;
+  observerRole: 'parent' | 'coach' | 'goalie_coach';
+  divergence: number;
+  conversationStarter: string;
+}
+
+export interface CrossReferenceEntry {
+  sessionId: string;
+  goalieRatings: Record<string, number>; // fieldKey → rating
+  parentRatings?: Record<string, number>;
+  coachRatings?: Record<string, number>;
+  goalieCoachRatings?: Record<string, number>;
+  gaps: CrossReferenceGap[];
+}
+
+// ─── Daily Training ────────────────────────────────────────────────────────────
+
+/** V.M.P. intensity rating: Visual → Mental → Physical */
+export type VMPRating = 'low' | 'medium_spotty' | 'high_consistent';
+
+/** Top-level training category */
+export type TrainingCategory =
+  | 'ice'
+  | 'puck_machine'
+  | 'land_conditioning'
+  | 'lifestyle_foundations'
+  | 'games_tourneys';
+
+/** L-index category identifiers (L1–L11) */
+export type LIndexCategory =
+  | 'L1' | 'L2' | 'L3' | 'L4' | 'L5' | 'L6'
+  | 'L7' | 'L8' | 'L9' | 'L10' | 'L11';
+
+/** A goalie's suggestion for a new L-Index training item — stored in l_index_suggestions collection */
+export interface LIndexSuggestion {
+  id: string;
+  goalieId: string;
+  goalieDisplayName?: string;
+  suggestedName: string;
+  suggestedCategory?: TrainingCategory;
+  description?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Timestamp;
+  reviewedAt?: Timestamp;
+  reviewedBy?: string;
+}
+
+/** L-Index catalogue item — admin-managed */
+export interface LIndexItem {
+  id: string;
+  lIndex: LIndexCategory;
+  topLevelCategory: 'land_conditioning' | 'lifestyle_foundations';
+  name: string;
+  definition: string;
+  purpose: string;
+  howTo: string;
+  videoUrl?: string;
+  levelTag: 'introduction' | 'development' | 'refinement';
+  isActive: boolean;
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** Single item log within a training log entry */
+export interface TrainingItemLog {
+  itemId: string; // LIndexItem id, or 'ice', 'puck_machine', 'game' for fixed items
+  category: TrainingCategory;
+  done: boolean;
+  consistencyRating?: number; // 1-5 star rating
+  vmpRating?: VMPRating;
+  voiceNote?: string;
+  textNote?: string;
+}
+
+/** Daily training log entry — one per goalie per day */
+export interface TrainingLogEntry {
+  id: string;
+  goalieId: string;
+  date: string; // YYYY-MM-DD
+  items: TrainingItemLog[];
+  overallNote?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// ─── Parent Chart Types ───────────────────────────────────────────────────────
+
+export type ParentEmotionalState =
+  | 'calm_focused'
+  | 'a_bit_nervous'
+  | 'distracted'
+  | 'upset'
+  | 'not_sure';
+
+export type ParentRoutineStatus =
+  | 'yes'
+  | 'mostly'
+  | 'dont_think_so'
+  | 'dont_know_routine';
+
+export type ParentCarRideMood =
+  | 'happy'
+  | 'neutral'
+  | 'frustrated'
+  | 'didnt_want_to_talk'
+  | 'great_conversation';
+
+export type ParentTalkAboutGame =
+  | 'yes_positive'
+  | 'yes_tense'
+  | 'briefly'
+  | 'no_gave_space';
+
+export type ParentNoticedObservation =
+  | 'looked_frustrated'
+  | 'seemed_tired'
+  | 'out_of_position'
+  | 'scored_on_and_shut_down'
+  | 'not_confident'
+  | 'other';
+
+export interface ParentPreGameData {
+  emotionalState: ParentEmotionalState;
+  followedRoutine: ParentRoutineStatus;
+  offIceNote?: string;
+}
+
+export interface ParentPeriodRatings {
+  engagedRating: number;        // 1-5
+  emotionalControlRating: number; // 1-5
+  skatingInSyncRating: number;  // 1-5
+  positioningRating: number;    // 1-5
+  overallImpressionRating: number; // 1-5
+  lowStarObservations?: ParentNoticedObservation[];
+  lowStarNote?: string;
+}
+
+export interface ParentPostGameData {
+  oneWordForGame: string;
+  onePositiveThing: string;
+  oneConcern: string;
+  carRideMood: ParentCarRideMood;
+  talkedAboutGame: ParentTalkAboutGame;
+}
+
+export interface ParentChartEntry {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  parentId: string;
+  parentName?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  preGame?: ParentPreGameData;
+  periods?: {
+    period1?: ParentPeriodRatings;
+    period2?: ParentPeriodRatings;
+    period3?: ParentPeriodRatings;
+  };
+  postGame?: ParentPostGameData;
+  completedSections: ('preGame' | 'periods' | 'postGame')[];
+}
+
+// ─── Coach Chart Types ────────────────────────────────────────────────────────
+
+export type CoachReadinessLevel =
+  | 'locked_in'
+  | 'solid'
+  | 'going_through_motions'
+  | 'unfocused'
+  | 'concerning';
+
+export type CoachPriorityFactor =
+  | 'engaged'
+  | 'mental_composure'
+  | 'skating_in_sync'
+  | 'positioning_7ams'
+  | 'below_line_6zs'
+  | 'form'
+  | 'reading_play';
+
+export interface CoachPreGameData {
+  readinessLevel: CoachReadinessLevel;
+  warmupQuality: number;   // 1-5
+  concerns?: string;
+}
+
+export interface CoachPeriodData {
+  engagedRating: number;
+  engagedBreakdown?: string;
+  engagedNote?: string;
+  mentalComposureRating: number;
+  mentalComposureBreakdown?: string;
+  mentalComposureNote?: string;
+  skatingInSyncRating: number;
+  skatingBreakdown?: string;
+  skatingNote?: string;
+  positioningRating: number;    // 7AMS
+  positioningBreakdown?: string;
+  positioningNote?: string;
+  belowLineRating: number;      // 6ZS
+  belowLineBreakdown?: string;
+  belowLineNote?: string;
+  formRating: number;
+  formBreakdown?: string;
+  formNote?: string;
+  readingPlayRating: number;
+  readingPlayBreakdown?: string;
+  readingPlayNote?: string;
+}
+
+export interface CoachPostGameData {
+  overallGameRating: number;    // 1-5
+  strengthNote: string;
+  priorityFactor: CoachPriorityFactor;
+  nextSessionFocus?: string;
+}
+
+export interface CoachChartEntry {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  coachId: string;
+  coachName?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  preGame?: CoachPreGameData;
+  periods?: {
+    period1?: CoachPeriodData;
+    period2?: CoachPeriodData;
+    period3?: CoachPeriodData;
+    overtime?: CoachPeriodData;
+  };
+  postGame?: CoachPostGameData;
+  completedSections: ('preGame' | 'periods' | 'postGame')[];
 }

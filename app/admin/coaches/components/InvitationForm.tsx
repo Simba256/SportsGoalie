@@ -4,19 +4,10 @@ import React, { useState } from 'react';
 import { CoachInvitation, CreateInvitationData } from '@/types/auth';
 import { coachInvitationService } from '@/lib/services/coach-invitation.service';
 import { emailService } from '@/lib/services/email.service';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2, Mail } from 'lucide-react';
+
+const RED = '#f87171';
 
 interface InvitationFormProps {
   invitedBy: string;
@@ -24,11 +15,7 @@ interface InvitationFormProps {
   onInvitationCreated: (invitation: CoachInvitation) => void;
 }
 
-export function InvitationForm({
-  invitedBy,
-  invitedByName,
-  onInvitationCreated,
-}: InvitationFormProps) {
+export function InvitationForm({ invitedBy, invitedByName, onInvitationCreated }: InvitationFormProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -41,17 +28,13 @@ export function InvitationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error('Please enter a valid email address');
       return;
     }
-
     try {
       setLoading(true);
-
       const invitationData: CreateInvitationData = {
         email: formData.email,
         invitedBy,
@@ -64,161 +47,85 @@ export function InvitationForm({
           customMessage: formData.customMessage || undefined,
         },
       };
-
       const invitation = await coachInvitationService.createInvitation(invitationData);
-
-      // Send invitation email
       const baseUrl = window.location.origin;
       const inviteUrl = `${baseUrl}/auth/accept-invite?token=${invitation.token}`;
-
       try {
         await emailService.sendCoachInvitation({ invitation, inviteUrl });
       } catch (emailError) {
         console.error('Failed to send invitation email:', emailError);
-        // Don't fail the entire operation if email fails
-        toast.warning('Invitation created but email failed to send', {
-          description: 'You can copy the invitation link manually',
-        });
+        toast.warning('Invitation created but email failed to send', { description: 'You can copy the invitation link manually' });
       }
-
       onInvitationCreated(invitation);
-
-      // Reset form
-      setFormData({
-        email: '',
-        firstName: '',
-        lastName: '',
-        organizationName: '',
-        customMessage: '',
-        expiresInDays: '7',
-      });
-
-      toast.success('Invitation created successfully!', {
-        description: `An invitation has been sent to ${invitation.email}`,
-      });
-    } catch (error: any) {
+      setFormData({ email: '', firstName: '', lastName: '', organizationName: '', customMessage: '', expiresInDays: '7' });
+      toast.success('Invitation created successfully!', { description: `An invitation has been sent to ${invitation.email}` });
+    } catch (error: unknown) {
       console.error('Failed to create invitation:', error);
-      toast.error('Failed to create invitation', {
-        description: error.message || 'An error occurred while creating the invitation',
-      });
+      toast.error('Failed to create invitation', { description: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const handleChange = (field: string, value: string) => setFormData(prev => ({ ...prev, [field]: value }));
+
+  const fieldLabel = (text: string, required?: boolean) => (
+    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+      {text} {required && <span style={{ color: RED }}>*</span>}
+    </p>
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Email */}
-      <div className="space-y-2">
-        <Label htmlFor="email">
-          Email Address <span className="text-destructive">*</span>
-        </Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="coach@example.com"
-            value={formData.email}
-            onChange={e => handleChange('email', e.target.value)}
-            className="pl-10"
-            required
-            disabled={loading}
-          />
+    <>
+      <style>{`
+        .if-inp { background: rgba(2,18,44,0.7) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: #fff !important; border-radius: 10px !important; padding: 10px 14px !important; width: 100% !important; font-size: 15px !important; outline: none !important; box-sizing: border-box !important; }
+        .if-inp:focus { border-color: rgba(55,181,255,0.45) !important; }
+        .if-inp::placeholder { color: rgba(255,255,255,0.25) !important; }
+        .if-inp:disabled { opacity: 0.5 !important; }
+        .if-sel { background: rgba(2,18,44,0.7) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: rgba(255,255,255,0.8) !important; border-radius: 10px !important; padding: 10px 14px !important; width: 100% !important; font-size: 15px !important; outline: none !important; cursor: pointer !important; }
+        .if-sel:focus { border-color: rgba(55,181,255,0.45) !important; }
+        .if-ta { background: rgba(2,18,44,0.7) !important; border: 1px solid rgba(55,181,255,0.18) !important; color: #fff !important; border-radius: 10px !important; padding: 10px 14px !important; width: 100% !important; font-size: 15px !important; outline: none !important; resize: vertical !important; box-sizing: border-box !important; }
+        .if-ta:focus { border-color: rgba(55,181,255,0.45) !important; }
+        .if-ta::placeholder { color: rgba(255,255,255,0.25) !important; }
+      `}</style>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          {fieldLabel('Email Address', true)}
+          <div style={{ position: 'relative' }}>
+            <Mail size={14} color="rgba(255,255,255,0.3)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input className="if-inp" style={{ paddingLeft: '36px' } as React.CSSProperties} type="email" placeholder="coach@example.com" value={formData.email} onChange={e => handleChange('email', e.target.value)} required disabled={loading} />
+          </div>
         </div>
-      </div>
-
-      {/* First Name */}
-      <div className="space-y-2">
-        <Label htmlFor="firstName">First Name (Optional)</Label>
-        <Input
-          id="firstName"
-          type="text"
-          placeholder="John"
-          value={formData.firstName}
-          onChange={e => handleChange('firstName', e.target.value)}
-          disabled={loading}
-        />
-      </div>
-
-      {/* Last Name */}
-      <div className="space-y-2">
-        <Label htmlFor="lastName">Last Name (Optional)</Label>
-        <Input
-          id="lastName"
-          type="text"
-          placeholder="Doe"
-          value={formData.lastName}
-          onChange={e => handleChange('lastName', e.target.value)}
-          disabled={loading}
-        />
-      </div>
-
-      {/* Organization */}
-      <div className="space-y-2">
-        <Label htmlFor="organizationName">Organization (Optional)</Label>
-        <Input
-          id="organizationName"
-          type="text"
-          placeholder="Hockey Academy"
-          value={formData.organizationName}
-          onChange={e => handleChange('organizationName', e.target.value)}
-          disabled={loading}
-        />
-      </div>
-
-      {/* Expiry */}
-      <div className="space-y-2">
-        <Label htmlFor="expiresInDays">Invitation Expires In</Label>
-        <Select
-          value={formData.expiresInDays}
-          onValueChange={value => handleChange('expiresInDays', value)}
-          disabled={loading}
-        >
-          <SelectTrigger id="expiresInDays">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1 Day</SelectItem>
-            <SelectItem value="3">3 Days</SelectItem>
-            <SelectItem value="7">7 Days (Recommended)</SelectItem>
-            <SelectItem value="14">14 Days</SelectItem>
-            <SelectItem value="30">30 Days</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Custom Message */}
-      <div className="space-y-2">
-        <Label htmlFor="customMessage">Custom Message (Optional)</Label>
-        <Textarea
-          id="customMessage"
-          placeholder="Add a personal message for the coach..."
-          value={formData.customMessage}
-          onChange={e => handleChange('customMessage', e.target.value)}
-          rows={3}
-          disabled={loading}
-        />
-      </div>
-
-      {/* Submit Button */}
-      <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={loading}>
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Sending Invitation...
-          </>
-        ) : (
-          <>
-            <Mail className="mr-2 h-4 w-4" />
-            Send Invitation
-          </>
-        )}
-      </Button>
-    </form>
+        <div>
+          {fieldLabel('First Name (Optional)')}
+          <input className="if-inp" type="text" placeholder="John" value={formData.firstName} onChange={e => handleChange('firstName', e.target.value)} disabled={loading} />
+        </div>
+        <div>
+          {fieldLabel('Last Name (Optional)')}
+          <input className="if-inp" type="text" placeholder="Doe" value={formData.lastName} onChange={e => handleChange('lastName', e.target.value)} disabled={loading} />
+        </div>
+        <div>
+          {fieldLabel('Organization (Optional)')}
+          <input className="if-inp" type="text" placeholder="Hockey Academy" value={formData.organizationName} onChange={e => handleChange('organizationName', e.target.value)} disabled={loading} />
+        </div>
+        <div>
+          {fieldLabel('Invitation Expires In')}
+          <select className="if-sel" value={formData.expiresInDays} onChange={e => handleChange('expiresInDays', e.target.value)} disabled={loading}>
+            <option value="1">1 Day</option>
+            <option value="3">3 Days</option>
+            <option value="7">7 Days (Recommended)</option>
+            <option value="14">14 Days</option>
+            <option value="30">30 Days</option>
+          </select>
+        </div>
+        <div>
+          {fieldLabel('Custom Message (Optional)')}
+          <textarea className="if-ta" placeholder="Add a personal message for the coach..." value={formData.customMessage} onChange={e => handleChange('customMessage', e.target.value)} rows={3} disabled={loading} />
+        </div>
+        <button type="submit" disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: loading ? 'rgba(248,113,113,0.5)' : `linear-gradient(135deg, ${RED} 0%, #dc2626 100%)`, border: 'none', color: '#fff', padding: '12px 20px', borderRadius: '10px', fontWeight: 700, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer', width: '100%' }}>
+          {loading ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Sending Invitation...</> : <><Mail size={15} /> Send Invitation</>}
+        </button>
+      </form>
+    </>
   );
 }

@@ -4,6 +4,21 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronDown } from 'lucide-react';
 
+const BLUE = '#37b5ff';
+const BLUE2 = '#60a5fa';
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-center gap-3 mb-5">
+      <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
+      <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
+        {children}
+      </p>
+      <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
+    </div>
+  );
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -15,7 +30,6 @@ export default function PricingPage() {
       upfront: '$95',
       monthly: '$15',
       highlight: false,
-      color: 'zinc',
       features: [
         '1 skill pillar access',
         'Video lessons + quizzes',
@@ -29,7 +43,6 @@ export default function PricingPage() {
       upfront: '$150',
       monthly: '$15',
       highlight: true,
-      color: 'red',
       features: [
         '3+ skill pillars access',
         'Advanced quizzes + analytics',
@@ -44,7 +57,6 @@ export default function PricingPage() {
       upfront: '$225',
       monthly: '$15',
       highlight: false,
-      color: 'blue',
       features: [
         'All 7 pillars unlocked',
         'Full lesson + quiz library',
@@ -55,48 +67,13 @@ export default function PricingPage() {
   ];
 
   const comparisonRows = [
-    {
-      offer: 'Video Review - 1 Hour',
-      founding: '$35 (50% off)',
-      postFounding: '$70',
-      benefit: 'Founding members keep this discounted rate permanently',
-    },
-    {
-      offer: 'Video Review - 3 Hours',
-      founding: '$105 (50% off)',
-      postFounding: '$210',
-      benefit: 'Best value for extended game/practice analysis',
-    },
-    {
-      offer: 'Goalie Subscription',
-      founding: 'Join now and lock your active rate',
-      postFounding: '$15/mo',
-      benefit: 'Price protection as the platform grows',
-    },
-    {
-      offer: 'Team Subscription',
-      founding: 'Founding access + lock-in option',
-      postFounding: '$20/mo',
-      benefit: 'Lower long-term operational cost',
-    },
-    {
-      offer: 'Organization Subscription',
-      founding: 'Founding access + lock-in option',
-      postFounding: '$100/mo',
-      benefit: 'Early adoption advantage for larger groups',
-    },
-    {
-      offer: 'Federation Subscription',
-      founding: 'Founding access + lock-in option',
-      postFounding: '$200/mo',
-      benefit: 'Enterprise-scale rollout with cost certainty',
-    },
-    {
-      offer: 'Full Platform Launch Pricing',
-      founding: 'Enter before launch to secure founding terms',
-      postFounding: '$1,500 one-time + $20-$35/mo',
-      benefit: 'Largest expected savings window',
-    },
+    { offer: 'Video Review - 1 Hour',         founding: '$35 (50% off)',                       postFounding: '$70' },
+    { offer: 'Video Review - 3 Hours',         founding: '$105 (50% off)',                      postFounding: '$210' },
+    { offer: 'Goalie Subscription',            founding: 'Join now and lock your active rate',  postFounding: '$15/mo' },
+    { offer: 'Team Subscription',              founding: 'Founding access + lock-in option',    postFounding: '$20/mo' },
+    { offer: 'Organization Subscription',      founding: 'Founding access + lock-in option',    postFounding: '$100/mo' },
+    { offer: 'Federation Subscription',        founding: 'Founding access + lock-in option',    postFounding: '$200/mo' },
+    { offer: 'Full Platform Launch Pricing',   founding: 'Enter before launch to secure founding terms', postFounding: '$1,500 one-time + $20–$35/mo' },
   ];
 
   const faqs = [
@@ -106,7 +83,7 @@ export default function PricingPage() {
     },
     {
       q: 'What is the 30-day guarantee?',
-      a: 'Your upfront payment is held for 30 days. Cancel in weeks 1-2 for a full refund. Sign the early waiver for immediate payment release. On day 30, the payment is released and your access continues.',
+      a: 'Your upfront payment is held for 30 days. Cancel in weeks 1–2 for a full refund. Sign the early waiver for immediate payment release. On day 30, the payment is released and your access continues.',
     },
     {
       q: 'Can I upgrade from 1 Pillar to more later?',
@@ -118,7 +95,7 @@ export default function PricingPage() {
     },
     {
       q: 'Do parents get access with any plan?',
-      a: 'Yes. All plans include parent access so guardians can monitor progress, view reports, and stay connected to their child\'s development.',
+      a: "Yes. All plans include parent access so guardians can monitor progress, view reports, and stay connected to their child's development.",
     },
     {
       q: 'Is there team pricing?',
@@ -126,107 +103,287 @@ export default function PricingPage() {
     },
   ];
 
+  const cardBase: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(55,181,255,0.18)',
+    borderRadius: '20px',
+    padding: '32px 28px',
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+  };
+
+  const cardHighlight: React.CSSProperties = {
+    ...cardBase,
+    background: 'rgba(55,181,255,0.08)',
+    border: `1.5px solid ${BLUE}`,
+    boxShadow: `0 0 40px rgba(55,181,255,0.12)`,
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-
-      {/* Hero */}
-      <section className="relative pt-20 pb-12 px-6 overflow-hidden bg-slate-50">
-
-        <div className="max-w-6xl mx-auto relative z-10 text-center">
-          <p className="inline-flex items-center gap-2 text-xs md:text-sm font-bold tracking-[0.18em] uppercase text-red-600 mb-6">
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-            Founding Member Rates Live
-          </p>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 leading-[1.05] mb-5 tracking-tight">
-            Invest In Your <span className="text-blue-500">Game</span>
-          </h1>
-          <p className="text-base md:text-lg text-slate-600 max-w-3xl mx-auto mb-5 leading-relaxed">
-            Lock in founding member rates before the full platform launch. Choose your pillar path and pay upfront once to unlock your pillars.
-          </p>
-          
-
-          <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4 text-sm md:text-base text-slate-700">
-            <span className="font-semibold">From $95 upfront</span>
-            <span className="text-slate-300">|</span>
-            <span className="font-semibold">Only $15/month</span>
-            <span className="text-slate-300">|</span>
-            <span className="font-semibold">30-day guarantee</span>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'linear-gradient(145deg, #000f28 0%, #062344 46%, #0a3159 100%)' }}
+    >
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-50 bg-slate-100/85 backdrop-blur-md border-b border-slate-200/70">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            aria-label="Go to home"
+          >
+            <img src="/logo.png" alt="Smarter Goalie" className="h-10 w-auto object-contain" />
+          </button>
+          <div className="hidden md:flex items-center gap-7">
+            <button
+              onClick={() => router.push('/')}
+              className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => router.push('/explain')}
+              className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide"
+            >
+              How It Works
+            </button>
+            <button
+              onClick={() => router.push('/auth/login')}
+              className="text-white px-4 py-2 rounded-md text-[15px] font-medium tracking-wide transition-colors duration-300"
+              style={{ background: BLUE }}
+            >
+              Login
+            </button>
           </div>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section className="text-center px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-20">
+        <SectionLabel>Founding Member Rates — Live Now</SectionLabel>
+
+        <h1
+          className="font-black uppercase mx-auto"
+          style={{
+            fontSize: 'clamp(28px, 5vw, 64px)',
+            lineHeight: 1.05,
+            color: '#ffffff',
+            maxWidth: '860px',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          INVEST IN{' '}
+          <span style={{ color: BLUE }}>YOUR GAME</span>
+        </h1>
+
+        <p
+          className="mt-5 mx-auto"
+          style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', maxWidth: '520px', lineHeight: 1.7 }}
+        >
+          Lock in founding member rates before the full platform launch. Choose your pillar path and pay upfront once to unlock your pillars.
+        </p>
+
+        <div
+          className="flex flex-wrap justify-center items-center gap-3 mt-8"
+          style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, letterSpacing: '0.5px' }}
+        >
+          <span>From $95 upfront</span>
+          <span style={{ color: 'rgba(55,181,255,0.4)' }}>|</span>
+          <span>Only $15/month</span>
+          <span style={{ color: 'rgba(55,181,255,0.4)' }}>|</span>
+          <span>30-day guarantee</span>
         </div>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="py-12 px-6 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
+      {/* ── Pricing Cards ── */}
+      <section className="px-4 sm:px-6 pb-20">
+        <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-3 gap-6 items-stretch">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className="rounded-3xl bg-slate-50 border border-red-200 p-7 md:p-8 flex flex-col transition-all duration-300 hover:border-red-500 hover:shadow-lg"
+                style={plan.highlight ? cardHighlight : cardBase}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.transform = 'translateY(-6px)';
+                  el.style.boxShadow = `0 24px 48px rgba(55,181,255,0.15), 0 0 0 1.5px ${BLUE}55`;
+                  el.style.borderColor = BLUE;
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.transform = 'translateY(0)';
+                  el.style.boxShadow = plan.highlight ? `0 0 40px rgba(55,181,255,0.12)` : 'none';
+                  el.style.borderColor = plan.highlight ? BLUE : 'rgba(55,181,255,0.18)';
+                }}
               >
-                <div>
-                  <span className="inline-block rounded-xl px-4 py-1.5 text-sm font-semibold mb-5 bg-red-100 text-red-700">
-                    {plan.name}
-                  </span>
-                  <p className="text-base text-slate-600 mb-8 min-h-[56px]">{plan.description}</p>
-
-                  <div className="mb-6">
-                    <p className="text-4xl md:text-5xl font-bold text-slate-900 leading-none">{plan.upfront}</p>
-                    <p className="text-sm text-slate-500 mt-2">One-time + {plan.monthly}/mo</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-200 pt-6 flex-1 flex flex-col">
-                  <ul className="space-y-3 flex-1">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
-                        <span className="text-sm text-slate-700 leading-snug">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => router.push('/auth/register')}
-                    className="mt-8 w-full py-3 rounded-full font-semibold text-base transition-all duration-300 hover:scale-[1.02] bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-lg hover:shadow-red-500/30"
+                {/* Tag */}
+                {plan.highlight && (
+                  <div
+                    className="text-center mb-5"
+                    style={{
+                      background: BLUE,
+                      color: '#000f28',
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase',
+                      padding: '5px 14px',
+                      borderRadius: '20px',
+                      alignSelf: 'flex-start',
+                    }}
                   >
-                    Book a Demo
-                  </button>
+                    Most Popular
+                  </div>
+                )}
+
+                {/* Plan name */}
+                <p
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '2.5px',
+                    textTransform: 'uppercase',
+                    color: BLUE,
+                    marginBottom: '10px',
+                  }}
+                >
+                  {plan.name}
+                </p>
+
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px', lineHeight: 1.6 }}>
+                  {plan.description}
+                </p>
+
+                {/* Price */}
+                <div style={{ marginBottom: '28px' }}>
+                  <span style={{ fontSize: '52px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
+                    {plan.upfront}
+                  </span>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '6px' }}>
+                    One-time + {plan.monthly}/mo
+                  </p>
                 </div>
+
+                {/* Divider */}
+                <div style={{ height: '1px', background: 'rgba(55,181,255,0.15)', marginBottom: '24px' }} />
+
+                {/* Features */}
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                  {plan.features.map((f, i) => (
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <Check size={14} style={{ color: BLUE, flexShrink: 0, marginTop: '2px' }} />
+                      <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <button
+                  onClick={() => router.push('/auth/register')}
+                  style={{
+                    marginTop: '28px',
+                    width: '100%',
+                    padding: '14px 0',
+                    borderRadius: '10px',
+                    border: plan.highlight ? 'none' : `1px solid ${BLUE}55`,
+                    background: plan.highlight
+                      ? `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`
+                      : 'rgba(55,181,255,0.08)',
+                    color: '#fff',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    transition: 'filter 0.2s',
+                  }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1)')}
+                >
+                  Book a Demo →
+                </button>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Founding and Post-Founding Plans */}
-      <section className="py-16 px-6 bg-gradient-to-b from-white to-slate-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-3">Founding Plans</p>
-            <p className="text-gray-500 max-w-3xl mx-auto">
-              A side-by-side view of what you get by joining now compared to standard pricing after the founding period.
+      {/* ── Comparison Table ── */}
+      <section className="px-4 sm:px-6 pb-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <SectionLabel>Founding Plans</SectionLabel>
+            <h2
+              className="font-black uppercase mx-auto"
+              style={{ fontSize: 'clamp(20px, 3.5vw, 40px)', color: '#fff', letterSpacing: '-0.02em', maxWidth: '600px' }}
+            >
+              FOUNDING VS{' '}
+              <span style={{ color: BLUE }}>POST-FOUNDING</span>
+            </h2>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginTop: '12px' }}>
+              A side-by-side view of what you get by joining now vs. standard pricing after the founding period.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-red-100 bg-gradient-to-br from-white to-red-50/30 overflow-hidden shadow-sm">
+          <div
+            style={{
+              borderRadius: '16px',
+              border: '1.5px solid rgba(55,181,255,0.35)',
+              overflow: 'hidden',
+              background: 'rgba(2, 18, 44, 0.85)',
+              boxShadow: '0 0 60px rgba(55,181,255,0.08), 0 8px 40px rgba(0,0,0,0.5)',
+            }}
+          >
             <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[820px]">
-                <thead className="bg-gradient-to-r from-slate-900 via-red-900 to-slate-900 text-white">
-                  <tr>
-                    <th className="px-6 py-4 text-sm font-semibold">Offer</th>
-                    <th className="px-6 py-4 text-sm font-semibold">Founding Member</th>
-                    <th className="px-6 py-4 text-sm font-semibold">Post-Founding</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(55,181,255,0.18)', borderBottom: '1.5px solid rgba(55,181,255,0.35)' }}>
+                    {['Offer', 'Founding Member', 'Post-Founding'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '18px 28px',
+                          textAlign: 'left',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          letterSpacing: '2.5px',
+                          textTransform: 'uppercase',
+                          color: BLUE,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {comparisonRows.map((row) => (
-                    <tr key={row.offer} className="border-t border-slate-100 hover:bg-slate-50/70 transition-colors">
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">{row.offer}</td>
-                      <td className="px-6 py-4 text-sm text-red-700 font-medium bg-red-50/40">{row.founding}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{row.postFounding}</td>
+                  {comparisonRows.map((row, i) => (
+                    <tr
+                      key={row.offer}
+                      style={{
+                        borderBottom: i < comparisonRows.length - 1 ? '1px solid rgba(55,181,255,0.1)' : 'none',
+                        background: i % 2 === 0 ? 'rgba(55,181,255,0.05)' : 'rgba(255,255,255,0.025)',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(55,181,255,0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLTableRowElement).style.background =
+                          i % 2 === 0 ? 'rgba(55,181,255,0.05)' : 'rgba(255,255,255,0.025)';
+                      }}
+                    >
+                      <td style={{ padding: '18px 28px', fontSize: '13.5px', fontWeight: 700, color: '#fff' }}>
+                        {row.offer}
+                      </td>
+                      <td style={{ padding: '18px 28px', fontSize: '13.5px', color: BLUE2, fontWeight: 600 }}>
+                        {row.founding}
+                      </td>
+                      <td style={{ padding: '18px 28px', fontSize: '13.5px', color: 'rgba(255,255,255,0.55)' }}>
+                        {row.postFounding}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -236,39 +393,80 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20 px-6 bg-gradient-to-b from-white to-blue-50/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Frequently Asked Questions</h2>
+      {/* ── FAQ ── */}
+      <section className="px-4 sm:px-6 pb-20">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <SectionLabel>Got Questions</SectionLabel>
+            <h2
+              className="font-black uppercase"
+              style={{ fontSize: 'clamp(20px, 3.5vw, 40px)', color: '#fff', letterSpacing: '-0.02em' }}
+            >
+              FREQUENTLY ASKED{' '}
+              <span style={{ color: BLUE }}>QUESTIONS</span>
+            </h2>
           </div>
-          <div className="space-y-4">
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {faqs.map((item, i) => {
               const isOpen = openFaqIndex === i;
-
               return (
                 <div
                   key={item.q}
-                  className="rounded-2xl border border-blue-100 bg-gradient-to-r from-slate-50 to-blue-50/40 transition-colors duration-300 hover:border-red-200 hover:bg-white"
+                  style={{
+                    background: isOpen ? 'rgba(4, 28, 64, 0.95)' : 'rgba(2, 18, 44, 0.8)',
+                    border: `1.5px solid ${isOpen ? 'rgba(55,181,255,0.5)' : 'rgba(55,181,255,0.18)'}`,
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    transition: 'border-color 0.2s ease, background 0.2s ease',
+                    boxShadow: isOpen ? '0 4px 32px rgba(55,181,255,0.1)' : '0 2px 12px rgba(0,0,0,0.3)',
+                  }}
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaqIndex(isOpen ? null : i)}
-                    className="w-full flex items-center justify-between gap-6 px-6 md:px-8 py-5 text-left"
-                    aria-expanded={isOpen}
-                    aria-controls={`faq-answer-${i}`}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px',
+                      padding: '20px 24px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
                   >
-                    <span className="text-base font-bold text-gray-900">{item.q}</span>
-                    <span className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
-                      isOpen ? 'bg-red-500 text-white' : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: isOpen ? '#fff' : 'rgba(255,255,255,0.88)', lineHeight: 1.5 }}>
+                      {item.q}
+                    </span>
+                    <span
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: isOpen ? BLUE : 'rgba(55,181,255,0.15)',
+                        border: `1px solid ${isOpen ? 'transparent' : 'rgba(55,181,255,0.3)'}`,
+                        transition: 'background 0.2s, border-color 0.2s',
+                      }}
+                    >
+                      <ChevronDown
+                        size={16}
+                        color={isOpen ? '#000f28' : BLUE}
+                        style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.25s' }}
+                      />
                     </span>
                   </button>
-
                   {isOpen && (
-                    <div id={`faq-answer-${i}`} className="px-6 md:px-8 pb-6">
-                      <p className="text-sm text-gray-500 leading-relaxed">{item.a}</p>
+                    <div style={{ padding: '0 24px 22px', borderTop: '1px solid rgba(55,181,255,0.15)' }}>
+                      <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, paddingTop: '16px' }}>
+                        {item.a}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -278,30 +476,94 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="relative py-20 px-6 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
-        <div className="absolute inset-0 opacity-60 [background-size:48px_48px] [background-image:linear-gradient(to_right,rgba(59,130,246,0.09)_1px,transparent_1px),linear-gradient(to_bottom,rgba(239,68,68,0.08)_1px,transparent_1px)]"></div>
-        <div className="absolute inset-0 [background-size:24px_24px] [background-image:radial-gradient(circle_at_center,rgba(30,41,59,0.05)_1px,transparent_1px)]"></div>
-        <div className="absolute -top-14 left-8 w-52 h-52 rounded-full bg-red-500/10 blur-3xl"></div>
-        <div className="absolute -bottom-16 right-8 w-60 h-60 rounded-full bg-blue-500/10 blur-3xl"></div>
+      {/* ── CTA ── */}
+      <section className="px-4 sm:px-6 pb-20 pt-4">
+        <div
+          className="max-w-3xl mx-auto text-center"
+          style={{
+            background: 'linear-gradient(160deg, rgba(4, 28, 64, 0.97) 0%, rgba(2, 18, 44, 0.95) 100%)',
+            border: '1.5px solid rgba(55,181,255,0.4)',
+            borderRadius: '24px',
+            padding: 'clamp(40px, 6vw, 72px) clamp(24px, 6vw, 64px)',
+            boxShadow: '0 0 80px rgba(55,181,255,0.1), 0 16px 60px rgba(0,0,0,0.5)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* top glow accent */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '1px',
+              background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)`,
+            }}
+          />
+          <SectionLabel>Limited Founding Spots</SectionLabel>
 
-        <div className="relative z-10 max-w-6xl mx-auto text-center">
-          <p className="text-red-500 font-semibold tracking-widest uppercase text-xs mb-4">Limited founding spots</p>
-          <h3 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-            Lock In Your <span className="bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text text-transparent">Rate Today</span>
+          <h3
+            className="font-black uppercase"
+            style={{ fontSize: 'clamp(22px, 4vw, 48px)', color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1 }}
+          >
+            LOCK IN YOUR{' '}
+            <span style={{ color: BLUE }}>RATE TODAY</span>
           </h3>
-          <p className="text-slate-600 mb-9 max-w-2xl mx-auto text-base leading-relaxed">
+
+          <p
+            style={{
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.6)',
+              marginTop: '16px',
+              marginBottom: '36px',
+              lineHeight: 1.7,
+              maxWidth: '480px',
+              margin: '16px auto 36px',
+            }}
+          >
             Join now and permanently secure founding member pricing before the platform goes live at full price.
           </p>
+
           <button
             onClick={() => router.push('/auth/register')}
-            className="group bg-gradient-to-r from-red-600 to-red-500 text-white px-12 py-4 rounded-full hover:shadow-xl hover:shadow-red-500/30 hover:scale-105 transition-all duration-300 font-semibold inline-flex items-center gap-2"
+            style={{
+              background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`,
+              color: '#fff',
+              padding: '16px 48px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '12px',
+              fontWeight: 800,
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              boxShadow: '0 8px 32px rgba(55,181,255,0.3)',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLButtonElement;
+              el.style.transform = 'translateY(-2px)';
+              el.style.boxShadow = '0 12px 40px rgba(55,181,255,0.45)';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLButtonElement;
+              el.style.transform = 'translateY(0)';
+              el.style.boxShadow = '0 8px 32px rgba(55,181,255,0.3)';
+            }}
           >
-            Claim Founding Rate
-            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+            Claim Founding Rate →
           </button>
         </div>
       </section>
+
+      {/* ── Footer ── */}
+      <div className="text-center px-4 pb-10 flex-shrink-0">
+        <p style={{ fontSize: '9px', letterSpacing: '3px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700 }}>
+          EVERY GOAL STARTS WITH THE RIGHT FOUNDATION — SMARTER GOALIE
+        </p>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   runTransaction,
   increment,
   Timestamp,
@@ -511,23 +510,36 @@ export class ProgressService extends BaseDatabaseService {
 
       const q = query(
         collection(db, this.COLLECTIONS.USER_ACHIEVEMENTS),
-        where('userId', '==', userId),
-        orderBy('unlockedAt', 'desc')
+        where('userId', '==', userId)
       );
 
       const querySnapshot = await getDocs(q);
-      const achievements: UserAchievement[] = querySnapshot.docs.map(doc =>
-        doc.data() as UserAchievement
-      );
+      const achievements: UserAchievement[] = querySnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        } as UserAchievement))
+        .sort((a, b) => {
+          const aTime = a.unlockedAt?.toMillis?.() || 0;
+          const bTime = b.unlockedAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
 
       this.cache.set(cacheKey, achievements);
 
       logger.info('Retrieved user achievements', 'ProgressService', { userId, count: achievements.length });
       return { success: true, data: achievements, timestamp: new Date() };
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (typeof error === 'object' && error !== null && 'message' in error)
+          ? String((error as { message?: unknown }).message)
+          : String(error);
+
       logger.error('Failed to get user achievements', 'ProgressService', {
         userId,
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
       });
       return {
         success: false,
@@ -1179,18 +1191,37 @@ export class ProgressService extends BaseDatabaseService {
     pillarId?: string
   ): Promise<ApiResponse<void>> {
     try {
+      // Always write a video_quiz_progress record so the dashboard, pillar pages,
+      // and analytics all reflect this lesson completion via their standard query path.
+      const progressId = `lesson_${userId}_${skillId}`;
+      await setDoc(doc(db, 'video_quiz_progress', progressId), {
+        id: progressId,
+        userId,
+        videoQuizId: `lesson_${skillId}`,
+        skillId,
+        sportId: pillarId || '',
+        isCompleted: true,
+        status: 'submitted',
+        percentage: 100,
+        score: 100,
+        maxScore: 100,
+        questionsAnswered: [],
+        questionsRemaining: 0,
+        currentTime: 0,
+        watchTime: 0,
+        totalTimeSpent: 0,
+        startedAt: Timestamp.now(),
+        completedAt: Timestamp.now(),
+        lastAccessedAt: Timestamp.now(),
+      });
+
       const { userService } = await import('./user.service');
       const userResult = await userService.getUser(userId);
 
       if (!userResult.success || !userResult.data) {
-        return {
-          success: false,
-          error: {
-            code: 'USER_NOT_FOUND',
-            message: 'User not found',
-          },
-          timestamp: new Date(),
-        };
+        // Even if we can't load the user, the progress record was written above.
+        logger.warn('recordLessonCompletion: user not found for workflow step', 'ProgressService', { userId });
+        return { success: true, timestamp: new Date() };
       }
 
       const user = userResult.data;

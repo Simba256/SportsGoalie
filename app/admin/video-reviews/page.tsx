@@ -1,35 +1,32 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users } from 'lucide-react';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
+import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/context';
 import { videoReviewService, StudentVideo } from '@/lib/database/services/video-review.service';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { VideoFeedbackComposer } from '@/components/messages/VideoFeedbackComposer';
 import { Sport } from '@/types';
+
+const BLUE = '#37b5ff';
+const RED = '#f87171';
+const AMBER = '#fbbf24';
+const GREEN = '#22c55e';
+
+const card = {
+  background: 'rgba(2,18,44,0.85)',
+  border: '1px solid rgba(55,181,255,0.14)',
+  borderRadius: '16px',
+} as const;
+
+const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  pending:       { bg: 'rgba(251,191,36,0.15)',  color: AMBER,  label: 'Pending Review' },
+  reviewed:      { bg: `rgba(55,181,255,0.12)`,  color: BLUE,   label: 'Under Review' },
+  feedback_sent: { bg: 'rgba(34,197,94,0.12)',   color: GREEN,  label: 'Feedback Sent' },
+};
 
 function VideoReviewsContent() {
   const { user } = useAuth();
@@ -53,42 +50,19 @@ function VideoReviewsContent() {
   const loadVideos = async () => {
     try {
       setLoading(true);
-
-      console.log('🚀 [Admin Video Reviews] Starting to load videos');
-      console.log('🔐 [Admin Video Reviews] Current user:', {
-        email: user?.email,
-        uid: user?.id,
-        role: user?.role
-      });
-
-      // Load videos and sports in parallel using proper services
-      console.log('📹 [Admin Video Reviews] Calling getAllVideosForReview...');
       const [videosResult, sportsResult] = await Promise.all([
         videoReviewService.getAllVideosForReview(),
-        sportsService.getAllSports()
+        sportsService.getAllSports(),
       ]);
 
-      console.log('📹 [Admin Video Reviews] Videos result:', {
-        success: videosResult.success,
-        dataLength: videosResult.data?.length,
-        error: videosResult.error,
-        data: videosResult.data
-      });
-
       if (videosResult.success && videosResult.data) {
-        console.log('✅ [Admin Video Reviews] Setting videos:', videosResult.data.length, 'videos');
         setVideos(videosResult.data);
       } else {
-        console.error('❌ [Admin Video Reviews] Error loading videos:', videosResult.error);
         toast.error('Failed to load videos');
       }
 
       if (sportsResult.success && sportsResult.data) {
-        // Sort sports by name
-        const sortedSports = sportsResult.data.items.sort((a, b) => {
-          return a.name.localeCompare(b.name);
-        });
-        setSports(sortedSports);
+        setSports(sportsResult.data.items.sort((a, b) => a.name.localeCompare(b.name)));
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -99,12 +73,6 @@ function VideoReviewsContent() {
   };
 
   const handleReviewVideo = (video: StudentVideo) => {
-    console.log('Opening video for review:', {
-      id: video.id,
-      fileName: video.fileName,
-      videoUrl: video.videoUrl,
-      fileSize: video.fileSize
-    });
     setSelectedVideo(video);
     setFeedback(video.coachFeedback || '');
     setRecommendedSports(video.recommendedCourses || []);
@@ -120,12 +88,6 @@ function VideoReviewsContent() {
     }
   };
 
-  const getFilteredSports = () => {
-    // Always return all available sports/courses for selection
-    // This allows coaches to recommend any course regardless of the video's sport
-    return sports;
-  };
-
   const removeSport = (sport: string) => {
     setRecommendedSports(recommendedSports.filter(c => c !== sport));
   };
@@ -135,26 +97,19 @@ function VideoReviewsContent() {
       toast.error('Please provide feedback before submitting');
       return;
     }
-
     setSubmittingFeedback(true);
-
     try {
       const result = await videoReviewService.submitCoachFeedback(
         selectedVideo.id,
-        {
-          coachFeedback: feedback,
-          recommendedCourses: recommendedSports,
-          reviewedBy: user?.email || 'coach@example.com'
-        },
-        user?.id // Pass admin user ID to create message
+        { coachFeedback: feedback, recommendedCourses: recommendedSports, reviewedBy: user?.email || 'coach@example.com' },
+        user?.id
       );
-
       if (result.success) {
         toast.success('Feedback sent to student successfully!');
         setSelectedVideo(null);
         setFeedback('');
         setRecommendedSports([]);
-        await loadVideos(); // Reload videos to get updated data
+        await loadVideos();
       } else {
         toast.error(result.error?.message || 'Failed to submit feedback');
       }
@@ -173,9 +128,10 @@ function VideoReviewsContent() {
 
   const filteredVideos = videos.filter(video => {
     const matchesStatus = filterStatus === 'all' || video.status === filterStatus;
-    const matchesSearch = video.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         video.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         video.sport?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      video.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.sport?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -187,400 +143,364 @@ function VideoReviewsContent() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formatFirestoreDate = (timestamp: any) => {
-    // Handle Firestore Timestamp objects
-    if (timestamp && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate().toLocaleDateString();
-    }
-    // Handle regular Date objects
-    if (timestamp instanceof Date) {
-      return timestamp.toLocaleDateString();
-    }
-    // Handle string dates
+    if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate().toLocaleDateString();
+    if (timestamp instanceof Date) return timestamp.toLocaleDateString();
     if (typeof timestamp === 'string') {
-      const parsedDate = new Date(timestamp);
-      if (isNaN(parsedDate.getTime())) {
-        return 'Invalid date';
-      }
-      return parsedDate.toLocaleDateString();
+      const d = new Date(timestamp);
+      return isNaN(d.getTime()) ? 'Invalid date' : d.toLocaleDateString();
     }
-    // Handle objects with seconds/nanoseconds (Firestore timestamp serialized)
-    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) {
-      return new Date(timestamp.seconds * 1000).toLocaleDateString();
-    }
+    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) return new Date(timestamp.seconds * 1000).toLocaleDateString();
     return 'Unknown date';
   };
 
-  const getStatusBadge = (status: StudentVideo['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Pending Review</Badge>;
-      case 'reviewed':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Under Review</Badge>;
-      case 'feedback_sent':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">Feedback Sent</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
+  const totalPending = videos.filter(v => v.status === 'pending').length;
+  const totalReviewed = videos.filter(v => v.status === 'reviewed').length;
+  const totalFeedbackSent = videos.filter(v => v.status === 'feedback_sent').length;
 
-  const getStatusIcon = (status: StudentVideo['status']) => {
-    switch (status) {
-      case 'pending':
-        return <AlertCircle className="h-4 w-4 text-amber-600" />;
-      case 'reviewed':
-        return <Eye className="h-4 w-4 text-red-600" />;
-      case 'feedback_sent':
-        return <CheckCircle className="h-4 w-4 text-gray-600" />;
-      default:
-        return null;
-    }
-  };
+  const STATS = [
+    { label: 'Total Videos', value: videos.length,     color: BLUE,  icon: <Users size={20} /> },
+    { label: 'Pending Review', value: totalPending,    color: AMBER, icon: <AlertCircle size={20} /> },
+    { label: 'Under Review',  value: totalReviewed,    color: BLUE,  icon: <Eye size={20} /> },
+    { label: 'Feedback Sent', value: totalFeedbackSent, color: GREEN, icon: <CheckCircle size={20} /> },
+  ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading videos...</p>
-        </div>
+      <div className="min-h-[400px] p-6">
+        <SkeletonDarkPage />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Video Reviews</h1>
-            <p className="text-gray-600 mt-2">Review student training videos and provide personalized feedback</p>
+    <>
+      <style>{`
+        .vr-search::placeholder { color: rgba(255,255,255,0.3); }
+        .vr-search { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px 10px 40px; width: 100%; outline: none; }
+        .vr-search:focus { border-color: rgba(55,181,255,0.45); }
+        .vr-sel { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px; outline: none; }
+        .vr-sel:focus { border-color: rgba(55,181,255,0.45); }
+        .vr-sel option { background: #0a1628; color: #fff; }
+        .vr-ta { color: #fff; background: rgba(255,255,255,0.05); border: 1px solid rgba(55,181,255,0.18); border-radius: 10px; padding: 10px 12px; width: 100%; outline: none; resize: vertical; font-family: inherit; }
+        .vr-ta::placeholder { color: rgba(255,255,255,0.3); }
+        .vr-ta:focus { border-color: rgba(55,181,255,0.45); }
+        .vr-ta:disabled { opacity: 0.5; cursor: not-allowed; }
+        .vr-card-btn:hover { background: rgba(55,181,255,0.18) !important; }
+        .vr-btn-outline:hover { background: rgba(255,255,255,0.08) !important; }
+        .vr-btn-primary:hover { filter: brightness(1.1); }
+        .vr-btn-secondary:hover { background: rgba(255,255,255,0.1) !important; }
+        .vr-sport-add:hover { background: rgba(55,181,255,0.18) !important; }
+        .vr-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .vr-modal { background: #020e22; border: 1px solid rgba(55,181,255,0.2); border-radius: 20px; width: 100%; max-width: 860px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .vr-close-btn:hover { background: rgba(255,255,255,0.12) !important; }
+      `}</style>
+
+      <div style={{ minHeight: '100vh', padding: '32px 24px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#fff', margin: 0 }}>Video Reviews</h1>
+              <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '6px', fontSize: '15px' }}>
+                Review student training videos and provide personalized feedback
+              </p>
+            </div>
+            <div style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '20px', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <AlertCircle size={14} color={AMBER} />
+              <span style={{ color: AMBER, fontSize: '15px', fontWeight: 600 }}>{totalPending} Pending</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="flex items-center space-x-1">
-              <Users className="h-3 w-3" />
-              <span>{videos.filter(v => v.status === 'pending').length} Pending</span>
-            </Badge>
-          </div>
-        </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <Input
-              placeholder="Search by student name, file name, or sport..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending Review</SelectItem>
-              <SelectItem value="reviewed">Under Review</SelectItem>
-              <SelectItem value="feedback_sent">Feedback Sent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Videos Grid */}
-        {filteredVideos.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No videos found</h3>
-            <p className="mt-1 text-gray-500">
-              {searchTerm || filterStatus !== 'all'
-                ? 'Try adjusting your search or filters'
-                : 'Students haven\'t uploaded any videos yet'
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredVideos.map((video) => (
-              <Card key={video.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(video.status)}
-                      <span className="font-medium text-sm">{video.studentName}</span>
-                    </div>
-                    {getStatusBadge(video.status)}
-                  </div>
-                  <CardTitle className="text-lg line-clamp-1">{video.fileName}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Sport:</span>
-                      <span className="font-medium">{video.sport || 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Size:</span>
-                      <span>{formatFileSize(video.fileSize)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Uploaded:</span>
-                      <span>{formatFirestoreDate(video.uploadedAt)}</span>
-                    </div>
-                  </div>
-
-                  {video.description && (
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-700">{video.description}</p>
-                    </div>
-                  )}
-
-                  {video.status === 'feedback_sent' && video.reviewedAt && (
-                    <div className="text-xs text-gray-500 text-center pt-2 border-t">
-                      Reviewed on {formatFirestoreDate(video.reviewedAt)}
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          className={`w-full ${video.status === 'pending' ? 'bg-red-600 hover:bg-red-700' : ''}`}
-                          onClick={() => handleReviewVideo(video)}
-                          variant={video.status === 'pending' ? 'default' : 'outline'}
-                        >
-                          {video.status === 'pending' ? (
-                            <>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Review Video
-                            </>
-                          ) : video.status === 'reviewed' ? (
-                            <>
-                              <MessageSquare className="mr-2 h-4 w-4" />
-                              Complete Review
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              View Feedback
-                            </>
-                          )}
-                        </Button>
-                      </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Review Video - {video.fileName}</DialogTitle>
-                        <DialogDescription>
-                          Student: {video.studentName} ({video.studentEmail})
-                        </DialogDescription>
-                      </DialogHeader>
-
-                      <div className="space-y-6">
-                        {/* Video Player */}
-                        <div className="bg-gray-900 rounded-lg aspect-video overflow-hidden">
-                          {selectedVideo?.videoUrl ? (
-                            <div className="relative w-full h-full">
-                              <video
-                                controls
-                                className="w-full h-full object-contain"
-                                preload="metadata"
-                                onError={(e) => {
-                                  console.error('Video playback error:', e);
-                                  console.log('Video URL:', selectedVideo.videoUrl);
-                                  console.log('Video details:', {
-                                    fileName: selectedVideo.fileName,
-                                    fileSize: selectedVideo.fileSize,
-                                    storagePath: selectedVideo.storagePath
-                                  });
-                                }}
-                                onLoadStart={() => {
-                                  console.log('Video loading started');
-                                }}
-                                onCanPlay={() => {
-                                  console.log('Video can play');
-                                }}
-                                onLoadedData={() => {
-                                  console.log('Video data loaded');
-                                }}
-                              >
-                                <source src={selectedVideo.videoUrl} type="video/mp4" />
-                                <source src={selectedVideo.videoUrl} type="video/webm" />
-                                <source src={selectedVideo.videoUrl} type="video/quicktime" />
-                                <source src={selectedVideo.videoUrl} type="video/avi" />
-                                Your browser does not support the video tag.
-                              </video>
-
-                              {/* Video info overlay */}
-                              <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                                {selectedVideo.fileName} • {(selectedVideo.fileSize / (1024 * 1024)).toFixed(1)} MB
-                              </div>
-
-                              {/* Direct download link as fallback */}
-                              <div className="absolute top-2 right-2">
-                                <a
-                                  href={selectedVideo.videoUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
-                                >
-                                  Open in New Tab
-                                </a>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <div className="text-center text-white">
-                                <Play className="mx-auto h-16 w-16 mb-4" />
-                                <p className="text-lg">Video Player</p>
-                                <p className="text-sm opacity-75">{video.fileName}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Student Description */}
-                        {video.description && (
-                          <div>
-                            <Label className="text-base font-medium">Student's Description</Label>
-                            <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                              <p className="text-sm">{video.description}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Feedback Section */}
-                        <div className="space-y-4">
-                          <Label htmlFor="feedback" className="text-base font-medium">
-                            Coach Feedback
-                          </Label>
-                          <Textarea
-                            id="feedback"
-                            placeholder="Provide detailed feedback on the student's performance, areas for improvement, and positive observations..."
-                            value={feedback}
-                            onChange={(e) => setFeedback(e.target.value)}
-                            rows={4}
-                            disabled={video.status === 'feedback_sent'}
-                          />
-                        </div>
-
-                        {/* Recommended Courses */}
-                        <div className="space-y-4">
-                          <Label className="text-base font-medium">Recommended Courses</Label>
-
-                          {video.status !== 'feedback_sent' && (
-                            <div className="flex gap-2">
-                              <Select value={selectedSportToAdd} onValueChange={setSelectedSportToAdd}>
-                                <SelectTrigger className="flex-1">
-                                  <SelectValue placeholder="Select a course to recommend..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getFilteredSports().map((sport) => (
-                                    <SelectItem key={sport.id} value={sport.id}>
-                                      {sport.name}
-                                    </SelectItem>
-                                  ))}
-                                  {getFilteredSports().length === 0 && (
-                                    <SelectItem value="no-sports" disabled>
-                                      No courses available
-                                    </SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                onClick={addRecommendedSport}
-                                variant="outline"
-                                disabled={!selectedSportToAdd}
-                              >
-                                Add
-                              </Button>
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-2">
-                            {recommendedSports.map((sport, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="flex items-center gap-1"
-                              >
-                                {sport}
-                                {video.status !== 'feedback_sent' && (
-                                  <button
-                                    onClick={() => removeSport(sport)}
-                                    className="ml-1 text-red-500 hover:text-red-700"
-                                  >
-                                    ×
-                                  </button>
-                                )}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Submit Button */}
-                        {video.status !== 'feedback_sent' && (
-                          <div className="flex justify-end">
-                            <Button
-                              onClick={submitFeedback}
-                              disabled={submittingFeedback || !feedback.trim()}
-                              className="min-w-32"
-                            >
-                              {submittingFeedback ? (
-                                <div className="flex items-center">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                  Sending...
-                                </div>
-                              ) : (
-                                <>
-                                  <Send className="mr-2 h-4 w-4" />
-                                  Send Feedback
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                    <Button
-                      className="w-full"
-                      variant="secondary"
-                      onClick={() => handleSendDetailedFeedback(video)}
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Send Detailed Feedback
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Stat Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '16px', marginBottom: '28px' }}>
+            {STATS.map(s => (
+              <div key={s.label} style={{ ...card, padding: '20px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${s.color}66,transparent)` }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', margin: 0 }}>{s.label}</p>
+                  <span style={{ color: s.color, opacity: 0.7 }}>{s.icon}</span>
+                </div>
+                <p style={{ fontSize: '28px', fontWeight: 700, color: '#fff', margin: 0 }}>{s.value}</p>
+              </div>
             ))}
           </div>
-        )}
 
-        {/* Video Feedback Composer Modal */}
-        {user && selectedVideoForMessage && (
-          <VideoFeedbackComposer
-            isOpen={showVideoFeedbackComposer}
-            onClose={() => {
-              setShowVideoFeedbackComposer(false);
-              setSelectedVideoForMessage(null);
-            }}
-            studentId={selectedVideoForMessage.studentId}
-            studentName={selectedVideoForMessage.studentName}
-            adminUserId={user.id}
-            videoUrl={selectedVideoForMessage.videoUrl}
-            videoReviewId={selectedVideoForMessage.id}
-            onMessageSent={() => {
-              loadVideos();
-              toast.success('Video feedback sent successfully');
-            }}
-          />
-        )}
+          {/* Filters */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }} />
+              <input
+                className="vr-search"
+                placeholder="Search by student, file name, or sport..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <select
+              className="vr-sel"
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              style={{ minWidth: '180px' }}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending Review</option>
+              <option value="reviewed">Under Review</option>
+              <option value="feedback_sent">Feedback Sent</option>
+            </select>
+          </div>
+
+          {/* Videos Grid */}
+          {filteredVideos.length === 0 ? (
+            <div style={{ ...card, padding: '64px', textAlign: 'center' }}>
+              <Users size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+              <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>No videos found</h3>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', margin: 0 }}>
+                {searchTerm || filterStatus !== 'all' ? 'Try adjusting your search or filters' : "Students haven't uploaded any videos yet"}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: '20px' }}>
+              {filteredVideos.map(video => {
+                const st = STATUS_STYLES[video.status] ?? { bg: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', label: 'Unknown' };
+                return (
+                  <div key={video.id} style={{ ...card, padding: '20px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${st.color}66,transparent)` }} />
+
+                    {/* Card Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {video.status === 'pending' && <AlertCircle size={16} color={AMBER} />}
+                        {video.status === 'reviewed' && <Eye size={16} color={BLUE} />}
+                        {video.status === 'feedback_sent' && <CheckCircle size={16} color={GREEN} />}
+                        <span style={{ color: '#fff', fontSize: '15px', fontWeight: 600 }}>{video.studentName}</span>
+                      </div>
+                      <span style={{ background: st.bg, color: st.color, border: `1px solid ${st.color}40`, borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 600 }}>
+                        {st.label}
+                      </span>
+                    </div>
+
+                    <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '15px', fontWeight: 500, marginBottom: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {video.fileName}
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+                      {[
+                        { label: 'Sport', value: video.sport || 'Not specified' },
+                        { label: 'Size', value: formatFileSize(video.fileSize) },
+                        { label: 'Uploaded', value: formatFirestoreDate(video.uploadedAt) },
+                      ].map(r => (
+                        <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>{r.label}:</span>
+                          <span style={{ color: 'rgba(255,255,255,0.75)' }}>{r.value}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {video.description && (
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '10px', marginBottom: '14px' }}>
+                        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', margin: 0 }}>{video.description}</p>
+                      </div>
+                    )}
+
+                    {video.status === 'feedback_sent' && video.reviewedAt && (
+                      <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '10px', marginBottom: '12px' }}>
+                        Reviewed on {formatFirestoreDate(video.reviewedAt)}
+                      </p>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button
+                        className="vr-card-btn"
+                        onClick={() => handleReviewVideo(video)}
+                        style={{
+                          width: '100%', padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '15px',
+                          background: video.status === 'pending' ? RED : `rgba(55,181,255,0.12)`,
+                          color: video.status === 'pending' ? '#fff' : BLUE,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s',
+                        }}
+                      >
+                        {video.status === 'pending' && <><Eye size={15} /> Review Video</>}
+                        {video.status === 'reviewed' && <><MessageSquare size={15} /> Complete Review</>}
+                        {video.status === 'feedback_sent' && <><CheckCircle size={15} /> View Feedback</>}
+                      </button>
+                      <button
+                        className="vr-btn-secondary"
+                        onClick={() => handleSendDetailedFeedback(video)}
+                        style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontWeight: 500, fontSize: '15px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
+                      >
+                        <MessageSquare size={15} /> Send Detailed Feedback
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Review Modal */}
+      {selectedVideo && (
+        <div className="vr-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setSelectedVideo(null); }}>
+          <div className="vr-modal">
+            {/* Modal Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, margin: 0 }}>Review Video — {selectedVideo.fileName}</h2>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', marginTop: '4px', margin: '4px 0 0' }}>
+                  Student: {selectedVideo.studentName} ({selectedVideo.studentEmail})
+                </p>
+              </div>
+              <button
+                className="vr-close-btn"
+                onClick={() => setSelectedVideo(null)}
+                style={{ background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Video Player */}
+              <div style={{ background: '#000', borderRadius: '12px', aspectRatio: '16/9', overflow: 'hidden', position: 'relative' }}>
+                {selectedVideo.videoUrl ? (
+                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                    <video controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} preload="metadata"
+                      onError={e => { console.error('Video playback error:', e); }}>
+                      <source src={selectedVideo.videoUrl} type="video/mp4" />
+                      <source src={selectedVideo.videoUrl} type="video/webm" />
+                      <source src={selectedVideo.videoUrl} type="video/quicktime" />
+                      <source src={selectedVideo.videoUrl} type="video/avi" />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: '12px', padding: '4px 8px', borderRadius: '4px' }}>
+                      {selectedVideo.fileName} • {(selectedVideo.fileSize / (1024 * 1024)).toFixed(1)} MB
+                    </div>
+                    <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
+                      <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ background: RED, color: '#fff', fontSize: '12px', padding: '4px 10px', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+                        Open in New Tab
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '12px' }}>
+                    <Play size={64} color="rgba(255,255,255,0.3)" />
+                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px', margin: 0 }}>{selectedVideo.fileName}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Student Description */}
+              {selectedVideo.description && (
+                <div>
+                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student&apos;s Description</p>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '15px', margin: 0 }}>{selectedVideo.description}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback Textarea */}
+              <div>
+                <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Coach Feedback
+                </label>
+                <textarea
+                  className="vr-ta"
+                  placeholder="Provide detailed feedback on the student's performance, areas for improvement, and positive observations..."
+                  value={feedback}
+                  onChange={e => setFeedback(e.target.value)}
+                  rows={4}
+                  disabled={selectedVideo.status === 'feedback_sent'}
+                />
+              </div>
+
+              {/* Recommended Courses */}
+              <div>
+                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Courses</p>
+
+                {selectedVideo.status !== 'feedback_sent' && (
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    <select
+                      className="vr-sel"
+                      value={selectedSportToAdd}
+                      onChange={e => setSelectedSportToAdd(e.target.value)}
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">Select a course to recommend...</option>
+                      {sports.map(sport => (
+                        <option key={sport.id} value={sport.id}>{sport.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      className="vr-sport-add"
+                      onClick={addRecommendedSport}
+                      disabled={!selectedSportToAdd}
+                      style={{ padding: '10px 16px', borderRadius: '10px', border: `1px solid rgba(55,181,255,0.25)`, background: `rgba(55,181,255,0.1)`, color: BLUE, fontWeight: 600, fontSize: '15px', cursor: selectedSportToAdd ? 'pointer' : 'not-allowed', opacity: selectedSportToAdd ? 1 : 0.5, transition: 'all 0.2s' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {recommendedSports.map((sport, i) => (
+                    <span key={i} style={{ background: `rgba(55,181,255,0.1)`, border: `1px solid rgba(55,181,255,0.25)`, borderRadius: '20px', padding: '4px 12px', fontSize: '13px', color: BLUE, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {sport}
+                      {selectedVideo.status !== 'feedback_sent' && (
+                        <button onClick={() => removeSport(sport)} style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: '15px', padding: 0, lineHeight: 1 }}>×</button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              {selectedVideo.status !== 'feedback_sent' && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <button
+                    className="vr-btn-primary"
+                    onClick={submitFeedback}
+                    disabled={submittingFeedback || !feedback.trim()}
+                    style={{ padding: '12px 28px', borderRadius: '10px', border: 'none', background: submittingFeedback || !feedback.trim() ? 'rgba(55,181,255,0.3)' : BLUE, color: '#fff', fontWeight: 700, fontSize: '15px', cursor: submittingFeedback || !feedback.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+                  >
+                    {submittingFeedback ? (
+                      <>
+                        <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        Sending...
+                      </>
+                    ) : (
+                      <><Send size={16} /> Send Feedback</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Feedback Composer Modal */}
+      {user && selectedVideoForMessage && (
+        <VideoFeedbackComposer
+          isOpen={showVideoFeedbackComposer}
+          onClose={() => { setShowVideoFeedbackComposer(false); setSelectedVideoForMessage(null); }}
+          studentId={selectedVideoForMessage.studentId}
+          studentName={selectedVideoForMessage.studentName}
+          adminUserId={user.id}
+          videoUrl={selectedVideoForMessage.videoUrl}
+          videoReviewId={selectedVideoForMessage.id}
+          onMessageSent={() => { loadVideos(); toast.success('Video feedback sent successfully'); }}
+        />
+      )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </>
   );
 }
 

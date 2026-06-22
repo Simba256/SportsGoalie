@@ -3,41 +3,19 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  LayoutDashboard,
-  Users,
-  UserPlus,
-  BarChart3,
-  BookOpen,
-  Trophy,
-  Video,
-  FileText,
-  MessageSquare,
-  Shield,
-  Settings,
-  LogOut,
-  ChevronLeft,
-  Menu,
-  X,
-  User,
-  BarChart2,
+  LayoutDashboard, Users, UserPlus, BarChart3, BookOpen, Trophy,
+  Video, FileText, MessageSquare, Shield, Settings, LogOut,
+  ChevronLeft, Menu, X, User, BarChart2, Dumbbell,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
-interface AdminSidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
+const BLUE = '#37b5ff';
+const sidebarBg = 'linear-gradient(180deg, #000f28 0%, #051e3e 60%, #062344 100%)';
+const borderColor = 'rgba(55,181,255,0.12)';
 
-interface NavSection {
-  label: string;
-  items: NavItem[];
-}
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
+interface AdminSidebarProps { isOpen: boolean; onToggle: () => void; }
+interface NavItem { label: string; href: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; }
+interface NavSection { label: string; items: NavItem[]; }
 
 const navSections: NavSection[] = [
   {
@@ -52,6 +30,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'All Users', href: '/admin/users', icon: Users },
       { label: 'Coaches', href: '/admin/coaches', icon: UserPlus },
+      { label: 'Goalies', href: '/admin/goalies', icon: User },
     ],
   },
   {
@@ -67,6 +46,7 @@ const navSections: NavSection[] = [
     label: 'Communication',
     items: [
       { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
+      { label: 'Voice Queue', href: '/admin/voice-queue', icon: MessageSquare },
       { label: 'Moderation', href: '/admin/moderation', icon: Shield },
     ],
   },
@@ -74,6 +54,7 @@ const navSections: NavSection[] = [
     label: 'System',
     items: [
       { label: 'Charting', href: '/admin/charting', icon: BarChart2 },
+      { label: 'L-Index', href: '/admin/l-index', icon: Dumbbell },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
@@ -84,118 +65,85 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/');
-  };
-
-  const isActive = (href: string) => {
-    if (href === '/admin') return pathname === '/admin';
-    return pathname.startsWith(href);
-  };
+  const handleLogout = async () => { await logout(); router.push('/'); };
+  const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
+      <style>{`
+        .a-sidebar { width: 0; transform: translateX(-100%); transition: width 0.3s ease, transform 0.3s ease; }
+        .a-sidebar-open { width: 256px !important; transform: translateX(0) !important; }
+        @media (min-width: 1024px) {
+          .a-sidebar { width: 80px !important; transform: translateX(0) !important; }
+        }
+        .a-nav-inactive:hover{background:rgba(55,181,255,0.08)!important;color:#fff!important}
+        .a-logout:hover{background:rgba(248,113,113,0.1)!important;color:#f87171!important}
+        .a-toggle:hover{background:rgba(55,181,255,0.1)!important;color:${BLUE}!important}
+      `}</style>
 
-      {/* Sidebar */}
+      {isOpen && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 40 }} className="lg:hidden" onClick={onToggle} />}
+
       <aside
-        className={`fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out
-          ${isOpen ? 'w-64' : 'w-0 lg:w-20'}
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
-        style={{
-          background: 'linear-gradient(180deg, #0f0f13 0%, #1a1a24 100%)',
-        }}
+        className={isOpen ? 'a-sidebar-open' : 'a-sidebar'}
+        style={{ position: 'fixed', top: 0, left: 0, height: '100%', zIndex: 50, display: 'flex', flexDirection: 'column', background: sidebarBg, borderRight: `1px solid ${borderColor}`, boxShadow: '4px 0 24px rgba(0,0,0,0.4)', overflow: 'hidden' }}
       >
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', padding: '0 16px', borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
           {isOpen ? (
             <>
-              <Link href="/admin" className="flex items-center gap-2">
-                <img
-                  src="/logo.png"
-                  alt="Smarter Goalie"
-                  className="h-8 w-auto"
-                />
-                <span className="text-white font-bold text-sm">
-                  Admin Panel
-                </span>
+              <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                <img src="/logo.png" alt="Smarter Goalie" style={{ height: '32px', width: 'auto' }} />
+                <div>
+                  <div style={{ color: '#fff', fontWeight: 800, fontSize: '12px', lineHeight: 1.2 }}>SmarterGoalie</div>
+                  <div style={{ color: BLUE, fontSize: '10px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Admin</div>
+                </div>
               </Link>
-              <button
-                onClick={onToggle}
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <X className="h-5 w-5 lg:hidden" />
-                <ChevronLeft className="h-5 w-5 hidden lg:block" />
+              <button onClick={onToggle} className="a-toggle" style={{ padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <X size={18} className="lg:hidden" /><ChevronLeft size={18} className="hidden lg:block" />
               </button>
             </>
           ) : (
-            <button
-              onClick={onToggle}
-              className="hidden lg:flex w-full items-center justify-center p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <Menu className="h-5 w-5" />
+            <button onClick={onToggle} className="a-toggle hidden lg:flex" style={{ width: '100%', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <Menu size={20} />
             </button>
           )}
         </div>
 
-        {/* User Profile Section */}
-        <div className={`px-4 py-4 border-b border-white/10 ${!isOpen && 'lg:px-2 lg:py-3'}`}>
-          <div className={`flex items-center ${isOpen ? 'gap-3' : 'lg:justify-center'}`}>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center flex-shrink-0">
-              <User className="h-5 w-5 text-white" />
+        {/* User */}
+        <div style={{ padding: isOpen ? '16px' : '12px 8px', borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isOpen ? '12px' : '0', justifyContent: isOpen ? 'flex-start' : 'center' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `linear-gradient(135deg, #f87171 0%, #dc2626 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `2px solid rgba(248,113,113,0.3)` }}>
+              <User size={18} color="#fff" />
             </div>
             {isOpen && (
-              <div className="overflow-hidden">
-                <p className="text-white text-sm font-semibold truncate">
-                  {user?.displayName || user?.email?.split('@')[0]}
-                </p>
-                <p className="text-white/50 text-xs truncate">Admin</p>
+              <div style={{ overflow: 'hidden' }}>
+                <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.displayName || user?.email?.split('@')[0]}</p>
+                <p style={{ color: '#f87171', fontSize: '11px', fontWeight: 600 }}>Admin</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto scrollbar-hide py-2 px-3" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {navSections.map((section) => (
-            <div key={section.label} className="mb-3">
+        {/* Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {navSections.map(section => (
+            <div key={section.label} style={{ marginBottom: '8px' }}>
               {isOpen && (
-                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/30">
+                <p style={{ padding: '4px 10px 6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.25)' }}>
                   {section.label}
                 </p>
               )}
-              {!isOpen && <div className="my-2 mx-2 border-t border-white/10 hidden lg:block" />}
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
+              {!isOpen && <div style={{ margin: '8px 4px', borderTop: `1px solid ${borderColor}` }} className="hidden lg:block" />}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                {section.items.map(item => {
                   const active = isActive(item.href);
                   const Icon = item.icon;
-
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => {
-                        if (window.innerWidth < 1024) onToggle();
-                      }}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                        ${!isOpen && 'lg:justify-center lg:px-2'}
-                        ${
-                          active
-                            ? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
-                            : 'text-white/60 hover:text-white hover:bg-white/8'
-                        }
-                      `}
-                      title={!isOpen ? item.label : undefined}
-                    >
-                      <Icon className={`h-5 w-5 flex-shrink-0 ${active ? 'text-white' : ''}`} />
+                    <Link key={item.href} href={item.href} onClick={() => { if (window.innerWidth < 1024) onToggle(); }} className={!active ? 'a-nav-inactive' : ''} title={!isOpen ? item.label : undefined}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: isOpen ? '8px 10px' : '8px', justifyContent: isOpen ? 'flex-start' : 'center', borderRadius: '8px', textDecoration: 'none', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s', background: active ? `rgba(55,181,255,0.18)` : 'transparent', color: active ? BLUE : 'rgba(255,255,255,0.5)', border: active ? `1px solid rgba(55,181,255,0.3)` : '1px solid transparent' }}>
+                      <Icon size={16} style={{ flexShrink: 0, color: active ? BLUE : undefined }} />
                       {isOpen && <span>{item.label}</span>}
                     </Link>
                   );
@@ -206,15 +154,10 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t border-white/10">
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/8 transition-colors
-              ${!isOpen && 'lg:justify-center lg:px-2'}
-            `}
-            title={!isOpen ? 'Log out' : undefined}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
+        <div style={{ padding: '8px', borderTop: `1px solid ${borderColor}`, flexShrink: 0 }}>
+          <button onClick={handleLogout} className="a-logout" title={!isOpen ? 'Log out' : undefined}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: isOpen ? '10px 12px' : '10px', justifyContent: isOpen ? 'flex-start' : 'center', borderRadius: '10px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            <LogOut size={18} style={{ flexShrink: 0 }} />
             {isOpen && <span>Log out</span>}
           </button>
         </div>

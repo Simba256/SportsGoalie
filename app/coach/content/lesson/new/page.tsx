@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { LessonCreator } from '@/components/coach/lesson-creator';
-import { Loader2 } from 'lucide-react';
 import { CustomContentLibrary } from '@/types';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 
 export default function NewLessonPage() {
   const router = useRouter();
@@ -30,11 +30,7 @@ export default function NewLessonPage() {
   };
 
   if (authLoading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SkeletonContentPage />;
   }
 
   return (

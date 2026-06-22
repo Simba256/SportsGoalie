@@ -172,6 +172,63 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Unified typography system for student goalie pages */
+  .goalie-app {
+    --goalie-font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    --goalie-body-size: 0.98rem;
+    --goalie-body-line-height: 1.65;
+    --goalie-heading-letter-spacing: -0.015em;
+    --goalie-card-label-size: 0.78rem;
+  }
+
+  .goalie-app main {
+    font-family: var(--goalie-font-family);
+    font-size: var(--goalie-body-size);
+    line-height: var(--goalie-body-line-height);
+  }
+
+  .goalie-app :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--goalie-font-family);
+    letter-spacing: var(--goalie-heading-letter-spacing);
+    line-height: 1.2;
+    color: rgb(15 23 42);
+  }
+
+  .goalie-app h1 {
+    font-size: clamp(2rem, 3.4vw, 3.25rem);
+    font-weight: 800;
+  }
+
+  .goalie-app h2 {
+    font-size: clamp(1.45rem, 2.2vw, 2rem);
+    font-weight: 750;
+  }
+
+  .goalie-app h3 {
+    font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+    font-weight: 700;
+  }
+
+  .goalie-app :where(p, li, label, input, textarea, button) {
+    font-family: var(--goalie-font-family);
+  }
+
+  .goalie-app :where(p, li, label) {
+    line-height: 1.65;
+  }
+
+  .goalie-app :where(small) {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .goalie-app :where(.card-label, .stat-label, .section-label) {
+    font-size: var(--goalie-card-label-size);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 }
 
 @keyframes marquee {

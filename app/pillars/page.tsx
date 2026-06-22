@@ -1,101 +1,21 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Sport, PILLARS } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
-import { LoadingState } from '@/components/ui/loading';
-import { Button } from '@/components/ui/button';
+import { SkeletonPillarsPage } from '@/components/ui/skeletons';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import {
-  Brain,
-  Footprints,
-  Shapes,
-  Target,
-  Grid3X3,
-  Dumbbell,
-  Heart,
-  RefreshCw,
-  BookOpen,
+  ArrowRight, Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart, RefreshCw, BookOpen,
 } from 'lucide-react';
 
-// ─── Per-pillar visual theme ──────────────────────────────────────────────────
-const PILLAR_THEME: Record<
-  string,
-  {
-    badgeClass: string;
-    iconBg: string;
-    iconText: string;
-    ctaClass: string;
-    dotColors: [string, string, string];
-    borderHover: string;
-  }
-> = {
-  purple: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-400', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-  blue: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-500', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-  green: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-400', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-  orange: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-400', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-  red: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-400', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-  cyan: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-500', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-  pink: {
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    ctaClass: 'text-blue-600 group-hover:text-blue-700',
-    dotColors: ['bg-blue-400', 'bg-blue-300', 'bg-slate-300'],
-    borderHover: 'hover:border-blue-300',
-  },
-};
+const BLUE = '#37b5ff';
 
-// Icon map
-const PILLAR_ICONS: Record<string, React.ElementType> = {
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
   Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
 };
 
-// Descriptions that match the client's documented content
 const PILLAR_DESCRIPTIONS: Record<string, string> = {
   mindset:     'Build your mental fortress. Learn why your brain does what it does and how to redirect anxiety into performance energy.',
   skating:     'Move with precision and purpose. Master edgework, lateral speed, and efficiency of movement in sync with the play.',
@@ -106,29 +26,17 @@ const PILLAR_DESCRIPTIONS: Record<string, string> = {
   lifestyle:   'Train the whole athlete. Off-ice habits, nutrition, recovery, and sleep are the foundation your on-ice game builds on.',
 };
 
-interface PillarsPageState {
-  pillars: Sport[];
-  loading: boolean;
-  error: string | null;
-}
+interface PillarsPageState { pillars: Sport[]; loading: boolean; error: string | null; }
 
 export default function PillarsPage() {
-  const [state, setState] = useState<PillarsPageState>({
-    pillars: [],
-    loading: true,
-    error: null,
-  });
+  const [state, setState] = useState<PillarsPageState>({ pillars: [], loading: true, error: null });
 
   const loadPillars = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       const result = await sportsService.getAllSports({ limit: 10 });
       if (result.success && result.data) {
-        setState({
-          pillars: result.data.items.sort((a, b) => a.order - b.order),
-          loading: false,
-          error: null,
-        });
+        setState({ pillars: result.data.items.sort((a, b) => a.order - b.order), loading: false, error: null });
       } else {
         setState({ pillars: [], loading: false, error: result.error?.message || 'Failed to load pillars' });
       }
@@ -139,166 +47,92 @@ export default function PillarsPage() {
 
   useEffect(() => { loadPillars(); }, []);
 
-  const getPillarDisplayInfo = (pillar: Sport) => {
-    const slug = getPillarSlugFromDocId(pillar.id);
-    if (slug) {
-      const info = PILLARS.find(p => p.slug === slug);
-      if (info) return { icon: info.icon, color: info.color, slug };
-    }
-    return { icon: pillar.icon, color: 'blue', slug: null };
-  };
-
-  // ─── Loading ──────────────────────────────────────────────────────────────
-  if (state.loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingState message="Loading your pillars…" />
-      </div>
-    );
-  }
+  if (state.loading) return <SkeletonPillarsPage />;
 
   return (
-    <div className="space-y-8">
+    <div style={{ minHeight: '100vh' }}>
 
-      {/* ══════════════════ HERO BANNER ══════════════════ */}
-      <section
-        className="relative -mx-4 -mt-4 md:-mx-6 md:-mt-6 rounded-b-none overflow-hidden bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1514511719-9f5849dc16d0?w=1920&q=80&auto=format&fit=crop')" }}
-      >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-10 md:py-14">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-[1.1] tracking-tight max-w-4xl">
-            The Architecture of a{' '}
-            <span className="text-red-500">Complete Goalie</span>
-          </h1>
-
-          <p className="mt-4 text-sm md:text-base text-white/80 max-w-2xl leading-relaxed">
-            Every pillar connects to every other.{' '}
-            <span className="font-semibold text-white">
-              Master all seven and you master the game —
-              physically, mentally, and technically.
-            </span>{' '}
-            Each one builds on the last.
-          </p>
-
-          {/* Accent divider */}
-          <div className="mt-4 h-1 w-14 rounded-full bg-blue-500" />
-        </div>
+      {/* ── Hero ── */}
+      <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,96px) 24px clamp(32px,5vw,56px)', maxWidth: '720px', margin: '0 auto' }}>
+        <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '16px' }}>
+          YOUR TRAINING PATH
+        </p>
+        <h1 style={{ fontSize: 'clamp(28px,5vw,56px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '18px' }}>
+          The Architecture of a<br />
+          <span style={{ color: BLUE }}>Complete Goalie</span>
+        </h1>
+        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto' }}>
+          Every pillar connects to every other. Master all seven and you master the game — physically, mentally, and technically.
+        </p>
       </section>
 
-      {/* ══════════════════ ERROR STATE ══════════════════ */}
-      {state.error && (
-        <div className="max-w-2xl mx-auto text-center px-4">
-          <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-8">
-            <p className="text-destructive font-medium mb-4">{state.error}</p>
-            <Button onClick={loadPillars} variant="destructive" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" /> Try Again
-            </Button>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 64px' }}>
+
+        {/* ── Error ── */}
+        {state.error && (
+          <div style={{ maxWidth: '480px', margin: '0 auto 32px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '14px', padding: '24px', textAlign: 'center' }}>
+            <p style={{ color: '#f87171', fontSize: '14px', marginBottom: '16px' }}>{state.error}</p>
+            <button
+              onClick={loadPillars}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#f87171', border: 'none', borderRadius: '8px', padding: '9px 18px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <RefreshCw size={13} /> Try Again
+            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ══════════════════ EMPTY STATE ══════════════════ */}
-      {!state.error && state.pillars.length === 0 && (
-        <div className="max-w-2xl mx-auto py-20 text-center">
-          <BookOpen className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-foreground mb-2">Pillars coming soon</h3>
-          <p className="text-muted-foreground">The curriculum is being built. Check back shortly.</p>
-        </div>
-      )}
+        {/* ── Empty ── */}
+        {!state.error && state.pillars.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+            <BookOpen size={40} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Pillars coming soon</h3>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>The curriculum is being built. Check back shortly.</p>
+          </div>
+        )}
 
-      {/* ══════════════════ PILLAR CARDS ══════════════════ */}
-      {state.pillars.length > 0 && (
-        <section className="max-w-7xl mx-auto px-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* ── Pillar Cards ── */}
+        {state.pillars.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
             {state.pillars.map((pillar) => {
-              const { icon, color, slug } = getPillarDisplayInfo(pillar);
-              const theme = PILLAR_THEME[color] ?? PILLAR_THEME['blue'];
-              const IconComponent = PILLAR_ICONS[icon] ?? Target;
-              const description =
-                (slug && PILLAR_DESCRIPTIONS[slug]) ?? pillar.description;
+              const slug = getPillarSlugFromDocId(pillar.id);
+              const info = slug ? PILLARS.find(p => p.slug === slug) : null;
+              const IconComponent = PILLAR_ICONS[info?.icon || pillar.icon || 'Target'] || Target;
+              const description = (slug && PILLAR_DESCRIPTIONS[slug]) ?? pillar.description;
 
               return (
-                <Link key={pillar.id} href={`/pillars/${pillar.id}`} className="group h-full block">
-                  <article className={`relative h-full min-h-[340px] rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 ${theme.borderHover}`}>
-                    {/* Top row: Icon + Badge + Arrow */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        {/* Colored icon circle */}
-                        <div className={`flex h-11 w-11 items-center justify-center rounded-full ${theme.iconBg}`}>
-                          <IconComponent className={`h-5 w-5 ${theme.iconText}`} strokeWidth={2} />
-                        </div>
-
-                        {/* Badge */}
-                        <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] ${theme.badgeClass}`}>
-                          Pillar {String(pillar.order).padStart(2, '0')}
-                        </span>
+                <Link key={pillar.id} href={`/pillars/${pillar.id}`} style={{ textDecoration: 'none' }}>
+                  <article
+                    style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '20px', padding: '28px', display: 'flex', flexDirection: 'column', height: '100%', transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease', cursor: 'pointer', boxSizing: 'border-box' }}
+                    onMouseEnter={e => { const el = e.currentTarget; el.style.transform = 'translateY(-6px)'; el.style.boxShadow = '0 20px 48px rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.45)'; }}
+                    onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none'; el.style.borderColor = 'rgba(55,181,255,0.18)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <IconComponent size={22} color={BLUE} />
                       </div>
-
-                      {/* Arrow */}
-                      <div className="h-8 w-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-all duration-300 group-hover:border-slate-300 group-hover:text-slate-600 group-hover:bg-slate-50">
-                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      </div>
+                      <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '20px', padding: '3px 10px' }}>
+                        Pillar {String(pillar.order).padStart(2, '0')}
+                      </span>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-lg font-bold text-foreground leading-snug mb-2">
+                    <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.2 }}>
                       {pillar.name}
                     </h3>
 
-                    {/* Description */}
-                    <p className="text-sm leading-relaxed text-muted-foreground mb-6 line-clamp-4">
+                    <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, flex: 1, marginBottom: '24px', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {description}
                     </p>
 
-                    {/* Bottom row: Dots + CTA */}
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex gap-1.5">
-                        <span className={`h-2.5 w-2.5 rounded-full ${theme.dotColors[0]}`} />
-                        <span className={`h-2.5 w-2.5 rounded-full ${theme.dotColors[1]}`} />
-                        <span className={`h-2.5 w-2.5 rounded-full ${theme.dotColors[2]}`} />
-                      </div>
-
-                      <span className={`inline-flex items-center gap-1 text-sm font-semibold transition-colors ${theme.ctaClass}`}>
-                        Explore Pillar
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      </span>
-                    </div>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: BLUE }}>
+                      Explore Pillar <ArrowRight size={15} />
+                    </span>
                   </article>
                 </Link>
               );
             })}
           </div>
-        </section>
-      )}
-
-      {/* ══════════════════ BOTTOM CALLOUT ══════════════════ */}
-      <section className="max-w-7xl mx-auto rounded-2xl border border-border/60 bg-card p-6 md:p-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-accent font-bold tracking-widest uppercase text-xs mb-3">
-            How It Works
-          </p>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-            Everything Connects
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm leading-relaxed mb-6">
-            Chart the game, train what matters, and build confidence for your next performance.
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-3 text-xs font-semibold text-foreground/80">
-            <span className="bg-muted px-4 py-2 rounded-full">Chart</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="bg-muted px-4 py-2 rounded-full">Learn</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="bg-muted px-4 py-2 rounded-full">Apply</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="bg-muted px-4 py-2 rounded-full">Perform Better</span>
-          </div>
-        </div>
-      </section>
-
+        )}
+      </main>
     </div>
   );
 }

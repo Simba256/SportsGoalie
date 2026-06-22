@@ -354,37 +354,52 @@ export class ParentLinkService extends BaseDatabaseService {
 
       const children: LinkedChildSummary[] = [];
 
-      // Fetch each child's details
+      // Fetch each child's details — wrapped per-child so one failure doesn't abort all
       for (const link of linksResult.data.items) {
-        const childResult = await this.getById<User>(this.USERS_COLLECTION, link.childId);
-        if (childResult.success && childResult.data) {
-          const child = childResult.data;
+        try {
+          const childResult = await this.getById<User>(this.USERS_COLLECTION, link.childId);
+          if (childResult.success && childResult.data) {
+            const child = childResult.data;
 
-          // Get progress data (simplified for now)
-          const { ProgressService } = await import('./progress.service');
-          const progressResult = await ProgressService.getUserProgress(link.childId);
+            const { ProgressService } = await import('./progress.service');
+            const { enrollmentService } = await import('./enrollment.service');
 
-          children.push({
-            childId: child.id,
-            displayName: child.displayName,
-            email: child.email,
-            profileImage: child.profileImage,
-            studentNumber: child.studentNumber,
-            linkedAt: link.linkedAt.toDate(),
-            relationship: link.relationship,
-            progressPercentage: progressResult.success && progressResult.data
-              ? Math.round((progressResult.data.overallStats.skillsCompleted / Math.max(progressResult.data.overallStats.sportsCompleted, 1)) * 100)
-              : undefined,
-            lastActiveAt: child.lastLoginAt?.toDate(),
-            quizzesCompleted: progressResult.success && progressResult.data
-              ? progressResult.data.overallStats.quizzesCompleted
-              : undefined,
-            currentStreak: progressResult.success && progressResult.data
-              ? progressResult.data.overallStats.currentStreak
-              : undefined,
-            hasCompletedAssessment: child.onboardingCompleted,
-            pacingLevel: child.initialAssessmentLevel,
-          });
+            const [progressResult, enrollmentsResult] = await Promise.allSettled([
+              ProgressService.getUserProgress(link.childId),
+              enrollmentService.getUserEnrolledSports(link.childId),
+            ]);
+
+            const progress = progressResult.status === 'fulfilled' && progressResult.value.success
+              ? progressResult.value.data
+              : null;
+
+            // Calculate accurate progress % from enrollment data (same formula as goalie dashboard)
+            let progressPercentage: number | undefined;
+            if (enrollmentsResult.status === 'fulfilled' && enrollmentsResult.value.success && enrollmentsResult.value.data) {
+              const enrollments = enrollmentsResult.value.data;
+              const totalSkills = enrollments.reduce((sum: number, e: { progress: { totalSkills: number } }) => sum + e.progress.totalSkills, 0);
+              const completedSkills = enrollments.reduce((sum: number, e: { progress: { completedSkills: string[] } }) => sum + e.progress.completedSkills.length, 0);
+              progressPercentage = totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
+            }
+
+            children.push({
+              childId: child.id,
+              displayName: child.displayName,
+              email: child.email,
+              profileImage: child.profileImage,
+              studentNumber: child.studentNumber,
+              linkedAt: link.linkedAt.toDate(),
+              relationship: link.relationship,
+              progressPercentage,
+              lastActiveAt: child.lastLoginAt?.toDate(),
+              quizzesCompleted: progress?.overallStats.quizzesCompleted,
+              currentStreak: progress?.overallStats.currentStreak,
+              hasCompletedAssessment: child.onboardingCompleted,
+              pacingLevel: child.initialAssessmentLevel,
+            });
+          }
+        } catch (childError) {
+          logger.warn('Could not load details for linked child, skipping', 'ParentLinkService', { childId: link.childId });
         }
       }
 

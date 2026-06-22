@@ -1,22 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, TrendingUp, Plus, Brain, Target } from 'lucide-react';
+import { Loader2, AlertTriangle, TrendingUp, Plus, Brain, Target, Zap, Lightbulb } from 'lucide-react';
 import { onboardingService } from '@/lib/database';
-import type {
-  IntelligenceProfile,
-  GapAnalysis,
-  StrengthAnalysis,
-} from '@/types';
-import { getPacingLevelDisplayText } from '@/types';
-import {
-  getRecommendedPillarsFromGaps,
-  type PillarRecommendation,
-} from '@/lib/utils/category-pillar-mapping';
+import type { IntelligenceProfile, GapAnalysis, StrengthAnalysis, ContentRecommendation } from '@/types';
+import { getPacingLevelDisplayText, GOALIE_CATEGORIES } from '@/types';
+import { getRecommendedPillarsFromGaps, type PillarRecommendation } from '@/lib/utils/category-pillar-mapping';
 import { getPillarByDocId } from '@/lib/utils/pillars';
+
+const BLUE = '#37b5ff';
+const PURPLE = '#a78bfa';
+const GREEN = '#4ade80';
+const YELLOW = '#fbbf24';
+const RED = '#f87171';
+
+const PRIORITY_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  high:   { color: RED,    bg: 'rgba(248,113,113,0.1)',  border: 'rgba(248,113,113,0.25)' },
+  medium: { color: YELLOW, bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.2)' },
+  low:    { color: BLUE,   bg: 'rgba(55,181,255,0.08)',  border: 'rgba(55,181,255,0.2)' },
+};
+
+const PACING_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  refinement:   { color: PURPLE, bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
+  development:  { color: BLUE,   bg: 'rgba(55,181,255,0.12)',  border: 'rgba(55,181,255,0.3)' },
+  introduction: { color: GREEN,  bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.25)' },
+};
+
+const card: React.CSSProperties = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '14px', overflow: 'hidden' };
+const sectionHeader: React.CSSProperties = { padding: '14px 16px', borderBottom: '1px solid rgba(55,181,255,0.08)' };
 
 interface Props {
   studentId: string;
@@ -49,173 +60,245 @@ export function StudentIntelligenceSidebar({ studentId, onAddContentForPillar }:
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <>
+        <style>{`@keyframes si-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        <div style={{ ...card, padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <Loader2 size={18} color="rgba(255,255,255,0.3)" style={{ animation: 'si-spin 1s linear infinite' }} />
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Loading profile…</p>
+        </div>
+      </>
     );
   }
 
   if (!profile) {
     return (
-      <Card className="border-amber-200 bg-amber-50">
-        <CardContent className="py-6 text-center">
-          <Brain className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-          <p className="text-sm font-medium text-amber-800">Assessment Not Completed</p>
-          <p className="text-xs text-amber-600 mt-1">
-            This student hasn't completed onboarding yet. Gaps and recommendations will appear here after assessment.
-          </p>
-        </CardContent>
-      </Card>
+      <div style={{ ...card, padding: '28px', textAlign: 'center' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+          <Brain size={22} color={YELLOW} />
+        </div>
+        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>Assessment Not Completed</p>
+        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '12px', lineHeight: 1.6 }}>
+          Gaps and recommendations will appear here after the goalie completes their assessment.
+        </p>
+      </div>
     );
   }
 
-  const priorityColors = {
-    high: 'bg-red-100 text-red-700 border-red-200',
-    medium: 'bg-amber-100 text-amber-700 border-amber-200',
-    low: 'bg-blue-100 text-blue-700 border-blue-200',
-  };
+  const pacingStyle = PACING_STYLE[profile.pacingLevel] || PACING_STYLE.introduction;
+  const scoreColor = profile.overallScore >= 3.1 ? GREEN : profile.overallScore >= 2.2 ? BLUE : YELLOW;
 
   return (
-    <div className="space-y-4">
-      {/* Score & Level */}
-      <Card className="border-zinc-200 bg-white shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2 text-zinc-900">
-            <Target className="h-4 w-4 text-zinc-700" />
-            Assessment Profile
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-2xl font-bold text-zinc-900">{profile.overallScore.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground ml-1">/ 4.0</span>
-            </div>
-            <Badge className={
-              profile.pacingLevel === 'refinement' ? 'bg-red-600 text-white' :
-              profile.pacingLevel === 'development' ? 'bg-blue-500' :
-              'bg-zinc-700 text-white'
-            }>
-              {getPacingLevelDisplayText(profile.pacingLevel)}
-            </Badge>
-          </div>
-          {/* Mini category bars */}
-          <div className="space-y-1.5">
-            {profile.categoryScores.map((cat) => (
-              <div key={cat.categorySlug} className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground w-16 truncate capitalize">
-                  {cat.categorySlug.replace('_', ' ')}
-                </span>
-                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      cat.averageScore >= 3.0 ? 'bg-blue-600' :
-                      cat.averageScore >= 2.0 ? 'bg-red-500' :
-                      'bg-zinc-400'
-                    }`}
-                    style={{ width: `${((cat.averageScore - 1) / 3) * 100}%` }}
-                  />
-                </div>
-                <span className="text-[10px] font-medium w-6 text-right">{cat.averageScore.toFixed(1)}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-      {/* Gaps */}
-      {profile.identifiedGaps.length > 0 && (
-        <Card className="border-red-100">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-red-700">
-              <AlertTriangle className="h-4 w-4" />
-              Identified Gaps ({profile.identifiedGaps.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {profile.identifiedGaps.map((gap: GapAnalysis) => (
-              <div key={gap.categorySlug} className={`rounded-lg border px-3 py-2 ${priorityColors[gap.priority]}`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold capitalize">{gap.categoryName}</span>
-                  <span className="text-[10px] font-bold uppercase">{gap.priority}</span>
+      {/* Assessment Profile */}
+      <div style={card}>
+        <div style={sectionHeader}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Target size={14} color={BLUE} />
+            <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>Assessment Profile</p>
+          </div>
+        </div>
+        <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <span style={{ fontSize: '32px', fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{profile.overallScore.toFixed(1)}</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', marginLeft: '4px' }}>/ 4.0</span>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: pacingStyle.color, background: pacingStyle.bg, border: `1px solid ${pacingStyle.border}`, borderRadius: '20px', padding: '4px 10px' }}>
+              {getPacingLevelDisplayText(profile.pacingLevel)}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {profile.categoryScores.map((cat) => {
+              const barColor = cat.averageScore >= 3.0 ? GREEN : cat.averageScore >= 2.0 ? BLUE : YELLOW;
+              const pct = ((cat.averageScore - 1) / 3) * 100;
+              const categoryName = GOALIE_CATEGORIES.find(c => c.slug === cat.categorySlug)?.shortName
+                ?? cat.categorySlug.replace(/_/g, ' ');
+              return (
+                <div key={cat.categorySlug}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>
+                      {categoryName}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: barColor }}>{cat.averageScore.toFixed(1)}</span>
+                  </div>
+                  <div style={{ height: '5px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: '99px', transition: 'width 0.5s' }} />
+                  </div>
                 </div>
-                <p className="text-[10px] mt-0.5 opacity-80">Score: {gap.score.toFixed(1)}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Identified Gaps */}
+      {profile.identifiedGaps.length > 0 && (
+        <div style={card}>
+          <div style={sectionHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={14} color={RED} />
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
+                Growth Areas <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({profile.identifiedGaps.length})</span>
+              </p>
+            </div>
+          </div>
+          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {profile.identifiedGaps.map((gap: GapAnalysis) => {
+              const s = PRIORITY_STYLE[gap.priority] || PRIORITY_STYLE.low;
+              return (
+                <div key={gap.categorySlug} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ color: '#fff', fontSize: '12px', fontWeight: 700, marginBottom: '2px', textTransform: 'capitalize' }}>{gap.categoryName}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px' }}>Score: {gap.score.toFixed(1)}</p>
+                  </div>
+                  <span style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase', color: s.color, background: `${s.color}20`, border: `1px solid ${s.color}40`, borderRadius: '20px', padding: '2px 8px' }}>
+                    {gap.priority}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Strengths */}
       {profile.identifiedStrengths.length > 0 && (
-        <Card className="border-blue-200 bg-white shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
-              <TrendingUp className="h-4 w-4" />
-              Strengths ({profile.identifiedStrengths.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
+        <div style={card}>
+          <div style={sectionHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={14} color={GREEN} />
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
+                Strengths <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({profile.identifiedStrengths.length})</span>
+              </p>
+            </div>
+          </div>
+          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {profile.identifiedStrengths.map((s: StrengthAnalysis) => (
-              <div key={s.categorySlug} className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5">
-                <span className="text-xs font-medium text-zinc-800 capitalize">{s.categoryName}</span>
-                <span className="text-xs font-bold text-blue-700">{s.score.toFixed(1)}</span>
+              <div key={s.categorySlug} style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.15)', borderRadius: '10px', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '12px', fontWeight: 600, textTransform: 'capitalize' }}>{s.categoryName}</span>
+                <span style={{ color: GREEN, fontSize: '13px', fontWeight: 800 }}>{s.score.toFixed(1)}</span>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Recommended Pillars (from gaps) */}
+      {/* Recommended Pillars */}
       {recommendations.length > 0 && onAddContentForPillar && (
-        <Card className="border-blue-100">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-700">Recommended Content Areas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div style={card}>
+          <div style={sectionHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Zap size={14} color={PURPLE} />
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>Recommended Pillars</p>
+            </div>
+          </div>
+          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {recommendations.map((rec) => {
               const pillarInfo = getPillarByDocId(rec.pillarId);
               return (
-                <div key={rec.pillarSlug} className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate">{pillarInfo?.name || rec.pillarSlug}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{rec.reasons[0]}</p>
+                <div key={rec.pillarSlug} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '8px 10px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ color: '#fff', fontSize: '12px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {pillarInfo?.name || rec.pillarSlug}
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rec.reasons[0]}</p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                  <button
                     onClick={() => onAddContentForPillar(rec.pillarId, pillarInfo?.name || rec.pillarSlug)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', color: BLUE, fontSize: '11px', fontWeight: 700, cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.2)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.1)'; }}
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add
-                  </Button>
+                    <Plus size={11} /> Add
+                  </button>
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Charting Emphasis */}
-      {profile.chartingEmphasis && profile.chartingEmphasis.length > 0 && (
-        <Card className="border-zinc-200 bg-white shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-900">Charting Focus Areas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-1">
-              {profile.chartingEmphasis.map((area) => (
-                <Badge key={area} variant="outline" className="text-[10px] border-red-200 bg-red-50 text-red-700">
-                  {area}
-                </Badge>
-              ))}
+      {/* Content Suggestions — from intelligence profile contentRecommendations */}
+      {profile.contentRecommendations && profile.contentRecommendations.length > 0 && (
+        <div style={card}>
+          <div style={sectionHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lightbulb size={14} color={YELLOW} />
+              <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
+                Content Suggestions{' '}
+                <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({profile.contentRecommendations.length})</span>
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {profile.contentRecommendations.map((rec: ContentRecommendation, i: number) => {
+              const s = PRIORITY_STYLE[rec.priority] || PRIORITY_STYLE.low;
+              // Map contentArea to a recommendation to pass to onAddContentForPillar.
+              // We surface the area name and suggested modules so the coach can search the library.
+              const pillarRec = recommendations.find(r =>
+                r.reasons.some(reason => reason.toLowerCase().includes(rec.contentArea.toLowerCase()))
+              );
+              return (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <p style={{ color: '#fff', fontSize: '12px', fontWeight: 700, textTransform: 'capitalize' }}>
+                          {rec.contentArea.replace(/_/g, ' ')}
+                        </p>
+                        <span style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.6px', textTransform: 'uppercase', color: s.color, background: `${s.color}20`, border: `1px solid ${s.color}40`, borderRadius: '20px', padding: '2px 7px', flexShrink: 0 }}>
+                          {rec.priority}
+                        </span>
+                      </div>
+                      <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px', lineHeight: 1.5, marginBottom: rec.suggestedModules && rec.suggestedModules.length > 0 ? '8px' : 0 }}>
+                        {rec.reason}
+                      </p>
+                      {rec.suggestedModules && rec.suggestedModules.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {rec.suggestedModules.map((mod, j) => (
+                            <span key={j} style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '2px 7px' }}>
+                              {mod}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {onAddContentForPillar && pillarRec && (
+                      <button
+                        onClick={() => onAddContentForPillar(pillarRec.pillarId, rec.contentArea.replace(/_/g, ' '))}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, fontSize: '11px', fontWeight: 700, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap', transition: 'background 0.2s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.18)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.08)'; }}
+                      >
+                        <Plus size={11} /> Find
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
+
+      {/* Charting Focus Areas */}
+      {profile.chartingEmphasis && profile.chartingEmphasis.length > 0 && (
+        <div style={card}>
+          <div style={sectionHeader}>
+            <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>Charting Focus Areas</p>
+          </div>
+          <div style={{ padding: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {profile.chartingEmphasis.map((area) => (
+              <span key={area} style={{ fontSize: '11px', fontWeight: 600, color: RED, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '20px', padding: '3px 10px' }}>
+                {area}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

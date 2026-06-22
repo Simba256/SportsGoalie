@@ -1,5 +1,6 @@
-'use client';
+﻿'use client';
 
+import React, { useState } from 'react';
 import {
   Calendar,
   TrendingUp,
@@ -34,11 +35,12 @@ import {
   PieChart,
   Pie,
 } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
+
+const BLUE = '#37b5ff';
+const card = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px' };
 
 export default function ProgressPage() {
   return (
@@ -48,35 +50,22 @@ export default function ProgressPage() {
   );
 }
 
+type TabKey = 'overview' | 'pillars' | 'performance' | 'history';
+
 function ProgressContent() {
   const { data, loading, error } = useAnalytics();
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="relative w-12 h-12 mx-auto mb-3">
-              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            </div>
-            <p className="text-muted-foreground text-sm">Loading your analytics...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonAnalytics />;
 
   if (error || !data) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <BarChart className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-            <h3 className="text-lg font-medium mb-2">Unable to load progress data</h3>
-            <p className="text-muted-foreground">{error || 'No data available'}</p>
-          </CardContent>
-        </Card>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ ...card, padding: '48px 24px', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
+          <BarChart size={40} color="rgba(255,255,255,0.2)" style={{ margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Unable to load progress data</h3>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{error || 'No data available'}</p>
+        </div>
       </div>
     );
   }
@@ -88,536 +77,440 @@ function ProgressContent() {
     ? Math.round((data.consistency.thisMonthDays / data.consistency.daysInCurrentMonth) * 100)
     : 0;
 
-  // Score distribution for donut chart
+  const PILLAR_ORDER = ['MIND-SET', 'SKATING', '7AMS', '7PTS', 'FORM', 'TEAM-PRACTICE', 'LIFE STYLE'];
+
   const scoreDistribution = [
-    { name: '90-100%', value: data.attempts.filter(a => a.percentage >= 90).length, color: '#1d4ed8' },
-    { name: '70-89%', value: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 90).length, color: '#3b82f6' },
-    { name: '50-69%', value: data.attempts.filter(a => a.percentage >= 50 && a.percentage < 70).length, color: '#f43f5e' },
-    { name: '<50%', value: data.attempts.filter(a => a.percentage < 50).length, color: '#ef4444' },
+    { name: '95-100 CLUB', value: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },
+    { name: '80-100 CLUB', value: data.attempts.filter(a => a.percentage >= 80 && a.percentage < 95).length, color: '#60cdff' },
+    { name: 'OWNING IT', value: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length, color: BLUE },
+    { name: 'DEVELOPING', value: data.attempts.filter(a => a.percentage >= 40 && a.percentage < 70).length, color: '#93c5fd' },
+    { name: 'FOUNDATION', value: data.attempts.filter(a => a.percentage < 40).length, color: '#f59e0b' },
   ].filter(s => s.value > 0);
 
-  // Radar data for pillars
-  const radarData = data.pillarBreakdown.map(p => ({
-    pillar: p.pillarName,
-    score: p.avgScore,
-    fullMark: 100,
-  }));
+  const sortedPillarBreakdown = [...data.pillarBreakdown].sort((a, b) => {
+    const ai = PILLAR_ORDER.findIndex(p => a.pillarName.toUpperCase().includes(p) || p.includes(a.pillarName.toUpperCase()));
+    const bi = PILLAR_ORDER.findIndex(p => b.pillarName.toUpperCase().includes(p) || p.includes(b.pillarName.toUpperCase()));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  const radarData = sortedPillarBreakdown.map(p => ({ pillar: p.pillarName, score: p.avgScore, fullMark: 100 }));
+
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'pillars', label: 'Pillars' },
+    { key: 'performance', label: 'Performance' },
+    { key: 'history', label: 'History' },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div style={{ minHeight: '100vh' }}>
 
-      {/* ══════════ HERO BANNER ══════════ */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-[#1a1a3e] to-slate-900 p-8 md:p-10">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-red-500/8 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative flex items-center gap-4">
-          <div className="hidden sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-            <TrendingUp className="h-7 w-7 text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">Progress Analytics</h1>
-            <p className="text-white/60 mt-1 text-sm md:text-base">Track your learning journey with detailed analytics and insights.</p>
-          </div>
+      {/* ── Hero ── */}
+      <section style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 'clamp(64px,9vw,108px) 24px clamp(48px,6vw,72px)', maxWidth: '720px', margin: '0 auto' }}>
+          <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '16px' }}>
+            YOUR PROGRESS
+          </p>
+          <h1 style={{ fontSize: 'clamp(28px,5vw,56px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '18px' }}>
+            Track Your<br />
+            <span style={{ color: BLUE }}>Learning Journey</span>
+          </h1>
+          <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto' }}>
+            Detailed analytics and insights to measure your growth across all seven pillars.
+          </p>
         </div>
-      </div>
+      </section>
 
-      {/* ══════════ STAT CARDS ══════════ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" emoji="🕐" gradient="from-blue-500/8 to-blue-500/3" />
-        <BigStatCard label="Quiz Attempts" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} emoji="🏆" gradient="from-red-500/8 to-red-500/3" />
-        <BigStatCard label="Avg Score" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} emoji="🎯" gradient="from-blue-500/8 to-blue-500/3" />
-        <BigStatCard label="Current Streak" value={`${data.currentStreak} days`} sub={`Best: ${data.longestStreak} days`} emoji="🔥" gradient="from-red-500/8 to-red-500/3" />
-      </div>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(16px,3vw,28px) clamp(14px,4vw,24px) 48px' }}>
+        <style>{`
+          .progress-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+          @media (min-width: 768px) { .progress-stats { grid-template-columns: repeat(4, 1fr); } }
+          .progress-two-col { display: grid; grid-template-columns: 1fr; gap: 16px; }
+          @media (min-width: 768px) { .progress-two-col { grid-template-columns: 1fr 1fr; } }
+          .progress-perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+          @media (min-width: 640px) { .progress-perf-grid { grid-template-columns: repeat(4, 1fr); } }
+          .progress-streak-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+          @media (min-width: 768px) { .progress-streak-grid { grid-template-columns: 2fr 3fr; } }
+          .progress-pillar-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+          @media (min-width: 640px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr; } }
+          @media (min-width: 1024px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr 1fr; } }
+          .progress-eff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          @media (min-width: 768px) { .progress-eff-grid { grid-template-columns: repeat(5, 1fr); } }
+          .progress-hist-sum { display: grid; grid-template-columns: 1fr; gap: 10px; }
+          @media (min-width: 480px) { .progress-hist-sum { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+        `}</style>
 
-      {/* ══════════ TABS ══════════ */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 border border-red-100 bg-gradient-to-r from-red-50 to-blue-50 p-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="pillars">Pillars</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
+        {/* Stat Cards */}
+        <div className="progress-stats" style={{ marginBottom: '28px' }}>
+          <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" icon={<Clock size={17} color={BLUE} />} />
+          <BigStatCard label="Knowledge Checks" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} icon={<Trophy size={17} color={BLUE} />} />
+          <BigStatCard label="Avg Grasp Level" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
+          <BigStatCard label="Current Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
+        </div>
 
-        {/* ─────────────────── OVERVIEW TAB ─────────────────── */}
-        <TabsContent value="overview" className="space-y-6">
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '24px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px', flexWrap: 'wrap' }}>
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              style={{ flex: 1, minWidth: '80px', padding: '9px 16px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                background: activeTab === t.key ? BLUE : 'transparent',
+                color: activeTab === t.key ? '#000f28' : 'rgba(255,255,255,0.5)',
+              }}
+            >{t.label}</button>
+          ))}
+        </div>
 
-          {/* 30-Day Activity Chart */}
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-blue-500" />
-                    30-Day Activity
-                  </CardTitle>
-                  <CardDescription>Your daily quiz scores over the last 30 days</CardDescription>
-                </div>
-                {data.totalQuizzes > 0 && (
-                  <div className="hidden sm:flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                      <span className="text-muted-foreground">Avg Score</span>
-                    </div>
-                  </div>
-                )}
+        {/* ── OVERVIEW TAB ── */}
+        {activeTab === 'overview' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* 30-Day Activity */}
+            <div style={{ ...card, padding: '22px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <Activity size={16} color={BLUE} />
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>30-Day Activity</span>
               </div>
-            </CardHeader>
-            <CardContent>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Your daily Grasp Levels over the last 30 days</p>
               {data.dailyProgress.some(d => d.quizzes > 0) ? (
-                <div className="h-[300px]">
+                <div style={{ height: '280px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data.dailyProgress}>
                       <defs>
                         <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
+                          <stop offset="0%" stopColor={BLUE} stopOpacity={0.35} />
+                          <stop offset="100%" stopColor={BLUE} stopOpacity={0.02} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
-                      <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} interval={4} stroke="#94a3b8" />
-                      <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} interval={4} stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.4)' }} />
+                      <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.4)' }} />
                       <Tooltip content={<ChartTooltip />} />
-                      <Area type="monotone" dataKey="avgScore" stroke="#3b82f6" strokeWidth={2.5} fill="url(#scoreGradient)" dot={false} activeDot={{ r: 6, strokeWidth: 3, fill: '#fff', stroke: '#3b82f6' }} />
+                      <Area type="monotone" dataKey="avgScore" stroke={BLUE} strokeWidth={2.5} fill="url(#scoreGradient)" dot={false} activeDot={{ r: 6, strokeWidth: 2, fill: '#000f28', stroke: BLUE }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <EmptyState icon={<BarChart className="h-12 w-12" />} title="No activity yet" message="Complete quizzes to see your 30-day progress chart" />
+                <EmptyState icon={<BarChart size={40} color="rgba(255,255,255,0.15)" />} title="No activity yet" message="Complete Knowledge Checks to see your 30-day progress chart" />
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Two-column: Consistency + Score Donut */}
-          <div className="grid gap-6 md:grid-cols-2">
-
-            {/* Learning Consistency */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  Learning Consistency
-                </CardTitle>
-                <CardDescription>How regularly you&apos;re practicing</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <GlowProgressBar label="This Week" current={data.consistency.thisWeekDays} total={data.consistency.daysInCurrentWeek} suffix="days" pct={weekPct} color="blue" />
-                <GlowProgressBar label="This Month" current={data.consistency.thisMonthDays} total={data.consistency.daysInCurrentMonth} suffix="days" pct={monthPct} color="red" />
-
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/50">
-                  <MiniStat label="Pass Rate" value={`${data.completionRate}%`} icon={<CheckCircle2 className="h-4 w-4 text-blue-500" />} />
-                  <MiniStat label="Avg Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime}m` : '--'} icon={<Clock className="h-4 w-4 text-blue-500" />} />
+            <div className="progress-two-col">
+              {/* Consistency */}
+              <div style={{ ...card, padding: '22px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <Calendar size={16} color={BLUE} />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Commitment Consistency</span>
                 </div>
-              </CardContent>
-            </Card>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '20px' }}>How regularly you train</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <GlowProgressBar label="This Week" current={data.consistency.thisWeekDays} total={data.consistency.daysInCurrentWeek} suffix="days" pct={weekPct} />
+                  <GlowProgressBar label="This Month" current={data.consistency.thisMonthDays} total={data.consistency.daysInCurrentMonth} suffix="days" pct={monthPct} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <MiniStat label="Pass Rate" value={`${data.completionRate}%`} icon={<CheckCircle2 size={14} color={BLUE} />} />
+                  <MiniStat label="Avg Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime}m` : '--'} icon={<Clock size={14} color={BLUE} />} />
+                </div>
+              </div>
 
-            {/* Score Distribution Donut */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-red-500" />
-                  Score Distribution
-                </CardTitle>
-                <CardDescription>How your quiz scores break down</CardDescription>
-              </CardHeader>
-              <CardContent>
+              {/* Score Distribution */}
+              <div style={{ ...card, padding: '22px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <Target size={16} color={BLUE} />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Where Your Grasp Level Lands</span>
+                </div>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>How your Grasp Levels break down</p>
                 {data.totalQuizzes > 0 ? (
-                  <div className="flex items-center gap-6">
-                    {/* Donut */}
-                    <div className="relative w-40 h-40 flex-shrink-0">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+                    <div style={{ position: 'relative', width: '140px', height: '140px', flexShrink: 0, margin: '0 auto' }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie
-                            data={scoreDistribution}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={48}
-                            outerRadius={70}
-                            paddingAngle={3}
-                            dataKey="value"
-                            strokeWidth={0}
-                          >
-                            {scoreDistribution.map((entry, i) => (
-                              <Cell key={i} fill={entry.color} />
-                            ))}
+                          <Pie data={scoreDistribution} cx="50%" cy="50%" innerRadius={46} outerRadius={66} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                            {scoreDistribution.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                           </Pie>
                         </PieChart>
                       </ResponsiveContainer>
-                      {/* Center label */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-foreground">{data.avgScore}%</span>
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Average</span>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: '22px', fontWeight: 900, color: '#fff' }}>{data.avgScore}%</span>
+                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>Average</span>
                       </div>
                     </div>
-
-                    {/* Legend */}
-                    <div className="flex-1 space-y-2.5">
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {[
-                        { label: 'Excellent (90-100%)', count: data.attempts.filter(a => a.percentage >= 90).length, color: '#1d4ed8' },
-                        { label: 'Good (70-89%)', count: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 90).length, color: '#3b82f6' },
-                        { label: 'Fair (50-69%)', count: data.attempts.filter(a => a.percentage >= 50 && a.percentage < 70).length, color: '#f43f5e' },
-                        { label: 'Needs Work (<50%)', count: data.attempts.filter(a => a.percentage < 50).length, color: '#ef4444' },
+                        { label: '95-100 CLUB (95-100%)', count: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },
+                        { label: '80-100 CLUB (80-94%)', count: data.attempts.filter(a => a.percentage >= 80 && a.percentage < 95).length, color: '#60cdff' },
+                        { label: 'OWNING IT (70-79%)', count: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length, color: BLUE },
+                        { label: 'DEVELOPING (40-69%)', count: data.attempts.filter(a => a.percentage >= 40 && a.percentage < 70).length, color: '#93c5fd' },
+                        { label: 'FOUNDATION (0-39%)', count: data.attempts.filter(a => a.percentage < 40).length, color: '#f59e0b' },
                       ].map(item => (
-                        <div key={item.label} className="flex items-center gap-2.5">
-                          <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                          <span className="text-xs text-muted-foreground flex-1">{item.label}</span>
-                          <span className="text-xs font-bold text-foreground">{item.count}</span>
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', flex: 1 }}>{item.label}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{item.count}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <EmptyState icon={<Target className="h-10 w-10" />} title="No data" message="Take quizzes to see your score distribution" />
+                  <EmptyState icon={<Target size={36} color="rgba(255,255,255,0.15)" />} title="No data" message="Complete Knowledge Checks to see your Grasp Level breakdown" />
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-        </TabsContent>
+        )}
 
-        {/* ─────────────────── PILLARS TAB ─────────────────── */}
-        <TabsContent value="pillars" className="space-y-6">
-          {data.pillarBreakdown.length > 0 ? (
-            <>
-              {/* Radar + Bar side by side */}
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Radar Chart */}
-                {radarData.length >= 3 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-blue-500" />
-                        Skill Radar
-                      </CardTitle>
-                      <CardDescription>Your strength across pillars</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[300px]">
+        {/* ── PILLARS TAB ── */}
+        {activeTab === 'pillars' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {data.pillarBreakdown.length > 0 ? (
+              <>
+                <div className="progress-two-col">
+                  {radarData.length >= 3 && (
+                    <div style={{ ...card, padding: '22px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <Zap size={16} color={BLUE} />
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Skill Radar</span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Your strength across pillars</p>
+                      <div style={{ height: '280px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart data={radarData} outerRadius="75%">
-                            <PolarGrid stroke="#e2e8f0" />
-                            <PolarAngleAxis dataKey="pillar" tick={{ fontSize: 11, fill: '#64748b' }} />
-                            <Radar name="Score" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} />
+                            <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                            <PolarAngleAxis dataKey="pillar" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
+                            <Radar name="Score" dataKey="score" stroke={BLUE} fill={BLUE} fillOpacity={0.12} strokeWidth={2} dot={{ r: 4, fill: BLUE, strokeWidth: 0 }} />
                           </RadarChart>
                         </ResponsiveContainer>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Bar Chart */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart className="h-5 w-5 text-red-500" />
-                      Performance by Pillar
-                    </CardTitle>
-                    <CardDescription>Average quiz score per pillar</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px]">
+                    </div>
+                  )}
+                  <div style={{ ...card, padding: '22px 24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <BarChart size={16} color={BLUE} />
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Performance by Pillar</span>
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Average Grasp Level per pillar</p>
+                    <div style={{ height: '280px' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <RechartsBarChart data={data.pillarBreakdown} margin={{ bottom: 50 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
-                          <XAxis dataKey="pillarName" fontSize={11} tickLine={false} axisLine={false} angle={-35} textAnchor="end" height={65} stroke="#94a3b8" />
-                          <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} stroke="#94a3b8" />
+                        <RechartsBarChart data={sortedPillarBreakdown} margin={{ bottom: 50 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="pillarName" fontSize={11} tickLine={false} axisLine={false} angle={-35} textAnchor="end" height={65} tick={{ fill: 'rgba(255,255,255,0.4)' }} />
+                          <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fill: 'rgba(255,255,255,0.4)' }} />
                           <Tooltip content={<PillarTooltip />} />
                           <Bar dataKey="avgScore" radius={[8, 8, 0, 0]} maxBarSize={45}>
-                            {data.pillarBreakdown.map((entry, index) => (
-                              <Cell key={index} fill={entry.color} />
-                            ))}
+                            {sortedPillarBreakdown.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                           </Bar>
                         </RechartsBarChart>
                       </ResponsiveContainer>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+                <div className="progress-pillar-grid">
+                  {sortedPillarBreakdown.map(pillar => <PillarCard key={pillar.pillarId} pillar={pillar} />)}
+                </div>
+              </>
+            ) : (
+              <div style={{ ...card, padding: '64px 24px' }}>
+                <EmptyState icon={<BookOpen size={48} color="rgba(255,255,255,0.12)" />} title="No pillar data yet" message="Complete Knowledge Checks across different pillars to see your breakdown" />
               </div>
-
-              {/* Pillar Detail Cards */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {data.pillarBreakdown.map(pillar => (
-                  <PillarCard key={pillar.pillarId} pillar={pillar} />
-                ))}
-              </div>
-            </>
-          ) : (
-            <Card><CardContent className="py-16"><EmptyState icon={<BookOpen className="h-12 w-12" />} title="No pillar data yet" message="Complete quizzes across different pillars to see your breakdown" /></CardContent></Card>
-          )}
-        </TabsContent>
-
-        {/* ─────────────────── PERFORMANCE TAB ─────────────────── */}
-        <TabsContent value="performance" className="space-y-6">
-
-          {/* Highlight Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <HighlightCard icon={<Clock className="h-5 w-5" />} label="Avg Quiz Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime} min` : '--'} color="blue" />
-            <HighlightCard icon={<CheckCircle2 className="h-5 w-5" />} label="Pass Rate" value={`${data.completionRate}%`} color="blue" />
-            <HighlightCard icon={<BookOpen className="h-5 w-5" />} label="Skills Covered" value={data.uniqueSkills} color="red" />
-            <HighlightCard icon={<Award className="h-5 w-5" />} label="Best Score" value={`${data.bestScore}%`} color="red" />
+            )}
           </div>
+        )}
 
-          <div className="grid gap-6 md:grid-cols-5">
-            {/* Streak Panel (2 cols) */}
-                <Card className="md:col-span-2 relative overflow-hidden border-red-100">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-red-500/10 to-transparent rounded-full blur-2xl -translate-y-1/4 translate-x-1/4" />
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Flame className="h-5 w-5 text-red-500" />
-                  Streak Tracker
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                {/* Big streak display */}
-                <div className="flex items-center gap-5">
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-red-600 to-blue-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-                    <span className="text-3xl font-black text-white">{data.currentStreak}</span>
+        {/* ── PERFORMANCE TAB ── */}
+        {activeTab === 'performance' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="progress-perf-grid">
+              <HighlightCard icon={<Clock size={16} color={BLUE} />} label="Avg KC Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime} min` : '--'} />
+              <HighlightCard icon={<CheckCircle2 size={16} color={BLUE} />} label="Pass Rate" value={`${data.completionRate}%`} />
+              <HighlightCard icon={<BookOpen size={16} color={BLUE} />} label="Skills Covered" value={data.uniqueSkills} />
+              <HighlightCard icon={<Award size={16} color={BLUE} />} label="Best Score" value={`${data.bestScore}%`} />
+            </div>
+
+            <div className="progress-streak-grid">
+              {/* Streak Panel */}
+              <div style={{ ...card, padding: '22px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
+                  <Flame size={16} color={BLUE} />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Streak Tracker</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '20px' }}>
+                  <div style={{ width: '72px', height: '72px', borderRadius: '18px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: '28px', fontWeight: 900, color: '#000f28' }}>{data.currentStreak}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Day Streak</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Day Streak</p>
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
                       {data.currentStreak === 0 ? 'Start a quiz today!' : data.currentStreak >= data.longestStreak ? 'Personal best!' : `${data.longestStreak - data.currentStreak} days to beat your best`}
                     </p>
                   </div>
                 </div>
+                {[
+                  { label: 'Longest Streak', value: `${data.longestStreak} days` },
+                  { label: 'Active This Week', value: `${data.consistency.thisWeekDays}/${data.consistency.daysInCurrentWeek} days` },
+                  { label: 'Active This Month', value: `${data.consistency.thisMonthDays}/${data.consistency.daysInCurrentMonth} days` },
+                ].map(row => (
+                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{row.label}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
 
-                <div className="space-y-3 pt-2 border-t border-border/50">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Longest Streak</span>
-                    <span className="text-sm font-bold text-foreground flex items-center gap-1">
-                      <Trophy className="h-3.5 w-3.5 text-blue-500" /> {data.longestStreak} days
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Active This Week</span>
-                    <span className="text-sm font-bold text-foreground">{data.consistency.thisWeekDays}/{data.consistency.daysInCurrentWeek} days</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Active This Month</span>
-                    <span className="text-sm font-bold text-foreground">{data.consistency.thisMonthDays}/{data.consistency.daysInCurrentMonth} days</span>
-                  </div>
+              {/* Score Trend */}
+              <div style={{ ...card, padding: '22px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <TrendingUp size={16} color={BLUE} />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Grasp Level Trend</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Score Trend (3 cols) */}
-            <Card className="md:col-span-3 border-red-100">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                  Score Trend
-                </CardTitle>
-                <CardDescription>Quiz scores over time (active days only)</CardDescription>
-              </CardHeader>
-              <CardContent>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Grasp Levels over time (active days only)</p>
                 {data.dailyProgress.filter(d => d.quizzes > 0).length > 0 ? (
-                  <div className="h-[260px]">
+                  <div style={{ height: '240px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={data.dailyProgress.filter(d => d.quizzes > 0)}>
                         <defs>
                           <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
-                            <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
+                            <stop offset="0%" stopColor={BLUE} stopOpacity={0.28} />
+                            <stop offset="100%" stopColor={BLUE} stopOpacity={0.02} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
-                        <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} stroke="#94a3b8" />
-                        <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} stroke="#94a3b8" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                        <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'rgba(255,255,255,0.4)' }} />
+                        <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fill: 'rgba(255,255,255,0.4)' }} />
                         <Tooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
                           return (
-                            <div className="rounded-xl border bg-card p-3 shadow-lg text-sm">
-                              <p className="font-semibold text-foreground">{label}</p>
-                              <p className="text-muted-foreground">Score: <span className="text-blue-600 font-medium">{payload[0].value}%</span></p>
+                            <div style={{ background: 'rgba(2,18,44,0.96)', border: '1px solid rgba(55,181,255,0.3)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px' }}>
+                              <p style={{ fontWeight: 700, color: '#fff', marginBottom: '4px' }}>{label}</p>
+                              <p style={{ color: 'rgba(255,255,255,0.5)' }}>Score: <span style={{ color: BLUE, fontWeight: 700 }}>{payload[0].value}%</span></p>
                             </div>
                           );
                         }} />
-                        <Area type="monotone" dataKey="avgScore" stroke="#3b82f6" strokeWidth={2.5} fill="url(#trendGradient)" dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#fff', stroke: '#3b82f6', strokeWidth: 3 }} />
+                        <Area type="monotone" dataKey="avgScore" stroke={BLUE} strokeWidth={2.5} fill="url(#trendGradient)" dot={{ r: 4, fill: BLUE, strokeWidth: 0 }} activeDot={{ r: 6, fill: '#000f28', stroke: BLUE, strokeWidth: 2 }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <EmptyState icon={<TrendingUp className="h-10 w-10" />} title="No trend data" message="Complete quizzes on multiple days to see your score trend" />
+                  <EmptyState icon={<TrendingUp size={36} color="rgba(255,255,255,0.15)" />} title="No trend data" message="Complete Knowledge Checks on multiple days to see your Grasp Level trend" />
                 )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Efficiency Metrics */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-blue-500" />
-                Learning Efficiency
-              </CardTitle>
-              <CardDescription>Key metrics about how you learn</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <EfficiencyTile label="Total Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} icon={<Clock className="h-4 w-4" />} />
-                <EfficiencyTile label="Avg per Quiz" value={data.avgSessionTime > 0 ? `${data.avgSessionTime}m` : '--'} icon={<Activity className="h-4 w-4" />} />
-                <EfficiencyTile label="Total Quizzes" value={data.totalQuizzes} icon={<Trophy className="h-4 w-4" />} />
-                <EfficiencyTile label="Unique Skills" value={data.uniqueSkills} icon={<BookOpen className="h-4 w-4" />} />
-                <EfficiencyTile label="Pillars" value={data.pillarBreakdown.length} icon={<Target className="h-4 w-4" />} />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ─────────────────── HISTORY TAB ─────────────────── */}
-        <TabsContent value="history" className="space-y-6">
-          {/* Quick summary row */}
-          {data.recentAttempts.length > 0 && (
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-blue-500/5 to-transparent">
-                <CardContent className="pt-5 pb-4 text-center">
-                  <p className="text-3xl font-bold text-foreground">{data.totalQuizzes}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Total Attempts</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-red-500/5 to-transparent border-red-100">
-                <CardContent className="pt-5 pb-4 text-center">
-                  <p className="text-3xl font-bold text-foreground">{data.attempts.filter(a => a.percentage >= 70).length}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Passed</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-red-500/5 to-transparent">
-                <CardContent className="pt-5 pb-4 text-center">
-                  <p className="text-3xl font-bold text-foreground">{data.bestScore}%</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Best Score</p>
-                </CardContent>
-              </Card>
             </div>
-          )}
 
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+            {/* Efficiency */}
+            <div style={{ ...card, padding: '22px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <Zap size={16} color={BLUE} />
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Learning Efficiency</span>
+              </div>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '18px' }}>Key metrics about how you learn</p>
+              <div className="progress-eff-grid">
+                <EffTile label="Total Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} icon={<Clock size={14} color={BLUE} />} />
+                <EffTile label="Avg per Quiz" value={data.avgSessionTime > 0 ? `${data.avgSessionTime}m` : '--'} icon={<Activity size={14} color={BLUE} />} />
+                <EffTile label="Knowledge Checks" value={data.totalQuizzes} icon={<Trophy size={14} color={BLUE} />} />
+                <EffTile label="Unique Skills" value={data.uniqueSkills} icon={<BookOpen size={14} color={BLUE} />} />
+                <EffTile label="Pillars" value={data.pillarBreakdown.length} icon={<Target size={14} color={BLUE} />} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── HISTORY TAB ── */}
+        {activeTab === 'history' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {data.recentAttempts.length > 0 && (
+              <div className="progress-hist-sum">
+                {[
+                  { label: 'Total Attempts', value: data.totalQuizzes },
+                  { label: 'Passed', value: data.attempts.filter(a => a.percentage >= 70).length },
+                  { label: 'Best Score', value: `${data.bestScore}%` },
+                ].map(s => (
+                  <div key={s.label} style={{ ...card, padding: '18px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '32px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ ...card, padding: '22px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-blue-500" />
-                    Recent Quiz Attempts
-                  </CardTitle>
-                  <CardDescription>Your latest {Math.min(data.recentAttempts.length, 10)} results</CardDescription>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                    <Calendar size={16} color={BLUE} />
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Recent Knowledge Checks</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Your latest {Math.min(data.recentAttempts.length, 10)} results</p>
                 </div>
                 {data.totalQuizzes > 0 && (
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 10px' }}>
                     {data.totalQuizzes} total
-                  </Badge>
+                  </span>
                 )}
               </div>
-            </CardHeader>
-            <CardContent>
               {data.recentAttempts.length > 0 ? (
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {data.recentAttempts.map((attempt, idx) => {
                     const passed = attempt.percentage >= 70;
                     return (
-                      <div
-                        key={attempt.id}
-                        className={`group flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
-                          passed
-                            ? 'border-blue-100 hover:border-blue-200 hover:bg-blue-50/30'
-                            : 'border-red-100 hover:border-red-200 hover:bg-red-50/30'
-                        }`}
-                      >
-                        {/* Rank number */}
-                        <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                          {idx + 1}
+                      <div key={attempt.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '12px', border: `1px solid ${passed ? 'rgba(55,181,255,0.2)' : 'rgba(248,113,113,0.2)'}`, background: passed ? 'rgba(55,181,255,0.04)' : 'rgba(248,113,113,0.04)', transition: 'all 0.2s' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', width: '20px', textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: passed ? 'rgba(55,181,255,0.15)' : 'rgba(248,113,113,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {passed ? <ArrowUpRight size={16} color={BLUE} /> : <ArrowDownRight size={16} color="#f87171" />}
                         </div>
-
-                        {/* Status icon */}
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          passed ? 'bg-blue-100' : 'bg-red-100'
-                        }`}>
-                          {passed ? (
-                            <ArrowUpRight className="h-5 w-5 text-blue-600" />
-                          ) : (
-                            <ArrowDownRight className="h-5 w-5 text-red-600" />
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-foreground truncate">{attempt.pillarName}</p>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{attempt.pillarName}</p>
+                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
                             {attempt.submittedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             {attempt.timeSpent > 0 && ` · ${attempt.timeSpent}m`}
                           </p>
                         </div>
-
-                        {/* Score */}
-                        <div className="text-right">
-                          <p className={`text-lg font-bold ${passed ? 'text-blue-600' : 'text-red-600'}`}>
-                            {attempt.percentage}%
-                          </p>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                            {passed ? 'Passed' : 'Retry'}
-                          </p>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ fontSize: '16px', fontWeight: 800, color: passed ? BLUE : '#f87171' }}>{attempt.percentage}%</p>
+                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{passed ? 'Passed' : 'Retry'}</p>
                         </div>
-
-                        {/* Progress bar */}
-                        <div className="w-24 hidden md:block">
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${passed ? 'bg-blue-500' : 'bg-red-500'}`}
-                              style={{ width: `${attempt.percentage}%` }}
-                            />
-                          </div>
+                        <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', flexShrink: 0 }}>
+                          <div style={{ height: '100%', borderRadius: '99px', background: passed ? BLUE : '#f87171', width: `${attempt.percentage}%` }} />
                         </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <EmptyState icon={<Calendar className="h-12 w-12" />} title="No history yet" message="Start taking quizzes to build your history" />
+                <EmptyState icon={<Calendar size={48} color="rgba(255,255,255,0.12)" />} title="No history yet" message="Start completing Knowledge Checks to build your history" />
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════════════
-   SUB-COMPONENTS
-   ══════════════════════════════════════════════════════════ */
+/* ── Sub-components ── */
 
-function BigStatCard({ label, value, sub, emoji, gradient }: {
-  label: string; value: string | number; sub: string; emoji: string; gradient: string;
-}) {
+function BigStatCard({ label, value, sub, icon }: { label: string; value: string | number; sub: string; icon: React.ReactNode }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br ${gradient} bg-card p-5 shadow-sm`}>
-      <div className="flex items-start justify-between">
-        <div className="relative z-10">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-3xl md:text-4xl font-bold text-foreground mt-1 tracking-tight">{value}</p>
-          <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-        </div>
-        <span className="text-5xl md:text-6xl opacity-80 select-none leading-none -mt-1" aria-hidden="true">{emoji}</span>
+    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>{label}</p>
+        <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+      </div>
+      <div>
+        <p style={{ fontSize: '42px', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>{value}</p>
+        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>{sub}</p>
       </div>
     </div>
   );
 }
 
-function GlowProgressBar({ label, current, total, suffix, pct, color }: {
-  label: string; current: number; total: number; suffix: string; pct: number; color: 'blue' | 'red';
-}) {
-  const barColor = color === 'blue' ? 'bg-blue-500' : 'bg-red-500';
-  const glowColor = color === 'blue' ? 'shadow-blue-500/30' : 'shadow-red-500/30';
+function GlowProgressBar({ label, current, total, suffix, pct }: { label: string; current: number; total: number; suffix: string; pct: number }) {
   return (
     <div>
-      <div className="flex items-center justify-between text-sm mb-2">
-        <span className="text-muted-foreground font-medium">{label}</span>
-        <span className="font-bold text-foreground">{current}/{total} {suffix}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>{label}</span>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{current}/{total} {suffix}</span>
       </div>
-      <div className="h-3 bg-muted rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${barColor} ${pct > 0 ? `shadow-sm ${glowColor}` : ''}`}
-          style={{ width: `${pct}%` }}
-        />
+      <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
+        <div style={{ height: '100%', borderRadius: '99px', background: BLUE, width: `${pct}%`, transition: 'width 0.7s' }} />
       </div>
     </div>
   );
@@ -625,70 +518,60 @@ function GlowProgressBar({ label, current, total, suffix, pct, color }: {
 
 function MiniStat({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/40">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '10px', padding: '10px 12px' }}>
       {icon}
       <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-bold text-foreground">{value}</p>
+        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>{label}</p>
+        <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{value}</p>
       </div>
     </div>
   );
 }
 
-function HighlightCard({ icon, label, value, color }: {
-  icon: React.ReactNode; label: string; value: string | number; color: 'blue' | 'red';
-}) {
-  const colorMap = {
-    blue: 'from-blue-500/10 to-blue-500/5 border-blue-200/50',
-    red: 'from-red-500/10 to-red-500/5 border-red-200/50',
-  };
-  const iconBg = {
-    blue: 'bg-blue-100 text-blue-600',
-    red: 'bg-red-100 text-red-600',
-  };
+function HighlightCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
-    <div className={`rounded-2xl border bg-gradient-to-br ${colorMap[color]} p-4`}>
-      <div className="flex items-center gap-3">
-        <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${iconBg[color]}`}>{icon}</div>
+    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '14px', padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
         <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{label}</p>
-          <p className="text-xl font-bold text-foreground -mt-0.5">{value}</p>
+          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>{label}</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>{value}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function EfficiencyTile({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
+function EffTile({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-red-50 border border-red-100">
-      <div className="text-blue-600 mb-1.5">{icon}</div>
-      <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{label}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '16px 12px', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.12)', borderRadius: '12px' }}>
+      <div style={{ marginBottom: '6px' }}>{icon}</div>
+      <p style={{ fontSize: '18px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{value}</p>
+      <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>{label}</p>
     </div>
   );
 }
 
 function PillarCard({ pillar }: { pillar: PillarBreakdown }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-5 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-0.5">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="h-11 w-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${pillar.color}18` }}>
-          <BookOpen className="h-5 w-5" style={{ color: pillar.color }} />
+    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '14px', padding: '18px 20px', transition: 'all 0.3s' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${pillar.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <BookOpen size={18} style={{ color: pillar.color }} />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground truncate">{pillar.pillarName}</h3>
-          <p className="text-xs text-muted-foreground">{pillar.attempts} attempts · {pillar.timeSpent}m</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pillar.pillarName}</h3>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{pillar.attempts} attempts · {pillar.timeSpent}m</p>
         </div>
-        <span className="text-xl font-bold" style={{ color: pillar.color }}>{pillar.avgScore}%</span>
+        <span style={{ fontSize: '20px', fontWeight: 800, color: pillar.color }}>{pillar.avgScore}%</span>
       </div>
-      <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pillar.avgScore}%`, backgroundColor: pillar.color }} />
+      <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
+        <div style={{ height: '100%', borderRadius: '99px', background: pillar.color, width: `${pillar.avgScore}%`, transition: 'width 0.7s' }} />
       </div>
-      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-        <span>Best: {pillar.bestScore}%</span>
-        <span className={pillar.avgScore >= 70 ? 'text-blue-600 font-medium' : 'text-red-600 font-medium'}>
-          {pillar.avgScore >= 70 ? 'On Track' : 'Needs Focus'}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>Best: {pillar.bestScore}%</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: pillar.avgScore >= 95 ? '#fbbf24' : pillar.avgScore >= 80 ? '#60cdff' : pillar.avgScore >= 70 ? BLUE : pillar.avgScore >= 40 ? '#93c5fd' : '#f59e0b' }}>
+          {pillar.avgScore >= 95 ? '95-100 CLUB' : pillar.avgScore >= 80 ? '80-100 CLUB' : pillar.avgScore >= 70 ? 'OWNING IT' : pillar.avgScore >= 40 ? 'DEVELOPING' : 'FOUNDATION'}
         </span>
       </div>
     </div>
@@ -699,12 +582,12 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="rounded-xl border bg-card p-3 shadow-xl text-sm min-w-[140px]">
-      <p className="font-semibold text-foreground mb-1.5 pb-1.5 border-b border-border/50">{label}</p>
-      <div className="space-y-1 text-muted-foreground">
-        <div className="flex justify-between"><span>Quizzes</span><span className="text-foreground font-medium">{d.quizzes}</span></div>
-        {d.avgScore > 0 && <div className="flex justify-between"><span>Avg Score</span><span className="text-blue-600 font-medium">{d.avgScore}%</span></div>}
-        {d.timeSpent > 0 && <div className="flex justify-between"><span>Time</span><span className="text-foreground font-medium">{d.timeSpent}m</span></div>}
+    <div style={{ background: 'rgba(2,18,44,0.96)', border: '1px solid rgba(55,181,255,0.3)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', minWidth: '140px' }}>
+      <p style={{ fontWeight: 700, color: '#fff', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{label}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Knowledge Checks</span><span style={{ color: '#fff', fontWeight: 600 }}>{d.quizzes}</span></div>
+        {d.avgScore > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Avg Grasp Level</span><span style={{ color: BLUE, fontWeight: 600 }}>{d.avgScore}%</span></div>}
+        {d.timeSpent > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}><span style={{ color: 'rgba(255,255,255,0.5)' }}>Time</span><span style={{ color: '#fff', fontWeight: 600 }}>{d.timeSpent}m</span></div>}
       </div>
     </div>
   );
@@ -714,16 +597,18 @@ function PillarTooltip({ active, payload }: { active?: boolean; payload?: Array<
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="rounded-xl border bg-card p-3 shadow-xl text-sm min-w-[160px]">
-      <div className="flex items-center gap-2 mb-1.5 pb-1.5 border-b border-border/50">
-        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: d.color }} />
-        <span className="font-semibold text-foreground">{d.pillarName}</span>
+    <div style={{ background: 'rgba(2,18,44,0.96)', border: '1px solid rgba(55,181,255,0.3)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', minWidth: '160px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, color: '#fff' }}>{d.pillarName}</span>
       </div>
-      <div className="space-y-1 text-muted-foreground">
-        <div className="flex justify-between"><span>Avg Score</span><span className="font-medium" style={{ color: d.color }}>{d.avgScore}%</span></div>
-        <div className="flex justify-between"><span>Best</span><span className="text-foreground font-medium">{d.bestScore}%</span></div>
-        <div className="flex justify-between"><span>Attempts</span><span className="text-foreground font-medium">{d.attempts}</span></div>
-        <div className="flex justify-between"><span>Time</span><span className="text-foreground font-medium">{d.timeSpent}m</span></div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {[{ l: 'Avg Grasp Level', v: `${d.avgScore}%`, c: d.color }, { l: 'Best', v: `${d.bestScore}%`, c: '#fff' }, { l: 'Attempts', v: d.attempts, c: '#fff' }, { l: 'Time', v: `${d.timeSpent}m`, c: '#fff' }].map(r => (
+          <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+            <span style={{ color: 'rgba(255,255,255,0.5)' }}>{r.l}</span>
+            <span style={{ color: r.c, fontWeight: 600 }}>{r.v}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -731,10 +616,10 @@ function PillarTooltip({ active, payload }: { active?: boolean; payload?: Array<
 
 function EmptyState({ icon, title, message }: { icon: React.ReactNode; title?: string; message: string }) {
   return (
-    <div className="text-center py-10">
-      <div className="text-muted-foreground/30 mx-auto mb-3 flex justify-center">{icon}</div>
-      {title && <p className="font-semibold text-foreground mb-1">{title}</p>}
-      <p className="text-sm text-muted-foreground max-w-xs mx-auto">{message}</p>
+    <div style={{ textAlign: 'center', padding: '40px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>{icon}</div>
+      {title && <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>{title}</p>}
+      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', maxWidth: '280px', margin: '0 auto' }}>{message}</p>
     </div>
   );
 }

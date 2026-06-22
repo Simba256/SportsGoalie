@@ -1,22 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog } from 'lucide-react';
+import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog, LineChart, X } from 'lucide-react';
+import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { userService, onboardingService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
@@ -24,16 +11,15 @@ import { User, OnboardingEvaluation } from '@/types';
 import { toast } from 'sonner';
 import { StudentSearchDialog } from '@/components/coach/student-search-dialog';
 
+const GOLD   = '#D4A93B';
+const BLUE   = '#37b5ff';
+
 type WorkflowFilter = 'all' | 'custom' | 'automated';
 
 interface StudentWithCurriculum {
   student: User;
   hasCurriculum: boolean;
-  curriculumProgress?: {
-    totalItems: number;
-    completedItems: number;
-    progressPercentage: number;
-  };
+  curriculumProgress?: { totalItems: number; completedItems: number; progressPercentage: number };
   evaluation?: OnboardingEvaluation | null;
 }
 
@@ -47,80 +33,45 @@ export default function CoachStudentsPage() {
   const [removing, setRemoving] = useState(false);
   const [workflowFilter, setWorkflowFilter] = useState<WorkflowFilter>('all');
 
-  useEffect(() => {
-    if (user?.id) {
-      loadStudents();
-    }
-  }, [user?.id]);
+  useEffect(() => { if (user?.id) loadStudents(); }, [user?.id]);
 
   const loadStudents = async () => {
     try {
       setLoading(true);
-
-      // Get students — admins see all, coaches see only their assigned students
       const studentsResult = await userService.getAllUsers({ role: 'student' });
+      if (!studentsResult.success || !studentsResult.data) { toast.error('Failed to load goalies'); return; }
 
-      if (!studentsResult.success || !studentsResult.data) {
-        toast.error('Failed to load students');
-        return;
-      }
-
-      // Filter to only students assigned to this coach (admins see all)
       if (user?.role === 'coach') {
-        studentsResult.data.items = studentsResult.data.items.filter(
-          (s) => s.assignedCoachId === user.id
-        );
+        studentsResult.data.items = studentsResult.data.items.filter(s => s.assignedCoachId === user.id);
       }
 
-      // Load curriculum and evaluation data for each student
       const studentsWithData: StudentWithCurriculum[] = await Promise.all(
-        studentsResult.data.items.map(async (student) => {
+        studentsResult.data.items.map(async student => {
           const [curriculumResult, evaluationResult] = await Promise.all([
             customCurriculumService.getStudentCurriculum(student.id),
             onboardingService.getEvaluation(student.id),
           ]);
-
-          const result: StudentWithCurriculum = {
-            student,
-            hasCurriculum: false,
-            evaluation: evaluationResult.success ? evaluationResult.data : null,
-          };
-
+          const result: StudentWithCurriculum = { student, hasCurriculum: false, evaluation: evaluationResult.success ? evaluationResult.data : null };
           if (curriculumResult.success && curriculumResult.data) {
             const curriculum = curriculumResult.data;
             const totalItems = curriculum.items.length;
             const completedItems = curriculum.items.filter(i => i.status === 'completed').length;
-
             result.hasCurriculum = true;
-            result.curriculumProgress = {
-              totalItems,
-              completedItems,
-              progressPercentage: totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0,
-            };
+            result.curriculumProgress = { totalItems, completedItems, progressPercentage: totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0 };
           }
-
           return result;
         })
       );
-
       setAllStudents(studentsWithData);
-    } catch (error) {
-      console.error('Failed to load students:', error);
-      toast.error('Failed to load students');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Failed to load goalies'); }
+    finally { setLoading(false); }
   };
 
-  // Filter students based on selected workflow filter
   const filteredStudents = useMemo(() => {
-    if (workflowFilter === 'all') {
-      return allStudents;
-    }
+    if (workflowFilter === 'all') return allStudents;
     return allStudents.filter(({ student }) => student.workflowType === workflowFilter);
   }, [allStudents, workflowFilter]);
 
-  // Count students by workflow type
   const counts = useMemo(() => ({
     all: allStudents.length,
     custom: allStudents.filter(({ student }) => student.workflowType === 'custom').length,
@@ -129,295 +80,236 @@ export default function CoachStudentsPage() {
 
   const handleRemoveStudent = async () => {
     if (!studentToRemove || !user?.id) return;
-
     try {
       setRemoving(true);
       const result = await userService.removeStudentFromCoach(studentToRemove.id, user.id);
-
-      if (result.success) {
-        toast.success(`${studentToRemove.displayName} removed from your roster`);
-        loadStudents();
-      } else {
-        toast.error(result.error?.message || 'Failed to remove student');
-      }
-    } catch (error) {
-      console.error('Failed to remove student:', error);
-      toast.error('Failed to remove student from roster');
-    } finally {
-      setRemoving(false);
-      setRemoveDialogOpen(false);
-      setStudentToRemove(null);
-    }
+      if (result.success) { toast.success(`${studentToRemove.displayName} removed from your roster`); loadStudents(); }
+      else toast.error(result.error?.message || 'Failed to remove goalie');
+    } catch { toast.error('Failed to remove goalie from roster'); }
+    finally { setRemoving(false); setRemoveDialogOpen(false); setStudentToRemove(null); }
   };
 
-  const openRemoveDialog = (student: User) => {
-    setStudentToRemove(student);
-    setRemoveDialogOpen(true);
-  };
+  const openRemoveDialog = (student: User) => { setStudentToRemove(student); setRemoveDialogOpen(true); };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <SkeletonDarkPage />;
+
+  const WORKFLOW_TABS = [
+    { key: 'all' as WorkflowFilter, label: `All (${counts.all})`, icon: <Users size={14} /> },
+    { key: 'custom' as WorkflowFilter, label: `Custom (${counts.custom})`, icon: <UserCog size={14} /> },
+    { key: 'automated' as WorkflowFilter, label: `Automated (${counts.automated})`, icon: <Zap size={14} /> },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-red-400 text-sm font-semibold tracking-wide uppercase mb-1">My Students</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Students</h1>
-            <p className="text-white/60 text-sm mt-1">View evaluations and manage curriculum for your students</p>
+    <div style={{ minHeight: '100vh' }}>
+      <style>{`
+        .students-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 640px)  { .students-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 1024px) { .students-grid { grid-template-columns: 1fr 1fr 1fr; } }
+        .students-header { padding: 20px 20px; }
+        @media (min-width: 640px) { .students-header { padding: 28px 32px; } }
+        .filter-tabs { flex-wrap: wrap; }
+        @media (max-width: 480px) { .filter-tabs { width: 100%; } .filter-tabs button { flex: 1; justify-content: center; } }
+        .card-actions { flex-direction: column; }
+        @media (min-width: 380px) { .card-actions { flex-direction: row; flex-wrap: wrap; } }
+      `}</style>
+
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(14px,3vw,24px) 56px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* Header */}
+        <div className="students-header" style={{ position: 'relative', borderRadius: '16px', background: 'linear-gradient(135deg, #04213f 0%, #0b3460 50%, #0d1f40 100%)', border: '1px solid rgba(55,181,255,0.18)', boxShadow: '0 4px 32px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(55,181,255,0.08)', filter: 'blur(70px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: GOLD, marginBottom: '6px' }}>My Goalies</p>
+              <h1 style={{ fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Goalies</h1>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>View evaluations and manage curriculum for your goalies</p>
+            </div>
+            {user?.role === 'coach' && workflowFilter === 'custom' && (
+              <button
+                onClick={() => setSearchDialogOpen(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '11px 20px', background: `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)`, border: 'none', borderRadius: '12px', color: '#0c0800', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 4px 16px rgba(212,169,59,0.3)`, whiteSpace: 'nowrap' }}
+              >
+                <UserPlus size={14} /> Add Goalie
+              </button>
+            )}
           </div>
-          {user?.role === 'coach' && workflowFilter === 'custom' && (
-            <Button
-              onClick={() => setSearchDialogOpen(true)}
-              size="sm"
-              className="shrink-0"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Student
-            </Button>
-          )}
         </div>
-      </div>
 
-      {/* Workflow Filter Tabs */}
-      <div className="mb-6">
-        <Tabs value={workflowFilter} onValueChange={(v) => setWorkflowFilter(v as WorkflowFilter)}>
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              All ({counts.all})
-            </TabsTrigger>
-            <TabsTrigger value="custom" className="flex items-center gap-2">
-              <UserCog className="h-4 w-4" />
-              Custom ({counts.custom})
-            </TabsTrigger>
-            <TabsTrigger value="automated" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Automated ({counts.automated})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+        {/* Workflow Filter Tabs */}
+        <div className="filter-tabs" style={{ display: 'flex', gap: '6px', background: 'rgba(2,18,44,0.8)', border: `1px solid rgba(212,169,59,0.18)`, borderRadius: '12px', padding: '5px', width: 'fit-content', maxWidth: '100%' }}>
+          {WORKFLOW_TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setWorkflowFilter(t.key)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                background: workflowFilter === t.key ? GOLD : 'transparent',
+                color: workflowFilter === t.key ? '#0c0800' : 'rgba(255,255,255,0.5)',
+              }}
+            >{t.icon}{t.label}</button>
+          ))}
+        </div>
 
-      {filteredStudents.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Users className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              {workflowFilter === 'all'
-                ? 'No Students Found'
-                : workflowFilter === 'custom'
-                  ? 'No Custom Workflow Students'
-                  : 'No Automated Workflow Students'}
+        {/* Students Grid */}
+        {filteredStudents.length === 0 ? (
+          <div style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.22)', borderRadius: '16px', padding: '64px 24px', textAlign: 'center' }}>
+            <Users size={56} color="rgba(255,255,255,0.12)" style={{ margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>
+              {workflowFilter === 'all' ? 'No Goalies Found' : workflowFilter === 'custom' ? 'No Custom Workflow Goalies' : 'No Automated Workflow Goalies'}
             </h3>
-            <p className="text-muted-foreground text-center max-w-md">
-              {workflowFilter === 'custom'
-                ? 'Students with custom workflow type will appear here when assigned.'
-                : workflowFilter === 'automated'
-                  ? 'Students with automated (self-paced) workflow will appear here.'
-                  : 'No students have registered yet.'}
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', maxWidth: '360px', margin: '0 auto' }}>
+              {workflowFilter === 'custom' ? 'Goalies with custom workflow type will appear here when assigned.' : workflowFilter === 'automated' ? 'Goalies with automated (self-paced) workflow will appear here.' : 'No goalies have registered yet.'}
             </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudents.map(({ student, hasCurriculum, curriculumProgress, evaluation }) => {
-            const isCustomWorkflow = student.workflowType === 'custom';
-            const evalStatus = evaluation?.status;
-            const evalCoachReview = evaluation?.coachReview;
-            const hasCompletedEvaluation = evalStatus === 'completed' || evalStatus === 'reviewed';
+          </div>
+        ) : (
+          <div className="students-grid">
+            {filteredStudents.map(({ student, hasCurriculum, curriculumProgress, evaluation }) => {
+              const isCustomWorkflow = student.workflowType === 'custom';
+              const evalStatus = evaluation?.status;
+              const evalCoachReview = evaluation?.coachReview;
+              const hasCompletedEvaluation = evalStatus === 'completed' || evalStatus === 'reviewed';
+              const workflowColor = isCustomWorkflow ? '#f87171' : BLUE;
 
-            return (
-              <Card key={student.id} className="group relative overflow-hidden border-zinc-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/50">
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-black to-red-600 opacity-80" />
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg font-bold text-zinc-900">{student.displayName}</CardTitle>
-                      <CardDescription className="mt-1 text-zinc-500">
-                        {student.email}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      {/* Workflow Type Badge */}
-                      <Badge
-                        variant="secondary"
-                        className={isCustomWorkflow
-                          ? 'bg-red-50 text-red-700 border-red-200'
-                          : 'bg-blue-100 text-blue-700 border-blue-200'}
-                      >
-                        {isCustomWorkflow ? (
-                          <>
-                            <UserCog className="h-3 w-3 mr-1" />
-                            Custom
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="h-3 w-3 mr-1" />
-                            Automated
-                          </>
+              return (
+                <div key={student.id} style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: `1px solid rgba(212,169,59,0.18)`, borderRadius: '16px', overflow: 'hidden', transition: 'all 0.3s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,169,59,0.38)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,169,59,0.16)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; }}
+                >
+                  {/* Top gradient bar */}
+                  <div style={{ height: '3px', background: `linear-gradient(90deg, ${GOLD}, #B8891E)` }} />
+
+                  <div style={{ padding: '18px 20px' }}>
+                    {/* Student header */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>{student.displayName}</h3>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{student.email}</p>
+                        {student.studentNumber && (
+                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>ID: {student.studentNumber}</p>
                         )}
-                      </Badge>
-                      {user?.role === 'coach' && isCustomWorkflow && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-zinc-500 hover:text-red-600 hover:bg-red-50"
-                          onClick={() => openRemoveDialog(student)}
-                          title="Remove from roster"
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '8px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: workflowColor, background: `${workflowColor}18`, border: `1px solid ${workflowColor}30`, borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          {isCustomWorkflow ? <><UserCog size={10} /> Custom</> : <><Zap size={10} /> Automated</>}
+                        </span>
+                        {user?.role === 'coach' && isCustomWorkflow && (
+                          <button
+                            onClick={() => openRemoveDialog(student)}
+                            title="Remove from roster"
+                            style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <UserMinus size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Evaluation status */}
+                    {hasCompletedEvaluation && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: evalCoachReview ? '#4ade80' : '#fbbf24', background: evalCoachReview ? 'rgba(74,222,128,0.1)' : 'rgba(251,191,36,0.1)', border: `1px solid ${evalCoachReview ? 'rgba(74,222,128,0.3)' : 'rgba(251,191,36,0.3)'}`, borderRadius: '20px', padding: '3px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <ClipboardCheck size={10} />{evalCoachReview ? 'Evaluation Reviewed' : 'Evaluation Pending Review'}
+                        </span>
+                      </div>
+                    )}
+                    {!hasCompletedEvaluation && !student.onboardingCompleted && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '20px', padding: '3px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Clock size={10} />Awaiting Onboarding
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Curriculum Progress */}
+                    {isCustomWorkflow && (
+                      hasCurriculum && curriculumProgress ? (
+                        <div style={{ background: 'rgba(212,169,59,0.06)', border: '1px solid rgba(212,169,59,0.14)', borderRadius: '10px', padding: '12px 14px', marginBottom: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Curriculum Progress</span>
+                            <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{curriculumProgress.progressPercentage}%</span>
+                          </div>
+                          <div style={{ height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
+                            <div style={{ height: '100%', borderRadius: '99px', background: `linear-gradient(90deg, ${GOLD}, #B8891E)`, width: `${curriculumProgress.progressPercentage}%`, transition: 'width 0.7s' }} />
+                          </div>
+                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{curriculumProgress.completedItems} of {curriculumProgress.totalItems} modules completed</p>
+                        </div>
+                      ) : (
+                        <div style={{ borderRadius: '10px', border: `1px dashed rgba(212,169,59,0.2)`, padding: '10px 14px', marginBottom: '12px' }}>
+                          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>No curriculum created yet</p>
+                        </div>
+                      )
+                    )}
+
+                    {/* Pacing Level */}
+                    {evaluation?.intelligenceProfile?.pacingLevel && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Pacing Level</span>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: GOLD, background: 'rgba(212,169,59,0.1)', border: '1px solid rgba(212,169,59,0.25)', borderRadius: '20px', padding: '2px 8px', textTransform: 'capitalize' }}>
+                          {evaluation.intelligenceProfile.pacingLevel}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="card-actions" style={{ display: 'flex', gap: '8px' }}>
+                      {hasCompletedEvaluation && (
+                        <Link href={`/coach/students/${student.id}/evaluation`} style={{ textDecoration: 'none' }}>
+                          <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(212,169,59,0.1)', border: '1px solid rgba(212,169,59,0.25)', borderRadius: '8px', color: GOLD, fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            <ClipboardCheck size={12} />View Evaluation
+                          </button>
+                        </Link>
+                      )}
+                      <Link href={`/coach/students/${student.id}/charting`} style={{ textDecoration: 'none' }}>
+                        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          <LineChart size={12} />View Charts
+                        </button>
+                      </Link>
+                      {isCustomWorkflow && (
+                        <Link href={`/coach/students/${student.id}/curriculum`} style={{ textDecoration: 'none', flex: 1 }}>
+                          <button style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '7px 12px', background: hasCurriculum ? `linear-gradient(135deg, ${GOLD} 0%, #B8891E 100%)` : 'rgba(212,169,59,0.08)', border: hasCurriculum ? 'none' : '1px solid rgba(212,169,59,0.25)', borderRadius: '8px', color: hasCurriculum ? '#0c0800' : GOLD, fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            <BookOpen size={12} />{hasCurriculum ? 'Manage Curriculum' : 'Create Curriculum'}
+                          </button>
+                        </Link>
                       )}
                     </div>
                   </div>
-                  {student.studentNumber && (
-                    <p className="text-xs text-zinc-500 mt-2 tracking-wide uppercase">
-                      ID: {student.studentNumber}
-                    </p>
-                  )}
-
-                  {/* Evaluation Status Badge */}
-                  <div className="mt-3">
-                    {hasCompletedEvaluation ? (
-                      <Badge
-                        variant="outline"
-                        className={evalCoachReview ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
-                      >
-                        <ClipboardCheck className="h-3 w-3 mr-1" />
-                        {evalCoachReview ? 'Evaluation Reviewed' : 'Evaluation Pending Review'}
-                      </Badge>
-                    ) : !student.onboardingCompleted ? (
-                      <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Awaiting Onboarding
-                      </Badge>
-                    ) : null}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Curriculum Progress - Only for custom workflow */}
-                  {isCustomWorkflow && (
-                    hasCurriculum && curriculumProgress ? (
-                      <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-zinc-500">Curriculum Progress</span>
-                          <span className="font-semibold text-zinc-900">{curriculumProgress.progressPercentage}%</span>
-                        </div>
-                        <div className="w-full bg-zinc-200 rounded-full h-2">
-                          <div
-                            className="bg-gradient-to-r from-blue-600 to-red-500 rounded-full h-2 transition-all"
-                            style={{ width: `${curriculumProgress.progressPercentage}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-zinc-500">
-                          {curriculumProgress.completedItems} of {curriculumProgress.totalItems} items completed
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-zinc-500 py-2 rounded-xl border border-dashed border-zinc-200 px-3">
-                        <p>No curriculum created yet</p>
-                      </div>
-                    )
-                  )}
-
-                  {/* Evaluation Summary */}
-                  {evaluation?.intelligenceProfile?.pacingLevel && (
-                    <div className="flex items-center justify-between text-sm py-2 border-t border-zinc-100">
-                      <span className="text-zinc-500">Pacing Level</span>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 capitalize">
-                        {evaluation.intelligenceProfile.pacingLevel}
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 pt-1">
-                    {/* View Evaluation - Available for all students with completed evaluation */}
-                    {hasCompletedEvaluation && (
-                      <Button asChild size="sm" className="border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 hover:border-blue-300">
-                        <Link href={`/coach/students/${student.id}/evaluation`}>
-                          <ClipboardCheck className="h-4 w-4 mr-2" />
-                          View Evaluation
-                        </Link>
-                      </Button>
-                    )}
-                    {/* Manage Curriculum - Only for custom workflow students */}
-                    {isCustomWorkflow && (
-                      <Button
-                        asChild
-                        className={hasCurriculum
-                          ? 'flex-1 bg-red-600 text-white hover:bg-red-700 shadow-sm shadow-red-200/60'
-                          : 'flex-1 border border-red-200 bg-white text-red-700 hover:bg-red-50'}
-                        variant={hasCurriculum ? 'default' : 'outline'}
-                      >
-                        <Link href={`/coach/students/${student.id}/curriculum`}>
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          {hasCurriculum ? 'Manage Curriculum' : 'Create Curriculum'}
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
 
       {/* Add Student Dialog */}
       {user?.id && (
-        <StudentSearchDialog
-          open={searchDialogOpen}
-          onOpenChange={setSearchDialogOpen}
-          coachId={user.id}
-          onStudentAdded={loadStudents}
-        />
+        <StudentSearchDialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen} coachId={user.id} onStudentAdded={loadStudents} />
       )}
 
-      {/* Remove Student Confirmation Dialog */}
-      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
-        <AlertDialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-0 bg-white shadow-2xl rounded-2xl">
-          <AlertDialogHeader className="px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-            <div className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 bg-red-500/10 rounded-full blur-3xl" />
-            <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300 mb-2">Roster</p>
-              <AlertDialogTitle className="text-2xl font-bold tracking-tight text-white">Remove Student from Roster</AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-300 mt-1.5 text-sm">
-              Are you sure you want to remove{' '}
-              <span className="font-semibold">{studentToRemove?.displayName}</span>{' '}
-              from your roster? They will no longer appear in your student list, but their curriculum progress will be preserved.
-              </AlertDialogDescription>
+      {/* Remove Student Confirm Modal */}
+      {removeDialogOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px' }}>
+          <div style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(248,113,113,0.4)', borderRadius: '20px', maxWidth: '480px', width: '100%', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+            <div style={{ padding: '28px 28px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: GOLD }}>Roster</p>
+                <button onClick={() => setRemoveDialogOpen(false)} disabled={removing} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X size={18} /></button>
+              </div>
+              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Remove Goalie from Roster</h2>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                Are you sure you want to remove <span style={{ fontWeight: 700, color: '#fff' }}>{studentToRemove?.displayName}</span> from your roster?
+                They will no longer appear in your goalie list, but their curriculum progress will be preserved.
+              </p>
             </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="px-8 pb-6 pt-4 border-t border-slate-200 bg-white">
-            <AlertDialogCancel disabled={removing} className="px-6 border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRemoveStudent}
-              disabled={removing}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              {removing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Removing...
-                </>
-              ) : (
-                'Remove Student'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <div style={{ display: 'flex', gap: '10px', padding: '16px 28px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setRemoveDialogOpen(false)} disabled={removing} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleRemoveStudent} disabled={removing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: '#dc2626', border: 'none', borderRadius: '10px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.7 : 1 }}>
+                {removing ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />Removing...</> : 'Remove Goalie'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { GoalieCategorySlug, GOALIE_CATEGORIES } from '@/types';
-import { ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen, CheckCircle } from 'lucide-react';
+import { ChevronRight, Heart, Brain, Clock, Target, MessageCircle, Dumbbell, BookOpen } from 'lucide-react';
 
 interface CategoryIntroProps {
   categorySlug: GoalieCategorySlug;
@@ -13,7 +13,7 @@ interface CategoryIntroProps {
   onStart: () => void;
 }
 
-const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
   feelings: Heart,
   knowledge: Brain,
   pre_game: Clock,
@@ -23,71 +23,23 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   learning: BookOpen,
 };
 
-const CATEGORY_COLORS: Record<string, {
-  gradient: string;
-  border: string;
-  text: string;
-  bg: string;
-  ring: string;
-}> = {
-  feelings: {
-    gradient: 'from-slate-700 to-slate-900',
-    border: 'border-slate-200',
-    text: 'text-slate-700',
-    bg: 'bg-slate-100',
-    ring: 'ring-slate-400',
-  },
-  knowledge: {
-    gradient: 'from-blue-500 to-blue-700',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    bg: 'bg-blue-50',
-    ring: 'ring-blue-400',
-  },
-  pre_game: {
-    gradient: 'from-blue-700 to-slate-800',
-    border: 'border-blue-200',
-    text: 'text-blue-800',
-    bg: 'bg-blue-50',
-    ring: 'ring-blue-500',
-  },
-  in_game: {
-    gradient: 'from-red-600 to-red-800',
-    border: 'border-red-200',
-    text: 'text-red-700',
-    bg: 'bg-red-50',
-    ring: 'ring-red-400',
-  },
-  post_game: {
-    gradient: 'from-zinc-600 to-zinc-800',
-    border: 'border-zinc-200',
-    text: 'text-zinc-700',
-    bg: 'bg-zinc-100',
-    ring: 'ring-zinc-400',
-  },
-  training: {
-    gradient: 'from-red-500 to-slate-700',
-    border: 'border-red-200',
-    text: 'text-red-700',
-    bg: 'bg-red-50',
-    ring: 'ring-red-400',
-  },
-  learning: {
-    gradient: 'from-slate-800 to-blue-900',
-    border: 'border-slate-200',
-    text: 'text-slate-700',
-    bg: 'bg-slate-100',
-    ring: 'ring-slate-400',
-  },
+const CATEGORY_ACCENT: Record<string, string> = {
+  feelings: '#a78bfa',
+  knowledge: '#37b5ff',
+  pre_game: '#2dd4bf',
+  in_game: '#f87171',
+  post_game: '#4ade80',
+  training: '#fb923c',
+  learning: '#818cf8',
 };
 
 const CATEGORY_TOOLTIPS: Record<string, string> = {
-  feelings: "Goaltending starts in your head before it ever reaches your body. How you feel about the position, how you handle pressure, how you bounce back — this is where development begins.",
+  feelings: "Goaltending starts in your head before it ever reaches your body. How you feel, handle pressure, and bounce back — this is where development begins.",
   knowledge: "No wrong answers here. This helps Smarter Goalie know where to start with your learning.",
-  pre_game: "The game doesn't start when the puck drops — it starts long before that. How you prepare at home, in the car, in the dressing room, and during warm-up all set the stage for how you'll perform.",
-  in_game: "Competing as a goalie isn't just about trying hard. It's about how you see the puck, how you read the play, and how your eyes, mind, and body work together.",
+  pre_game: "How you prepare at home, in the car, in the dressing room, and during warm-up sets the stage for performance.",
+  in_game: "It's about how you see the puck, read the play, and how your eyes, mind, and body work together.",
   post_game: "How you process your performance after a game can be just as important as the game itself.",
-  training: "The best goalies develop habits and routines that help them improve even when they're not on the ice.",
+  training: "The best goalies build habits and routines that help them improve even off the ice.",
   learning: "This helps us show you content in the way that works best for you.",
 };
 
@@ -101,119 +53,115 @@ export function CategoryIntro({
   onStart,
 }: CategoryIntroProps) {
   const Icon = CATEGORY_ICONS[categorySlug] || Target;
-  const colors = CATEGORY_COLORS[categorySlug] || CATEGORY_COLORS.knowledge;
+  const accent = CATEGORY_ACCENT[categorySlug] || '#37b5ff';
   const tooltip = CATEGORY_TOOLTIPS[categorySlug] || '';
-
   const categoryInfo = GOALIE_CATEGORIES.find(c => c.slug === categorySlug);
   const weight = categoryInfo?.weight || 0;
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-2xl">
+    <>
+      <style>{`
+        .ci-btn:hover { opacity: 0.88 !important; transform: scale(1.01) !important; }
+        @keyframes ci-fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ci-fade { animation: ci-fade 0.35s ease both; }
+      `}</style>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px' }}>
+        <div className="ci-fade" style={{ width: '100%', maxWidth: '520px' }}>
 
-        {/* ── Category dots tracker ─────────────────────────────────────── */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {Array.from({ length: totalCategories }).map((_, i) => (
-            <div key={i} className="flex items-center gap-2">
-              {i < categoryIndex ? (
-                <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm shadow-emerald-200">
-                  <CheckCircle className="w-4 h-4 text-white" />
-                </div>
-              ) : i === categoryIndex ? (
-                <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${colors.gradient} flex items-center justify-center shadow-md ring-2 ring-offset-2 ring-offset-white ${colors.ring}`}>
-                  <span className="text-[10px] font-black text-white">{i + 1}</span>
-                </div>
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center">
-                  <span className="text-[10px] font-semibold text-zinc-400">{i + 1}</span>
-                </div>
-              )}
-              {i < totalCategories - 1 && (
-                <div className={`h-0.5 w-4 rounded-full ${i < categoryIndex ? 'bg-emerald-400' : 'bg-zinc-200'}`} />
-              )}
-            </div>
-          ))}
-        </div>
+          {/* Header */}
+          <div style={{
+            position: 'relative', background: 'rgba(2,18,44,0.9)',
+            border: `1px solid ${accent}30`, borderRadius: '16px', overflow: 'hidden',
+            boxShadow: `0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px ${accent}10`,
+          }}>
+            {/* Top accent strip */}
+            <div style={{ height: '3px', background: `linear-gradient(90deg, ${accent}, ${accent}50, transparent)` }} />
 
-        {/* ── Main card ────────────────────────────────────────────────── */}
-        <div className="relative rounded-3xl overflow-hidden border border-zinc-200 shadow-xl shadow-zinc-200/60 bg-white">
-
-          {/* Card header — gradient hero */}
-          <div className={`relative bg-gradient-to-br ${colors.gradient} px-8 pt-10 pb-12 overflow-hidden text-center`}>
-            {/* Decorative glow blobs */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
-
-            {/* Subtle grid pattern */}
-            <div
-              className="absolute inset-0 opacity-10 pointer-events-none"
-              style={{
-                backgroundImage: 'linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)',
-                backgroundSize: '32px 32px',
-              }}
-            />
-
-            {/* Icon */}
-            <div className="relative z-10 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg mb-4">
-              <Icon className="w-10 h-10 text-white" />
-            </div>
-
-            {/* Category label */}
-            <div className="relative z-10">
-              <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-white/70 mb-2">
+            {/* Card header */}
+            <div style={{
+              padding: '20px 24px 16px', textAlign: 'center',
+              background: `radial-gradient(ellipse at 60% 0%, ${accent}18 0%, transparent 65%)`,
+              borderBottom: `1px solid ${accent}15`,
+            }}>
+              {/* Category label */}
+              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: `${accent}aa`, marginBottom: '10px' }}>
                 Category {categoryIndex + 1} of {totalCategories}
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-3">
+              </p>
+
+              {/* Icon */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '52px', height: '52px', borderRadius: '14px',
+                background: `${accent}20`, border: `1px solid ${accent}40`,
+                marginBottom: '12px', boxShadow: `0 6px 18px ${accent}18`,
+              }}>
+                <Icon size={26} color={accent} />
+              </div>
+
+              <h1 style={{ fontSize: 'clamp(20px,3.5vw,28px)', fontWeight: 900, color: '#fff', marginBottom: '6px', lineHeight: 1.15 }}>
                 {categoryName}
               </h1>
-              <p className="text-white/80 text-base leading-relaxed max-w-md mx-auto">
+              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', lineHeight: 1.5, maxWidth: '360px', margin: '0 auto' }}>
                 {categoryDescription}
               </p>
             </div>
-          </div>
 
-          {/* Card body */}
-          <div className="px-8 py-6 space-y-5">
+            {/* Card body */}
+            <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-            {/* Stats row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className={`rounded-2xl p-4 ${colors.bg} ${colors.border} border text-center`}>
-                <p className={`text-2xl font-black ${colors.text}`}>{questionCount}</p>
-                <p className="text-xs text-zinc-500 font-medium mt-0.5">Questions</p>
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {[
+                  { label: 'Questions', value: String(questionCount) },
+                  { label: 'Profile Weight', value: `${weight}%` },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{
+                    padding: '12px', borderRadius: '10px', textAlign: 'center',
+                    background: `${accent}0c`, border: `1px solid ${accent}18`,
+                  }}>
+                    <p style={{ fontSize: '22px', fontWeight: 900, color: accent, lineHeight: 1 }}>{value}</p>
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '3px' }}>{label}</p>
+                  </div>
+                ))}
               </div>
-              <div className={`rounded-2xl p-4 ${colors.bg} ${colors.border} border text-center`}>
-                <p className={`text-2xl font-black ${colors.text}`}>{weight}%</p>
-                <p className="text-xs text-zinc-500 font-medium mt-0.5">Profile Weight</p>
-              </div>
+
+              {/* Insight */}
+              {tooltip && (
+                <div style={{
+                  display: 'flex', gap: '10px', padding: '12px 14px',
+                  background: 'rgba(255,255,255,0.03)', borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                  <div style={{ width: '3px', flexShrink: 0, borderRadius: '99px', background: `${accent}80`, minHeight: '32px' }} />
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.55 }}>{tooltip}</p>
+                </div>
+              )}
+
+              {/* CTA */}
+              <button
+                className="ci-btn"
+                onClick={onStart}
+                style={{
+                  width: '100%', padding: '13px',
+                  borderRadius: '10px',
+                  background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`,
+                  border: 'none', color: '#fff',
+                  fontWeight: 800, fontSize: '15px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                  transition: 'opacity 0.2s, transform 0.2s',
+                  boxShadow: `0 4px 16px ${accent}28`,
+                }}
+              >
+                Start Category <ChevronRight size={16} />
+              </button>
+
+              <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.22)' }}>
+                No right or wrong answers — answer honestly for the best results
+              </p>
             </div>
-
-            {/* Insight box */}
-            {tooltip && (
-              <div className="flex gap-3 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                <div className={`w-1 flex-shrink-0 rounded-full bg-gradient-to-b ${colors.gradient}`} />
-                <p className="text-sm text-zinc-600 leading-relaxed">
-                  {tooltip}
-                </p>
-              </div>
-            )}
-
-            {/* CTA */}
-            <button
-              onClick={onStart}
-              className={`w-full py-4 rounded-2xl font-bold text-base text-white bg-gradient-to-r ${colors.gradient} shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2`}
-            >
-              Start Category
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Foot note */}
-            <p className="text-center text-xs text-zinc-400">
-              No right or wrong answers — answer honestly for the best results
-            </p>
           </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 }

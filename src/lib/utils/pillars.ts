@@ -91,6 +91,14 @@ export function getPillarDocId(slug: PillarSlug): PillarId {
 }
 
 /**
+ * Get the app URL for a pillar slug
+ * Used by charting pages to navigate from low-score badges → Pillar content
+ */
+export function getPillarUrl(slug: PillarSlug): string {
+  return `/pillars/${PILLAR_IDS[slug]}`;
+}
+
+/**
  * Get pillar info by Firestore document ID
  */
 export function getPillarByDocId(docId: string): PillarInfo | null {

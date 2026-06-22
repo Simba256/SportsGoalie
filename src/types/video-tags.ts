@@ -20,7 +20,7 @@ export type PillarTag = PillarSlug;
 /**
  * System tags - goaltending methodology systems
  */
-export type SystemTag = '7AMS' | '7PTS' | '4LAS' | 'Box' | 'General';
+export type SystemTag = '7AMS' | '6ZS' | '4LAS' | 'Box' | 'General';
 
 /**
  * User type tags - target audience for content
@@ -62,7 +62,7 @@ export interface VideoStructuredTags {
 // ==========================================
 
 /** All available system tags */
-export const SYSTEM_TAGS: SystemTag[] = ['7AMS', '7PTS', '4LAS', 'Box', 'General'];
+export const SYSTEM_TAGS: SystemTag[] = ['7AMS', '6ZS', '4LAS', 'Box', 'General'];
 
 /** All available user type tags */
 export const USER_TYPE_TAGS: UserTypeTag[] = ['goalie', 'parent', 'coach'];
@@ -86,8 +86,8 @@ export const SYSTEM_TAG_METADATA: Record<SystemTag, { name: string; description:
     description: 'Movement patterns based on 7 angles from the net',
     color: 'blue',
   },
-  '7PTS': {
-    name: '7-Point Tracking System',
+  '6ZS': {
+    name: '6-Zone System',
     description: 'Puck tracking methodology for visual acquisition',
     color: 'green',
   },

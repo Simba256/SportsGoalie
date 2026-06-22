@@ -10,132 +10,107 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const PUBLIC_ROUTES = ['/', '/onboarding', '/pricing'];
+const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact', '/bridge'];
+const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
+const PUBLIC_ROUTES = ['/', '/pricing'];
 
 function isPublicRoute(pathname: string): boolean {
-  if (pathname === '/') {
-    return true;
-  }
+  if (pathname === '/') return true;
   return PUBLIC_ROUTES.some(route => route !== '/' && pathname.startsWith(route));
 }
-
 function isBareRoute(pathname: string): boolean {
   return BARE_ROUTES.some(route => pathname.startsWith(route));
 }
-
-function isAdminRoute(pathname: string): boolean {
-  return pathname.startsWith('/admin');
+function isNakedRoute(pathname: string): boolean {
+  return NAKED_ROUTES.some(route => pathname.startsWith(route));
 }
-
-function isCoachRoute(pathname: string): boolean {
-  return pathname.startsWith('/coach');
+function isOnboardingRoute(pathname: string): boolean {
+  return ONBOARDING_ROUTES.some(route => pathname.startsWith(route));
 }
-
-function isParentRoute(pathname: string): boolean {
-  return pathname.startsWith('/parent');
+function isAdminRoute(pathname: string): boolean { return pathname.startsWith('/admin'); }
+function isCoachRoute(pathname: string): boolean { return pathname.startsWith('/coach'); }
+function isParentRoute(pathname: string): boolean { return pathname.startsWith('/parent'); }
+function isFullscreenRoute(pathname: string): boolean {
+  return pathname.startsWith('/charting/sessions/') || pathname.startsWith('/charting/analytics') || pathname.startsWith('/training/log');
 }
 
 function getPageTitle(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
   const first = segments[0];
-
   if (first === 'admin') {
-    const adminTitles: Record<string, string> = {
-      admin: 'Dashboard',
-      analytics: 'Analytics',
-      users: 'Users',
-      coaches: 'Coaches',
-      pillars: 'Pillars',
-      quizzes: 'Quizzes',
-      'video-reviews': 'Video Reviews',
-      'form-templates': 'Form Templates',
-      messages: 'Messages',
-      moderation: 'Moderation',
-      charting: 'Charting',
-      settings: 'Settings',
-      'project-assistant': 'Project Assistant',
+    const titles: Record<string, string> = {
+      admin: 'Dashboard', analytics: 'Analytics', users: 'Users', coaches: 'Coaches',
+      pillars: 'Pillars', quizzes: 'Quizzes', 'video-reviews': 'Video Reviews',
+      'form-templates': 'Form Templates', messages: 'Messages', moderation: 'Moderation',
+      charting: 'Charting', settings: 'Settings', 'project-assistant': 'Project Assistant',
     };
-    return adminTitles[segments[1]] || 'Dashboard';
+    return titles[segments[1]] || 'Dashboard';
   }
-
   if (first === 'coach') {
-    const coachTitles: Record<string, string> = {
-      coach: 'Dashboard',
-      students: 'My Students',
-      content: 'Content Library',
+    const titles: Record<string, string> = {
+      coach: 'Dashboard', students: 'My Goalies', content: 'Content Library',
+      assessment: 'Baseline Assessment', profile: 'Profile', charting: 'Charting',
     };
-    return coachTitles[segments[1]] || 'Dashboard';
+    return titles[segments[1]] || 'Dashboard';
   }
-
   if (first === 'parent') {
-    const parentTitles: Record<string, string> = {
-      parent: 'Dashboard',
-      goalies: 'My Goalies',
-      'link-child': 'Link Goalie',
-      onboarding: 'Assessment',
-      perception: 'Perception',
-      profile: 'Profile',
-      child: 'Goalie Details',
+    const titles: Record<string, string> = {
+      parent: 'Dashboard', goalies: 'My Goalies', 'link-child': 'Link Goalie',
+      onboarding: 'Assessment', perception: 'Perception', profile: 'Profile', child: 'Goalie Details',
     };
-    return parentTitles[segments[1]] || 'Dashboard';
+    return titles[segments[1]] || 'Dashboard';
   }
-
-  const studentTitles: Record<string, string> = {
-    dashboard: 'Dashboard',
-    pillars: 'Pillars',
-    lessons: 'Lessons',
-    quizzes: 'Quizzes',
-    quiz: 'Quiz',
-    progress: 'Analytics',
-    goals: 'Goals & Achievements',
-    messages: 'Messages',
-    profile: 'Profile',
-    charting: 'Charting',
-    'mind-vault': 'Mind Vault',
-    learn: 'Learn',
+  const titles: Record<string, string> = {
+    dashboard: 'Dashboard', pillars: 'Pillars', lessons: 'Lessons', quizzes: 'Quizzes',
+    quiz: 'Quiz', progress: 'Analytics', goals: 'Goals & Achievements', messages: 'Messages',
+    profile: 'Profile', charting: 'Charting', 'mind-vault': 'Mind Vault', learn: 'Learn',
+    training: 'Daily Training',
   };
-
-  return studentTitles[first] || 'Dashboard';
+  return titles[first] || 'Dashboard';
 }
 
-function TopBar({
-  pageTitle,
-  onToggleSidebar,
-}: {
-  pageTitle: string;
-  onToggleSidebar: () => void;
-}) {
+function TopBar({ pageTitle, onToggleSidebar }: { pageTitle: string; onToggleSidebar: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center px-6 gap-4">
-      <button
-        onClick={onToggleSidebar}
-        className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-        aria-label="Toggle sidebar"
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-      <span className="text-sm text-gray-900 font-semibold">{pageTitle}</span>
-    </header>
+    <>
+      <style>{`.tb-toggle:hover{background:rgba(0,255,255,0.08)!important;color:#00FFFF!important}`}</style>
+      <header style={{ position: 'sticky', top: 0, zIndex: 30, height: '64px', background: 'rgba(6,5,15,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,255,255,0.1)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: '16px', boxShadow: '0 1px 32px rgba(0,0,0,0.5)' }}>
+        <button onClick={onToggleSidebar} className="lg:hidden tb-toggle"
+          style={{ padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
+          aria-label="Toggle sidebar">
+          <svg style={{ height: '20px', width: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em' }}>{pageTitle}</span>
+        <div style={{ flex: 1 }} />
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'linear-gradient(135deg, #00FFFF, #00FF99)', boxShadow: '0 0 10px rgba(0,255,255,0.7)', flexShrink: 0 }} />
+      </header>
+    </>
   );
 }
+
+const appBg = '#041830';
+const adminBg = 'linear-gradient(145deg, #010b1e 0%, #020f24 50%, #010d20 100%)';
 
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const toggle = () => setSidebarOpen(o => !o);
 
-  if (searchParams.get('embedded') === '1') {
-    return <>{children}</>;
-  }
+  if (searchParams.get('embedded') === '1') return <>{children}</>;
+  if (isNakedRoute(pathname)) return <>{children}</>;
+  if (isBareRoute(pathname)) return <>{children}</>;
 
-  if (isBareRoute(pathname)) {
+  // Onboarding: Header7 navbar (fixed) + dark content below it, no footer
+  if (isOnboardingRoute(pathname)) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
-        <main className="flex-1">{children}</main>
-        <Footer7 />
-      </div>
+      <>
+        <Header7 />
+        <div style={{ paddingTop: '72px', height: '100dvh', overflow: 'hidden', background: 'linear-gradient(145deg, #06050f 0%, #0d0b1e 50%, #08071a 100%)' }}>
+          {children}
+        </div>
+      </>
     );
   }
 
@@ -153,11 +128,10 @@ export function LayoutShell({ children }: { children: ReactNode }) {
 
   if (isAdminRoute(pathname)) {
     return (
-      <div className="min-h-screen bg-white">
-        <AdminSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-
+      <div style={{ minHeight: '100vh', background: adminBg }}>
+        <AdminSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-          <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
         </div>
       </div>
@@ -166,13 +140,11 @@ export function LayoutShell({ children }: { children: ReactNode }) {
 
   if (isCoachRoute(pathname)) {
     return (
-      <div className="min-h-screen bg-white">
-        <CoachSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-
+      <div style={{ minHeight: '100vh', background: appBg }}>
+        <CoachSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-          <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
-          <Footer7 />
         </div>
       </div>
     );
@@ -180,26 +152,24 @@ export function LayoutShell({ children }: { children: ReactNode }) {
 
   if (isParentRoute(pathname)) {
     return (
-      <div className="min-h-screen bg-white">
-        <ParentSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-
+      <div style={{ minHeight: '100vh', background: appBg }}>
+        <ParentSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-          <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
           <main className="p-6">{children}</main>
-          <Footer7 />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+  const fullscreen = isFullscreenRoute(pathname);
 
+  return (
+    <div style={{ minHeight: '100vh', background: appBg }}>
+      <DashboardSidebar isOpen={sidebarOpen} onToggle={toggle} />
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        <TopBar pageTitle={pageTitle} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="p-6">{children}</main>
-        <Footer7 />
+        {!fullscreen && <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />}
+        <main className={fullscreen ? '' : 'p-6'}>{children}</main>
       </div>
     </div>
   );

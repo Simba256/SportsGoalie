@@ -104,24 +104,42 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
+      // Coaches and admins can list/query the users collection (needed for student roster queries)
+      allow list: if isAdmin() || isCoach();
+
       // Users can read their own profile, admins can read all
       // Coaches can read all student profiles (needed to browse and add students to roster)
       // Students can read their assigned coach's profile
+      // Students can read only their linked parent profiles (for Family Links UI)
       // Parents can read student profiles (needed to view linked children)
-      allow read: if isOwnerOrAdmin(userId) ||
+      allow get: if isOwnerOrAdmin(userId) ||
                      (isCoach() && resource.data.role == 'student') ||
                      (isAuthenticated() && resource.data.role == 'coach') ||
-                     (isParent() && resource.data.role == 'student');
+                     (isAuthenticated() &&
+                      resource.data.role == 'parent' &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('linkedParentIds', []).hasAny([userId])) ||
+                     (isParent() && resource.data.role == 'student') ||
+                     // Direct fallback: parent (by Firestore role) reading a student profile
+                     (isAuthenticated() &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'parent' &&
+                      resource.data.role == 'student') ||
+                     (isAuthenticated() &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'student' &&
+                      resource.data.role == 'parent');
 
       // Users can create their own profile during registration
       // After createUserWithEmailAndPassword, the user is automatically signed in
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // Users can update their own profile (except role and email), admins can update any
+      // Parents can update a student's linkedParentIds (needed for parent-child linking)
       allow update: if (isOwner(userId) &&
                        !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
                        !('email' in request.resource.data.diff(resource.data).affectedKeys())) ||
-                      isAdmin();
+                      isAdmin() ||
+                      (isParent() &&
+                       resource.data.role == 'student' &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedParentIds', 'updatedAt']));
 
       // Only admins can delete users
       allow delete: if isAdmin();
@@ -539,8 +557,8 @@ service cloud.firestore {
 
     // Sessions collection - Game and Practice tracking
     match /sessions/{sessionId} {
-      // Students can get their own sessions, admins can get all
-      allow get: if isOwnerOrAdmin(resource.data.studentId);
+      // Students can get their own sessions, coaches/parents can get any session (needed for charting), admins can get all
+      allow get: if isOwnerOrAdmin(resource.data.studentId) || isCoachOrAdmin() || isParent();
 
       // Students can list/query their own sessions (application filters by studentId), admins can list all
       // Trust application layer to filter by studentId for students
@@ -597,7 +615,67 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Parent Charting Entries collection - Parent-authored game charts per student session
+    match /parent_charting_entries/{entryId} {
+      // Any authenticated user can read (app-layer filters by parentId/studentId; students need read for cross-reference)
+      allow read: if isAuthenticated();
+
+      // Parents can create entries where they are the author
+      allow create: if isAuthenticated() &&
+                       isParent() &&
+                       hasRequiredFields(['sessionId', 'studentId', 'parentId', 'completedSections']) &&
+                       request.resource.data.parentId == getUserId() &&
+                       request.resource.data.completedSections is list;
+
+      // Parents can update their own entries; admins can update any
+      allow update: if isAuthenticated() && (
+        (isParent() && resource.data.parentId == getUserId()) ||
+        isAdmin()
+      );
+
+      // Only admins can delete parent chart entries
+      allow delete: if isAdmin();
+    }
+
+    // Coach Charting Entries collection - Coach-authored game charts per student session
+    match /coach_charting_entries/{entryId} {
+      // Coaches can read their own entries; admins can read all
+      allow get: if isCoachOrAdmin() && (isAdmin() || resource.data.coachId == getUserId());
+
+      // Coaches can list/query entries (application filters by coachId); admins can list all
+      allow list: if isCoachOrAdmin();
+
+      // Coaches can create entries where they are the author
+      allow create: if isCoachOrAdmin() &&
+                       hasRequiredFields(['sessionId', 'studentId', 'coachId', 'completedSections']) &&
+                       request.resource.data.coachId == getUserId() &&
+                       request.resource.data.completedSections is list;
+
+      // Coaches can update their own entries; admins can update any
+      allow update: if isCoachOrAdmin() && (isAdmin() || resource.data.coachId == getUserId());
+
+      // Only admins can delete coach chart entries
+      allow delete: if isAdmin();
+    }
+
     // ==================== DYNAMIC CHARTING SYSTEM ====================
+
+    // Goalie Charting Profile collection - progression state for goalie self-charting
+    match /goalie_charting_profile/{userId} {
+      // Owner can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Owner can create/bootstrap their own profile, admins can create for any user
+      allow create: if isAuthenticated() &&
+                       (isOwner(userId) || isAdmin()) &&
+                       hasRequiredFields(['userId', 'currentLevel', 'unlockedLevels', 'stats']);
+
+      // Owner can update own progression profile, admins can update any
+      allow update: if isOwnerOrAdmin(userId);
+
+      // Only admins can delete progression profiles
+      allow delete: if isAdmin();
+    }
 
     // Form Templates collection - Dynamic form definitions
     match /form_templates/{templateId} {
@@ -745,9 +823,11 @@ service cloud.firestore {
       // Students can read their own evaluation
       // Coaches can read evaluations of any student (needed for review workflow)
       // Admins can read all
+      // Parents can read their linked children's evaluations (for perception comparison)
       allow read: if isAuthenticated() && (
         isOwnEvaluation() ||               // Student reads own (V1 or V2)
-        isCoachOrAdmin()                   // Coaches/admins can read for review
+        isCoachOrAdmin() ||                // Coaches/admins can read for review
+        isParent()                         // Parents can read child evaluations
       );
 
       // Students can create their own evaluation during onboarding
@@ -864,14 +944,14 @@ service cloud.firestore {
 
     // Parent Links collection - Active parent-child relationships
     match /parentLinks/{linkId} {
-      // Parents can read their own links, children can read links to them, admins can read all
-      allow read: if isAuthenticated() && (
+      // Individual document reads — must be participant or admin
+      allow get: if isAuthenticated() && (
         resource.data.parentId == getUserId() ||
         resource.data.childId == getUserId() ||
         isAdmin()
       );
 
-      // Allow list queries filtered by parentId or childId
+      // List/query — any authenticated user can query (app filters by their own parentId/childId)
       allow list: if isAuthenticated();
 
       // Authenticated users can create links (service validates roles and codes)
@@ -897,6 +977,11 @@ service cloud.firestore {
       allow read: if isParent();
     }
 
+    // Parents need to read video quiz progress to load child stats in the dashboard
+    match /video_quiz_progress/{progressId} {
+      allow read: if isParent();
+    }
+
     // Mind Vault entries — private to the goalie
     match /mind_vault_entries/{entryId} {
       allow read: if isAuthenticated();
@@ -904,6 +989,109 @@ service cloud.firestore {
                        isOwner(request.resource.data.studentId);
       allow update: if isOwnerOrAdmin(resource.data.studentId);
       allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
+    // Generic Invitations collection — all roles (student/coach/goalie_coach/parent)
+    match /invitations/{invitationId} {
+      // Admins can read all invitations
+      allow read: if isAdmin();
+
+      // PUBLIC: anyone can query by token — needed so the accept-invite page
+      // can validate the token before the user has an account
+      allow list: if true;
+
+      // Only admins can create invitations
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['email', 'token', 'role', 'status', 'invitedBy', 'invitedByName', 'createdAt', 'expiresAt']) &&
+                       request.resource.data.email is string &&
+                       isValidEmail(request.resource.data.email) &&
+                       request.resource.data.token is string &&
+                       request.resource.data.token.size() > 0 &&
+                       (request.resource.data.status == 'pending' ||
+                        request.resource.data.status == 'accepted' ||
+                        request.resource.data.status == 'expired' ||
+                        request.resource.data.status == 'revoked') &&
+                       request.resource.data.invitedBy is string &&
+                       request.resource.data.invitedByName is string &&
+                       isValidTimestamp(request.resource.data.createdAt) &&
+                       isValidTimestamp(request.resource.data.expiresAt);
+
+      // Admins can update (resend, revoke); authenticated users can mark accepted
+      // after completing registration via the invite link
+      allow update: if isAdmin() || isAuthenticated();
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ==================== PARENT VOICE CHANNEL ====================
+
+    // Parent Voice Submissions — Phase 1: Connect With Us form
+    match /parent_voice_submissions/{submissionId} {
+      // Parents can read their own submissions
+      allow get: if isAuthenticated() && resource.data.parentId == getUserId();
+      allow list: if isAuthenticated() && (
+        request.auth.uid != null &&
+        // Parent sees only their own (application enforces the where clause)
+        isParent() ||
+        isAdmin()
+      );
+
+      // Parents can create submissions (parentId must match their own UID)
+      allow create: if isAuthenticated() &&
+                       request.resource.data.parentId == getUserId() &&
+                       request.resource.data.category in ['COMPLIMENT', 'CONCERN', 'QUESTION'] &&
+                       request.resource.data.subject is string &&
+                       request.resource.data.subject.size() > 0 &&
+                       request.resource.data.subject.size() <= 80 &&
+                       request.resource.data.body is string &&
+                       request.resource.data.body.size() > 0 &&
+                       request.resource.data.body.size() <= 1000 &&
+                       request.resource.data.status == 'NEW';
+
+      // Only admins can update (reply, change status, escalate)
+      allow update: if isAdmin();
+
+      // Only admins can delete/archive
+      allow delete: if isAdmin();
+    }
+
+    // L-Index catalogue — admin-managed training items
+    match /l_index_items/{itemId} {
+      // Anyone authenticated can read (students need to load items for training logs)
+      allow read: if isAuthenticated();
+
+      // Only admins can create, update, delete
+      allow create: if isAdmin() &&
+                       hasRequiredFields(['lIndex', 'topLevelCategory', 'name', 'definition', 'levelTag', 'isActive', 'createdBy']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.definition is string &&
+                       request.resource.data.definition.size() > 0;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Training Logs collection — daily training log entries per student
+    match /training_logs/{logId} {
+      allow read: if isOwnerOrAdmin(resource.data.goalieId);
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       (isOwner(request.resource.data.goalieId) || isAdmin()) &&
+                       hasRequiredFields(['goalieId', 'date', 'items']);
+      allow update: if isOwnerOrAdmin(resource.data.goalieId);
+      allow delete: if isOwnerOrAdmin(resource.data.goalieId);
+    }
+
+    // L-Index Suggestions — goalies can submit, admins can review
+    match /l_index_suggestions/{suggestionId} {
+      allow list, get: if isAdmin();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.goalieId == getUserId() &&
+                       hasRequiredFields(['goalieId', 'suggestedName', 'suggestedCategory', 'status']);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Catch-all rule for any other collections

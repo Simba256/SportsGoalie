@@ -527,3 +527,12 @@ export function getCoachCategoryOrder(): CoachCategorySlug[] {
 export function getCoachTotalQuestionCount(): number {
   return COACH_ASSESSMENT_QUESTIONS.length;
 }
+
+/**
+ * Get assessment questions for a specific coach category
+ */
+export function getQuestionsForCoachCategory(slug: CoachCategorySlug): AssessmentQuestion[] {
+  return COACH_ASSESSMENT_QUESTIONS
+    .filter(q => q.categorySlug === slug)
+    .sort((a, b) => a.order - b.order);
+}

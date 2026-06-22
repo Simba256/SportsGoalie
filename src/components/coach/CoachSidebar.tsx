@@ -3,28 +3,23 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  LayoutDashboard,
-  Users,
-  FolderOpen,
-  LogOut,
-  ChevronLeft,
-  Menu,
-  X,
-  User,
-  UserCircle,
+  LayoutDashboard, Users, FolderOpen, LogOut,
+  ChevronLeft, Menu, X, User, UserCircle, ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
-interface CoachSidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
+const BLUE = '#37b5ff';
+const sidebarBg = 'linear-gradient(180deg, #000f28 0%, #051e3e 60%, #062344 100%)';
+const borderColor = 'rgba(55,181,255,0.12)';
+
+interface CoachSidebarProps { isOpen: boolean; onToggle: () => void; }
 
 const navItems = [
-  { label: 'Dashboard', href: '/coach', icon: LayoutDashboard },
-  { label: 'My Students', href: '/coach/students', icon: Users },
-  { label: 'Content Library', href: '/coach/content', icon: FolderOpen },
-  { label: 'Profile', href: '/profile', icon: UserCircle },
+  { label: 'Dashboard',       href: '/coach',              icon: LayoutDashboard },
+  { label: 'My Goalies',      href: '/coach/students',     icon: Users },
+  { label: 'Charting',        href: '/coach/charting',     icon: ClipboardList },
+  { label: 'Content Library', href: '/coach/content',      icon: FolderOpen },
+  { label: 'Profile',         href: '/coach/profile',      icon: UserCircle },
 ];
 
 export function CoachSidebar({ isOpen, onToggle }: CoachSidebarProps) {
@@ -32,107 +27,66 @@ export function CoachSidebar({ isOpen, onToggle }: CoachSidebarProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/');
-  };
-
-  const isActive = (href: string) => {
-    if (href === '/coach') return pathname === '/coach';
-    return pathname.startsWith(href);
-  };
+  const handleLogout = async () => { await logout(); router.push('/'); };
+  const isActive = (href: string) => href === '/coach' ? pathname === '/coach' : pathname.startsWith(href);
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
+      <style>{`
+        .c-sidebar { width: 0; transform: translateX(-100%); transition: width 0.3s ease, transform 0.3s ease; }
+        .c-sidebar-open { width: 256px !important; transform: translateX(0) !important; }
+        @media (min-width: 1024px) { .c-sidebar { width: 80px !important; transform: translateX(0) !important; } }
+        .c-nav-inactive:hover{background:rgba(55,181,255,0.08)!important;color:#fff!important}
+        .c-logout:hover{background:rgba(248,113,113,0.1)!important;color:#f87171!important}
+        .c-toggle:hover{background:rgba(55,181,255,0.1)!important;color:${BLUE}!important}
+      `}</style>
+      {isOpen && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 40 }} className="lg:hidden" onClick={onToggle} />}
+      <aside className={isOpen ? 'c-sidebar-open' : 'c-sidebar'} style={{ position: 'fixed', top: 0, left: 0, height: '100%', zIndex: 50, display: 'flex', flexDirection: 'column', background: sidebarBg, borderRight: `1px solid ${borderColor}`, boxShadow: '4px 0 24px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out
-          ${isOpen ? 'w-64' : 'w-0 lg:w-20'}
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          bg-white border-r border-gray-200 shadow-sm
-        `}
-      >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', padding: '0 16px', borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
           {isOpen ? (
             <>
-              <Link href="/" className="flex items-center gap-2">
-                <img
-                  src="/logo.png"
-                  alt="Smarter Goalie"
-                  className="h-8 w-auto"
-                />
-                <span className="text-gray-900 font-bold text-sm">
-                  SmarterGoalie
-                </span>
+              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                <img src="/logo.png" alt="Smarter Goalie" style={{ height: '32px', width: 'auto' }} />
+                <span style={{ color: '#fff', fontWeight: 800, fontSize: '13px' }}>SmarterGoalie</span>
               </Link>
-              <button
-                onClick={onToggle}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-              >
-                <X className="h-5 w-5 lg:hidden" />
-                <ChevronLeft className="h-5 w-5 hidden lg:block" />
+              <button onClick={onToggle} className="c-toggle" style={{ padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <X size={18} className="lg:hidden" /><ChevronLeft size={18} className="hidden lg:block" />
               </button>
             </>
           ) : (
-            <button
-              onClick={onToggle}
-              className="hidden lg:flex w-full items-center justify-center p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="h-5 w-5" />
+            <button onClick={onToggle} className="c-toggle hidden lg:flex" style={{ width: '100%', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <Menu size={20} />
             </button>
           )}
         </div>
 
-        {/* User Profile Section */}
-        <div className={`px-4 py-4 border-b border-gray-200 ${!isOpen && 'lg:px-2 lg:py-3'}`}>
-          <div className={`flex items-center ${isOpen ? 'gap-3' : 'lg:justify-center'}`}>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center flex-shrink-0">
-              <User className="h-5 w-5 text-white" />
+        {/* User */}
+        <div style={{ padding: isOpen ? '16px' : '12px 8px', borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isOpen ? '12px' : '0', justifyContent: isOpen ? 'flex-start' : 'center' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `2px solid rgba(55,181,255,0.3)` }}>
+              <User size={18} color="#000f28" />
             </div>
             {isOpen && (
-              <div className="overflow-hidden">
-                <p className="text-gray-900 text-sm font-semibold truncate">
-                  {user?.displayName || user?.email?.split('@')[0]}
-                </p>
-                <p className="text-gray-500 text-xs truncate">Coach</p>
+              <div style={{ overflow: 'hidden' }}>
+                <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.displayName || user?.email?.split('@')[0]}</p>
+                <p style={{ color: BLUE, fontSize: '11px', fontWeight: 600 }}>TEAM</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {navItems.map((item) => {
+        {/* Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 8px', scrollbarWidth: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {navItems.map(item => {
             const active = isActive(item.href);
             const Icon = item.icon;
-
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => {
-                  if (window.innerWidth < 1024) onToggle();
-                }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                  ${!isOpen && 'lg:justify-center lg:px-2'}
-                  ${
-                    active
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }
-                `}
-                title={!isOpen ? item.label : undefined}
-              >
-                <Icon className={`h-5 w-5 flex-shrink-0 ${active ? 'text-white' : ''}`} />
+              <Link key={item.href} href={item.href} onClick={() => { if (window.innerWidth < 1024) onToggle(); }} className={!active ? 'c-nav-inactive' : ''} title={!isOpen ? item.label : undefined}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: isOpen ? '10px 12px' : '10px', justifyContent: isOpen ? 'flex-start' : 'center', borderRadius: '10px', textDecoration: 'none', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s', background: active ? `rgba(55,181,255,0.18)` : 'transparent', color: active ? BLUE : 'rgba(255,255,255,0.55)', border: active ? `1px solid rgba(55,181,255,0.3)` : '1px solid transparent', boxShadow: active ? `0 0 12px rgba(55,181,255,0.12)` : 'none' }}>
+                <Icon size={18} style={{ flexShrink: 0, color: active ? BLUE : undefined }} />
                 {isOpen && <span>{item.label}</span>}
               </Link>
             );
@@ -140,15 +94,10 @@ export function CoachSidebar({ isOpen, onToggle }: CoachSidebarProps) {
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t border-gray-200">
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors
-              ${!isOpen && 'lg:justify-center lg:px-2'}
-            `}
-            title={!isOpen ? 'Log out' : undefined}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
+        <div style={{ padding: '8px', borderTop: `1px solid ${borderColor}`, flexShrink: 0 }}>
+          <button onClick={handleLogout} className="c-logout" title={!isOpen ? 'Log out' : undefined}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: isOpen ? '10px 12px' : '10px', justifyContent: isOpen ? 'flex-start' : 'center', borderRadius: '10px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            <LogOut size={18} style={{ flexShrink: 0 }} />
             {isOpen && <span>Log out</span>}
           </button>
         </div>

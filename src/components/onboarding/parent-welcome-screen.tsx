@@ -1,7 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Users, ChevronRight, Eye, Brain, Clock, Car, Target, MessageCircle } from 'lucide-react';
+
+const BLUE = '#37b5ff';
 
 interface ParentWelcomeScreenProps {
   parentName: string;
@@ -9,91 +10,108 @@ interface ParentWelcomeScreenProps {
 }
 
 const PARENT_CATEGORIES = [
-  { name: 'Goalie State', icon: Eye, color: 'bg-purple-100 text-purple-600 border-purple-200' },
-  { name: 'Understanding', icon: Brain, color: 'bg-blue-100 text-blue-600 border-blue-200' },
-  { name: 'Pre-Game', icon: Clock, color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
-  { name: 'Car Ride Home', icon: Car, color: 'bg-amber-100 text-amber-600 border-amber-200' },
-  { name: 'Development Role', icon: Users, color: 'bg-green-100 text-green-600 border-green-200' },
-  { name: 'Expectations', icon: Target, color: 'bg-red-100 text-red-600 border-red-200' },
-  { name: 'Preferences', icon: MessageCircle, color: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
+  { name: 'Goalie State', icon: Eye, color: '#a78bfa' },
+  { name: 'Understanding', icon: Brain, color: BLUE },
+  { name: 'Pre-Game', icon: Clock, color: '#22d3ee' },
+  { name: 'Car Ride Home', icon: Car, color: '#fbbf24' },
+  { name: 'Development Role', icon: Users, color: '#4ade80' },
+  { name: 'Expectations', icon: Target, color: '#f87171' },
+  { name: 'Preferences', icon: MessageCircle, color: '#fb923c' },
+];
+
+const CHECK_ITEMS = [
+  'Quick intake questions about your goalie',
+  '28 assessment questions across 7 categories',
+  'All multiple choice — no right or wrong answers',
+  'Your responses cross-reference with your goalie\'s self-assessment',
+  'Progress is saved automatically',
 ];
 
 export function ParentWelcomeScreen({ parentName, onBegin }: ParentWelcomeScreenProps) {
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full text-center">
-        {/* Logo */}
-        <div className="mb-8">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500 shadow-lg shadow-red-500/20">
-            <Users className="w-12 h-12 text-white" />
+    <>
+      <style>{`
+        .pw-begin:hover { opacity: 0.88 !important; transform: translateY(-2px) !important; }
+        .pw-cat:hover { border-color: rgba(55,181,255,0.35) !important; }
+        @keyframes pw-fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .pw-fade { animation: pw-fade 0.4s ease both; }
+        @media (max-width: 720px) {
+          .pw-grid { flex-direction: column !important; }
+          .pw-left { align-items: center !important; text-align: center !important; }
+        }
+      `}</style>
+
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 60px' }}>
+        <div className="pw-fade pw-grid" style={{ display: 'flex', gap: '56px', alignItems: 'center', maxWidth: '860px', width: '100%' }}>
+
+          {/* ── LEFT: Branding + CTA ── */}
+          <div className="pw-left" style={{ flex: '0 0 auto', maxWidth: '340px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+
+            {/* Icon */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '50%', background: `${BLUE}18`, border: `2px solid ${BLUE}50`, boxShadow: `0 0 28px ${BLUE}28`, marginBottom: '20px' }}>
+              <Users size={32} color={BLUE} />
+            </div>
+
+            {/* Title */}
+            <h1 style={{ fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '12px' }}>
+              Welcome,{' '}
+              <span style={{ color: BLUE }}>{parentName}</span>!
+            </h1>
+
+            <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginBottom: '24px' }}>
+              Help us understand your perspective on your goalie&apos;s development across{' '}
+              <span style={{ color: BLUE, fontWeight: 700 }}>7 key areas</span>.
+            </p>
+
+            {/* CTA */}
+            <button
+              className="pw-begin"
+              onClick={onBegin}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, border: 'none', color: '#000f28', padding: '15px 32px', borderRadius: '12px', fontSize: '16px', fontWeight: 800, cursor: 'pointer', boxShadow: `0 8px 24px ${BLUE}45`, transition: 'all 0.2s', marginBottom: '12px' }}
+            >
+              Let&apos;s Get Started <ChevronRight size={18} />
+            </button>
+
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+              Answer honestly — your perspective builds a complete picture.
+            </p>
+          </div>
+
+          {/* ── DIVIDER ── */}
+          <div style={{ width: '1px', alignSelf: 'stretch', background: 'rgba(55,181,255,0.12)', flexShrink: 0 }} />
+
+          {/* ── RIGHT: Details ── */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Category badges */}
+            <div>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>7 Assessment Areas</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                {PARENT_CATEGORIES.map(({ name, icon: Icon, color }) => (
+                  <div key={name} className="pw-cat" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', background: `${color}12`, border: `1px solid ${color}28`, transition: 'border-color 0.2s' }}>
+                    <Icon size={13} color={color} />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>{name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Info card */}
+            <div style={{ background: 'rgba(2,18,44,0.7)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '14px', padding: '18px 20px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>What to expect</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
+                {CHECK_ITEMS.map((item) => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '9px' }}>
+                    <ChevronRight size={15} color={BLUE} style={{ flexShrink: 0, marginTop: '1px' }} />
+                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
-
-        {/* Welcome text */}
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">
-          Welcome, {parentName}!
-        </h1>
-
-        <p className="text-lg sm:text-xl text-gray-500 mb-8 leading-relaxed">
-          Help us understand your perspective on your goalie&apos;s development.
-          We&apos;ll start with a few questions about your goalie, then explore{' '}
-          <span className="text-red-500 font-semibold">7 areas</span> of how you see their game.
-        </p>
-
-        {/* Category preview */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {PARENT_CATEGORIES.map(({ name, icon: Icon, color }) => (
-            <div
-              key={name}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${color}`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{name}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Info */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-10 text-left">
-          <h3 className="font-semibold text-gray-900 mb-3">What to expect:</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>Quick intake questions about your goalie</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>28 assessment questions across 7 categories</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>All multiple choice — no right or wrong answers</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>Your responses help us cross-reference with your goalie&apos;s self-assessment</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <span>Progress is saved automatically</span>
-            </li>
-          </ul>
-        </div>
-
-        {/* Begin button */}
-        <Button
-          size="lg"
-          onClick={onBegin}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-10 py-6 text-lg rounded-xl shadow-lg shadow-red-500/20 transition-all hover:scale-105"
-        >
-          Let&apos;s Get Started
-          <ChevronRight className="ml-2 w-5 h-5" />
-        </Button>
-
-        <p className="mt-6 text-sm text-gray-400">
-          Answer honestly — your perspective helps build a complete picture of your goalie&apos;s development.
-        </p>
       </div>
-    </div>
+    </>
   );
 }

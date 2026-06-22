@@ -13,6 +13,10 @@ export { CustomContentService, customContentService } from './services/custom-co
 export { OnboardingService, onboardingService } from './services/onboarding.service';
 export { ParentLinkService, parentLinkService } from './services/parent-link.service';
 export { MindVaultService, mindVaultService } from './services/mind-vault.service';
+export { VoiceSubmissionService, voiceSubmissionService } from './services/voice-submission.service';
+export { CoachChartingService, coachChartingService } from './services/coach-charting.service';
+export { ParentChartingService, parentChartingService } from './services/parent-charting.service';
+export type { VoiceSubmission, VoiceCategory, VoiceStatus } from './services/voice-submission.service';
 
 // Utilities
 export { SeederService, seederService } from './seeding/seeder.service';

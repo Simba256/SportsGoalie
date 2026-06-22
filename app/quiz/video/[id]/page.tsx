@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
@@ -11,10 +12,10 @@ import { customContentService } from '@/lib/database/services/custom-content.ser
 import { customCurriculumService } from '@/lib/database/services/custom-curriculum.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+
+const BLUE = '#37b5ff';
 
 function VideoQuizPageContent() {
   const params = useParams();
@@ -26,11 +27,8 @@ function VideoQuizPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load quiz data
   useEffect(() => {
-    if (quizId && user) {
-      loadQuizData();
-    }
+    if (quizId && user) { loadQuizData(); }
   }, [quizId, user]);
 
   const loadQuizData = async () => {
@@ -40,18 +38,14 @@ function VideoQuizPageContent() {
 
       let actualQuizId = quizId;
 
-      // If this is a custom content reference, resolve to actual quiz ID
       if (quizId.startsWith('content_')) {
         const contentResult = await customContentService.getContent(quizId);
-
         if (!contentResult.success || !contentResult.data) {
           setError('Content not found');
           toast.error('Content not found');
           setTimeout(() => router.push('/dashboard'), 2000);
           return;
         }
-
-        // Parse the content field to get the real videoQuizId
         try {
           const contentData = JSON.parse(contentResult.data.content);
           if (contentData.videoQuizId) {
@@ -70,9 +64,7 @@ function VideoQuizPageContent() {
         }
       }
 
-      // Load the quiz using the resolved ID
       const quizResult = await videoQuizService.getVideoQuiz(actualQuizId);
-
       if (!quizResult.success || !quizResult.data) {
         setError('Video quiz not found');
         toast.error('Video quiz not found');
@@ -81,8 +73,6 @@ function VideoQuizPageContent() {
       }
 
       const quizData = quizResult.data;
-
-      // Ensure questions is an array
       if (!quizData.questions) {
         console.error('❌ No questions field in quiz data');
         quizData.questions = [];
@@ -90,13 +80,6 @@ function VideoQuizPageContent() {
         console.error('❌ Questions field is not an array:', typeof quizData.questions);
         quizData.questions = [];
       }
-
-      console.log('📊 Quiz loaded successfully:', {
-        quizId: quizData.id,
-        title: quizData.title,
-        questionsCount: quizData.questions.length,
-        firstQuestion: quizData.questions[0],
-      });
 
       setQuiz(quizData);
     } catch (error) {
@@ -108,38 +91,22 @@ function VideoQuizPageContent() {
     }
   };
 
-  // Handle quiz completion
   const handleQuizComplete = async (progress: VideoQuizProgress) => {
     try {
       const result = await videoQuizService.completeQuiz(progress);
-
       if (result.success) {
-        // Record progress for curriculum tracking (handles both automated and custom workflows)
         if (user && quiz) {
           await ProgressService.recordQuizCompletion(
-            user.id,
-            quizId,
-            quiz.skillId || '',
-            quiz.sportId || '',
-            progress.percentage,
-            progress.timeSpent || 0,
+            user.id, quizId, quiz.skillId || '', quiz.sportId || '',
+            progress.percentage, progress.timeSpent || 0,
             progress.percentage >= (quiz.settings?.passingScore || 70)
           );
-
-          // If this is a custom content item, mark it complete in the curriculum
           if (quizId.startsWith('content_')) {
             await customCurriculumService.markItemCompleteByContentId(user.id, quizId);
           }
         }
-
-        toast.success('Video quiz completed!', {
-          description: `You scored ${progress.percentage.toFixed(1)}%`,
-        });
-
-        // Redirect to results page quickly
-        setTimeout(() => {
-          router.push(`/quiz/video/${quizId}/results`);
-        }, 500);
+        toast.success('Video quiz completed!', { description: `You scored ${progress.percentage.toFixed(1)}%` });
+        setTimeout(() => { router.push(`/quiz/video/${quizId}/results`); }, 500);
       } else {
         toast.error('Failed to save quiz results');
       }
@@ -149,61 +116,46 @@ function VideoQuizPageContent() {
     }
   };
 
-  // Loading state
   if (loading) {
+    return <div style={{ minHeight: '60vh', padding: '24px' }}><SkeletonContentPage /></div>;
+  }
+
+  if (error || !quiz || !user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-red-600" />
-          <p className="mt-4 text-slate-600">Loading video quiz...</p>
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ maxWidth: '400px', background: 'rgba(2,18,44,0.9)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '16px', padding: '32px', textAlign: 'center' }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '16px', marginBottom: '20px' }}>{error || 'Video quiz not found'}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(220,38,38,0.3)' }}
+          >
+            <ArrowLeft size={16} />
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (error || !quiz || !user) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Card className="max-w-md border-red-100">
-          <CardContent className="pt-6 text-center">
-            <p className="text-lg text-slate-700 mb-4">{error || 'Video quiz not found'}</p>
-            <Button onClick={() => router.push('/dashboard')} className="bg-red-600 hover:bg-red-700 text-white">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 px-6 py-6 shadow-lg">
-        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-red-500/15 blur-3xl" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(55,181,255,0.2)', background: 'linear-gradient(135deg, #000f28 0%, #062344 50%, #0a1628 100%)', padding: '24px', boxShadow: '0 4px 32px rgba(0,0,0,0.4)' }}>
+        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(55,181,255,0.1)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-40px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(248,113,113,0.06)', filter: 'blur(50px)', pointerEvents: 'none' }} />
         <Link
           href="/dashboard"
-          className="relative inline-flex items-center text-sm text-blue-100 hover:text-white mb-4 transition-colors"
+          style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none', marginBottom: '16px', fontWeight: 600 }}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowLeft size={14} />
           Back to Dashboard
         </Link>
-
-        <h1 className="relative text-3xl font-bold mb-2 text-white">{quiz.title}</h1>
+        <h1 style={{ position: 'relative', color: '#fff', fontSize: '28px', fontWeight: 900, marginBottom: '8px', letterSpacing: '-0.02em' }}>{quiz.title}</h1>
         {quiz.description && (
-          <p className="relative text-blue-100/90">{quiz.description}</p>
+          <p style={{ position: 'relative', color: BLUE, fontSize: '14px', opacity: 0.8 }}>{quiz.description}</p>
         )}
       </div>
 
-      {/* Video Player */}
-      <StandaloneVideoQuizPlayer
-        quiz={quiz}
-        userId={user.id}
-        onComplete={handleQuizComplete}
-      />
+      <StandaloneVideoQuizPlayer quiz={quiz} userId={user.id} onComplete={handleQuizComplete} />
     </div>
   );
 }

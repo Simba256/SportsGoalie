@@ -10,6 +10,8 @@ interface TestimonialsSectionProps {
     href?: string;
   }>;
   className?: string;
+  dark?: boolean;
+  gradientColor?: string;
 }
 
 export function TestimonialsSection({
@@ -17,6 +19,8 @@ export function TestimonialsSection({
   description,
   testimonials,
   className,
+  dark = false,
+  gradientColor = 'hsl(var(--background))',
 }: TestimonialsSectionProps) {
   return (
     <section
@@ -28,10 +32,16 @@ export function TestimonialsSection({
     >
       <div className="mx-auto flex max-w-container flex-col items-center gap-4 text-center sm:gap-16">
         <div className="flex flex-col items-center gap-4 px-4 sm:gap-8">
-          <h2 className="max-w-[720px] text-3xl font-semibold leading-tight sm:text-5xl sm:leading-tight">
+          <h2
+            className="max-w-[720px] text-3xl font-semibold leading-tight sm:text-5xl sm:leading-tight"
+            style={dark ? { color: '#ffffff' } : undefined}
+          >
             {title}
           </h2>
-          <p className="text-md max-w-[600px] font-medium text-muted-foreground sm:text-xl">
+          <p
+            className="text-md max-w-[600px] font-medium text-muted-foreground sm:text-xl"
+            style={dark ? { color: 'rgba(255,255,255,0.55)' } : undefined}
+          >
             {description}
           </p>
         </div>
@@ -47,8 +57,14 @@ export function TestimonialsSection({
             </div>
           </div>
 
-          <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-1/5 bg-gradient-to-r from-background sm:block" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/5 bg-gradient-to-l from-background sm:block" />
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 hidden w-1/5 sm:block"
+            style={{ background: `linear-gradient(to right, ${gradientColor}, transparent)` }}
+          />
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/5 sm:block"
+            style={{ background: `linear-gradient(to left, ${gradientColor}, transparent)` }}
+          />
         </div>
       </div>
     </section>

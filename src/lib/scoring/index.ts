@@ -16,6 +16,19 @@ export {
   convertLegacyResponses,
 } from './intelligence-profile';
 
+// V2 baseline questionnaire scoring bridge
+export {
+  convertStudentV2ToAssessmentResponses,
+  convertParentV2ToAssessmentResponses,
+  convertCoachV2ToAssessmentResponses,
+  generateStudentV2IntelligenceProfile,
+  generateParentV2IntelligenceProfile,
+  generateCoachV2IntelligenceProfile,
+} from './v2-baseline-scoring';
+
+// Practice index auto-generator (Pillar auto-connect)
+export { generatePracticeIndex } from './practice-index-generator';
+
 // Cross-reference engine
 export {
   DEFAULT_CROSS_REFERENCE_RULES,

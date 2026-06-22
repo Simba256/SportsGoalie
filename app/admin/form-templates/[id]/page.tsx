@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
 import { FormTemplate } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+
+const BLUE = '#37b5ff';
+const GREEN = '#22c55e';
+const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
 
 export default function TemplateDetailPage() {
   const params = useParams();
@@ -19,15 +20,12 @@ export default function TemplateDetailPage() {
   const [template, setTemplate] = useState<FormTemplate | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadTemplate();
-  }, [templateId]);
+  useEffect(() => { loadTemplate(); }, [templateId]);
 
   const loadTemplate = async () => {
     setLoading(true);
     try {
       const result = await formTemplateService.getTemplate(templateId);
-
       if (result.success && result.data) {
         setTemplate(result.data);
       } else {
@@ -45,186 +43,117 @@ export default function TemplateDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Loading template…</p>
       </div>
     );
   }
 
-  if (!template) {
-    return null;
-  }
+  if (!template) return null;
 
   const totalFields = template.sections.reduce((sum, section) => sum + section.fields.length, 0);
   const analyticsEnabledFields = template.sections.reduce(
-    (sum, section) => sum + section.fields.filter((f) => f.analytics.enabled).length,
-    0
+    (sum, section) => sum + section.fields.filter((f) => f.analytics.enabled).length, 0
   );
 
+  const metaItems = [
+    { label: 'Sport', value: template.sport || 'Not specified' },
+    { label: 'Version', value: `v${template.version}` },
+    { label: 'Sections', value: String(template.sections.length) },
+    { label: 'Total Fields', value: String(totalFields) },
+    { label: 'Analytics Fields', value: String(analyticsEnabledFields) },
+    { label: 'Usage Count', value: `${template.usageCount || 0} entries` },
+    { label: 'Status', value: template.isArchived ? 'Archived' : template.isActive ? 'Active' : 'Inactive' },
+    { label: 'Partial Submission', value: template.allowPartialSubmission ? 'Allowed' : 'Not allowed' },
+  ];
+
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/form-templates">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Templates
-            </Link>
-          </Button>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Link href="/admin/form-templates" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', padding: '8px 14px', borderRadius: '10px', fontSize: '15px', fontWeight: 600, textDecoration: 'none' }}>
+          <ArrowLeft size={15} /> Back to Templates
+        </Link>
         {template.isActive && (
-          <Badge variant="default" className="ml-2">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Active
-          </Badge>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(34,197,94,0.12)', color: GREEN, padding: '4px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 700 }}>
+            <CheckCircle2 size={12} /> Active
+          </span>
         )}
       </div>
 
       {/* Template Info */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">{template.name}</CardTitle>
-              {template.description && (
-                <CardDescription className="mt-2 text-base">{template.description}</CardDescription>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Metadata */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Sport</p>
-              <p className="font-medium">{template.sport || 'Not specified'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Version</p>
-              <p className="font-medium">v{template.version}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Sections</p>
-              <p className="font-medium">{template.sections.length}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Fields</p>
-              <p className="font-medium">{totalFields}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Analytics Fields</p>
-              <p className="font-medium">{analyticsEnabledFields}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Usage Count</p>
-              <p className="font-medium">{template.usageCount || 0} entries</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Status</p>
-              <p className="font-medium">
-                {template.isArchived ? 'Archived' : template.isActive ? 'Active' : 'Inactive'}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Partial Submission</p>
-              <p className="font-medium">{template.allowPartialSubmission ? 'Allowed' : 'Not allowed'}</p>
-            </div>
-          </div>
+      <div style={{ position: 'relative', ...card, padding: '24px', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+        <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '24px', marginBottom: '6px' }}>{template.name}</h1>
+        {template.description && <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px', marginBottom: '24px' }}>{template.description}</p>}
 
-          {/* Dates */}
-          <div className="border-t pt-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Created</p>
-                <p>{template.createdAt?.toDate?.().toLocaleString() || 'Unknown'}</p>
-              </div>
-              {template.updatedAt && (
-                <div>
-                  <p className="text-muted-foreground">Last Updated</p>
-                  <p>{template.updatedAt?.toDate?.().toLocaleString() || 'Unknown'}</p>
-                </div>
-              )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+          {metaItems.map(({ label, value }) => (
+            <div key={label}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '4px' }}>{label}</p>
+              <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>{value}</p>
             </div>
+          ))}
+        </div>
+
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          <div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '4px' }}>Created</p>
+            <p style={{ color: '#fff', fontSize: '15px' }}>{template.createdAt?.toDate?.().toLocaleString() || 'Unknown'}</p>
           </div>
-        </CardContent>
-      </Card>
+          {template.updatedAt && (
+            <div>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '4px' }}>Last Updated</p>
+              <p style={{ color: '#fff', fontSize: '15px' }}>{template.updatedAt?.toDate?.().toLocaleString() || 'Unknown'}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Sections */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Sections & Fields</h2>
-        {template.sections
-          .sort((a, b) => a.order - b.order)
-          .map((section, sectionIndex) => (
-            <Card key={section.id}>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
-                    {sectionIndex + 1}
+      <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '20px' }}>Sections &amp; Fields</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {template.sections.sort((a, b) => a.order - b.order).map((section, sectionIndex) => (
+          <div key={section.id} style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}66, transparent)` }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: `rgba(55,181,255,0.15)`, border: `1px solid rgba(55,181,255,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: BLUE, flexShrink: 0 }}>
+                {sectionIndex + 1}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: '17px' }}>{section.title}</p>
+                {section.description && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '2px' }}>{section.description}</p>}
+              </div>
+              <span style={{ background: 'rgba(55,181,255,0.1)', color: BLUE, padding: '2px 10px', borderRadius: '20px', fontSize: '13px', fontWeight: 600 }}>{section.fields.length} fields</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {section.fields.sort((a, b) => a.order - b.order).map((field, fieldIndex) => (
+                <div key={field.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(55,181,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: BLUE, flexShrink: 0 }}>
+                    {fieldIndex + 1}
                   </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{section.title}</CardTitle>
-                    {section.description && (
-                      <CardDescription className="mt-1">{section.description}</CardDescription>
-                    )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>{field.label}</p>
+                      <span style={{ background: 'rgba(55,181,255,0.1)', color: BLUE, padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{field.type}</span>
+                      {field.validation?.required && <span style={{ background: 'rgba(248,113,113,0.12)', color: '#f87171', padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>Required</span>}
+                      {field.analytics.enabled && <span style={{ background: 'rgba(34,197,94,0.12)', color: GREEN, padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>Analytics: {field.analytics.type}</span>}
+                    </div>
+                    {field.description && <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', marginBottom: '4px' }}>{field.description}</p>}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {field.options && field.options.length > 0 && <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Options: {field.options.join(', ')}</span>}
+                      {field.validation?.min !== undefined && <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Min: {field.validation.min}</span>}
+                      {field.validation?.max !== undefined && <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Max: {field.validation.max}</span>}
+                      {field.includeComments && <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Includes comments</span>}
+                      {field.analytics.category && <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>Category: {field.analytics.category}</span>}
+                    </div>
                   </div>
-                  <Badge variant="outline">{section.fields.length} fields</Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {section.fields
-                    .sort((a, b) => a.order - b.order)
-                    .map((field, fieldIndex) => (
-                      <div
-                        key={field.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border bg-muted/50"
-                      >
-                        <div className="flex h-6 w-6 items-center justify-center rounded bg-background text-xs font-medium">
-                          {fieldIndex + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium">{field.label}</p>
-                            <Badge variant="secondary" className="text-xs">
-                              {field.type}
-                            </Badge>
-                            {field.validation?.required && (
-                              <Badge variant="destructive" className="text-xs">
-                                Required
-                              </Badge>
-                            )}
-                            {field.analytics.enabled && (
-                              <Badge variant="default" className="text-xs">
-                                Analytics: {field.analytics.type}
-                              </Badge>
-                            )}
-                          </div>
-                          {field.description && (
-                            <p className="text-sm text-muted-foreground mb-2">{field.description}</p>
-                          )}
-                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            {field.options && field.options.length > 0 && (
-                              <span>Options: {field.options.join(', ')}</span>
-                            )}
-                            {field.validation?.min !== undefined && (
-                              <span>Min: {field.validation.min}</span>
-                            )}
-                            {field.validation?.max !== undefined && (
-                              <span>Max: {field.validation.max}</span>
-                            )}
-                            {field.includeComments && <span>Includes comments</span>}
-                            {field.analytics.category && (
-                              <span>Category: {field.analytics.category}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

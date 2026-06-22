@@ -2,68 +2,65 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { Button } from '@/components/ui/button';
 import {
-  Loader2,
-  AlertCircle,
-  ClipboardCheck,
-  CheckCircle2,
-  ArrowRight,
-  Users,
-  Clock,
+  AlertCircle, ClipboardCheck, CheckCircle2, ArrowRight, Users, Clock,
 } from 'lucide-react';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import Link from 'next/link';
 
-/**
- * Parent onboarding page — redirects to the main onboarding flow.
- * The assessment is now part of the immersive onboarding experience at /onboarding.
- */
+const BLUE = '#37b5ff';
+const cardBg = 'rgba(2,18,44,0.82)';
+const border = '1px solid rgba(55,181,255,0.18)';
+
+const CATEGORIES = [
+  "Your Goalie's Current State",
+  'Position Understanding',
+  'Pre-Game Observations',
+  'The Car Ride Home',
+  'Your Role in Development',
+  'Expectations & Goals',
+  'Communication Preferences',
+];
+
 export default function ParentOnboardingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-      </div>
-    );
-  }
+  if (loading) return <SkeletonContentPage />;
 
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
+  if (!user) {
+    router.push('/auth/login');
+    return null;
+  }
 
   if (user.role !== 'parent') {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+      <div style={{ maxWidth: '560px', margin: '40px auto', padding: '0 16px' }}>
+        <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '16px', padding: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <AlertCircle size={20} color="#f87171" style={{ flexShrink: 0, marginTop: '2px' }} />
           <div>
-            <h3 className="font-semibold text-red-900">Access Denied</h3>
-            <p className="text-sm text-red-700">This page is only available for parent accounts.</p>
+            <p style={{ color: '#f87171', fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>Access Denied</p>
+            <p style={{ color: 'rgba(248,113,113,0.7)', fontSize: '13px' }}>This page is only available for parent accounts.</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // Already completed
   if (user.parentOnboardingComplete) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-xl shadow-red-900/5">
-          <div className="mx-auto w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-5">
-            <CheckCircle2 className="h-8 w-8 text-green-500" />
+      <div style={{ maxWidth: '560px', margin: '40px auto', padding: '0 16px' }}>
+        <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', padding: '48px 32px', textAlign: 'center', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <CheckCircle2 size={30} color="#22c55e" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Assessment Complete!</h2>
-          <p className="text-gray-500 max-w-md mx-auto mb-8">
-            You&apos;ve already completed your parent assessment. View your linked goalies to see
-            how your perceptions compare with their self-assessments.
+          <h2 style={{ color: '#fff', fontWeight: 800, fontSize: '22px', marginBottom: '8px' }}>Assessment Complete!</h2>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', lineHeight: 1.7, maxWidth: '360px', margin: '0 auto 28px' }}>
+            You've already completed your parent assessment. View your linked goalies to see how your perceptions compare with their self-assessments.
           </p>
-          <Link href="/parent">
-            <Button className="bg-red-600 hover:bg-red-700">Go to Dashboard</Button>
+          <Link href="/parent" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '12px 28px', borderRadius: '12px', textDecoration: 'none', fontWeight: 700, fontSize: '14px' }}>
+            Go to Dashboard <ArrowRight size={16} />
           </Link>
         </div>
       </div>
@@ -71,85 +68,75 @@ export default function ParentOnboardingPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Main Card */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-xl shadow-red-900/5 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 px-8 py-10 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-tr from-red-500/10 via-transparent to-red-500/5" />
-          <div className="relative">
-            <div className="mx-auto w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-4">
-              <Users className="h-7 w-7 text-white" />
+    <>
+      <style>{`
+        .po-begin:hover { opacity: 0.9 !important; transform: translateY(-1px) !important; box-shadow: 0 8px 24px rgba(55,181,255,0.3) !important; }
+        .po-begin { transition: all 0.2s !important; }
+        .po-cat:hover { background: rgba(55,181,255,0.08) !important; }
+      `}</style>
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '32px 16px' }}>
+        <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+
+          {/* Header Banner */}
+          <div style={{ background: 'linear-gradient(135deg, #000f28 0%, #051e3e 60%, #062344 100%)', padding: '36px 32px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: `radial-gradient(circle, rgba(55,181,255,0.15) 0%, transparent 70%)` }} />
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Users size={26} color="#fff" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-1">Welcome, Parent!</h1>
-            <p className="text-gray-400 text-sm max-w-md mx-auto">
+            <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '22px', marginBottom: '6px' }}>Welcome, Parent!</h1>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', maxWidth: '320px', margin: '0 auto' }}>
               Help us understand your perspective on your goalie&apos;s development
             </p>
           </div>
-        </div>
 
-        {/* Body */}
-        <div className="px-8 py-8 space-y-6">
-          <p className="text-center text-gray-500 text-sm leading-relaxed">
-            This questionnaire helps us understand how you perceive your goalie&apos;s skills,
-            confidence, and development needs. Your responses will be cross-referenced with
-            their self-assessment to provide valuable insights.
-          </p>
+          {/* Body */}
+          <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', lineHeight: 1.7, textAlign: 'center' }}>
+              This questionnaire helps us understand how you perceive your goalie&apos;s skills, confidence, and development needs. Your responses will be cross-referenced with their self-assessment to provide valuable insights.
+            </p>
 
-          {/* Categories Grid */}
-          <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              7 Assessment Categories
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {[
-                'Your Goalie\'s Current State',
-                'Position Understanding',
-                'Pre-Game Observations',
-                'The Car Ride Home',
-                'Your Role in Development',
-                'Expectations & Goals',
-                'Communication Preferences',
-              ].map((cat) => (
-                <div key={cat} className="flex items-center gap-2.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-700">{cat}</span>
-                </div>
-              ))}
+            {/* Categories */}
+            <div style={{ background: 'rgba(55,181,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '16px' }}>
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>7 Assessment Categories</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {CATEGORIES.map((cat) => (
+                  <div key={cat} className="po-cat" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', transition: 'background 0.2s' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>{cat}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Time Estimate */}
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-            <Clock className="h-4 w-4" />
-            <span>28 questions &middot; Approximately 10-15 minutes</span>
-          </div>
-
-          {/* Note */}
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3">
-            <ClipboardCheck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-sm font-semibold text-amber-900">Honest Perspectives Help Most</h4>
-              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                There are no right or wrong answers. Answer based on your current observations,
-                not what you hope will happen. This helps identify genuine areas for support.
-              </p>
+            {/* Time */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
+              <Clock size={15} />
+              <span>28 questions · Approximately 10–15 minutes</span>
             </div>
-          </div>
 
-          {/* CTA */}
-          <Button className="w-full bg-red-600 hover:bg-red-700 h-12 text-base" asChild>
-            <Link href="/onboarding?role=parent">
-              Begin Assessment
-              <ArrowRight className="h-4 w-4 ml-2" />
+            {/* Notice */}
+            <div style={{ background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '12px', padding: '14px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <ClipboardCheck size={18} color="#fbbf24" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <p style={{ color: '#fbbf24', fontWeight: 700, fontSize: '13px', marginBottom: '4px' }}>Honest Perspectives Help Most</p>
+                <p style={{ color: 'rgba(251,191,36,0.65)', fontSize: '12px', lineHeight: 1.6 }}>
+                  There are no right or wrong answers. Answer based on your current observations, not what you hope will happen. This helps identify genuine areas for support.
+                </p>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <Link href="/onboarding?role=parent" className="po-begin" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '14px', borderRadius: '12px', textDecoration: 'none', fontWeight: 800, fontSize: '15px' }}>
+              Begin Assessment <ArrowRight size={18} />
             </Link>
-          </Button>
 
-          <p className="text-center text-xs text-gray-400">
-            You can complete this assessment later from your dashboard.
-          </p>
+            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', textAlign: 'center' }}>
+              You can complete this assessment later from your dashboard.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

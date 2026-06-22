@@ -1,14 +1,14 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { Shield, Loader2, Sparkles } from 'lucide-react';
+import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 import { MindVaultCategoryCard } from '@/components/mind-vault/MindVaultCategoryCard';
-import {
-  MIND_VAULT_CATEGORIES,
-  type MindVaultCategorySummary,
-} from '@/types/mind-vault';
+import { Brain, ListChecks, Flame } from 'lucide-react';
+import { MIND_VAULT_CATEGORIES, type MindVaultCategorySummary } from '@/types/mind-vault';
+
+const BLUE = '#37b5ff';
 
 export default function MindVaultPage() {
   const { user } = useAuth();
@@ -20,130 +20,113 @@ export default function MindVaultPage() {
     const load = async () => {
       setLoading(true);
       const result = await mindVaultService.getCategorySummary(user.id);
-      if (result.success && result.data) {
-        setSummaries(result.data);
-      }
+      if (result.success && result.data) setSummaries(result.data);
       setLoading(false);
     };
     load();
   }, [user?.id]);
 
-  const getSummary = (slug: string) =>
-    summaries.find((s) => s.category === slug);
-
+  const getSummary = (slug: string) => summaries.find(s => s.category === slug);
   const totalEntries = summaries.reduce((sum, s) => sum + s.entryCount, 0);
-  const activeCategories = summaries.filter((s) => s.entryCount > 0).length;
-  const coreEntries =
-    (getSummary('acceptance')?.entryCount || 0) +
-    (getSummary('cannot_accept')?.entryCount || 0);
+  const activeCategories = summaries.filter(s => s.entryCount > 0).length;
+  const coreEntries = (getSummary('acceptance')?.entryCount || 0) + (getSummary('cannot_accept')?.entryCount || 0);
   const momentum = Math.round((activeCategories / MIND_VAULT_CATEGORIES.length) * 100) || 0;
+  const safeMomentum = loading ? 0 : Math.max(momentum, 6);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-100/80 via-white to-blue-100/70 border border-red-200/60 p-6 md:p-8 overflow-hidden shadow-xl shadow-red-200/30">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-200/15 rounded-full blur-2xl" />
+    <div style={{ minHeight: '100vh' }}>
 
-        <div className="relative flex items-start gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Shield className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Mind Vault</h1>
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
-                <Sparkles className="h-3 w-3" />
-                Mindset Engine
-              </span>
-            </div>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-sm leading-relaxed sm:text-base">
-              Build your mental armor with entries that keep you grounded, focused, and resilient.
-            </p>
-          </div>
+      {/* ── Hero Banner ── */}
+      <section style={{ position: 'relative', height: '280px', display: 'flex', alignItems: 'flex-end', backgroundImage: "url('/mind-vault.png')", backgroundSize: 'cover', backgroundPosition: 'center', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,15,40,0.9) 0%, rgba(6,35,68,0.8) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, bottom: 0, background: 'linear-gradient(to top, #000f28 0%, transparent 60%)' }} />
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 24px 32px', textAlign: 'center' }}>
+          <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '8px' }}>
+            Build the <span style={{ color: BLUE }}>Mental Game</span>
+          </h1>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>
+            Your personal mental armor, expanded one entry at a time.
+          </p>
         </div>
+      </section>
 
-        <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Total Entries</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px 48px' }}>
+
+        {/* ── Stats Row ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '32px' }}>
+          {/* Total Entries */}
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '150px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>Total Entries</p>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Brain size={17} color={BLUE} />
+              </div>
+            </div>
+            <p style={{ fontSize: '52px', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-2px' }}>
               {loading ? '--' : totalEntries}
             </p>
           </div>
-          <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">Core List Entries</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
+
+          {/* Core Entries */}
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '150px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>Core List Entries</p>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ListChecks size={17} color={BLUE} />
+              </div>
+            </div>
+            <p style={{ fontSize: '52px', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-2px' }}>
               {loading ? '--' : coreEntries}
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-card px-4 py-3">
-            <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-semibold uppercase tracking-wider text-muted-foreground">Momentum</span>
-              <span className="font-bold text-primary">{loading ? '--' : `${momentum}%`}</span>
+
+          {/* Momentum */}
+          <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '150px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>Momentum</p>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Flame size={17} color={BLUE} />
+              </div>
             </div>
-            <div className="h-2 rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-                style={{ width: `${loading ? 8 : Math.max(momentum, 8)}%` }}
-              />
+            <p style={{ fontSize: '32px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
+              {loading ? '--' : `${momentum}%`}
+            </p>
+            <div style={{ marginTop: 'auto' }}>
+              <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
+                <div style={{ height: '100%', background: BLUE, borderRadius: '99px', width: `${safeMomentum}%`, transition: 'width 0.5s' }} />
+              </div>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', fontWeight: 600 }}>Keep your streak alive!</p>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Expandable Index
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Start with the core lists, then keep adding entries as new challenges appear. The vault
-          expands over time and becomes your personal mental armor.
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-        </div>
-      ) : (
-        <>
-          {/* Featured: Acceptance & Cannot Accept */}
-          <div className="mb-6">
-            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
-              Core Lists
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {MIND_VAULT_CATEGORIES.filter(
-                (c) => c.slug === 'acceptance' || c.slug === 'cannot_accept'
-              ).map((cat) => (
-                <MindVaultCategoryCard
-                  key={cat.slug}
-                  category={cat}
-                  summary={getSummary(cat.slug)}
-                />
-              ))}
-            </div>
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <SkeletonCardGrid count={2} cols={2} />
+            <SkeletonCardGrid count={4} cols={2} />
           </div>
+        ) : (
+          <>
+            <section style={{ marginBottom: '28px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '14px' }}>Core Lists</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                {MIND_VAULT_CATEGORIES.filter(c => c.slug === 'acceptance' || c.slug === 'cannot_accept').map(cat => (
+                  <MindVaultCategoryCard key={cat.slug} category={cat} summary={getSummary(cat.slug)} />
+                ))}
+              </div>
+            </section>
 
-          {/* Other Categories */}
-          <div>
-            <h2 className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-              All Categories
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {MIND_VAULT_CATEGORIES.filter(
-                (c) => c.slug !== 'acceptance' && c.slug !== 'cannot_accept'
-              ).map((cat) => (
-                <MindVaultCategoryCard
-                  key={cat.slug}
-                  category={cat}
-                  summary={getSummary(cat.slug)}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+            <section>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '14px' }}>All Categories</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                {MIND_VAULT_CATEGORIES.filter(c => c.slug !== 'acceptance' && c.slug !== 'cannot_accept').map(cat => (
+                  <MindVaultCategoryCard key={cat.slug} category={cat} summary={getSummary(cat.slug)} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+      </main>
     </div>
   );
 }

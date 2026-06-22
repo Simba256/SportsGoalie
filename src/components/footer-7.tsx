@@ -49,7 +49,7 @@ const defaultSections = [
     title: "Connect",
     links: [
       { name: "info@smartergoalie.com", href: "mailto:info@smartergoalie.com" },
-      { name: "416", href: "tel:416" },
+      { name: "+1 (416) 939-0555", href: "tel:+14169390555" },
       { name: "Help Center", href: "#" },
       { name: "Privacy", href: "#" },
     ],
@@ -86,54 +86,122 @@ export const Footer7 = ({
   legalLinks = defaultLegalLinks,
 }: Footer7Props) => {
   return (
-    <section className="py-12 px-6 bg-white text-slate-900 border-t border-slate-200">
+    <section
+      style={{
+        background: 'linear-gradient(145deg, #000f28 0%, #062344 60%, #0a3159 100%)',
+        borderTop: '1px solid rgba(55,181,255,0.15)',
+        padding: '48px 24px',
+      }}
+    >
       <div className="max-w-7xl mx-auto">
         <div className="flex w-full flex-col justify-between gap-10 lg:flex-row lg:items-start lg:text-left">
+
+          {/* Brand column */}
           <div className="flex w-full flex-col justify-between gap-6 lg:items-start">
             {/* Logo */}
-            <div className="flex items-center gap-2 lg:justify-start">
+            <div className="flex items-center gap-3 lg:justify-start">
               <a href={logo.url}>
                 {logo.src ? (
-                  <img
-                    src={logo.src}
-                    alt={logo.alt}
-                    title={logo.title}
-                    className="h-8"
-                  />
+                  <img src={logo.src} alt={logo.alt} title={logo.title} className="h-9 w-auto" />
                 ) : (
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-red-500 to-blue-500 flex items-center justify-center font-bold text-white">
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      color: '#fff',
+                      fontSize: '14px',
+                    }}
+                  >
                     SG
                   </div>
                 )}
               </a>
-                <h2 className="text-xl font-semibold text-slate-900">
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  letterSpacing: '2px',
+                  color: '#fff',
+                  textTransform: 'uppercase',
+                }}
+              >
                 {logo.title}
-              </h2>
+              </span>
             </div>
-            <p className="max-w-[70%] text-sm text-slate-600">
+
+            {/* Description */}
+            <p
+              style={{
+                maxWidth: '320px',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.45)',
+                lineHeight: 1.75,
+              }}
+            >
               {description}
             </p>
-            <ul className="flex items-center space-x-6 text-slate-500">
+
+            {/* Social icons */}
+            <ul style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               {socialLinks.map((social, idx) => (
-                <li key={idx} className="font-medium hover:text-red-600 transition-colors">
-                  <a href={social.href} aria-label={social.label}>
+                <li key={idx}>
+                  <a
+                    href={social.href}
+                    aria-label={social.label}
+                    style={{
+                      color: 'rgba(255,255,255,0.35)',
+                      transition: 'color 0.2s',
+                      display: 'block',
+                    }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = '#37b5ff')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.35)')}
+                  >
                     {social.icon}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
+
+          {/* Link columns */}
           <div className="grid w-full gap-6 md:grid-cols-3 lg:gap-20">
             {sections.map((section, sectionIdx) => (
               <div key={sectionIdx}>
-                <h3 className="mb-4 font-bold">{section.title}</h3>
-                <ul className="space-y-3 text-sm text-slate-600">
+                <h3
+                  style={{
+                    marginBottom: '16px',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    letterSpacing: '2.5px',
+                    textTransform: 'uppercase',
+                    color: '#37b5ff',
+                  }}
+                >
+                  {section.title}
+                </h3>
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {section.links.map((link, linkIdx) => (
-                    <li
-                      key={linkIdx}
-                      className="font-medium hover:text-blue-600 transition-colors"
-                    >
-                      <a href={link.href}>{link.name}</a>
+                    <li key={linkIdx}>
+                      <a
+                        href={link.href}
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          color: 'rgba(255,255,255,0.5)',
+                          textDecoration: 'none',
+                          transition: 'color 0.2s',
+                        }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = '#fff')}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)')}
+                      >
+                        {link.name}
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -141,12 +209,41 @@ export const Footer7 = ({
             ))}
           </div>
         </div>
-        <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 py-5 text-xs font-medium text-slate-500 md:flex-row md:items-center md:text-left">
-          <p className="order-2 lg:order-1">{copyright}</p>
-          <ul className="order-1 flex flex-col gap-2 md:order-2 md:flex-row">
+
+        {/* Bottom bar */}
+        <div
+          style={{
+            marginTop: '40px',
+            paddingTop: '20px',
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>
+            {copyright}
+          </p>
+          <ul style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {legalLinks.map((link, idx) => (
-              <li key={idx} className="hover:text-red-600 transition-colors">
-                <a href={link.href}> {link.name}</a>
+              <li key={idx}>
+                <a
+                  href={link.href}
+                  style={{
+                    fontSize: '12px',
+                    color: 'rgba(255,255,255,0.3)',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = '#37b5ff')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.3)')}
+                >
+                  {link.name}
+                </a>
               </li>
             ))}
           </ul>
@@ -155,4 +252,3 @@ export const Footer7 = ({
     </section>
   );
 };
-

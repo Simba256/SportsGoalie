@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
 import { Session, ChartingEntry } from '@/types';
@@ -140,8 +141,8 @@ export default function PreGamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <SkeletonContentPage />
       </div>
     );
   }
@@ -167,7 +168,7 @@ export default function PreGamePage() {
               <h1 className="text-3xl font-bold text-gray-900">Pre-Game Checklist</h1>
               <p className="text-gray-600">
                 {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
-                {session.opponent && ` vs ${session.opponent}`}
+                  {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
               </p>
             </div>
           </div>
