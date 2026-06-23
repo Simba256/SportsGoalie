@@ -1,10 +1,9 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users, X, Clock, Pause, Square } from 'lucide-react';
 import { toast } from 'sonner';
-import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
 import { videoReviewService, StudentVideo, VideoReviewSession } from '@/lib/database/services/video-review.service';
 import { sportsService } from '@/lib/database/services/sports.service';
@@ -29,7 +28,36 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
   feedback_sent: { bg: 'rgba(34,197,94,0.12)',   color: GREEN,  label: 'Feedback Sent' },
 };
 
-function VideoReviewsContent() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function formatFirestoreDate(timestamp: any) {
+  if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate().toLocaleDateString();
+  if (timestamp instanceof Date) return timestamp.toLocaleDateString();
+  if (typeof timestamp === 'string') {
+    const d = new Date(timestamp);
+    return isNaN(d.getTime()) ? 'Invalid date' : d.toLocaleDateString();
+  }
+  if (timestamp && typeof timestamp === 'object' && timestamp.seconds) return new Date(timestamp.seconds * 1000).toLocaleDateString();
+  return 'Unknown date';
+}
+
+function formatDuration(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+export default function CoachVideoReviewsPage() {
   const { user } = useAuth();
   const [videos, setVideos] = useState<StudentVideo[]>([]);
   const [sports, setSports] = useState<Sport[]>([]);
@@ -50,9 +78,7 @@ function VideoReviewsContent() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    loadVideos();
-  }, []);
+  useEffect(() => { loadVideos(); }, []);
 
   const loadVideos = async () => {
     try {
@@ -61,13 +87,8 @@ function VideoReviewsContent() {
         videoReviewService.getAllVideosForReview(),
         sportsService.getAllSports(),
       ]);
-
-      if (videosResult.success && videosResult.data) {
-        setVideos(videosResult.data);
-      } else {
-        toast.error('Failed to load videos');
-      }
-
+      if (videosResult.success && videosResult.data) setVideos(videosResult.data);
+      else toast.error('Failed to load videos');
       if (sportsResult.success && sportsResult.data) {
         setSports(sportsResult.data.items.sort((a, b) => a.name.localeCompare(b.name)));
       }
@@ -144,34 +165,17 @@ function VideoReviewsContent() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const formatDuration = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`;
-  };
-
   const addRecommendedSport = () => {
     if (selectedSportToAdd && !recommendedSports.includes(selectedSportToAdd)) {
       const sport = sports.find(c => c.id === selectedSportToAdd);
-      if (sport) {
-        setRecommendedSports([...recommendedSports, sport.name]);
-        setSelectedSportToAdd('');
-      }
+      if (sport) { setRecommendedSports([...recommendedSports, sport.name]); setSelectedSportToAdd(''); }
     }
   };
 
-  const removeSport = (sport: string) => {
-    setRecommendedSports(recommendedSports.filter(c => c !== sport));
-  };
+  const removeSport = (sport: string) => setRecommendedSports(recommendedSports.filter(c => c !== sport));
 
   const submitFeedback = async () => {
-    if (!selectedVideo || !feedback.trim()) {
-      toast.error('Please provide feedback before submitting');
-      return;
-    }
+    if (!selectedVideo || !feedback.trim()) { toast.error('Please provide feedback before submitting'); return; }
     setSubmittingFeedback(true);
     try {
       const result = await videoReviewService.submitCoachFeedback(
@@ -181,9 +185,7 @@ function VideoReviewsContent() {
       );
       if (result.success) {
         toast.success('Feedback sent to student successfully!');
-        setSelectedVideo(null);
-        setFeedback('');
-        setRecommendedSports([]);
+        setSelectedVideo(null); setFeedback(''); setRecommendedSports([]);
         await loadVideos();
       } else {
         toast.error(result.error?.message || 'Failed to submit feedback');
@@ -196,11 +198,6 @@ function VideoReviewsContent() {
     }
   };
 
-  const handleSendDetailedFeedback = (video: StudentVideo) => {
-    setSelectedVideoForMessage(video);
-    setShowVideoFeedbackComposer(true);
-  };
-
   const filteredVideos = videos.filter(video => {
     const matchesStatus = filterStatus === 'all' || video.status === filterStatus;
     const matchesSearch =
@@ -210,44 +207,18 @@ function VideoReviewsContent() {
     return matchesStatus && matchesSearch;
   });
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const formatFirestoreDate = (timestamp: any) => {
-    if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate().toLocaleDateString();
-    if (timestamp instanceof Date) return timestamp.toLocaleDateString();
-    if (typeof timestamp === 'string') {
-      const d = new Date(timestamp);
-      return isNaN(d.getTime()) ? 'Invalid date' : d.toLocaleDateString();
-    }
-    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) return new Date(timestamp.seconds * 1000).toLocaleDateString();
-    return 'Unknown date';
-  };
-
   const totalPending = videos.filter(v => v.status === 'pending').length;
   const totalReviewed = videos.filter(v => v.status === 'reviewed').length;
   const totalFeedbackSent = videos.filter(v => v.status === 'feedback_sent').length;
 
   const STATS = [
-    { label: 'Total Videos', value: videos.length,     color: BLUE,  icon: <Users size={20} /> },
-    { label: 'Pending Review', value: totalPending,    color: AMBER, icon: <AlertCircle size={20} /> },
-    { label: 'Under Review',  value: totalReviewed,    color: BLUE,  icon: <Eye size={20} /> },
-    { label: 'Feedback Sent', value: totalFeedbackSent, color: GREEN, icon: <CheckCircle size={20} /> },
+    { label: 'Total Videos',   value: videos.length,      color: BLUE,  icon: <Users size={20} /> },
+    { label: 'Pending Review', value: totalPending,        color: AMBER, icon: <AlertCircle size={20} /> },
+    { label: 'Under Review',   value: totalReviewed,       color: BLUE,  icon: <Eye size={20} /> },
+    { label: 'Feedback Sent',  value: totalFeedbackSent,   color: GREEN, icon: <CheckCircle size={20} /> },
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-[400px] p-6">
-        <SkeletonDarkPage />
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-[400px] p-6"><SkeletonDarkPage /></div>;
 
   return (
     <>
@@ -263,13 +234,13 @@ function VideoReviewsContent() {
         .vr-ta:focus { border-color: rgba(55,181,255,0.45); }
         .vr-ta:disabled { opacity: 0.5; cursor: not-allowed; }
         .vr-card-btn:hover { background: rgba(55,181,255,0.18) !important; }
-        .vr-btn-outline:hover { background: rgba(255,255,255,0.08) !important; }
         .vr-btn-primary:hover { filter: brightness(1.1); }
         .vr-btn-secondary:hover { background: rgba(255,255,255,0.1) !important; }
         .vr-sport-add:hover { background: rgba(55,181,255,0.18) !important; }
         .vr-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
         .vr-modal { background: #020e22; border: 1px solid rgba(55,181,255,0.2); border-radius: 20px; width: 100%; max-width: 860px; max-height: 90vh; overflow-y: auto; position: relative; }
         .vr-close-btn:hover { background: rgba(255,255,255,0.12) !important; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       <div style={{ minHeight: '100vh', padding: '32px 24px' }}>
@@ -280,13 +251,15 @@ function VideoReviewsContent() {
             <div>
               <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#fff', margin: 0 }}>Video Reviews</h1>
               <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '6px', fontSize: '15px' }}>
-                Review student training videos and provide personalized feedback
+                Review goalie training videos and provide personalized feedback
               </p>
             </div>
-            <div style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '20px', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <AlertCircle size={14} color={AMBER} />
-              <span style={{ color: AMBER, fontSize: '15px', fontWeight: 600 }}>{totalPending} Pending</span>
-            </div>
+            {totalPending > 0 && (
+              <div style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '20px', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <AlertCircle size={14} color={AMBER} />
+                <span style={{ color: AMBER, fontSize: '15px', fontWeight: 600 }}>{totalPending} Pending</span>
+              </div>
+            )}
           </div>
 
           {/* Stat Cards */}
@@ -307,19 +280,9 @@ function VideoReviewsContent() {
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
             <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
               <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }} />
-              <input
-                className="vr-search"
-                placeholder="Search by student, file name, or sport..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
+              <input className="vr-search" placeholder="Search by goalie, file name, or sport..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <select
-              className="vr-sel"
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              style={{ minWidth: '180px' }}
-            >
+            <select className="vr-sel" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ minWidth: '180px' }}>
               <option value="all">All Status</option>
               <option value="pending">Pending Review</option>
               <option value="reviewed">Under Review</option>
@@ -333,7 +296,7 @@ function VideoReviewsContent() {
               <Users size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
               <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>No videos found</h3>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', margin: 0 }}>
-                {searchTerm || filterStatus !== 'all' ? 'Try adjusting your search or filters' : "Students haven't uploaded any videos yet"}
+                {searchTerm || filterStatus !== 'all' ? 'Try adjusting your search or filters' : "Goalies haven't uploaded any videos yet"}
               </p>
             </div>
           ) : (
@@ -363,8 +326,8 @@ function VideoReviewsContent() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
                       {[
-                        { label: 'Sport', value: video.sport || 'Not specified' },
-                        { label: 'Size', value: formatFileSize(video.fileSize) },
+                        { label: 'Sport',    value: video.sport || 'Not specified' },
+                        { label: 'Size',     value: formatFileSize(video.fileSize) },
                         { label: 'Uploaded', value: formatFirestoreDate(video.uploadedAt) },
                       ].map(r => (
                         <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
@@ -386,6 +349,14 @@ function VideoReviewsContent() {
                       </p>
                     )}
 
+                    {/* Time logged badge */}
+                    {(video.totalTimeSpentSeconds || 0) > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
+                        <Clock size={12} color={GOLD} />
+                        <span style={{ color: GOLD, fontSize: '12px', fontWeight: 700 }}>{formatDuration(video.totalTimeSpentSeconds!)} logged</span>
+                      </div>
+                    )}
+
                     {/* Action Buttons */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <button
@@ -404,7 +375,7 @@ function VideoReviewsContent() {
                       </button>
                       <button
                         className="vr-btn-secondary"
-                        onClick={() => handleSendDetailedFeedback(video)}
+                        onClick={() => { setSelectedVideoForMessage(video); setShowVideoFeedbackComposer(true); }}
                         style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontWeight: 500, fontSize: '15px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
                       >
                         <MessageSquare size={15} /> Send Detailed Feedback
@@ -422,19 +393,14 @@ function VideoReviewsContent() {
       {selectedVideo && (
         <div className="vr-modal-overlay" onClick={e => { if (e.target === e.currentTarget) handleCloseModal(); }}>
           <div className="vr-modal">
-            {/* Modal Header */}
             <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, margin: 0 }}>Review Video — {selectedVideo.fileName}</h2>
                 <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', marginTop: '4px', margin: '4px 0 0' }}>
-                  Student: {selectedVideo.studentName} ({selectedVideo.studentEmail})
+                  Goalie: {selectedVideo.studentName} ({selectedVideo.studentEmail})
                 </p>
               </div>
-              <button
-                className="vr-close-btn"
-                onClick={handleCloseModal}
-                style={{ background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
-              >
+              <button className="vr-close-btn" onClick={handleCloseModal} style={{ background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
                 <X size={18} />
               </button>
             </div>
@@ -444,20 +410,17 @@ function VideoReviewsContent() {
               <div style={{ background: '#000', borderRadius: '12px', aspectRatio: '16/9', overflow: 'hidden', position: 'relative' }}>
                 {selectedVideo.videoUrl ? (
                   <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                    <video controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} preload="metadata"
-                      onError={e => { console.error('Video playback error:', e); }}>
+                    <video controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} preload="metadata">
                       <source src={selectedVideo.videoUrl} type="video/mp4" />
                       <source src={selectedVideo.videoUrl} type="video/webm" />
                       <source src={selectedVideo.videoUrl} type="video/quicktime" />
-                      <source src={selectedVideo.videoUrl} type="video/avi" />
                       Your browser does not support the video tag.
                     </video>
                     <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: '12px', padding: '4px 8px', borderRadius: '4px' }}>
                       {selectedVideo.fileName} • {(selectedVideo.fileSize / (1024 * 1024)).toFixed(1)} MB
                     </div>
                     <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
-                      <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer"
-                        style={{ background: RED, color: '#fff', fontSize: '12px', padding: '4px 10px', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+                      <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer" style={{ background: RED, color: '#fff', fontSize: '12px', padding: '4px 10px', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
                         Open in New Tab
                       </a>
                     </div>
@@ -473,7 +436,7 @@ function VideoReviewsContent() {
               {/* Student Description */}
               {selectedVideo.description && (
                 <div>
-                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student&apos;s Description</p>
+                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Goalie&apos;s Description</p>
                   <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
                     <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '15px', margin: 0 }}>{selectedVideo.description}</p>
                   </div>
@@ -494,18 +457,12 @@ function VideoReviewsContent() {
                   )}
                 </div>
 
-                {/* Timer display */}
                 <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-                  <span style={{
-                    fontSize: '38px', fontWeight: 800, letterSpacing: '3px', fontVariantNumeric: 'tabular-nums',
-                    color: timerState === 'running' ? GOLD : timerState === 'paused' ? AMBER : 'rgba(255,255,255,0.35)',
-                    transition: 'color 0.3s',
-                  }}>
+                  <span style={{ fontSize: '38px', fontWeight: 800, letterSpacing: '3px', fontVariantNumeric: 'tabular-nums', color: timerState === 'running' ? GOLD : timerState === 'paused' ? AMBER : 'rgba(255,255,255,0.35)', transition: 'color 0.3s' }}>
                     {formatTimer(elapsedSeconds)}
                   </span>
                 </div>
 
-                {/* Timer controls */}
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: (selectedVideo.timeSessions?.length || 0) > 0 ? '12px' : 0 }}>
                   {timerState === 'idle' && (
                     <button onClick={startTimer} style={{ padding: '8px 22px', borderRadius: '8px', border: 'none', background: GOLD, color: '#0c0800', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -534,16 +491,13 @@ function VideoReviewsContent() {
                   )}
                 </div>
 
-                {/* Past sessions log */}
                 {(selectedVideo.timeSessions?.length || 0) > 0 && (
                   <div style={{ borderTop: '1px solid rgba(212,169,59,0.15)', paddingTop: '12px' }}>
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '8px' }}>Session Log</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {selectedVideo.timeSessions!.map((s, i) => (
                         <div key={s.id || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-                          <span style={{ color: 'rgba(255,255,255,0.45)' }}>
-                            {formatFirestoreDate(s.startedAt)} — {s.reviewerName}
-                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.45)' }}>{formatFirestoreDate(s.startedAt)} — {s.reviewerName}</span>
                           <span style={{ color: GOLD, fontWeight: 700 }}>{formatDuration(s.durationSeconds)}</span>
                         </div>
                       ))}
@@ -552,14 +506,14 @@ function VideoReviewsContent() {
                 )}
               </div>
 
-              {/* Feedback Textarea */}
+              {/* Feedback */}
               <div>
                 <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Coach Feedback
                 </label>
                 <textarea
                   className="vr-ta"
-                  placeholder="Provide detailed feedback on the student's performance, areas for improvement, and positive observations..."
+                  placeholder="Provide detailed feedback on the goalie's performance, areas for improvement, and positive observations..."
                   value={feedback}
                   onChange={e => setFeedback(e.target.value)}
                   rows={4}
@@ -570,31 +524,18 @@ function VideoReviewsContent() {
               {/* Recommended Courses */}
               <div>
                 <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Courses</p>
-
                 {selectedVideo.status !== 'feedback_sent' && (
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                    <select
-                      className="vr-sel"
-                      value={selectedSportToAdd}
-                      onChange={e => setSelectedSportToAdd(e.target.value)}
-                      style={{ flex: 1 }}
-                    >
+                    <select className="vr-sel" value={selectedSportToAdd} onChange={e => setSelectedSportToAdd(e.target.value)} style={{ flex: 1 }}>
                       <option value="">Select a course to recommend...</option>
-                      {sports.map(sport => (
-                        <option key={sport.id} value={sport.id}>{sport.name}</option>
-                      ))}
+                      {sports.map(sport => <option key={sport.id} value={sport.id}>{sport.name}</option>)}
                     </select>
-                    <button
-                      className="vr-sport-add"
-                      onClick={addRecommendedSport}
-                      disabled={!selectedSportToAdd}
-                      style={{ padding: '10px 16px', borderRadius: '10px', border: `1px solid rgba(55,181,255,0.25)`, background: `rgba(55,181,255,0.1)`, color: BLUE, fontWeight: 600, fontSize: '15px', cursor: selectedSportToAdd ? 'pointer' : 'not-allowed', opacity: selectedSportToAdd ? 1 : 0.5, transition: 'all 0.2s' }}
-                    >
+                    <button className="vr-sport-add" onClick={addRecommendedSport} disabled={!selectedSportToAdd}
+                      style={{ padding: '10px 16px', borderRadius: '10px', border: `1px solid rgba(55,181,255,0.25)`, background: `rgba(55,181,255,0.1)`, color: BLUE, fontWeight: 600, fontSize: '15px', cursor: selectedSportToAdd ? 'pointer' : 'not-allowed', opacity: selectedSportToAdd ? 1 : 0.5, transition: 'all 0.2s' }}>
                       Add
                     </button>
                   </div>
                 )}
-
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {recommendedSports.map((sport, i) => (
                     <span key={i} style={{ background: `rgba(55,181,255,0.1)`, border: `1px solid rgba(55,181,255,0.25)`, borderRadius: '20px', padding: '4px 12px', fontSize: '13px', color: BLUE, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -607,7 +548,7 @@ function VideoReviewsContent() {
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               {selectedVideo.status !== 'feedback_sent' && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                   <button
@@ -616,14 +557,9 @@ function VideoReviewsContent() {
                     disabled={submittingFeedback || !feedback.trim()}
                     style={{ padding: '12px 28px', borderRadius: '10px', border: 'none', background: submittingFeedback || !feedback.trim() ? 'rgba(55,181,255,0.3)' : BLUE, color: '#fff', fontWeight: 700, fontSize: '15px', cursor: submittingFeedback || !feedback.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
                   >
-                    {submittingFeedback ? (
-                      <>
-                        <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                        Sending...
-                      </>
-                    ) : (
-                      <><Send size={16} /> Send Feedback</>
-                    )}
+                    {submittingFeedback
+                      ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Sending...</>
+                      : <><Send size={16} /> Send Feedback</>}
                   </button>
                 </div>
               )}
@@ -632,7 +568,6 @@ function VideoReviewsContent() {
         </div>
       )}
 
-      {/* Video Feedback Composer Modal */}
       {user && selectedVideoForMessage && (
         <VideoFeedbackComposer
           isOpen={showVideoFeedbackComposer}
@@ -645,16 +580,6 @@ function VideoReviewsContent() {
           onMessageSent={() => { loadVideos(); toast.success('Video feedback sent successfully'); }}
         />
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
-  );
-}
-
-export default function VideoReviewsPage() {
-  return (
-    <AdminRoute>
-      <VideoReviewsContent />
-    </AdminRoute>
   );
 }
