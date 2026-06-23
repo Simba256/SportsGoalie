@@ -371,10 +371,8 @@ export default function Home() {
       <>
           <section id="features" className="pt-20 pb-0" style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
             <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-12">
-              <div className="flex justify-between items-center">
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">WHAT WE DO</h2>
-                <span className="text-xl font-semibold" style={{ color: '#37b5ff' }}>1/5</span>
-              </div>
+              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>FEATURES</span>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white">WHAT WE DO</h2>
             </div>
             <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="20%" scaleEndPosition="15%" baseScale={0.95}>
               {/* 1 — The 7 Pillars of Intelligent Goaltending */}
@@ -524,6 +522,7 @@ export default function Home() {
           <ToolboxSection />
 
           <TestimonialsSection
+            eyebrow="COMMUNITY"
             title="Voices From The Smarter Goalie Community"
             description="Goalies, parents, and coaches trust Smarter Goalie to sharpen their game, track real progress, and train with purpose."
             testimonials={testimonials}
