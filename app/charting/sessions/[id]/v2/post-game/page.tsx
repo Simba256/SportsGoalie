@@ -39,12 +39,12 @@ const GAME_RETENTION_OPTIONS = [
 ];
 
 const IMPROVEMENT_FOCUS_OPTIONS = [
-  { value: 'mind_control',         label: 'Mind Control',            detail: 'Stay in the now, period by period',        pillar: 'Mindset' },
+  { value: 'mind_control',         label: 'Emotional Balance',        detail: 'Stay in the now, period by period',        pillar: 'Mindset' },
   { value: 'pre_game_routine',     label: 'Pre-Game Routine',        detail: 'Preparation & mental activation',          pillar: 'Mindset' },
   { value: 'positioning',          label: 'Positioning',             detail: 'Angle play, depth & reads',                pillar: 'Positioning' },
   { value: 'form',                 label: 'Form & Structure',        detail: 'Mechanics, technique & fundamentals',      pillar: 'Form' },
   { value: 'skating',              label: 'Skating',                 detail: 'Edge work, recovery & movement',           pillar: 'Skating' },
-  { value: 'seven_point',          label: '6 Zone Grid',             detail: 'Below icing line — angles & reads',        pillar: '6 Zone Grid' },
+  { value: 'seven_point',          label: '6ZS',                     detail: 'Below icing line — angles & reads',        pillar: '6 Zone Grid' },
   { value: 'game_retention',       label: 'Game Retention',          detail: 'Recall, replay & self-review',             pillar: 'Mindset' },
   { value: 'pressure_performance', label: 'Pressure Performance',    detail: 'High-challenge, breakaway, 2-on-1',        pillar: 'Mindset' },
   { value: 'goal_decisions',       label: 'Reading the Play',        detail: 'Read → position → execute under pressure', pillar: 'Positioning' },
@@ -77,10 +77,10 @@ function derivePriorityArea(
     const pct = (mindControlAvg / 5) * 100;
     candidates.push({
       score: pct,
-      label: 'Mind Control',
+      label: 'Emotional Balance',
       pillarLabel: 'Mindset — Mind-Set Development',
       pillarSlug: 'mindset',
-      reason: `Mind control averaged ${mindControlAvg.toFixed(1)}/5 across periods`,
+      reason: `Emotional balance averaged ${mindControlAvg.toFixed(1)}/5 across periods`,
       urgency: mindControlAvg <= 2 ? 'critical' : mindControlAvg <= 3 ? 'high' : 'moderate',
     });
   }
@@ -91,7 +91,7 @@ function derivePriorityArea(
     const goodPct = (goodGoals / totalGoals) * 100;
     candidates.push({
       score: goodPct,
-      label: 'Reading the Play',
+      label: 'Decision Making Process',
       pillarLabel: 'Positioning — Positional Systems',
       pillarSlug: 'positioning',
       reason: `${badGoals} weak goal${badGoals !== 1 ? 's' : ''} — ${(100 - goodPct).toFixed(0)}% error rate on goals`,
@@ -424,7 +424,7 @@ export default function V2PostGamePage() {
 
               {/* #3 Mind Control Average */}
               <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.3)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p className="text-xs font-semibold text-white">#3 — Mind Control</p>
+                <p className="text-xs font-semibold text-white">#3 — Emotional Balance</p>
                 {hasPeriodData ? (
                   <>
                     <div className="flex justify-center">
@@ -461,7 +461,7 @@ export default function V2PostGamePage() {
                       })()}
                     </div>
                     <p className="text-[10px] text-white/35 text-center leading-relaxed">
-                      System calculates average of per-period Mind Control ratings automatically.
+                      System calculates average of per-period Emotional Balance ratings automatically.
                     </p>
                   </>
                 ) : (
@@ -499,7 +499,7 @@ export default function V2PostGamePage() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
                               <p className="text-sm font-black text-white text-center leading-tight">
-                                {calculations.goodGoals} Good,<br />{calculations.badGoals} Bad
+                                {calculations.goodGoals} Good,<br />{calculations.badGoals} Weak
                               </p>
                               <p className="text-[11px] font-bold" style={{ color: '#37b5ff' }}>
                                 {calculations.goodDecisionRate}%
@@ -510,7 +510,7 @@ export default function V2PostGamePage() {
                       })()}
                     </div>
                     <p className="text-[10px] text-white/35 text-center leading-relaxed">
-                      {calculations.goodDecisionRate}% Good Decision Rate this game
+                      {calculations.goodDecisionRate}% Good Decision Factor this game
                     </p>
                   </>
                 ) : (

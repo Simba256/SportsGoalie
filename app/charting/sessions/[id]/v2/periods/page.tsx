@@ -445,7 +445,7 @@ export default function V2PeriodsPage() {
                 : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
             }>
               <ContextualHelp
-                label="Mind Control"
+                label="Emotional Balance"
                 helpText="Rate your mental command during this period. 1 = Not in the Now, 5 = Command Center Operating. Tap any star to see its full definition."
               >
                 <StarRating

@@ -251,7 +251,7 @@ export default function V2PreGamePage() {
           {/* 4. Anxiety Present */}
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.28)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
-              label="Anxiety Present?"
+              label="Pre-Game Stress?"
               helpText="If anxiety is present, this is normal. What matters is what you do with it. Your response feeds your Mind Vault — methods that work get stored."
             >
               <YesNoToggle

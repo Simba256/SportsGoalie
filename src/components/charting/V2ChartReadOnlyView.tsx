@@ -129,7 +129,7 @@ function PreGameSection({ data }: { data: V2PreGameData }) {
       </div>
       <div style={{ borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '4px 12px' }}>
         <YesNoLine label="Routine completed" value={data.routineCompleted} voice={data.routineVoiceNote} />
-        <YesNoLine label="Anxiety present" value={data.anxietyPresent} voice={data.anxietyVoiceNote} />
+        <YesNoLine label="Pre-Game Stress" value={data.anxietyPresent} voice={data.anxietyVoiceNote} />
         <div style={{ borderBottom: 'none' }}>
           <YesNoLine label="Target state achieved" value={data.targetStateAchieved} voice={data.targetStateVoiceNote} />
         </div>
@@ -163,8 +163,8 @@ function PeriodsSection({ periods }: { periods: NonNullable<V2Fields['v2Periods'
                   { label: 'Std Saves', value: p.standardSaves ?? 0, color: 'rgba(255,255,255,0.6)' },
                   { label: 'Key Saves', value: p.keySaves ?? 0, color: '#4ade80' },
                   { label: 'Weak GA', value: p.weakGoals ?? 0, color: '#f87171' },
-                  { label: 'Mid-Chall', value: p.midChallengeCount ?? 0, color: 'rgba(255,255,255,0.6)' },
-                  { label: 'Hi-Chall', value: p.highChallengeCount ?? 0, color: '#fb923c' },
+                  { label: 'Emph. Applied', value: p.midChallengeCount ?? 0, color: 'rgba(255,255,255,0.6)' },
+                  { label: 'Align. Owned', value: p.highChallengeCount ?? 0, color: '#fb923c' },
                 ].map(({ label: sl, value: sv, color }) => (
                   <div key={sl} style={{ borderRadius: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', padding: '5px 4px', textAlign: 'center' }}>
                     <p style={{ fontSize: '8px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '2px', letterSpacing: '0.5px' }}>{sl}</p>
@@ -176,12 +176,20 @@ function PeriodsSection({ periods }: { periods: NonNullable<V2Fields['v2Periods'
               {/* Ratings */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)' }}>Mind Control</p>
-                  {p.mindControlChallengeLevel && (
-                    <span style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '2px 6px', borderRadius: '20px', background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171' }}>
-                      {p.mindControlChallengeLevel} challenge
-                    </span>
-                  )}
+                  <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)' }}>Emotional Balance</p>
+                  {p.mindControlChallengeLevel && (() => {
+                    const levelMap: Record<string, { label: string; bg: string; border: string; color: string }> = {
+                      low:  { label: 'Balance Issue',    bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.3)', color: '#f87171' },
+                      mid:  { label: 'Emphasis Applied', bg: 'rgba(251,191,36,0.15)',  border: 'rgba(251,191,36,0.3)',  color: '#fbbf24' },
+                      high: { label: 'Alignment Owned',  bg: 'rgba(74,222,128,0.15)',  border: 'rgba(74,222,128,0.3)',  color: '#4ade80' },
+                    };
+                    const lvl = levelMap[p.mindControlChallengeLevel] ?? { label: p.mindControlChallengeLevel, bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.3)', color: '#f87171' };
+                    return (
+                      <span style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '2px 6px', borderRadius: '20px', background: lvl.bg, border: `1px solid ${lvl.border}`, color: lvl.color }}>
+                        {lvl.label}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <RatingBar value={p.mindControlRating} />
                 {p.mindControlVoiceNote && (
@@ -206,7 +214,7 @@ function PeriodsSection({ periods }: { periods: NonNullable<V2Fields['v2Periods'
                         ? <CheckCircle2 size={12} color="#4ade80" style={{ flexShrink: 0, marginTop: '1px' }} />
                         : <XCircle size={12} color="#f87171" style={{ flexShrink: 0, marginTop: '1px' }} />}
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Goal {g.goalNumber} · {g.isGoodGoal ? 'Good' : 'Bad'}</p>
+                        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Goal {g.goalNumber} · {g.isGoodGoal ? 'Good' : 'Weak'}</p>
                         {g.voiceNote && <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>&ldquo;{g.voiceNote}&rdquo;</p>}
                       </div>
                     </div>
@@ -227,9 +235,10 @@ function PostGameSection({ data }: { data: V2PostGameData }) {
       <SectionHeader icon={MessageSquare} title="Post-Game Review" />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '12px' }}>
         <Stat label="Good Goals" value={data.goodGoalCount} />
-        <Stat label="Bad Goals" value={data.badGoalCount} />
-        <Stat label="Good Decision %" value={`${(data.goodDecisionRate ?? 0).toFixed(0)}`} suffix="%" />
-        <Stat label="Mind Control Avg" value={(data.mindControlAverage ?? 0).toFixed(1)} suffix="/ 5" />
+        <Stat label="Weak Goals" value={data.badGoalCount} />
+        <Stat label="Good Decision Factor" value={`${(data.goodDecisionRate ?? 0).toFixed(0)}`} suffix="%" />
+        <Stat label="Weak Decision Factor" value={`${(100 - (data.goodDecisionRate ?? 0)).toFixed(0)}`} suffix="%" />
+        <Stat label="Emotional Balance Avg" value={(data.mindControlAverage ?? 0).toFixed(1)} suffix="/ 5" />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
         <div style={{ borderRadius: '10px', background: 'rgba(55,181,255,0.05)', border: '1px solid rgba(55,181,255,0.12)', padding: '12px' }}>
@@ -280,7 +289,12 @@ function PostGameSection({ data }: { data: V2PostGameData }) {
               <div>
                 <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: '3px' }}>Focus Area</p>
                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>
-                  {data.improvementFocus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                  {({
+                    mind_control: 'Emotional Balance',
+                    goal_decisions: 'Decision Making Process',
+                    seven_point: '6ZS',
+                  } as Record<string, string>)[data.improvementFocus]
+                    ?? data.improvementFocus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                 </p>
               </div>
             )}
