@@ -352,7 +352,7 @@ export default function ParentPostGamePage() {
           <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
             <ContextualHelp
               label="ONE thing that concerned you"
-              helpText="Honest concerns are valuable data — not criticism. The platform cross-references this with your Goalie's self-evaluation to find patterns."
+              helpText="Honest concerns are valuable data — not criticism. Smarter Goalie's intuitive system cross-references this with your Goalie's self-evaluation to find patterns."
             >
               <textarea
                 value={formData.oneConcern ?? ''}
@@ -389,7 +389,7 @@ export default function ParentPostGamePage() {
           <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
             <ContextualHelp
               label="Did you talk about the game?"
-              helpText="How you debrief after a game shapes your Goalie's relationship with performance. The platform guides post-game conversations based on your answers."
+              helpText="How you debrief after a game shapes your Goalie's relationship with performance. Smarter Goalie's intuitive system guides post-game conversations based on your answers."
             >
               <EmojiRadioGroup<ParentTalkAboutGame>
                 value={formData.talkedAboutGame ?? null}

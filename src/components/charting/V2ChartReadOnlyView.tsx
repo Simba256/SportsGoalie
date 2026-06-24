@@ -291,7 +291,7 @@ function PostGameSection({ data }: { data: V2PostGameData }) {
                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>
                   {({
                     mind_control: 'Emotional Balance',
-                    goal_decisions: 'Decision Making Process',
+                    goal_decisions: 'Reading the Play',
                     seven_point: '6ZS',
                   } as Record<string, string>)[data.improvementFocus]
                     ?? data.improvementFocus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
