@@ -474,16 +474,19 @@ export default function GoaliePage() {
 
         {/* Bottom: audio pill player */}
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50px', padding: '8px 28px 8px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50px', padding: '8px 20px 8px 8px', width: 'fit-content', maxWidth: '100%' }}>
             <button style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#00f2ff', boxShadow: '0 0 20px rgba(0,242,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </button>
-            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase' }}>
+            <span className="hidden sm:inline" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
               HEAR COACH MIKE: THE FEEL FACTOR AND THE MIND&rsquo;S EYE
             </span>
-            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>
+            <span className="sm:hidden" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase' }}>
+              HEAR COACH MIKE
+            </span>
+            <span className="hidden sm:inline" style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
               VOICE ON
             </span>
           </div>

@@ -204,8 +204,8 @@ function AcceptInviteContent() {
           skipEmailVerification: true,
         });
         await coachInvitationService.acceptInvitation(invitationId(invitation), userId);
-        toast.success('Coach account created!');
-        router.push(`/auth/login?email=${encodeURIComponent(invitation.data.email)}&verified=pending`);
+        toast.success('Coach account created! Welcome aboard.');
+        router.push('/coach');
         return;
       }
 
@@ -249,8 +249,16 @@ function AcceptInviteContent() {
       // Mark invitation accepted in the generic collection
       await invitationService.acceptInvitation(invitationId(invitation), userId);
 
-      toast.success(`${roleLabel(invitation)} account created!`);
-      router.push(`/auth/login?email=${encodeURIComponent(inv.email)}&verified=pending`);
+      toast.success(`${roleLabel(invitation)} account created! Welcome aboard.`);
+      // Redirect directly to the appropriate destination — the user is already authenticated
+      // after register(), so routing through /auth/login would cause an immediate re-redirect.
+      if (registerRole === 'student') {
+        router.push('/onboarding');
+      } else if (registerRole === 'parent') {
+        router.push('/onboarding?role=parent');
+      } else {
+        router.push('/coach');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
       setSubmitting(false);

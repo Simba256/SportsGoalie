@@ -41,7 +41,7 @@ function generateToken(): string {
   return Array.from(values, v => chars[v % chars.length]).join('');
 }
 
-function expiryDate(days = 7): Date {
+function expiryDate(days = 30): Date {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d;
@@ -100,7 +100,7 @@ class InvitationService {
       const token = generateToken();
       const ref = doc(collection(db, COLLECTION));
       const now = new Date();
-      const expires = expiryDate(data.expiresInDays ?? 7);
+      const expires = expiryDate(data.expiresInDays ?? 30);
 
       const invitation: Invitation = {
         id: ref.id,
@@ -183,7 +183,8 @@ class InvitationService {
       if (invitation.status === 'accepted') return { valid: false, error: 'This invitation has already been used.' };
       if (invitation.status === 'revoked') return { valid: false, error: 'This invitation has been revoked.' };
       if (isExpired(invitation.expiresAt)) {
-        await this.updateStatus(invitation.id, 'expired');
+        // Best-effort status update — fails silently if the user isn't authenticated yet
+        this.updateStatus(invitation.id, 'expired').catch(() => {});
         return { valid: false, error: 'This invitation has expired. Ask your admin to resend it.' };
       }
 
@@ -225,7 +226,7 @@ class InvitationService {
   async resendInvitation(invitationId: string): Promise<Invitation> {
     try {
       const newToken = generateToken();
-      const newExpiry = expiryDate(7);
+      const newExpiry = expiryDate(30);
 
       await updateDoc(doc(db, COLLECTION, invitationId), {
         token: newToken,

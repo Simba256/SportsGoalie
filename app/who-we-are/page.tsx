@@ -271,7 +271,7 @@ export default function WhoWeArePage() {
           style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: act.bg, borderBottom: `1px solid ${act.accent}25` }}
         >
           {/* Ghost act number */}
-          <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${act.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+          <div style={{ position: 'absolute', right: '-1%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(80px, 18vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${act.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0, overflow: 'hidden', maxWidth: '50%' }}>
             {String(i + 1).padStart(2, '0')}
           </div>
 
@@ -379,7 +379,7 @@ export default function WhoWeArePage() {
       <section
         style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: ACT_EIGHT.bg, borderBottom: `1px solid ${ACT_EIGHT.accent}25` }}
       >
-        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', right: '-1%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(80px, 18vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0, overflow: 'hidden', maxWidth: '50%' }}>
           08
         </div>
 
