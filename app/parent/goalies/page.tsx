@@ -103,7 +103,7 @@ export default function ParentGoaliesPage() {
                       <h4 style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>{child.displayName}</h4>
                       {child.pacingLevel && (
                         <span style={{ padding: '2px 8px', borderRadius: '20px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, fontSize: '10px', fontWeight: 700 }}>
-                          {child.pacingLevel}
+                          {({ introduction: 'Introduction', intermediate: 'Development', advanced: 'Refinement' } as Record<string, string>)[child.pacingLevel] ?? child.pacingLevel}
                         </span>
                       )}
                       <span style={{ padding: '2px 8px', borderRadius: '20px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>

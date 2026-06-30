@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ChevronLeft } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
 const BeamsBackground = dynamic(
   () => import('@/components/ui/beams-background').then(m => ({ default: m.BeamsBackground })),
@@ -172,38 +174,10 @@ const STATS = [
 export default function WhoWeArePage() {
   const router = useRouter();
 
-  const navBtnStyle = {
-    background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px',
-    color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px',
-  } as React.CSSProperties;
-
-  const dotStyle = {
-    width: '6px', height: '6px', borderRadius: '50%', background: BLUE3, flexShrink: 0,
-  } as React.CSSProperties;
-
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ ...navBtnStyle, color: BLUE3 }}>
-              <span style={{ ...dotStyle, background: BLUE3 }} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={{ ...navBtnStyle }}>
-              <span style={dotStyle} />THE SYSTEM
-            </button>
-            <button onClick={() => router.push('/contact')} style={{ background: `linear-gradient(135deg, ${BLUE}, ${BLUE3})`, border: 'none', borderRadius: '50px', padding: '9px 20px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: NAVY, boxShadow: '0 2px 12px rgba(55,181,255,0.35)' }}>
-              CONTACT US
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* ── HERO ── */}
       {/* Background: beams + four-corner colored glows that bleed into each other */}
@@ -297,7 +271,7 @@ export default function WhoWeArePage() {
           style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: act.bg, borderBottom: `1px solid ${act.accent}25` }}
         >
           {/* Ghost act number */}
-          <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${act.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+          <div style={{ position: 'absolute', right: '-1%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(80px, 18vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${act.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0, overflow: 'hidden', maxWidth: '50%' }}>
             {String(i + 1).padStart(2, '0')}
           </div>
 
@@ -405,7 +379,7 @@ export default function WhoWeArePage() {
       <section
         style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: ACT_EIGHT.bg, borderBottom: `1px solid ${ACT_EIGHT.accent}25` }}
       >
-        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', right: '-1%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(80px, 18vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0, overflow: 'hidden', maxWidth: '50%' }}>
           08
         </div>
 
@@ -486,13 +460,7 @@ export default function WhoWeArePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <div style={{ background: NAVY, padding: '28px 24px', textAlign: 'center' }}>
-        <div style={{ height: '2px', background: `linear-gradient(to right, ${BLUE}, ${BLUE2}, ${BLUE3}, ${BLUE4})`, marginBottom: '20px', boxShadow: '0 0 12px rgba(55,181,255,0.3)' }} />
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
-          &copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER
-        </p>
-      </div>
+      <Footer7 />
     </div>
   );
 }

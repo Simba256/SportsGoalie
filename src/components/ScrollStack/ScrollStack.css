@@ -14,7 +14,16 @@
   top: var(--scroll-stack-top, 15vh);
   width: 100%;
   margin-bottom: var(--scroll-stack-gap, 100px);
+  isolation: isolate;
 }
+
+/* Ascending z-index so later cards always paint on top of earlier ones */
+.scroll-stack-card:nth-child(1) { z-index: 1; }
+.scroll-stack-card:nth-child(2) { z-index: 2; }
+.scroll-stack-card:nth-child(3) { z-index: 3; }
+.scroll-stack-card:nth-child(4) { z-index: 4; }
+.scroll-stack-card:nth-child(5) { z-index: 5; }
+.scroll-stack-card:nth-child(6) { z-index: 6; }
 
 .scroll-stack-card:last-child {
   margin-bottom: 0;

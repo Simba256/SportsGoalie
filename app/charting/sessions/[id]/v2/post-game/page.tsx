@@ -39,7 +39,7 @@ const GAME_RETENTION_OPTIONS = [
 ];
 
 const IMPROVEMENT_FOCUS_OPTIONS = [
-  { value: 'mind_control',         label: 'Mind Control',            detail: 'Stay in the now, period by period',        pillar: 'Mindset' },
+  { value: 'mind_control',         label: 'Emotional Balance',        detail: 'Stay in the now, period by period',        pillar: 'Mindset' },
   { value: 'pre_game_routine',     label: 'Pre-Game Routine',        detail: 'Preparation & mental activation',          pillar: 'Mindset' },
   { value: 'positioning',          label: 'Positioning',             detail: 'Angle play, depth & reads',                pillar: 'Positioning' },
   { value: 'form',                 label: 'Form & Structure',        detail: 'Mechanics, technique & fundamentals',      pillar: 'Form' },
@@ -77,10 +77,10 @@ function derivePriorityArea(
     const pct = (mindControlAvg / 5) * 100;
     candidates.push({
       score: pct,
-      label: 'Mind Control',
+      label: 'Emotional Balance',
       pillarLabel: 'Mindset — Mind-Set Development',
       pillarSlug: 'mindset',
-      reason: `Mind control averaged ${mindControlAvg.toFixed(1)}/5 across periods`,
+      reason: `Emotional balance averaged ${mindControlAvg.toFixed(1)}/5 across periods`,
       urgency: mindControlAvg <= 2 ? 'critical' : mindControlAvg <= 3 ? 'high' : 'moderate',
     });
   }
@@ -424,7 +424,7 @@ export default function V2PostGamePage() {
 
               {/* #3 Mind Control Average */}
               <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.3)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p className="text-xs font-semibold text-white">#3 — Mind Control</p>
+                <p className="text-xs font-semibold text-white">#3 — Emotional Balance</p>
                 {hasPeriodData ? (
                   <>
                     <div className="flex justify-center">
@@ -461,7 +461,7 @@ export default function V2PostGamePage() {
                       })()}
                     </div>
                     <p className="text-[10px] text-white/35 text-center leading-relaxed">
-                      System calculates average of per-period Mind Control ratings automatically.
+                      System calculates average of per-period Emotional Balance ratings automatically.
                     </p>
                   </>
                 ) : (
@@ -499,7 +499,7 @@ export default function V2PostGamePage() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
                               <p className="text-sm font-black text-white text-center leading-tight">
-                                {calculations.goodGoals} Good,<br />{calculations.badGoals} Bad
+                                {calculations.goodGoals} Good,<br />{calculations.badGoals} Weak
                               </p>
                               <p className="text-[11px] font-bold" style={{ color: '#37b5ff' }}>
                                 {calculations.goodDecisionRate}%
@@ -510,7 +510,7 @@ export default function V2PostGamePage() {
                       })()}
                     </div>
                     <p className="text-[10px] text-white/35 text-center leading-relaxed">
-                      {calculations.goodDecisionRate}% Good Decision Rate this game
+                      {calculations.goodDecisionRate}% Good Decision Factor this game
                     </p>
                   </>
                 ) : (

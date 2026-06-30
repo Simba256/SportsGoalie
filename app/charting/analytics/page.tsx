@@ -552,7 +552,7 @@ export default function ChartingAnalyticsPage() {
             {openV2Game && (
               <div style={{ borderRadius: '18px', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: `1px solid rgba(248,113,113,0.18)`, padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatTile label="Mind Control Avg" value={v2GameStats.avgMindControl.toFixed(1)} unit="/ 5" sub={`${v2GameStats.periodSamples} periods`} accent={VIOLET} />
+                  <StatTile label="Emotional Balance Avg" value={v2GameStats.avgMindControl.toFixed(1)} unit="/ 5" sub={`${v2GameStats.periodSamples} periods`} accent={VIOLET} />
                   <StatTile label="Factor Ratio Avg" value={v2GameStats.avgFactorRatio.toFixed(1)} unit="/ 5" sub="Across periods" accent={CORAL} />
                   <StatTile label="Good / Weak Goals" value={`${v2GameStats.goodGoals} / ${v2GameStats.badGoals}`} sub={`Ratio ${v2GameStats.goodBadRatio.toFixed(2)}:1`} accent={MINT} />
                   <StatTile label="Goals Against" value={v2GameStats.goalsAgainst} sub="Total across sessions" accent={CORAL} />
@@ -596,7 +596,7 @@ export default function ChartingAnalyticsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
                       <ProgressRow label="Routine Completed" value={`${v2GameStats.routinePct.toFixed(0)}%`} />
                       <ProgressRow label="Target State" value={`${v2GameStats.targetStatePct.toFixed(0)}%`} />
-                      <ProgressRow label="Anxiety Present" value={`${v2GameStats.anxietyPct.toFixed(0)}%`} />
+                      <ProgressRow label="Pre-Game Stress" value={`${v2GameStats.anxietyPct.toFixed(0)}%`} />
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Avg Mental State</p>
                         <p className="text-base font-black text-white tabular-nums">{v2GameStats.avgMentalState.toFixed(1)}<span className="text-xs font-medium text-white/40 ml-1">/ 5</span></p>
@@ -615,7 +615,7 @@ export default function ChartingAnalyticsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
                       <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Overall Game Factor</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgOverallFactor.toFixed(1)}<span className="text-xs text-white/40 ml-1">/ 5</span></p></div>
                       <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Game Retention</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgRetention.toFixed(1)}<span className="text-xs text-white/40 ml-1">/ 5</span></p></div>
-                      <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Good Decision Rate</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgGoodDecisionRate.toFixed(0)}%</p></div>
+                      <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Good Decision Factor</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgGoodDecisionRate.toFixed(0)}%</p></div>
                       <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Mind Vault Entries</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.vaultCount}</p></div>
                     </div>
                   </div>

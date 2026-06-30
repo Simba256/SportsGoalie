@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, RefreshCw, XCircle, CheckCircle, Clock, Ban, ChevronRight, Trash2 } from 'lucide-react';
+import { Loader2, RefreshCw, XCircle, CheckCircle, Clock, Ban, ChevronRight, Trash2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { invitationService } from '@/lib/services/invitation.service';
 import { Invitation } from '@/types/invitation';
@@ -43,6 +43,18 @@ export function GoalieInviteList({ invitations, loading, onResend, onRevoke, onD
   const [actionId, setActionId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  const getInviteUrl = (token: string) =>
+    `${window.location.origin}/auth/accept-invite?token=${token}`;
+
+  const copyInviteLink = async (token: string, email: string) => {
+    try {
+      await navigator.clipboard.writeText(getInviteUrl(token));
+      toast.success(`Invite link copied for ${email}`);
+    } catch {
+      toast.error('Could not copy to clipboard');
+    }
+  };
+
   const handleResend = async (inv: Invitation) => {
     setActionId(inv.id);
     try {
@@ -52,7 +64,10 @@ export function GoalieInviteList({ invitations, loading, onResend, onRevoke, onD
         if (!res.ok) throw new Error('Email API returned error');
         toast.success(`Invite resent to ${updated.email}`);
       } catch {
-        toast.success(`Invitation refreshed for ${updated.email}`, { description: 'Email delivery failed — copy the invite link manually.' });
+        toast.warning(`Email delivery failed for ${updated.email}`, {
+          description: 'Use the copy button to share the invite link manually.',
+          duration: 8000,
+        });
       }
       onResend(updated);
     } catch (error: any) {
@@ -111,6 +126,7 @@ export function GoalieInviteList({ invitations, loading, onResend, onRevoke, onD
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {invitations.map(inv => {
         const busy = actionId === inv.id;
+        const canCopyLink = inv.status === 'pending' || inv.status === 'expired';
         const canResend = inv.status === 'pending' || inv.status === 'expired';
         const canRevoke = inv.status === 'pending';
         const canDelete = inv.status !== 'pending';
@@ -153,6 +169,12 @@ export function GoalieInviteList({ invitations, loading, onResend, onRevoke, onD
 
               {/* Right: actions */}
               <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
+                {canCopyLink && (
+                  <button onClick={() => copyInviteLink(inv.token, inv.email)} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '6px', border: `1px solid rgba(96,205,255,0.2)`, background: 'rgba(96,205,255,0.07)', color: BLUE2, fontSize: '11px', fontWeight: 700, letterSpacing: '0.8px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1, transition: 'all 0.2s' }}>
+                    <Copy size={11} />
+                    Copy Link
+                  </button>
+                )}
                 {canResend && (
                   <button onClick={() => handleResend(inv)} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '6px', border: `1px solid ${BLUE}44`, background: 'rgba(55,181,255,0.1)', color: BLUE, fontSize: '11px', fontWeight: 700, letterSpacing: '0.8px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1, transition: 'all 0.2s' }}>
                     {busy ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={11} />}
