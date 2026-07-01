@@ -99,22 +99,24 @@ export default function ParentGoaliesPage() {
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                       <h4 style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>{child.displayName}</h4>
                       {child.pacingLevel && (
                         <span style={{ padding: '2px 8px', borderRadius: '20px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, fontSize: '10px', fontWeight: 700 }}>
-                          {child.pacingLevel}
+                          {({ introduction: 'Introduction', intermediate: 'Development', advanced: 'Refinement' } as Record<string, string>)[child.pacingLevel] ?? child.pacingLevel}
                         </span>
                       )}
                       <span style={{ padding: '2px 8px', borderRadius: '20px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>
                         {child.relationship}
                       </span>
                     </div>
-                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden', marginBottom: '8px' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #2563eb, #dc2626)', borderRadius: '99px', transition: 'width 0.5s ease' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #37b5ff, #22c55e)', borderRadius: '99px', transition: 'width 0.5s ease' }} />
+                      </div>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{pct}%</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>{pct}% progress</span>
                       <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Trophy size={12} /> {child.quizzesCompleted || 0} quizzes
                       </span>

@@ -245,7 +245,7 @@ export default function V2PeriodsPage() {
       }
 
       toast.success('Period charting saved!');
-      router.push(`/charting/sessions/${sessionId}`);
+      router.push(`/charting/sessions/${sessionId}/v2/post-game`);
     } catch (error) {
       console.error('Failed to save:', error);
       toast.error('Failed to save data');
@@ -306,15 +306,7 @@ export default function V2PeriodsPage() {
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <h1 className="text-sm font-bold text-white">Period Charting</h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
 
         {/* Period tabs */}
@@ -408,7 +400,7 @@ export default function V2PeriodsPage() {
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
               label="Goal Classification"
-              helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Bad Goal: Breakdown in position, read, form, or mental execution within your control."
+              helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Weak Goal: Breakdown in position, read, form, or mental execution within your control."
             >
               <GoalClassifier
                 goalCount={activePeriod.goalsAgainst}
@@ -453,7 +445,7 @@ export default function V2PeriodsPage() {
                 : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
             }>
               <ContextualHelp
-                label="Mind Control"
+                label="Emotional Balance"
                 helpText="Rate your mental command during this period. 1 = Not in the Now, 5 = Command Center Operating. Tap any star to see its full definition."
               >
                 <StarRating

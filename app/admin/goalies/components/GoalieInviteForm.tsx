@@ -78,7 +78,7 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
         role: 'student',
         invitedBy,
         invitedByName,
-        expiresInDays: 7,
+        expiresInDays: 30,
         metadata: {
           firstName: form.firstName.trim() || undefined,
           lastName: form.lastName.trim() || undefined,
@@ -99,9 +99,9 @@ export function GoalieInviteForm({ invitedBy, invitedByName, onInvitationCreated
         if (!res.ok) throw new Error('Email API error');
         toast.success(`Invite sent to ${invitation.email}`);
       } catch {
-        // Invitation created in Firestore — email failed, warn but don't block
-        toast.success(`Invitation created for ${invitation.email}`, {
-          description: 'Email delivery failed — copy the invite link manually from the list below.',
+        toast.warning(`Email delivery failed for ${invitation.email}`, {
+          description: 'Invitation saved — use "Copy Link" in the list below to share it manually.',
+          duration: 10000,
         });
       }
 

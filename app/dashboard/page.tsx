@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { SkeletonDashboard } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
@@ -19,6 +21,7 @@ import { useRecentQuizzes } from '@/hooks/useRecentQuizzes';
 import { CustomCurriculumDashboard } from '@/components/dashboard/CustomCurriculumDashboard';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
+import { useGrowthPoints } from '@/hooks/useGrowthPoints';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
@@ -47,11 +50,32 @@ function DashboardContent() {
   return <StandardDashboard />;
 }
 
+type BaselineIntelligenceProfile = {
+  overallScore: number;
+  pacingLevel: string;
+  identifiedStrengths: Array<{ categoryName: string; score: number }>;
+  identifiedGaps: Array<{ categoryName: string; score: number; priority?: string }>;
+};
+
 function StandardDashboard() {
   const { user } = useAuth();
   const { userProgress, loading } = useProgress();
   const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
   const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(14);
+  const { currentPoints } = useGrowthPoints();
+  const [baselineProfile, setBaselineProfile] = useState<BaselineIntelligenceProfile | null>(null);
+
+  useEffect(() => {
+    if (!user?.id || !user?.onboardingCompleted) return;
+    getDoc(doc(db, 'studentBaselineProfiles', user.id))
+      .then(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data?.intelligenceProfile) setBaselineProfile(data.intelligenceProfile as BaselineIntelligenceProfile);
+        }
+      })
+      .catch(() => {});
+  }, [user?.id, user?.onboardingCompleted]);
 
   if (loading || enrollmentsLoading) return <SkeletonDashboard />;
 
@@ -184,7 +208,7 @@ function StandardDashboard() {
           <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
           <StatCard label="Avg Grasp Level" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
           <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
-          <StatCard label="Growth Points" value={(user as unknown as { growthPoints?: number })?.growthPoints ?? 0} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
+          <StatCard label="Growth Points" value={currentPoints} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
           <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
       </div>
@@ -359,6 +383,9 @@ function StandardDashboard() {
               </div>
             </div>
 
+            {/* Baseline Profile */}
+            {baselineProfile && <GoalieProfileCard profile={baselineProfile} />}
+
             {/* Mind Vault */}
             <Link href="/mind-vault" style={{ textDecoration: 'none' }}>
               <div className="vault-hover" style={{ background: 'linear-gradient(135deg,rgba(167,139,250,.14) 0%,rgba(2,18,44,.92) 55%,rgba(109,40,217,.1) 100%)', border: '1px solid rgba(167,139,250,.22)', borderRadius: '20px', padding: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -523,6 +550,76 @@ function QuickActionCard({ href, icon, label, sub, color }: { href: string; icon
         </div>
       </div>
     </Link>
+  );
+}
+
+function GoalieProfileCard({ profile }: { profile: BaselineIntelligenceProfile }) {
+  const GREEN = '#4ade80';
+  const YELLOW = '#fbbf24';
+
+  const PACING_META: Record<string, { color: string; label: string }> = {
+    introduction: { color: YELLOW, label: 'Introduction' },
+    development: { color: BLUE, label: 'Development' },
+    refinement: { color: GREEN, label: 'Refinement' },
+  };
+
+  const pm = PACING_META[profile.pacingLevel] || PACING_META.introduction;
+  const barPct = ((profile.overallScore - 1) / 3) * 100;
+  const topStrength = profile.identifiedStrengths?.[0];
+  const topGap = profile.identifiedGaps?.[0];
+
+  return (
+    <div style={{ position: 'relative', background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', padding: '20px', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${pm.color}88,transparent)` }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '30px', height: '30px', borderRadius: '9px', background: `${pm.color}1a`, border: `1px solid ${pm.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Brain size={15} color={pm.color} />
+          </div>
+          <div>
+            <p style={{ fontSize: '14px', fontWeight: 800, color: '#fff', margin: 0 }}>Your Goalie Profile</p>
+            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,.3)', margin: 0 }}>Baseline Assessment</p>
+          </div>
+        </div>
+        <span style={{ background: `${pm.color}18`, border: `1px solid ${pm.color}30`, color: pm.color, padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>
+          {pm.label}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '10px' }}>
+        <span style={{ fontSize: '38px', fontWeight: 900, color: pm.color, lineHeight: 1 }}>{profile.overallScore.toFixed(1)}</span>
+        <span style={{ fontSize: '13px', color: 'rgba(255,255,255,.3)', fontWeight: 600 }}>/4.0</span>
+      </div>
+
+      <div style={{ height: '6px', background: 'rgba(255,255,255,.07)', borderRadius: '99px', overflow: 'hidden', marginBottom: '5px' }}>
+        <div style={{ height: '100%', width: `${barPct}%`, background: pm.color, borderRadius: '99px', boxShadow: `0 0 8px ${pm.color}55`, transition: 'width 0.8s ease' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,.2)', fontWeight: 600, marginBottom: '12px' }}>
+        <span>Intro</span><span>Development</span><span>Refinement</span>
+      </div>
+
+      {(topStrength || topGap) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
+          {topStrength && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.45)' }}>
+                Strength: <strong style={{ color: 'rgba(255,255,255,.75)', fontWeight: 600 }}>{topStrength.categoryName}</strong>
+              </span>
+            </div>
+          )}
+          {topGap && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: YELLOW, flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.45)' }}>
+                Focus area: <strong style={{ color: 'rgba(255,255,255,.75)', fontWeight: 600 }}>{topGap.categoryName}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

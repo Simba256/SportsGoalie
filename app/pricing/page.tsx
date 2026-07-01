@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Menu, X } from 'lucide-react';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
@@ -22,6 +22,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function PricingPage() {
   const router = useRouter();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const plans = [
     {
@@ -130,34 +131,51 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => { router.push('/'); setMobileNavOpen(false); }}
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
             aria-label="Go to home"
           >
             <img src="/logo.png" alt="Smarter Goalie" className="h-10 w-auto object-contain" />
           </button>
           <div className="hidden md:flex items-center gap-7">
-            <button
-              onClick={() => router.push('/')}
-              className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide"
-            >
+            <button onClick={() => router.push('/')} className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide">
               Home
             </button>
-            <button
-              onClick={() => router.push('/explain')}
-              className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide"
-            >
+            <button onClick={() => router.push('/explain')} className="text-slate-800 hover:text-slate-900 text-[15px] font-medium tracking-wide">
               How It Works
             </button>
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="text-white px-4 py-2 rounded-md text-[15px] font-medium tracking-wide transition-colors duration-300"
-              style={{ background: BLUE }}
-            >
+            <button onClick={() => router.push('/auth/login')} className="text-white px-4 py-2 rounded-md text-[15px] font-medium tracking-wide transition-colors duration-300" style={{ background: BLUE }}>
               Login
             </button>
           </div>
+          {/* Mobile: Login + hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            <button onClick={() => router.push('/auth/login')} className="text-white text-[13px] font-semibold rounded-md px-3 py-2" style={{ background: BLUE, border: 'none', cursor: 'pointer' }}>
+              Login
+            </button>
+            <button
+              onClick={() => setMobileNavOpen(o => !o)}
+              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', color: '#1e293b', minWidth: '40px', minHeight: '40px' }}
+            >
+              {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
+        {/* Mobile dropdown */}
+        {mobileNavOpen && (
+          <div style={{ background: '#fff', borderTop: '1px solid #e2e8f0', padding: '4px 20px 16px' }}>
+            {[
+              { label: 'Home', action: () => { router.push('/'); setMobileNavOpen(false); } },
+              { label: 'How It Works', action: () => { router.push('/explain'); setMobileNavOpen(false); } },
+              { label: 'Contact', action: () => { router.push('/contact'); setMobileNavOpen(false); } },
+            ].map(({ label, action }) => (
+              <button key={label} onClick={action}
+                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', fontSize: '15px', fontWeight: 600, color: '#1e293b', padding: '15px 0' }}
+              >{label}</button>
+            ))}
+          </div>
+        )}
       </nav>
 
       {/* ── Hero ── */}

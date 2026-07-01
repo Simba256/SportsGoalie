@@ -955,8 +955,8 @@ export const PILLARS: PillarInfo[] = [
   },
   {
     slug: 'seven_point',
-    name: '7 Point System Below Icing Line',
-    shortName: '7 Point',
+    name: '6 Zone Grid Below Icing Line',
+    shortName: '6 Zone Grid',
     description: 'Zone awareness and coverage patterns',
     icon: 'Grid3X3',
     color: 'red',

@@ -726,33 +726,30 @@ export class ProgressService extends BaseDatabaseService {
         throw new Error('Failed to get user progress');
       }
 
+      const stats = userProgressResult.data.overallStats;
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const lastActive = userProgressResult.data.overallStats.currentStreak > 0
-        ? new Date() // We need to get this from sport progress
-        : null;
 
-      let newStreak = 1;
-      let longestStreak = userProgressResult.data.overallStats.longestStreak;
+      let newStreak = stats.currentStreak || 0;
+      let longestStreak = stats.longestStreak || 0;
 
-      if (lastActive) {
-        const lastActiveDate = new Date(
-          lastActive.getFullYear(),
-          lastActive.getMonth(),
-          lastActive.getDate()
-        );
-        const daysDiff = Math.floor((today.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (stats.lastStreakDate) {
+        const last = stats.lastStreakDate.toDate();
+        const lastDay = new Date(last.getFullYear(), last.getMonth(), last.getDate());
+        const daysDiff = Math.floor((today.getTime() - lastDay.getTime()) / (1000 * 60 * 60 * 24));
 
         if (daysDiff === 0) {
-          // Same day, maintain current streak
-          newStreak = userProgressResult.data.overallStats.currentStreak;
+          // Already logged in today — no change needed
         } else if (daysDiff === 1) {
-          // Next day, increment streak
-          newStreak = userProgressResult.data.overallStats.currentStreak + 1;
+          // Consecutive day — extend streak
+          newStreak += 1;
         } else {
-          // Streak broken, reset to 1
+          // Gap in login — reset
           newStreak = 1;
         }
+      } else {
+        // First time ever logging in — start streak
+        newStreak = 1;
       }
 
       if (newStreak > longestStreak) {
@@ -767,7 +764,8 @@ export class ProgressService extends BaseDatabaseService {
 
       await this.updateOverallStats(userId, {
         currentStreak: newStreak,
-        longestStreak: longestStreak,
+        longestStreak,
+        lastStreakDate: Timestamp.now(),
       });
 
       // Check for streak achievements

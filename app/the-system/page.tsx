@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ChevronRight } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
 import { PillarsArchitectureSection } from '@/components/the-system/pillars-architecture-section';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -56,11 +58,11 @@ export default function TheSystemPage() {
   const sec: React.CSSProperties = {
     position: 'relative',
     overflow: 'hidden',
-    minHeight: '100vh',
+    minHeight: '100svh',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    padding: 'clamp(80px,10vw,130px) 0',
+    padding: 'clamp(60px,8vw,130px) 0',
   };
 
   return (
@@ -84,58 +86,10 @@ export default function TheSystemPage() {
         }
       `}} />
 
-      {/* ── NAV ── */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button
-              onClick={() => router.push('/who-we-are')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />
-              WHO WE ARE
-            </button>
-            {/* Active state — THE SYSTEM */}
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'default', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: BLUE, display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, boxShadow: `0 0 0 3px rgba(55,181,255,0.22)`, flexShrink: 0 }} />
-              THE SYSTEM
-            </button>
-            <button
-              onClick={() => router.push('/contact')}
-              style={{
-                background: `linear-gradient(135deg, ${BLUE}, #0ea5e9)`,
-                border: 'none', borderRadius: '50px',
-                padding: '9px 20px', cursor: 'pointer',
-                fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#fff',
-                boxShadow: '0 2px 12px rgba(55,181,255,0.3)',
-              }}
-            >
-              CONTACT US
-            </button>
-          </div>
-          {/* Mobile contact button */}
-          <button
-            onClick={() => router.push('/contact')}
-            className="sm:hidden"
-            style={{
-              background: `linear-gradient(135deg, ${BLUE}, #0ea5e9)`,
-              border: 'none', borderRadius: '50px',
-              padding: '8px 16px', cursor: 'pointer',
-              fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: '#fff',
-            }}
-          >
-            CONTACT
-          </button>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* ── B: OPENING STATEMENT ── */}
-      <section style={{ ...sec, background: '#060f28' }}>
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #081d3f 0%, #0a2248 55%, #071840 100%)' }}>
         <MeshGradientBg
           colors={['#060f28', '#0f2847', '#1F3864', '#1850b4', '#37b5ff', '#0a2040']}
           distortion={0.9}
@@ -172,7 +126,7 @@ export default function TheSystemPage() {
       />
 
       {/* ── D: CHARTING ARCHITECTURE ── */}
-      <section style={{ ...sec, background: 'linear-gradient(140deg, #060d1f 0%, #0a1835 55%, #061228 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(140deg, #091c40 0%, #0d2448 55%, #081a3c 100%)' }}>
         {/* Grid overlay */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(55,181,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(55,181,255,0.025) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
         {/* Glow orbs */}
@@ -222,7 +176,7 @@ export default function TheSystemPage() {
               {
                 num: '01',
                 title: 'Game Charting',
-                desc: 'Factor Ratios, good goal / bad goal, V.M.P. intensity, period by period',
+                desc: 'Factor Ratios, good goal / weak goal, V.M.P. intensity, period by period',
                 metric: 'Factor Ratio',
                 color: BLUE2,
                 icon: (
@@ -278,7 +232,7 @@ export default function TheSystemPage() {
                   spotlight
                   className="group h-full rounded-[18px] cursor-default"
                   style={{
-                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #060d1f 80%)`,
+                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #091c40 80%)`,
                     border: `1px solid ${item.color}${isActive ? '55' : '28'}`,
                     boxShadow: isActive
                       ? `0 16px 48px ${item.color}22, inset 0 1px 0 rgba(255,255,255,0.08)`
@@ -373,9 +327,12 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── E: PERSONALIZED COMPANION SYSTEM ── */}
-      <section style={{ ...sec, background: 'linear-gradient(145deg, #1e5ec4 0%, #1850b4 58%, #0f3d9e 100%)' }}>
-        <FloatingPaths position={-1} color="rgba(96,205,255,0.7)" />
-        <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: '55vw', height: '55vw', maxWidth: '680px', maxHeight: '680px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.13) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #0d2d6b 0%, #0a2358 55%, #071940 100%)' }}>
+        <FloatingPaths position={-1} color="rgba(96,205,255,0.45)" />
+        {/* Grid overlay */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(55,181,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(55,181,255,0.03) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: '55vw', height: '55vw', maxWidth: '680px', maxHeight: '680px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.22) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.1) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 items-center">
@@ -436,7 +393,7 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── F: MOTIVATIONAL LIBRARY ── */}
-      <section style={{ ...sec, background: 'linear-gradient(145deg, #0b0f1e 0%, #080d18 60%, #0f0d1c 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #0a1428 0%, #091220 60%, #0c1128 100%)' }}>
         {/* Amber glow bottom-left */}
         <div style={{ position: 'absolute', bottom: '-8%', left: '-5%', width: '700px', height: '700px', background: 'radial-gradient(ellipse, rgba(251,191,36,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
         {/* Blue glow top-right */}
@@ -544,7 +501,7 @@ export default function TheSystemPage() {
                   spotlight
                   className={`group h-full rounded-[18px] cursor-default${i === 4 ? ' sm:col-span-2 lg:col-span-1' : ''}`}
                   style={{
-                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #0b0f1e 80%)`,
+                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #0a1428 80%)`,
                     border: `1px solid ${item.color}${isActive ? '55' : '28'}`,
                     boxShadow: isActive
                       ? `0 16px 48px ${item.color}22, inset 0 1px 0 rgba(255,255,255,0.08)`
@@ -653,7 +610,7 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── G: YOUR INDIVIDUAL PAGE ── */}
-      <section style={{ ...sec, background: 'linear-gradient(155deg, #07101f 0%, #0b1d36 55%, #060f22 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(155deg, #091c3e 0%, #0d2448 55%, #081a3c 100%)' }}>
         {/* Dot grid */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(55,181,255,0.13) 1.5px, transparent 1.5px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
         {/* Blue glow orb top-right */}
@@ -676,7 +633,7 @@ export default function TheSystemPage() {
               <VoiceButton label="Coach Mike: Your Individual Page" />
             </div>
 
-            <div style={{ flex: '0 0 auto', maxWidth: '420px', width: '100%', marginLeft: 'auto' }}>
+            <div style={{ flex: '0 0 auto', maxWidth: '420px', width: '100%' }}>
               <TiltCard
                 tiltLimit={10}
                 scale={1.03}
@@ -684,7 +641,7 @@ export default function TheSystemPage() {
                 spotlight
                 className="rounded-[24px]"
                 style={{
-                  background: 'linear-gradient(145deg, rgba(10,20,44,0.97) 0%, rgba(7,15,34,0.99) 100%)',
+                  background: 'linear-gradient(145deg, rgba(12,26,56,0.97) 0%, rgba(9,20,46,0.99) 100%)',
                   backdropFilter: 'blur(24px)',
                   WebkitBackdropFilter: 'blur(24px)',
                   border: '1px solid rgba(55,181,255,0.22)',
@@ -796,9 +753,10 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── I: THE COMMUNITY ── */}
-      <section style={{ ...sec, background: 'linear-gradient(140deg, #1b3c7c 0%, #163272 100%)' }}>
-        <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.01) 60px, rgba(255,255,255,0.01) 61px)', pointerEvents: 'none' }} />
+      <section style={{ ...sec, background: 'linear-gradient(140deg, #0d2255 0%, #0b1d48 100%)' }}>
+        <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.013) 60px, rgba(255,255,255,0.013) 61px)', pointerEvents: 'none' }} />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
@@ -848,7 +806,7 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── J: THE CLOSE ── */}
-      <section style={{ ...sec, background: 'linear-gradient(160deg, #092038 0%, #0e2848 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(160deg, #0b2244 0%, #102c52 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(96,205,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(96,205,255,0.018) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', right: '-40px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 24vw, 380px)', fontWeight: 900, color: 'rgba(255,255,255,0.016)', letterSpacing: '-10px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', textTransform: 'uppercase' as const }}>SYSTEM</div>
         <div style={{ position: 'absolute', top: '-20%', left: '50%', width: '800px', height: '800px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.06) 0%, transparent 70%)', pointerEvents: 'none', transform: 'translateX(-50%)' }} />
@@ -900,12 +858,7 @@ export default function TheSystemPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
-          &copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER
-        </p>
-      </div>
+      <Footer7 />
     </div>
   );
 }

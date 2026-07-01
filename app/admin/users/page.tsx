@@ -5,6 +5,7 @@ import { Search, Users, UserPlus, ShieldCheck, MoreHorizontal, Trash2, AlertTria
 import Link from 'next/link';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
+import { auth } from '@/lib/firebase/config';
 import { userService } from '@/lib/database/services/user.service';
 import { invitationService } from '@/lib/services/invitation.service';
 import { User, UserRole } from '@/types';
@@ -52,8 +53,18 @@ function UsersManagementContent() {
     try {
       const result = await userService.deleteUser(user.id, currentUser.id);
       if (result.success) {
-        // Also remove any accepted invitations for this user
         await invitationService.deleteByAcceptedUserId(user.id);
+
+        // Delete the Firebase Auth record so the email can be re-invited
+        const idToken = await auth.currentUser?.getIdToken();
+        if (idToken) {
+          await fetch('/api/admin/delete-user', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+            body: JSON.stringify({ uid: user.id }),
+          });
+        }
+
         toast.success(`${user.displayName || user.email} has been deleted`);
         setUsers(prev => prev.filter(u => u.id !== user.id));
       } else {

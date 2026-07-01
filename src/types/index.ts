@@ -336,6 +336,7 @@ export interface OverallStats {
   averageQuizScore: number;  // Average percentage from video quizzes
   currentStreak: number;
   longestStreak: number;
+  lastStreakDate?: Timestamp;
   // Deprecated - keeping for backward compatibility but always return default values
   totalPoints: number;       // Always returns 0
   level: number;             // Always returns 1

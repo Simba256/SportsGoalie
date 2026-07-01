@@ -22,6 +22,7 @@ import {
   isAuthError,
 } from '@/lib/errors/auth-errors';
 import { userService } from '@/lib/database/services/user.service';
+import { ProgressService } from '@/lib/database/services/progress.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
 
 interface AuthContextType extends AuthState {
@@ -190,6 +191,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastLoginAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Update login streak for goalies (fire-and-forget — don't block auth flow)
+        if (user.role === 'student') {
+          ProgressService.updateStreak(user.id).catch(() => {});
+        }
       }
 
       setUser(user);
@@ -367,7 +373,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const context = createErrorContext('resetPassword', { email });
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      const continueUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/login`
+          : `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/login`;
+
+      await sendPasswordResetEmail(auth, email, {
+        url: continueUrl,
+        handleCodeInApp: false,
+      });
     } catch (error: unknown) {
       // Convert Firebase errors to AuthError
       const authError = createAuthErrorFromFirebase(error, context);

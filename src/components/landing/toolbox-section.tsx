@@ -229,29 +229,12 @@ export function ToolboxSection() {
       />
 
       <div className="relative mx-auto max-w-[1100px]">
-        <div className="mb-12 text-center md:mb-16">
-          <div className="relative mx-auto max-w-[920px]">
-            <div
-              className="pointer-events-none absolute left-1/2 top-1/2 h-[120%] w-[min(100%,720px)] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-              style={{ background: 'radial-gradient(ellipse, rgba(55,181,255,0.14) 0%, transparent 70%)' }}
-            />
-
-            <h2
-              className="relative whitespace-nowrap font-black uppercase italic leading-tight tracking-tight text-white"
-              style={{ fontSize: 'clamp(18px,4vw,56px)', textShadow: '0 4px 24px rgba(0,0,0,0.35)' }}
-            >
-              What&rsquo;s In{' '}
-              <span
-                className="bg-gradient-to-br from-[#7dd3fc] via-[#37b5ff] to-[#0ea5e9] bg-clip-text text-transparent"
-                style={{ filter: 'drop-shadow(0 0 28px rgba(55,181,255,0.45))' }}
-              >
-                YOUR
-              </span>{' '}
-              Tool Box?
-            </h2>
-          </div>
-
-          <p className="mx-auto mt-6 max-w-[560px] text-base leading-relaxed text-white/50 md:mt-7 md:text-[17px]">
+        <div className="mb-12 md:mb-16">
+          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>THE TOOLS</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white">
+            What&rsquo;s In Your Tool Box?
+          </h2>
+          <p className="mt-4 max-w-[560px] text-base leading-relaxed text-white/50 md:text-[17px]">
             Three systems that separate good goalies from great ones. Build each tool as you grow through the Smarter Goalie path.
           </p>
         </div>

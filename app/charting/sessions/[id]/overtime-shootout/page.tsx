@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { createEmptyYesNo } from '@/components/charting/YesNoField';
 import { RadioSelectField } from '@/components/charting/RadioSelectField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -236,16 +236,6 @@ export default function OvertimeShootoutPage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Data
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Tabs for Overtime and Shootout */}

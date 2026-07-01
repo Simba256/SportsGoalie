@@ -102,6 +102,10 @@ storybook-static/
 client_data/
 scripts/
 docs/invoices/
+docs/client/
+
+# Project tracker (local only)
+PROJECT_TRACKER.md
 
 # Allow important project documentation
 !PROGRESS.md
@@ -112,7 +116,5 @@ docs/invoices/
 # *.md
 .dockerignore
 
-# Allow docs folder (important project documentation)
-# docs/
-/docs/michael-docs/
-/docs 
+# Ignore local docs (context files for Claude, not for repo)
+docs/

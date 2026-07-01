@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ClipboardList, ChevronLeft } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
@@ -191,22 +193,7 @@ export default function TeamProgramsPage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />THE SYSTEM
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
@@ -413,7 +400,7 @@ export default function TeamProgramsPage() {
               { accent: '#00f2ff', label: 'Mind-Set' },
               { accent: BLUE2, label: 'Skating Tech' },
               { accent: BLUE, label: '7AMS' },
-              { accent: BLUE3, label: '7 Point' },
+              { accent: BLUE3, label: '6 Zone Grid' },
               { accent: '#38bdf8', label: 'Form Tech' },
               { accent: '#22d3ee', label: 'Game & Practice' },
               { accent: BLUE2, label: 'Lifestyle' },
@@ -514,9 +501,7 @@ export default function TeamProgramsPage() {
         </div>
       </section>
 
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
-      </div>
+      <Footer7 />
     </div>
   );
 }
