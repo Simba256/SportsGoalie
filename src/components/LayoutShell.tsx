@@ -132,7 +132,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <AdminSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -144,7 +144,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <CoachSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -156,7 +156,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <ParentSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -183,7 +183,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <DashboardSidebar isOpen={sidebarOpen} onToggle={toggle} />
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {!fullscreen && <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />}
-        <main className={fullscreen ? '' : 'p-6'}>{children}</main>
+        <main className={fullscreen ? '' : 'p-3 md:p-6'}>{children}</main>
       </div>
     </div>
   );

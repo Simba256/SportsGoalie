@@ -901,7 +901,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
         <button
           onClick={goNext}
           style={btnPrimary}
-          className="sbq-btn"
+          className="sbq-btn sbq-cta"
         >
           BEGIN THE STUDENT BASELINE PROFILE
           <ChevronRight style={{ width: '18px', height: '18px' }} />
@@ -1001,7 +1001,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
   const renderPoiseNote = (): React.ReactElement => (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ maxWidth: '600px', width: '100%' }} className="sbq-fade">
-        <div style={{ ...cardStyle, padding: '36px', borderColor: `rgba(55,181,255,0.22)` }}>
+        <div style={{ ...cardStyle, padding: '36px', borderColor: `rgba(55,181,255,0.22)` }} className="sbq-card-pad">
           <div style={{ height: '3px', background: `linear-gradient(90deg, ${BLUE}, #0ea5e9, transparent)`, borderRadius: '99px', marginBottom: '28px' }} />
           <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: `${BLUE}99`, marginBottom: '18px' }}>
             A note before you continue
@@ -1025,7 +1025,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
           <button
             onClick={goNext}
             style={{ ...btnPrimary, fontSize: '15px' }}
-            className="sbq-btn"
+            className="sbq-btn sbq-cta"
           >
             CONTINUE
             <ChevronRight style={{ width: '16px', height: '16px' }} />
@@ -1066,7 +1066,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
             <button
               onClick={goNext}
               style={{ ...btnPrimary, fontSize: '15px' }}
-              className="sbq-btn"
+              className="sbq-btn sbq-cta"
             >
               START SECTION {section.key}
               <ChevronRight style={{ width: '16px', height: '16px' }} />
@@ -1240,7 +1240,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
   const renderClosing = (): React.ReactElement => (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ maxWidth: '620px', width: '100%', textAlign: 'center' }} className="sbq-fade">
-        <div style={{ ...cardStyle, padding: '36px', marginBottom: '24px' }}>
+        <div style={{ ...cardStyle, padding: '36px', marginBottom: '24px' }} className="sbq-card-pad">
           <div style={{ height: '3px', background: `linear-gradient(90deg, ${GREEN}, #0ea5e9, ${BLUE})`, borderRadius: '99px', marginBottom: '28px' }} />
           <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: `${GREEN}99`, marginBottom: '18px' }}>
             Section Complete
@@ -1281,7 +1281,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
             cursor: saving ? 'not-allowed' : 'pointer',
             fontSize: '15px',
           }}
-          className={saving ? undefined : 'sbq-btn'}
+          className={saving ? 'sbq-cta' : 'sbq-btn sbq-cta'}
         >
           {saving ? (
             <>
@@ -1342,6 +1342,10 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
         @media (max-width: 600px) {
           .sbq-ep-row { flex-direction: column !important; }
           .sbq-loc-row { flex-direction: column !important; }
+        }
+        @media (max-width: 480px) {
+          .sbq-cta { width: 100% !important; justify-content: center !important; box-sizing: border-box !important; }
+          .sbq-card-pad { padding: 20px !important; }
         }
       `}</style>
 

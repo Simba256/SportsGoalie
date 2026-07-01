@@ -66,7 +66,7 @@ export default function PillarsPage() {
         </p>
       </section>
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 64px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 clamp(14px,4vw,24px) 64px' }}>
 
         {/* ── Error ── */}
         {state.error && (
@@ -92,7 +92,7 @@ export default function PillarsPage() {
 
         {/* ── Pillar Cards ── */}
         {state.pillars.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: '20px' }}>
             {state.pillars.map((pillar) => {
               const slug = getPillarSlugFromDocId(pillar.id);
               const info = slug ? PILLARS.find(p => p.slug === slug) : null;
