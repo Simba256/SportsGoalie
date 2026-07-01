@@ -318,7 +318,8 @@ export function ParentBaselineQuestionnaire({
         parentOverallScore: intelligenceProfile.overallScore,
       });
       onComplete();
-    } catch {
+    } catch (err) {
+      console.error('saveProfile failed:', err);
       setError('Unable to save your profile. Please try again.');
       setSaving(false);
     }

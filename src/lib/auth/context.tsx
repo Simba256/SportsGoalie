@@ -373,7 +373,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const context = createErrorContext('resetPassword', { email });
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      const continueUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/login`
+          : `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/login`;
+
+      await sendPasswordResetEmail(auth, email, {
+        url: continueUrl,
+        handleCodeInApp: false,
+      });
     } catch (error: unknown) {
       // Convert Firebase errors to AuthError
       const authError = createAuthErrorFromFirebase(error, context);

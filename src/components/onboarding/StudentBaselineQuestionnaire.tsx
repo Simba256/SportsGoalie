@@ -322,7 +322,8 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
         overallScore: intelligenceProfile.overallScore,
       });
       onComplete();
-    } catch {
+    } catch (err) {
+      console.error('saveProfile failed:', err);
       setError('Unable to save your profile. Please try again.');
       setSaving(false);
     }

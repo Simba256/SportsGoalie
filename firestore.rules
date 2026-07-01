@@ -1094,6 +1094,42 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Student Baseline Profiles collection - onboarding questionnaire results
+    match /studentBaselineProfiles/{userId} {
+      // Students can read their own profile, coaches/admins and linked parents can read
+      allow read: if isOwnerOrAdmin(userId) || isCoachOrAdmin() || isParent();
+
+      // Students can create or update their own profile
+      allow create, update: if isAuthenticated() && isOwner(userId);
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Coach Baseline Profiles collection - coach onboarding questionnaire results
+    match /coachBaselineProfiles/{userId} {
+      // Coaches can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Coaches can create or update their own profile
+      allow create, update: if isAuthenticated() && isOwner(userId);
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Parent Baseline Profiles collection - parent onboarding questionnaire results
+    match /parentBaselineProfiles/{userId} {
+      // Parents can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Parents can create or update their own profile
+      allow create, update: if isAuthenticated() && isOwner(userId);
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
     // Catch-all rule for any other collections
     match /{document=**} {
       // Deny all access to undefined collections
