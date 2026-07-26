@@ -8,6 +8,7 @@ import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
+import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
@@ -425,6 +426,8 @@ export default function GoalieCoachPage() {
           </div>
         </div>
       </section>
+
+      <SevenPillarsCTA from="goalie-coach" eyebrow="For The Goalie Coach" />
 
       <Footer7 />
     </div>

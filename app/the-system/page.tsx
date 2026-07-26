@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
@@ -16,6 +17,22 @@ const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
+
+const heroContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+  },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 56 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
 
 function VoiceButton({ label }: { label: string }) {
   const [playing, setPlaying] = useState(false);
@@ -98,24 +115,38 @@ export default function TheSystemPage() {
           veilOpacity={0.48}
         />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '32px' }}>
+        <motion.div
+          className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full"
+          style={{ position: 'relative', zIndex: 1 }}
+          variants={heroContainer}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={heroItem} style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '32px' }}>
             <div style={{ width: '48px', height: '2px', background: `linear-gradient(90deg, ${BLUE2}, rgba(96,205,255,0.2))`, flexShrink: 0 }} />
             <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>THE SMARTER GOALIE SYSTEM</p>
-          </div>
+          </motion.div>
 
-          <h1 style={{ fontSize: 'clamp(30px, 5vw, 68px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 28px', color: '#fff', maxWidth: '920px' }}>
+          <motion.h1
+            variants={heroItem}
+            style={{ fontSize: 'clamp(30px, 5vw, 68px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 28px', color: '#fff', maxWidth: '920px' }}
+          >
             SEVEN PILLARS.<br />
             <span style={{ color: BLUE2 }}>ONE COMPLETE ARCHITECTURE.</span><br />
             <span style={{ color: RED }}>BUILT ON SIX DECADES.</span>
-          </h1>
+          </motion.h1>
 
-          <p style={{ fontSize: 'clamp(15px, 1.8vw, 20px)', color: 'rgba(255,255,255,0.68)', lineHeight: 1.85, maxWidth: '680px', margin: '0 0 44px', fontStyle: 'italic' }}>
+          <motion.p
+            variants={heroItem}
+            style={{ fontSize: 'clamp(15px, 1.8vw, 20px)', color: 'rgba(255,255,255,0.68)', lineHeight: 1.85, maxWidth: '680px', margin: '0 0 44px', fontStyle: 'italic' }}
+          >
             Every component shown on this page is connected to every other. Nothing operates in isolation. The goalie who engages with the full system develops faster, more completely, and more permanently than any program has ever produced.
-          </p>
+          </motion.p>
 
-          <VoiceButton label="Coach Mike: The Complete System" />
-        </div>
+          <motion.div variants={heroItem}>
+            <VoiceButton label="Coach Mike: The Complete System" />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* ── C: 7 PILLARS OVERVIEW ── */}

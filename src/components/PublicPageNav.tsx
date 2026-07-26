@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
-  { label: 'WHO WE ARE', path: '/who-we-are' },
-  { label: 'THE SYSTEM',  path: '/the-system' },
-  { label: 'CONTACT US', path: '/contact' },
+  { label: 'Who We Are', path: '/who-we-are' },
+  { label: 'The System', path: '/the-system' },
+  { label: 'Contact Us', path: '/contact' },
 ];
 
 const BLUE = '#37b5ff';
