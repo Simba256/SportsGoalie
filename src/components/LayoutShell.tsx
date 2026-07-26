@@ -10,7 +10,21 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact', '/bridge'];
+const NAKED_ROUTES = [
+  '/explain',
+  '/goalie',
+  '/parent-role',
+  '/team-programs',
+  '/goalie-coach',
+  '/organization',
+  '/who-we-are',
+  '/the-system',
+  '/contact',
+  '/bridge',
+  '/7-pillars',
+  '/pillar',
+  '/offer',
+];
 const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
 const PUBLIC_ROUTES = ['/', '/pricing'];
 

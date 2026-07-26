@@ -76,7 +76,7 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '3',
-    name: '7 ANGLE-MARK SYSTEM',
+    name: '7AMS',
     subtitle: "The Goalie's GPS",
     desc: 'Seven markers. The Feel Factor. Positional certainty at all times.',
     Icon: Map,
@@ -84,7 +84,7 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '4',
-    name: '7 POINT SYSTEM',
+    name: '6 ZONE GRID',
     subtitle: 'Net Management',
     desc: 'Below the icing line. Wraparounds. Net management made complete.',
     Icon: Grid3X3,
@@ -100,7 +100,7 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '6',
-    name: 'GAME & PRACTICE PERFORMANCE',
+    name: 'GAME & PRACTICE',
     subtitle: 'The Development Loop',
     desc: 'Reading the play. The Development Loop. Charting everything.',
     Icon: BarChart3,
