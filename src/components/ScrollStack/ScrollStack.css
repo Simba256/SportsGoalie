@@ -11,10 +11,22 @@
 
 .scroll-stack-card {
   position: sticky;
-  top: var(--scroll-stack-top, 15vh);
+  top: 88px;
   width: 100%;
   margin-bottom: var(--scroll-stack-gap, 100px);
   isolation: isolate;
+}
+
+/* Cards are a fixed 560px tall from md: up, so the sticky offset is set to
+   roughly center that height in the viewport. A transform-based centering
+   trick isn't used here because it would also shift the card's normal
+   in-flow position before it engages stickiness, dragging it up into the
+   intro copy above the section. Mobile card height varies with content, so
+   it keeps a simple offset below the navbar instead. */
+@media (min-width: 768px) {
+  .scroll-stack-card {
+    top: var(--scroll-stack-top, calc(50vh - 280px));
+  }
 }
 
 /* Ascending z-index so later cards always paint on top of earlier ones */

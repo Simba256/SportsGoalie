@@ -426,7 +426,7 @@ export default function Home() {
                 The support system that keeps you sharp.
               </p>
             </div>
-            <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="72px" scaleEndPosition="15%" baseScale={0.95}>
+            <ScrollStack useWindowScroll={true} itemDistance={200} itemScale={0.02} itemStackDistance={30} stackPosition="calc(50vh - 280px)" scaleEndPosition="15%" baseScale={0.95}>
               {/* 1 — The 7 Pillars of Intelligent Goaltending */}
               <ScrollStackItem>
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
@@ -439,15 +439,14 @@ export default function Home() {
                       />
                       <div className="p-5 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>1/5</span></div>
-                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">THE 7 PILLARS</h3>
-                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">THE 7 PILLARS</h3>
+                        <p className="text-lg md:text-xl font-semibold mb-4" style={{ color: '#37b5ff' }}>
                           Raw talent is one thing. Building it into a SMARTER goaltender is another.
                         </p>
-                        <p className="text-zinc-400 text-base mb-5">Through 7 Pillars, we lay the foundation.</p>
+                        <p className="text-zinc-400 text-base leading-relaxed mb-5">Through 7 Pillars, we lay the foundation.</p>
                         <p className="text-zinc-300 leading-relaxed mb-6">
                           We build INTELLIGENT ATHLETIC GOALTENDERS through 7 Pillars — anchored by two UNIQUE, PROVEN positional systems: the Seven Angle-Mark System (7AMS) above the icing line and the 6 Zone System (6ZS) below it. From MIND-SET to Skating Tech, Form Tech, Game Performance, and LIFE STYLE — mastering each pillar builds lasting consistency.
                         </p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -459,14 +458,13 @@ export default function Home() {
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgb(6,30,70)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center md:h-[560px]">
                       <div className="h-44 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_2.png")' }}></div>
-                      <div className="p-5 md:px-10 md:py-8 flex flex-col justify-center">
-                        <div className="text-right mb-2"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>2/5</span></div>
-                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">VIDEO NEVER LIES</h3>
-                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>Seeing Is Believing</p>
+                      <div className="p-5 md:p-12 flex flex-col justify-center">
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>2/5</span></div>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">VIDEO NEVER LIES</h3>
+                        <p className="text-lg md:text-xl font-semibold mb-4" style={{ color: '#37b5ff' }}>Seeing Is Believing</p>
                         <p className="text-zinc-300 leading-relaxed mb-6">
                           But the real value isn&rsquo;t just in watching; it&rsquo;s understanding what you&rsquo;re seeing. It&rsquo;s analyzing your technique, your mobility, your reactions, your decision making process. To truly understand your game. How much can you improve? Raising your evaluation ability is the key to immediate development. We don&rsquo;t know where your ceiling is, but we know exactly how to use video to analyze your game with you. Your success and your growth are in your hands, and you&rsquo;ll have all the support you need to maintain your level or reach the heights you dream of.
                         </p>
-                        <button className="mt-2 text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -480,12 +478,11 @@ export default function Home() {
                       <div className="h-44 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_3.png")' }}></div>
                       <div className="p-5 md:p-12 flex flex-col justify-center">
                         <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>3/5</span></div>
-                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">ANALYTICS & GAP MANAGEMENT</h3>
-                        <p className="text-lg md:text-xl mb-6" style={{ color: '#37b5ff' }}>Gaps are not failures — gaps are the roadmap to building your consistency in performance.</p>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">ANALYTICS & GAP MANAGEMENT</h3>
+                        <p className="text-lg md:text-xl font-semibold mb-4" style={{ color: '#37b5ff' }}>Gaps are not failures — gaps are the roadmap to building your consistency in performance.</p>
                         <p className="text-zinc-300 leading-relaxed mb-6">
                           The charting systems build your personal Baseline Profile. Your knowledge and skill base is now alive. Smarter Goalie&rsquo;s intuitive system is designed to grow your knowledge base and your tech game with methods built to accelerate your development.
                         </p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -497,17 +494,16 @@ export default function Home() {
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgb(6,30,70)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center md:h-[560px]">
                       <div className="h-44 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/card3-5.png")' }}></div>
-                      <div className="p-5 md:px-10 md:py-8 flex flex-col justify-center">
-                        <div className="text-right mb-2"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>4/5</span></div>
-                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">THE CHESS GAME</h3>
-                        <p className="text-lg md:text-xl mb-4" style={{ color: '#37b5ff' }}>Think Smart. Play Smarter.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-4">
+                      <div className="p-5 md:p-12 flex flex-col justify-center">
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>4/5</span></div>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">THE CHESS GAME</h3>
+                        <p className="text-lg md:text-xl font-semibold mb-4" style={{ color: '#37b5ff' }}>Think Smart. Play Smarter.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
                           Knowledge is power, and Smarter Goalie is knowledge-driven. Most goalies are playing a 1000-piece puzzle with a fragmented picture and no border pieces. They&rsquo;ve got talent scattered everywhere and no frame to build it on. We hand you the borders first, then fill in the picture until the whole game comes into focus.
                         </p>
-                        <p className="text-zinc-400 text-sm mb-5">
+                        <p className="text-zinc-400 text-base leading-relaxed mb-5">
                           Chess is won in the mind. So is goaltending. Anyone can move the pieces. Anyone can stop a puck. A Smarter Goalie knows the options, anticipates the play, dictates the terms and holds the cards. Everyone reacts. A Smarter Goalie decides when, why, where, and how.
                         </p>
-                        <button className="text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
@@ -519,17 +515,16 @@ export default function Home() {
                   <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgb(6,30,70)', border: '1px solid rgba(55,181,255,0.45)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(55,181,255,0.08)' }}>
                     <div className="grid md:grid-cols-2 gap-0 items-center md:h-[560px]">
                       <div className="h-44 md:h-full bg-cover bg-center" style={{ backgroundImage: 'url("/feature_5.png")' }}></div>
-                      <div className="p-5 md:px-8 md:py-6 flex flex-col justify-center">
-                        <div className="text-right mb-1"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>5/5</span></div>
-                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">THE MIRROR NEVER LIES</h3>
-                        <p className="text-base md:text-lg mb-3 font-semibold" style={{ color: '#37b5ff' }}>Discover. Understand. Know. Own. Maintain.</p>
-                        <p className="text-zinc-300 leading-relaxed mb-3">
+                      <div className="p-5 md:p-12 flex flex-col justify-center">
+                        <div className="text-right mb-4"><span className="text-lg font-semibold" style={{ color: '#37b5ff' }}>5/5</span></div>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">THE MIRROR NEVER LIES</h3>
+                        <p className="text-lg md:text-xl font-semibold mb-4" style={{ color: '#37b5ff' }}>Discover. Understand. Know. Own. Maintain.</p>
+                        <p className="text-zinc-300 leading-relaxed mb-6">
                           This is where it all comes together. After the layers, the principles, the systems, the reads, Smarter Goalie hands it back simplified in a single living chart. You log your game period by period and rate the factors that decide goaltending. The number isn&rsquo;t a grade. It&rsquo;s a mirror that shows exactly where you stand.
                         </p>
-                        <p className="text-zinc-400 text-sm leading-snug mb-6">
-                          When a rating dips, the system doesn&rsquo;t scold. It opens the precise lessons that lift that gap, drawn from everything you&rsquo;ve learned. Self-aware in the moment. Self-correcting by design. Layers made simple. Foundations built layer by layer, and a starter is born.
+                        <p className="text-zinc-400 text-base leading-relaxed mb-5">
+                          When a rating dips, the system doesn&rsquo;t scold. It opens the precise lessons that lift that gap, drawn from everything you&rsquo;ve learned. Foundations built layer by layer, and a starter is born.
                         </p>
-                        <button className="mt-2 text-white px-8 py-3 rounded-full transition-all duration-300 font-semibold inline-flex items-center gap-2 w-fit shrink-0 hover:opacity-85" style={{ background: 'linear-gradient(135deg, #37b5ff 0%, #0ea5e9 100%)', boxShadow: '0 4px 16px rgba(55,181,255,0.25)' }}><span className="w-2 h-2 bg-white rounded-full"></span>More about this ›</button>
                       </div>
                     </div>
                   </div>
