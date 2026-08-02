@@ -22,6 +22,7 @@ import {
   isAuthError,
 } from '@/lib/errors/auth-errors';
 import { userService } from '@/lib/database/services/user.service';
+import { ProgressService } from '@/lib/database/services/progress.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
 
 interface AuthContextType extends AuthState {
@@ -190,6 +191,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastLoginAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Update login streak for goalies (fire-and-forget — don't block auth flow)
+        if (user.role === 'student') {
+          ProgressService.updateStreak(user.id).catch(() => {});
+        }
       }
 
       setUser(user);
@@ -210,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Register function
   const register = async (credentials: RegisterCredentials) => {
     const context = createErrorContext('register', { email: credentials.email });
+    let createdAuthUser: FirebaseUser | undefined;
 
     try {
       isRegisteringRef.current = true; // Prevent auth state listener from signing out
@@ -244,6 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.email,
         credentials.password
       );
+      createdAuthUser = userCredential.user;
 
       // Update Firebase profile
       await updateProfile(userCredential.user, {
@@ -337,6 +345,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error code:', (error as { code: string }).code);
       }
 
+      // The Auth user was created but a later step (Firestore write, coach code, etc.)
+      // failed — delete it so the email isn't permanently orphaned in Firebase Auth
+      // with no corresponding Firestore user document.
+      if (createdAuthUser) {
+        try {
+          await createdAuthUser.delete();
+        } catch (cleanupError) {
+          console.error('❌ Failed to roll back orphaned auth user:', cleanupError);
+        }
+      }
+
       // If it's already an AuthError, just re-throw it
       if (isAuthError(error)) {
         throw error;
@@ -367,7 +386,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const context = createErrorContext('resetPassword', { email });
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      const continueUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/login`
+          : `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/login`;
+
+      await sendPasswordResetEmail(auth, email, {
+        url: continueUrl,
+        handleCodeInApp: false,
+      });
     } catch (error: unknown) {
       // Convert Firebase errors to AuthError
       const authError = createAuthErrorFromFirebase(error, context);
@@ -446,6 +473,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // register() creates the Firestore user document and calls setUser itself.
+      // Firebase signs the new user in the moment createUserWithEmailAndPassword
+      // resolves, which fires this listener before register()'s own setDoc call
+      // lands — racing its write (correct role) against the fallback default
+      // ('student') below and letting whichever finishes last win. Skip while a
+      // registration is in flight so it can never clobber the intended role.
+      if (isRegisteringRef.current) {
+        return;
+      }
+
       if (firebaseUser) {
         const user = await createUserFromFirebaseUser(firebaseUser);
         setUser(user);

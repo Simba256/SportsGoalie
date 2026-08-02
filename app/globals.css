@@ -169,6 +169,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -229,6 +232,128 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Navy charting theme (scoped)
+
+   DynamicFormRenderer and the dynamic field components are shared with the
+   session charting flow, which still sits on a light `bg-gray-50` page. Rather
+   than fork those components or thread a `variant` prop through eight field
+   types, this class repoints the shadcn design tokens to the app's navy palette
+   for everything inside it. Any page that wraps the renderer in
+   `.charting-dark` gets the dark treatment; every other consumer is untouched.
+
+   Palette matches the charting hub and session pages: ground #041830, panel
+   gradient #0c2e56 → #04213f → #0a2d52, cyan #37b5ff.
+   ────────────────────────────────────────────────────────────────────────── */
+.charting-dark {
+  --card: #0b3059;
+  --card-foreground: #ffffff;
+  --popover: #0b3059;
+  --popover-foreground: #ffffff;
+  --foreground: #ffffff;
+
+  --muted: rgba(255, 255, 255, 0.1);
+  /* Was 0.45 — roughly 3:1 against the panel, which is why field descriptions,
+     scale anchors and the "/10" suffix read as unreadable grey mush. Everything
+     secondary on this page routes through this token, so it has to clear 4.5:1. */
+  --muted-foreground: rgba(255, 255, 255, 0.72);
+
+  --border: rgba(55, 181, 255, 0.18);
+  --input: rgba(55, 181, 255, 0.22);
+  --ring: rgba(55, 181, 255, 0.45);
+
+  --primary: #37b5ff;
+  --primary-foreground: #04213f;
+  --secondary: rgba(255, 255, 255, 0.07);
+  --secondary-foreground: #ffffff;
+  --accent: rgba(55, 181, 255, 0.12);
+  --accent-foreground: #ffffff;
+
+  color: #ffffff;
+}
+
+/* Section cards get the same gradient panel as the rest of charting.
+
+   The old gradient dipped to #04213f at its 30% stop — darker than the #041830
+   page ground behind it — so the panel sank into the background instead of
+   lifting off it. This one stays a consistent step lighter than the ground,
+   which is what gives the white text something to sit on. */
+.charting-dark [data-slot='card'] {
+  background: linear-gradient(165deg, #0e3763 0%, #0a2c50 100%);
+  border-color: rgba(55, 181, 255, 0.2);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.charting-dark [data-slot='card-header']:hover {
+  background: rgba(55, 181, 255, 0.06);
+}
+
+/* Checkpoint rows are separated by hairlines rather than each being its own
+   bordered box — sixteen nested boxes inside a panel is what made this read as
+   crammed. Kept brighter than --border, which is cyan-tinted and vanishes here. */
+.charting-dark [data-slot='card-content'] > .divide-y > * + * {
+  border-top-color: rgba(255, 255, 255, 0.09);
+}
+
+/* Steps of the scale field's rating meter. Filled is deliberately a solid fill,
+   not the cyan→mint button gradient — repeated across ten narrow segments that
+   reads as stripes. The glow ties it back to the rest of the charting UI.
+
+   `data-filled` is always present and always "true" or "false", so every rule
+   below is anchored to one exact state. An earlier version styled the base case
+   unscoped and carved hover out with `:not([data-filled])`; that left the
+   selected segment's appearance depending on one negation continuing to hold,
+   and while the pointer sat on the segment you had just clicked it rendered
+   unselected — so picking 5 looked like picking 4. Mutually exclusive attribute
+   values remove the dependency entirely: no rule here can match both states, so
+   selection can't be undone by hover, focus, or any later addition. */
+.charting-dark button[data-segment][data-filled='false'] {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.charting-dark button[data-segment][data-filled='false']:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(55, 181, 255, 0.45);
+  color: #ffffff;
+}
+
+/* Both the resting and hover rules are spelled out. The hover one carries the
+   same colours on purpose — a picked segment must not change under the pointer. */
+.charting-dark button[data-segment][data-filled='true'],
+.charting-dark button[data-segment][data-filled='true']:hover {
+  background: #37b5ff;
+  border-color: transparent;
+  color: #04213f;
+  box-shadow: 0 2px 10px rgba(55, 181, 255, 0.22);
+}
+
+.charting-dark [data-slot='textarea'],
+.charting-dark [data-slot='input'] {
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+/* The Slider primitive hardcodes a light track and a white thumb ring. */
+.charting-dark input[type='range'] {
+  background: rgba(255, 255, 255, 0.1);
+}
+.charting-dark input[type='range']::-webkit-slider-thumb {
+  border-color: #04213f;
+  box-shadow: 0 0 0 3px rgba(55, 181, 255, 0.25);
+}
+.charting-dark input[type='range']::-moz-range-thumb {
+  border-color: #04213f;
+  box-shadow: 0 0 0 3px rgba(55, 181, 255, 0.25);
+}
+
+.charting-dark :is(h1, h2, h3, h4, h5, h6) {
+  color: #ffffff;
 }
 
 @keyframes marquee {

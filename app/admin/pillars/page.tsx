@@ -28,7 +28,7 @@ const PILLAR_DESCRIPTIONS: Record<string, string> = {
   skating: 'Build your goalie dream on skill skating, as a skill. Learn a vision to pair with skating reason project.',
   form: 'Build your goalie structure. Skating is creativity, form and as structure, repetition, structure, assignments.',
   positioning: 'Build your goalie mask for anxiety position paths and the scan team of the most positional systems.',
-  seven_point: 'Build your mentalframes. Learn your positioning as strong unlock to form 7 Point System below icing line.',
+  seven_point: 'Build your mentalframes. Learn your positioning as strong unlock to form 6 Zone Grid below icing line.',
   training: 'Build your game/practice/off-ice, vision my different weighting off-ice.',
   lifestyle: 'Build your lifestyle habits to support confidence, focus, and consistent performance in and out of the crease.',
 };

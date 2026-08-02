@@ -4,6 +4,15 @@ import { logger } from '../../utils/logger';
 import { firebaseService } from '../../firebase/service';
 import { messageService } from './message.service';
 
+export interface VideoReviewSession {
+  id: string;
+  reviewerId: string;
+  reviewerName: string;
+  startedAt: Date | Timestamp;
+  endedAt?: Date | Timestamp;
+  durationSeconds: number;
+}
+
 export interface StudentVideo {
   id: string;
   studentId: string;
@@ -21,6 +30,8 @@ export interface StudentVideo {
   recommendedCourses?: string[];
   reviewedAt?: Date;
   reviewedBy?: string;
+  timeSessions?: VideoReviewSession[];
+  totalTimeSpentSeconds?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -303,6 +314,47 @@ class VideoReviewService extends BaseDatabaseService {
         error: {
           message: error instanceof Error ? error.message : 'Failed to submit feedback'
         }
+      };
+    }
+  }
+
+  /**
+   * Add a completed timed review session to a video record
+   */
+  async addCompletedSession(videoId: string, session: VideoReviewSession): Promise<ServiceResult<void>> {
+    try {
+      const videoResult = await this.getVideo(videoId);
+      if (!videoResult.success || !videoResult.data) {
+        return { success: false, error: { message: 'Video not found' } };
+      }
+
+      const existing = videoResult.data;
+      const currentSessions: VideoReviewSession[] = existing.timeSessions || [];
+
+      const toTimestamp = (d: Date | Timestamp) =>
+        d instanceof Date ? Timestamp.fromDate(d) : d;
+
+      const newSession = {
+        ...session,
+        startedAt: toTimestamp(session.startedAt),
+        endedAt: session.endedAt ? toTimestamp(session.endedAt) : undefined,
+      };
+
+      const newSessions = [...currentSessions, newSession];
+      const totalTimeSpentSeconds = newSessions.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+
+      await firebaseService.updateDocument(this.collection, videoId, {
+        timeSessions: newSessions,
+        totalTimeSpentSeconds,
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+
+      return { success: true };
+    } catch (error) {
+      logger.error('Failed to add review session', 'VideoReviewService', error);
+      return {
+        success: false,
+        error: { message: error instanceof Error ? error.message : 'Failed to add session' },
       };
     }
   }

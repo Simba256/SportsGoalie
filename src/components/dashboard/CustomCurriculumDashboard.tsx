@@ -12,6 +12,8 @@ import type { LucideIcon } from 'lucide-react';
 import { userService, sportsService, videoQuizService, customContentService } from '@/lib/database';
 import { customCurriculumService } from '@/lib/database';
 import { onboardingService } from '@/lib/database';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { useProgress } from '@/hooks/useProgress';
 import { User, Sport, SportProgress, CustomCurriculum, CustomCurriculumItem, IntelligenceProfile, getPacingLevelDisplayText, PILLARS } from '@/types';
 import { enrollmentService } from '@/lib/database/services/enrollment.service';
@@ -101,12 +103,18 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
   const loadData = async () => {
     try {
       setLoading(true);
-      const [curriculumResult, evalResult, coachResult] = await Promise.all([
+      const [curriculumResult, baselineSnap, evalResult, coachResult] = await Promise.all([
         customCurriculumService.getStudentCurriculum(user.id),
+        getDoc(doc(db, 'studentBaselineProfiles', user.id)).catch(() => null),
         onboardingService.getEvaluation(user.id).catch(() => null),
         user.assignedCoachId ? userService.getUser(user.assignedCoachId).catch(() => null) : Promise.resolve(null),
       ]);
-      if (evalResult?.success && evalResult.data?.intelligenceProfile) setProfile(evalResult.data.intelligenceProfile);
+      const baselineProfile = baselineSnap?.exists() ? baselineSnap.data()?.intelligenceProfile : null;
+      if (baselineProfile) {
+        setProfile(baselineProfile as IntelligenceProfile);
+      } else if (evalResult?.success && evalResult.data?.intelligenceProfile) {
+        setProfile(evalResult.data.intelligenceProfile);
+      }
       if (coachResult?.success && coachResult.data) setCoach(coachResult.data);
       if (curriculumResult.success && curriculumResult.data) setCurriculum(curriculumResult.data);
     } catch {
@@ -184,6 +192,10 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
         .vault-hover{transition:border-color .2s,transform .2s}
         .vault-hover:hover{border-color:rgba(167,139,250,.45)!important;transform:translateY(-2px)}
         .shimmer-bar{background:linear-gradient(90deg,var(--c) 0%,var(--c2) 45%,var(--c) 100%);background-size:400px 100%;animation:shimmer 2.5s infinite linear}
+        .hero-ring{display:none}
+        @media(min-width:520px){.hero-ring{display:block}}
+        .path-act{display:flex;align-items:center;gap:10px;flex-shrink:0}
+        @media(max-width:540px){.path-row{flex-wrap:wrap!important;padding:12px 16px!important;gap:10px 12px!important}.path-act{flex-basis:100%;margin-left:46px}.path-row>svg{display:none}}
       `}</style>
 
       {/* ── HERO ── */}
@@ -193,7 +205,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
         <div style={{ position: 'absolute', top: '5%', right: '12%', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(55,181,255,.1) 0%,transparent 70%)', animation: 'blob 7s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '30%', right: '30%', width: '240px', height: '240px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,.07) 0%,transparent 70%)', animation: 'blob2 9s ease-in-out infinite', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 28px 44px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: 'clamp(0px,2vw,0px) clamp(14px,4vw,28px) clamp(24px,5vw,44px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
           {/* Left text */}
           <div style={{ flex: 1, minWidth: '260px' }}>
             {(userProgress?.overallStats?.currentStreak ?? 0) > 0 && (
@@ -248,14 +260,14 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
           </div>
 
           {/* Progress ring */}
-          <div className="s4" style={{ flexShrink: 0 }}>
+          <div className="s4 hero-ring" style={{ flexShrink: 0 }}>
             <HeroRing pct={progressPct} completed={completedItems} total={totalItems} />
           </div>
         </div>
       </section>
 
       {/* ── STATS STRIP ── */}
-      <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 0' }}>
+      <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '14px' }}>
           <StatCard label="Modules Done" value={completedItems} icon={<CheckCircle2 size={16} />} color="#4ade80" delay="0s" />
           <StatCard label="Available" value={unlockedItems} icon={<PlayCircle size={16} />} color={BLUE} delay=".05s" />
@@ -267,7 +279,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 28px 64px' }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 64px' }}>
         <div className="dash-grid">
 
           {/* LEFT COLUMN */}
@@ -325,7 +337,7 @@ export function CustomCurriculumDashboard({ user }: CustomCurriculumDashboardPro
                         </div>
 
                         {/* Status + action */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                        <div className="path-act">
                           <span style={{ fontSize: '11px', fontWeight: 700, color: statusColor, background: `${statusColor}18`, border: `1px solid ${statusColor}30`, borderRadius: '6px', padding: '3px 9px', letterSpacing: '.3px' }}>
                             {isDone ? 'DONE' : isActive ? 'READY' : 'LOCKED'}
                           </span>

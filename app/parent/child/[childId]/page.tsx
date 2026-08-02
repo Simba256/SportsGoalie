@@ -12,7 +12,9 @@ import {
   ClipboardCheck, BarChart3, Scale, LineChart, BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
-import { redirect, useParams } from 'next/navigation';
+import { redirect, useParams, useSearchParams } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { enrollmentService } from '@/lib/database/services/enrollment.service';
 import { onboardingService } from '@/lib/database/services/onboarding.service';
 import { compareGoalieAndParent, DEFAULT_CROSS_REFERENCE_RULES } from '@/lib/scoring/cross-reference-engine';
@@ -23,23 +25,33 @@ const BLUE = '#37b5ff';
 const cardBg = 'rgba(2,18,44,0.82)';
 const border = '1px solid rgba(55,181,255,0.18)';
 
+type ChildIntelligenceProfile = {
+  overallScore: number;
+  pacingLevel: string;
+  identifiedStrengths: Array<{ categoryName: string; score: number }>;
+  identifiedGaps: Array<{ categoryName: string; score: number; priority?: string }>;
+  categoryScores: Array<{ categorySlug: string; categoryName: string; averageScore: number; weight: number }>;
+};
+
 const TABS = [
-  { id: 'comparison', label: 'Perception', icon: Scale },
   { id: 'charting', label: 'Game Charts', icon: LineChart },
   { id: 'progress', label: 'Progress', icon: BarChart3 },
+  { id: 'comparison', label: 'Perception', icon: Scale },
 ];
 
 export default function ChildDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const params = useParams();
+  const searchParams = useSearchParams();
   const childId = params.childId as string;
 
   const [childData, setChildData] = useState<LinkedChildSummary | null>(null);
   const [crossReferenceData, setCrossReferenceData] = useState<ParentCrossReferenceView | null>(null);
   const [enrollments, setEnrollments] = useState<{ sport: { id: string; name: string }; progress: { totalSkills: number; completedSkills: string[]; progressPercentage: number; status: string } }[]>([]);
+  const [goalieProfile, setGoalieProfile] = useState<ChildIntelligenceProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('comparison');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'charting');
 
   useEffect(() => {
     if (!user || !childId) return;
@@ -127,6 +139,17 @@ export default function ChildDetailPage() {
         if (enrollmentsResult.status === 'fulfilled' && enrollmentsResult.value.success && enrollmentsResult.value.data) {
           setEnrollments(enrollmentsResult.value.data as typeof enrollments);
         }
+
+        // Fetch baseline intelligence profile
+        try {
+          const baselineSnap = await getDoc(doc(db, 'studentBaselineProfiles', childId));
+          if (baselineSnap.exists()) {
+            const data = baselineSnap.data();
+            if (data?.intelligenceProfile) setGoalieProfile(data.intelligenceProfile as ChildIntelligenceProfile);
+          }
+        } catch {
+          // Profile may not exist for all students
+        }
       } catch (err) {
         console.error('Failed to load child data:', err);
         setError('Failed to load goalie data');
@@ -147,8 +170,8 @@ export default function ChildDetailPage() {
           <p style={{ color: 'rgba(248,113,113,0.7)', fontSize: '13px' }}>{msg}</p>
         </div>
       </div>
-      <Link href="/parent" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
-        <ChevronLeft size={16} /> Back to Dashboard
+      <Link href="/parent/goalies" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+        <ChevronLeft size={16} /> Back
       </Link>
     </div>
   );
@@ -194,8 +217,8 @@ export default function ChildDetailPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* Back */}
-        <Link href="/parent" className="cd-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
-          <ChevronLeft size={16} /> Back to Dashboard
+        <Link href="/parent/goalies" className="cd-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}>
+          <ChevronLeft size={16} /> Back
         </Link>
 
         {/* Child Header Card */}
@@ -214,6 +237,11 @@ export default function ChildDetailPage() {
                 {pacing && (
                   <span style={{ background: pacing.bg, color: pacing.color, padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>{pacing.label}</span>
                 )}
+                {goalieProfile && (
+                  <span style={{ color: pacing?.color ?? BLUE, fontWeight: 800, fontSize: '15px' }}>
+                    {goalieProfile.overallScore.toFixed(1)}<span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: '12px' }}>/4.0</span>
+                  </span>
+                )}
               </div>
               {childData.studentNumber && (
                 <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', fontFamily: 'monospace', marginBottom: '6px' }}>ID: {childData.studentNumber}</p>
@@ -229,6 +257,59 @@ export default function ChildDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Assessment Profile Card */}
+        {goalieProfile && (() => {
+          const PACING_META: Record<string, { color: string; label: string; description: string }> = {
+            introduction: { color: '#fbbf24', label: 'Introduction', description: 'Building foundational goalie knowledge and habits.' },
+            development: { color: BLUE, label: 'Development', description: 'Developing core skills and game understanding.' },
+            refinement: { color: '#22c55e', label: 'Refinement', description: 'Refining advanced techniques and mental performance.' },
+          };
+          const pm = PACING_META[goalieProfile.pacingLevel] || PACING_META.introduction;
+          const barPct = ((goalieProfile.overallScore - 1) / 3) * 100;
+          const topStrength = goalieProfile.identifiedStrengths?.[0];
+          const topGap = goalieProfile.identifiedGaps?.[0];
+          return (
+            <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', padding: '18px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${pm.color}88, transparent)` }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: '14px' }}>Baseline Assessment Profile</p>
+                <span style={{ background: `${pm.color}18`, border: `1px solid ${pm.color}30`, color: pm.color, padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>{pm.label}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '32px', fontWeight: 900, color: pm.color, lineHeight: 1 }}>{goalieProfile.overallScore.toFixed(1)}</span>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>/4.0</span>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginLeft: '8px', fontStyle: 'italic' }}>{pm.description}</span>
+              </div>
+              <div style={{ height: '5px', background: 'rgba(255,255,255,0.07)', borderRadius: '99px', overflow: 'hidden', marginBottom: '4px' }}>
+                <div style={{ height: '100%', width: `${barPct}%`, background: pm.color, borderRadius: '99px', boxShadow: `0 0 8px ${pm.color}55` }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600, marginBottom: '12px' }}>
+                <span>Introduction</span><span>Development</span><span>Refinement</span>
+              </div>
+              {(topStrength || topGap) && (
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  {topStrength && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
+                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>
+                        Strength: <strong style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 600 }}>{topStrength.categoryName}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {topGap && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', flexShrink: 0 }} />
+                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>
+                        Focus area: <strong style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 600 }}>{topGap.categoryName}</strong>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Stats Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }} className="child-stats-grid">

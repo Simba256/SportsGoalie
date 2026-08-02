@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ChevronLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
-const BeamsBackground = dynamic(
-  () => import('@/components/ui/beams-background').then(m => ({ default: m.BeamsBackground })),
-  { ssr: false }
+const MeshGradientBg = dynamic(
+  () => import('@/components/ui/mesh-gradient-bg').then(m => ({ default: m.MeshGradientBg })),
+  { ssr: false, loading: () => null }
 );
 
 const BLUE = '#37b5ff';
@@ -16,6 +19,22 @@ const BLUE4 = '#7dd3fc';
 const NAVY = '#000f28';
 const NAVY2 = '#041530';
 const BODY_TEXT = 'rgba(200,230,255,0.84)';
+
+const heroContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+  },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 56 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
 
 const ACT_ACCENTS = [BLUE, BLUE3, BLUE2, BLUE4, BLUE, BLUE3, BLUE2] as const;
 
@@ -172,71 +191,20 @@ const STATS = [
 export default function WhoWeArePage() {
   const router = useRouter();
 
-  const navBtnStyle = {
-    background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px',
-    color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px',
-  } as React.CSSProperties;
-
-  const dotStyle = {
-    width: '6px', height: '6px', borderRadius: '50%', background: BLUE3, flexShrink: 0,
-  } as React.CSSProperties;
-
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ ...navBtnStyle, color: BLUE3 }}>
-              <span style={{ ...dotStyle, background: BLUE3 }} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={{ ...navBtnStyle }}>
-              <span style={dotStyle} />THE SYSTEM
-            </button>
-            <button onClick={() => router.push('/contact')} style={{ background: `linear-gradient(135deg, ${BLUE}, ${BLUE3})`, border: 'none', borderRadius: '50px', padding: '9px 20px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: NAVY, boxShadow: '0 2px 12px rgba(55,181,255,0.35)' }}>
-              CONTACT US
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* ── HERO ── */}
-      {/* Background: beams + four-corner colored glows that bleed into each other */}
-      <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: 'clamp(80px,10vw,120px)', paddingBottom: 'clamp(60px,8vw,100px)' }}>
-
-        {/* Base dark bg */}
-        <div style={{ position: 'absolute', inset: 0, background: NAVY, zIndex: 0 }} />
-
-        {/* Blue corner washes */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 1, background:
-          `radial-gradient(ellipse at 0% 0%,   rgba(55,181,255,0.14) 0%, transparent 45%),
-           radial-gradient(ellipse at 100% 0%,  rgba(14,165,233,0.12) 0%, transparent 45%),
-           radial-gradient(ellipse at 0% 100%,  rgba(96,205,255,0.10) 0%, transparent 40%),
-           radial-gradient(ellipse at 100% 100%,rgba(55,181,255,0.11) 0%, transparent 40%)`,
-          pointerEvents: 'none' }} />
-
-        {/* Beams on top of color washes */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 2, overflow: 'hidden' }}>
-          <BeamsBackground
-            beamWidth={3}
-            beamHeight={30}
-            beamNumber={12}
-            lightColor={BLUE}
-            backgroundColor="transparent"
-            speed={1.5}
-            noiseIntensity={1.2}
-            scale={0.14}
-            rotation={43}
-          />
-        </div>
-
-        {/* Readability overlay */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 3, background: `linear-gradient(to bottom, rgba(0,15,40,0.35) 0%, rgba(0,15,40,0.1) 40%, rgba(0,15,40,0.45) 100%)`, pointerEvents: 'none' }} />
+      <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: 'clamp(80px,10vw,120px)', paddingBottom: 'clamp(60px,8vw,100px)', background: 'linear-gradient(145deg, #081d3f 0%, #0a2248 55%, #071840 100%)' }}>
+        <MeshGradientBg
+          colors={['#060f28', '#0f2847', '#1F3864', '#1850b4', '#37b5ff', '#0a2040']}
+          distortion={0.9}
+          swirl={0.7}
+          speed={0.38}
+          veilOpacity={0.48}
+        />
 
         {/* Back button */}
         <button
@@ -248,36 +216,60 @@ export default function WhoWeArePage() {
           <ChevronLeft size={13} />Back
         </button>
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 4 }}>
+        <motion.div
+          className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full"
+          style={{ position: 'relative', zIndex: 4 }}
+          variants={heroContainer}
+          initial="hidden"
+          animate="show"
+        >
           {/* Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}>
+          <motion.div
+            variants={heroItem}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}
+          >
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
             <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>BUILT BY A GOALIE. FOR MOTIVATED GOALIES.</p>
-          </div>
+          </motion.div>
 
           {/* Blue accent rule */}
-          <div style={{ display: 'flex', height: '3px', width: '220px', borderRadius: '4px', overflow: 'hidden', marginBottom: '28px', gap: '2px' }}>
+          <motion.div
+            variants={heroItem}
+            style={{ display: 'flex', height: '3px', width: '220px', borderRadius: '4px', overflow: 'hidden', marginBottom: '28px', gap: '2px' }}
+          >
             {[BLUE, BLUE2, BLUE3, BLUE4].map(c => (
               <div key={c} style={{ flex: 1, background: c, boxShadow: `0 0 8px ${c}` }} />
             ))}
-          </div>
+          </motion.div>
 
-          <h1 style={{ fontSize: 'clamp(36px, 7vw, 96px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', margin: '0 0 20px', color: '#fff' }}>
+          <motion.h1
+            variants={heroItem}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', margin: '0 0 20px', color: '#fff' }}
+          >
             THE COACH<br />
             <span style={{ color: BLUE, textShadow: '0 0 40px rgba(55,181,255,0.47), 0 0 80px rgba(55,181,255,0.2)' }}>MIKE</span>
             {' '}
             <span style={{ color: '#fff' }}>STORY</span>
-          </h1>
+          </motion.h1>
 
-          <p style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: BLUE2, margin: '0 0 28px', letterSpacing: '-0.01em', textShadow: '0 0 20px rgba(96,205,255,0.33)' }}>
+          <motion.p
+            variants={heroItem}
+            style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: BLUE2, margin: '0 0 28px', letterSpacing: '-0.01em', textShadow: '0 0 20px rgba(96,205,255,0.33)' }}
+          >
             Six decades. Seven pillars. One system built from nothing.
-          </p>
-          <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, maxWidth: '560px', margin: '0 0 44px' }}>
+          </motion.p>
+          <motion.p
+            variants={heroItem}
+            style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, maxWidth: '560px', margin: '0 0 44px' }}
+          >
             No template was handed to him. No coach built it for him. What you are about to read is how a boy in a house-league net became the person who built the most complete goaltending development system in the world, and the receipts to prove it.
-          </p>
+          </motion.p>
 
           {/* Act dots */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <motion.div
+            variants={heroItem}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}
+          >
             {[...ACTS, ACT_EIGHT].map((act, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: act.accent, boxShadow: `0 0 8px ${act.accent}99, 0 0 16px ${act.accent}44` }} />
@@ -286,8 +278,8 @@ export default function WhoWeArePage() {
                 </span>
               </div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* ── THE 7 ACTS ── */}
@@ -297,7 +289,7 @@ export default function WhoWeArePage() {
           style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: act.bg, borderBottom: `1px solid ${act.accent}25` }}
         >
           {/* Ghost act number */}
-          <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${act.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+          <div style={{ position: 'absolute', right: '-1%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(80px, 18vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${act.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0, overflow: 'hidden', maxWidth: '50%' }}>
             {String(i + 1).padStart(2, '0')}
           </div>
 
@@ -405,7 +397,7 @@ export default function WhoWeArePage() {
       <section
         style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(60px,8vw,100px) 0', background: ACT_EIGHT.bg, borderBottom: `1px solid ${ACT_EIGHT.accent}25` }}
       >
-        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 20vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', right: '-1%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(80px, 18vw, 280px)', fontWeight: 900, fontStyle: 'italic', color: `${ACT_EIGHT.accent}10`, letterSpacing: '-0.05em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0, overflow: 'hidden', maxWidth: '50%' }}>
           08
         </div>
 
@@ -477,7 +469,7 @@ export default function WhoWeArePage() {
               SELECT YOUR ROLE →
             </button>
             <button
-              onClick={() => router.push('/team-programs/pillar/1')}
+              onClick={() => router.push('/7-pillars?from=who-we-are')}
               style={{ background: 'rgba(55,181,255,0.12)', color: BLUE2, border: '1px solid rgba(96,205,255,0.4)', padding: '16px 36px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, letterSpacing: '1.5px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 0 16px rgba(55,181,255,0.12)' }}
             >
               EXPLORE THE SYSTEM
@@ -486,13 +478,7 @@ export default function WhoWeArePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <div style={{ background: NAVY, padding: '28px 24px', textAlign: 'center' }}>
-        <div style={{ height: '2px', background: `linear-gradient(to right, ${BLUE}, ${BLUE2}, ${BLUE3}, ${BLUE4})`, marginBottom: '20px', boxShadow: '0 0 12px rgba(55,181,255,0.3)' }} />
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
-          &copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER
-        </p>
-      </div>
+      <Footer7 />
     </div>
   );
 }

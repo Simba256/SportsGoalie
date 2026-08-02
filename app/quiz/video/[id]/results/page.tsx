@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import { GrowthPointsToast } from '@/components/ui/GrowthPointsToast';
 import { GROWTH_POINTS } from '@/lib/config/growth-points';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -31,6 +32,7 @@ function VideoQuizResultsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGpToast, setShowGpToast] = useState(false);
+  const [gpToastPoints, setGpToastPoints] = useState(0);
 
   useEffect(() => {
     if (quizId && user) { loadResults(); }
@@ -70,11 +72,32 @@ function VideoQuizResultsContent() {
       setQuiz(quizResult.data);
       setProgress(progressData);
 
-      const sessionKey = `gp_shown_quiz_${quizId}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, '1');
-        setTimeout(() => setShowGpToast(true), 600);
+      const pct = progressData.percentage;
+      let totalPoints = GROWTH_POINTS.KNOWLEDGE_CHECK_COMPLETE;
+      let bonusLabel = '';
+      if (pct >= 95) {
+        totalPoints += GROWTH_POINTS.KC_CLUB_95_BONUS;
+        bonusLabel = ' — 95-100 Club bonus!';
+      } else if (pct >= 80) {
+        totalPoints += GROWTH_POINTS.KC_CLUB_80_BONUS;
+        bonusLabel = ' — 80-100 Club bonus!';
+      } else if (pct >= 70) {
+        totalPoints += GROWTH_POINTS.KC_OWNING_IT_BONUS;
+        bonusLabel = ' — Owning It bonus!';
       }
+
+      growthPointsService.awardPointsOnce(
+        user!.id,
+        'KNOWLEDGE_CHECK_COMPLETE',
+        totalPoints,
+        `Knowledge Check Completed${bonusLabel}`,
+        `quiz_${actualQuizId}`
+      ).then((awarded) => {
+        if (awarded) {
+          setGpToastPoints(totalPoints);
+          setTimeout(() => setShowGpToast(true), 600);
+        }
+      }).catch(() => {});
     } catch (err) {
       console.error('Error loading results:', err);
       setError('Failed to load quiz results');
@@ -124,7 +147,7 @@ function VideoQuizResultsContent() {
 
   return (
     <>
-      <GrowthPointsToast points={GROWTH_POINTS.KNOWLEDGE_CHECK} show={showGpToast} />
+      <GrowthPointsToast points={gpToastPoints} show={showGpToast} />
       <style>{`
         .qr-action:hover { opacity: 0.85 !important; transform: translateY(-1px); }
         .qr-outline:hover { background: rgba(55,181,255,0.08) !important; }

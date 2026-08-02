@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Check, Trophy, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Check, Trophy, Loader2, Save, Eye, GitMerge, Lightbulb, Users, ArrowRight, Timer, BarChart3, MessageSquare, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { chartingService, userService } from '@/lib/database';
@@ -181,6 +181,176 @@ const PERIOD_TABS: { key: PeriodKey; label: string }[] = [
   { key: 'overtime', label: 'OT' },
 ];
 
+// ─── IntroOverlay ─────────────────────────────────────────────────────────────
+
+function IntroOverlay({ onStart }: { onStart: () => void }) {
+  return (
+    <div
+      className="min-h-screen flex flex-col animate-in fade-in duration-300"
+      style={{ background: '#041830' }}
+    >
+      {/* Ambient glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute top-0 left-1/2 w-[600px] h-[600px] opacity-[0.06]"
+          style={{ background: 'radial-gradient(circle, #D4A93B 0%, transparent 70%)', transform: 'translate(-50%, -30%)' }}
+        />
+      </div>
+
+      <div className="relative z-10 flex-1 flex flex-col px-5 py-8 max-w-4xl mx-auto w-full">
+
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4"
+            style={{ background: 'rgba(212,169,59,0.1)', border: '1px solid rgba(212,169,59,0.2)' }}
+          >
+            <Eye className="w-3.5 h-3.5" style={{ color: '#D4A93B' }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#D4A93B' }}>Coaching Mode</span>
+          </div>
+          <h1 className="text-3xl font-black text-white mb-2 tracking-tight">
+            Before You Chart
+          </h1>
+          <p className="text-sm text-white/45 leading-relaxed max-w-sm mx-auto">
+            Your evaluation is one of four charts that cross-reference in real time. Here's how your read feeds the system.
+          </p>
+        </div>
+
+        {/* ── How the Cross-Reference Works ── */}
+        <div
+          className="rounded-2xl p-5 mb-4 space-y-5"
+          style={{
+            background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 100%)',
+            border: '1px solid rgba(55,181,255,0.22)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)',
+          }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(55,181,255,0.15)' }}>
+              <GitMerge className="w-4 h-4" style={{ color: '#7dd3fc' }} />
+            </div>
+            <p className="text-sm font-bold text-white">How the Cross-Reference Works</p>
+          </div>
+          <div className="space-y-4">
+            {[
+              { icon: '📍', title: 'Where you align', body: "When your technical read matches the goalie's self-eval, it confirms the signal — objective data the development path acts on." },
+              { icon: '⚡', title: 'Where you diverge', body: "Mismatches are the most valuable data points. They surface blind spots — technical gaps the goalie can't see yet, or self-perception that needs calibrating." },
+              { icon: '🎯', title: 'Your priority shapes the path', body: "The ONE priority factor you flag in Post-Game directly determines which Pillar content Smarter Goalie serves the goalie next." },
+            ].map(item => (
+              <div key={item.title} className="flex gap-3.5 items-start">
+                <span className="text-xl flex-shrink-0 leading-none mt-0.5">{item.icon}</span>
+                <div>
+                  <p className="text-sm font-bold text-white/85">{item.title}</p>
+                  <p className="text-xs text-white/45 mt-1 leading-relaxed">{item.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── What Each Section Captures + The Coach Role ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+
+          {/* What Each Section Captures */}
+          <div
+            className="rounded-2xl p-5 space-y-5"
+            style={{
+              background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 100%)',
+              border: '1px solid rgba(55,181,255,0.22)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)',
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(125,211,252,0.1)' }}>
+                <Lightbulb className="w-4 h-4" style={{ color: '#7dd3fc' }} />
+              </div>
+              <p className="text-sm font-bold text-white">What Each Section Captures</p>
+            </div>
+            <div className="space-y-4">
+              {[
+                { icon: <Timer className="w-4 h-4" />, label: 'Pre-Game', color: '#7dd3fc', body: "Goalie's readiness level and warmup quality — your technical read before the puck drops." },
+                { icon: <BarChart3 className="w-4 h-4" />, label: 'Periods', color: '#a78bfa', body: "7-factor evaluation per period — Engagement, Composure, Skating, 7AMS, 6ZS, Form, and Reading the Play." },
+                { icon: <MessageSquare className="w-4 h-4" />, label: 'Post-Game', color: '#34d399', body: "Overall game read, ONE strength, and ONE priority — the flag that shapes the goalie's development path." },
+              ].map(item => (
+                <div key={item.label} className="flex gap-3.5 items-start">
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${item.color}18`, color: item.color }}
+                  >
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: item.color }}>{item.label}</p>
+                    <p className="text-xs text-white/45 mt-1 leading-relaxed">{item.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* The Coach Role */}
+          <div
+            className="rounded-2xl p-5 space-y-3"
+            style={{
+              background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 100%)',
+              border: '1px solid rgba(55,181,255,0.22)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)',
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                <Users className="w-4 h-4 text-white/50" />
+              </div>
+              <p className="text-sm font-bold text-white/70">The Coach Role</p>
+            </div>
+            <p className="text-sm text-white/50 leading-relaxed">
+              You're not just observing — you're evaluating. Your technical read through the Smarter Goalie framework is the most informed input in the cross-reference. Rate what you see against the system, not gut feel alone.
+            </p>
+            <div className="pt-2 space-y-2.5">
+              {[
+                { label: 'Anchor to the definitions', note: 'Each star level has a technical description — use it.' },
+                { label: 'One strength. One priority.', note: 'Specificity is more powerful than broad feedback.' },
+                { label: 'Your flag shapes their path', note: 'The priority you pick determines what content the goalie sees next.' },
+              ].map(tip => (
+                <div key={tip.label} className="flex gap-2.5 items-start">
+                  <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: GOLD }} />
+                  <div>
+                    <span className="text-xs font-bold text-white/65">{tip.label} </span>
+                    <span className="text-xs text-white/30">{tip.note}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── CTA ── */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={onStart}
+            className="w-full rounded-2xl text-base font-black flex items-center justify-center gap-2.5 transition-all active:scale-[0.98]"
+            style={{
+              background: 'linear-gradient(135deg, #D4A93B 0%, #B8891E 100%)',
+              color: '#0c0800',
+              boxShadow: '0 6px 20px rgba(212,169,59,0.4)',
+              height: '52px',
+            }}
+          >
+            Start Charting
+            <ArrowRight className="w-5 h-5" />
+          </button>
+          <p className="text-center text-[10px] text-white/20 tracking-wider uppercase">
+            The Smarter Goalie Way™ · Four charts, one mirror
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ─── FactorRow ────────────────────────────────────────────────────────────────
 
 interface FactorRowProps {
@@ -288,6 +458,7 @@ export default function CoachChartPage() {
   const [session,  setSession]  = useState<Session | null>(null);
   const [student,  setStudent]  = useState<UserType | null>(null);
   const [loading,  setLoading]  = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
   const [entryId,  setEntryId]  = useState<string | null>(null);
   const [completedSections, setCompletedSections] = useState<SectionKey[]>([]);
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null);
@@ -329,7 +500,7 @@ export default function CoachChartPage() {
 
         if (!sessionResult.success || !sessionResult.data) {
           toast.error('Session not found');
-          router.push(`/coach/students/${studentId}/charting`);
+          router.push(`/coach/charting/${studentId}`);
           return;
         }
         setSession(sessionResult.data);
@@ -549,7 +720,7 @@ export default function CoachChartPage() {
           {!session ? 'Session not found.' : 'Coach charts are for game sessions only.'}
         </p>
         <Link
-          href={`/coach/students/${studentId}/charting`}
+          href={`/coach/charting/${studentId}`}
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.2)', color: BLUE, padding: '9px 18px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '13px' }}
         >
           Back to Charting
@@ -557,6 +728,8 @@ export default function CoachChartPage() {
       </div>
     );
   }
+
+  if (showIntro) return <IntroOverlay onStart={() => setShowIntro(false)} />;
 
   const dateStr   = session.date?.toDate ? format(session.date.toDate(), 'EEE, MMM d, yyyy') : '';
   const initials  = (student?.displayName || 'G').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
@@ -583,11 +756,11 @@ export default function CoachChartPage() {
 
         {/* Back */}
         <Link
-          href={`/coach/students/${studentId}/charting`}
+          href={`/coach/charting/${studentId}`}
           className="cc-back"
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', width: 'fit-content', transition: 'all 0.2s' }}
         >
-          <ArrowLeft size={15} /> Back to Charting History
+          <ArrowLeft size={15} /> Back to Charting
         </Link>
 
         {/* ── Session Header ── */}
@@ -903,7 +1076,7 @@ export default function CoachChartPage() {
                 ONE priority to work on
               </p>
               <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)', marginBottom: '10px', lineHeight: 1.5 }}>
-                Your flag feeds the goalie's development path — the platform serves the matching Pillar content for the priority you select.
+                Your flag feeds the goalie's development path — Smarter Goalie's intuitive system serves the matching Pillar content for the priority you select.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {(Object.entries(PRIORITY_FACTOR_LABELS) as [CoachPriorityFactor, string][]).map(([key, label]) => (
@@ -950,6 +1123,22 @@ export default function CoachChartPage() {
         </div>
 
       </div>
+
+      {/* Floating guide button */}
+      <button
+        type="button"
+        onClick={() => setShowIntro(true)}
+        title="How this works"
+        style={{
+          position: 'fixed', bottom: '24px', right: '20px',
+          width: '42px', height: '42px', borderRadius: '50%',
+          background: 'rgba(212,169,59,0.12)', border: '1px solid rgba(212,169,59,0.3)',
+          color: GOLD, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.35)', transition: 'all 0.2s', zIndex: 50,
+        }}
+      >
+        <HelpCircle size={18} />
+      </button>
     </>
   );
 }

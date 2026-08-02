@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog, LineChart, X } from 'lucide-react';
+import { Loader2, Users, BookOpen, UserPlus, UserMinus, ClipboardCheck, Clock, Zap, UserCog, LineChart, X, Video } from 'lucide-react';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { userService, onboardingService } from '@/lib/database';
@@ -262,6 +262,11 @@ export default function CoachStudentsPage() {
                       <Link href={`/coach/students/${student.id}/charting`} style={{ textDecoration: 'none' }}>
                         <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                           <LineChart size={12} />View Charts
+                        </button>
+                      </Link>
+                      <Link href={`/coach/students/${student.id}/videos`} style={{ textDecoration: 'none' }}>
+                        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '8px', color: 'rgba(55,181,255,0.8)', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          <Video size={12} />Videos
                         </button>
                       </Link>
                       {isCustomWorkflow && (

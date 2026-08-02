@@ -17,6 +17,13 @@ export interface DynamicFieldProps {
   error?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * Word labels for the low and high ends of a `scale` field. Templates don't
+   * carry these, and they aren't universal — the Hockey tracker's scales mean
+   * "Easy to Very Difficult", the pillar check-ins mean "Weak to Strong" — so
+   * the consumer supplies them. Omitted means numbers only.
+   */
+  scaleAnchors?: { low: string; high: string };
 }
 
 /**
@@ -30,6 +37,7 @@ export const DynamicField: React.FC<DynamicFieldProps> = ({
   error,
   disabled,
   className,
+  scaleAnchors,
 }) => {
   // Render the appropriate field component based on type
   switch (field.type) {
@@ -90,6 +98,7 @@ export const DynamicField: React.FC<DynamicFieldProps> = ({
           error={error}
           disabled={disabled}
           className={className}
+          scaleAnchors={scaleAnchors}
         />
       );
 

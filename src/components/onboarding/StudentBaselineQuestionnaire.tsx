@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { generateStudentV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
 import {
   STUDENT_BASELINE_SECTIONS,
@@ -64,6 +64,55 @@ interface QState {
   openExtras: Record<string, string>;
 }
 
+// ─── Draft persistence ──────────────────────────────────────────────────────
+// Answers are auto-saved to localStorage so a failed submit, a dropped
+// connection, or an accidental refresh never costs the user their progress
+// through the full 74-question form.
+
+const DRAFT_KEY_PREFIX = 'sbq-draft-';
+
+function isQState(value: unknown): value is QState {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.phase === 'string' &&
+    typeof v.sectionIndex === 'number' &&
+    typeof v.questionIndex === 'number' &&
+    typeof v.responses === 'object' &&
+    typeof v.openExtras === 'object'
+  );
+}
+
+function loadDraft(userId: string): QState | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${userId}`);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return isQState(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(userId: string, state: QState): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(`${DRAFT_KEY_PREFIX}${userId}`, JSON.stringify(state));
+  } catch {
+    // Best-effort — draft saving should never block the main flow.
+  }
+}
+
+function clearDraft(userId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(`${DRAFT_KEY_PREFIX}${userId}`);
+  } catch {
+    // ignore
+  }
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -75,13 +124,21 @@ interface Props {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function StudentBaselineQuestionnaire({ userId, userName: _userName, onComplete }: Props): React.ReactElement {
-  const [state, setState] = useState<QState>({
-    phase: 'hero',
-    sectionIndex: 0,
-    questionIndex: 0,
-    responses: {},
-    openExtras: {},
-  });
+  const [state, setState] = useState<QState>(
+    () =>
+      loadDraft(userId) ?? {
+        phase: 'hero',
+        sectionIndex: 0,
+        questionIndex: 0,
+        responses: {},
+        openExtras: {},
+      }
+  );
+
+  // Auto-save progress so a failed submit or dropped connection never loses answers.
+  useEffect(() => {
+    saveDraft(userId, state);
+  }, [userId, state]);
 
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -290,41 +347,63 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
 
   // ── Save ───────────────────────────────────────────────────────────────────
 
+  const MAX_SAVE_ATTEMPTS = 3;
+
+  const attemptSaveProfile = async (): Promise<void> => {
+    const sectionKeys: SectionKey[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+    // Run scoring engine on raw V2 responses to produce an Intelligence Profile
+    const intelligenceProfile = generateStudentV2IntelligenceProfile(userId, state.responses);
+
+    // Write both documents atomically — either both land or neither does, so a
+    // partial failure can never strand the account in a half-onboarded state.
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'studentBaselineProfiles', userId), {
+      userId,
+      submittedAt: serverTimestamp(),
+      responses: state.responses,
+      openExtras: state.openExtras,
+      sectionsCompleted: sectionKeys,
+      intelligenceProfile: {
+        overallScore: intelligenceProfile.overallScore,
+        pacingLevel: intelligenceProfile.pacingLevel,
+        categoryScores: intelligenceProfile.categoryScores,
+        identifiedGaps: intelligenceProfile.identifiedGaps,
+        identifiedStrengths: intelligenceProfile.identifiedStrengths,
+        contentRecommendations: intelligenceProfile.contentRecommendations,
+        chartingEmphasis: intelligenceProfile.chartingEmphasis,
+      },
+    });
+    batch.update(doc(db, 'users', userId), {
+      onboardingCompleted: true,
+      onboardingCompletedAt: serverTimestamp(),
+      pacingLevel: intelligenceProfile.pacingLevel,
+      overallScore: intelligenceProfile.overallScore,
+    });
+    await batch.commit();
+  };
+
   const saveProfile = async (): Promise<void> => {
     setSaving(true);
     setError(null);
-    try {
-      const sectionKeys: SectionKey[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-      // Run scoring engine on raw V2 responses to produce an Intelligence Profile
-      const intelligenceProfile = generateStudentV2IntelligenceProfile(userId, state.responses);
-
-      await setDoc(doc(db, 'studentBaselineProfiles', userId), {
-        userId,
-        submittedAt: serverTimestamp(),
-        responses: state.responses,
-        openExtras: state.openExtras,
-        sectionsCompleted: sectionKeys,
-        intelligenceProfile: {
-          overallScore: intelligenceProfile.overallScore,
-          pacingLevel: intelligenceProfile.pacingLevel,
-          categoryScores: intelligenceProfile.categoryScores,
-          identifiedGaps: intelligenceProfile.identifiedGaps,
-          identifiedStrengths: intelligenceProfile.identifiedStrengths,
-          contentRecommendations: intelligenceProfile.contentRecommendations,
-          chartingEmphasis: intelligenceProfile.chartingEmphasis,
-        },
-      });
-      await updateDoc(doc(db, 'users', userId), {
-        onboardingCompleted: true,
-        onboardingCompletedAt: serverTimestamp(),
-        pacingLevel: intelligenceProfile.pacingLevel,
-        overallScore: intelligenceProfile.overallScore,
-      });
-      onComplete();
-    } catch {
-      setError('Unable to save your profile. Please try again.');
-      setSaving(false);
+    for (let attempt = 1; attempt <= MAX_SAVE_ATTEMPTS; attempt++) {
+      try {
+        await attemptSaveProfile();
+        clearDraft(userId);
+        onComplete();
+        return;
+      } catch (err) {
+        console.error(`saveProfile attempt ${attempt} failed:`, err);
+        if (attempt === MAX_SAVE_ATTEMPTS) {
+          setError(
+            'Unable to save your profile — please check your internet connection and try again. Your answers are saved on this device, so nothing will be lost.'
+          );
+          setSaving(false);
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+        }
+      }
     }
   };
 
@@ -901,7 +980,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
         <button
           onClick={goNext}
           style={btnPrimary}
-          className="sbq-btn"
+          className="sbq-btn sbq-cta"
         >
           BEGIN THE STUDENT BASELINE PROFILE
           <ChevronRight style={{ width: '18px', height: '18px' }} />
@@ -1001,7 +1080,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
   const renderPoiseNote = (): React.ReactElement => (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ maxWidth: '600px', width: '100%' }} className="sbq-fade">
-        <div style={{ ...cardStyle, padding: '36px', borderColor: `rgba(55,181,255,0.22)` }}>
+        <div style={{ ...cardStyle, padding: '36px', borderColor: `rgba(55,181,255,0.22)` }} className="sbq-card-pad">
           <div style={{ height: '3px', background: `linear-gradient(90deg, ${BLUE}, #0ea5e9, transparent)`, borderRadius: '99px', marginBottom: '28px' }} />
           <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: `${BLUE}99`, marginBottom: '18px' }}>
             A note before you continue
@@ -1025,7 +1104,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
           <button
             onClick={goNext}
             style={{ ...btnPrimary, fontSize: '15px' }}
-            className="sbq-btn"
+            className="sbq-btn sbq-cta"
           >
             CONTINUE
             <ChevronRight style={{ width: '16px', height: '16px' }} />
@@ -1066,7 +1145,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
             <button
               onClick={goNext}
               style={{ ...btnPrimary, fontSize: '15px' }}
-              className="sbq-btn"
+              className="sbq-btn sbq-cta"
             >
               START SECTION {section.key}
               <ChevronRight style={{ width: '16px', height: '16px' }} />
@@ -1240,7 +1319,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
   const renderClosing = (): React.ReactElement => (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ maxWidth: '620px', width: '100%', textAlign: 'center' }} className="sbq-fade">
-        <div style={{ ...cardStyle, padding: '36px', marginBottom: '24px' }}>
+        <div style={{ ...cardStyle, padding: '36px', marginBottom: '24px' }} className="sbq-card-pad">
           <div style={{ height: '3px', background: `linear-gradient(90deg, ${GREEN}, #0ea5e9, ${BLUE})`, borderRadius: '99px', marginBottom: '28px' }} />
           <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: `${GREEN}99`, marginBottom: '18px' }}>
             Section Complete
@@ -1281,7 +1360,7 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
             cursor: saving ? 'not-allowed' : 'pointer',
             fontSize: '15px',
           }}
-          className={saving ? undefined : 'sbq-btn'}
+          className={saving ? 'sbq-cta' : 'sbq-btn sbq-cta'}
         >
           {saving ? (
             <>
@@ -1342,6 +1421,10 @@ export function StudentBaselineQuestionnaire({ userId, userName: _userName, onCo
         @media (max-width: 600px) {
           .sbq-ep-row { flex-direction: column !important; }
           .sbq-loc-row { flex-direction: column !important; }
+        }
+        @media (max-width: 480px) {
+          .sbq-cta { width: 100% !important; justify-content: center !important; box-sizing: border-box !important; }
+          .sbq-card-pad { padding: 20px !important; }
         }
       `}</style>
 

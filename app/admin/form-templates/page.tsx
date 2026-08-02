@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
 import { initializeDefaultTemplates, checkDefaultTemplatesExist } from '@/lib/templates/init-templates';
-import { FormTemplate } from '@/types';
+import { FormTemplate, PILLARS } from '@/types';
 import { Loader2, Plus, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -22,6 +22,21 @@ export default function FormTemplatesPage() {
   const [templatesExist, setTemplatesExist] = useState({ hockeyGoalie: false });
 
   useEffect(() => { loadTemplates(); checkTemplates(); }, []);
+
+  // Group by pillar so concurrently-active templates read as expected, not like a bug.
+  const pillarGroups = useMemo(() => {
+    const order: { key: string; label: string }[] = [
+      { key: 'combined', label: 'Combined (All Pillars)' },
+      ...PILLARS.map(p => ({ key: p.slug as string, label: p.name })),
+    ];
+    const groups = order
+      .map(({ key, label }) => ({ key, label, items: templates.filter(t => t.pillar === key) }))
+      .filter(g => g.items.length > 0);
+    // Legacy docs written before `pillar` existed have no value to group by.
+    const ungrouped = templates.filter(t => !order.some(o => o.key === t.pillar));
+    if (ungrouped.length > 0) groups.push({ key: '_unassigned', label: 'No Pillar Assigned', items: ungrouped });
+    return groups;
+  }, [templates]);
 
   const loadTemplates = async () => {
     setLoading(true);
@@ -136,8 +151,17 @@ export default function FormTemplatesPage() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-            {templates.map((template) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            {pillarGroups.map((group) => (
+              <div key={group.key}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '17px' }}>{group.label}</h2>
+                  <span style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.45)', padding: '1px 9px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                    {group.items.length}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+            {group.items.map((template) => (
               <div key={template.id} className="ft-card" style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden', transition: 'border-color 0.2s' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${template.isActive ? GREEN : BLUE}66, transparent)` }} />
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -155,6 +179,7 @@ export default function FormTemplatesPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px', marginBottom: '16px' }}>
                   {[
                     { label: 'Version', value: `v${template.version}` },
+                    { label: 'Sport', value: template.sport || '—' },
                     { label: 'Sections', value: String(template.sections.length) },
                     { label: 'Usage', value: `${template.usageCount || 0} entries` },
                     { label: 'Status', value: template.isActive ? 'Active' : 'Inactive' },
@@ -177,6 +202,9 @@ export default function FormTemplatesPage() {
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
                   <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px' }}>Created: {template.createdAt?.toDate?.().toLocaleDateString() || 'Unknown'}</p>
                   {template.updatedAt && <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px' }}>Updated: {template.updatedAt?.toDate?.().toLocaleDateString() || 'Unknown'}</p>}
+                </div>
+              </div>
+            ))}
                 </div>
               </div>
             ))}

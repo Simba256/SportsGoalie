@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -31,7 +32,7 @@ import {
 function OnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading, refreshUser } = useAuth();
+  const { user, loading: authLoading, refreshUser, logout } = useAuth();
 
   // Determine if this is a parent onboarding flow
   const isParent = user?.role === 'parent' || searchParams.get('role') === 'parent';
@@ -129,6 +130,25 @@ function OnboardingPageContent() {
 
   const canGoBackInAssessment = currentCategoryIndex > 0 || currentQuestionIndex > 0;
 
+  const escapeHatch = user ? (
+    <div style={{ position: 'fixed', top: '14px', right: '16px', zIndex: 999 }}>
+      <button
+        onClick={() => logout()}
+        title={`Signed in as ${user.displayName || user.email} — click to sign out`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px',
+          padding: '6px 12px', cursor: 'pointer', color: 'rgba(255,255,255,0.55)',
+          fontSize: '12px', fontWeight: 600,
+        }}
+      >
+        <LogOut size={13} />
+        Not {user.displayName?.split(' ')[0] || 'you'}? Sign out
+      </button>
+    </div>
+  ) : null;
+
   // Wait for auth only — the three new questionnaires are self-contained
   // and must not be blocked by the legacy hook loading state
   if (authLoading || !user) {
@@ -145,6 +165,7 @@ function OnboardingPageContent() {
   if (isCoach && !user.coachOnboardingComplete) {
     return (
       <OnboardingContainer>
+        {escapeHatch}
         <CoachBaselineQuestionnaire
           userId={user.id}
           userName={user.displayName?.split(' ')[0] || 'Coach'}
@@ -158,6 +179,7 @@ function OnboardingPageContent() {
   if (isParent && !user.parentOnboardingComplete) {
     return (
       <OnboardingContainer>
+        {escapeHatch}
         <ParentBaselineQuestionnaire
           userId={user.id}
           userName={user.displayName?.split(' ')[0] || 'Parent'}
@@ -171,6 +193,7 @@ function OnboardingPageContent() {
   if (!isParent && !isCoach && !user.onboardingCompleted) {
     return (
       <OnboardingContainer>
+        {escapeHatch}
         <StudentBaselineQuestionnaire
           userId={user.id}
           userName={user.displayName?.split(' ')[0] || 'Student'}
@@ -218,6 +241,7 @@ function OnboardingPageContent() {
 
   return (
     <OnboardingContainer>
+      {escapeHatch}
       {/* Progress bar (shown during intake and assessment phases) */}
       {(phase === 'intake' || phase === 'question' || phase === 'category_intro') && (
         <div style={{ padding: '24px 24px 12px' }}>

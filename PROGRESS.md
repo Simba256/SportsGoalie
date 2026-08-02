@@ -316,9 +316,11 @@ Initial project analysis and progress tracking system implementation.
 - [x] **B1.2:** 7th Pillar: Lifestyle - 2h ✅
   - Type definitions, pillar IDs, color classes, UI icons, test updates, database migration
 - [ ] **B1.3:** Landing Page + Role Selection - 5-8h
-  - 8 roles: Goalie, Parent, Coach, Goalie Coach, Team Manager, Org, Federation, Camp
+  - 2 self-registration roles: Goalie, Parent (from landing page)
+  - Coach: invitation only (existing system)
+  - Admin: internal assignment only
   - Introduction video placement
-  - Each selection routes to appropriate intake flow
+  - Role tiles route to appropriate intake/registration flow
 - [x] **B1.4:** Video Database + Tagging System - 8-12h ✅
   - Tagging schema: Pillar (1-7), System (7AMS/7PTS/4LAS/Box/General)
   - User Type, Level (Introduction/Development/Refinement)

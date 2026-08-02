@@ -10,7 +10,21 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
 
 const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact', '/bridge'];
+const NAKED_ROUTES = [
+  '/explain',
+  '/goalie',
+  '/parent-role',
+  '/team-programs',
+  '/goalie-coach',
+  '/organization',
+  '/who-we-are',
+  '/the-system',
+  '/contact',
+  '/bridge',
+  '/7-pillars',
+  '/pillar',
+  '/offer',
+];
 const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
 const PUBLIC_ROUTES = ['/', '/pricing'];
 
@@ -132,7 +146,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <AdminSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -144,7 +158,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <CoachSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -156,7 +170,21 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <ParentSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
+        </div>
+      </div>
+    );
+  }
+
+  // Parent-chart pages live under /charting/sessions/[id]/parent-chart/* (shared session
+  // namespace) but must show the ParentSidebar, not the DashboardSidebar. These pages have
+  // their own sticky header so we skip the LayoutShell TopBar (fullscreen-style layout).
+  if (pathname.includes('/parent-chart')) {
+    return (
+      <div style={{ minHeight: '100vh', background: appBg }}>
+        <ParentSidebar isOpen={sidebarOpen} onToggle={toggle} />
+        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+          <main>{children}</main>
         </div>
       </div>
     );
@@ -169,7 +197,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <DashboardSidebar isOpen={sidebarOpen} onToggle={toggle} />
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {!fullscreen && <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />}
-        <main className={fullscreen ? '' : 'p-6'}>{children}</main>
+        <main className={fullscreen ? '' : 'p-3 md:p-6'}>{children}</main>
       </div>
     </div>
   );

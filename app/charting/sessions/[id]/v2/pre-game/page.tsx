@@ -125,7 +125,7 @@ export default function V2PreGamePage() {
       }
 
       toast.success('Pre-Game section saved!');
-      router.push(`/charting/sessions/${sessionId}`);
+      router.push(`/charting/sessions/${sessionId}/v2/periods`);
     } catch (error) {
       console.error('Failed to save:', error);
       toast.error('Failed to save data');
@@ -174,15 +174,7 @@ export default function V2PreGamePage() {
           <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#7dd3fc] to-white bg-clip-text text-transparent">
             Pre-Game
           </h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="text-white rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: '#7dd3fc' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
       </div>
 
@@ -259,7 +251,7 @@ export default function V2PreGamePage() {
           {/* 4. Anxiety Present */}
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.28)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
-              label="Anxiety Present?"
+              label="Pre-Game Stress?"
               helpText="If anxiety is present, this is normal. What matters is what you do with it. Your response feeds your Mind Vault — methods that work get stored."
             >
               <YesNoToggle

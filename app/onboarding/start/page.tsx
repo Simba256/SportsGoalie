@@ -58,6 +58,8 @@ export default function GoalieOnboardingStartPage() {
         .go-begin:hover { opacity: 0.9 !important; transform: translateY(-1px) !important; box-shadow: 0 8px 24px rgba(55,181,255,0.3) !important; }
         .go-begin { transition: all 0.2s !important; }
         .go-cat:hover { background: rgba(55,181,255,0.08) !important; }
+        .go-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        @media (max-width: 420px) { .go-cats { grid-template-columns: 1fr; } }
       `}</style>
       <div style={{ maxWidth: '640px', margin: '0 auto', padding: '32px 16px' }}>
         <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', overflow: 'hidden' }}>
@@ -91,7 +93,7 @@ export default function GoalieOnboardingStartPage() {
             {/* Categories */}
             <div style={{ background: 'rgba(55,181,255,0.04)', border: '1px solid rgba(55,181,255,0.1)', borderRadius: '12px', padding: '16px' }}>
               <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>7 Assessment Categories</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div className="go-cats">
                 {CATEGORIES.map((cat) => (
                   <div key={cat.label} className="go-cat" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', transition: 'background 0.2s' }}>
                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />

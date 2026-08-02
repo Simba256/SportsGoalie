@@ -27,6 +27,8 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 
 // ─── Options ─────────────────────────────────────────────────────────────────
 
@@ -315,6 +317,9 @@ export default function V2PracticeChartPage() {
       }
 
       await chartingService.updateSession(sessionId, { status: 'completed' });
+      growthPointsService.awardPointsOnce(
+        user!.id, 'CHART_LOGGED', GROWTH_POINTS.CHART_LOGGED, 'Chart Logged', `chart_${sessionId}`
+      ).catch(() => {});
 
       toast.success('Practice chart saved!');
       router.push(`/charting/sessions/${sessionId}`);
@@ -366,21 +371,7 @@ export default function V2PracticeChartPage() {
           <h1 className="text-base md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#34d399] to-white bg-clip-text text-transparent">
             Practice Chart
           </h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg px-3 md:px-4 h-9 text-xs md:text-sm font-semibold border-0"
-            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff' }}
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Save className="w-3.5 h-3.5 mr-1.5" /> Save
-              </>
-            )}
-          </Button>
+          <div className="w-16" />
         </div>
       </div>
 

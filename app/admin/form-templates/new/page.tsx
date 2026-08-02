@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
-import { FormSection, FormField, FieldType } from '@/types';
+import { FormSection, FormField, FieldType, PillarSlug, PILLARS } from '@/types';
 import { Loader2, Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -20,6 +20,8 @@ export default function NewTemplatePage() {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [sport, setSport] = useState('Hockey');
+  const [pillar, setPillar] = useState<PillarSlug | 'combined'>('combined');
   const [sections, setSections] = useState<Partial<FormSection>[]>([
     { id: 'section_1', title: '', description: '', order: 1, fields: [] },
   ]);
@@ -75,6 +77,7 @@ export default function NewTemplatePage() {
   const handleSave = async () => {
     if (!user) { toast.error('You must be logged in'); return; }
     if (!name.trim()) { toast.error('Template name is required'); return; }
+    if (!sport.trim()) { toast.error('Sport is required'); return; }
     if (sections.length === 0) { toast.error('Template must have at least one section'); return; }
     for (let i = 0; i < sections.length; i++) {
       if (!sections[i].title?.trim()) { toast.error(`Section ${i + 1} must have a title`); return; }
@@ -89,7 +92,7 @@ export default function NewTemplatePage() {
         ...section,
         fields: section.fields?.map(field => { const { _optionsRaw, ...cleanField } = field as FormField & { _optionsRaw?: string }; return cleanField; }) || []
       }));
-      const result = await formTemplateService.createTemplate({ name, description, isActive: false, isArchived: false, allowPartialSubmission: true, sections: cleanSections as FormSection[], createdBy: user.id });
+      const result = await formTemplateService.createTemplate({ name, description, sport: sport.trim(), pillar, isActive: false, isArchived: false, allowPartialSubmission: true, sections: cleanSections as FormSection[], createdBy: user.id });
       if (result.success && result.data) {
         toast.success('Template created successfully');
         router.push(`/admin/form-templates/${result.data.id}`);
@@ -147,6 +150,24 @@ export default function NewTemplatePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>{fieldLabel('Template Name', true)}<input className="nt-inp" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Soccer Player Performance Tracker" /></div>
             <div>{fieldLabel('Description')}<textarea className="nt-ta" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what this form is used for..." rows={3} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+              <div>
+                {fieldLabel('Sport', true)}
+                <input className="nt-inp" value={sport} onChange={e => setSport(e.target.value)} placeholder="e.g., Hockey" />
+              </div>
+              <div>
+                {fieldLabel('Pillar', true)}
+                <select className="nt-sel" value={pillar} onChange={e => setPillar(e.target.value as PillarSlug | 'combined')}>
+                  <option value="combined">Combined (All Pillars)</option>
+                  {PILLARS.map(p => (
+                    <option key={p.slug} value={p.slug}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: '12px', lineHeight: 1.5 }}>
+              One template can be active per sport + pillar pair, so a pillar chart can run alongside the combined tracker.
+            </p>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -37,10 +37,21 @@ const labelStyle: React.CSSProperties = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, user, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect already-authenticated users to their home so they don't see this form flash
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.role === 'admin') router.push('/admin');
+      else if (user.role === 'coach') router.push('/coach');
+      else if (user.role === 'parent') router.push('/parent');
+      else if (user.role === 'student' && !user.onboardingCompleted) router.push('/onboarding');
+      else router.push('/dashboard');
+    }
+  }, [user, loading, router]);
 
   const {
     register,
@@ -144,13 +155,19 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          <style dangerouslySetInnerHTML={{ __html: `
+            @media (max-width: 480px) {
+              .reg-grid-role { grid-template-columns: 1fr !important; }
+              .reg-grid-pw   { grid-template-columns: 1fr !important; }
+            }
+          `}} />
           <form
             onSubmit={handleSubmit(onSubmit)}
             style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}
             data-testid="register-form"
           >
-            {/* Role + Full Name — side by side */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '10px' }}>
+            {/* Role + Full Name — side by side on sm+, stacked on mobile */}
+            <div className="reg-grid-role" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '10px' }}>
               <div>
                 <label htmlFor="role" style={labelStyle}>I am a...</label>
                 <div style={{ position: 'relative' }}>
@@ -202,8 +219,8 @@ export default function RegisterPage() {
               {errors.email && <p style={{ fontSize: '11px', color: '#f87171', marginTop: '4px' }} data-testid="email-error">{errors.email.message}</p>}
             </div>
 
-            {/* Password + Confirm Password — side by side */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {/* Password + Confirm Password — side by side on sm+, stacked on mobile */}
+            <div className="reg-grid-pw" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div>
                 <label htmlFor="password" style={labelStyle}>Password</label>
                 <div style={{ position: 'relative' }}>

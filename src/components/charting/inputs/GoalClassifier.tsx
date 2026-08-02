@@ -60,7 +60,7 @@ export function GoalClassifier({ goalCount, goals, onChange }: GoalClassifierPro
                 ? 'bg-[rgba(55,181,255,0.12)] text-[#37b5ff]'
                 : 'bg-red-900/20 text-red-400'
             }`}>
-              {goal.isGoodGoal ? 'Good Goal' : 'Bad Goal'}
+              {goal.isGoodGoal ? 'Good Goal' : 'Weak Goal'}
             </span>
           </div>
 

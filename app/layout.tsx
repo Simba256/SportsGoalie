@@ -1,23 +1,16 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 
 import { AuthProvider } from '@/lib/auth/context';
 import { Toaster } from '@/components/ui/sonner';
-import { Chatbot } from '@/components/ui/chatbot';
 import { LayoutShell } from '@/components/LayoutShell';
 
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+const geistSans = GeistSans;
+const geistMono = GeistMono;
 
 export const metadata: Metadata = {
   title: 'SmarterGoalie - Digital Learning Platform',
@@ -49,7 +42,6 @@ export default function RootLayout({
             <LayoutShell>{children}</LayoutShell>
           </Suspense>
           <Toaster />
-          <Chatbot />
         </AuthProvider>
       </body>
     </html>
