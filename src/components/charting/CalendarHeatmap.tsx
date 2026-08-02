@@ -57,7 +57,7 @@ export const CalendarHeatmap = ({
   const isDynamicEntryPartial  = (entry: DynamicChartingEntry): boolean => !!(entry?.completionPercentage > 0 && !entry.isComplete);
 
   const legacyEntriesBySession  = chartingEntries.reduce((acc, e) => { acc[e.sessionId] = e; return acc; }, {} as Record<string, any>);
-  const dynamicEntriesBySession = dynamicEntries.reduce((acc, e) => { acc[e.sessionId] = e; return acc; }, {} as Record<string, DynamicChartingEntry>);
+  const dynamicEntriesBySession = dynamicEntries.reduce((acc, e) => { if (e.sessionId) acc[e.sessionId] = e; return acc; }, {} as Record<string, DynamicChartingEntry>);
 
   const getCompletionLevel = (date: Date): number => {
     const dateKey = format(date, 'yyyy-MM-dd');

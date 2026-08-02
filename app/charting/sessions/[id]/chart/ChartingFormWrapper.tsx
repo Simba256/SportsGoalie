@@ -35,6 +35,9 @@ export function ChartingFormWrapper({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [useDynamicForm, setUseDynamicForm] = useState(false);
+  // Distinct from "no template configured": the lookup itself failed. Kept separate so
+  // a broken query never gets reported to the student as a missing template.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     loadTemplateAndEntry();
@@ -44,10 +47,14 @@ export function ChartingFormWrapper({
     console.log('🔷 [STUDENT] Loading template and entry for session:', session.id);
     try {
       setLoading(true);
+      setLoadFailed(false);
 
       // Try to get active template
       console.log('🔷 [STUDENT] Fetching active template...');
-      const templateResult = await formTemplateService.getActiveTemplate();
+      const templateResult = await formTemplateService.getActiveTemplate({
+        sport: 'Hockey',
+        pillar: 'combined',
+      });
       console.log('🔷 [STUDENT] getActiveTemplate result:', {
         success: templateResult.success,
         hasData: !!templateResult.data,
@@ -57,7 +64,19 @@ export function ChartingFormWrapper({
         fullResult: templateResult
       });
 
-      if (templateResult.success && templateResult.data) {
+      if (!templateResult.success) {
+        // The lookup itself failed (missing index, permissions, network). This is NOT
+        // the same as "no template configured" — surface it as a fault so nobody wastes
+        // time re-activating a template that was already active.
+        console.error('❌ [STUDENT] getActiveTemplate failed:', templateResult.error);
+        toast.error('Could not load the charting form. Please report this to an admin.');
+        setLoadFailed(true);
+        setUseDynamicForm(false);
+      } else if (!templateResult.data) {
+        // Genuinely nothing configured for this scope — legacy fallback is correct.
+        console.log('🔷 [STUDENT] No active template configured, using legacy form');
+        setUseDynamicForm(false);
+      } else {
         console.log('🔷 [STUDENT] ✅ Active template found, using dynamic form');
         setTemplate(templateResult.data);
         setUseDynamicForm(true);
@@ -84,14 +103,11 @@ export function ChartingFormWrapper({
             console.log('🔷 [STUDENT] No entry found for current user (userId:', userId, ')');
           }
         }
-      } else {
-        // No active template, use legacy form
-        console.log('🔷 [STUDENT] ❌ No active template found, using legacy form');
-        console.log('🔷 [STUDENT] Template result details:', templateResult);
-        setUseDynamicForm(false);
       }
     } catch (error) {
       console.error('❌ [STUDENT] Error loading template:', error);
+      toast.error('Could not load the charting form. Please report this to an admin.');
+      setLoadFailed(true);
       setUseDynamicForm(false);
     } finally {
       setLoading(false);
@@ -247,7 +263,37 @@ export function ChartingFormWrapper({
     );
   }
 
-  // Fallback to legacy form if no template
+  // The lookup broke. Say that plainly — telling the student "no template found" here
+  // would send them (and their admin) chasing a configuration problem that isn't real.
+  if (loadFailed) {
+    return (
+      <div className="space-y-4">
+        <Card className="p-4 bg-red-50 border-red-200">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-900">Couldn&apos;t load your charting form</h3>
+              <p className="text-sm text-red-700 mt-1">
+                Something went wrong reaching the server, so we&apos;ve loaded the original form
+                so you can still chart this session. Your admin should check the logs.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => loadTemplateAndEntry()}
+              >
+                Try again
+              </Button>
+            </div>
+          </div>
+        </Card>
+        <LegacyForm />
+      </div>
+    );
+  }
+
+  // Fallback to legacy form if no template is configured for this scope
   return (
     <div className="space-y-4">
       <Card className="p-4 bg-yellow-50 border-yellow-200">

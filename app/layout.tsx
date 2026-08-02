@@ -5,7 +5,6 @@ import { GeistMono } from 'geist/font/mono';
 
 import { AuthProvider } from '@/lib/auth/context';
 import { Toaster } from '@/components/ui/sonner';
-import { Chatbot } from '@/components/ui/chatbot';
 import { LayoutShell } from '@/components/LayoutShell';
 
 import './globals.css';
@@ -43,7 +42,6 @@ export default function RootLayout({
             <LayoutShell>{children}</LayoutShell>
           </Suspense>
           <Toaster />
-          <Chatbot />
         </AuthProvider>
       </body>
     </html>

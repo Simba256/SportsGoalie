@@ -8,6 +8,7 @@ import { AdminRoute } from '@/components/auth/protected-route';
 import { ArrowLeft, Calendar, User, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { V2ChartReadOnlyView } from '@/components/charting/V2ChartReadOnlyView';
+import { toDateSafe } from '@/lib/utils/timestamp';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -143,10 +144,13 @@ function EntryDetailContent() {
               </div>
             </div>
           ))}
-          {entry.submittedAt && (
+          {/* toDateSafe, not a raw toDate(): entries written before the
+              removeUndefinedFields fix hold a plain {seconds} map with no methods,
+              and calling toDate() on one crashes the whole page. */}
+          {toDateSafe(entry.submittedAt) && (
             <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
               <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
-                Submitted on {entry.submittedAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                Submitted on {toDateSafe(entry.submittedAt)!.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           )}

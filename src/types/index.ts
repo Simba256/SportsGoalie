@@ -842,6 +842,7 @@ export type {
   FieldType,
   AnalyticsType,
   TrendDirection,
+  ChartMode,
   FieldAnalyticsConfig,
   FieldValidation,
   FormField,

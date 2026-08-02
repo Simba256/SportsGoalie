@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
-import { chartingService } from '@/lib/database';
+import { chartingService, formTemplateService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
-import { Session, SessionStats, DynamicChartingEntry, ChartingEntry } from '@/types';
+import { Session, SessionStats, DynamicChartingEntry, ChartingEntry, FormTemplate, PILLARS } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, X, ArrowRight, BarChart2 } from 'lucide-react';
+import {
+  Plus, Calendar, X, ArrowRight, BarChart2,
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+} from 'lucide-react';
 import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
@@ -19,6 +22,10 @@ const VIOLET = '#7dd3fc';
 const CORAL  = '#f87171';
 const MUTED  = 'rgba(255,255,255,0.38)';
 const LABEL  = 'rgba(255,255,255,0.55)';
+
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+};
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -82,6 +89,7 @@ export default function ChartingPage() {
   const [sessions,        setSessions]        = useState<Session[]>([]);
   const [chartingEntries, setChartingEntries] = useState<ChartingEntry[]>([]);
   const [dynamicEntries,  setDynamicEntries]  = useState<DynamicChartingEntry[]>([]);
+  const [pillarTemplates, setPillarTemplates] = useState<FormTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const stats         = useMemo<SessionStats>(() => calculateSessionStats(sessions), [sessions]);
@@ -90,7 +98,7 @@ export default function ChartingPage() {
   const chartedSessionIds = useMemo(() => {
     const ids = new Set<string>();
     chartingEntries.forEach(e => ids.add(e.sessionId));
-    dynamicEntries.forEach(e => ids.add(e.sessionId));
+    dynamicEntries.forEach(e => { if (e.sessionId) ids.add(e.sessionId); });
     return ids;
   }, [chartingEntries, dynamicEntries]);
 
@@ -111,14 +119,19 @@ export default function ChartingPage() {
     if (!user) return;
     try {
       setLoading(true);
-      const [sR, eR, dR] = await Promise.all([
+      const [sR, eR, dR, pR] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getChartingEntriesByStudent(user.id),
         dynamicChartingService.getDynamicEntriesByStudent(user.id),
+        formTemplateService.getActiveTemplatesForSport('Hockey'),
       ]);
       if (sR.success && sR.data) setSessions(sR.data);
       if (eR.success && eR.data) setChartingEntries(eR.data);
       if (dR.success && dR.data) setDynamicEntries(dR.data);
+      // A failure here silently hides the Pillar Check-Ins section, so log it rather than
+      // letting "query broke" look the same as "no pillar templates exist".
+      if (!pR.success) console.error('Failed to load pillar templates:', pR.error);
+      else if (pR.data) setPillarTemplates(pR.data.filter(t => t.pillar !== 'combined'));
     } catch (err) { console.error('Failed to load data:', err); }
     finally { setLoading(false); }
   };
@@ -208,6 +221,51 @@ export default function ChartingPage() {
         <MetricCard label="Practices"       value={stats.practiceSessions}        sub="practice sessions"    icon={<IconPractice color={MINT}   />} accent={MINT} />
         <MetricCard label="This Month"      value={stats.thisMonthSessions || 0}  sub="sessions logged"      icon={<IconMonth    color={VIOLET} />} accent={VIOLET} />
       </div>
+
+      {/* ── PILLAR CHECK-INS ── */}
+      {pillarTemplates.length > 0 && (
+        <div style={{ position: 'relative', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent 0%, #37b5ff 40%, #34d399 70%, transparent 100%)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '18px 22px 16px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-.01em' }}>Pillar Check-Ins</h3>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)', fontWeight: 500, marginTop: '1px' }}>Rate yourself anytime — no session needed</p>
+            </div>
+            {/* Pillar charts live in their own area — these cards are a shortcut
+                into the form, not the place to read your history back. */}
+            <button
+              type="button"
+              onClick={() => router.push('/charting/pillars')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '9px', padding: '7px 13px', color: 'rgba(255,255,255,0.78)', fontSize: '12px', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            >
+              View Charts
+              <ArrowRight size={12} />
+            </button>
+          </div>
+          <div style={{ padding: '18px 22px 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+            {pillarTemplates.map(template => {
+              const info = PILLARS.find(p => p.slug === template.pillar);
+              if (!info) return null;
+              const IconComponent = PILLAR_ICONS[info.icon] || Target;
+              return (
+                <div
+                  key={template.id}
+                  onClick={() => router.push(`/charting/pillars/${template.pillar}`)}
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '12px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.35)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.14)'; }}
+                >
+                  <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconComponent size={16} color={CYAN} />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{info.shortName}</span>
+                  <ArrowRight size={13} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── ACTIVITY CALENDAR ── */}
       <div style={{ position: 'relative', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>

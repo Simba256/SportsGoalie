@@ -12,6 +12,7 @@ import { User, UserRole } from '@/types';
 import { Invitation } from '@/types/invitation';
 import { AdminInviteForm } from './components/AdminInviteForm';
 import { AdminInviteList } from './components/AdminInviteList';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 const BLUE = '#37b5ff';
@@ -35,7 +36,6 @@ function UsersManagementContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showInvitePanel, setShowInvitePanel] = useState(false);
   const [adminInvitations, setAdminInvitations] = useState<Invitation[]>([]);
@@ -94,7 +94,6 @@ function UsersManagementContent() {
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     if (!currentUser?.id) return;
-    setOpenMenuId(null);
     try {
       const result = await userService.changeUserRole(userId, newRole, currentUser.id);
       if (result.success) { toast.success(`Role updated to ${newRole}`); fetchUsers(); }
@@ -235,7 +234,6 @@ function UsersManagementContent() {
               {filteredUsers.map((user, i) => {
                 const initials = (user.displayName || user.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
                 const rs = ROLE_STYLES[user.role] || ROLE_STYLES.student;
-                const isMenuOpen = openMenuId === user.id;
                 const isConfirmingDelete = confirmDeleteId === user.id;
                 const isSelf = user.id === currentUser?.id;
                 return (
@@ -263,31 +261,31 @@ function UsersManagementContent() {
                           View Profile
                         </Link>
                         {/* Actions menu */}
-                        <div style={{ position: 'relative' }}>
-                          <button onClick={() => { setOpenMenuId(isMenuOpen ? null : user.id); setConfirmDeleteId(null); }} style={{ padding: '7px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <MoreHorizontal size={16} />
-                          </button>
-                          {isMenuOpen && (
-                            <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', padding: '4px', zIndex: 50, minWidth: '172px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-                              {(['student', 'coach', 'parent', 'admin'] as UserRole[]).filter(r => r !== user.role).map(role => (
-                                <button key={role} className="au-menu-item" onClick={() => handleRoleChange(user.id, role)}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '7px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.15s', textAlign: 'left' }}>
-                                  {role === 'admin' ? <ShieldCheck size={13} /> : <Users size={13} />}
-                                  Make {role}
-                                </button>
-                              ))}
-                              {!isSelf && (
-                                <>
-                                  <div style={{ margin: '4px 8px', borderTop: '1px solid rgba(248,113,113,0.15)' }} />
-                                  <button className="au-menu-delete" onClick={() => { setOpenMenuId(null); setConfirmDeleteId(user.id); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '7px', border: 'none', background: 'transparent', color: 'rgba(248,113,113,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left' }}>
-                                    <Trash2 size={13} /> Delete User
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <button onClick={() => setConfirmDeleteId(null)} style={{ padding: '7px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                              <MoreHorizontal size={16} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" style={{ background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', padding: '4px', minWidth: '172px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                            {(['student', 'coach', 'parent', 'admin'] as UserRole[]).filter(r => r !== user.role).map(role => (
+                              <DropdownMenuItem key={role} className="au-menu-item" onSelect={() => handleRoleChange(user.id, role)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '7px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
+                                {role === 'admin' ? <ShieldCheck size={13} /> : <Users size={13} />}
+                                Make {role}
+                              </DropdownMenuItem>
+                            ))}
+                            {!isSelf && (
+                              <>
+                                <DropdownMenuSeparator style={{ margin: '4px 8px', background: 'rgba(248,113,113,0.15)' }} />
+                                <DropdownMenuItem className="au-menu-delete" onSelect={() => setConfirmDeleteId(user.id)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '7px', color: 'rgba(248,113,113,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                  <Trash2 size={13} /> Delete User
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
 

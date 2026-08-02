@@ -24,6 +24,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toDateSafe } from '@/lib/utils/timestamp';
 import { DynamicSessionAnalytics } from '@/components/charting/DynamicSessionAnalytics';
 
 export default function SessionDetailPage() {
@@ -50,7 +51,7 @@ export default function SessionDetailPage() {
       const [sessionResult, entriesResult, templateResult, dynamicEntriesResult] = await Promise.all([
         chartingService.getSession(sessionId),
         chartingService.getChartingEntriesBySession(sessionId),
-        formTemplateService.getActiveTemplate(),
+        formTemplateService.getActiveTemplate({ sport: 'Hockey', pillar: 'combined' }),
         dynamicChartingService.getDynamicEntriesBySession(sessionId),
       ]);
 
@@ -62,10 +63,13 @@ export default function SessionDetailPage() {
         setEntries(entriesResult.data);
       }
 
-      if (templateResult.success && templateResult.data) {
-        setActiveTemplate(templateResult.data);
-      } else {
+      if (!templateResult.success) {
+        // Falling back to the legacy analytics panel is fine here, but the failure itself
+        // must not be silent — otherwise a broken query looks identical to "no template".
+        console.error('Failed to load active template:', templateResult.error);
         setActiveTemplate(null);
+      } else {
+        setActiveTemplate(templateResult.data ?? null);
       }
 
       if (dynamicEntriesResult.success && dynamicEntriesResult.data) {
@@ -454,9 +458,15 @@ export default function SessionDetailPage() {
                   <div>
                     <p className="font-medium text-white">Admin Observation</p>
                     <p className="text-sm text-white/40">
-                      {entry.submittedAt && typeof entry.submittedAt.toDate === 'function'
-                        ? formatDistanceToNow(entry.submittedAt.toDate(), { addSuffix: true })
-                        : 'Recently'}
+                      {/* toDateSafe rather than a toDate guard: entries written before
+                          the removeUndefinedFields fix hold a plain {seconds} map, which
+                          has no toDate and so fell through to a vague "Recently". */}
+                      {(() => {
+                        const submitted = toDateSafe(entry.submittedAt);
+                        return submitted
+                          ? formatDistanceToNow(submitted, { addSuffix: true })
+                          : 'Recently';
+                      })()}
                     </p>
                   </div>
                   <Button
