@@ -714,9 +714,13 @@ service cloud.firestore {
       // Students can list/query their own entries (application filters by studentId), admins can list all
       allow list: if isAuthenticated();
 
-      // Students can create entries for themselves, admins can create for any student
+      // Students can create entries for themselves, admins can create for any student.
+      // `sessionId` is deliberately NOT required: standalone pillar check-ins are not tied
+      // to a logged game or practice session. It is still type-checked when present.
       allow create: if isAuthenticated() &&
-                       hasRequiredFields(['sessionId', 'studentId', 'formTemplateId', 'formTemplateVersion', 'submittedBy', 'submitterRole', 'responses']) &&
+                       hasRequiredFields(['studentId', 'formTemplateId', 'formTemplateVersion', 'submittedBy', 'submitterRole', 'responses']) &&
+                       (!request.resource.data.keys().hasAny(['sessionId']) ||
+                        request.resource.data.sessionId is string) &&
                        (isOwner(request.resource.data.studentId) || isAdmin()) &&
                        request.resource.data.formTemplateId is string &&
                        request.resource.data.formTemplateId.size() > 0 &&
@@ -1151,6 +1155,43 @@ service cloud.firestore {
 
       // Only admins can delete
       allow delete: if isAdmin();
+    }
+
+    // Growth Points - the goalie rewards ledger (balance doc per goalie, plus an
+    // append-only transaction log).
+    //
+    // These two collections had no rules at all, so the catch-all below was denying every
+    // read and write. Both collections are empty in production as a result: the feature has
+    // never recorded a single point since it was built.
+    //
+    // Points are awarded from the browser (there is no Cloud Function behind this), so
+    // these rules can only enforce that a goalie touches nobody's ledger but their own.
+    // Someone determined could still award themselves points from the dev console. Closing
+    // that properly means moving awardPoints server-side, which is a separate piece of work.
+    match /growth_points_balance/{userId} {
+      allow read: if isOwnerOrAdmin(userId);
+
+      // On update, request.resource.data is the merged post-write document, so goalieId
+      // is still checked even though awardPoints only sends the changed counters.
+      allow create, update: if isAdmin() ||
+                               (isOwner(userId) &&
+                                request.resource.data.goalieId == userId);
+
+      allow delete: if isAdmin();
+    }
+
+    match /growth_points_transactions/{transactionId} {
+      // Reads are per-document, including inside a query: the ledger is queried with
+      // where('goalieId','==',uid), so every returned document satisfies this.
+      allow read: if isOwnerOrAdmin(resource.data.goalieId);
+
+      allow create: if isAdmin() ||
+                       (isOwner(request.resource.data.goalieId) &&
+                        hasRequiredFields(['goalieId', 'transactionType', 'points', 'eventType', 'description']) &&
+                        request.resource.data.points is number);
+
+      // The log is append-only: nobody rewrites history except an admin.
+      allow update, delete: if isAdmin();
     }
 
     // Catch-all rule for any other collections
