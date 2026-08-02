@@ -27,6 +27,10 @@ export interface DynamicFormRendererProps {
   collapsibleSections?: boolean;
   highlightRequired?: boolean;
   initialSectionIndex?: number; // Focus on a specific section initially
+  /** Set false when the page already titles the form, to avoid repeating it. */
+  showFormHeader?: boolean;
+  /** Word labels for the ends of `scale` fields — see DynamicFieldProps. */
+  scaleAnchors?: { low: string; high: string };
 }
 
 /**
@@ -44,6 +48,8 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   collapsibleSections = true,
   highlightRequired = true,
   initialSectionIndex,
+  showFormHeader = true,
+  scaleAnchors,
 }) => {
   const [responses, setResponses] = useState<FormResponses>(initialValues);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
@@ -181,54 +187,65 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   const renderSection = (section: FormSection, index: number) => {
     const isExpanded = isSectionExpanded(section.id);
     const completionPercentage = getSectionCompletionPercentage(section);
+    const isComplete = completionPercentage === 100;
+
     return (
       <Card key={section.id} id={`section-${section.id}`} className="overflow-hidden">
         <CardHeader
           className={cn(
-            'cursor-pointer transition-colors',
-            collapsibleSections && 'hover:bg-muted/50'
+            'transition-colors',
+            collapsibleSections && 'cursor-pointer hover:bg-muted/40'
           )}
           onClick={() => toggleSection(section.id)}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                {showSectionNumbers && (
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                    {index + 1}
-                  </span>
-                )}
-                {section.title}
-                {highlightRequired && section.fields.some((f) => f.validation?.required) && (
-                  <span className="text-red-500 text-sm">*</span>
-                )}
-              </CardTitle>
-              {section.description && (
-                <CardDescription className="mt-1">{section.description}</CardDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              {showSectionNumbers && (
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold tabular-nums text-primary-foreground">
+                  {index + 1}
+                </span>
               )}
+              <div className="min-w-0 space-y-1">
+                <CardTitle className="text-lg leading-snug">
+                  {section.title}
+                  {highlightRequired && section.fields.some((f) => f.validation?.required) && (
+                    <span className="ml-1 text-base text-red-500">*</span>
+                  )}
+                </CardTitle>
+                {section.description && (
+                  <CardDescription className="text-[13px] leading-relaxed">
+                    {section.description}
+                  </CardDescription>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-3">
+
+            <div className="flex shrink-0 items-center gap-2">
               {/* Completion indicator */}
               {completionPercentage > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  {completionPercentage}%
-                </div>
+                <span
+                  className={cn(
+                    'rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums',
+                    isComplete ? 'bg-emerald-500/15 text-emerald-500' : 'bg-primary/15 text-primary'
+                  )}
+                >
+                  {isComplete ? 'Complete' : `${completionPercentage}%`}
+                </span>
               )}
               {/* Collapse/expand icon */}
-              {collapsibleSections && (
-                isExpanded ? (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              {collapsibleSections &&
+                (isExpanded ? (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                )
-              )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                ))}
             </div>
           </div>
           {/* Progress bar */}
           {completionPercentage > 0 && completionPercentage < 100 && (
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full bg-primary transition-all"
+                className="h-full rounded-full bg-primary transition-all"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
@@ -236,7 +253,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
         </CardHeader>
 
         {isExpanded && (
-          <CardContent className="pt-6">
+          <CardContent>
             {section.isRepeatable ? (
               renderRepeatableSection(section)
             ) : (
@@ -251,9 +268,13 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   const renderRegularSection = (section: FormSection) => {
     const sectionData = (responses[section.id] as SectionResponse) || {};
 
+    // A divided list, not a stack of bordered boxes. A section here is often 16
+    // near-identical rating rows; boxing each one meant 16 more borders
+    // competing with the panel border for the same 700px of width.
     return (
-      <div className="space-y-6">
-        {section.fields
+      <div className="divide-y divide-border">
+        {/* Copy before sorting — `.sort()` mutates, and this array is the template's own. */}
+        {[...section.fields]
           .sort((a, b) => a.order - b.order)
           .map((field) => {
             const fieldValue = sectionData[field.id];
@@ -262,10 +283,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
             return (
               <div
                 key={field.id}
-                className={cn(
-                  'rounded-lg border p-4',
-                  field.columnSpan === 2 && 'col-span-2'
-                )}
+                className="py-5 first:pt-0 last:pb-0"
               >
                 <DynamicField
                   field={field}
@@ -273,6 +291,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                   onChange={(value) => handleFieldChange(section.id, field.id, value)}
                   error={errors[errorKey]}
                   disabled={disabled}
+                  scaleAnchors={scaleAnchors}
                 />
               </div>
             );
@@ -331,7 +350,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
             </div>
 
             <div className="space-y-4">
-              {section.fields
+              {[...section.fields]
                 .sort((a, b) => a.order - b.order)
                 .map((field) => {
                   const fieldValue = instanceData[field.id];
@@ -347,6 +366,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                       }
                       error={errors[errorKey]}
                       disabled={disabled}
+                      scaleAnchors={scaleAnchors}
                     />
                   );
                 })}
@@ -370,7 +390,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   };
 
   const router = useRouter();
-  const sortedSections = template.sections.sort((a, b) => a.order - b.order);
+  const sortedSections = [...template.sections].sort((a, b) => a.order - b.order);
   const totalSections = sortedSections.length;
 
   const handleNavigateSection = (newIndex: number | 'all') => {
@@ -388,12 +408,14 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   return (
     <div className={cn('space-y-6', className)}>
       {/* Form header */}
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">{template.name}</h2>
-        {template.description && (
-          <p className="text-muted-foreground">{template.description}</p>
-        )}
-      </div>
+      {showFormHeader && (
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold">{template.name}</h2>
+          {template.description && (
+            <p className="text-muted-foreground">{template.description}</p>
+          )}
+        </div>
+      )}
 
       {/* Section Navigation */}
       {initialSectionIndex !== undefined && (

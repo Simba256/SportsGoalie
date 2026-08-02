@@ -21,8 +21,72 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { logger } from '../../utils/logger';
+import { toDateSafe } from '../../utils/timestamp';
 import { formTemplateService } from './form-template.service';
 import { dynamicChartingService } from './dynamic-charting.service';
+
+/**
+ * Milliseconds for any date-shaped value Firestore may hand back, `null` when
+ * there's nothing usable.
+ *
+ * Every timestamp read in this service goes through here rather than calling
+ * `.toMillis()` / `.toDate()` directly. Entries written before the
+ * `removeUndefinedFields` fix hold `submittedAt` as a plain `{ seconds,
+ * nanoseconds }` map with no methods on it, so a direct call throws
+ * `toMillis is not a function` and takes the whole analytics calculation down —
+ * which is exactly how a single legacy entry could blank a student's board.
+ */
+function millisOf(value: unknown): number | null {
+  return toDateSafe(value)?.getTime() ?? null;
+}
+
+/**
+ * Sort comparator over entry timestamps, tolerant of the mangled shape above.
+ * Undatable entries sort last in both directions rather than poisoning the
+ * comparison with NaN.
+ */
+function compareBySubmittedAt(
+  a: { submittedAt: unknown },
+  b: { submittedAt: unknown },
+  direction: 'asc' | 'desc'
+): number {
+  const aMs = millisOf(a.submittedAt);
+  const bMs = millisOf(b.submittedAt);
+
+  if (aMs === null && bMs === null) return 0;
+  if (aMs === null) return 1;
+  if (bMs === null) return -1;
+
+  return direction === 'asc' ? aMs - bMs : bMs - aMs;
+}
+
+/**
+ * Flattens a thrown value into something loggable.
+ *
+ * FirebaseError puts the useful part on `code` (`permission-denied`,
+ * `failed-precondition` for a missing composite index) and, for a missing index,
+ * the console URL that creates it inside `message` — neither of which survives a
+ * bare `String(error)`.
+ */
+function describeError(error: unknown): { code: string; message: string; stack?: string } {
+  if (error instanceof Error) {
+    return {
+      code: (error as { code?: string }).code ?? error.name,
+      message: error.message || '(no message)',
+      stack: error.stack,
+    };
+  }
+
+  if (error && typeof error === 'object') {
+    const candidate = error as { code?: string; message?: string };
+    return {
+      code: candidate.code ?? 'unknown',
+      message: candidate.message ?? JSON.stringify(error),
+    };
+  }
+
+  return { code: 'unknown', message: String(error) };
+}
 
 /**
  * Service for calculating analytics from dynamic form responses
@@ -82,29 +146,36 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         };
       }
 
-      let entries = entriesResult.data;
-
-      // Apply date filters if provided
-      if (options.dateFrom || options.dateTo) {
-        entries = this.filterEntriesByDate(entries, options.dateFrom, options.dateTo);
-      }
-
-      // Filter by completion if specified
+      // Filter by completion if specified. This applies to the full history too,
+      // since a baseline should never be pinned to a partial/incomplete entry.
+      let allEntries = entriesResult.data;
       if (!options.includePartialEntries) {
-        entries = entries.filter((e) => e.isComplete);
+        allEntries = allEntries.filter((e) => e.isComplete);
       }
 
-      // Calculate analytics
-      const analytics = await this.calculateAnalytics(studentId, template, entries);
+      // The baseline always anchors to the full, unfiltered history — only the
+      // "current" side of the calculation respects a date window. Otherwise
+      // picking anything but All-Time would silently exclude the baseline entry.
+      const hasDateFilter = Boolean(options.dateFrom || options.dateTo);
+      const windowedEntries = hasDateFilter
+        ? this.filterEntriesByDate(allEntries, options.dateFrom, options.dateTo)
+        : allEntries;
 
-      // Save to database
-      const analyticsId = `${studentId}_${templateId}`;
-      await this.createWithId(this.ANALYTICS_COLLECTION, analyticsId, analytics);
+      const analytics = await this.calculateAnalytics(studentId, template, allEntries, windowedEntries);
+
+      // Only persist the canonical (full-history) calculation. A date-filtered
+      // result must never overwrite the cached ${studentId}_${templateId} doc
+      // that other consumers read from.
+      if (!hasDateFilter) {
+        const analyticsId = `${studentId}_${templateId}`;
+        await this.createWithId(this.ANALYTICS_COLLECTION, analyticsId, analytics);
+      }
 
       logger.info('Student analytics calculated successfully', 'DynamicAnalyticsService', {
         studentId,
         templateId,
-        entriesAnalyzed: entries.length,
+        entriesAnalyzed: windowedEntries.length,
+        persisted: !hasDateFilter,
       });
 
       return {
@@ -113,13 +184,25 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error calculating student analytics', 'DynamicAnalyticsService', { error: error instanceof Error ? error.message : String(error) });
+      // Firestore rejections (permission-denied, failed-precondition/missing index)
+      // carry their reason on `code` and, for a missing index, the URL to create it
+      // in `message`. Logging only `error.message` on a bare object loses all of it,
+      // which is how this surfaced as an unreadable `{}`.
+      const detail = describeError(error);
+      // Folded into the message rather than left in the data object: the Next.js
+      // error overlay renders the data argument shallowly, so a reason left in there
+      // is effectively invisible while debugging.
+      logger.error(
+        `Error calculating student analytics [${detail.code}] ${detail.message}`,
+        'DynamicAnalyticsService',
+        { studentId, templateId, ...detail }
+      );
       return {
         success: false,
         message: 'Failed to calculate analytics',
         error: {
-          code: 'CALCULATION_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          code: detail.code ?? 'CALCULATION_ERROR',
+          message: detail.message,
         },
         timestamp: new Date(),
       };
@@ -127,14 +210,24 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Gets cached analytics for a student
+   * Gets analytics for a student. With no options, returns the cached doc
+   * as before. Passing a date range (or recalculate: true) computes fresh
+   * instead — without persisting — so a filtered dashboard view can't
+   * clobber the canonical cached analytics other consumers rely on.
    */
   async getStudentAnalytics(
     studentId: string,
-    templateId: string
+    templateId: string,
+    options: Omit<AnalyticsQueryOptions, 'studentId'> = {}
   ): Promise<ApiResponse<DynamicStudentAnalytics | null>> {
-    const analyticsId = `${studentId}_${templateId}`;
-    return await this.getById<DynamicStudentAnalytics>(this.ANALYTICS_COLLECTION, analyticsId);
+    const hasDateFilter = Boolean(options.dateFrom || options.dateTo);
+
+    if (!hasDateFilter && !options.recalculate) {
+      const analyticsId = `${studentId}_${templateId}`;
+      return await this.getById<DynamicStudentAnalytics>(this.ANALYTICS_COLLECTION, analyticsId);
+    }
+
+    return await this.recalculateStudentAnalytics(studentId, templateId, options);
   }
 
   /**
@@ -150,7 +243,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       const q = query(
         analyticsRef,
         where('studentId', '==', studentId),
-        orderBy('lastCalculatedAt', 'desc'),
+        orderBy('lastCalculated', 'desc'),
         firestoreLimit(1)
       );
 
@@ -198,13 +291,14 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   private async calculateAnalytics(
     studentId: string,
     template: FormTemplate,
-    entries: DynamicChartingEntry[]
+    allEntries: DynamicChartingEntry[],
+    windowedEntries: DynamicChartingEntry[]
   ): Promise<Omit<DynamicStudentAnalytics, 'id' | 'createdAt' | 'updatedAt'>> {
     // Session stats
-    const sessionStats = this.calculateSessionStats(entries);
+    const sessionStats = this.calculateSessionStats(windowedEntries);
 
     // Streak data
-    const streak = this.calculateStreak(entries);
+    const streak = this.calculateStreak(windowedEntries);
 
     // Field-level analytics
     const fieldAnalytics: { [fieldId: string]: FieldAnalyticsResult } = {};
@@ -217,7 +311,8 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
           const fieldResult = this.calculateFieldAnalytics(
             field,
             section.id,
-            entries,
+            windowedEntries,
+            allEntries,
             section.isRepeatable
           );
 
@@ -281,6 +376,49 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         .slice(-3)
         .reverse()
         .map((f) => f.fieldLabel);
+
+      // Baseline/current tracking: average each field's raw baseline/latest value
+      // (not the normalized 0-100 score) so the category stays in the fields' own units.
+      const baselineValues = categoryData.fieldResults
+        .map((fr) => fr.baselineValue)
+        .filter((v): v is number => v !== undefined);
+      const latestValues = categoryData.fieldResults
+        .map((fr) => fr.latestValue)
+        .filter((v): v is number => v !== undefined);
+
+      if (baselineValues.length > 0) {
+        categoryData.baselineScore = this.round(
+          baselineValues.reduce((sum, v) => sum + v, 0) / baselineValues.length,
+          2
+        );
+
+        const baselineDates = categoryData.fieldResults
+          .map((fr) => fr.baselineDate)
+          .filter((d): d is Timestamp => d !== undefined);
+        if (baselineDates.length > 0) {
+          categoryData.baselineDate = baselineDates.reduce((earliest, d) => {
+            const dMs = millisOf(d);
+            const earliestMs = millisOf(earliest);
+            if (dMs === null) return earliest;
+            if (earliestMs === null) return d;
+            return dMs < earliestMs ? d : earliest;
+          });
+        }
+      }
+
+      if (latestValues.length > 0) {
+        categoryData.currentScore = this.round(
+          latestValues.reduce((sum, v) => sum + v, 0) / latestValues.length,
+          2
+        );
+      }
+
+      if (categoryData.baselineScore !== undefined && categoryData.currentScore !== undefined) {
+        categoryData.growthFromBaseline = this.round(
+          categoryData.currentScore - categoryData.baselineScore,
+          2
+        );
+      }
     }
 
     // Overall performance
@@ -315,6 +453,9 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       studentId,
       formTemplateId: template.id,
       formTemplateName: template.name,
+      pillar: template.pillar,
+      sport: template.sport,
+      totalEntries: allEntries.length,
       sessionStats,
       streak,
       fieldAnalytics,
@@ -337,6 +478,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     field: FormField,
     sectionId: string,
     entries: DynamicChartingEntry[],
+    allEntries: DynamicChartingEntry[],
     isRepeatable?: boolean
   ): FieldAnalyticsResult | null {
     // Extract values for this field from all entries
@@ -384,6 +526,24 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       case 'count':
         this.calculateCountAnalytics(result, values);
         break;
+    }
+
+    // Baseline always anchors to the first-ever submission across full history,
+    // independent of the active date window, so switching dashboard filters
+    // can't move the anchor.
+    const baseline = this.extractFieldEdgeValue(field.id, sectionId, allEntries, isRepeatable, 'first');
+    if (baseline) {
+      result.baselineValue = baseline.value;
+      result.baselineDate = baseline.date;
+
+      // Latest reflects the current window, so growth reflects progress made
+      // within the selected period (Week/Month/3-Month/All-Time).
+      const latest = this.extractFieldEdgeValue(field.id, sectionId, entries, isRepeatable, 'last');
+      if (latest) {
+        result.latestValue = latest.value;
+        result.latestDate = latest.date;
+        result.growthFromBaseline = this.round(latest.value - baseline.value, 2);
+      }
     }
 
     // Target tracking
@@ -627,6 +787,34 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   }
 
   /**
+   * Finds the first (baseline) or last (latest) numeric value for a field
+   * across the given entries, scanning in chronological order and skipping
+   * non-numeric responses (e.g. yes/no or text fields have no meaningful
+   * baseline/growth value).
+   */
+  private extractFieldEdgeValue(
+    fieldId: string,
+    sectionId: string,
+    entries: DynamicChartingEntry[],
+    isRepeatable: boolean | undefined,
+    edge: 'first' | 'last'
+  ): { value: number; date: Timestamp } | null {
+    const sorted = [...entries].sort((a, b) =>
+      compareBySubmittedAt(a, b, edge === 'first' ? 'asc' : 'desc')
+    );
+
+    for (const entry of sorted) {
+      const values = this.extractFieldValues(fieldId, sectionId, [entry], isRepeatable);
+      const numericValue = values.map(Number).find((n) => !isNaN(n));
+      if (numericValue !== undefined) {
+        return { value: numericValue, date: entry.submittedAt };
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Calculates session statistics
    */
   private calculateSessionStats(entries: DynamicChartingEntry[]) {
@@ -645,9 +833,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         : 0;
 
     // Date calculations
-    const sortedEntries = [...entries].sort(
-      (a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis()
-    );
+    const sortedEntries = [...entries].sort((a, b) => compareBySubmittedAt(a, b, 'desc'));
 
     const firstSessionDate = sortedEntries[sortedEntries.length - 1]?.submittedAt;
     const lastSessionDate = sortedEntries[0]?.submittedAt;
@@ -656,9 +842,11 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     let averageSessionsPerWeek = 0;
     let averageSessionsPerMonth = 0;
 
-    if (firstSessionDate && lastSessionDate) {
-      const daysDiff =
-        (lastSessionDate.toMillis() - firstSessionDate.toMillis()) / (1000 * 60 * 60 * 24);
+    const firstMs = millisOf(firstSessionDate);
+    const lastMs = millisOf(lastSessionDate);
+
+    if (firstMs !== null && lastMs !== null) {
+      const daysDiff = (lastMs - firstMs) / (1000 * 60 * 60 * 24);
 
       if (daysDiff > 0) {
         averageSessionsPerWeek = this.round((totalSessions / daysDiff) * 7, 1);
@@ -685,9 +873,11 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   private calculateStreak(entries: DynamicChartingEntry[]) {
     const dates = entries
       .map((e) => {
-        const date = e.submittedAt.toDate();
+        const date = toDateSafe(e.submittedAt);
+        if (!date) return null;
         return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
       })
+      .filter((date): date is string => date !== null)
       .filter((date, index, self) => self.indexOf(date) === index)
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
@@ -801,7 +991,13 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     dateTo?: Date
   ): DynamicChartingEntry[] {
     return entries.filter((entry) => {
-      const entryDate = entry.submittedAt.toDate();
+      const entryDate = toDateSafe(entry.submittedAt);
+
+      // An entry we can't date can't be placed in the window, so it's excluded
+      // rather than silently counted as in-range.
+      if (!entryDate) {
+        return false;
+      }
 
       if (dateFrom && entryDate < dateFrom) {
         return false;
