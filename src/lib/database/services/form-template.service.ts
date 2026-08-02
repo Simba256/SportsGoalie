@@ -7,6 +7,7 @@ import {
   FieldType,
   AnalyticsType,
   ApiResponse,
+  PillarSlug,
 } from '@/types';
 import {
   Timestamp,
@@ -19,6 +20,8 @@ import {
   doc,
   updateDoc,
   increment,
+  writeBatch,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { db } from '../../firebase/config';
@@ -42,7 +45,7 @@ import { db } from '../../firebase/config';
  * });
  *
  * // Activate a template
- * await formTemplateService.activateTemplate(templateId, 'Hockey');
+ * await formTemplateService.activateTemplate(templateId);
  * ```
  */
 export class FormTemplateService extends BaseDatabaseService {
@@ -76,9 +79,9 @@ export class FormTemplateService extends BaseDatabaseService {
       };
     }
 
-    // If this template should be active, deactivate others
+    // If this template should be active, deactivate others in the same (sport, pillar) scope
     if (templateData.isActive && templateData.sport) {
-      await this.deactivateOtherTemplates(templateData.sport);
+      await this.deactivateTemplatesInScope(templateData.sport, templateData.pillar);
     }
 
     const cleanedData = {
@@ -169,9 +172,10 @@ export class FormTemplateService extends BaseDatabaseService {
       };
     }
 
-    // If activating this template, deactivate others
+    // If activating this template, deactivate others in the same (sport, pillar) scope
     if (updates.isActive && currentTemplate.sport) {
-      await this.deactivateOtherTemplates(templateId);
+      const pillar = updates.pillar ?? currentTemplate.pillar ?? 'combined';
+      await this.deactivateTemplatesInScope(currentTemplate.sport, pillar, templateId);
     }
 
     const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, updates);
@@ -302,6 +306,9 @@ export class FormTemplateService extends BaseDatabaseService {
       if (options.sport !== undefined) {
         q = query(q, where('sport', '==', options.sport));
       }
+      if (options.pillar !== undefined) {
+        q = query(q, where('pillar', '==', options.pillar));
+      }
       if (options.isActive !== undefined) {
         q = query(q, where('isActive', '==', options.isActive));
       }
@@ -348,14 +355,23 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
-   * Gets the active template
+   * Gets the active template for a specific (sport, pillar) scope.
+   * Multiple pillar templates can be active at once for the same sport
+   * (e.g. "combined", "mindset", "skating" can all be active simultaneously) —
+   * this returns only the one matching the given scope.
    */
-  async getActiveTemplate(): Promise<ApiResponse<FormTemplate | null>> {
+  async getActiveTemplate(scope: {
+    sport: string;
+    pillar: PillarSlug | 'combined';
+  }): Promise<ApiResponse<FormTemplate | null>> {
     logger.database('query', this.TEMPLATES_COLLECTION, undefined, {
       isActive: true,
+      ...scope,
     });
 
     const result = await this.getTemplates({
+      sport: scope.sport,
+      pillar: scope.pillar,
       isActive: true,
       isArchived: false,
       limit: 1,
@@ -378,6 +394,24 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
+   * Gets every simultaneously-active template for a sport, across all pillars.
+   * Used by the student dashboard to render all active pillar charts at once
+   * instead of issuing one getActiveTemplate() call per pillar.
+   */
+  async getActiveTemplatesForSport(sport: string): Promise<ApiResponse<FormTemplate[]>> {
+    logger.database('query', this.TEMPLATES_COLLECTION, undefined, {
+      sport,
+      isActive: true,
+    });
+
+    return await this.getTemplates({
+      sport,
+      isActive: true,
+      isArchived: false,
+    });
+  }
+
+  /**
    * Gets templates by creator
    */
   async getTemplatesByCreator(
@@ -395,23 +429,19 @@ export class FormTemplateService extends BaseDatabaseService {
   // ==================== TEMPLATE ACTIVATION ====================
 
   /**
-   * Activates a template for a specific sport
-   * Deactivates all other templates for that sport
+   * Activates a template. Deactivates all other templates in the same
+   * (sport, pillar) scope, so templates for a different pillar (or a
+   * different sport) are left untouched — multiple pillars can be
+   * concurrently active.
    */
   async activateTemplate(templateId: string): Promise<ApiResponse<void>> {
-    console.log('🔵 [ACTIVATE] Starting activation for template:', templateId);
     logger.database('update', this.TEMPLATES_COLLECTION, templateId, {
       action: 'activate',
     });
 
     try {
-      // Get template to verify it exists
-      console.log('🔵 [ACTIVATE] Step 1: Fetching template...');
       const templateResult = await this.getTemplate(templateId);
-      console.log('🔵 [ACTIVATE] Step 1 result:', templateResult.success ? '✅ Success' : '❌ Failed', templateResult);
-
       if (!templateResult.success || !templateResult.data) {
-        console.error('❌ [ACTIVATE] Template not found');
         return {
           success: false,
           message: 'Template not found',
@@ -419,53 +449,30 @@ export class FormTemplateService extends BaseDatabaseService {
         };
       }
 
-      // FIRST: Deactivate ALL templates (including the one we want to activate)
-      console.log('🔵 [ACTIVATE] Step 2: Deactivating ALL templates...');
-      try {
-        await this.deactivateAllTemplates();
-        console.log('🔵 [ACTIVATE] Step 2: ✅ All templates deactivated');
-      } catch (error) {
-        console.error('❌ [ACTIVATE] Step 2 FAILED - Error deactivating templates:', error);
-        throw error;
-      }
+      const template = templateResult.data;
+      const sport = template.sport || 'Hockey';
+      const pillar = template.pillar || 'combined';
 
-      // THEN: Activate this template
-      console.log('🔵 [ACTIVATE] Step 3: Activating template', templateId);
-      try {
-        const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
-          isActive: true,
+      await this.deactivateTemplatesInScope(sport, pillar, templateId);
+
+      const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
+        isActive: true,
+      });
+
+      if (result.success) {
+        logger.info('Form template activated successfully', 'FormTemplateService', {
+          templateId,
+          sport,
+          pillar,
         });
-        console.log('🔵 [ACTIVATE] Step 3 result:', result.success ? '✅ Success' : '❌ Failed', result);
-
-        if (!result.success) {
-          console.error('❌ [ACTIVATE] Failed to activate template');
-          return result;
-        }
-
-        // VERIFY: Check that only this template is active
-        console.log('🔵 [ACTIVATE] Step 4: Verifying activation...');
-        const verifyResult = await this.getTemplates({ isActive: true });
-        if (verifyResult.success && verifyResult.data) {
-          const activeCount = verifyResult.data.length;
-          const isCorrectlyActivated = activeCount === 1 && verifyResult.data[0].id === templateId;
-          console.log('🔵 [ACTIVATE] Verification:', {
-            activeCount,
-            isCorrectlyActivated,
-            activeTemplates: verifyResult.data.map(t => ({ id: t.id, name: t.name }))
-          });
-
-          if (!isCorrectlyActivated) {
-            console.error('❌ [ACTIVATE] Verification FAILED - Multiple templates are active or wrong template active');
-          }
-        }
-
-        return result;
-      } catch (error) {
-        console.error('❌ [ACTIVATE] Step 3 FAILED - Error activating template:', error);
-        throw error;
       }
+
+      return result;
     } catch (error) {
-      console.error('❌ [ACTIVATE] CRITICAL ERROR in activateTemplate:', error);
+      logger.error('Error activating template', 'FormTemplateService', {
+        error: error instanceof Error ? error.message : String(error),
+        templateId,
+      });
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error during activation',
@@ -479,93 +486,44 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
-   * Deactivates ALL active templates (used before activating a new one)
+   * Deactivates all active templates within a (sport, pillar) scope, optionally
+   * excluding one template ID. Applied atomically via writeBatch so a failure
+   * partway through can't leave two templates simultaneously active in the
+   * same scope.
    */
-  private async deactivateAllTemplates(): Promise<void> {
-    console.log('🟡 [DEACTIVATE-ALL] Querying for ALL active templates...');
-    try {
-      const templates = await this.getTemplates({
-        isActive: true,
-      });
-      console.log('🟡 [DEACTIVATE-ALL] Query result:', templates.success ? '✅ Success' : '❌ Failed',
-        `Found ${templates.data?.length || 0} active templates`);
+  private async deactivateTemplatesInScope(
+    sport: string,
+    pillar: PillarSlug | 'combined',
+    exceptTemplateId?: string
+  ): Promise<void> {
+    const templatesRef = collection(db, this.TEMPLATES_COLLECTION);
+    const q = query(
+      templatesRef,
+      where('sport', '==', sport),
+      where('pillar', '==', pillar),
+      where('isActive', '==', true)
+    );
 
-      if (!templates.success || !templates.data || templates.data.length === 0) {
-        console.log('🟡 [DEACTIVATE-ALL] No active templates to deactivate');
-        return;
-      }
+    const snapshot = await getDocs(q);
+    const toDeactivate = snapshot.docs.filter((docSnap) => docSnap.id !== exceptTemplateId);
 
-      console.log('🟡 [DEACTIVATE-ALL] Templates to deactivate:', templates.data.map(t => `${t.name} (${t.id})`));
-
-      const templateData = templates.data;
-      const updatePromises = templateData.map((t, index) => {
-        console.log(`🟡 [DEACTIVATE-ALL] Deactivating ${index + 1}/${templateData.length}: ${t.name} (${t.id})`);
-        return this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
-          isActive: false,
-        }).then(result => {
-          console.log(`🟡 [DEACTIVATE-ALL] Result for ${t.name}:`, result.success ? '✅ Success' : '❌ Failed');
-          if (!result.success) {
-            console.error(`❌ [DEACTIVATE-ALL] Failed to deactivate ${t.name}:`, result.message);
-          }
-          return result;
-        }).catch(error => {
-          console.error(`❌ [DEACTIVATE-ALL] ERROR deactivating ${t.name} (${t.id}):`, error);
-          throw error;
-        });
-      });
-
-      await Promise.all(updatePromises);
-      console.log('🟡 [DEACTIVATE-ALL] ✅ All templates deactivated successfully');
-    } catch (error) {
-      console.error('❌ [DEACTIVATE-ALL] CRITICAL ERROR in deactivateAllTemplates:', error);
-      throw error;
+    if (toDeactivate.length === 0) {
+      return;
     }
-  }
 
-  /**
-   * Deactivates all active templates except the specified one
-   */
-  private async deactivateOtherTemplates(exceptTemplateId?: string): Promise<void> {
-    console.log('🟡 [DEACTIVATE] Querying for active templates...');
-    try {
-      const templates = await this.getTemplates({
-        isActive: true,
-      });
-      console.log('🟡 [DEACTIVATE] Query result:', templates.success ? '✅ Success' : '❌ Failed',
-        `Found ${templates.data?.length || 0} active templates`);
+    const batch = writeBatch(db);
+    toDeactivate.forEach((docSnap) => {
+      batch.update(docSnap.ref, { isActive: false, updatedAt: serverTimestamp() });
+    });
 
-      if (!templates.success || !templates.data) {
-        console.log('🟡 [DEACTIVATE] No templates to deactivate');
-        return;
-      }
+    await batch.commit();
 
-      const templatesToDeactivate = templates.data.filter((t) => t.id !== exceptTemplateId);
-      console.log('🟡 [DEACTIVATE] Templates to deactivate:', templatesToDeactivate.map(t => `${t.name} (${t.id})`));
-
-      if (templatesToDeactivate.length === 0) {
-        console.log('🟡 [DEACTIVATE] No other active templates found');
-        return;
-      }
-
-      const updatePromises = templatesToDeactivate.map((t, index) => {
-        console.log(`🟡 [DEACTIVATE] Deactivating ${index + 1}/${templatesToDeactivate.length}: ${t.name} (${t.id})`);
-        return this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
-          isActive: false,
-        }).then(result => {
-          console.log(`🟡 [DEACTIVATE] Result for ${t.name}:`, result.success ? '✅ Success' : '❌ Failed');
-          return result;
-        }).catch(error => {
-          console.error(`❌ [DEACTIVATE] ERROR deactivating ${t.name} (${t.id}):`, error);
-          throw error;
-        });
-      });
-
-      await Promise.all(updatePromises);
-      console.log('🟡 [DEACTIVATE] ✅ All templates deactivated successfully');
-    } catch (error) {
-      console.error('❌ [DEACTIVATE] CRITICAL ERROR in deactivateOtherTemplates:', error);
-      throw error;
-    }
+    logger.info('Deactivated templates in scope', 'FormTemplateService', {
+      sport,
+      pillar,
+      count: toDeactivate.length,
+      exceptTemplateId,
+    });
   }
 
   // ==================== TEMPLATE VALIDATION ====================

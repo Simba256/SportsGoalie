@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formTemplateService } from '@/lib/database/services/form-template.service';
-import { FormTemplate } from '@/types';
+import { FormTemplate, PILLARS } from '@/types';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -56,8 +56,13 @@ export default function TemplateDetailPage() {
     (sum, section) => sum + section.fields.filter((f) => f.analytics.enabled).length, 0
   );
 
+  const pillarLabel = template.pillar === 'combined'
+    ? 'Combined (All Pillars)'
+    : PILLARS.find(p => p.slug === template.pillar)?.name || template.pillar || 'Not specified';
+
   const metaItems = [
     { label: 'Sport', value: template.sport || 'Not specified' },
+    { label: 'Pillar', value: pillarLabel },
     { label: 'Version', value: `v${template.version}` },
     { label: 'Sections', value: String(template.sections.length) },
     { label: 'Total Fields', value: String(totalFields) },
