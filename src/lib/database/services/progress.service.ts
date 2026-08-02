@@ -52,6 +52,24 @@ export class ProgressService extends BaseDatabaseService {
   private static cache = cacheService;
 
   /**
+   * Starting stats for a student who has no progress document yet. Most student accounts
+   * are created without one, so the first write to `user_progress` has to build the record
+   * rather than assume it exists.
+   */
+  private static readonly DEFAULT_OVERALL_STATS: OverallStats = {
+    totalTimeSpent: 0,
+    skillsCompleted: 0,
+    sportsCompleted: 0,
+    quizzesCompleted: 0,
+    averageQuizScore: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalPoints: 0,
+    level: 1,
+    experiencePoints: 0,
+  };
+
+  /**
    * Get user's overall progress statistics from video quiz data
    */
   static async getUserProgress(userId: string): Promise<ApiResponse<UserProgress | null>> {
@@ -722,18 +740,22 @@ export class ProgressService extends BaseDatabaseService {
   static async updateStreak(userId: string): Promise<ApiResponse<StreakInfo>> {
     try {
       const userProgressResult = await this.getUserProgress(userId);
-      if (!userProgressResult.success || !userProgressResult.data) {
-        throw new Error('Failed to get user progress');
+
+      // A failed lookup is worth reporting. A missing progress record is not: most student
+      // accounts are created without one, and "no record yet" just means this is day one of
+      // the streak. Treating the two the same is what made every such login log an error.
+      if (!userProgressResult.success) {
+        throw new Error(userProgressResult.error?.message || 'Failed to get user progress');
       }
 
-      const stats = userProgressResult.data.overallStats;
+      const stats = userProgressResult.data?.overallStats;
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      let newStreak = stats.currentStreak || 0;
-      let longestStreak = stats.longestStreak || 0;
+      let newStreak = stats?.currentStreak || 0;
+      let longestStreak = stats?.longestStreak || 0;
 
-      if (stats.lastStreakDate) {
+      if (stats?.lastStreakDate) {
         const last = stats.lastStreakDate.toDate();
         const lastDay = new Date(last.getFullYear(), last.getMonth(), last.getDate());
         const daysDiff = Math.floor((today.getTime() - lastDay.getTime()) / (1000 * 60 * 60 * 24));
@@ -774,9 +796,12 @@ export class ProgressService extends BaseDatabaseService {
       logger.info('Updated user streak', 'ProgressService', { userId, currentStreak: newStreak, longestStreak });
       return { success: true, data: streakInfo, timestamp: new Date() };
     } catch (error) {
-      logger.error('Failed to update streak', 'ProgressService', {
+      // The reason goes in the message, not only in the data payload: the dev overlay
+      // renders that payload as `{}`, which is what made this failure unreadable.
+      const reason = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to update streak: ${reason}`, 'ProgressService', {
         userId,
-        error: error instanceof Error ? error.message : String(error)
+        error: reason,
       });
       return {
         success: false,
@@ -854,12 +879,29 @@ export class ProgressService extends BaseDatabaseService {
       }
     }
 
-    await updateDoc(docRef, {
-      ...Object.fromEntries(
-        Object.entries(updates).map(([key, value]) => [`overallStats.${key}`, value])
-      ),
-      lastUpdated: Timestamp.now(),
-    });
+    const snapshot = await getDoc(docRef);
+
+    if (snapshot.exists()) {
+      // Dotted keys are read as a path into `overallStats`. That only holds for updateDoc.
+      await updateDoc(docRef, {
+        ...Object.fromEntries(
+          Object.entries(updates).map(([key, value]) => [`overallStats.${key}`, value])
+        ),
+        lastUpdated: Timestamp.now(),
+      });
+    } else {
+      // updateDoc throws on a document that doesn't exist, and most student accounts have
+      // never had one, so the first write has to create it. Note the shape change: setDoc
+      // does NOT read dots as a path, so the update goes in nested. Reusing the flat
+      // `overallStats.x` keys here would create a literal field of that name sitting next
+      // to the real object.
+      await setDoc(docRef, {
+        userId,
+        overallStats: { ...this.DEFAULT_OVERALL_STATS, ...updates },
+        achievements: [],
+        lastUpdated: Timestamp.now(),
+      });
+    }
 
     // Invalidate cache
     this.cache.delete(`user_progress_${userId}`);

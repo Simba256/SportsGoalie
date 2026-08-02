@@ -22,6 +22,12 @@ export function useGrowthPoints() {
     try {
       const b = await growthPointsService.getBalance(user.id);
       setBalance(b);
+    } catch (error) {
+      // `finally` alone does not swallow the rejection, it rethrows it, and the effect
+      // below calls this without awaiting. That combination turned any failed read into
+      // an unhandled rejection with no indication of where it came from.
+      console.error('Failed to load growth points balance:', error);
+      setBalance(null);
     } finally {
       setLoading(false);
     }
@@ -90,6 +96,11 @@ export function useGrowthPointsTransactions(limitCount = 50) {
     growthPointsService
       .getTransactions(user.id, limitCount)
       .then(setTransactions)
+      .catch((error) => {
+        // Same trap as fetchBalance above: `.finally()` is not a rejection handler.
+        console.error('Failed to load growth points transactions:', error);
+        setTransactions([]);
+      })
       .finally(() => setLoading(false));
   }, [user?.id, limitCount]);
 
