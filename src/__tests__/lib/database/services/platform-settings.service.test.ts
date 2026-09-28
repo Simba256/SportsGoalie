@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { normalizePlatformSettings } from '@/lib/database/services/platform-settings.service';
-import { DEFAULT_PLATFORM_SETTINGS } from '@/types/platform-settings';
+import { DEFAULT_PLATFORM_SETTINGS, MAX_WAITLIST_LINE_LENGTH } from '@/types/platform-settings';
 
 /**
  * `normalizePlatformSettings` is the only thing standing between the settings form
@@ -93,5 +93,26 @@ describe('normalizePlatformSettings', () => {
 
     expect(result.general.siteDescription).toBe('');
     expect(result.general.siteName).toBe(DEFAULT_PLATFORM_SETTINGS.general.siteName);
+  });
+
+  // The approval email carries this link, so anything that is not a web address
+  // is dropped rather than mailed to an applicant.
+  it('keeps a web booking link, trimmed, and drops anything else', () => {
+    const link = (bookingUrl: unknown) => normalizePlatformSettings({ general: { bookingUrl } }).general.bookingUrl;
+
+    expect(link('  https://cal.com/michael/intro  ')).toBe('https://cal.com/michael/intro');
+    expect(link('javascript:alert(1)')).toBe('');
+    expect(link('cal.com/michael')).toBe('');
+    expect(link(42)).toBe('');
+    expect(link(undefined)).toBe('');
+  });
+
+  it("keeps Michael's waiting-list line as typed, trimmed, with its paragraph breaks", () => {
+    const line = (waitlistLine: unknown) => normalizePlatformSettings({ general: { waitlistLine } }).general.waitlistLine;
+
+    expect(line('  First.\r\n\r\nSecond.  ')).toBe('First.\n\nSecond.');
+    expect(line('   ')).toBe('');
+    expect(line(null)).toBe('');
+    expect(line('x'.repeat(MAX_WAITLIST_LINE_LENGTH + 50))).toHaveLength(MAX_WAITLIST_LINE_LENGTH);
   });
 });

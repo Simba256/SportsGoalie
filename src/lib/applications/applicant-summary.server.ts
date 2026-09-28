@@ -41,6 +41,8 @@ export function toApplicantSummary(
     decidedAt: toIso(data.applicationDecidedAt),
     decidedByName: data.applicationDecidedByName,
     decisionNote: data.applicationNote,
+    openedAt: toIso(data.applicationOpenedAt),
+    openedByName: data.applicationOpenedByName,
 
     hasProfile: !!profile,
     overallScore: typeof data.overallScore === 'number' ? data.overallScore : profile?.intelligenceProfile?.overallScore,

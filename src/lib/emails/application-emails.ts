@@ -1,43 +1,58 @@
 /**
- * Application-by-questionnaire emails (item 2).
+ * Application-by-questionnaire emails (item 2; copy pack 3.3–3.6).
  *
- * ⚠️ THE COPY BELOW IS A DRAFT AND IS NOT MICHAEL'S VERBATIM WORDING.
+ * The words are Michael's. They live in `src/data/applicant-flow-copy.ts` under
+ * their copy-pack IDs and are only assembled here, so this file owns the
+ * presentation and nothing else: restyle freely, never reword. His pack marks
+ * the wording as provisional, and a change of words is an edit to that file.
  *
- * The founding-member confirmation in this folder is his, word for word, and
- * is marked as such. These four are not — he asked for "the automatic email in
- * your words" and has not sent the words yet. They are written to his register
- * and to what he has already said in writing about how this works (he reads
- * every submission himself; the booking is carried by the approval and nobody
- * else ever sees it; a waitlist is a not-yet rather than a no). They are here
- * so the flow is complete and testable end to end, not because the wording is
- * settled.
- *
- * Replace each block with his text when it arrives, and delete this warning
- * when you do. Same rule as the founding email after that: restyle the
- * presentation, never the words.
+ * Nothing is added around his words — no sub-headings, no bolding, no subtitle
+ * under the logo. Every decision email is shown to the sender in full before it
+ * goes (H-25), and what that preview shows must be what he wrote and nothing
+ * else.
  */
 
+import {
+  EMAIL_APPROVED,
+  EMAIL_DECLINED,
+  EMAIL_RECEIVED,
+  EMAIL_SIGNATURE,
+  EMAIL_WAITLISTED,
+} from '@/data/applicant-flow-copy';
+import { isUsableBookingUrl, normalizeWaitlistLine } from '@/types/platform-settings';
+
 /**
- * Where an approved applicant books their call with Michael.
+ * The booking link from the environment — the fallback, not the source.
  *
- * A plain URL in a template, deliberately — a Cal.com (or equivalent) free
- * page that Michael owns. There is no calendar build behind this; the booking
- * and scheduling calendar is a separate, much larger piece of work that has
- * not been commissioned.
- *
- * This constant is now the *fallback*, not the source. The link is set on the
- * admin System Settings screen so Michael can change it himself; the decision
- * route reads it through `getBookingUrl()` and only falls back to this when the
- * setting is empty. Either way, an empty link means the approval email omits the
- * booking block entirely rather than shipping a dead one.
+ * The link is set on the admin System Settings screen so Michael can change it
+ * himself; `getBookingUrl()` reads that first and only falls back to this when
+ * the setting is empty. With neither set, approval is refused (H-26) — see
+ * `MissingBookingLinkError`.
  */
 export const BOOKING_URL = process.env.BOOKING_URL || process.env.NEXT_PUBLIC_BOOKING_URL || '';
 
-const p = (text: string) =>
-  `<p style="margin:0 0 18px;color:#334155;font-size:15px;line-height:1.75;">${text}</p>`;
+/**
+ * Thrown when an approval email is asked for without a usable booking link.
+ *
+ * H-26: "The booking link in the approval email is required, not optional.
+ * Without it an approved applicant has no way to reach me and the flow
+ * dead-ends." So there is no link-less version of the email to fall back on;
+ * the decision route turns this into a message pointing at Settings.
+ */
+export class MissingBookingLinkError extends Error {
+  constructor() {
+    super('There is no booking link set, and the approval email cannot go without one.');
+    this.name = 'MissingBookingLinkError';
+  }
+}
 
-const heading = (text: string) =>
-  `<p style="margin:28px 0 14px;color:#0d1b3a;font-size:13px;font-weight:800;letter-spacing:2px;">${text}</p>`;
+export interface ApplicationEmail {
+  subject: string;
+  text: string;
+  html: string;
+}
+
+// ─── Presentation ─────────────────────────────────────────────────────────────
 
 function escapeHtml(text: string): string {
   return text
@@ -47,8 +62,40 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
+const p = (html: string) =>
+  `<p style="margin:0 0 18px;color:#334155;font-size:15px;line-height:1.75;">${html}</p>`;
+
+/**
+ * One paragraph of the email in both forms. `html` is only given where the
+ * paragraph carries markup (the booking link); otherwise it is the text,
+ * escaped.
+ */
+interface Block {
+  text: string;
+  html?: string;
+}
+
+const block = (text: string): Block => ({ text });
+
+/**
+ * Free text Michael typed into a setting, as blocks. A blank line starts a new
+ * paragraph and a single line break stays a line break, so what he typed is
+ * what the goalie reads.
+ */
+function blocksFromTyped(value: string): Block[] {
+  return value
+    .split(/\n\s*\n/)
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(part => ({ text: part, html: escapeHtml(part).replace(/\n/g, '<br>') }));
+}
+
 /** The shared shell, matching the founding-member email. */
-function shell(subtitle: string, title: string, body: string): string {
+function shell(title: string, body: string, footer: string, subtitle?: string): string {
+  const subtitleHtml = subtitle
+    ? `\n        <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:14px;">${escapeHtml(subtitle)}</p>`
+    : '';
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -63,16 +110,12 @@ function shell(subtitle: string, title: string, body: string): string {
 
       <div style="background:linear-gradient(135deg,#050d1a 0%,#0d1b3a 100%);padding:36px 32px;text-align:center;">
         <div style="font-size:40px;margin-bottom:12px;">🥅</div>
-        <h1 style="margin:0;color:#37b5ff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">Smarter Goalie</h1>
-        <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:14px;">${escapeHtml(subtitle)}</p>
+        <h1 style="margin:0;color:#37b5ff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">Smarter Goalie</h1>${subtitleHtml}
       </div>
 
       <div style="padding:36px 32px;">
 ${body}
-        <p style="margin:28px 0 0;color:#0d1b3a;font-size:15px;line-height:1.6;">
-          Michael LoCicero<br>
-          <span style="color:#64748b;">Smarter Goalie</span>
-        </p>
+${footer}
       </div>
 
     </div>
@@ -81,181 +124,92 @@ ${body}
 </html>`.trim();
 }
 
-const signOff = `
+const signatureHtml = `        <p style="margin:28px 0 0;color:#0d1b3a;font-size:15px;line-height:1.6;">
+          ${escapeHtml(EMAIL_SIGNATURE.name)}<br>
+          <span style="color:#64748b;">${escapeHtml(EMAIL_SIGNATURE.line)}</span>
+        </p>`;
 
-Michael LoCicero
-Smarter Goalie`;
+const signatureText = `${EMAIL_SIGNATURE.name}\n${EMAIL_SIGNATURE.line}`;
 
-export interface ApplicationEmail {
-  subject: string;
-  text: string;
-  html: string;
-}
+/**
+ * An applicant email: "[First name] —", Michael's paragraphs, his signature.
+ *
+ * With no first name the greeting line is left out rather than replaced with
+ * wording he did not write.
+ */
+function compose(subject: string, firstName: string | undefined, blocks: Block[]): ApplicationEmail {
+  const all: Block[] = firstName ? [block(`${firstName} —`), ...blocks] : blocks;
 
-/** Greeting that degrades gracefully when we only have an email address. */
-function greet(firstName?: string): string {
-  return firstName ? `${firstName},` : 'Hello,';
-}
-
-// ─── 1. Application received ──────────────────────────────────────────────────
-
-/** Sent automatically the moment the questionnaire is submitted. */
-export function buildApplicationReceived(firstName?: string): ApplicationEmail {
-  const subject = 'Your application is in';
-
-  const text = `${greet(firstName)}
-
-Your questionnaire is in and I have it.
-
-That was not a form. It was the same baseline every goalie in the system does, and it has already been analysed — so before we have spoken, I have a read on where you are and what you would need from me.
-
-I go through these myself. Not a filter, not an assistant — me. That means it takes as long as it takes, and I would rather be slow and right than quick and wrong about whether this is a fit.
-
-If it is a fit, the next thing you get from me is an invitation to book a call. That link only ever goes to people I have already said yes to.
-
-Nothing more to do at your end. Sit tight.${signOff}`;
-
-  const html = shell(
-    'Application received',
-    subject,
-    [
-      p(escapeHtml(greet(firstName))),
-      p('Your questionnaire is in and I have it.'),
-      p('That was not a form. It was the same baseline every goalie in the system does, and it has already been analysed — so before we have spoken, I have a read on where you are and what you would need from me.'),
-      p('I go through these myself. Not a filter, not an assistant — me. That means it takes as long as it takes, and I would rather be slow and right than quick and wrong about whether this is a fit.'),
-      heading('WHAT HAPPENS NEXT'),
-      p('If it is a fit, the next thing you get from me is an invitation to book a call. That link only ever goes to people I have already said yes to.'),
-      p('<strong>Nothing more to do at your end. Sit tight.</strong>'),
-    ].join('\n')
-  );
+  const text = [...all.map(b => b.text), signatureText].join('\n\n');
+  const html = shell(subject, all.map(b => p(b.html ?? escapeHtml(b.text))).join('\n'), signatureHtml);
 
   return { subject, text, html };
 }
 
-// ─── 2. Approved ──────────────────────────────────────────────────────────────
+/**
+ * The first name the emails greet an applicant by: the first word of the name
+ * they gave. Undefined when there is no name — an email address is never used
+ * as one, so nobody is greeted "jo@example.com —".
+ */
+export function applicantFirstName(displayName: unknown): string | undefined {
+  if (typeof displayName !== 'string') return undefined;
+  const first = displayName.trim().split(/\s+/)[0];
+  if (!first || first.includes('@')) return undefined;
+  return first;
+}
+
+// ─── 3.3 Application received ─────────────────────────────────────────────────
+
+/** Sent automatically the moment the questionnaire is submitted. */
+export function buildApplicationReceived(firstName?: string): ApplicationEmail {
+  return compose(EMAIL_RECEIVED.subject, firstName, EMAIL_RECEIVED.body.map(block));
+}
+
+// ─── 3.4 Approved ─────────────────────────────────────────────────────────────
 
 /**
  * Sent when Michael approves. This is the email that carries the booking link —
  * the only place it ever appears, which is what makes booking approved-only.
+ *
+ * Throws `MissingBookingLinkError` without a usable link (H-26).
  */
-export function buildApplicationApproved(firstName?: string, bookingUrl: string = BOOKING_URL): ApplicationEmail {
-  const subject = "You're in — let's get a call booked";
+export function buildApplicationApproved(firstName: string | undefined, bookingUrl: string): ApplicationEmail {
+  const url = bookingUrl.trim();
+  if (!isUsableBookingUrl(url)) throw new MissingBookingLinkError();
 
-  const bookingText = bookingUrl
-    ? `
+  const link: Block = {
+    text: `${EMAIL_APPROVED.linkLead} ${url}`,
+    html: `${escapeHtml(EMAIL_APPROVED.linkLead)} <a href="${escapeHtml(url)}" style="color:#0284c7;font-weight:700;word-break:break-all;">${escapeHtml(url)}</a>`,
+  };
 
-BOOK YOUR CALL
-
-${bookingUrl}
-
-Pick a time that suits you. This link is yours — it does not go out publicly, and only people I have approved ever see it.`
-    : `
-
-BOOK YOUR CALL
-
-I will follow up with a time. Reply to this email with a couple of windows that work for you and I will lock one in.`;
-
-  const text = `${greet(firstName)}
-
-I have read your questionnaire and I want you in.
-
-I am not going to pretend that took a long committee. Your answers told me what I needed to know, and the analysis lined up with them.
-
-The next step is a call with me. Not a sales call — a conversation about what you are actually trying to fix, so that when your account opens it opens on the right thing.${bookingText}
-
-After the call we sort out the founding-member details and your account opens fully. Your questionnaire is already saved as your baseline, so you never fill it in twice. Your record starts the day you applied, not the day you pay.${signOff}`;
-
-  const bookingHtml = bookingUrl
-    ? [
-        heading('BOOK YOUR CALL'),
-        `<div style="text-align:center;margin:0 0 18px;">
-          <a href="${escapeHtml(bookingUrl)}" style="display:inline-block;background:linear-gradient(135deg,#37b5ff,#0ea5e9);color:#001426;font-size:15px;font-weight:800;letter-spacing:0.5px;text-decoration:none;padding:14px 32px;border-radius:10px;">Pick a time</a>
-        </div>`,
-        p('Pick a time that suits you. This link is yours — it does not go out publicly, and only people I have approved ever see it.'),
-      ].join('\n')
-    : [
-        heading('BOOK YOUR CALL'),
-        p('I will follow up with a time. Reply to this email with a couple of windows that work for you and I will lock one in.'),
-      ].join('\n');
-
-  const html = shell(
-    'Application approved',
-    subject,
-    [
-      p(escapeHtml(greet(firstName))),
-      p('I have read your questionnaire and <strong>I want you in.</strong>'),
-      p('I am not going to pretend that took a long committee. Your answers told me what I needed to know, and the analysis lined up with them.'),
-      p('The next step is a call with me. Not a sales call — a conversation about what you are actually trying to fix, so that when your account opens it opens on the right thing.'),
-      bookingHtml,
-      heading('AFTER THE CALL'),
-      p('We sort out the founding-member details and your account opens fully. Your questionnaire is already saved as your baseline, so you never fill it in twice. <strong>Your record starts the day you applied, not the day you pay.</strong>'),
-    ].join('\n')
-  );
-
-  return { subject, text, html };
+  return compose(EMAIL_APPROVED.subject, firstName, [
+    ...EMAIL_APPROVED.beforeLink.map(block),
+    link,
+    ...EMAIL_APPROVED.afterLink.map(block),
+  ]);
 }
 
-// ─── 3. Waitlisted ────────────────────────────────────────────────────────────
+// ─── 3.5 Waiting list ─────────────────────────────────────────────────────────
 
-export function buildApplicationWaitlisted(firstName?: string): ApplicationEmail {
-  const subject = 'Your application — where things stand';
-
-  const text = `${greet(firstName)}
-
-I have read your questionnaire, and I am putting you on the list.
-
-I want to be straight about what that means, because "waiting list" is usually a polite no and this is not one. I am taking a small first group so I can give each of them proper attention. You are in the group I want, and there is not room this round.
-
-Nothing you have done is lost. Your questionnaire is saved exactly as you left it, and when a place opens I come back to you with it already done.
-
-If your situation changes, or you want to talk it through, reply to this email. It comes to me.${signOff}`;
-
-  const html = shell(
-    'Waiting list',
-    subject,
-    [
-      p(escapeHtml(greet(firstName))),
-      p('I have read your questionnaire, and I am putting you on the list.'),
-      p('I want to be straight about what that means, because "waiting list" is usually a polite no and this is not one. I am taking a small first group so I can give each of them proper attention. <strong>You are in the group I want, and there is not room this round.</strong>'),
-      p('Nothing you have done is lost. Your questionnaire is saved exactly as you left it, and when a place opens I come back to you with it already done.'),
-      p('If your situation changes, or you want to talk it through, reply to this email. It comes to me.'),
-    ].join('\n')
-  );
-
-  return { subject, text, html };
+/**
+ * `waitlistLine` is the [COACH TO SET] paragraph from System Settings. Empty
+ * leaves it out — the email reads straight on to "When a place opens…".
+ */
+export function buildApplicationWaitlisted(firstName?: string, waitlistLine = ''): ApplicationEmail {
+  return compose(EMAIL_WAITLISTED.subject, firstName, [
+    ...EMAIL_WAITLISTED.beforeCoachLine.map(block),
+    ...blocksFromTyped(normalizeWaitlistLine(waitlistLine)),
+    ...EMAIL_WAITLISTED.afterCoachLine.map(block),
+  ]);
 }
 
-// ─── 4. Declined ──────────────────────────────────────────────────────────────
+// ─── 3.6 Not this time ────────────────────────────────────────────────────────
 
 export function buildApplicationDeclined(firstName?: string): ApplicationEmail {
-  const subject = 'Your application';
-
-  const text = `${greet(firstName)}
-
-I have read your questionnaire properly, and I am not taking it forward this time.
-
-You deserve a real reason rather than a form letter, so here it is: this is a judgement about fit and about timing. What I run is demanding and it suits a particular kind of goalie at a particular point. Getting that wrong helps neither of us, and I would rather say so now than take your money and have you find out in month three.
-
-That is not a verdict on you as a goalie. If things change — different stage, different season, different goals — write to me and say so.
-
-Thank you for the time you put into it. I read every word.${signOff}`;
-
-  const html = shell(
-    'Your application',
-    subject,
-    [
-      p(escapeHtml(greet(firstName))),
-      p('I have read your questionnaire properly, and I am not taking it forward this time.'),
-      p('You deserve a real reason rather than a form letter, so here it is: this is a judgement about fit and about timing. What I run is demanding and it suits a particular kind of goalie at a particular point. Getting that wrong helps neither of us, and I would rather say so now than take your money and have you find out in month three.'),
-      p('<strong>That is not a verdict on you as a goalie.</strong> If things change — different stage, different season, different goals — write to me and say so.'),
-      p('Thank you for the time you put into it. I read every word.'),
-    ].join('\n')
-  );
-
-  return { subject, text, html };
+  return compose(EMAIL_DECLINED.subject, firstName, EMAIL_DECLINED.body.map(block));
 }
 
-// ─── 5. Michael's heads-up ────────────────────────────────────────────────────
+// ─── Michael's heads-up ───────────────────────────────────────────────────────
 
 interface ApplicationNotificationData {
   displayName: string;
@@ -265,7 +219,10 @@ interface ApplicationNotificationData {
   adminUrl: string;
 }
 
-/** The heads-up to Michael when an application lands, mirroring the founding one. */
+/**
+ * The heads-up to Michael when an application lands, mirroring the founding one.
+ * Internal, so it is not copy-pack text and keeps its own plain wording.
+ */
 export function buildApplicationNotification(data: ApplicationNotificationData): ApplicationEmail {
   const subject = `New application — ${data.displayName}`;
 
@@ -297,7 +254,6 @@ Review it here: ${data.adminUrl}`;
     .join('');
 
   const html = shell(
-    'New application',
     subject,
     [
       p('A new application has come in.'),
@@ -305,7 +261,9 @@ Review it here: ${data.adminUrl}`;
       `<div style="text-align:center;margin:0 0 18px;">
         <a href="${escapeHtml(data.adminUrl)}" style="display:inline-block;background:linear-gradient(135deg,#37b5ff,#0ea5e9);color:#001426;font-size:15px;font-weight:800;letter-spacing:0.5px;text-decoration:none;padding:14px 32px;border-radius:10px;">Review the application</a>
       </div>`,
-    ].join('\n')
+    ].join('\n'),
+    '',
+    'New application'
   );
 
   return { subject, text, html };

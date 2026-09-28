@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 
 import { AdminRoute } from '@/components/auth/protected-route';
 import {
-  ApproveDialog,
   DecisionButtons,
+  DecisionDialog,
   StatusPill,
   authedFetch,
   BLUE,
@@ -218,15 +218,29 @@ function ReviewContent() {
                 Nothing to decide yet — they have not submitted.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <DecisionButtons applicant={applicant} busy={saving} onDecide={begin} size="large" />
-              </div>
+              <>
+                {applicant.applicationStatus === 'awaiting_call' && (
+                  <p style={{ fontSize: '12px', color: BODY, margin: '0 0 12px', lineHeight: 1.6 }}>
+                    Approved and sent the booking link. They stay behind the wall until you
+                    open their account after the call.
+                  </p>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <DecisionButtons applicant={applicant} busy={saving} onDecide={begin} size="large" />
+                </div>
+              </>
             )}
 
             {applicant.decidedAt && (
               <p style={{ fontSize: '11px', color: MUTED, margin: '14px 0 0', lineHeight: 1.6 }}>
                 Decided {new Date(applicant.decidedAt).toLocaleDateString()}
                 {applicant.decidedByName ? ` by ${applicant.decidedByName}` : ''}.
+              </p>
+            )}
+            {applicant.applicationStatus === 'approved' && applicant.openedAt && (
+              <p style={{ fontSize: '11px', color: MUTED, margin: '4px 0 0', lineHeight: 1.6 }}>
+                Account opened {new Date(applicant.openedAt).toLocaleDateString()}
+                {applicant.openedByName ? ` by ${applicant.openedByName}` : ''}.
               </p>
             )}
             {applicant.decisionNote && (
@@ -263,13 +277,14 @@ function ReviewContent() {
       </div>
 
       {pending && (
-        <ApproveDialog
+        <DecisionDialog
+          key={`${pending.applicant.id}:${pending.decision}`}
           pending={pending}
           coaches={coaches}
           saving={saving}
           onChange={setPending}
           onCancel={() => setPending(null)}
-          onConfirm={() => submit(pending)}
+          onConfirm={previewHash => submit(pending, previewHash)}
         />
       )}
     </div>

@@ -13,7 +13,11 @@ import {
   normalizePlatformSettings,
   platformSettingsService,
 } from '@/lib/database/services/platform-settings.service';
-import { isUsableBookingUrl, type PlatformSettings } from '@/types/platform-settings';
+import {
+  isUsableBookingUrl,
+  MAX_WAITLIST_LINE_LENGTH,
+  type PlatformSettings,
+} from '@/types/platform-settings';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -63,7 +67,9 @@ function SettingsContent() {
   // The service drops an unusable booking link to empty on the way in, which would
   // otherwise look like the save silently ignored what was typed. Catching it here
   // means the reason is said out loud before anything is written.
-  // Empty is allowed and meaningful, so only a non-empty unusable link is an error.
+  // Empty can still be saved — the rest of the settings should not be held
+  // hostage to it — but the box says in red that it is required. The approval
+  // itself is what refuses to go without a link (see decision-email.server.ts).
   const bookingUrlInvalid =
     settings.general.bookingUrl.trim() !== '' && !isUsableBookingUrl(settings.general.bookingUrl);
 
@@ -207,12 +213,43 @@ function SettingsContent() {
                         <p style={{ color: RED, fontSize: '12px', marginTop: '4px' }}>
                           That is not a valid link. It has to start with https:// — paste the whole address from your browser.
                         </p>
+                      ) : settings.general.bookingUrl.trim() === '' ? (
+                        <p style={{ color: RED, fontSize: '12px', marginTop: '4px' }}>
+                          Required. Where an approved applicant books their call — the approval email
+                          cannot go without it, so set it here before approving anyone.
+                        </p>
                       ) : (
                         <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', marginTop: '4px' }}>
-                          Where an approved applicant books their call. Leave it empty and the approval
-                          email asks them to reply with times instead — no dead link either way.
+                          Where an approved applicant books their call. The approval email carries it, and
+                          so does the &ldquo;Book your call&rdquo; button they see while they wait.
                         </p>
                       )}
+                    </div>
+                    {/* The waiting-list line (copy pack 3.5, [COACH TO SET]). Michael's own
+                        words, so they are set here rather than written into the email. */}
+                    <div>
+                      <label htmlFor="waitlist-line" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
+                        <Clock size={13} color={BLUE} /> WAITING-LIST LINE
+                      </label>
+                      <textarea
+                        id="waitlist-line"
+                        className="st-ta"
+                        maxLength={MAX_WAITLIST_LINE_LENGTH}
+                        placeholder="What someone on the waiting list gets in the meantime."
+                        value={settings.general.waitlistLine}
+                        onChange={e => updateSetting('general', 'waitlistLine', e.target.value)}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginTop: '4px' }}>
+                        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', margin: 0 }}>
+                          What someone on the waiting list gets in the meantime. It goes into the
+                          waiting-list email just before &ldquo;When a place opens, I go to this list
+                          first.&rdquo; Leave it empty and the email goes without it. A blank line
+                          starts a new paragraph.
+                        </p>
+                        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                          {settings.general.waitlistLine.length}/{MAX_WAITLIST_LINE_LENGTH}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

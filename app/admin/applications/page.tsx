@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 
 import { AdminRoute } from '@/components/auth/protected-route';
 import {
-  ApproveDialog,
   DecisionButtons,
+  DecisionDialog,
   StatusPill,
   TABS,
   authedFetch,
@@ -23,18 +23,22 @@ import {
 } from '@/components/admin/applications/decision-ui';
 import type {
   ApplicantSummary,
-  ApplicationDecision,
+  ApplicationAction,
   ApplicationStatus,
 } from '@/types/application';
 
 /**
  * Admin — the application queue.
  *
- * Michael's requirement: approve, waitlist or decline in one click, with
- * approval filling in the coach and the track and sending the email in the
- * same action. That is what the approve dialog is — the two fields the
- * invitation would have carried, asked for once, then written straight onto
- * the account that already exists.
+ * Michael's requirement: approve, waitlist or decline from here, with approval
+ * filling in the coach and the track and sending the email in the same
+ * action. Every one of those opens a confirmation showing the exact email
+ * first (copy pack 3.7, H-25) — nothing is sent from a single click.
+ *
+ * Approving does not open the account (copy pack 3.8, H-24). It moves the
+ * applicant to Awaiting call and emails them the booking link; they stay
+ * behind the wall, now with a "Book your call" button, until Michael opens the
+ * account after the call with "Open account", which sends nothing.
  *
  * The row carries the headline numbers only. Reading what someone actually
  * wrote happens on the review screen behind their name, because a queue that
@@ -43,9 +47,9 @@ import type {
  * NOTE FOR MICHAEL: he wrote "if approved, the invitation goes out". Approval
  * here does not send an invitation, because the invitation flow *creates* an
  * account and the applicant already has one — sending it would give them a
- * second, empty account and lose the questionnaire. Instead approval takes
- * the wall down on their existing account and emails them the booking link,
- * which is what the invitation was carrying. Same outcome, one account.
+ * second, empty account and lose the questionnaire. Instead approval emails
+ * the booking link to their existing account, which is what the invitation
+ * was carrying. Same outcome, one account.
  */
 
 export default function AdminApplicationsPage() {
@@ -100,8 +104,9 @@ function ApplicationsContent() {
       </div>
       <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 20px', lineHeight: 1.6, maxWidth: '680px' }}>
         Everyone who applied through <strong style={{ color: BODY }}>/apply</strong>. They see nothing of the platform
-        until you approve them. Click a name to read their answers. Approving opens their account,
-        sets their coach and track, and emails them the booking link.
+        until you open their account. Click a name to read their answers. Approving sets their coach
+        and track and emails them the booking link; after your call, <strong style={{ color: BODY }}>Open account</strong> lets
+        them in. You see every email before it goes.
       </p>
 
       {/* Tabs + search */}
@@ -161,15 +166,16 @@ function ApplicationsContent() {
         </div>
       )}
 
-      {/* Approve dialog */}
+      {/* The confirmation — the email in full, or the open-account check */}
       {pending && (
-        <ApproveDialog
+        <DecisionDialog
+          key={`${pending.applicant.id}:${pending.decision}`}
           pending={pending}
           coaches={coaches}
           saving={saving}
           onChange={setPending}
           onCancel={() => setPending(null)}
-          onConfirm={() => submit(pending)}
+          onConfirm={previewHash => submit(pending, previewHash)}
         />
       )}
     </div>
@@ -182,7 +188,7 @@ function ApplicantRow({
   applicant, onDecide, busy,
 }: {
   applicant: ApplicantSummary;
-  onDecide: (a: ApplicantSummary, d: ApplicationDecision) => void;
+  onDecide: (a: ApplicantSummary, d: ApplicationAction) => void;
   busy: boolean;
 }) {
   const a = applicant;

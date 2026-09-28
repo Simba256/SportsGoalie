@@ -21,6 +21,7 @@ import {
 } from '@/data/driver-or-passenger';
 import type { DriverOrPassengerChoiceId } from '@/data/driver-or-passenger';
 import type { ApplicationStatus } from '@/types/application';
+import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
   SIGNUP_INTAKE_SCREEN,
   SIGNUP_AGE_BANDS,
@@ -1931,7 +1932,8 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
             </>
           ) : (
             <>
-              SUBMIT MY BASELINE PROFILE
+              {/* An applicant's last click sends the application (copy pack 3.1). */}
+              {applicationStatus === 'applying' ? APPLICATION_PAGE.button : 'SUBMIT MY BASELINE PROFILE'}
               <ChevronRight style={{ width: '18px', height: '18px' }} />
             </>
           )}

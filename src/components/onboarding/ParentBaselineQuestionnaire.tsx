@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase/config';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { generateParentV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
 import type { ApplicationStatus } from '@/types/application';
+import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
   PARENT_BASELINE_SECTIONS,
   getParentActiveQuestions,
@@ -1591,7 +1592,8 @@ export function ParentBaselineQuestionnaire({
             </>
           ) : (
             <>
-              SUBMIT MY BASELINE PROFILE →
+              {/* An applicant's last click sends the application (copy pack 3.1). */}
+              {applicationStatus === 'applying' ? APPLICATION_PAGE.button : 'SUBMIT MY BASELINE PROFILE →'}
               <ChevronRight style={{ width: '18px', height: '18px' }} />
             </>
           )}

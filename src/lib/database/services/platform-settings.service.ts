@@ -24,6 +24,7 @@ import { logger } from '@/lib/utils/logger';
 import {
   DEFAULT_PLATFORM_SETTINGS,
   normalizeBookingUrl,
+  normalizeWaitlistLine,
   PLATFORM_LANGUAGES,
   PLATFORM_SETTING_RANGES,
   PLATFORM_TIMEZONES,
@@ -119,11 +120,12 @@ export function normalizePlatformSettings(raw: unknown): PlatformSettings {
       defaultTimezone: oneOf(general.defaultTimezone, PLATFORM_TIMEZONES, 'UTC'),
       maintenanceMode: bool(general.maintenanceMode, defaults.general.maintenanceMode),
       registrationEnabled: bool(general.registrationEnabled, defaults.general.registrationEnabled),
-      // Unusable becomes empty rather than keeping the previous value: the approval
-      // email treats empty as "no booking page yet" and says so in words, which is
-      // the safe outcome. The screen re-renders from what was stored, so a rejected
-      // link visibly clears instead of quietly pretending to have been saved.
+      // Unusable becomes empty rather than keeping the previous value: an empty link
+      // stops approvals with a message pointing back here, which is the safe
+      // outcome. The screen re-renders from what was stored, so a rejected link
+      // visibly clears instead of quietly pretending to have been saved.
       bookingUrl: normalizeBookingUrl(general.bookingUrl),
+      waitlistLine: normalizeWaitlistLine(general.waitlistLine),
     },
     content: {
       autoApproval: bool(content.autoApproval, defaults.content.autoApproval),

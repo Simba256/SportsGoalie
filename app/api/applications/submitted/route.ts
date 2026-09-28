@@ -4,6 +4,7 @@ import { verifyUserRequest } from '@/lib/auth/admin-request';
 import { emailService } from '@/lib/services/email.service';
 import { logger } from '@/lib/utils/logger';
 import {
+  applicantFirstName,
   buildApplicationReceived,
   buildApplicationNotification,
 } from '@/lib/emails/application-emails';
@@ -52,13 +53,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, sent: false, reason: 'already sent' });
     }
 
+    // Michael's heads-up names them however it can; the applicant's own email
+    // greets them by first name only, and never by their email address.
     const displayName: string = user.displayName || user.email || 'Applicant';
-    const firstName: string | undefined = displayName.split(' ')[0] || undefined;
 
     // 1. The applicant's acknowledgement.
     let sent = false;
     try {
-      const email = buildApplicationReceived(firstName);
+      const email = buildApplicationReceived(applicantFirstName(user.displayName));
       await emailService.sendEmail({
         to: user.email,
         subject: email.subject,

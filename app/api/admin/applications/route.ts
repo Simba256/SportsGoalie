@@ -3,7 +3,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/auth/admin-request';
 import { logger } from '@/lib/utils/logger';
 import { toApplicantSummary } from '@/lib/applications/applicant-summary.server';
-import type { ApplicantSummary, ApplicationStatus } from '@/types/application';
+import { APPLICATION_STATUSES, type ApplicantSummary } from '@/types/application';
 
 /**
  * Admin: the application queue.
@@ -32,13 +32,12 @@ export async function GET(request: NextRequest) {
   try {
     // `!=` would exclude documents with no applicationStatus field at all,
     // which is what we want, but Firestore's inequality queries need an index
-    // and an orderBy on the same field. An `in` over the five known values is
+    // and an orderBy on the same field. An `in` over the known values is
     // simpler, needs no index, and cannot accidentally sweep up the existing
-    // membership if a sixth status is added without thinking.
-    const statuses: ApplicationStatus[] = ['applying', 'submitted', 'waitlisted', 'approved', 'declined'];
-
+    // membership. The list lives with the type, so a new status added there
+    // shows up here too rather than silently vanishing from the queue.
     const [applicantSnap, coachSnap] = await Promise.all([
-      adminDb.collection('users').where('applicationStatus', 'in', statuses).limit(500).get(),
+      adminDb.collection('users').where('applicationStatus', 'in', APPLICATION_STATUSES).limit(500).get(),
       adminDb.collection('users').where('role', '==', 'coach').limit(200).get(),
     ]);
 

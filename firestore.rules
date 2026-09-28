@@ -139,7 +139,8 @@ service cloud.firestore {
       // could set it themselves the wall would be a suggestion. The single
       // self-transition allowed is 'applying' -> 'submitted', which is the flip
       // the baseline questionnaire makes in the same write as the profile.
-      // Everything recording Michael's decision is admin-only.
+      // Everything recording Michael's decision is admin-only, and so is the
+      // record of him opening the account after the call.
       //
       // Parents can update a student's linkedParentIds (needed for parent-child linking)
       allow update: if (isOwner(userId) &&
@@ -149,7 +150,8 @@ service cloud.firestore {
                        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
                          'appliedAt', 'applicationDecidedAt', 'applicationDecidedBy',
                          'applicationDecidedByName', 'applicationNote',
-                         'applicationReceivedEmailSent', 'applicationDecisionEmailSent'
+                         'applicationReceivedEmailSent', 'applicationDecisionEmailSent',
+                         'applicationOpenedAt', 'applicationOpenedBy', 'applicationOpenedByName'
                        ]) &&
                        (!('applicationStatus' in request.resource.data.diff(resource.data).affectedKeys()) ||
                         (resource.data.get('applicationStatus', '') == 'applying' &&
