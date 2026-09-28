@@ -23,9 +23,13 @@
  * A plain URL in a template, deliberately — a Cal.com (or equivalent) free
  * page that Michael owns. There is no calendar build behind this; the booking
  * and scheduling calendar is a separate, much larger piece of work that has
- * not been commissioned. Set BOOKING_URL in the environment when his page
- * exists; until then the approval email omits the booking block entirely
- * rather than shipping a dead link.
+ * not been commissioned.
+ *
+ * This constant is now the *fallback*, not the source. The link is set on the
+ * admin System Settings screen so Michael can change it himself; the decision
+ * route reads it through `getBookingUrl()` and only falls back to this when the
+ * setting is empty. Either way, an empty link means the approval email omits the
+ * booking block entirely rather than shipping a dead one.
  */
 export const BOOKING_URL = process.env.BOOKING_URL || process.env.NEXT_PUBLIC_BOOKING_URL || '';
 

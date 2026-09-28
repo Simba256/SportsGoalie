@@ -5,7 +5,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { verifyAdminRequest } from '@/lib/auth/admin-request';
 import { emailService } from '@/lib/services/email.service';
 import { logger } from '@/lib/utils/logger';
-import type { ApplicationStatus } from '@/types/application';
+import { getBookingUrl } from '@/lib/settings/booking-url.server';
+import { toApplicantSummary, toIso } from '@/lib/applications/applicant-summary.server';
+import type { ApplicantProfile, ApplicationStatus } from '@/types/application';
 import {
   buildApplicationApproved,
   buildApplicationWaitlisted,
@@ -35,6 +37,77 @@ import {
  * recorded first and stands whether or not the email leaves. A failed send is
  * reported back to the screen so it can be retried by hand, not swallowed.
  */
+
+/**
+ * Admin: read one applicant in full.
+ *
+ *   GET /api/admin/applications/[id]
+ *
+ * Everything the review screen needs in one round trip: the same summary the
+ * queue row showed, the whole questionnaire, and the coach list so the approve
+ * dialog works without going back to the queue endpoint.
+ *
+ * Only the raw answers are returned. Resolving a stored option id back to the
+ * words the applicant clicked is the screen's job, against the question bank —
+ * doing it here would freeze today's wording into the response and quietly
+ * diverge from the questionnaire the next time a question is edited.
+ */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await verifyAdminRequest(request);
+  if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+
+  const { id } = await params;
+
+  try {
+    const [userDoc, profileDoc, coachSnap] = await Promise.all([
+      adminDb.collection('users').doc(id).get(),
+      adminDb.collection('studentBaselineProfiles').doc(id).get(),
+      adminDb.collection('users').where('role', '==', 'coach').limit(200).get(),
+    ]);
+
+    const user = userDoc.data();
+    if (!userDoc.exists || !user) {
+      return NextResponse.json({ success: false, error: 'Applicant not found' }, { status: 404 });
+    }
+    // Same guard as the decision below: this screen shows a questionnaire and
+    // offers to wall or unwall an account, neither of which belongs anywhere
+    // near an ordinary member's record.
+    if (!user.applicationStatus) {
+      return NextResponse.json(
+        { success: false, error: 'That account is a member, not an applicant.' },
+        { status: 400 }
+      );
+    }
+
+    const raw = profileDoc.exists ? profileDoc.data() : undefined;
+
+    const profile: ApplicantProfile | null = raw
+      ? {
+          submittedAt: toIso(raw.submittedAt),
+          responses: (raw.responses ?? {}) as Record<string, string | string[]>,
+          openExtras: (raw.openExtras ?? {}) as Record<string, string>,
+          driverOrPassenger: raw.driverOrPassenger ?? null,
+          signupIntake: (raw.signupIntake ?? null) as Record<string, unknown> | null,
+          sectionsCompleted: Array.isArray(raw.sectionsCompleted) ? raw.sectionsCompleted : [],
+          intelligenceProfile: raw.intelligenceProfile ?? null,
+        }
+      : null;
+
+    const coaches = coachSnap.docs
+      .map(doc => ({ id: doc.id, name: (doc.data().displayName as string) ?? doc.data().email ?? '(unnamed coach)' }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return NextResponse.json({
+      success: true,
+      applicant: toApplicantSummary(id, user, raw),
+      profile,
+      coaches,
+    });
+  } catch (error) {
+    logger.error('Failed to load one application', 'Applications-Admin-API', { id, error });
+    return NextResponse.json({ success: false, error: 'Failed to load the application' }, { status: 500 });
+  }
+}
 
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'waitlist', 'decline']),
@@ -110,8 +183,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const displayName: string = user.displayName || user.email || 'there';
     const firstName: string | undefined = displayName.split(' ')[0] || undefined;
 
+    // Only the approval carries a booking link, so only the approval pays for the
+    // settings read.
     const email =
-      decision === 'approve' ? buildApplicationApproved(firstName)
+      decision === 'approve' ? buildApplicationApproved(firstName, await getBookingUrl())
       : decision === 'waitlist' ? buildApplicationWaitlisted(firstName)
       : buildApplicationDeclined(firstName);
 

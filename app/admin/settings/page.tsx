@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Settings, Save, RefreshCw, Globe, Shield, Mail, Bell,
-  Database, Server, Key, Clock, Users,
+  Database, Server, Key, Clock, Users, CalendarClock,
 } from 'lucide-react';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ import {
   normalizePlatformSettings,
   platformSettingsService,
 } from '@/lib/database/services/platform-settings.service';
-import type { PlatformSettings } from '@/types/platform-settings';
+import { isUsableBookingUrl, type PlatformSettings } from '@/types/platform-settings';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -60,8 +60,20 @@ function SettingsContent() {
     return () => { cancelled = true; };
   }, []);
 
+  // The service drops an unusable booking link to empty on the way in, which would
+  // otherwise look like the save silently ignored what was typed. Catching it here
+  // means the reason is said out loud before anything is written.
+  // Empty is allowed and meaningful, so only a non-empty unusable link is an error.
+  const bookingUrlInvalid =
+    settings.general.bookingUrl.trim() !== '' && !isUsableBookingUrl(settings.general.bookingUrl);
+
   const handleSave = async () => {
     if (!user?.id) { toast.error('Failed to save settings'); return; }
+    if (bookingUrlInvalid) {
+      toast.error('The booking link has to be a full web address starting with https://');
+      setActiveTab('general');
+      return;
+    }
     try {
       setLoading(true);
       const result = await platformSettingsService.saveSettings(settings, user.id);
@@ -177,6 +189,30 @@ function SettingsContent() {
                     <div>
                       <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '5px' }}>SITE DESCRIPTION</label>
                       <textarea className="st-ta" value={settings.general.siteDescription} onChange={e => updateSetting('general', 'siteDescription', e.target.value)} />
+                    </div>
+                    {/* The booking link. Lives here rather than in the environment so it can
+                        be changed without a developer and without a redeploy. */}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                      <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
+                        <CalendarClock size={13} color={BLUE} /> BOOKING LINK
+                      </label>
+                      <input
+                        className="st-inp"
+                        type="url"
+                        placeholder="https://cal.com/your-name/intro-call"
+                        value={settings.general.bookingUrl}
+                        onChange={e => updateSetting('general', 'bookingUrl', e.target.value)}
+                      />
+                      {bookingUrlInvalid ? (
+                        <p style={{ color: RED, fontSize: '12px', marginTop: '4px' }}>
+                          That is not a valid link. It has to start with https:// — paste the whole address from your browser.
+                        </p>
+                      ) : (
+                        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', marginTop: '4px' }}>
+                          Where an approved applicant books their call. Leave it empty and the approval
+                          email asks them to reply with times instead — no dead link either way.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

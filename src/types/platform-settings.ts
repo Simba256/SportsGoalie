@@ -21,6 +21,13 @@ export interface PlatformSettings {
     defaultTimezone: string;
     maintenanceMode: boolean;
     registrationEnabled: boolean;
+    /**
+     * Where an approved applicant books their call — a Cal.com (or equivalent)
+     * page the coach owns. Empty is a valid, meaningful state: the approval
+     * email drops the booking block entirely rather than shipping a dead link,
+     * so a blank here is safer than a wrong one.
+     */
+    bookingUrl: string;
   };
   content: {
     autoApproval: boolean;
@@ -65,6 +72,7 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
     defaultTimezone: 'UTC',
     maintenanceMode: false,
     registrationEnabled: true,
+    bookingUrl: '',
   },
   content: {
     autoApproval: false,
@@ -118,6 +126,36 @@ export const PLATFORM_SETTING_RANGES = {
     rateLimitWindow: { min: 60, max: 3600 },
   },
 } as const;
+
+/** Longest booking link accepted. Over this is rejected, never truncated. */
+export const MAX_BOOKING_URL_LENGTH = 500;
+
+/**
+ * The one definition of a usable booking link, shared by the settings form, the
+ * service that stores it and the route that puts it in an email — so a link that
+ * passes in one place cannot fail in another.
+ *
+ * Only http(s): this URL ends up as an anchor in an email, so `javascript:` and
+ * `data:` must never survive. Empty is not "unusable" — it is the deliberate
+ * "no booking page yet" state.
+ */
+export function isUsableBookingUrl(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > MAX_BOOKING_URL_LENGTH) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/** Empty for anything that would not be safe to link. */
+export function normalizeBookingUrl(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  return isUsableBookingUrl(trimmed) ? trimmed : '';
+}
 
 /** The options the two dropdowns offer. A stored value outside these would render blank. */
 export const PLATFORM_LANGUAGES = ['en', 'es', 'fr', 'de'] as const;

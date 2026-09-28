@@ -37,7 +37,8 @@ export type ApplicationDecision = 'approve' | 'waitlist' | 'decline';
 /**
  * An applicant as the admin list shows them: the account, plus the headline
  * numbers from the baseline profile so Michael can triage without opening
- * anything. The full answers sit behind the review screen (item 3).
+ * anything. The full answers sit behind the review screen — see
+ * `ApplicantReview` below.
  */
 export interface ApplicantSummary {
   id: string;
@@ -65,6 +66,51 @@ export interface ApplicantSummary {
   assignedCoachId?: string;
   assignedCoachName?: string;
   tier?: 'automated' | 'custom';
+}
+
+/**
+ * What one applicant actually wrote — the `studentBaselineProfiles` document as
+ * the review screen needs it.
+ *
+ * `responses` is a flat map keyed by V2 question id (A1, A2, …). The question
+ * text is deliberately NOT stored alongside it: the question bank in
+ * `src/data/student-baseline-profile-v2.ts` is the one place questions are
+ * worded, and the review screen renders answers against it so a reworded
+ * question shows its new wording everywhere at once. A radio or multi-select
+ * answer is stored as the option id, so the screen has to resolve those back to
+ * option text — an answer rendered as "C4-2" is not a review, it is a puzzle.
+ *
+ * `openExtras` holds the free text attached to options that invite it, keyed by
+ * the same question ids.
+ */
+export interface ApplicantProfile {
+  /** ISO. When they submitted, which can differ from when the account was made. */
+  submittedAt?: string;
+  responses: Record<string, string | string[]>;
+  openExtras: Record<string, string>;
+  driverOrPassenger: string | null;
+  /** The four sign-up intake answers, when they got that far. */
+  signupIntake: Record<string, unknown> | null;
+  /** Section keys A–H that were completed. */
+  sectionsCompleted: string[];
+  intelligenceProfile: {
+    overallScore?: number;
+    pacingLevel?: string;
+    categoryScores?: Record<string, number>;
+    identifiedGaps?: string[];
+    identifiedStrengths?: string[];
+    contentRecommendations?: string[];
+    chartingEmphasis?: string[];
+  } | null;
+}
+
+/** What `GET /api/admin/applications/[id]` returns. */
+export interface ApplicantReview {
+  applicant: ApplicantSummary;
+  /** Null for an applicant who has not submitted the questionnaire yet. */
+  profile: ApplicantProfile | null;
+  /** The same coach list the queue loads, so the approve dialog works here too. */
+  coaches: { id: string; name: string }[];
 }
 
 /** What the admin screen sends when Michael acts on an applicant. */
