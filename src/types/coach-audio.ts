@@ -45,6 +45,21 @@ export const COACH_AUDIO_PART_ORDER: CoachAudioPart[] = [
   'triggers',
 ];
 
+/**
+ * A recording that is on file but must not play, because Michael has said he
+ * is re-recording it.
+ *
+ * The hold is by upload date, not by a flag someone has to remember to clear:
+ * every upload stamps a fresh `uploadedAt`, so the new take plays the moment it
+ * is uploaded, with no code change. Until then the old take stays silent.
+ */
+export interface CoachAudioReRecord {
+  /** Why the take on file is held, in words for the admin screen. */
+  reason: string;
+  /** A take uploaded before this instant is the old one. ISO 8601. */
+  heldBefore: string;
+}
+
 /** One expected recording. */
 export interface CoachAudioCatalogueEntry {
   /** e.g. 'V-A-01'. Also the Firestore document id and the storage filename. */
@@ -59,6 +74,11 @@ export interface CoachAudioCatalogueEntry {
   readsMessageId?: string;
   /** Set when the clip is known not to have been recorded yet, with the reason. */
   notYetRecorded?: string;
+  /**
+   * Set when Michael is re-recording the clip. `scriptLine` is then the old
+   * wording, so it is kept off the public pages until the new wording arrives.
+   */
+  reRecord?: CoachAudioReRecord;
 }
 
 /** An uploaded recording. Firestore: `coach_audio_clips/{id}`. */
@@ -97,7 +117,21 @@ export interface CoachAudioStatus {
  *
  *   V-B-22 records only the banner line, not the sub-line. The sub-line was
  *   always meant to be read rather than heard.
+ *
+ * Four clips are held for re-recording: V-A-01, V-A-02, V-A-05 and V-A-10.
+ * Michael found script errors in them and said the corrected wording would come
+ * with the new recordings. Their script lines below are still the old wording,
+ * which is what the takes on file say.
  */
+
+/**
+ * Every take in the 12 September folder was uploaded on 13 September, so a take
+ * uploaded after this is a new one.
+ */
+const FIRST_FOLDER_CUTOFF = '2026-09-14T00:00:00Z';
+
+const NEW_WORDING_TO_COME =
+  'Michael found a script error in this line and is re-recording it. The corrected wording comes with the new recording.';
 
 export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
   // ── Part 1 · Orientation ──────────────────────────────────────────────────
@@ -106,12 +140,18 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'orientation',
     scriptLine:
       "Welcome in. I'm Michael. Six decades on this, and one system - and from here on you're going to hear it from me, not from a manual.",
+    reRecord: {
+      reason:
+        'Michael is re-recording this line. The take on file says "I\'m Michael" where it should say "Coach Mike". The corrected wording comes with the new recording.',
+      heldBefore: FIRST_FOLDER_CUTOFF,
+    },
   },
   {
     id: 'V-A-02',
     part: 'orientation',
     scriptLine:
       "This isn't a video library. Nothing here moves until you put something in. You chart, I read it, and I come back to you. That's the loop.",
+    reRecord: { reason: NEW_WORDING_TO_COME, heldBefore: FIRST_FOLDER_CUTOFF },
   },
   {
     id: 'V-A-03',
@@ -130,6 +170,7 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'orientation',
     scriptLine:
       "You don't need an hour. You need one honest chart and five minutes of thinking about it. Do that four times a week and you'll pass goalies who are on the ice twice as much as you.",
+    reRecord: { reason: NEW_WORDING_TO_COME, heldBefore: FIRST_FOLDER_CUTOFF },
   },
 
   // ── Part 2 · The Systems ──────────────────────────────────────────────────
@@ -162,6 +203,7 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'systems',
     scriptLine:
       'Three lanes on the attack. Left, center, right. A lane is information. Most goalies have it and never use it.',
+    reRecord: { reason: NEW_WORDING_TO_COME, heldBefore: FIRST_FOLDER_CUTOFF },
   },
   {
     id: 'V-A-11',
@@ -470,6 +512,27 @@ export function coachAudioIdFromFilename(filename: string): string | null {
 /** The Block B message id a trigger clip reads, or null for non-trigger clips. */
 export function coachAudioReadsMessage(id: string): string | null {
   return CATALOGUE_BY_ID.get(id)?.readsMessageId ?? null;
+}
+
+/**
+ * True when the take on file is the old one of a clip Michael is re-recording.
+ *
+ * A take whose upload date cannot be read counts as held: if it cannot be told
+ * apart from the old take, silence is the safer mistake.
+ */
+export function isHeldForReRecord(clip: Pick<CoachAudioClip, 'id' | 'uploadedAt'>): boolean {
+  const hold = CATALOGUE_BY_ID.get(clip.id)?.reRecord;
+  if (!hold) return false;
+  return !(clip.uploadedAt.getTime() >= Date.parse(hold.heldBefore));
+}
+
+/** The clips that may play on the site: everything uploaded, less the held takes. */
+export function playableClips(
+  clips: Record<string, CoachAudioClip>
+): Record<string, CoachAudioClip> {
+  return Object.fromEntries(
+    Object.entries(clips).filter(([, clip]) => !isHeldForReRecord(clip))
+  );
 }
 
 /** Audio formats accepted on upload. mp3 is preferred for delivery; wav is the master. */
