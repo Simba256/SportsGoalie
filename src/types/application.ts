@@ -7,8 +7,9 @@
  * applied, not the day they paid". So an applicant is not a row in an
  * `applications` table waiting to be copied into a real account later. They are
  * a real account from the first minute, carrying `applicationStatus`, walled
- * off from the content until Michael approves them. Approval flips the field;
- * nothing is migrated, because there is nothing to migrate.
+ * off from the content until Michael has approved them and they have had their
+ * call. Each step flips the field; nothing is migrated, because there is
+ * nothing to migrate.
  *
  * The consequence to keep in mind: a user document with NO `applicationStatus`
  * at all is an ordinary member. Every account created before this existed is in
@@ -18,26 +19,45 @@
 /**
  * Where an applicant stands.
  *
- * `applying`   — account exists, questionnaire not yet submitted. They are mid-flow.
- * `submitted`  — questionnaire in. This is Michael's queue.
- * `waitlisted` — a real answer, not a soft no. Michael parks them and can come back.
- * `approved`   — the wall is down and the approval email carries the booking link.
- * `declined`   — answered, and the account stays walled.
+ * Michael's flow (H-23): apply → he reviews → approve / waiting list / not this
+ * time → the invitation unlocks the call → after the call, the content opens.
+ *
+ * `applying`      — account exists, questionnaire not yet submitted. They are mid-flow.
+ * `submitted`     — questionnaire in. This is Michael's queue.
+ * `waitlisted`    — a real answer, not a soft no. Michael parks them and can come back.
+ * `awaiting_call` — approved, and the approval email has gone with the booking
+ *                   link. Still walled: the content opens after the call, not
+ *                   before it.
+ * `approved`      — the call has happened and the account is open. Reached only
+ *                   by the admin "Open account" action, which sends no email.
+ * `declined`      — answered, and the account stays walled.
  */
 export type ApplicationStatus =
   | 'applying'
   | 'submitted'
   | 'waitlisted'
+  | 'awaiting_call'
   | 'approved'
   | 'declined';
 
-/** The three decisions Michael can take from the admin screen. */
+/**
+ * The three decisions Michael takes from the admin screen — copy pack 3.7's
+ * three buttons. Each one sends an email, and each is previewed in full first.
+ */
 export type ApplicationDecision = 'approve' | 'waitlist' | 'decline';
+
+/**
+ * Everything the admin decision route accepts: the three decisions, plus
+ * opening the account after the call. `open` sends nothing, so it has no
+ * preview.
+ */
+export type ApplicationAction = ApplicationDecision | 'open';
 
 /**
  * An applicant as the admin list shows them: the account, plus the headline
  * numbers from the baseline profile so Michael can triage without opening
- * anything. The full answers sit behind the review screen (item 3).
+ * anything. The full answers sit behind the review screen — see
+ * `ApplicantReview` below.
  */
 export interface ApplicantSummary {
   id: string;
@@ -51,6 +71,9 @@ export interface ApplicantSummary {
   decidedByName?: string;
   /** Michael's own note against the decision. His words, not the system's. */
   decisionNote?: string;
+  /** When the account was opened after the call, and by whom. */
+  openedAt?: string;
+  openedByName?: string;
 
   /** True once the baseline questionnaire has been completed and scored. */
   hasProfile: boolean;
@@ -67,14 +90,74 @@ export interface ApplicantSummary {
   tier?: 'automated' | 'custom';
 }
 
+/**
+ * What one applicant actually wrote — the `studentBaselineProfiles` document as
+ * the review screen needs it.
+ *
+ * `responses` is a flat map keyed by V2 question id (A1, A2, …). The question
+ * text is deliberately NOT stored alongside it: the question bank in
+ * `src/data/student-baseline-profile-v2.ts` is the one place questions are
+ * worded, and the review screen renders answers against it so a reworded
+ * question shows its new wording everywhere at once. A radio or multi-select
+ * answer is stored as the option id, so the screen has to resolve those back to
+ * option text — an answer rendered as "C4-2" is not a review, it is a puzzle.
+ *
+ * `openExtras` holds the free text attached to options that invite it, keyed by
+ * the same question ids.
+ */
+export interface ApplicantProfile {
+  /** ISO. When they submitted, which can differ from when the account was made. */
+  submittedAt?: string;
+  responses: Record<string, string | string[]>;
+  openExtras: Record<string, string>;
+  driverOrPassenger: string | null;
+  /** The four sign-up intake answers, when they got that far. */
+  signupIntake: Record<string, unknown> | null;
+  /** Section keys A–H that were completed. */
+  sectionsCompleted: string[];
+  intelligenceProfile: {
+    overallScore?: number;
+    pacingLevel?: string;
+    categoryScores?: Record<string, number>;
+    identifiedGaps?: string[];
+    identifiedStrengths?: string[];
+    contentRecommendations?: string[];
+    chartingEmphasis?: string[];
+  } | null;
+}
+
+/** What `GET /api/admin/applications/[id]` returns. */
+export interface ApplicantReview {
+  applicant: ApplicantSummary;
+  /** Null for an applicant who has not submitted the questionnaire yet. */
+  profile: ApplicantProfile | null;
+  /** The same coach list the queue loads, so the approve dialog works here too. */
+  coaches: { id: string; name: string }[];
+}
+
 /** What the admin screen sends when Michael acts on an applicant. */
 export interface ApplicationDecisionPayload {
-  decision: ApplicationDecision;
+  decision: ApplicationAction;
   /** Approve only: the coach and track that get written onto the account. */
   assignedCoachId?: string;
   assignedCoachName?: string;
   tier?: 'automated' | 'custom';
   note?: string;
+  /**
+   * Required for the three decisions: the fingerprint of the email the sender
+   * was shown. The route rebuilds the email and refuses to send if it no
+   * longer matches — so what goes out is exactly what was on screen (H-25).
+   */
+  previewHash?: string;
+}
+
+/** What `GET /api/admin/applications/[id]/preview` returns. */
+export interface DecisionEmailPreview {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  previewHash: string;
 }
 
 /** Statuses that keep the content wall up. Anything not `approved`, in practice. */
@@ -82,8 +165,12 @@ export const WALLED_APPLICATION_STATUSES: ApplicationStatus[] = [
   'applying',
   'submitted',
   'waitlisted',
+  'awaiting_call',
   'declined',
 ];
+
+/** Every status an applicant can be in — what the admin queue asks Firestore for. */
+export const APPLICATION_STATUSES: ApplicationStatus[] = [...WALLED_APPLICATION_STATUSES, 'approved'];
 
 /**
  * The wall test, in one place so the guard, the admin screen and any future

@@ -21,6 +21,7 @@ import {
 } from '@/data/driver-or-passenger';
 import type { DriverOrPassengerChoiceId } from '@/data/driver-or-passenger';
 import type { ApplicationStatus } from '@/types/application';
+import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
   SIGNUP_INTAKE_SCREEN,
   SIGNUP_AGE_BANDS,
@@ -31,6 +32,7 @@ import type {
   SignupAgeBandId,
   SignupLevelId,
 } from '@/data/goalie-signup-intake';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 import {
   Mic,
   ChevronRight,
@@ -1142,6 +1144,8 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           Tell us who you are and what brought you here.
         </p>
 
+        <ScreenVoice clipId="V-A-01" label="HEAR COACH MIKE: WELCOME IN" className="mb-6 justify-center" />
+
         <div style={{ ...cardStyle, padding: '24px', textAlign: 'left', marginBottom: '20px' }}>
           <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>
             Welcome. This is the first conversation Smarter Goalie has with you. There are no wrong answers. There is no rush. There is no judgment. Some questions you will know exactly how to answer. Others you might think about, and that is okay too. If a question is not clear, click the &lsquo;?&rsquo; next to it for help. If you are not sure how to answer, &ldquo;I&apos;m not sure yet&rdquo; is always available — and it is just as valuable as any other answer. We are here to know you. So we can build with you.
@@ -1410,6 +1414,8 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           {DRIVER_OR_PASSENGER_SCREEN.eyebrow}
         </p>
 
+        <ScreenVoice clipId="DOP-INTRO" label="HEAR COACH MIKE: WHAT THIS IS" className="mb-5 justify-center" />
+
         <div style={{ ...cardStyle, padding: '28px', marginBottom: '20px' }} className="sbq-card-pad">
           <p style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, letterSpacing: '0.02em', margin: '0 0 22px' }}>
             {DRIVER_OR_PASSENGER_SCREEN.intro}
@@ -1525,6 +1531,11 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
             <p style={{ fontSize: 'clamp(15px,2vw,17px)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.85, marginBottom: '28px' }}>
               {option.reply}
             </p>
+            <ScreenVoice
+              clipId={`DOP-${option.letter}`}
+              label={`HEAR COACH MIKE: ${option.replyTitle}`}
+              className="mb-7"
+            />
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
               <button onClick={goNext} style={{ ...btnPrimary, fontSize: '15px' }} className="sbq-btn sbq-cta">
                 CONTINUE
@@ -1575,6 +1586,8 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, marginBottom: '32px' }}>
             This must be completed by <strong style={{ color: '#fff' }}>you alone</strong>. Please do not have anyone with you while you answer. Your honest, independent answers are what make Smarter Goalie work.
           </p>
+
+          <ScreenVoice clipId="V-A-04" label="HEAR COACH MIKE: THE HONESTY RULE" className="mb-8 justify-center" />
 
           {privacyRejected && (
             <div
@@ -1897,6 +1910,7 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           <p style={{ fontSize: 'clamp(15px,2vw,17px)', color: 'rgba(255,255,255,0.7)', lineHeight: 1.85, marginBottom: '0' }}>
             Coach Mike personally reads every submission. <strong style={{ color: BLUE }}>Welcome to the Smarter Goalie way.</strong>
           </p>
+          <ScreenVoice clipId="V-A-05" label="HEAR COACH MIKE: HOW TO USE THE DAY" className="mt-7 justify-center" />
         </div>
 
         {error && (
@@ -1931,7 +1945,8 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
             </>
           ) : (
             <>
-              SUBMIT MY BASELINE PROFILE
+              {/* An applicant's last click sends the application (copy pack 3.1). */}
+              {applicationStatus === 'applying' ? APPLICATION_PAGE.button : 'SUBMIT MY BASELINE PROFILE'}
               <ChevronRight style={{ width: '18px', height: '18px' }} />
             </>
           )}

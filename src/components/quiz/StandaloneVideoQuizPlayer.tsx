@@ -57,7 +57,12 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
 
   // The coach voice. One shared audio element for the whole site, so starting a
   // clip here stops anything else that was playing.
-  const { play: playVoice, pause: pauseVoice, enabled: voiceEnabled } = useCoachAudio();
+  const {
+    play: playVoice,
+    pause: pauseVoice,
+    prime: primeVoice,
+    enabled: voiceEnabled,
+  } = useCoachAudio();
 
   // Static data refs - these NEVER change after initialization
   const questionsRef = useRef<VideoQuizQuestionWithState[]>([]);
@@ -258,6 +263,9 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
    */
   const releaseFreeze = useCallback((resumeAt?: number) => {
     pauseVoice();
+    // Every way out of a freeze is a tap. If the phone refused this freeze's
+    // voice, that tap unlocks it for the next one. Does nothing once unlocked.
+    primeVoice();
     setFrozenQuestion(null);
     setAwaitingChoice(false);
 
@@ -270,7 +278,7 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
     }
 
     setTimeout(() => setPlaying(true), 100);
-  }, [pauseVoice]);
+  }, [pauseVoice, primeVoice]);
 
   /**
    * A hold that asks nothing is settled once the goalie moves on from it. It is
@@ -498,11 +506,23 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
     playerRef.current?.seekTo(seconds, 'seconds');
   }, []);
 
-  // Start quiz
+  // Start quiz.
+  //
+  // The freeze-point voice starts itself, with no tap, and an iPhone refuses
+  // that unless the audio was unlocked by an earlier tap. This is that tap.
+  // `primeVoice` must run here, synchronously, not in an effect or a timer.
   const handleStart = useCallback(() => {
+    primeVoice();
     setHasStarted(true);
     setPlaying(true);
-  }, []);
+  }, [primeVoice]);
+
+  // Play/pause on the control bar is a tap too, so it unlocks the voice as
+  // well, in case the Start tap did not. Does nothing once unlocked.
+  const handlePlayPause = useCallback(() => {
+    if (!playing) primeVoice();
+    setPlaying(!playing);
+  }, [playing, primeVoice]);
 
   // A hold with no question is not a question, so it takes no number and is not
   // counted in "N of M" or in the answered badge.
@@ -579,7 +599,7 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
           duration={duration}
           volume={volume}
           muted={muted}
-          onPlayPause={() => setPlaying(!playing)}
+          onPlayPause={handlePlayPause}
           onSeek={handleSeek}
           onPlaybackRateChange={(rate) => setPlaybackRate(rate)}
           onVolumeChange={(vol) => setVolume(vol)}

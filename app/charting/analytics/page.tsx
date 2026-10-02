@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { SkeletonAnalytics } from '@/components/ui/skeletons';
-import { chartingService } from '@/lib/database';
-import { Session, ChartingEntry } from '@/types';
+import { chartingService, dynamicChartingService, formTemplateService } from '@/lib/database';
+import { Session, ChartingEntry, DynamicChartingEntry, FormTemplate } from '@/types';
+import { toDateSafe as toDateSafeShared } from '@/lib/utils/timestamp';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -46,6 +48,10 @@ export default function ChartingAnalyticsPage() {
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
+  // Pillar-chart check-ins live in their own collection, apart from sessions, so
+  // they are loaded separately and shown beside the session stats.
+  const [checkIns, setCheckIns] = useState<DynamicChartingEntry[]>([]);
+  const [checkInTemplates, setCheckInTemplates] = useState<Record<string, FormTemplate>>({});
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [openV2Game, setOpenV2Game] = useState(false);
@@ -59,12 +65,24 @@ export default function ChartingAnalyticsPage() {
     if (!user) return;
     try {
       setLoading(true);
-      const [sessionsResult, allEntriesResult] = await Promise.all([
+      const [sessionsResult, allEntriesResult, checkInsResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getChartingEntriesByStudent(user.id),
+        dynamicChartingService.getDynamicEntriesByStudent(user.id),
       ]);
       if (sessionsResult.success && sessionsResult.data) setSessions(sessionsResult.data);
       if (allEntriesResult.success && allEntriesResult.data) setEntries(allEntriesResult.data);
+      if (checkInsResult.success && checkInsResult.data) {
+        const loaded = checkInsResult.data;
+        setCheckIns(loaded);
+        const templateIds = Array.from(new Set(loaded.map((e) => e.formTemplateId)));
+        const templateResults = await Promise.all(templateIds.map((id) => formTemplateService.getTemplate(id)));
+        const byId: Record<string, FormTemplate> = {};
+        templateResults.forEach((r, i) => {
+          if (r.success && r.data) byId[templateIds[i]] = r.data;
+        });
+        setCheckInTemplates(byId);
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -84,6 +102,22 @@ export default function ChartingAnalyticsPage() {
     return sessions.filter((s) => {
       const sessionDate = toDateSafe((s as unknown as { date?: unknown }).date);
       return sessionDate ? sessionDate >= startDate : false;
+    });
+  };
+
+  const getFilteredCheckIns = () => {
+    const now = new Date();
+    let startDate: Date | null;
+    switch (timeRange) {
+      case 'week': startDate = startOfWeek(now); break;
+      case 'month': startDate = startOfMonth(now); break;
+      case '3months': startDate = subMonths(now, 3); break;
+      default: startDate = null;
+    }
+    if (!startDate) return checkIns;
+    return checkIns.filter((e) => {
+      const d = toDateSafeShared(e.submittedAt);
+      return d ? d >= startDate! : false;
     });
   };
 
@@ -378,6 +412,7 @@ export default function ChartingAnalyticsPage() {
   const preGameStats = calculatePreGameStats();
   const postGameStats = calculatePostGameStats();
   const filteredSessions = getFilteredSessions();
+  const filteredCheckIns = getFilteredCheckIns();
 
   // ── helpers ──────────────────────────────────────────────────────────────────
   const getTrendIcon = (trend: string) => {
@@ -475,8 +510,8 @@ export default function ChartingAnalyticsPage() {
                   Analyse Your <span style={{ color: CYAN, textShadow: `0 0 20px rgba(55,181,255,0.4)` }}>Game</span>
                 </h1>
                 <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
-                  {sessions.length > 0
-                    ? `${sessions.length} total sessions · ${entries.length} charted · select a time window below`
+                  {sessions.length > 0 || checkIns.length > 0
+                    ? `${sessions.length} total sessions · ${entries.length} charted · ${checkIns.length} pillar check-in${checkIns.length === 1 ? '' : 's'} · select a time window below`
                     : 'Chart your sessions to unlock deep performance insights.'}
                 </p>
               </div>
@@ -493,6 +528,7 @@ export default function ChartingAnalyticsPage() {
           <AnMetricCard label="Game Sessions"  value={sessions.filter(s => s.type === 'game').length}     sub="game sessions"     color={CORAL}  icon="games" />
           <AnMetricCard label="Practice"       value={sessions.filter(s => s.type === 'practice').length} sub="practice sessions" color={MINT}   icon="practice" />
           <AnMetricCard label="Charted"        value={entries.length}                                     sub="with chart data"   color={VIOLET} icon="charted" />
+          <AnMetricCard label="Pillar Check-ins" value={checkIns.length}                                  sub="pillar charts"     color={CYAN}   icon="charted" />
         </div>
 
         {/* ── Time Range Filter ─────────────────────────────────────────────── */}
@@ -711,9 +747,39 @@ export default function ChartingAnalyticsPage() {
           </div>
         )}
 
+        {/* ── Pillar check-ins ──────────────────────────────────────────────── */}
+        {filteredCheckIns.length > 0 && (
+          <SectionCard>
+            <SectionTitle>Pillar Check-ins</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {filteredCheckIns.slice(0, 20).map((entry) => {
+                const template = checkInTemplates[entry.formTemplateId];
+                const date = toDateSafeShared(entry.submittedAt);
+                const board = template ? `/charting/pillars/${template.pillar}/history` : null;
+                return (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    disabled={!board}
+                    onClick={() => board && router.push(board)}
+                    className="flex items-center justify-between gap-3 text-left"
+                    style={{ ...innerCard, borderRadius: '12px', padding: '12px 16px', cursor: board ? 'pointer' : 'default' }}
+                  >
+                    <div className="min-w-0">
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{template?.name ?? 'Pillar chart'}</p>
+                      <p style={{ fontSize: '11px', color: MUTED, marginTop: '2px' }}>{date ? format(date, 'MMM d, yyyy · h:mm a') : 'Date unavailable'}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: MUTED }} />
+                  </button>
+                );
+              })}
+            </div>
+          </SectionCard>
+        )}
+
         {/* ── Legacy analytics (only shown if there's data) ─────────────────── */}
         {filteredSessions.length === 0 ? (
-          <div style={{ borderRadius: '18px', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.2)', padding: '64px 32px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+          filteredCheckIns.length > 0 ? null : <div style={{ borderRadius: '18px', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.2)', padding: '64px 32px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <BarChart3 className="w-14 h-14 mx-auto mb-4" style={{ color: 'rgba(55,181,255,0.3)' }} />
             <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>No Sessions Found</h3>
             <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', marginBottom: '20px' }}>No sessions found for the selected time period.</p>

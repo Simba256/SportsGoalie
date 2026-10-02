@@ -34,6 +34,7 @@ import {
   COACH_AUDIO_PART_LABELS,
   COACH_AUDIO_PART_ORDER,
   coachAudioIdFromFilename,
+  isHeldForReRecord,
   type CoachAudioPart,
   type CoachAudioStatus,
 } from '@/types/coach-audio';
@@ -94,6 +95,11 @@ function formatSize(bytes: number): string {
   return bytes >= 1024 * 1024
     ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
     : `${Math.round(bytes / 1024)} KB`;
+}
+
+/** Uploaded, but the old take of a line Michael is re-recording, so silent on the site. */
+function isHeld(row: CoachAudioStatus): boolean {
+  return row.clip !== null && isHeldForReRecord(row.clip);
 }
 
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
@@ -255,9 +261,15 @@ function CoachAudioAdminPage() {
   );
 
   // Two or three uploaded clips is enough to prove the "only one plays at a
-  // time" rule; one missing clip proves the disabled state renders.
+  // time" rule; one missing clip proves the disabled state renders. Held takes
+  // are left out: the site treats them as missing, so they would only show as
+  // NOT RECORDED YET here.
   const previewIds = useMemo(
-    () => statuses.filter(row => row.clip !== null).slice(0, 3).map(row => row.entry.id),
+    () =>
+      statuses
+        .filter(row => row.clip !== null && !isHeld(row))
+        .slice(0, 3)
+        .map(row => row.entry.id),
     [statuses]
   );
   const missingPreviewId = useMemo(
@@ -268,6 +280,7 @@ function CoachAudioAdminPage() {
   const summary = useMemo(() => {
     const total = statuses.length;
     const uploaded = statuses.filter(s => s.clip !== null).length;
+    const held = statuses.filter(isHeld).length;
     const byPart = COACH_AUDIO_PART_ORDER.map(part => {
       const rows = statuses.filter(s => s.entry.part === part);
       return {
@@ -276,7 +289,7 @@ function CoachAudioAdminPage() {
         uploaded: rows.filter(s => s.clip !== null).length,
       };
     });
-    return { total, uploaded, missing: total - uploaded, byPart };
+    return { total, uploaded, held, missing: total - uploaded, byPart };
   }, [statuses]);
 
   if (isLoading) return <SkeletonDarkPage />;
@@ -312,7 +325,7 @@ function CoachAudioAdminPage() {
             {summary.uploaded}
           </span>
           <span style={{ fontSize: '15px', color: MUTED }}>of {summary.total} recordings in</span>
-          {summary.missing > 0 && (
+          {(summary.missing > 0 || summary.held > 0) && (
             <span
               style={{
                 marginLeft: 'auto',
@@ -325,7 +338,12 @@ function CoachAudioAdminPage() {
               }}
             >
               <CircleAlert size={14} />
-              {summary.missing} still missing
+              {[
+                summary.missing > 0 ? `${summary.missing} still missing` : null,
+                summary.held > 0 ? `${summary.held} held for re-recording` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </span>
           )}
         </div>
@@ -532,6 +550,7 @@ function ClipRow({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { entry, clip } = status;
+  const held = isHeld(status);
 
   return (
     <div
@@ -592,7 +611,11 @@ function ClipRow({
               reads {entry.readsMessageId}
             </span>
           )}
-          {clip ? (
+          {held ? (
+            <span style={{ fontSize: '10px', color: AMBER, fontWeight: 700 }}>
+              HELD · SILENT ON THE SITE
+            </span>
+          ) : clip ? (
             <Check size={13} color={GREEN} />
           ) : (
             <span style={{ fontSize: '10px', color: AMBER, fontWeight: 700 }}>MISSING</span>
@@ -614,6 +637,15 @@ function ClipRow({
         {!clip && entry.notYetRecorded && (
           <div style={{ color: FAINT, fontSize: '11px', marginTop: '3px', fontStyle: 'italic' }}>
             {entry.notYetRecorded}
+          </div>
+        )}
+        {entry.reRecord && (
+          <div style={{ color: FAINT, fontSize: '11px', marginTop: '3px', fontStyle: 'italic' }}>
+            {held
+              ? `${entry.reRecord.reason} Upload the new take here and it plays straight away.`
+              : clip
+                ? 'New take in and playing. The line above is still the old wording; its words are kept off the site until the new wording is added.'
+                : entry.reRecord.reason}
           </div>
         )}
       </div>

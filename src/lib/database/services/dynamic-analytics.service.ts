@@ -98,7 +98,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   private readonly ANALYTICS_COLLECTION = 'dynamic_charting_analytics';
   // 2: scores normalize against the field's configured scale instead of the
   //    observed range, and scale fields mis-typed as `percentage` are repaired.
-  private readonly CALCULATION_VERSION = 2; // Increment when algorithm changes
+  private readonly CALCULATION_VERSION = 3; // Increment when algorithm changes
 
   // ==================== MAIN ANALYTICS CALCULATION ====================
 
@@ -1032,6 +1032,12 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
    * Converts field analytics to a 0-100 score
    */
   private getFieldScore(fieldAnalytics: FieldAnalyticsResult): number | null {
+    // A count (shots faced, period, clock) is a fact, not a performance rating,
+    // whatever analytics type it was saved with. It never feeds a score.
+    if (fieldAnalytics.fieldType === 'numeric' && fieldAnalytics.scaleMax === undefined) {
+      return null;
+    }
+
     if (fieldAnalytics.percentage !== undefined) {
       return fieldAnalytics.percentage;
     }

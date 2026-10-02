@@ -16,14 +16,14 @@ import {
 } from '@/components/admin/pillar-chrome';
 
 const PILLAR_DESCRIPTIONS: Record<string, string> = {
-  mindset: 'Build your mental fortress. Learn why your brain does what it does and how to redirect anxiety into performance energy.',
-  skating: 'Build your goalie dream on skill skating, as a skill. Learn a vision to pair with skating reason project.',
-  form: 'Build your goalie structure. Skating is creativity, form and as structure, repetition, structure, assignments.',
-  positioning: 'Build your goalie mask for anxiety position paths and the scan team of the most positional systems.',
-  seven_point: 'Build your mentalframes. Learn your positioning as strong unlock to form the 6 Zone – 7 Point System™ below the icing line.',
-  game: 'Build your game day. Routine before the puck drops, management during it, and the charting and review that turn a played game into a lesson.',
-  practice: 'Build your practice. Go in with intent, target what your charts say is weak, and make the session demand what a game demands.',
-  lifestyle: 'Build your lifestyle habits — off-ice training, nutrition, sleep and recovery — to support confidence, focus, and consistent performance in and out of the crease.',
+  mindset: "Build your Mind Vault. Without the right mind set, it really won't matter how skilled you are. Learn why your brain does what it does, and how to turn anxiety into performance energy.",
+  skating: 'Skating is the engine. Master balance, edgework, lateral, T-push and stopping tech — no wasted movement, no wasted energy, no wasted time — and perform in sync with the play.',
+  form: 'Perfect your understanding, balance, coordination and sense of self — the ability to get into a save and your recovery tech, stationary or in motion.',
+  positioning: "The 7 Angle-Marker System (7AMS) — your Goalie's Positional System (GPS) above the icing line. We don't guess — we read the ice. The landmarks are balanced, and all 7 angles connect to the net.",
+  seven_point: 'Own the danger zone. 6Z-7PS addresses below-the-icing-line positioning — the most dangerous area on ice.',
+  game: 'Chart what actually happened. Game-day routine, in-game management, and the post-game review that turns one night into a pattern you can train against.',
+  practice: 'Make every rep count. Plan with intent, aim at what your charts say needs attention, and build practices that ask what a game asks.',
+  lifestyle: 'Train the whole athlete. Off-ice habits, nutrition, recovery, and sleep are the foundation your on-ice game builds on.',
 };
 
 interface PillarFormData {

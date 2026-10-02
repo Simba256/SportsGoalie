@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
-import { Timestamp } from 'firebase-admin/firestore';
 import { verifyAdminRequest } from '@/lib/auth/admin-request';
 import { logger } from '@/lib/utils/logger';
-import type { ApplicantSummary, ApplicationStatus } from '@/types/application';
+import { toApplicantSummary } from '@/lib/applications/applicant-summary.server';
+import { APPLICATION_STATUSES, type ApplicantSummary } from '@/types/application';
 
 /**
  * Admin: the application queue.
@@ -17,10 +17,6 @@ import type { ApplicantSummary, ApplicationStatus } from '@/types/application';
  * user with no `applicationStatus` at all is an existing member who must
  * never appear here.
  */
-
-function toIso(value: unknown): string | undefined {
-  return value instanceof Timestamp ? value.toDate().toISOString() : undefined;
-}
 
 export interface ApplicationsResponse {
   success: boolean;
@@ -36,13 +32,12 @@ export async function GET(request: NextRequest) {
   try {
     // `!=` would exclude documents with no applicationStatus field at all,
     // which is what we want, but Firestore's inequality queries need an index
-    // and an orderBy on the same field. An `in` over the five known values is
+    // and an orderBy on the same field. An `in` over the known values is
     // simpler, needs no index, and cannot accidentally sweep up the existing
-    // membership if a sixth status is added without thinking.
-    const statuses: ApplicationStatus[] = ['applying', 'submitted', 'waitlisted', 'approved', 'declined'];
-
+    // membership. The list lives with the type, so a new status added there
+    // shows up here too rather than silently vanishing from the queue.
     const [applicantSnap, coachSnap] = await Promise.all([
-      adminDb.collection('users').where('applicationStatus', 'in', statuses).limit(500).get(),
+      adminDb.collection('users').where('applicationStatus', 'in', APPLICATION_STATUSES).limit(500).get(),
       adminDb.collection('users').where('role', '==', 'coach').limit(200).get(),
     ]);
 
@@ -59,34 +54,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const applicants: ApplicantSummary[] = applicantSnap.docs.map(doc => {
-      const data = doc.data();
-      const profile = profiles.get(doc.id);
-      const intake = profile?.signupIntake ?? data.signupIntake;
-
-      return {
-        id: doc.id,
-        email: data.email ?? '',
-        displayName: data.displayName ?? data.email ?? '(no name)',
-        applicationStatus: (data.applicationStatus ?? 'submitted') as ApplicationStatus,
-        appliedAt: toIso(data.appliedAt),
-        submittedAt: toIso(data.applicationSubmittedAt),
-        decidedAt: toIso(data.applicationDecidedAt),
-        decidedByName: data.applicationDecidedByName,
-        decisionNote: data.applicationNote,
-
-        hasProfile: !!profile,
-        overallScore: typeof data.overallScore === 'number' ? data.overallScore : profile?.intelligenceProfile?.overallScore,
-        pacingLevel: typeof data.pacingLevel === 'string' ? data.pacingLevel : profile?.intelligenceProfile?.pacingLevel,
-        driverOrPassenger: data.driverOrPassenger ?? profile?.driverOrPassenger ?? undefined,
-        ageRange: intake?.ageRange,
-        experienceLevel: intake?.experienceLevel,
-
-        assignedCoachId: data.assignedCoachId,
-        assignedCoachName: data.assignedCoachName,
-        tier: data.workflowType === 'custom' || data.workflowType === 'automated' ? data.workflowType : undefined,
-      };
-    });
+    const applicants: ApplicantSummary[] = applicantSnap.docs.map(doc =>
+      toApplicantSummary(doc.id, doc.data(), profiles.get(doc.id))
+    );
 
     // Newest application first. Sorted here rather than in Firestore because
     // an `in` filter plus an orderBy on a different field needs a composite

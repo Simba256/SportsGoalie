@@ -1,10 +1,14 @@
 'use client';
 
-import { ClipboardCheck, Clock, LogOut, Mail, PauseCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ClipboardCheck, Clock, LogOut, Mail, PauseCircle, Phone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { useAuth } from '@/lib/auth/context';
+import { auth } from '@/lib/firebase/config';
+import { APPLICATION_RECEIVED_SCREEN, PRE_CALL_GATE } from '@/data/applicant-flow-copy';
+import { isUsableBookingUrl } from '@/types/platform-settings';
 import type { ApplicationStatus } from '@/types/application';
 
 const BLUE = '#37b5ff';
@@ -25,13 +29,18 @@ const CARD_BG = 'linear-gradient(135deg, #041e3a 0%, #082d52 100%)';
  * The one door left open is the questionnaire itself, which lives at
  * /onboarding and is deliberately outside ProtectedRoute. That is the whole
  * point of the applicant state: they can do the baseline and nothing else.
+ *
+ * Two states read Michael's copy pack, from `src/data/applicant-flow-copy.ts`:
+ * `submitted` is 3.2 (application received) and `awaiting_call` is 3.8 (in,
+ * but the content opens after the call). The other states keep their own
+ * wording until he sends some.
  */
 
 interface Copy {
   icon: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties }>;
   heading: React.ReactNode;
-  body: string;
-  sub: string;
+  body?: string;
+  sub?: string;
   cta?: { label: string; href: string };
 }
 
@@ -48,12 +57,20 @@ function copyFor(status: ApplicationStatus, firstName: string | null): Copy {
         cta: { label: 'Finish the questionnaire', href: '/onboarding' },
       };
 
+    // 3.2 — shown the moment the questionnaire is in.
     case 'submitted':
       return {
         icon: Clock,
-        heading: <>Your application is <span style={{ color: BLUE2 }}>in</span>.</>,
-        body: `${you}your questionnaire has been received and analysed, and it is now in front of Coach Mike.`,
-        sub: 'He reads every submission himself, so this takes as long as it takes. If he wants you in, the next thing you get is an email inviting you to book a call with him.',
+        heading: APPLICATION_RECEIVED_SCREEN.heading,
+        body: APPLICATION_RECEIVED_SCREEN.body,
+      };
+
+    // 3.8 — approved and invited; the content opens after the call. The
+    // "Book your call" button is added by the screen once the link has loaded.
+    case 'awaiting_call':
+      return {
+        icon: Phone,
+        heading: PRE_CALL_GATE.heading,
       };
 
     case 'waitlisted':
@@ -72,17 +89,52 @@ function copyFor(status: ApplicationStatus, firstName: string | null): Copy {
         sub: 'That is a judgement about fit and timing, not about you as a goalie. If your situation changes, get in touch — the door is not bolted.',
       };
 
-    // Not reachable: an approved applicant is through the wall. Here so the
-    // switch is total and a future status cannot fall through to nothing.
+    // Not reachable in practice: an approved applicant is through the wall.
+    // Here so the switch is total and a future status cannot fall through to
+    // nothing.
     case 'approved':
     default:
       return {
         icon: ClipboardCheck,
-        heading: <>You are <span style={{ color: BLUE2 }}>approved</span>.</>,
-        body: `${you}your place is confirmed. Check your email for the link to book your call with Coach Mike.`,
-        sub: 'If the app has not opened up for you yet, sign out and back in.',
+        heading: <>Your account is <span style={{ color: BLUE2 }}>open</span>.</>,
+        body: `${you}you are through.`,
+        sub: 'If it has not opened up for you yet, sign out and back in.',
       };
   }
+}
+
+/**
+ * The booking link for an applicant waiting on their call, or null until it
+ * has loaded (and for good if there isn't one). It comes from the server
+ * because the setting it lives in is admin-only; the route hands it only to an
+ * applicant in `awaiting_call`. A failure just leaves the button off — the
+ * link is also in their approval email, and Contact Us is always there.
+ */
+function useBookingLink(enabled: boolean): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return;
+        const res = await fetch('/api/applications/booking-link', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { bookingUrl?: string | null };
+        if (!cancelled && data.bookingUrl && isUsableBookingUrl(data.bookingUrl)) setUrl(data.bookingUrl);
+      } catch {
+        // Left off; see above.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [enabled]);
+
+  return enabled ? url : null;
 }
 
 export function ApplicantHoldingScreen() {
@@ -92,6 +144,9 @@ export function ApplicantHoldingScreen() {
   const status: ApplicationStatus = user?.applicationStatus ?? 'submitted';
   const firstName = user?.displayName?.split(' ')[0] ?? null;
   const { icon: Icon, heading, body, sub, cta } = copyFor(status, firstName);
+  const bookingUrl = useBookingLink(status === 'awaiting_call');
+  // Only one button gets the filled style; Contact Us steps back when there is another.
+  const hasPrimary = !!cta || !!bookingUrl;
 
   const handleLogout = async () => {
     await logout();
@@ -137,14 +192,32 @@ export function ApplicantHoldingScreen() {
           {heading}
         </h1>
 
-        <p style={{ fontSize: 'clamp(14px, 1.8vw, 15px)', color: BODY, lineHeight: 1.75, margin: '0 0 10px' }}>
-          {body}
-        </p>
-        <p style={{ fontSize: 'clamp(14px, 1.8vw, 15px)', color: MUTED, lineHeight: 1.75, margin: '0 0 26px' }}>
-          {sub}
-        </p>
+        {body && (
+          <p style={{ fontSize: 'clamp(14px, 1.8vw, 15px)', color: BODY, lineHeight: 1.75, margin: sub ? '0 0 10px' : '0 0 26px' }}>
+            {body}
+          </p>
+        )}
+        {sub && (
+          <p style={{ fontSize: 'clamp(14px, 1.8vw, 15px)', color: MUTED, lineHeight: 1.75, margin: '0 0 26px' }}>
+            {sub}
+          </p>
+        )}
+        {!body && !sub && <div style={{ height: '14px' }} />}
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* 3.8's button. A new tab, so the applicant keeps this screen; the
+              link is the same one their approval email carries. */}
+          {bookingUrl && (
+            <a
+              href={bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="applicant-btn"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: `linear-gradient(135deg, ${BLUE}, #0ea5e9)`, borderRadius: '10px', padding: '11px 22px', color: '#001426', fontSize: '13px', fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', textDecoration: 'none', boxShadow: '0 6px 22px rgba(55,181,255,0.3)' }}
+            >
+              <Phone size={15} aria-hidden="true" /> {PRE_CALL_GATE.button}
+            </a>
+          )}
           {cta && (
             <Link
               href={cta.href}
@@ -158,7 +231,7 @@ export function ApplicantHoldingScreen() {
           <a
             href="mailto:info@smartergoalie.com,goaliesmarter@gmail.com"
             className="applicant-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: cta ? 'transparent' : `linear-gradient(135deg, ${BLUE}, #0ea5e9)`, border: cta ? '1px solid rgba(200,230,255,0.25)' : 'none', borderRadius: '10px', padding: '11px 22px', color: cta ? BODY : '#001426', fontSize: '13px', fontWeight: cta ? 700 : 800, letterSpacing: '.06em', textTransform: 'uppercase', textDecoration: 'none' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: hasPrimary ? 'transparent' : `linear-gradient(135deg, ${BLUE}, #0ea5e9)`, border: hasPrimary ? '1px solid rgba(200,230,255,0.25)' : 'none', borderRadius: '10px', padding: '11px 22px', color: hasPrimary ? BODY : '#001426', fontSize: '13px', fontWeight: hasPrimary ? 700 : 800, letterSpacing: '.06em', textTransform: 'uppercase', textDecoration: 'none' }}
           >
             <Mail size={15} aria-hidden="true" /> Contact Us
           </a>

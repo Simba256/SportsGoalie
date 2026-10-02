@@ -82,6 +82,21 @@ function scalePercent(value: number, field: FormField | undefined): number {
   return scaleToPercentage(value, max, min) ?? 0;
 }
 
+/**
+ * True only for fields answered on a rating scale. A count (shots faced, period,
+ * clock, net box) has no ceiling, so it is shown as a plain number and never
+ * scored out of 10 or counted as a checkpoint.
+ */
+function isRatingField(field: FormField | undefined): boolean {
+  if (!field) return false;
+  if (field.type === 'scale') return true;
+  return (
+    field.type === 'numeric' &&
+    field.validation?.min !== undefined &&
+    field.validation?.max !== undefined
+  );
+}
+
 function GrowthChip({ growth }: { growth: number }) {
   const rounded = Math.round(growth * 10) / 10;
   const [color, bg, Icon] =
@@ -168,7 +183,7 @@ function CheckpointBar({
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px', fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.38)' }}>
-        <span>Weak ({min})</span>
+        <span>Needs Work ({min})</span>
         {hasBaseline && <span>Baseline {result.baselineValue}</span>}
         <span>Strong ({max})</span>
       </div>
@@ -247,7 +262,7 @@ function EntryCard({
                             </span>
                             <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
                               {display ?? '—'}
-                              {display !== null && typeof response?.value === 'number' && (
+                              {display !== null && typeof response?.value === 'number' && isRatingField(field) && (
                                 <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>
                                   /{field.validation?.max ?? 10}
                                 </span>
@@ -400,9 +415,10 @@ export default function PillarHistoryPage() {
   const checkpoints = useMemo(() => {
     if (!analytics) return [];
     return Object.values(analytics.fieldAnalytics || {})
+      .filter((r) => isRatingField(fieldsById.get(r.fieldId)))
       .filter((r) => typeof (r.latestValue ?? r.average) === 'number' && r.dataPoints > 0)
       .sort((a, b) => (a.latestValue ?? a.average ?? 0) - (b.latestValue ?? b.average ?? 0));
-  }, [analytics]);
+  }, [analytics, fieldsById]);
 
   if (authLoading || loading) {
     return (

@@ -8,6 +8,7 @@ import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Loader2 } from 'lucide-rea
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { useAuth } from '@/lib/auth/context';
 import { isAuthError } from '@/lib/errors/auth-errors';
+import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
   MAX_SIGNUP_AGE,
   MIN_SIGNUP_AGE,
@@ -18,17 +19,21 @@ import {
 /**
  * /apply — the front door.
  *
- * Michael's line for this page: "If you like what you see, do our
- * questionnaire and find out just how good a fit we are." So it is not a
- * sign-up form dressed as an application. It creates the account, and then
- * hands straight over to the questionnaire, because the questionnaire *is*
- * the application — there is no second form behind it, and the answers become
- * the baseline profile rather than being thrown away after a decision.
+ * The heading, sub-heading and body are copy pack 3.1, read from
+ * `src/data/applicant-flow-copy.ts`. 3.1's button, "Send it to Michael", is
+ * the questionnaire's final submit rather than the button here: this page only
+ * makes the account, and the application is sent at the end of the
+ * questionnaire.
+ *
+ * It is not a sign-up form dressed as an application. It creates the account,
+ * and then hands straight over to the questionnaire, because the questionnaire
+ * *is* the application — there is no second form behind it, and the answers
+ * become the baseline profile rather than being thrown away after a decision.
  *
  * The account it creates is walled: `asApplicant` sets applicationStatus to
  * 'applying', and ProtectedRoute shows the holding screen in place of every
- * guarded page until Michael approves. /onboarding is the single door left
- * open, which is why it sits outside ProtectedRoute.
+ * guarded page until Michael opens the account after their call. /onboarding
+ * is the single door left open, which is why it sits outside ProtectedRoute.
  *
  * WHY THERE IS A PARENT OPTION HERE. An under-18 goalie cannot hold their own
  * login (item 6b) — register() refuses one outright. Most of Michael's market
@@ -69,11 +74,13 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 };
 
-/** What the applicant is told before they start, so nothing is a surprise. */
+/**
+ * What the applicant is told before they start, so nothing is a surprise.
+ * "He reads every one himself" is not repeated here — 3.1 says it above.
+ */
 const WHAT_HAPPENS = [
   'It takes about twenty minutes. There is no shorter version and no way to skip it.',
-  'Coach Mike reads every submission himself. Not a filter, not an assistant.',
-  'If he says yes, you get an email inviting you to book a call with him.',
+  'If he says yes, you get an email to book a fifteen-minute phone call with him.',
   'Your answers become your baseline. You never fill this in twice — your record starts today, not the day you pay.',
 ];
 
@@ -190,19 +197,21 @@ export default function ApplyPage() {
 
       <div style={{ maxWidth: '1040px', margin: '0 auto', padding: 'clamp(32px, 6vw, 64px) 20px 80px' }}>
 
-        {/* ── Hero — Michael's line, and what it actually costs them ── */}
+        {/* ── Hero — copy pack 3.1, in Michael's own voice ── */}
         <div style={{ textAlign: 'center', marginBottom: 'clamp(32px, 5vw, 52px)' }}>
-          <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '.22em', color: BLUE, textTransform: 'uppercase', margin: '0 0 14px' }}>
-            Apply to Smarter Goalie
-          </p>
-          <h1 style={{ fontSize: 'clamp(26px, 5vw, 40px)', fontWeight: 900, letterSpacing: '-0.025em', color: '#fff', margin: '0 0 18px', lineHeight: 1.15 }}>
-            If you like what you see, do our questionnaire<br />
-            and find out just how good a <span style={{ color: BLUE2 }}>fit</span> we are.
+          <h1 style={{ fontSize: 'clamp(34px, 6vw, 52px)', fontWeight: 900, letterSpacing: '-0.025em', color: '#fff', margin: '0 0 14px', lineHeight: 1.1 }}>
+            {APPLICATION_PAGE.heading}
           </h1>
-          <p style={{ fontSize: 'clamp(15px, 2vw, 17px)', color: BODY, lineHeight: 1.7, maxWidth: '620px', margin: '0 auto' }}>
-            This is not a waiting list you join and forget. It is the same baseline every goalie
-            in the system does, and it goes straight to Coach Mike.
+          <p style={{ fontSize: 'clamp(17px, 2.4vw, 21px)', fontWeight: 700, color: BLUE2, lineHeight: 1.5, maxWidth: '640px', margin: '0 auto 22px' }}>
+            {APPLICATION_PAGE.subheading}
           </p>
+          <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {APPLICATION_PAGE.body.map(paragraph => (
+              <p key={paragraph} style={{ fontSize: 'clamp(15px, 2vw, 17px)', color: BODY, lineHeight: 1.7, margin: 0 }}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(20px, 3vw, 32px)', alignItems: 'start' }}>
@@ -223,7 +232,7 @@ export default function ApplyPage() {
             <p style={{ fontSize: '13px', color: MUTED, lineHeight: 1.65, margin: '22px 0 0', paddingTop: '18px', borderTop: '1px solid rgba(55,181,255,0.14)' }}>
               You will not see any of the training content while your application is open.
               That is on purpose — Coach Mike decides who comes in, and nothing opens up
-              before he has.
+              until after your call with him.
             </p>
           </div>
 

@@ -1,98 +1,59 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ClipboardCheck, Check, Clock, Inbox, Loader2, Mail, PauseCircle, Search, X,
-} from 'lucide-react';
+import Link from 'next/link';
+import { ClipboardCheck, Inbox, Loader2, Mail, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AdminRoute } from '@/components/auth/protected-route';
-import { auth } from '@/lib/firebase/config';
+import {
+  DecisionButtons,
+  DecisionDialog,
+  StatusPill,
+  TABS,
+  authedFetch,
+  BLUE,
+  BLUE2,
+  BODY,
+  MUTED,
+  card,
+  inputStyle,
+  useApplicationDecision,
+  type Coach,
+} from '@/components/admin/applications/decision-ui';
 import type {
   ApplicantSummary,
-  ApplicationDecision,
+  ApplicationAction,
   ApplicationStatus,
 } from '@/types/application';
 
 /**
  * Admin — the application queue.
  *
- * Michael's requirement: approve, waitlist or decline in one click, with
- * approval filling in the coach and the track and sending the email in the
- * same action. That is what the approve dialog is — the two fields the
- * invitation would have carried, asked for once, then written straight onto
- * the account that already exists.
+ * Michael's requirement: approve, waitlist or decline from here, with approval
+ * filling in the coach and the track and sending the email in the same
+ * action. Every one of those opens a confirmation showing the exact email
+ * first (copy pack 3.7, H-25) — nothing is sent from a single click.
+ *
+ * Approving does not open the account (copy pack 3.8, H-24). It moves the
+ * applicant to Awaiting call and emails them the booking link; they stay
+ * behind the wall, now with a "Book your call" button, until Michael opens the
+ * account after the call with "Open account", which sends nothing.
+ *
+ * The row carries the headline numbers only. Reading what someone actually
+ * wrote happens on the review screen behind their name, because a queue that
+ * shows every answer is not a queue any more.
  *
  * NOTE FOR MICHAEL: he wrote "if approved, the invitation goes out". Approval
  * here does not send an invitation, because the invitation flow *creates* an
  * account and the applicant already has one — sending it would give them a
- * second, empty account and lose the questionnaire. Instead approval takes
- * the wall down on their existing account and emails them the booking link,
- * which is what the invitation was carrying. Same outcome, one account.
+ * second, empty account and lose the questionnaire. Instead approval emails
+ * the booking link to their existing account, which is what the invitation
+ * was carrying. Same outcome, one account.
  */
-
-const BLUE = '#37b5ff';
-const BLUE2 = '#60cdff';
-const GREEN = '#22c55e';
-const AMBER = '#fbbf24';
-const RED = '#f87171';
-const MUTED = 'rgba(200,230,255,0.55)';
-const BODY = 'rgba(200,230,255,0.84)';
-
-const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  background: 'rgba(4,20,45,0.9)',
-  border: '1px solid rgba(55,181,255,0.2)',
-  borderRadius: '9px',
-  color: '#fff',
-  fontSize: '13px',
-  outline: 'none',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '10px',
-  fontWeight: 700,
-  letterSpacing: '.1em',
-  textTransform: 'uppercase',
-  color: BLUE2,
-  marginBottom: '6px',
-};
 
 export default function AdminApplicationsPage() {
   return <AdminRoute><ApplicationsContent /></AdminRoute>;
-}
-
-async function authedFetch(url: string, init?: RequestInit) {
-  const token = await auth.currentUser?.getIdToken();
-  return fetch(url, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init?.headers },
-  });
-}
-
-interface Coach { id: string; name: string }
-
-const TABS: { key: ApplicationStatus; label: string; colour: string }[] = [
-  { key: 'submitted', label: 'To review', colour: BLUE },
-  { key: 'applying', label: 'Unfinished', colour: MUTED },
-  { key: 'waitlisted', label: 'Waiting list', colour: AMBER },
-  { key: 'approved', label: 'Approved', colour: GREEN },
-  { key: 'declined', label: 'Declined', colour: RED },
-];
-
-/** A decision in flight, holding the applicant and the coach/track choices. */
-interface PendingDecision {
-  applicant: ApplicantSummary;
-  decision: ApplicationDecision;
-  tier: 'automated' | 'custom';
-  coachId: string;
-  note: string;
 }
 
 function ApplicationsContent() {
@@ -101,8 +62,6 @@ function ApplicationsContent() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<ApplicationStatus>('submitted');
   const [search, setSearch] = useState('');
-  const [pending, setPending] = useState<PendingDecision | null>(null);
-  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -123,66 +82,7 @@ function ApplicationsContent() {
 
   useEffect(() => { load(); }, [load]);
 
-  /**
-   * Waitlist and decline go through immediately — there is nothing to fill in.
-   * Approve opens the dialog, because approving without a track and (for
-   * custom) a coach would leave the account open onto nothing.
-   */
-  function begin(applicant: ApplicantSummary, decision: ApplicationDecision) {
-    if (decision === 'approve') {
-      setPending({
-        applicant,
-        decision,
-        tier: applicant.tier ?? 'automated',
-        coachId: applicant.assignedCoachId ?? '',
-        note: '',
-      });
-      return;
-    }
-    void submit({ applicant, decision, tier: 'automated', coachId: '', note: '' });
-  }
-
-  async function submit(p: PendingDecision) {
-    if (p.decision === 'approve' && p.tier === 'custom' && !p.coachId) {
-      toast.error('Pick a coach — a custom-track goalie needs one.');
-      return;
-    }
-
-    setSaving(true);
-    const coach = coaches.find(c => c.id === p.coachId);
-    try {
-      const res = await authedFetch(`/api/admin/applications/${p.applicant.id}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          decision: p.decision,
-          ...(p.decision === 'approve' && { tier: p.tier }),
-          ...(p.decision === 'approve' && p.coachId && { assignedCoachId: p.coachId, assignedCoachName: coach?.name }),
-          ...(p.note.trim() && { note: p.note.trim() }),
-        }),
-      });
-      const data = (await res.json()) as { success: boolean; emailSent?: boolean; error?: string };
-      if (!data.success) throw new Error(data.error || 'Failed');
-
-      const name = p.applicant.displayName;
-      const done =
-        p.decision === 'approve' ? `${name} is in.`
-        : p.decision === 'waitlist' ? `${name} is on the waiting list.`
-        : `${name} has been declined.`;
-
-      // Whether the email actually left matters — it is the only thing the
-      // applicant sees, and the approval email is what carries the booking
-      // link. Say so plainly rather than reporting a clean success.
-      if (data.emailSent) toast.success(done, { description: 'Email sent.' });
-      else toast.warning(done, { description: 'Recorded, but the email did not send. Follow up by hand.' });
-
-      setPending(null);
-      await load();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to record the decision');
-    } finally {
-      setSaving(false);
-    }
-  }
+  const { pending, setPending, saving, begin, submit } = useApplicationDecision(coaches, load);
 
   const query = search.trim().toLowerCase();
   const visible = useMemo(
@@ -204,7 +104,9 @@ function ApplicationsContent() {
       </div>
       <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 20px', lineHeight: 1.6, maxWidth: '680px' }}>
         Everyone who applied through <strong style={{ color: BODY }}>/apply</strong>. They see nothing of the platform
-        until you approve them. Approving opens their account, sets their coach and track, and emails them the booking link.
+        until you open their account. Click a name to read their answers. Approving sets their coach
+        and track and emails them the booking link; after your call, <strong style={{ color: BODY }}>Open account</strong> lets
+        them in. You see every email before it goes.
       </p>
 
       {/* Tabs + search */}
@@ -264,15 +166,16 @@ function ApplicationsContent() {
         </div>
       )}
 
-      {/* Approve dialog */}
+      {/* The confirmation — the email in full, or the open-account check */}
       {pending && (
-        <ApproveDialog
+        <DecisionDialog
+          key={`${pending.applicant.id}:${pending.decision}`}
           pending={pending}
           coaches={coaches}
           saving={saving}
           onChange={setPending}
           onCancel={() => setPending(null)}
-          onConfirm={() => submit(pending)}
+          onConfirm={previewHash => submit(pending, previewHash)}
         />
       )}
     </div>
@@ -285,7 +188,7 @@ function ApplicantRow({
   applicant, onDecide, busy,
 }: {
   applicant: ApplicantSummary;
-  onDecide: (a: ApplicantSummary, d: ApplicationDecision) => void;
+  onDecide: (a: ApplicantSummary, d: ApplicationAction) => void;
   busy: boolean;
 }) {
   const a = applicant;
@@ -305,7 +208,13 @@ function ApplicantRow({
 
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff' }}>{a.displayName}</span>
+            {/* The name is the way in to the answers. */}
+            <Link
+              href={`/admin/applications/${a.id}`}
+              style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(55,181,255,0.35)' }}
+            >
+              {a.displayName}
+            </Link>
             <StatusPill status={a.applicationStatus} />
           </div>
           <a href={`mailto:${a.email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: MUTED, marginTop: '4px', textDecoration: 'none' }}>
@@ -330,195 +239,30 @@ function ApplicantRow({
 
         {/* The headline numbers, so triage does not need a second screen */}
         <div style={{ flex: '1 1 300px', display: 'flex', flexWrap: 'wrap', gap: '14px 22px', alignSelf: 'center' }}>
-          {a.hasProfile ? facts.map(([label, value]) => (
-            <div key={label}>
-              <p style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: MUTED, margin: '0 0 2px' }}>{label}</p>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', margin: 0 }}>{value}</p>
-            </div>
-          )) : (
+          {a.hasProfile ? (
+            <>
+              {facts.map(([label, value]) => (
+                <div key={label}>
+                  <p style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: MUTED, margin: '0 0 2px' }}>{label}</p>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', margin: 0 }}>{value}</p>
+                </div>
+              ))}
+              <Link
+                href={`/admin/applications/${a.id}`}
+                style={{ alignSelf: 'center', fontSize: '12px', fontWeight: 700, color: BLUE2, textDecoration: 'none' }}
+              >
+                Read answers →
+              </Link>
+            </>
+          ) : (
             <p style={{ fontSize: '12px', color: MUTED, margin: 0, fontStyle: 'italic' }}>
               Questionnaire not submitted yet — nothing to read.
             </p>
           )}
         </div>
 
-        {/* Actions. Approve is available on any status but 'applying': there is
-            nothing to judge until the questionnaire is in. */}
         <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap', alignSelf: 'center' }}>
-          {a.applicationStatus !== 'applying' && (
-            <>
-              {a.applicationStatus !== 'approved' && (
-                <ActionButton label="Approve" icon={Check} colour={GREEN} busy={busy} onClick={() => onDecide(a, 'approve')} />
-              )}
-              {a.applicationStatus !== 'waitlisted' && (
-                <ActionButton label="Waitlist" icon={Clock} colour={AMBER} busy={busy} onClick={() => onDecide(a, 'waitlist')} />
-              )}
-              {a.applicationStatus !== 'declined' && (
-                <ActionButton label="Decline" icon={PauseCircle} colour={RED} busy={busy} onClick={() => onDecide(a, 'decline')} />
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActionButton({
-  label, icon: Icon, colour, busy, onClick,
-}: {
-  label: string;
-  icon: React.ComponentType<{ size?: number }>;
-  colour: string;
-  busy: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={busy}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: '6px',
-        padding: '8px 14px', borderRadius: '9px',
-        border: `1px solid ${colour}44`, background: `${colour}18`, color: colour,
-        fontSize: '12px', fontWeight: 700, fontFamily: 'inherit',
-        cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1,
-      }}
-    >
-      <Icon size={13} /> {label}
-    </button>
-  );
-}
-
-function StatusPill({ status }: { status: ApplicationStatus }) {
-  const colour =
-    status === 'approved' ? GREEN
-    : status === 'waitlisted' ? AMBER
-    : status === 'declined' ? RED
-    : status === 'submitted' ? BLUE
-    : MUTED;
-  const label = TABS.find(t => t.key === status)?.label ?? status;
-
-  return (
-    <span style={{
-      fontSize: '10px', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase',
-      color: colour, background: `${colour}1f`, border: `1px solid ${colour}44`,
-      borderRadius: '99px', padding: '3px 9px',
-    }}>
-      {label}
-    </span>
-  );
-}
-
-// ─── Approve dialog ───────────────────────────────────────────────────────────
-
-function ApproveDialog({
-  pending, coaches, saving, onChange, onCancel, onConfirm,
-}: {
-  pending: PendingDecision;
-  coaches: Coach[];
-  saving: boolean;
-  onChange: (p: PendingDecision) => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div
-      onClick={onCancel}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,6,18,0.78)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 100,
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ ...card, background: 'linear-gradient(135deg, #041e3a 0%, #082d52 100%)', padding: '26px', maxWidth: '440px', width: '100%' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '6px' }}>
-          <h2 style={{ fontSize: '17px', fontWeight: 900, color: '#fff', margin: 0 }}>
-            Approve {pending.applicant.displayName}
-          </h2>
-          <button onClick={onCancel} aria-label="Cancel" style={{ background: 'none', border: 'none', color: MUTED, cursor: 'pointer', padding: 0, display: 'flex' }}>
-            <X size={17} />
-          </button>
-        </div>
-        <p style={{ fontSize: '12px', color: MUTED, margin: '0 0 20px', lineHeight: 1.6 }}>
-          Their account opens, their questionnaire becomes their baseline, and they get the
-          email with the booking link.
-        </p>
-
-        <div style={{ marginBottom: '16px' }}>
-          <span style={labelStyle}>Track</span>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {(['automated', 'custom'] as const).map(t => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onChange({ ...pending, tier: t })}
-                style={{
-                  flex: 1, padding: '10px', borderRadius: '9px',
-                  border: pending.tier === t ? `1px solid ${BLUE}` : '1px solid rgba(55,181,255,0.2)',
-                  background: pending.tier === t ? 'rgba(55,181,255,0.15)' : 'rgba(4,20,45,0.9)',
-                  color: pending.tier === t ? '#fff' : MUTED,
-                  fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="coach" style={labelStyle}>
-            Coach {pending.tier === 'custom' ? '(required)' : '(optional)'}
-          </label>
-          <select
-            id="coach"
-            value={pending.coachId}
-            onChange={e => onChange({ ...pending, coachId: e.target.value })}
-            style={inputStyle}
-          >
-            <option value="">— none —</option>
-            {coaches.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '22px' }}>
-          <label htmlFor="note" style={labelStyle}>Note (private, for your own record)</label>
-          <textarea
-            id="note"
-            value={pending.note}
-            onChange={e => onChange({ ...pending, note: e.target.value })}
-            rows={2}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '9px' }}>
-          <button
-            onClick={onCancel}
-            disabled={saving}
-            style={{ flex: 1, padding: '12px', borderRadius: '9px', border: '1px solid rgba(200,230,255,0.22)', background: 'transparent', color: BODY, fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={saving}
-            style={{
-              flex: 2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              padding: '12px', borderRadius: '9px', border: 'none',
-              background: saving ? 'rgba(34,197,94,0.3)' : `linear-gradient(135deg, ${GREEN}, #16a34a)`,
-              color: saving ? 'rgba(255,255,255,0.6)' : '#00220e',
-              fontSize: '12px', fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase',
-              cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            {saving ? 'Approving…' : 'Approve and send'}
-          </button>
+          <DecisionButtons applicant={a} busy={busy} onDecide={onDecide} />
         </div>
       </div>
     </div>

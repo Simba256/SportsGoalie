@@ -284,9 +284,28 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
    * there is no clip id, when the recording has not been uploaded, or when the
    * viewer has voice switched off - a control that promises audio and delivers
    * silence is worse than no control.
+   *
+   * If the phone refused to start the clip by itself (an iPhone does, when
+   * nothing has unlocked the audio yet), the goalie has heard nothing. The
+   * button then says so and stands out, because one tap plays it.
    */
-  const renderVoiceReplay = () =>
-    question.voiceClipId && voice.available && voice.enabled ? (
+  const renderVoiceReplay = () => {
+    if (!question.voiceClipId || !voice.available || !voice.enabled) return null;
+
+    if (voice.wasBlocked && !voice.isPlaying) {
+      return (
+        <button
+          type="button"
+          onClick={voice.toggle}
+          className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-sky-700"
+        >
+          <Volume2 className="h-4 w-4" />
+          Tap to hear Coach Mike
+        </button>
+      );
+    }
+
+    return (
       <button
         type="button"
         onClick={voice.toggle}
@@ -295,7 +314,8 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
         {voice.isPlaying ? <Pause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         {voice.isPlaying ? 'Pause' : 'Hear Coach Mike'}
       </button>
-    ) : null;
+    );
+  };
 
   /**
    * PLAY ON / REWIND. Michael's words, and Michael's rule: nothing moves until

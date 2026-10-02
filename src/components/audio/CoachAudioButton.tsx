@@ -46,8 +46,8 @@ export function CoachAudioButton({
   const { clip, available, isLoading, isPlaying, enabled, toggle } = useCoachAudioClip(clipId);
   const { setEnabled } = useCoachAudio();
 
-  const entry = getCoachAudioEntry(clipId);
-  const displayLabel = label ?? entry?.scriptLine ?? 'HEAR COACH MIKE';
+  const transcript = transcriptFor(clipId);
+  const displayLabel = label ?? transcript ?? 'HEAR COACH MIKE';
 
   // While the first load is in flight, keep the button in place rather than
   // popping it in — the marketing pages lay out around it.
@@ -66,7 +66,7 @@ export function CoachAudioButton({
             ? `${isPlaying ? 'Pause' : 'Play'} Coach Mike: ${displayLabel}`
             : 'This recording has not been added yet'
         }
-        title={available ? entry?.scriptLine : 'Not recorded yet'}
+        title={available ? transcript : 'Not recorded yet'}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -138,9 +138,22 @@ export function CoachAudioButton({
         The script line doubles as the transcript. Kept in the DOM for screen
         readers rather than rendered, so the visual design is untouched.
       */}
-      {clip && entry && <span className="sr-only">{entry.scriptLine}</span>}
+      {clip && transcript && <span className="sr-only">{transcript}</span>}
     </div>
   );
+}
+
+/**
+ * The words to show for a clip, or undefined when there are none to trust.
+ *
+ * A clip Michael is re-recording still carries the old wording in the
+ * catalogue. Once the new take is uploaded it plays straight away, but the
+ * words on file are not the ones being spoken, so none are shown until the
+ * catalogue is updated.
+ */
+function transcriptFor(clipId: string): string | undefined {
+  const entry = getCoachAudioEntry(clipId);
+  return entry && !entry.reRecord ? entry.scriptLine : undefined;
 }
 
 /**
@@ -155,7 +168,6 @@ export function CoachAudioInlineButton({
   whenMissing?: 'disable' | 'hide';
 }) {
   const { available, isLoading, isPlaying, enabled, toggle } = useCoachAudioClip(clipId);
-  const entry = getCoachAudioEntry(clipId);
 
   if (!available && !isLoading && whenMissing === 'hide') return null;
 
@@ -169,7 +181,7 @@ export function CoachAudioInlineButton({
       aria-label={
         available ? `${isPlaying ? 'Pause' : 'Play'} Coach Mike` : 'Recording not added yet'
       }
-      title={entry?.scriptLine}
+      title={transcriptFor(clipId)}
       style={{
         width: '30px',
         height: '30px',

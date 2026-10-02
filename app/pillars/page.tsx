@@ -20,16 +20,16 @@ const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: 
 };
 
 const PILLAR_DESCRIPTIONS: Record<string, string> = {
-  mindset:     'Build your mental fortress. Learn why your brain does what it does and how to redirect anxiety into performance energy.',
-  skating:     'Move with precision and purpose. Master edgework, lateral speed, and efficiency of movement in sync with the play.',
-  form:        'Perfect your physical foundation. Stance, paddle control, and body mechanics — the blueprint of every great save.',
-  positioning: 'See the ice geometrically. The 7 Angle-Marker System gives you a mathematical grid to always be in the right spot.',
+  mindset:     "Build your Mind Vault. Without the right mind set, it really won't matter how skilled you are. Learn why your brain does what it does, and how to turn anxiety into performance energy.",
+  skating:     'Skating is the engine. Master balance, edgework, lateral, T-push and stopping tech — no wasted movement, no wasted energy, no wasted time — and perform in sync with the play.',
+  form:        'Perfect your understanding, balance, coordination and sense of self — the ability to get into a save and your recovery tech, stationary or in motion.',
+  positioning: "The 7 Angle-Marker System (7AMS) — your Goalie's Positional System (GPS) above the icing line. We don't guess — we read the ice. The landmarks are balanced, and all 7 angles connect to the net.",
   seven_point: 'Own the danger zone. 6Z-7PS addresses below-the-icing-line positioning — the most dangerous area on ice.',
   // Keyed by the slugs getPillarSlugFromDocId can actually return. The retired
   // `training` slug resolves to `practice` before it ever reaches this map, so its
   // old combined copy is split across the two pillars that replaced it.
   game:        'Chart what actually happened. Game-day routine, in-game management, and the post-game review that turns one night into a pattern you can train against.',
-  practice:    'Make every rep count. Plan with intent, aim at the weakness your charts found, and build practices that ask what a game asks.',
+  practice:    'Make every rep count. Plan with intent, aim at what your charts say needs attention, and build practices that ask what a game asks.',
   lifestyle:   'Train the whole athlete. Off-ice habits, nutrition, recovery, and sleep are the foundation your on-ice game builds on.',
 };
 
