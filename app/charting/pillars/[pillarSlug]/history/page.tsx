@@ -42,6 +42,7 @@ import {
   headerPanelStyle,
   accentLineStyle,
   formatResponseValue,
+  isRatingField,
 } from '@/components/charting/pillar-chrome';
 
 /**
@@ -80,21 +81,6 @@ function scalePercent(value: number, field: FormField | undefined): number {
   const min = field?.validation?.min ?? 1;
   const max = field?.validation?.max ?? 10;
   return scaleToPercentage(value, max, min) ?? 0;
-}
-
-/**
- * True only for fields answered on a rating scale. A count (shots faced, period,
- * clock, net box) has no ceiling, so it is shown as a plain number and never
- * scored out of 10 or counted as a checkpoint.
- */
-function isRatingField(field: FormField | undefined): boolean {
-  if (!field) return false;
-  if (field.type === 'scale') return true;
-  return (
-    field.type === 'numeric' &&
-    field.validation?.min !== undefined &&
-    field.validation?.max !== undefined
-  );
 }
 
 function GrowthChip({ growth }: { growth: number }) {
@@ -420,6 +406,44 @@ export default function PillarHistoryPage() {
       .sort((a, b) => (a.latestValue ?? a.average ?? 0) - (b.latestValue ?? b.average ?? 0));
   }, [analytics, fieldsById]);
 
+  /**
+   * The headline score is the average of the bars on screen, so the number can
+   * always be reconciled with what the goalie can see (four bars at 2/10 read 20%).
+   */
+  const overallScore = useMemo(() => {
+    const percents = checkpoints
+      .map((r) => {
+        const value = r.latestValue ?? r.average;
+        return typeof value === 'number' ? scalePercent(value, fieldsById.get(r.fieldId)) : null;
+      })
+      .filter((p): p is number => p !== null);
+    if (percents.length === 0) return 0;
+    return percents.reduce((sum, p) => sum + p, 0) / percents.length;
+  }, [checkpoints, fieldsById]);
+
+  /** Counts from the newest check-in — plain numbers, no scale. */
+  const latestCounts = useMemo(() => {
+    const newest = visibleEntries[0];
+    if (!newest || !template) return [];
+    const rows: { id: string; label: string; value: number }[] = [];
+    [...template.sections]
+      .sort((a, b) => a.order - b.order)
+      .forEach((section) => {
+        const sectionData = newest.responses?.[section.id];
+        if (!sectionData || Array.isArray(sectionData)) return;
+        [...section.fields]
+          .sort((a, b) => a.order - b.order)
+          .forEach((field) => {
+            if (field.type !== 'numeric' || isRatingField(field)) return;
+            const value = (sectionData as Record<string, FieldResponse>)[field.id]?.value;
+            if (typeof value === 'number' && !isNaN(value)) {
+              rows.push({ id: field.id, label: field.label, value });
+            }
+          });
+      });
+    return rows;
+  }, [visibleEntries, template]);
+
   if (authLoading || loading) {
     return (
       <div style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
@@ -591,7 +615,7 @@ export default function PillarHistoryPage() {
                   <StatTile label="checkpoints tracked" value={String(checkpoints.length)} accent={CYAN} />
                   <StatTile
                     label="overall score"
-                    value={`${Math.round(analytics?.overallPerformanceScore ?? 0)}%`}
+                    value={`${Math.round(overallScore)}%`}
                     accent={MINT}
                   />
                   <StatTile
@@ -614,6 +638,26 @@ export default function PillarHistoryPage() {
               </>
             )}
           </div>
+
+          {/* ── LATEST NUMBERS ── plain counts, never scored ── */}
+          {latestCounts.length > 0 && (
+            <div style={panelStyle}>
+              <div style={accentLineStyle} />
+              <div style={{ padding: '18px 20px 15px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
+                  Game Numbers
+                </h3>
+                <p style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 500, marginTop: '2px' }}>
+                  From your latest check-in — facts, not scores
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '16px 20px 18px' }}>
+                {latestCounts.map((row) => (
+                  <StatTile key={row.id} label={row.label} value={String(row.value)} accent="#fff" />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── SUBMITTED CHECK-INS ── */}
           <div style={{ ...panelStyle, marginBottom: '24px' }}>

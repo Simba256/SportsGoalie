@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart } from 'lucide-react';
-import { FieldResponseValue } from '@/types';
+import { FieldResponseValue, FormField } from '@/types';
 
 /**
  * Shared visual language for the pillar-charting area (`/charting/pillars/**`).
@@ -55,4 +55,20 @@ export function formatResponseValue(value: FieldResponseValue | undefined): stri
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (Array.isArray(value)) return value.length ? value.join(', ') : null;
   return String(value);
+}
+
+
+/**
+ * True only for fields answered on a rating scale. A count (shots faced, period,
+ * clock, net box) has no ceiling, so it is shown as a plain number and never
+ * scored out of 10, averaged into a score, or counted as a checkpoint.
+ */
+export function isRatingField(field: FormField | undefined): boolean {
+  if (!field) return false;
+  if (field.type === 'scale') return true;
+  return (
+    field.type === 'numeric' &&
+    field.validation?.min !== undefined &&
+    field.validation?.max !== undefined
+  );
 }

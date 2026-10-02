@@ -98,7 +98,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   private readonly ANALYTICS_COLLECTION = 'dynamic_charting_analytics';
   // 2: scores normalize against the field's configured scale instead of the
   //    observed range, and scale fields mis-typed as `percentage` are repaired.
-  private readonly CALCULATION_VERSION = 3; // Increment when algorithm changes
+  private readonly CALCULATION_VERSION = 4; // Increment when algorithm changes
 
   // ==================== MAIN ANALYTICS CALCULATION ====================
 
@@ -426,8 +426,17 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     }
 
     // Overall performance
+    // Rating fields only, scored on the same basis as the Progress Board's bars
+    // (latest answer, falling back to the average), so this number always matches
+    // what the goalie sees. Counts and yes/no answers are facts, not ratings.
     const allScores = Object.values(fieldAnalytics)
-      .map((fa) => this.getFieldScore(fa))
+      .filter((fa) => fa.scaleMax !== undefined)
+      .map((fa) => {
+        const value = fa.latestValue ?? fa.average;
+        return typeof value === 'number'
+          ? scaleToPercentage(value, fa.scaleMax as number, fa.scaleMin)
+          : null;
+      })
       .filter((s) => s !== null) as number[];
 
     const overallPerformanceScore =
