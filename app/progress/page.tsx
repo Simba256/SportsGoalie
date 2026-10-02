@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Calendar,
   TrendingUp,
@@ -38,6 +38,8 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
+import { useAuth } from '@/lib/auth/context';
+import { dynamicChartingService } from '@/lib/database';
 import { getScoreBand, getScoreBandRangeLabel, SCORE_BANDS, type ScoreTier } from '@/lib/config/score-bands';
 
 const BLUE = '#37b5ff';
@@ -60,6 +62,19 @@ type TabKey = 'overview' | 'pillars' | 'performance' | 'history';
 function ProgressContent() {
   const { data, loading, error } = useAnalytics();
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const { user } = useAuth();
+  // Pillar-chart check-ins aren't Knowledge Checks, so they never reach the
+  // figures above; the count is fetched here so submitted check-ins still show.
+  const [checkInCount, setCheckInCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    dynamicChartingService.getDynamicEntriesByStudent(user.id).then((r) => {
+      if (!cancelled && r.success && r.data) setCheckInCount(r.data.length);
+    });
+    return () => { cancelled = true; };
+  }, [user]);
 
   if (loading) return <SkeletonAnalytics />;
 
@@ -158,6 +173,18 @@ function ProgressContent() {
           <BigStatCard label="Avg Grasp Level" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
           <BigStatCard label="Current Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
         </div>
+
+        {checkInCount !== null && checkInCount > 0 && (
+          <Link
+            href="/charting/pillars"
+            style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '14px 18px', marginBottom: '24px', textDecoration: 'none' }}
+          >
+            <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>
+              Pillar Check-ins: {checkInCount} submitted
+            </span>
+            <span style={{ color: BLUE, fontSize: '12px', fontWeight: 700 }}>Open Progress Boards →</span>
+          </Link>
+        )}
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '24px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px', flexWrap: 'wrap' }}>
