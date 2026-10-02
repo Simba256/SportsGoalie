@@ -32,8 +32,7 @@ import type {
   SignupAgeBandId,
   SignupLevelId,
 } from '@/data/goalie-signup-intake';
-import { CoachAudioButton } from '@/components/audio/CoachAudioButton';
-import { useCoachAudio } from '@/lib/audio/context';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 import {
   Mic,
   ChevronRight,
@@ -146,26 +145,6 @@ function clearDraft(userId: string): void {
   } catch {
     // ignore
   }
-}
-
-// ─── Coach Mike's welcome lines ─────────────────────────────────────────────
-// The five orientation recordings (V-A-01 to V-A-05), one on each opening
-// screen. Hidden until the take is uploaded, and while a take is held for
-// re-recording, so no screen offers audio it cannot play.
-
-interface ScreenVoiceProps {
-  clipId: string;
-  label: string;
-  className?: string;
-}
-
-function ScreenVoice({ clipId, label, className }: ScreenVoiceProps): React.ReactElement {
-  const { stopClip } = useCoachAudio();
-
-  // Stop this line when its screen goes, so it does not run on over the next.
-  useEffect(() => () => stopClip(clipId), [clipId, stopClip]);
-
-  return <CoachAudioButton clipId={clipId} label={label} whenMissing="hide" className={className} />;
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -1435,7 +1414,7 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           {DRIVER_OR_PASSENGER_SCREEN.eyebrow}
         </p>
 
-        <ScreenVoice clipId="V-A-02" label="HEAR COACH MIKE: WHAT THIS IS" className="mb-5 justify-center" />
+        <ScreenVoice clipId="DOP-INTRO" label="HEAR COACH MIKE: WHAT THIS IS" className="mb-5 justify-center" />
 
         <div style={{ ...cardStyle, padding: '28px', marginBottom: '20px' }} className="sbq-card-pad">
           <p style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, letterSpacing: '0.02em', margin: '0 0 22px' }}>
@@ -1552,7 +1531,11 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
             <p style={{ fontSize: 'clamp(15px,2vw,17px)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.85, marginBottom: '28px' }}>
               {option.reply}
             </p>
-            <ScreenVoice clipId="V-A-03" label="HEAR COACH MIKE: BUILT NOT BORN" className="mb-7" />
+            <ScreenVoice
+              clipId={`DOP-${option.letter}`}
+              label={`HEAR COACH MIKE: ${option.replyTitle}`}
+              className="mb-7"
+            />
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
               <button onClick={goNext} style={{ ...btnPrimary, fontSize: '15px' }} className="sbq-btn sbq-cta">
                 CONTINUE
