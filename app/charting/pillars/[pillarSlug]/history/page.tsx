@@ -425,7 +425,7 @@ export default function PillarHistoryPage() {
   const latestCounts = useMemo(() => {
     const newest = visibleEntries[0];
     if (!newest || !template) return [];
-    const rows: { id: string; label: string; value: number }[] = [];
+    const rows: { id: string; label: string; value: string }[] = [];
     [...template.sections]
       .sort((a, b) => a.order - b.order)
       .forEach((section) => {
@@ -434,11 +434,56 @@ export default function PillarHistoryPage() {
         [...section.fields]
           .sort((a, b) => a.order - b.order)
           .forEach((field) => {
-            if (field.type !== 'numeric' || isRatingField(field)) return;
+            if (isRatingField(field)) return;
             const value = (sectionData as Record<string, FieldResponse>)[field.id]?.value;
-            if (typeof value === 'number' && !isNaN(value)) {
-              rows.push({ id: field.id, label: field.label, value });
+            if (field.type === 'numeric') {
+              if (typeof value === 'number' && !isNaN(value)) {
+                rows.push({ id: field.id, label: field.label, value: String(value) });
+              }
+              return;
             }
+            // Period, net box and games-today are radio fields. Their answers are
+            // stored as text ("1", "OT"), so they are told apart from word-choice
+            // radios (PATTERN / BURP) by having numbered options.
+            const hasNumberedOptions = field.options?.some((option) => /^\d+$/.test(option.trim()));
+            if (field.type === 'radio' && hasNumberedOptions && typeof value === 'string' && value.trim() !== '') {
+              rows.push({ id: field.id, label: field.label, value: value.trim() });
+            }
+          });
+      });
+    return rows;
+  }, [visibleEntries, template]);
+
+  /**
+   * Yes/no questions get their own lines and never feed the score — a "yes" on
+   * "last minute of the period" is a goal against, so counting it as high would
+   * pull the score the wrong way. Shown as: latest answer + how often it was yes.
+   */
+  const yesNoResults = useMemo(() => {
+    if (!template) return [];
+    const rows: { id: string; label: string; latest: boolean; yesCount: number; answered: number }[] = [];
+    [...template.sections]
+      .sort((a, b) => a.order - b.order)
+      .forEach((section) => {
+        [...section.fields]
+          .sort((a, b) => a.order - b.order)
+          .filter((field) => field.type === 'yesno')
+          .forEach((field) => {
+            const answers = visibleEntries
+              .map((entry) => {
+                const sectionData = entry.responses?.[section.id];
+                if (!sectionData || Array.isArray(sectionData)) return undefined;
+                return (sectionData as Record<string, FieldResponse>)[field.id]?.value;
+              })
+              .filter((value): value is boolean => typeof value === 'boolean');
+            if (answers.length === 0) return;
+            rows.push({
+              id: field.id,
+              label: field.label,
+              latest: answers[0],
+              yesCount: answers.filter(Boolean).length,
+              answered: answers.length,
+            });
           });
       });
     return rows;
@@ -653,7 +698,50 @@ export default function PillarHistoryPage() {
               </div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '16px 20px 18px' }}>
                 {latestCounts.map((row) => (
-                  <StatTile key={row.id} label={row.label} value={String(row.value)} accent="#fff" />
+                  <StatTile key={row.id} label={row.label} value={row.value} accent="#fff" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── YES / NO RESULTS ── patterns tracked on their own, never scored ── */}
+          {yesNoResults.length > 0 && (
+            <div style={panelStyle}>
+              <div style={accentLineStyle} />
+              <div style={{ padding: '18px 20px 15px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
+                  Yes / No Results
+                </h3>
+                <p style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 500, marginTop: '2px' }}>
+                  Patterns to watch — tracked on their own, not part of your score
+                </p>
+              </div>
+              <div style={{ padding: '2px 20px 8px' }}>
+                {yesNoResults.map((row, index) => (
+                  <div
+                    key={row.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '13px 0',
+                      ...(index > 0 ? { borderTop: '1px solid rgba(255,255,255,0.07)' } : {}),
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', lineHeight: 1.35 }}>
+                        {row.label}
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 500, marginTop: '2px' }}>
+                        Yes in {row.yesCount} of {row.answered} check-in{row.answered === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#fff' }}>{row.latest ? 'Yes' : 'No'}</div>
+                      <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>latest</div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
