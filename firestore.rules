@@ -1042,6 +1042,23 @@ service cloud.firestore {
       allow delete: if isOwnerOrAdmin(resource.data.studentId);
     }
 
+    // Learning goals — private to the goalie who set them.
+    // The studentId on a goal can never be changed, so a goal cannot be handed to someone else.
+    match /student_goals/{goalId} {
+      allow read: if isOwnerOrAdmin(resource.data.studentId);
+      allow create: if isOwner(request.resource.data.studentId) &&
+                       request.resource.data.title is string &&
+                       request.resource.data.title.size() > 0 &&
+                       request.resource.data.title.size() <= 100 &&
+                       request.resource.data.targetValue is number &&
+                       request.resource.data.targetValue > 0 &&
+                       request.resource.data.type in ['skill_completion', 'quiz_score', 'time_spent', 'streak', 'sport_completion'] &&
+                       request.resource.data.priority in ['low', 'medium', 'high'];
+      allow update: if isOwnerOrAdmin(resource.data.studentId) &&
+                       request.resource.data.studentId == resource.data.studentId;
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
     // Generic Invitations collection — all roles (student/coach/goalie_coach/parent)
     match /invitations/{invitationId} {
       // Admins can read all invitations

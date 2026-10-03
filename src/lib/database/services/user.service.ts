@@ -470,7 +470,8 @@ export class UserService extends BaseDatabaseService {
 
       // Calculate real stats
       const quizzesCompleted = attempts.length; // Total number of video quiz attempts
-      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+      // The quiz player records seconds in totalTimeSpent and never sets the legacy timeSpent alias.
+      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.totalTimeSpent || a.timeSpent || 0), 0);
       const averageQuizScore = quizzesCompleted > 0
         ? Math.round(attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizzesCompleted)
         : 0;

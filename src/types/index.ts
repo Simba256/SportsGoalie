@@ -440,7 +440,7 @@ export interface UserProgress {
 }
 
 export interface OverallStats {
-  totalTimeSpent: number; // minutes
+  totalTimeSpent: number; // seconds (summed from quiz attempts)
   skillsCompleted: number;  // Number of unique skills attempted
   sportsCompleted: number;
   quizzesCompleted: number;  // Total quiz attempts
