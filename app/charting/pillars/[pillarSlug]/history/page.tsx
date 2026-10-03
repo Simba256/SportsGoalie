@@ -664,7 +664,7 @@ export default function PillarHistoryPage() {
                     accent={MINT}
                   />
                   <StatTile
-                    label="current streak"
+                    label="check-in streak (days)"
                     value={String(analytics?.streak?.currentStreak ?? 0)}
                     accent="#fbbf24"
                   />

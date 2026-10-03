@@ -23,6 +23,7 @@ import {
 import { db } from '../../firebase/config';
 import { logger } from '../../utils/logger';
 import { toDateSafe } from '../../utils/timestamp';
+import { calculateActivityStreak } from '../../utils/streak';
 import { scaleToPercentage } from '../../scoring/scale-score';
 import { formTemplateService } from './form-template.service';
 import { dynamicChartingService } from './dynamic-charting.service';
@@ -98,7 +99,9 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   private readonly ANALYTICS_COLLECTION = 'dynamic_charting_analytics';
   // 2: scores normalize against the field's configured scale instead of the
   //    observed range, and scale fields mis-typed as `percentage` are repaired.
-  private readonly CALCULATION_VERSION = 4; // Increment when algorithm changes
+  // 5: the check-in streak counts from yesterday as well as today, and the
+  //    longest streak is the true longest run rather than a running counter.
+  private readonly CALCULATION_VERSION = 5; // Increment when algorithm changes
 
   // ==================== MAIN ANALYTICS CALCULATION ====================
 
@@ -945,42 +948,20 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Calculates streak data
+   * Calculates streak data. The counting rule is shared with the charting hub
+   * (see calculateActivityStreak) so the two screens cannot disagree.
    */
   private calculateStreak(entries: DynamicChartingEntry[]) {
-    const dates = entries
-      .map((e) => {
-        const date = toDateSafe(e.submittedAt);
-        if (!date) return null;
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
-      })
-      .filter((date): date is string => date !== null)
+    const submitted = entries
+      .map((e) => toDateSafe(e.submittedAt))
+      .filter((date): date is Date => date !== null);
+
+    const dates = submitted
+      .map((date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString())
       .filter((date, index, self) => self.indexOf(date) === index)
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-    let currentStreak = 0;
-    let longestStreak = 0;
-    let tempStreak = 0;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < dates.length; i++) {
-      const currentDate = new Date(dates[i]);
-      const expectedDate = new Date(today);
-      expectedDate.setDate(expectedDate.getDate() - i);
-
-      if (currentDate.toISOString() === expectedDate.toISOString()) {
-        tempStreak++;
-        if (i === 0 || currentStreak > 0) {
-          currentStreak = tempStreak;
-        }
-      } else {
-        tempStreak = 1;
-      }
-
-      longestStreak = Math.max(longestStreak, tempStreak);
-    }
+    const { currentStreak, longestStreak } = calculateActivityStreak(submitted);
 
     return {
       currentStreak,

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
+import { calculateActivityStreak } from '@/lib/utils/streak';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import { NewSessionModal } from '@/components/charting/NewSessionModal';
 
@@ -38,11 +39,6 @@ const toDate = (value: unknown): Date | null => {
   return null;
 };
 
-const toDateKey = (value: unknown): string | null => {
-  const date = toDate(value);
-  return date ? format(date, 'yyyy-MM-dd') : null;
-};
-
 const calculateSessionStats = (sessions: Session[]): SessionStats => {
   const completedSessions = sessions.filter(s => s.status === 'completed');
   const gameSessions     = sessions.filter(s => s.type === 'game');
@@ -62,25 +58,12 @@ const calculateSessionStats = (sessions: Session[]): SessionStats => {
 };
 
 const calculateCurrentStreak = (sessions: Session[], chartingEntries: ChartingEntry[], dynamicEntries: DynamicChartingEntry[]): number => {
-  const activityDateKeys = new Set<string>();
-  sessions.filter(s => s.status === 'completed').forEach(s => { const k = toDateKey(s.date); if (k) activityDateKeys.add(k); });
-  chartingEntries.forEach(e => { const k = toDateKey(e.submittedAt); if (k) activityDateKeys.add(k); });
-  dynamicEntries.forEach(e => { const k = toDateKey(e.submittedAt); if (k) activityDateKeys.add(k); });
-  const streakDates = Array.from(activityDateKeys).sort((a, b) => b.localeCompare(a));
-  if (!streakDates.length) return 0;
-  const today     = toDateKey(new Date());
-  const yesterday = toDateKey(new Date(Date.now() - DAY_MS));
-  if (!today || !yesterday) return 0;
-  if (streakDates[0] !== today && streakDates[0] !== yesterday) return 0;
-  let streak = 1;
-  for (let i = 1; i < streakDates.length; i++) {
-    const prev = new Date(`${streakDates[i - 1]}T00:00:00`);
-    const curr = new Date(`${streakDates[i]}T00:00:00`);
-    const diff = Math.round((prev.getTime() - curr.getTime()) / DAY_MS);
-    if (diff === 1) { streak++; continue; }
-    if (diff > 1) break;
-  }
-  return streak;
+  const activityDates = [
+    ...sessions.filter(s => s.status === 'completed').map(s => toDate(s.date)),
+    ...chartingEntries.map(e => toDate(e.submittedAt)),
+    ...dynamicEntries.map(e => toDate(e.submittedAt)),
+  ].filter((date): date is Date => date !== null);
+  return calculateActivityStreak(activityDates).currentStreak;
 };
 
 export default function ChartingPage() {
@@ -187,7 +170,7 @@ export default function ChartingPage() {
               </h1>
               <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
                 {stats.totalSessions > 0
-                  ? `${stats.totalSessions} total sessions · ${chartingStats.completionRate}% charted · ${currentStreak} day streak`
+                  ? `${stats.totalSessions} total sessions · ${chartingStats.completionRate}% charted · ${currentStreak} day charting streak`
                   : 'Start charting your game and practice sessions to track your progress.'}
               </p>
               <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
@@ -284,7 +267,7 @@ export default function ChartingPage() {
           {currentStreak > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '99px', padding: '5px 12px' }}>
               <span style={{ fontSize: '14px' }}>🔥</span>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc' }}>{currentStreak} day streak</span>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc' }}>{currentStreak} day charting streak</span>
             </div>
           )}
         </div>

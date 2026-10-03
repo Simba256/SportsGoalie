@@ -5,8 +5,9 @@ import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import { chartingService, dynamicChartingService, formTemplateService } from '@/lib/database';
-import { Session, ChartingEntry, DynamicChartingEntry, FormTemplate } from '@/types';
+import { Session, ChartingEntry, DynamicChartingEntry, FormTemplate, FieldResponse } from '@/types';
 import { toDateSafe as toDateSafeShared } from '@/lib/utils/timestamp';
+import { formatResponseValue, isRatingField } from '@/components/charting/pillar-chrome';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,68 @@ const LABEL  = 'rgba(255,255,255,0.55)';
 const innerCard = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' } as const;
 const divider = { borderColor: 'rgba(255,255,255,0.07)' } as const;
 
+/**
+ * What the goalie actually answered on one pillar check-in — every question with
+ * its answer, grouped by section, so Analytics shows the content of the chart and
+ * not only that one was submitted. Unanswered questions are left out.
+ */
+function CheckInAnswers({ entry, template }: { entry: DynamicChartingEntry; template: FormTemplate }) {
+  const sections = [...template.sections]
+    .sort((a, b) => a.order - b.order)
+    .map((section) => {
+      const sectionData = entry.responses?.[section.id];
+      if (!sectionData || Array.isArray(sectionData)) return null;
+      const answered = [...section.fields]
+        .sort((a, b) => a.order - b.order)
+        .map((field) => ({ field, response: (sectionData as Record<string, FieldResponse>)[field.id] }))
+        .filter(({ response }) => formatResponseValue(response?.value) !== null || response?.comments);
+      return answered.length > 0 ? { section, answered } : null;
+    })
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+
+  if (sections.length === 0) {
+    return <p style={{ fontSize: '12px', color: MUTED }}>No answers were recorded on this check-in.</p>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {sections.map(({ section, answered }) => (
+        <div key={section.id}>
+          <p style={{ fontSize: '10.5px', fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(55,181,255,0.75)', marginBottom: '6px' }}>
+            {section.title}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {answered.map(({ field, response }) => {
+              const display = formatResponseValue(response?.value);
+              return (
+                <div key={field.id}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '14px' }}>
+                    <span style={{ fontSize: '12.5px', color: LABEL, fontWeight: 500, minWidth: 0 }}>{field.label}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                      {display ?? '—'}
+                      {display !== null && typeof response?.value === 'number' && isRatingField(field) && (
+                        <span style={{ fontSize: '10.5px', fontWeight: 600, color: MUTED }}>/{field.validation?.max ?? 10}</span>
+                      )}
+                    </span>
+                  </div>
+                  {response?.comments && (
+                    <p style={{ marginTop: '3px', fontSize: '11.5px', color: MUTED, fontStyle: 'italic', lineHeight: 1.5 }}>{response.comments}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {entry.additionalComments && (
+        <p style={{ fontSize: '12px', color: LABEL, lineHeight: 1.55 }}>
+          <span style={{ fontWeight: 800, color: '#fff' }}>Notes: </span>{entry.additionalComments}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ChartingAnalyticsPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -56,6 +119,7 @@ export default function ChartingAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [openV2Game, setOpenV2Game] = useState(false);
   const [openV2Practice, setOpenV2Practice] = useState(false);
+  const [openCheckInId, setOpenCheckInId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -756,21 +820,40 @@ export default function ChartingAnalyticsPage() {
                 const template = checkInTemplates[entry.formTemplateId];
                 const date = toDateSafeShared(entry.submittedAt);
                 const board = template ? `/charting/pillars/${template.pillar}/history` : null;
+                const open = openCheckInId === entry.id;
+                const Chevron = open ? ChevronDown : ChevronRight;
                 return (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    disabled={!board}
-                    onClick={() => board && router.push(board)}
-                    className="flex items-center justify-between gap-3 text-left"
-                    style={{ ...innerCard, borderRadius: '12px', padding: '12px 16px', cursor: board ? 'pointer' : 'default' }}
-                  >
-                    <div className="min-w-0">
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{template?.name ?? 'Pillar chart'}</p>
-                      <p style={{ fontSize: '11px', color: MUTED, marginTop: '2px' }}>{date ? format(date, 'MMM d, yyyy · h:mm a') : 'Date unavailable'}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: MUTED }} />
-                  </button>
+                  <div key={entry.id} style={{ ...innerCard, borderRadius: '12px' }}>
+                    <button
+                      type="button"
+                      disabled={!template}
+                      onClick={() => setOpenCheckInId(open ? null : entry.id)}
+                      aria-expanded={open}
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      style={{ padding: '12px 16px', background: 'transparent', border: 'none', cursor: template ? 'pointer' : 'default' }}
+                    >
+                      <div className="min-w-0">
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{template?.name ?? 'Pillar chart'}</p>
+                        <p style={{ fontSize: '11px', color: MUTED, marginTop: '2px' }}>{date ? format(date, 'MMM d, yyyy · h:mm a') : 'Date unavailable'}</p>
+                      </div>
+                      {template && <Chevron className="w-4 h-4 flex-shrink-0" style={{ color: MUTED }} />}
+                    </button>
+                    {open && template && (
+                      <div style={{ padding: '14px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                        <CheckInAnswers entry={entry} template={template} />
+                        {board && (
+                          <button
+                            type="button"
+                            onClick={() => router.push(board)}
+                            className="flex items-center gap-1"
+                            style={{ marginTop: '14px', fontSize: '12px', fontWeight: 700, color: CYAN, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+                          >
+                            View Progress Board <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

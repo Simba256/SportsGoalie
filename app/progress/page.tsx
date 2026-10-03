@@ -171,7 +171,7 @@ function ProgressContent() {
           <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" icon={<Clock size={17} color={BLUE} />} />
           <BigStatCard label="Knowledge Checks" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} icon={<Trophy size={17} color={BLUE} />} />
           <BigStatCard label="Avg Grasp Level" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
-          <BigStatCard label="Current Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
+          <BigStatCard label="Learning Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
         </div>
 
         {checkInCount !== null && checkInCount > 0 && (
@@ -370,7 +370,7 @@ function ProgressContent() {
                     <span style={{ fontSize: '28px', fontWeight: 900, color: '#000f28' }}>{data.currentStreak}</span>
                   </div>
                   <div>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Day Streak</p>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Day Learning Streak</p>
                     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
                       {data.currentStreak === 0 ? 'Start a quiz today!' : data.currentStreak >= data.longestStreak ? 'Personal best!' : `${data.longestStreak - data.currentStreak} days to beat your best`}
                     </p>

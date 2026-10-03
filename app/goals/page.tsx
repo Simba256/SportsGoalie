@@ -10,14 +10,6 @@ import { useAchievements } from '@/hooks/useProgress';
 
 const BLUE = '#37b5ff';
 
-const sampleGoals = [
-  { id: '1', title: 'Complete 5 Modules in 7AMS', description: 'Work through 5 modules in the Seven Angle-Marker System pillar to build positional mastery.', type: 'skill_completion' as const, targetValue: 5, currentValue: 3, unit: 'modules', deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), priority: 'high' as const, isCompleted: false, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-  { id: '2', title: 'Maintain 7-Day Learning Streak', description: 'Show up every day for 7 consecutive days. Consistency is the foundation of every great goaltender.', type: 'streak' as const, targetValue: 7, currentValue: 3, unit: 'days', deadline: undefined, priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-  { id: '3', title: 'Achieve 95-100 CLUB Grasp Level Average', description: 'Push your Knowledge Check Grasp Level average into the 95-100 CLUB tier across all pillars.', type: 'quiz_score' as const, targetValue: 95, currentValue: 78, unit: '%', deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
-  { id: '4', title: 'Complete Pillar 1 — MindSet', description: 'Finish every module in the MindSet pillar. The mental game is the foundation of everything.', type: 'sport_completion' as const, targetValue: 1, currentValue: 1, unit: 'pillar', deadline: undefined, priority: 'high' as const, isCompleted: true, createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) },
-  { id: '5', title: 'Log 20 Charting Hours This Month', description: 'Track 20 hours of game and practice charting this month to build real performance data.', type: 'time_spent' as const, targetValue: 20, currentValue: 12, unit: 'hours', deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), priority: 'low' as const, isCompleted: false, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
-];
-
 interface Goal {
   id: string;
   title: string;
@@ -43,7 +35,7 @@ export default function GoalsAndAchievementsPage() {
 }
 
 function GoalsAndAchievementsContent() {
-  const [goals, setGoals] = useState<Goal[]>(sampleGoals);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [activeTab, setActiveTab] = useState<ActiveTab>('goals');
   const { achievements, userAchievements, loading: achievementsLoading, error: achievementsError } = useAchievements();
 
