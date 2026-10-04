@@ -40,6 +40,7 @@ import Link from 'next/link';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
 import { useAuth } from '@/lib/auth/context';
 import { dynamicChartingService } from '@/lib/database';
+import { PILLARS } from '@/types';
 import { getScoreBand, getScoreBandRangeLabel, SCORE_BANDS, type ScoreTier } from '@/lib/config/score-bands';
 
 const BLUE = '#37b5ff';
@@ -97,9 +98,10 @@ function ProgressContent() {
     ? Math.round((data.consistency.thisMonthDays / data.consistency.daysInCurrentMonth) * 100)
     : 0;
 
-  // Sort keys, matched loosely against the stored pillar name (see below), in
-  // Michael's approved order. Uppercase because the comparison uppercases both sides.
-  const PILLAR_ORDER = ['MINDSET', 'SKATING', '7AMS', '6 ZONE', 'FORM', 'GAME', 'PRACTICE', 'LIFESTYLE'];
+  // Michael's approved pillar order is the order of the PILLARS list. Sorting is
+  // keyed on the pillar's slug, not its display name: Pillar 4's short name is
+  // "6Z-7PS", which a name match missed, so it was pushed to the end of the list.
+  const PILLAR_ORDER: string[] = PILLARS.map(p => p.slug);
 
   // One pass over the attempts, shared by the ring and the legend beside it. The
   // bands live in score-bands.ts so the two can never drift apart again.
@@ -114,8 +116,8 @@ function ProgressContent() {
     .filter(s => s.value > 0);
 
   const sortedPillarBreakdown = [...data.pillarBreakdown].sort((a, b) => {
-    const ai = PILLAR_ORDER.findIndex(p => a.pillarName.toUpperCase().includes(p) || p.includes(a.pillarName.toUpperCase()));
-    const bi = PILLAR_ORDER.findIndex(p => b.pillarName.toUpperCase().includes(p) || p.includes(b.pillarName.toUpperCase()));
+    const ai = PILLAR_ORDER.indexOf(a.pillarId);
+    const bi = PILLAR_ORDER.indexOf(b.pillarId);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
@@ -372,7 +374,7 @@ function ProgressContent() {
                   <div>
                     <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Day Learning Streak</p>
                     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
-                      {data.currentStreak === 0 ? 'Start a quiz today!' : data.currentStreak >= data.longestStreak ? 'Personal best!' : `${data.longestStreak - data.currentStreak} days to beat your best`}
+                      {data.currentStreak === 0 ? 'Start a Knowledge Check today!' : data.currentStreak >= data.longestStreak ? 'Personal best!' : `${data.longestStreak - data.currentStreak} days to beat your best`}
                     </p>
                   </div>
                 </div>

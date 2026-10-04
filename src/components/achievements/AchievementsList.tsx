@@ -42,7 +42,7 @@ export function AchievementsList({ achievements, userAchievements, loading = fal
   const userAchievementMap = new Map(userAchievements.map(ua => [ua.achievementId, ua]));
 
   const filteredAchievements = achievements.filter(a => {
-    const matchesCategory = filterCategory === 'all' || (a.rarity ?? '').toUpperCase() === filterCategory;
+    const matchesCategory = filterCategory === 'all' || (a.category ?? a.rarity ?? '').toUpperCase() === filterCategory;
     const matchesTier = filterTier === 'all' || (a.tier ?? '').toUpperCase() === filterTier;
     const matchesType = filterType === 'all' || a.type === filterType || (filterType === 'knowledge-check' && a.type === 'quiz');
     return matchesCategory && matchesTier && matchesType;
