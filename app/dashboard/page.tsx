@@ -23,6 +23,8 @@ import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
 import { scaleToPercentage } from '@/lib/scoring/scale-score';
 import { useGrowthPoints } from '@/hooks/useGrowthPoints';
+import { mindVaultService } from '@/lib/database/services/mind-vault.service';
+import { getMindVaultCategoryInfo, type MindVaultCategorySummary } from '@/types/mind-vault';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
@@ -68,6 +70,15 @@ function StandardDashboard() {
   const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(14);
   const { currentPoints } = useGrowthPoints();
   const [baselineProfile, setBaselineProfile] = useState<BaselineIntelligenceProfile | null>(null);
+  // null while loading; a failed read settles to an empty vault rather than hanging the card.
+  const [vaultSummaries, setVaultSummaries] = useState<MindVaultCategorySummary[] | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    mindVaultService.getCategorySummary(user.id)
+      .then(result => setVaultSummaries(result.success && result.data ? result.data : []))
+      .catch(() => setVaultSummaries([]));
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id || !user?.onboardingCompleted) return;
@@ -155,7 +166,7 @@ function StandardDashboard() {
                 color: '#fb923c',
               }}>
                 <Flame size={13} color="#fb923c" />
-                <span style={{ fontSize: '12px', fontWeight: 700 }}>{stats.currentStreak} day streak</span>
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>{stats.currentStreak} day learning streak</span>
               </div>
             )}
             <div className="s1" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '30px', padding: '5px 14px', marginBottom: '18px' }}>
@@ -211,7 +222,7 @@ function StandardDashboard() {
           <StatCard label="Knowledge Checks" value={stats?.quizzesCompleted ?? 0} icon={<Trophy size={16} />} color={BLUE} delay="0s" />
           <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
           <StatCard label="Avg Grasp Level" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
-          <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
+          <StatCard label="Learning Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
           <StatCard label="Growth Points" value={currentPoints} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
           <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
@@ -290,39 +301,8 @@ function StandardDashboard() {
             {/* Continue Learning */}
             {activePillar && <ContinueLearningCard pillar={activePillar} />}
 
-            {/* MY MIND-VAULT — Coming Soon */}
-            <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.12) 0%, rgba(2,18,44,0.95) 55%, rgba(109,40,217,0.08) 100%)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(167,139,250,0.12)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Brain size={18} color="#a78bfa" />
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>MY MIND-VAULT</h2>
-                    <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)', margin: 0 }}>Your personal performance foundation</p>
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.32)', borderRadius: '20px', padding: '5px 14px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#a78bfa', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Coming Soon</span>
-                </div>
-              </div>
-              <div style={{ padding: '36px 24px', textAlign: 'center' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 28px rgba(167,139,250,0.18)' }}>
-                  <Brain size={28} color="#a78bfa" />
-                </div>
-                <h3 style={{ fontSize: '19px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Building Your Personal Vault</h3>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, maxWidth: '340px', margin: '0 auto 24px' }}>
-                  Your MIND-VAULT is where only the most valuable foundational thoughts and behaviors are stored — for game performance and for life.
-                </p>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {['Mental Filters', 'Acceptance List', 'Focus Protocol'].map((item) => (
-                    <div key={item} style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '20px', padding: '6px 14px' }}>
-                      <span style={{ fontSize: '11px', color: 'rgba(167,139,250,0.7)', fontWeight: 600 }}>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {/* MY MIND-VAULT */}
+            <MindVaultCard summaries={vaultSummaries} />
           </div>
 
           {/* RIGHT COLUMN */}
@@ -519,6 +499,72 @@ function ContinueLearningCard({ pillar }: { pillar: { sport: { id: string; name:
         </div>
       </div>
     </Link>
+  );
+}
+
+/** The goalie's own vault at a glance: how much is in it and where, with a way in. */
+function MindVaultCard({ summaries }: { summaries: MindVaultCategorySummary[] | null }) {
+  const VIOLET = '#a78bfa';
+  const total = (summaries ?? []).reduce((sum, s) => sum + s.entryCount, 0);
+  const topCategories = (summaries ?? [])
+    .filter((s) => s.entryCount > 0)
+    .sort((a, b) => b.entryCount - a.entryCount)
+    .slice(0, 4);
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.12) 0%, rgba(2,18,44,0.95) 55%, rgba(109,40,217,0.08) 100%)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '20px 24px', borderBottom: '1px solid rgba(167,139,250,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Brain size={18} color={VIOLET} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>MY MIND-VAULT</h2>
+            <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)', margin: 0 }}>Your personal performance foundation</p>
+          </div>
+        </div>
+        {summaries !== null && total > 0 && (
+          <div style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.32)', borderRadius: '20px', padding: '5px 14px', flexShrink: 0 }}>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: VIOLET, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              {total} {total === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: '24px' }}>
+        {summaries === null ? (
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Loading your vault…</p>
+        ) : total === 0 ? (
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, maxWidth: '340px', margin: '0 auto 20px' }}>
+              Your MIND-VAULT is where only the most valuable foundational thoughts and behaviors are stored — for game performance and for life.
+            </p>
+            <Link href="/mind-vault" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(167,139,250,0.14)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '12px', padding: '10px 20px', fontSize: '13px', fontWeight: 800, color: VIOLET, textDecoration: 'none' }}>
+              Start your vault <ArrowRight size={14} />
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
+              {topCategories.map((summary) => {
+                const info = getMindVaultCategoryInfo(summary.category);
+                const href = `/mind-vault/${summary.category === 'cannot_accept' ? 'cannot-accept' : summary.category}`;
+                return (
+                  <Link key={summary.category} href={href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', background: 'rgba(167,139,250,0.07)', border: '1px solid rgba(167,139,250,0.16)', borderRadius: '12px', padding: '11px 14px', textDecoration: 'none' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{info?.name ?? summary.category}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: VIOLET, fontVariantNumeric: 'tabular-nums' }}>{summary.entryCount}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link href="/mind-vault" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: VIOLET, textDecoration: 'none' }}>
+              Open my Mind-Vault <ArrowRight size={14} />
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -47,6 +47,11 @@ const ENABLED_STORAGE_KEY = 'sg.coachAudio.enabled';
 interface CoachAudioContextValue {
   /** Clips that may play, by id: uploaded and not held. Empty until the first load resolves. */
   clips: Record<string, CoachAudioClip>;
+  /**
+   * True until the clip list is in and the viewer's voice preference has been
+   * read, so nothing starts on the strength of a default the preference is
+   * about to overturn.
+   */
   isLoading: boolean;
   /** The clip currently playing, or null. */
   playingId: string | null;
@@ -56,6 +61,12 @@ interface CoachAudioContextValue {
   enabled: boolean;
   setEnabled: (value: boolean) => void;
   play: (id: string) => void;
+  /**
+   * Plays the clips one after another, each starting as the last one ends.
+   * Starting any other clip, or pausing, drops whatever of the sequence has
+   * not played yet. Call it from a tap handler on an iPhone, as with `play`.
+   */
+  playSequence: (ids: string[]) => void;
   pause: () => void;
   /** Stops `id` if it is the clip playing, and leaves anything else alone. */
   stopClip: (id: string) => void;
@@ -74,7 +85,8 @@ const CoachAudioContext = createContext<CoachAudioContextValue | null>(null);
 
 export function CoachAudioProvider({ children }: { children: ReactNode }) {
   const [clips, setClips] = useState<Record<string, CoachAudioClip>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [clipsLoading, setIsLoading] = useState(true);
+  const [preferenceRead, setPreferenceRead] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [blockedId, setBlockedId] = useState<string | null>(null);
   const [enabled, setEnabledState] = useState(true);
@@ -85,6 +97,12 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
   // The clip the element was last asked to play. Set at once rather than when
   // play() resolves, so `stopClip` also catches a clip that is still starting.
   const requestedIdRef = useRef<string | null>(null);
+  // What is still to play after the current clip, in order. Only `playSequence`
+  // fills it; any other way of starting or stopping a clip empties it.
+  const queueRef = useRef<string[]>([]);
+  // Always the latest "start the next queued clip", so the audio element's
+  // 'ended' listener, which is attached once, never calls a stale one.
+  const advanceRef = useRef<() => void>(() => {});
 
   const refresh = useCallback(async () => {
     const result = await coachAudioService.getAllClips();
@@ -128,6 +146,7 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
       } catch {
         /* default to on */
       }
+      setPreferenceRead(true);
     }, 0);
 
     return () => {
@@ -143,27 +162,40 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
     audioRef.current = element;
 
     const clearPlaying = () => setPlayingId(null);
-    element.addEventListener('ended', clearPlaying);
+    // A clip that ends by itself hands over to the next one queued. 'pause'
+    // fires on a natural end too, so it must not touch the queue; only an
+    // explicit pause() or a failure does.
+    const onEnded = () => {
+      clearPlaying();
+      advanceRef.current();
+    };
+    const onError = () => {
+      queueRef.current = [];
+      clearPlaying();
+    };
+    element.addEventListener('ended', onEnded);
     element.addEventListener('pause', clearPlaying);
-    element.addEventListener('error', clearPlaying);
+    element.addEventListener('error', onError);
 
     return () => {
-      element.removeEventListener('ended', clearPlaying);
+      element.removeEventListener('ended', onEnded);
       element.removeEventListener('pause', clearPlaying);
-      element.removeEventListener('error', clearPlaying);
+      element.removeEventListener('error', onError);
       element.pause();
       audioRef.current = null;
     };
   }, []);
 
   const pause = useCallback(() => {
+    queueRef.current = [];
     audioRef.current?.pause();
     setPlayingId(null);
     // A refused play only matters while its moment is on screen.
     setBlockedId(null);
   }, []);
 
-  const play = useCallback(
+  // Starts one clip and leaves the queue as it is.
+  const startOne = useCallback(
     (id: string) => {
       const element = audioRef.current;
       const clip = clips[id];
@@ -184,6 +216,10 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
         // Whatever went wrong, the button must not be left showing "playing".
         setPlayingId(null);
 
+        // A clip that did not start ends the sequence it was part of, unless
+        // something newer has already taken over the element.
+        if (requestedIdRef.current === id) queueRef.current = [];
+
         if (outcome === 'blocked') {
           // The phone wants a tap. Say which clip, so the screen can ask for
           // one, and unlock again on the next tap that primes.
@@ -193,6 +229,34 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
       });
     },
     [clips]
+  );
+
+  useEffect(() => {
+    advanceRef.current = () => {
+      const next = queueRef.current.shift();
+      if (next) startOne(next);
+    };
+  }, [startOne]);
+
+  const play = useCallback(
+    (id: string) => {
+      queueRef.current = [];
+      startOne(id);
+    },
+    [startOne]
+  );
+
+  const playSequence = useCallback(
+    (ids: string[]) => {
+      // A line that is not on file is skipped rather than ending the run. A
+      // caller that needs every line, or none, checks `clips` first.
+      const playable = ids.filter(id => clips[id]);
+      if (playable.length === 0) return;
+
+      queueRef.current = playable.slice(1);
+      startOne(playable[0]);
+    },
+    [clips, startOne]
   );
 
   const prime = useCallback(() => {
@@ -235,6 +299,8 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
     [pause]
   );
 
+  const isLoading = clipsLoading || !preferenceRead;
+
   const value = useMemo<CoachAudioContextValue>(
     () => ({
       clips,
@@ -244,6 +310,7 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
       enabled,
       setEnabled,
       play,
+      playSequence,
       pause,
       stopClip,
       toggle,
@@ -258,6 +325,7 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
       enabled,
       setEnabled,
       play,
+      playSequence,
       pause,
       stopClip,
       toggle,

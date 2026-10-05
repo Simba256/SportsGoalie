@@ -688,8 +688,9 @@ export class ProgressService extends BaseDatabaseService {
 
       const achievement = achievementDoc.data() as Achievement;
 
-      // Create document reference first to get the ID
-      const docRef = doc(collection(db, this.COLLECTIONS.USER_ACHIEVEMENTS));
+      // One document per goalie and achievement. The rules check this id, so an unlock can only
+      // be recorded once.
+      const docRef = doc(db, this.COLLECTIONS.USER_ACHIEVEMENTS, `${userId}_${achievementId}`);
 
       // Create user achievement with id
       const userAchievement: UserAchievement = {

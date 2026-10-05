@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 
 import { stubMediaElements } from '../../helpers/media-element';
+import { holdForReRecord } from '../../helpers/re-record-hold';
 import { CoachAudioProvider, useCoachAudio, useCoachAudioClip } from '@/lib/audio/context';
 import { silentWavDataUri } from '@/lib/audio/playback';
 import type { CoachAudioClip } from '@/types/coach-audio';
@@ -86,6 +87,13 @@ afterEach(() => {
 });
 
 describe('CoachAudioProvider — what may play', () => {
+  // The shipped catalogue holds nothing, so V-A-01 and V-A-02 are held here.
+  let release: () => void;
+  beforeEach(() => {
+    release = holdForReRecord(['V-A-01', 'V-A-02'], '2026-09-14T00:00:00Z');
+  });
+  afterEach(() => release());
+
   it('leaves a held take out, and lets a new take of a held line through', async () => {
     await renderProvider();
     expect(Object.keys(audio.clips).sort()).toEqual(['V-A-02', 'V-A-03', 'V-A-04']);
@@ -246,5 +254,122 @@ describe('CoachAudioProvider — stopClip', () => {
 
     act(() => audio.stopClip('V-A-03'));
     expect(media.pause).not.toHaveBeenCalled();
+  });
+});
+
+describe('CoachAudioProvider — playSequence', () => {
+  const played = () => media.state.playedSources;
+  const url = (id: string) => `https://storage.example/${id}.mp3`;
+
+  it('plays each clip as the one before it ends, in order', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-01', 'V-A-02', 'V-A-03']));
+    await settle();
+    expect(played()).toEqual([url('V-A-01')]);
+    expect(audio.playingId).toBe('V-A-01');
+
+    act(() => media.end());
+    await settle();
+    expect(played()).toEqual([url('V-A-01'), url('V-A-02')]);
+    expect(audio.playingId).toBe('V-A-02');
+
+    act(() => media.end());
+    await settle();
+    expect(played()).toEqual([url('V-A-01'), url('V-A-02'), url('V-A-03')]);
+
+    act(() => media.end());
+    await settle();
+    expect(played()).toHaveLength(3);
+    expect(audio.playingId).toBeNull();
+  });
+
+  it('is not cut short by the pause event a browser fires as a clip ends', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-01', 'V-A-02']));
+    await settle();
+
+    // A real element fires 'pause' and then 'ended' when it reaches the end.
+    act(() => {
+      media.state.element!.dispatchEvent(new Event('pause'));
+      media.end();
+    });
+    await settle();
+
+    expect(played()).toEqual([url('V-A-01'), url('V-A-02')]);
+  });
+
+  it('drops the rest when the goalie pauses', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-01', 'V-A-02']));
+    await settle();
+    act(() => audio.pause());
+    act(() => media.end());
+    await settle();
+
+    expect(played()).toEqual([url('V-A-01')]);
+  });
+
+  it('drops the rest when the goalie starts a clip of their own', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-01', 'V-A-02', 'V-A-03']));
+    await settle();
+    act(() => audio.play('V-A-04'));
+    await settle();
+    act(() => media.end());
+    await settle();
+
+    expect(played()).toEqual([url('V-A-01'), url('V-A-04')]);
+  });
+
+  it('skips a line that is not on file and plays the rest', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-01', 'V-A-99', 'V-A-02']));
+    await settle();
+    act(() => media.end());
+    await settle();
+
+    expect(played()).toEqual([url('V-A-01'), url('V-A-02')]);
+  });
+
+  it('plays nothing when none of the lines are on file', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-98', 'V-A-99']));
+    await settle();
+
+    expect(media.play).not.toHaveBeenCalled();
+  });
+
+  it('ends the sequence when the phone refuses its first clip, and names that clip', async () => {
+    await renderProvider();
+
+    media.state.nextPlay = 'refused';
+    act(() => audio.playSequence(['V-A-01', 'V-A-02']));
+    await settle();
+    expect(audio.blockedId).toBe('V-A-01');
+
+    media.state.nextPlay = 'plays';
+    act(() => media.end());
+    await settle();
+    expect(played()).toEqual([url('V-A-01')]);
+  });
+
+  it('ends the sequence when a clip fails to load', async () => {
+    await renderProvider();
+
+    act(() => audio.playSequence(['V-A-01', 'V-A-02']));
+    await settle();
+    act(() => {
+      media.state.element!.dispatchEvent(new Event('error'));
+      media.end();
+    });
+    await settle();
+
+    expect(played()).toEqual([url('V-A-01')]);
   });
 });

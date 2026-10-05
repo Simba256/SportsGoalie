@@ -355,10 +355,10 @@ export default function PillarCheckInPage() {
             showFormHeader={false}
             // Pillar check-ins are the development engine, so they read on the
             // 5-Star scale. The value written is still 1-10 — the stars are how
-            // it's said, not what's stored. The Weak/Strong anchors stay as the
+            // it's said, not what's stored. The Needs Work/Strong anchors stay as the
             // fallback for any checkpoint whose range doesn't split into five.
             scaleDisplay="stars"
-            scaleAnchors={{ low: 'Weak', high: 'Strong' }}
+            scaleAnchors={{ low: 'Needs Work', high: 'Strong' }}
           />
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '24px' }}>

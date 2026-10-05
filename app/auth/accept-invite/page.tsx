@@ -9,6 +9,7 @@ import { coachInvitationService } from '@/lib/services/coach-invitation.service'
 import { Invitation, InvitationValidationReason } from '@/types/invitation';
 import { CoachInvitation } from '@/types/auth';
 import { useAuth } from '@/lib/auth/context';
+import { useCoachAudio } from '@/lib/audio/context';
 import Link from 'next/link';
 
 const BLUE = '#37b5ff';
@@ -101,6 +102,7 @@ function AcceptInviteContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const { register } = useAuth();
+  const { prime } = useCoachAudio();
 
   const [validating, setValidating] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -180,6 +182,11 @@ function AcceptInviteContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invitation || !token) return;
+
+    // An invited goalie hears Coach Mike's welcome by itself on the next screen.
+    // Unlock playback now, inside the tap and before any await, for the iPhone.
+    // Silent, and only for goalies: it can pause their music.
+    if (invitation.kind !== 'coach_legacy' && (invitation.data as Invitation).role === 'student') prime();
 
     if (form.password.length < 8) {
       toast.error('Password must be at least 8 characters');

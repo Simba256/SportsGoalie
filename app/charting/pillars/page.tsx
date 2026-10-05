@@ -16,6 +16,7 @@ import {
   panelStyle,
   headerPanelStyle,
   accentLineStyle,
+  isRatingField,
 } from '@/components/charting/pillar-chrome';
 
 /**
@@ -35,21 +36,24 @@ interface PillarCard {
   latestAverage: number | null;
 }
 
-/** Flattens a submitted entry down to just its numeric answers. */
-function numericAnswers(entry: DynamicChartingEntry): number[] {
+/**
+ * The rating answers on a submitted entry. Counts (shots faced, period, clock)
+ * are left out — averaging them in made the card read 3.8 on four 2/10 ratings.
+ */
+function ratingAnswers(entry: DynamicChartingEntry, template: FormTemplate): number[] {
   const values: number[] = [];
 
-  const collect = (section: Record<string, { value: unknown }>) => {
-    Object.values(section).forEach((response) => {
-      if (response && typeof response.value === 'number' && !isNaN(response.value)) {
-        values.push(response.value);
-      }
+  template.sections.forEach((section) => {
+    const sectionData = entry.responses?.[section.id];
+    if (!sectionData) return;
+    const instances = Array.isArray(sectionData) ? sectionData : [sectionData];
+    instances.forEach((instance) => {
+      section.fields.forEach((field) => {
+        if (!isRatingField(field)) return;
+        const value = (instance as Record<string, { value: unknown }>)[field.id]?.value;
+        if (typeof value === 'number' && !isNaN(value)) values.push(value);
+      });
     });
-  };
-
-  Object.values(entry.responses || {}).forEach((section) => {
-    if (Array.isArray(section)) section.forEach((instance) => collect(instance as never));
-    else if (section) collect(section as never);
   });
 
   return values;
@@ -96,7 +100,7 @@ export default function PillarChartsIndexPage() {
           );
           const entries = entriesResult.success && entriesResult.data ? entriesResult.data : [];
           const newest = entries[0];
-          const numbers = newest ? numericAnswers(newest) : [];
+          const numbers = newest ? ratingAnswers(newest, template) : [];
 
           return {
             template,

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
+import { holdForReRecord } from '../../helpers/re-record-hold';
 import {
   COACH_AUDIO_CATALOGUE,
   isHeldForReRecord,
@@ -10,6 +11,21 @@ import {
 // Every take in the first folder was uploaded on 13 September.
 const FIRST_FOLDER_UPLOAD = new Date('2026-09-13T15:00:00Z');
 const NEW_TAKE_UPLOAD = new Date('2026-10-02T09:00:00Z');
+
+// The shipped catalogue holds nothing now, so these tests hold four lines
+// themselves, as the four that were held before the 29 September takes arrived.
+const HELD_IDS = ['V-A-01', 'V-A-02', 'V-A-05', 'V-A-10'];
+const CUTOFF = '2026-09-14T00:00:00Z';
+
+let release: () => void;
+
+beforeEach(() => {
+  release = holdForReRecord(HELD_IDS, CUTOFF);
+});
+
+afterEach(() => {
+  release();
+});
 
 function clip(id: string, uploadedAt: Date): CoachAudioClip {
   return {
@@ -26,11 +42,6 @@ function clip(id: string, uploadedAt: Date): CoachAudioClip {
 }
 
 describe('re-record hold — which takes stay silent', () => {
-  it('holds exactly the four lines Michael is re-recording', () => {
-    const held = COACH_AUDIO_CATALOGUE.filter(entry => entry.reRecord).map(entry => entry.id);
-    expect(held).toEqual(['V-A-01', 'V-A-02', 'V-A-05', 'V-A-10']);
-  });
-
   it('gives every hold a cutoff that parses and a reason to show the admin', () => {
     for (const entry of COACH_AUDIO_CATALOGUE.filter(e => e.reRecord)) {
       expect(Number.isNaN(Date.parse(entry.reRecord!.heldBefore)), entry.id).toBe(false);
@@ -39,14 +50,21 @@ describe('re-record hold — which takes stay silent', () => {
   });
 
   it('keeps the take from the first folder silent', () => {
-    for (const id of ['V-A-01', 'V-A-02', 'V-A-05', 'V-A-10']) {
+    for (const id of HELD_IDS) {
       expect(isHeldForReRecord(clip(id, FIRST_FOLDER_UPLOAD)), id).toBe(true);
     }
   });
 
   it('plays a new take as soon as it is uploaded, with no code change', () => {
-    for (const id of ['V-A-01', 'V-A-02', 'V-A-05', 'V-A-10']) {
+    for (const id of HELD_IDS) {
       expect(isHeldForReRecord(clip(id, NEW_TAKE_UPLOAD)), id).toBe(false);
+    }
+  });
+
+  it('holds nothing once the holds are lifted, however old the take', () => {
+    release();
+    for (const id of HELD_IDS) {
+      expect(isHeldForReRecord(clip(id, FIRST_FOLDER_UPLOAD)), id).toBe(false);
     }
   });
 

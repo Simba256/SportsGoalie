@@ -37,6 +37,16 @@ export interface User {
   driverOrPassenger?: 'driver' | 'aspiring_driver' | 'passenger' | 'undecided'; // Michael's Driver-or-Passenger screen (Item 4) — which button the goalie pressed before the baseline questionnaire
 
   /**
+   * Coach Mike's once-only voice moments this account has already had, by key
+   * (`firstLogin`, `chartingFirstOpen`, `mindVaultFirstVisit`; see
+   * `src/lib/audio/moments.ts`), each stamped with when it happened. Absent
+   * means the moment has not fired yet. Kept on the account rather than in the
+   * browser so a goalie who signs in on a second phone does not hear their
+   * welcome twice.
+   */
+  voiceMoments?: Record<string, Timestamp>;
+
+  /**
    * The four sign-up intake answers — name, age, level and why they are here.
    * Written as soon as the goalie leaves the intake screen, before the 74
    * baseline questions, so an abandoned questionnaire still leaves a record.
@@ -440,7 +450,7 @@ export interface UserProgress {
 }
 
 export interface OverallStats {
-  totalTimeSpent: number; // minutes
+  totalTimeSpent: number; // seconds (summed from quiz attempts)
   skillsCompleted: number;  // Number of unique skills attempted
   sportsCompleted: number;
   quizzesCompleted: number;  // Total quiz attempts

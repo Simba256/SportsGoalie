@@ -157,7 +157,6 @@ function isPublicRoute(pathname: string): boolean {
     '/auth/login',
     '/auth/register',
     '/auth/reset-password',
-    '/pillars',
     '/pillar',
     '/7-pillars',
     '/explain',

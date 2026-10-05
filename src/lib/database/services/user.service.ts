@@ -222,6 +222,17 @@ export class UserService extends BaseDatabaseService {
     });
   }
 
+  /**
+   * Records that a once-only Coach Mike voice moment has played for this
+   * account. Written under `voiceMoments.{key}` so marking one moment never
+   * rewrites another, and a second call for the same key simply restamps it.
+   */
+  async markVoiceMoment(userId: string, key: string): Promise<ApiResponse<void>> {
+    return this.update<User>(this.USERS_COLLECTION, userId, {
+      [`voiceMoments.${key}`]: Timestamp.now(),
+    } as Partial<User>);
+  }
+
   async updateLastLogin(userId: string): Promise<ApiResponse<void>> {
     return this.update<User>(this.USERS_COLLECTION, userId, {
       lastLoginAt: Timestamp.now(),
@@ -470,7 +481,8 @@ export class UserService extends BaseDatabaseService {
 
       // Calculate real stats
       const quizzesCompleted = attempts.length; // Total number of video quiz attempts
-      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+      // The quiz player records seconds in totalTimeSpent and never sets the legacy timeSpent alias.
+      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.totalTimeSpent || a.timeSpent || 0), 0);
       const averageQuizScore = quizzesCompleted > 0
         ? Math.round(attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizzesCompleted)
         : 0;

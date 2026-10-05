@@ -649,7 +649,7 @@ export default function V2PeriodsPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
-                        <p className="text-xs font-semibold text-white/70">Work on 7AMS — Seven Angle-Mark System</p>
+                        <p className="text-xs font-semibold text-white/70">Work on 7AMS — 7 Angle-Marker System</p>
                       </div>
                     </div>
                   </div>

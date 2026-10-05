@@ -563,7 +563,7 @@ function UserDetailsContent() {
                         {[
                           { label: 'Average Quiz Score', value: `${userProgress.overallStats.averageQuizScore}%` },
                           { label: 'Current Streak', value: `${userProgress.overallStats.currentStreak} days` },
-                          { label: 'Total Time', value: `${Math.round(userProgress.overallStats.totalTimeSpent / 60)} hours` },
+                          { label: 'Total Time', value: `${Math.round((userProgress.overallStats.totalTimeSpent / 3600) * 10) / 10} hours` },
                         ].map(({ label, value }) => (
                           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px' }}>{label}</span>
