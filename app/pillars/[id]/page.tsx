@@ -10,6 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/context';
 import { getPillarSlugFromDocId, pillarDisplayName } from '@/lib/utils/pillars';
+import { PillarTeachingVoice } from '@/components/audio/PillarTeachingVoice';
 import { scaleToPercentage } from '@/lib/scoring/scale-score';
 import { SkeletonPillarDetail } from '@/components/ui/skeletons';
 import Link from 'next/link';
@@ -296,6 +297,7 @@ export default function PillarDetailPage() {
               <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '12px' }}>
                 {pillarDisplayName(pillar.id, pillar.name)}
               </h1>
+              <PillarTeachingVoice pillarId={pillar.id} />
               <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: '560px', marginBottom: '16px' }}>
                 {pillar.description}
               </p>

@@ -120,6 +120,18 @@ export interface CoachAudioStatus {
  * V-A-19–26 pillar intros added; the Driver-or-Passenger and parent/coach
  * onboarding lines added under the 'assessment' and 'guardian' parts).
  *
+ * Voice Block 1 (approved by Michael 1 October) then replaced the wording of
+ * ten Part 1 and Part 2 lines with the final scripts: V-A-01, 02, 03, 05, 06,
+ * 07, 08, 09, 10 and 14. Each scriptLine is the script he sent, word for word,
+ * and is what the matching mp3 says.
+ *
+ * Voice Blocks 3 to 6 (1 and 2 October) did the same for the rest of what is
+ * recorded so far: DOP-INTRO and DOP-A to D, PARENT-WELCOME and PARENT-P2 to P8,
+ * COACH-WELCOME, V-A-04, 11, 12, 13, 15 and 18, and V-B-02, 04, 06, 07 and 09.
+ * V-A-27 to 37 and V-B-01, 03, 05 and 08 came back unchanged. V-A-16, V-A-17 and
+ * V-B-10 to 22 are still the 12 September wording; they are updated the same
+ * way when their final scripts arrive.
+ *
  * Two deliberate divergences from the written copy pack, both his and both
  * correct:
  *
@@ -137,30 +149,31 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'V-A-01',
     part: 'orientation',
     scriptLine:
-      "Welcome. I'm Coach Mike. Before there were goalie coaches, there were goalies, trying to figure it out alone. I was one of them. With no roadmap, I created one. Smarter Goalie is my life's work. Think Smart. Play Smart.",
+      "Welcome. I'm Coach Mike. Before there were goalie coaches, there were goalies, all of us flying by the seat of our pants, trying to figure it out and in most cases alone. I was one of them. With no roadmap, no books really teaching the position in the market back in the 60's, so I embarked on studying and learning from everyone I saw, to understand the pieces to the puzzle. Smarter Goalie is my life's work. Not smart? Get smart.",
   },
   {
     id: 'V-A-02',
     part: 'orientation',
     scriptLine:
-      "This isn't a camp. These aren't drills. They are systems. You can't improve what you don't measure, so here, you chart. The chart is not a test. It's a mirror.",
+      'Coach Mike here: Welcome to a platform built for goaltending and life, available right at your fingertips for as long as you play the game. Smarter Goalie features an intuitive system designed to establish your baseline profile from day one. The unique teaching process coupled with the analytics and precise charting, the platform continuously evolves alongside you, adapting to your growth and refining your performance at every stage of your development. Think Smart. Play Smart.',
   },
   {
     id: 'V-A-03',
     part: 'orientation',
-    scriptLine: "Built Not Born. Greatness isn't born; it's built, one deliberate thought at a time.",
+    scriptLine:
+      '"Built Not Born" is our core philosophy. It means goaltending performance isn\'t an innate gift or pure luck. It is systematically developed through mental mastery, deliberate practice, and cognitive training. Every save, decision, and reaction is shaped by training your brain to think, process, and perform physically under pressure. Practice Smart. Play Smart.',
   },
   {
     id: 'V-A-04',
     part: 'orientation',
     scriptLine:
-      "One rule that matters more than any technique I'll teach you. Chart what actually happened. A chart you shade to look good teaches me nothing, and it teaches you less.",
+      "One rule that matters more than any technique I'll teach you. Chart what actually happened. The most important person you need to be honest with is yourself, and in doing so, you are being very realistic, not candy coating anything, as that serves only the opposition. A chart you shade to look good teaches me nothing, and it teaches you less. So, honesty is the best policy! Think Smart. Play Smart.",
   },
   {
     id: 'V-A-05',
     part: 'orientation',
     scriptLine:
-      'Put in the time. Do the work the right way, and your game will not be recognizable. Consistency in performance is the object.',
+      'The smarter goalie has a commitment to deliberate mental and physical improvement. By systematically learning, routines are built, self-awareness and self-evaluation grow confidently. You will transform your goaltending performance and achieve unstoppable, game-to-game consistency. Commit Smart. Play Smart.',
   },
 
   // ── Part 2 · The Systems ──────────────────────────────────────────────────
@@ -168,61 +181,61 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'V-A-06',
     part: 'systems',
     scriptLine:
-      "The 7 Angle-Marker System. Above the icing line. It creates an unshakable connection to the net, teaching you where you must be, when, and why. We don't guess. We know.",
+      "The 7 Angle-Marker System. Above the icing line. It creates an unshakable connection to the net, the crease and white ice. Coach Mike designed this system using actual landmarks that exist on the ice, with the exception of angle 4, no visible marker. The system is connected to the net, and with Coach Mike's systematic way of teaching, you become one with net, crease and white ice, simplifying your game and making it look easy. Positional play shows intelligence and a smart decision making process to stay with the puck, the play. Learn Smart. Play Smart.",
   },
   {
     id: 'V-A-07',
     part: 'systems',
     scriptLine:
-      "The 6 Zone - 7 Point System. Below the icing line. The puck may be behind the net, but the game is still yours. In the goalie's house, nothing happens without your permission.",
+      "The 6 Zone, 7 Point System is Smarter Goalie's framework to keep the advantage in the goalie's house below the icing line. Built with strategy and tactic play using our core 4 principles of Logic, Common Sense, Math, and Science, it maps the ice behind and beside the net into 6 zones and 7 points to create dominance below the icing line. Think Smart. Play Smart.",
   },
   {
     id: 'V-A-08',
     part: 'systems',
     scriptLine:
-      'One and seven are the same. Two and six are the same. Three and five are the same. Four is the dividing line. The only thing that truly changes side to side is the wrap-around, glove or stick.',
+      'In the 7 Angle-Marker System: Angles 1 and 7 are the same. Angles 2 and 6 are the same. Angles 3 and 5 are the same. Angle 4 is the dividing line from one end zone to the other end zone net.',
   },
   {
     id: 'V-A-09',
     part: 'systems',
     scriptLine:
-      'The 4 Level Arch System. Level one, top of the crease. Level two, low slot. Level three, mid slot. Level four, high slot. Position is not location.',
+      'Depth and multi-level play using the 4 Level Arch System. Level 1, top of the crease. Level 2, low slot. Level 3, mid slot. Level 4, high slot. Regardless of angle, the 4 Level Arch System is an asset in many ways and is utilized in elevating the positional game, maximizing positional strength given the game situation. Positional strategies and tactical play. Think Smart. Play Smart.',
   },
   {
     id: 'V-A-10',
     part: 'systems',
     scriptLine:
-      'Three lanes on attack: the left lane, the center lane and the right lane. Know the lane the play is in, and the lane it shifts to.',
+      "Three lanes of attack: the left lane, the center lane and the right lane. Opponent's Zone, Neutral Zone, End Zone. Learning to see the ice, the puck and options the player with the puck has is the chess game unfolding. Read Smart. Play Smart.",
   },
   {
     id: 'V-A-11',
     part: 'systems',
     scriptLine:
-      'In the game, performance runs on V.M.P: Visual, Mental, Physical. You see it, your mind reads it, your body responds. That order is simple science, and understanding it is powerful.',
+      'In the game, performance runs on V.M.P: the Visual, Mental, Physical relationship. We have two visual intakes, the focused eye and the peripheral eye. The brain must decipher the correct information to react to physically. You see it, your mind processes it, your body responds. That order is simple science, and understanding it is powerful. Training the subconscious is the target and the goal. Think Smart. Play Smart.',
   },
   {
     id: 'V-A-12',
     part: 'systems',
     scriptLine:
-      'No wasted movement, no wasted energy, no wasted time. Waste one and you waste all three.',
+      'No wasted movement, no wasted energy, no wasted time. Waste one and you waste all three. The goal is to understand all the pieces to the puzzle. For me, goaltending was a 500 piece puzzle with no border and no picture. Well, now it has a border and a picture, and 6 decades of study and learning, breaking down this unique position in sports to simplify and accelerate learning and development. Learn Smart. Think Smart.',
   },
   {
     id: 'V-A-13',
     part: 'systems',
     scriptLine:
-      "The Factor Ratio is the number that says whether the work is working. It isn't a grade and it isn't a score. It's a mirror.",
+      "The Factor Ratio is the bar. It shows what level of the bar you're at, and where you need to go. Getting down to the bare knuckles, that's the Factor Ratio. Your influences, your prep, your game, your practice, your daily life: they all factor into your Factor Ratio. Charting is your oversight mechanism, your barometer, your support to guide you and direct you, from what works for you and what does not. Understanding where you are today is the key to reaching the goals that take your game to the next level. Whether you stay at your current playing level or move up the ladder, as a goalie I wanted to earn the respect of my teammates, coaches, family and friends. I wanted to have a reputation that represented my efforts and consistency in performance. Think Smart. Play Smart.",
   },
   {
     id: 'V-A-14',
     part: 'systems',
     scriptLine:
-      'Your Mind Vault. The place where you keep your best tools: confidence, focus, and staying calm. We build it piece by piece. Stop hoping for confidence, and start accessing it.',
+      "The Mind-Vault is your impenetrable inner sanctuary and personal repository for peak mental performance. Designed to help goalies move beyond fleeting feelings of confidence, it serves as a carefully curated vault where you store your hard-won successes, proven strategies, and core mental anchors. When high-pressure game situations hit, you don't have to hope for poise. You simply access it, filter out the noise, master the quick reset, and command your game with complete composure. Build Smart. Play Smart.",
   },
   {
     id: 'V-A-15',
     part: 'systems',
     scriptLine:
-      "The Feel Factor is the part nobody else on your team is writing down. It's also the part that tells me the most.",
+      "The Feel Factor is the part nobody else on your team is writing down. It's also the part that tells me the most. The Feel Factor crosses all physical and mental aspects a goalie needs to have to adjust in real time. Whether it's practice or game or even off ice, it will play a major role in how you stay in the now, current and responsible to self. Think Smart. Play Smart.",
   },
   {
     id: 'V-A-16',
@@ -242,7 +255,7 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'V-A-18',
     part: 'pillars',
     scriptLine:
-      'MindSet. Skating Tech. The 7 Angle-Marker System. The 6 Zone 7 Point System. Form Tech. Game Performance Charting System. Practice System. Lifestyle and Hockey.',
+      'MindSet. Skating Tech. The 7 Angle-Marker System. The 6 Zone 7 Point System. Form Tech. Game Performance Charting System. Practice System. Lifestyle and Hockey. Who you are, what you are, can be measured. Stay up to date and current in your charting, maintenance and development processes to maintain your standard of performance. You want to be that go-to person the coach and team perform for. A number one goaltender, a starter (not a backup), elevates the bench and the coaching staff, as both parties can focus on their role knowing they have a goaltender they can depend on. Think Smart. Play Smart.',
   },
   {
     id: 'V-A-19',
@@ -318,7 +331,8 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'V-B-02',
     part: 'triggers',
     readsMessageId: 'B-02',
-    scriptLine: "Chart's in. It's on your record. Keep the loop turning.",
+    scriptLine:
+      "Chart's in. It's on your record. Keep the content coming, the system grows like you every time you add content or travel through your courses.",
   },
   {
     id: 'V-B-03',
@@ -332,7 +346,7 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'triggers',
     readsMessageId: 'B-04',
     scriptLine:
-      'Your Factor Ratio came down. Before you take that the wrong way - a drop after a good stretch almost always means you started guessing instead of reading. Go back to your angle first. Read, then move.',
+      'Your Factor Ratio came down. Before you take that the wrong way - a drop after a good stretch almost always means you started guessing instead of being certain. Go back to your angle first. Read, then move and continue to build.',
   },
   {
     id: 'V-B-05',
@@ -346,14 +360,14 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'triggers',
     readsMessageId: 'B-06',
     scriptLine:
-      "You're losing the same marker in the 7 Angle-Marker System. That's not a reflex problem - that's an angle you haven't settled yet. Stand on that marker with no puck and find your line before you ever play it live.",
+      "Your charting is telling us that extra attention is needed. The pattern is clear from your honest charting and that's great intel for your focus and development in practice or on your own or with a support person or goalie coach on our team.",
   },
   {
     id: 'V-B-07',
     part: 'triggers',
     readsMessageId: 'B-07',
     scriptLine:
-      "Here's something your own chart just told me. Below the icing line, 1 and 7 are the same. 2 and 6 are the same. 3 and 5 are the same. 4 is the dividing line. You're strong on one side of that line and losing on its mirror - same read, same footwork. The only thing that genuinely changes side to side is the wrap-around, glove or stick. Fix the mirror and you fix both. Waste one and you waste all three.",
+      "Here's something your own chart just told us. This insight to your game is our direction. Your strengths and the areas that need that special attention. That's the process we are in, we have a maintenance aspect to our training and a special emphasis portion to our training. With this in mind those areas the system brings to light for special emphasis are very important in advancing your game. So don't get stressed, get excited. We have direction and that gets us closer to our ultimate goal.",
   },
   {
     id: 'V-B-08',
@@ -367,7 +381,7 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'triggers',
     readsMessageId: 'B-09',
     scriptLine:
-      "They're beating you out of the same lane. Left, Center, Right - a lane is information, and right now you're not using it. In your next practice, call the lane out loud before the shot comes. Out loud.",
+      'Your charting is giving us direction. Great work, your honesty is a guiding light. There are patterns that are good; they confirm your knowledge, decision making process, positional play and the ones that need attention. Keep up the good work on and off ice and your dreams will come true.',
   },
   {
     id: 'V-B-10',
@@ -465,31 +479,31 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'DOP-INTRO',
     part: 'assessment',
     scriptLine:
-      "The driver knows they love to drive, and they know they want to be the best driver they can be. The passenger is just along for the ride. The driver has all the responsibility; they want to reach their destination safe and sound, while the passenger can enjoy the scenery. They have no responsibilities. So, who are you? The driver, or the passenger? The driver knows what they want, and they have the passion and the desire and will to be the best they can be. The passenger is just along for the ride. Smarter Goalie was, and is, designed for the motivated, the passionate, those who have a fire in their belly. Designed for the motivated. Build your game.",
+      'The driver knows they love to drive, and they know they want to be the best driver they can be. The passenger is just along for the ride. The driver has all the responsibility; they want to reach their destination safe and sound, while the passenger can enjoy the scenery. They have no responsibilities. So, who are you? The driver, or the passenger? The driver knows what they want, and they have the passion and the desire and will to be the best they can be. The passenger is just along for the ride. Smarter Goalie was, and is, designed for the motivated, the passionate, those who have a fire in their belly. Designed for the motivated. Are you ready to build your game? Think Smart. Play Smart.',
   },
   {
     id: 'DOP-A',
     part: 'assessment',
     scriptLine:
-      "Good. The motivated act. You understand that this system is your support and guidance, and you are ready to use it to become the 'Intelligent Athletic Goaltender' and the leader you are meant to be. I am not going to chase you; I am going to provide the framework. You will get the system, you will do the work, and you will watch your motivation and confidence build with every repetition and every detail you master. That is the driver's path.",
+      "Good. The motivated act. You understand that this system is your support and guidance, and you are ready to use it to become the 'Intelligent Athletic Goaltender' and the leader you are meant to be: the number 1, the starter, the goalie teammates approach before a game and ask, \"Are you starting today?\" I am not going to chase you; I am going to provide you the tools and framework to succeed. You will get the system, you will do the work, and you will watch your reputation, confidence and self-esteem build with every repetition and every detail you master. That is the driver's path. Train Smart. Play Smart.",
   },
   {
     id: 'DOP-B',
     part: 'assessment',
     scriptLine:
-      "That is an honest answer and a great place to start. Every action you take from this point forward will build your motivation and confidence. The system is your support and guidance to becoming an 'Intelligent Athletic Goaltender' and a leader on the ice. The work you do, whether in the driveway or on the ice, is where you transform. With every repetition and every fundamental detail you master, your confidence will grow, and your motivation will follow naturally. You are the architect of your own progress, and you are building your path to success.",
+      "That is an honest answer and a great place to start. Every action you take from this point forward will build your skill, knowledge and confidence. The system is your support and guidance to becoming that 'Intelligent Athletic Goaltender' and a leader on the ice, building your reputation as a starter. The work you do, whether in the driveway or on the ice and online, is where you transform. With every repetition and every fundamental detail you master, your confidence will grow, and your motivation will follow naturally. You are the architect of your own progress, the architect on how fast you get acknowledged and asked, \"What is it you're doing? Your game is getting better.\" You are building your path to success every day you're paying attention to your development. Think Smart. Play Smart.",
   },
   {
     id: 'DOP-C',
     part: 'assessment',
     scriptLine:
-      "Thank you for being straight about that. Recognizing where you are is the first step to moving forward. You now have the tools to become an 'Intelligent Athletic Goaltender' and a leader. Treat this system as your support and guidance. Start by mastering one thing. As you engage with the work, each action you take will ignite your motivation and fuel your confidence, proving that you have what it takes to lead.",
+      "Thank you for being straight about that. Recognizing where you are is the first step to moving forward. You now have the tools to become an 'Intelligent Athletic Goaltender' and a leader. Treat this system as your support and guidance. Start by mastering one thing. As you engage with the work, each action you take will ignite your motivation and fuel your confidence, proving that you have what it takes to lead. Think Smart. Play Smart.",
   },
   {
     id: 'DOP-D',
     part: 'assessment',
     scriptLine:
-      "That is a perfectly honest place to start. You do not need to be certain on day one. You are here to learn and grow, and that is what matters. Let this system provide the support and guidance you need. As you explore, ask questions, and engage with the process, your motivation and confidence will naturally grow with every step. You are on your way to becoming an 'Intelligent Athletic Goaltender,' and every action you take is a building block for your future.",
+      "That is a perfectly honest place to start. You do not need to be certain on day one. You are here to learn and grow, and that is what matters. Let this system provide the support and guidance you need. As you explore, ask questions, and engage with the process, your motivation and confidence will naturally grow with every step. You are on your way to becoming an 'Intelligent Athletic Goaltender,' and every action you take is a building block for your future. Learn Smart. Play Smart.",
   },
 
   // ── Parent & coach onboarding ─────────────────────────────────────────────
@@ -497,55 +511,55 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'PARENT-WELCOME',
     part: 'guardian',
     scriptLine:
-      "Welcome. I'm Coach Mike.\n\nBefore there were goalie coaches, there were goalies, trying to figure it out alone. I was one of them. Six decades later, this system exists so no goalie has to do that again, and so no parent has to guess how to help.\n\nIn the game of hockey, your child has chosen the position with the most responsibility. Our mission is to build Intelligent Athletic Goaltenders: goalies who understand their own game, can evaluate it honestly, and grow it on purpose. Everything we teach is built on four filters. Logic. Common sense. Math. And science. Nothing mysterious.\n\nHere is how it works. Your goalie learns eight pillars, one piece at a time. They chart what actually happened. The chart points to the work that matters. They practise it, and they chart again. The chart is a mirror. A gap isn't a failure. It's a roadmap.\n\nYou don't need to know the position to help. The system is built to educate parents alongside their goalie, in plain language, so you can learn at your own pace and understand what your child is working on, and why.\n\nWhat you share with us is not shown to your goalie directly. The system takes it in, and returns it to them selectively, as the right support at the right time. So be open with us. Every piece helps.\n\nThe most valuable thing you can give is steady support. Be supportive and encouraging, and avoid the temptation to coach from the stands. Let us carry the technical side.\n\nThis work is about more than stopping pucks. It builds character, confidence, and the habit of honest self-evaluation, for the rink and beyond it.\n\nMy commitment to you is a sincere effort, every day, to raise the bar for your goalie and for everyone around them. Welcome to the team. Built Not Born.",
+      "Welcome. I'm Coach Mike.\n\nBefore there were goalie coaches, there were goalies, trying to figure it out alone. I was one of them. Six decades later, this system exists so no goalie has to do that again, and so no parent has to guess how to help.\n\nIn the game of hockey, your child has chosen the position with the most responsibility. Our mission is to build Intelligent Athletic Goaltenders: goalies who understand their own game, can evaluate it honestly, and grow it on purpose. Everything we teach is built on four filters. Logic. Common sense. Math. And science. Nothing mysterious.\n\nHere is how it works. Your goalie learns eight pillars, one piece at a time. They chart what actually happened. The chart points to the work that matters. They practise it, and they chart again. The chart is a mirror. A gap isn't a failure. It's a roadmap.\n\nYou don't need to know the position to help. The system is built to educate parents alongside their goalie, in plain language, so you can learn at your own pace and understand what your child is working on, and why.\n\nWhat you share with us is not shown to your goalie directly. The system takes it in, and returns it to them selectively, as the right support at the right time. So be open with us. Every piece helps.\n\nThe most valuable thing you can give is steady support. Be supportive and encouraging, and avoid the temptation to coach from the stands. Let us carry the technical side.\n\nThis work is about more than stopping pucks. It builds character, confidence, and the habit of honest self-evaluation, for the rink and beyond it.\n\nMy commitment to you is a sincere effort, every day, to raise the bar for your goalie and for everyone around them. Welcome to the team. Built Not Born. Think Smart. Play Smart.",
   },
   {
     id: 'PARENT-P2',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does and why we start the way we do. Skating is the engine of everything a goalie does. Before we change anything, we teach your child to understand it, using plain logic, common sense and simple science, one piece at a time. That understanding lets them look at their own skating honestly and see where they are and where they can grow. It is designed to motivate, not to criticize. Your role stays simple: encourage the reps and celebrate the small wins.",
+      "Here is what the Skating Pillar course does and why we start the way we do. Skating is the engine. The stronger the engine, the better the goalie performs at game speed or, as we like to say, game frequency. Through a technical eye, we teach your child to understand the pieces to the puzzle, using plain logic, common sense, math and simple science, one piece at a time. That new understanding lets them look at their own skating honestly and see where they are and where they need improvement to grow their game. It is designed to motivate, to inspire, to encourage without discouraging. Your role stays simple: encourage the reps, recognize and provide that pat on the back, and celebrate all the stages of growth. Knowing you have their back, 'cause you're growing in knowledge, unites all. Think Smart. Play Smart.",
   },
   {
     id: 'PARENT-P3',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does. Before a goalie makes a save, they have to be in the right place, and that place can be described with simple geometry. We teach your child to understand the angle from the puck to the net and the right depth on that line. Because it's measurable, they can look at their own positioning honestly and see where they are and where they can grow. It's logical, it's fair, and it's built to motivate. Encourage the reps and celebrate the small wins.",
+      "Before a goaltender can make a save, they must master positioning by seeing the ice through the puck's eye: understanding angle, positional play and depth related to the opposition and the goalie's own support on ice. We teach goalies to read what the shooter has and align precisely with the puck-to-net trajectory. Because positioning is measurable, goalies can evaluate their performance objectively, identify growth opportunities, and build confidence. By grounding their development in logic, common sense, math, and science, we provide a fair, motivating framework where every repetition counts and small wins build long-term success. Nothing is left to the imagination. Learn Smart. Play Smart.",
   },
   {
     id: 'PARENT-P4',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does. When the puck goes behind or beside the net, the game moves quickly, so we give it structure with a grid. We teach your child to understand that map first, so the busy moments become a logical read instead of a scramble. Then they can look honestly at how they handle those plays and see where they can grow. It's structured, it's logical, and it's built to motivate. Encourage the reps and celebrate the small wins.",
+      "Here is what this course does. When the puck goes behind or below the icing line beside the net, the game moves quickly, so I designed a system to simplify the game. We teach your goalie to understand that grid, map first, so the busy moments become a logical read instead of a scramble. Then they can look honestly at how they handle those game situations, recognizing their decision making process along with strategy and tactical play. It's structured, it's logical, and it's built to motivate and command control. So encourage the progress and support the growth forward, and any minor setbacks, as they only serve as a reminder they know a better way. Think Smart. Play Smart.",
   },
   {
     id: 'PARENT-P5',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does. Form is how your child's body makes the save, and our rule is foundation before flair. We use video so they can see their own form, and simple science to explain why consistent form holds up and saves energy. First they understand what good form is, then they can look at their own honestly and see where to grow. It's clear, it's visual, and it's built to motivate. Encourage the reps and celebrate the small wins.",
+      "Here is what this course does. Form is how your child's body makes the save, and our rule is foundation before flair. Understand how to get a save stationary or in motion, and ultimately understand what the shooter has, to create the correct coverage in getting into the save and in recovery mode, for example. Through the use of video analysis, as the technical grows and the goalie sees what I see, their self-awareness is heightened and self-evaluation becomes a reality. First they understand what good form is, then they can look at their own honestly and see where attention is required. It's clear, it's visual, and it's built to motivate. They will progress to \"Form Feel\", which is the athletic growth to self. They know without seeing the breakdown point and can address it in real time. Encourage the reps and celebrate the growth. Learn Smart. Play Smart.",
   },
   {
     id: 'PARENT-P6',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does. Game is where everything your child builds shows up live. It works in three logical steps, see, read, react, what we call V.M.P. First we teach them to understand good game reads, like reading the shooter's stick to be ready early. Then they can look honestly at their own games and see where to grow. It's logical and it's built to motivate. Encourage the reps and celebrate the small wins.",
+      "Here is what this course does. Game is where everything your child builds shows up live. It works in three logical steps, see, read, react, what we call V.M.P: the Visual, Mental, Physical relationship. First we teach them to understand good game reads, like reading the shooter's stick to be ready early. Then they can look honestly at their own games and see where to grow. It's logical and it's built to motivate. Encourage the reps and celebrate the small wins, as they will turn into bigger wins. Think Smart. Play Smart.",
   },
   {
     id: 'PARENT-P7',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does. How your child practices is how they'll play, so we teach them to understand what makes a repetition valuable, quality over quantity, before they drill. Every rep builds a habit, so we build good ones on purpose, working the one thing their chart names. Then they can look honestly at their own practice and see where to grow. It's logical and it's built to motivate. Encourage the reps and celebrate the small wins.",
+      "Here is what this course does. How your child practices is how they'll play, so we teach them to understand what makes a repetition valuable, quality over quantity, before they drill. Every rep builds a habit, so we build good ones on purpose, working on the one thing their chart names. Then they can look honestly at their own practice and see where to grow. It's logical and it's built to motivate. Encourage the reps and celebrate the small wins, as they will turn into bigger wins. Think Smart. Play Smart.",
   },
   {
     id: 'PARENT-P8',
     part: 'guardian',
     scriptLine:
-      "Here is what this course does, and this is one where you matter most. Being a goalie is a lifestyle, and the principle is simple: what you maintain, you keep. We teach your child to understand how nutrition, rest and routine sustain their game, using common sense and simple science. Then they can look honestly at their own habits and see where to grow. It's practical and it's built to motivate, and the home routine is a big part of it. Your encouragement makes the difference.",
+      "Here is what this course does, and this is one where you matter most. Being a goalie is a lifestyle, and the principle is simple: what you maintain, you keep. We teach your child to understand how nutrition, rest and routine sustain their game, using common sense and simple science. Then they can look honestly at their own habits and see where to grow. It's practical and it's built to motivate, and the home routine is a big part of it. Your encouragement makes the difference. Encourage the reps and celebrate the small wins, as they will turn into bigger wins. Think Smart. Play Smart.",
   },
   {
     id: 'COACH-WELCOME',
     part: 'guardian',
     scriptLine:
-      "Welcome, Coach. I'm Coach Mike.\n\nFor six decades I've worked with goalies, and I've watched team coaches carry an enormous load: a full roster, systems, lines, and one position that carries the most responsibility on the ice. What the game has rarely given coaches is the tools to really support that position. That was never a coaching failure. The tools simply weren't built.\n\nThat is our mission: to build Intelligent Athletic Goaltenders, and to give the people around them a bridge into the position. Everything we teach is built on four filters. Logic. Common sense. Math. And science. Your goalie works through eight pillars, from MindSet and skating, to the positional systems, form, and game performance. They chart what actually happened. The chart points to the work that matters. They practise it with intent, and they chart again. That is the Development Loop.\n\nThe system runs parallel support for parents and team coaches, so the whole development circle speaks the same language, from plain-language descriptions to full technical terminology. You'll learn how your goalie is being taught, and why.\n\nWhat you share with us is not shown to your goalie directly. The system takes it in, and returns it to them selectively, as the right resource at the right time. Your read from the bench matters, and it will be used with care.\n\nGoalie coaches are givers. We build character, self-esteem, and goalies who can evaluate and train themselves, with our support. A goalie who can do that gives your team a chance to compete, every game.\n\nI'm not here to replace what you do. I'm here to support it, and to raise the bar for this position across the board, together.\n\nWelcome aboard. Built Not Born. Six decades. One system.",
+      "Welcome, Coach. I'm Coach Mike.\n\nFor six decades I've worked with goalies, with myself being the first I taught, and I've watched team coaches carry an enormous load: a full roster, systems, lines, and one position that carries the most responsibility on the ice. What the game has rarely given coaches is the tools to really support that position. That was never a coaching failure. The tools simply weren't built.\n\nThat is our mission: to build Intelligent Athletic Goaltenders, and to give the people around them a bridge into the position. Everything we teach is built on four filters. Logic. Common sense. Math. And science. Your goalie works through eight pillars, from MindSet and skating, to the positional systems, form, game performance, practice and lifestyle. They chart what actually happened. The chart points to the work that matters. They practise it with intent, and they chart again. That is the Development Loop.\n\nThe system runs parallel support for parents and team coaches, so the whole development circle contributes and assists to support the most important member of the team. You'll learn how your goalie is being taught, and why.\n\nWhat you share with us is not shown to your goalie directly. The system takes it in, and returns it to them selectively, as the right resource at the right time. Your read from the bench matters, and it will be used with care.\n\nGoalie coaches are givers. We build character, self-esteem, and goalies who can evaluate and self-train themselves, with our support. A goalie who can do that gives your team a chance to compete, every game.\n\nSmarter Goalie is here to raise the bar together. Welcome aboard. Built Not Born. Six decades. One system.",
   },
 ];
 

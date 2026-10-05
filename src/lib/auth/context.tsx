@@ -119,6 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(userData.onboardingCompleted !== undefined && { onboardingCompleted: userData.onboardingCompleted }),
           ...(userData.onboardingCompletedAt && { onboardingCompletedAt: userData.onboardingCompletedAt }),
           ...(userData.initialAssessmentLevel && { initialAssessmentLevel: userData.initialAssessmentLevel }),
+          // Which once-only Coach Mike voice moments have already played.
+          ...(userData.voiceMoments && { voiceMoments: userData.voiceMoments }),
           // Include parent-child linking fields (for students/goalies)
           ...(userData.linkedParentIds && { linkedParentIds: userData.linkedParentIds }),
           ...(userData.parentLinkCode && { parentLinkCode: userData.parentLinkCode }),

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, Mail, ChevronDown } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/context';
+import { useCoachAudio } from '@/lib/audio/context';
 import { registerSchema, type RegisterFormData } from '@/lib/validation/auth';
 import {
   GOALIE_SELF_REGISTRATION_ENABLED,
@@ -45,6 +46,7 @@ const labelStyle: React.CSSProperties = {
 export default function RegisterPage() {
   const router = useRouter();
   const { register: registerUser, user, loading } = useAuth();
+  const { prime } = useCoachAudio();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -206,7 +208,14 @@ export default function RegisterPage() {
             }
           `}} />
           <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={event => {
+              // A new goalie hears Coach Mike's welcome by itself on the next
+              // screen, and an iPhone only allows that if playback was unlocked
+              // inside this tap. Before the validation await, so the tap still
+              // counts. Silent, and only for goalies: it can pause their music.
+              if (selectedRole === 'student') prime();
+              return handleSubmit(onSubmit)(event);
+            }}
             style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}
             data-testid="register-form"
           >

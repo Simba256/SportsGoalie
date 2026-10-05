@@ -13,17 +13,30 @@ vi.mock('@/lib/database/services/coach-audio.service', () => ({
 }));
 
 const USER_ID = 'goalie-under-test';
-const FIRST_FOLDER_UPLOAD = new Date('2026-09-13T15:00:00Z');
-const NEW_TAKE_UPLOAD = new Date('2026-10-02T09:00:00Z');
+const UPLOADED = new Date('2026-10-04T09:00:00Z');
 
-/** The five welcome lines, the screen each sits on, and its button label. */
+/**
+ * The Driver-or-Passenger lines, the screen each sits on, and its button label.
+ * The dp_reply screen reads the line for the goalie's answer; the draft that
+ * `openAt` resumes from answers "driver", which is reply A.
+ *
+ * V-A-01 to V-A-05 are not here. Michael's placement doc (4 Oct 2026) makes
+ * them events, not buttons on a screen: the welcome plays at first login and
+ * the charting lines at first charting. See first-login-sequence.test.tsx.
+ */
 const SCREENS = [
-  { id: 'V-A-01', phase: 'hero', label: 'HEAR COACH MIKE: WELCOME IN' },
-  { id: 'V-A-02', phase: 'dp_choice', label: 'HEAR COACH MIKE: WHAT THIS IS' },
-  { id: 'V-A-03', phase: 'dp_reply', label: 'HEAR COACH MIKE: BUILT NOT BORN' },
-  { id: 'V-A-04', phase: 'privacy_gate', label: 'HEAR COACH MIKE: THE HONESTY RULE' },
-  { id: 'V-A-05', phase: 'closing', label: 'HEAR COACH MIKE: HOW TO USE THE DAY' },
+  { id: 'DOP-INTRO', phase: 'dp_choice', label: 'HEAR COACH MIKE: WHAT THIS IS' },
+  { id: 'DOP-A', phase: 'dp_reply', label: "HEAR COACH MIKE: A — I'M THE DRIVER" },
 ] as const;
+
+/** Screens that once carried an event clip's button and now carry nothing. */
+const EVENT_CLIP_SCREENS = [
+  { id: 'V-A-01', phase: 'hero' },
+  { id: 'V-A-04', phase: 'privacy_gate' },
+  { id: 'V-A-05', phase: 'closing' },
+] as const;
+
+const ALL_BLOCK_1_AND_4_LINES = ['V-A-01', 'V-A-04', 'V-A-05'];
 
 function clip(id: string, uploadedAt: Date): CoachAudioClip {
   return {
@@ -39,9 +52,11 @@ function clip(id: string, uploadedAt: Date): CoachAudioClip {
   };
 }
 
-/** What is on file today: all five from the first folder. */
-function firstFolder(): Record<string, CoachAudioClip> {
-  return Object.fromEntries(SCREENS.map(s => [s.id, clip(s.id, FIRST_FOLDER_UPLOAD)]));
+/** Every line uploaded, the event clips too. */
+function onFile(): Record<string, CoachAudioClip> {
+  return Object.fromEntries(
+    [...SCREENS.map(s => s.id), ...ALL_BLOCK_1_AND_4_LINES].map(id => [id, clip(id, UPLOADED)])
+  );
 }
 
 /** Opens the questionnaire on a given screen, through the saved-draft path it resumes from. */
@@ -87,65 +102,57 @@ afterEach(() => {
 });
 
 describe('onboarding — Coach Mike on the opening screens', () => {
-  it.each(SCREENS.filter(s => s.id === 'V-A-03' || s.id === 'V-A-04'))(
-    'offers $id on the $phase screen',
-    async ({ phase, label }) => {
-      getAllClips.mockResolvedValue({ success: true, data: firstFolder() });
-      await openAt(phase);
-      expect(playButton(label)).not.toBeNull();
-    }
-  );
-
-  it.each(SCREENS.filter(s => s.id === 'V-A-01' || s.id === 'V-A-02' || s.id === 'V-A-05'))(
-    'offers nothing on the $phase screen while $id is held for re-recording',
-    async ({ phase }) => {
-      getAllClips.mockResolvedValue({ success: true, data: firstFolder() });
-      await openAt(phase);
-      expect(screen.queryByRole('button', { name: /Coach Mike/ })).toBeNull();
-      expect(screen.queryByText('NOT RECORDED YET')).toBeNull();
-    }
-  );
-
-  it.each(SCREENS)('offers $id on the $phase screen once a new take is uploaded', async ({ id, phase, label }) => {
-    getAllClips.mockResolvedValue({
-      success: true,
-      data: { ...firstFolder(), [id]: clip(id, NEW_TAKE_UPLOAD) },
-    });
+  it.each(SCREENS)('offers $id on the $phase screen', async ({ phase, label }) => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile() });
     await openAt(phase);
     expect(playButton(label)).not.toBeNull();
   });
 
+  it.each(SCREENS)('offers nothing on the $phase screen while $id is not uploaded', async ({ id, phase }) => {
+    const { [id]: _missing, ...rest } = onFile();
+    getAllClips.mockResolvedValue({ success: true, data: rest });
+    await openAt(phase);
+    expect(screen.queryByRole('button', { name: /Coach Mike/ })).toBeNull();
+    expect(screen.queryByText('NOT RECORDED YET')).toBeNull();
+  });
+
   it('offers nothing when a line has not been uploaded at all', async () => {
     getAllClips.mockResolvedValue({ success: true, data: {} });
-    await openAt('privacy_gate');
+    await openAt('dp_choice');
     expect(screen.queryByRole('button', { name: /Coach Mike/ })).toBeNull();
   });
 
-  it('plays the line when the button is pressed', async () => {
-    getAllClips.mockResolvedValue({ success: true, data: firstFolder() });
-    await openAt('privacy_gate');
+  it.each(EVENT_CLIP_SCREENS)(
+    'offers no button for $id on the $phase screen, even with every line uploaded',
+    async ({ phase }) => {
+      getAllClips.mockResolvedValue({ success: true, data: onFile() });
+      await openAt(phase);
+      expect(screen.queryByRole('button', { name: /Coach Mike/ })).toBeNull();
+    }
+  );
 
-    fireEvent.click(playButton('HEAR COACH MIKE: THE HONESTY RULE')!);
+  it('plays the line when the button is pressed', async () => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile() });
+    await openAt('dp_choice');
+
+    fireEvent.click(playButton('HEAR COACH MIKE: WHAT THIS IS')!);
     await act(async () => {});
 
-    expect(media.state.playedSources).toEqual(['https://storage.example/V-A-04.mp3']);
+    expect(media.state.playedSources).toEqual(['https://storage.example/DOP-INTRO.mp3']);
     expect(
-      screen.getByRole('button', { name: 'Pause Coach Mike: HEAR COACH MIKE: THE HONESTY RULE' })
+      screen.getByRole('button', { name: 'Pause Coach Mike: HEAR COACH MIKE: WHAT THIS IS' })
     ).toBeInTheDocument();
   });
 
   it('stops the line when the goalie moves on to the next screen', async () => {
-    getAllClips.mockResolvedValue({
-      success: true,
-      data: { ...firstFolder(), 'V-A-01': clip('V-A-01', NEW_TAKE_UPLOAD) },
-    });
-    await openAt('hero');
+    getAllClips.mockResolvedValue({ success: true, data: onFile() });
+    await openAt('dp_reply');
 
-    fireEvent.click(playButton('HEAR COACH MIKE: WELCOME IN')!);
+    fireEvent.click(playButton("HEAR COACH MIKE: A — I'M THE DRIVER")!);
     await act(async () => {});
     expect(media.pause).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: /BEGIN THE STUDENT BASELINE PROFILE/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'CONTINUE' }));
 
     expect(media.pause).toHaveBeenCalledTimes(1);
     expect(media.state.paused).toBe(true);

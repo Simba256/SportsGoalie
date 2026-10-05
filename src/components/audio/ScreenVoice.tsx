@@ -7,6 +7,8 @@ import { useCoachAudio } from '@/lib/audio/context';
 interface ScreenVoiceProps {
   clipId: string;
   label: string;
+  /** Render the VOICE ON/OFF control beside the button. On by default. */
+  showToggle?: boolean;
   className?: string;
 }
 
@@ -16,10 +18,18 @@ interface ScreenVoiceProps {
  * take is uploaded, and while a take is held for re-recording, so no screen
  * offers audio it cannot play.
  */
-export function ScreenVoice({ clipId, label, className }: ScreenVoiceProps): React.ReactElement {
+export function ScreenVoice({ clipId, label, showToggle, className }: ScreenVoiceProps): React.ReactElement {
   const { stopClip } = useCoachAudio();
 
   useEffect(() => () => stopClip(clipId), [clipId, stopClip]);
 
-  return <CoachAudioButton clipId={clipId} label={label} whenMissing="hide" className={className} />;
+  return (
+    <CoachAudioButton
+      clipId={clipId}
+      label={label}
+      showToggle={showToggle}
+      whenMissing="hide"
+      className={className}
+    />
+  );
 }

@@ -222,6 +222,17 @@ export class UserService extends BaseDatabaseService {
     });
   }
 
+  /**
+   * Records that a once-only Coach Mike voice moment has played for this
+   * account. Written under `voiceMoments.{key}` so marking one moment never
+   * rewrites another, and a second call for the same key simply restamps it.
+   */
+  async markVoiceMoment(userId: string, key: string): Promise<ApiResponse<void>> {
+    return this.update<User>(this.USERS_COLLECTION, userId, {
+      [`voiceMoments.${key}`]: Timestamp.now(),
+    } as Partial<User>);
+  }
+
   async updateLastLogin(userId: string): Promise<ApiResponse<void>> {
     return this.update<User>(this.USERS_COLLECTION, userId, {
       lastLoginAt: Timestamp.now(),
