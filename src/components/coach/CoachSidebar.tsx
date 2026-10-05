@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Users, FolderOpen, LogOut,
-  ChevronLeft, Menu, X, User, UserCircle, ClipboardList,
+  ChevronLeft, Menu, X, User, UserCircle, ClipboardList, Video,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
@@ -18,6 +18,7 @@ const navItems = [
   { label: 'Dashboard',       href: '/coach',              icon: LayoutDashboard },
   { label: 'My Goalies',      href: '/coach/students',     icon: Users },
   { label: 'Charting',        href: '/coach/charting',     icon: ClipboardList },
+  { label: 'Video Reviews',   href: '/coach/video-reviews', icon: Video },
   { label: 'Content Library', href: '/coach/content',      icon: FolderOpen },
   { label: 'Profile',         href: '/coach/profile',      icon: UserCircle },
 ];

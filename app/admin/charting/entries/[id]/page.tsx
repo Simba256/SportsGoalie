@@ -8,6 +8,7 @@ import { AdminRoute } from '@/components/auth/protected-route';
 import { ArrowLeft, Calendar, User, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { V2ChartReadOnlyView } from '@/components/charting/V2ChartReadOnlyView';
+import { toDateSafe } from '@/lib/utils/timestamp';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -143,10 +144,13 @@ function EntryDetailContent() {
               </div>
             </div>
           ))}
-          {entry.submittedAt && (
+          {/* toDateSafe, not a raw toDate(): entries written before the
+              removeUndefinedFields fix hold a plain {seconds} map with no methods,
+              and calling toDate() on one crashes the whole page. */}
+          {toDateSafe(entry.submittedAt) && (
             <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
               <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
-                Submitted on {entry.submittedAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                Submitted on {toDateSafe(entry.submittedAt)!.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           )}
@@ -200,7 +204,7 @@ function EntryDetailContent() {
       {entry.preGame && sectionCard('Pre-Game Checklist', (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
           <div>{subHeading('Game Readiness')}{renderYesNoField('Well Rested', entry.preGame.gameReadiness.wellRested)}{renderYesNoField('Fueled for Game', entry.preGame.gameReadiness.fueledForGame)}</div>
-          <div>{subHeading('Mind-Set')}{renderYesNoField('Mind Cleared', entry.preGame.mindSet.mindCleared)}{renderYesNoField('Mental Imagery', entry.preGame.mindSet.mentalImagery)}</div>
+          <div>{subHeading('MindSet')}{renderYesNoField('Mind Cleared', entry.preGame.mindSet.mindCleared)}{renderYesNoField('Mental Imagery', entry.preGame.mindSet.mentalImagery)}</div>
           <div>{subHeading('Pre-Game Routine')}{renderYesNoField('Ball Exercises', entry.preGame.preGameRoutine.ballExercises)}{renderYesNoField('Stretching', entry.preGame.preGameRoutine.stretching)}{renderYesNoField('Other', entry.preGame.preGameRoutine.other)}</div>
           <div>{subHeading('Warm-Up')}{renderYesNoField('Looked Engaged', entry.preGame.warmUp.lookedEngaged)}{renderYesNoField('Lacked Focus', entry.preGame.warmUp.lackedFocus)}{renderYesNoField('Team Warm-Up Needs Adjustment', entry.preGame.warmUp.teamWarmUpNeedsAdjustment)}</div>
         </div>
@@ -213,7 +217,7 @@ function EntryDetailContent() {
         if (!periodData) return null;
         return sectionCard(`Period ${periodNum}`, (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-            <div>{subHeading('Mind-Set')}{renderRadioField('Focus', { focusConsistent: periodData.mindSet.focusConsistent, focusInconsistent: periodData.mindSet.focusInconsistent })}{renderRadioField('Decision Making', { decisionMakingStrong: periodData.mindSet.decisionMakingStrong, decisionMakingImproving: periodData.mindSet.decisionMakingImproving, decisionMakingNeedsWork: periodData.mindSet.decisionMakingNeedsWork })}{renderRadioField('Body Language', { bodyLanguageConsistent: periodData.mindSet.bodyLanguageConsistent, bodyLanguageInconsistent: periodData.mindSet.bodyLanguageInconsistent })}</div>
+            <div>{subHeading('MindSet')}{renderRadioField('Focus', { focusConsistent: periodData.mindSet.focusConsistent, focusInconsistent: periodData.mindSet.focusInconsistent })}{renderRadioField('Decision Making', { decisionMakingStrong: periodData.mindSet.decisionMakingStrong, decisionMakingImproving: periodData.mindSet.decisionMakingImproving, decisionMakingNeedsWork: periodData.mindSet.decisionMakingNeedsWork })}{renderRadioField('Body Language', { bodyLanguageConsistent: periodData.mindSet.bodyLanguageConsistent, bodyLanguageInconsistent: periodData.mindSet.bodyLanguageInconsistent })}</div>
             <div>{subHeading('Skating')}{renderRadioField('Skating Performance', { inSyncWithPuck: periodData.skating.inSyncWithPuck, improving: periodData.skating.improving, weak: periodData.skating.weak, notInSync: periodData.skating.notInSync })}</div>
             <div>{subHeading('Positional - Above Icing')}{renderRadioField('Performance Level', { poor: periodData.positionalAboveIcing.poor, improving: periodData.positionalAboveIcing.improving, good: periodData.positionalAboveIcing.good })}</div>
             <div>{subHeading('Positional - Below Icing')}{renderRadioField('Performance Level', { poor: periodData.positionalBelowIcing.poor, improving: periodData.positionalBelowIcing.improving, good: periodData.positionalBelowIcing.good, strong: periodData.positionalBelowIcing.strong })}</div>
@@ -238,7 +242,7 @@ function EntryDetailContent() {
           {entry.overtime && (
             <div>
               {subHeading('Overtime')}
-              {renderRadioField('Mind-Set Focus', { good: entry.overtime.mindSetFocus.good, needsWork: entry.overtime.mindSetFocus.needsWork })}
+              {renderRadioField('MindSet Focus', { good: entry.overtime.mindSetFocus.good, needsWork: entry.overtime.mindSetFocus.needsWork })}
               {renderRadioField('Skating Performance', { good: entry.overtime.skatingPerformance.good, needsWork: entry.overtime.skatingPerformance.needsWork })}
               {renderRadioField('Positional Game', { good: entry.overtime.positionalGame.good, needsWork: entry.overtime.positionalGame.needsWork })}
             </div>

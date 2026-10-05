@@ -39,6 +39,15 @@ vi.mock('@/lib/auth/context', () => ({
   }),
 }));
 
+// The Coach Mike buttons need the audio provider the root layout supplies. What
+// they show is tested in components/audio/page-placements.test.tsx; here the
+// stand-in just records which pillar the page asked them for.
+vi.mock('@/components/audio/PillarTeachingVoice', () => ({
+  PillarTeachingVoice: ({ pillarId }: { pillarId: string }) => (
+    <div data-testid="pillar-teaching-voice" data-pillar-id={pillarId} />
+  ),
+}));
+
 // Mock Next.js router
 const mockRouter = {
   push: vi.fn(),
@@ -184,6 +193,16 @@ describe('PillarDetailPage', () => {
     // Find link containing the skill
     const skillCard = screen.getByText('Mental Preparation').closest('a');
     expect(skillCard).toHaveAttribute('href', '/pillars/pillar_mindset/skills/skill-1');
+  });
+
+  it("carries Coach Mike's teaching buttons for the pillar being viewed", async () => {
+    render(<PillarDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Mental Preparation')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('pillar-teaching-voice')).toHaveAttribute('data-pillar-id', 'pillar_mindset');
   });
 
   it('handles pillar not found error', async () => {

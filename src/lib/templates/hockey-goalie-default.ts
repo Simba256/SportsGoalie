@@ -8,6 +8,8 @@ import { FormTemplate } from '@/types';
 export const createDefaultHockeyGoalieTemplate = (createdBy: string): Omit<FormTemplate, 'id' | 'createdAt' | 'updatedAt'> => ({
   name: 'Hockey Goalie Performance Tracker',
   description: 'Comprehensive performance tracking for hockey goalies including pre-game preparation, in-game performance, and post-game review.',
+  sport: 'Hockey',
+  pillar: 'combined',
   version: 1,
   isActive: true,
   isArchived: false,
@@ -54,7 +56,7 @@ export const createDefaultHockeyGoalieTemplate = (createdBy: string): Omit<FormT
           },
           order: 2,
         },
-        // Mind Set
+        // MindSet
         {
           id: 'mind_cleared',
           label: 'Mind Cleared',
@@ -550,7 +552,7 @@ export const createDefaultHockeyGoalieTemplate = (createdBy: string): Omit<FormT
  */
 function createPeriodFields(periodId: string, periodNum: number) {
   return [
-    // Mind Set
+    // MindSet
     {
       id: `focus_consistent_${periodId}`,
       label: 'Focus - Consistent',
@@ -561,7 +563,7 @@ function createPeriodFields(periodId: string, periodNum: number) {
       analytics: {
         enabled: true,
         type: 'percentage' as const,
-        category: `Period ${periodNum} Mind Set`,
+        category: `Period ${periodNum} MindSet`,
         displayName: 'Focus Consistency %',
         targetValue: 75,
       },
@@ -577,7 +579,7 @@ function createPeriodFields(periodId: string, periodNum: number) {
       analytics: {
         enabled: true,
         type: 'distribution' as const,
-        category: `Period ${periodNum} Mind Set`,
+        category: `Period ${periodNum} MindSet`,
       },
       order: 2,
     },
@@ -591,7 +593,7 @@ function createPeriodFields(periodId: string, periodNum: number) {
       analytics: {
         enabled: true,
         type: 'distribution' as const,
-        category: `Period ${periodNum} Mind Set`,
+        category: `Period ${periodNum} MindSet`,
       },
       order: 3,
     },

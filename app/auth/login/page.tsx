@@ -215,18 +215,36 @@ export default function LoginPage() {
             <VerificationMessage />
           </Suspense>
 
+          <style>{`
+            .auth-input:-webkit-autofill,
+            .auth-input:-webkit-autofill:hover,
+            .auth-input:-webkit-autofill:focus,
+            .auth-input:-webkit-autofill:active {
+              -webkit-text-fill-color: #fff !important;
+              -webkit-box-shadow: 0 0 0px 1000px #00101f inset !important;
+              box-shadow: 0 0 0px 1000px #00101f inset !important;
+              caret-color: #fff !important;
+              transition: background-color 5000s ease-in-out 0s !important;
+            }
+          `}</style>
+
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} data-testid="login-form">
 
-            {/* Email */}
+            {/* Email, or a goalie handle for an account a parent holds (item 6c).
+                Deliberately type="text" rather than type="email": the browser's
+                own validation would reject a handle before the form ever sees
+                it. */}
             <div>
-              <label htmlFor="email" style={labelStyle}>Email</label>
+              <label htmlFor="email" style={labelStyle}>Email or goalie username</label>
               <input
                 id="email"
-                type="email"
+                type="text"
+                inputMode="email"
                 placeholder="your@email.com"
                 {...register('email')}
-                autoComplete="email"
+                autoComplete="username"
                 data-testid="email-input"
+                className="auth-input"
                 style={inputStyle}
                 onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
                 onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
@@ -258,6 +276,7 @@ export default function LoginPage() {
                   {...register('password')}
                   autoComplete="current-password"
                   data-testid="password-input"
+                  className="auth-input"
                   style={{ ...inputStyle, paddingRight: '44px' }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
                   onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}

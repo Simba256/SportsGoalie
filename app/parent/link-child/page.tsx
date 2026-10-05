@@ -36,7 +36,7 @@ export default function LinkChildPage() {
 
   const handleLinkSuccess = (childName: string) => {
     toast.success(`Successfully linked to ${childName}!`);
-    router.push('/parent');
+    router.push('/parent/goalies');
   };
 
   return (
@@ -46,10 +46,10 @@ export default function LinkChildPage() {
         .lc-help-step { transition: background 0.2s; }
         .lc-help-step:hover { background: rgba(55,181,255,0.06) !important; }
       `}</style>
-      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Back */}
-        <Link href="/parent" className="lc-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', transition: 'all 0.2s', width: 'fit-content' }}>
-          <ChevronLeft size={16} /> Back to Dashboard
+        <Link href="/parent/goalies" className="lc-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', transition: 'all 0.2s', width: 'fit-content' }}>
+          <ChevronLeft size={16} /> Back
         </Link>
 
         {/* Page Header */}
@@ -67,9 +67,7 @@ export default function LinkChildPage() {
         </div>
 
         {/* Link Form */}
-        <div style={{ background: cardBg, border, borderRadius: '16px', overflow: 'hidden' }}>
-          <LinkChildForm parentId={user.id} onLinkSuccess={handleLinkSuccess} />
-        </div>
+        <LinkChildForm parentId={user.id} onLinkSuccess={handleLinkSuccess} />
 
         {/* Help Section */}
         <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', padding: '20px', overflow: 'hidden' }}>

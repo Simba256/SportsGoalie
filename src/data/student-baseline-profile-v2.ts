@@ -426,15 +426,22 @@ export const STUDENT_BASELINE_SECTIONS: V2Section[] = [
       {
         id: 'C6',
         section: 'C',
-        inputType: 'radio',
-        question: 'Of the following — which area do you feel needs the most work right now?',
+        /*
+          Michael, 21 Aug: on his third pass through this question he wanted to
+          pick four or five areas, not one — a goalie working on their mental
+          game is usually working on their skating too. The renderer prints
+          "Select all that apply" for multi_select, so the note below does not
+          repeat it.
+        */
+        inputType: 'multi_select',
+        question: 'Of the following — which areas do you feel need the most work right now?',
         note: 'These are examples to help you think. If your answer is something we did not list — tell us in your own words. We do not want to lead you.',
         evolutionEligible: true,
         options: [
-          { id: 'C6-1', text: 'Mind-Set — confidence, focus, mental game' },
+          { id: 'C6-1', text: 'MindSet — confidence, focus, mental game' },
           { id: 'C6-2', text: 'Skating — balance, coordination, execution, recovery' },
           { id: 'C6-3', text: 'Positional Play — angles, depth, reads' },
-          { id: 'C6-4', text: 'Form Technique — set-crouches, execution, recovery' },
+          { id: 'C6-4', text: 'Form — set-crouches, execution, recovery' },
           { id: 'C6-5', text: 'Game Performance — consistency in performance under pressure' },
           { id: 'C6-6', text: 'Lifestyle — preparation, rest, nutrition, training' },
           { id: 'C6-open', text: 'Something else — tell us in your own words', hasOpenText: true },
@@ -924,7 +931,7 @@ export const STUDENT_BASELINE_SECTIONS: V2Section[] = [
           { id: 'H1-3', text: 'Tools to evaluate my own performance' },
           { id: 'H1-4', text: 'Real data I can share with my coach or parents' },
           { id: 'H1-5', text: 'Recognition and progress markers when I improve' },
-          { id: 'H1-6', text: 'A place to grow my Mind-Set and confidence' },
+          { id: 'H1-6', text: 'A place to grow my MindSet and confidence' },
           { id: 'H1-7', text: 'Connection to other goalies who think like I do' },
           { id: 'H1-open', text: 'Something we missed — tell us in your own words', hasOpenText: true },
         ],

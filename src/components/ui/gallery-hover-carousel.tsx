@@ -64,14 +64,10 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
       {/* Header */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 clamp(24px,5vw,80px)', marginBottom: '40px' }}>
         {eyebrow && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#37b5ff', boxShadow: '0 0 10px rgba(55,181,255,0.8)' }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', margin: 0 }}>{eyebrow}</p>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#37b5ff', boxShadow: '0 0 10px rgba(55,181,255,0.8)' }} />
-          </div>
+          <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: '99px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', color: '#37b5ff', fontSize: '10px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '14px' }}>{eyebrow}</span>
         )}
         {heading && (
-          <h2 style={{ fontSize: 'clamp(22px,2.8vw,34px)', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{heading}</h2>
+          <h2 style={{ fontSize: 'clamp(28px,3.5vw,48px)', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{heading}</h2>
         )}
         {subheading && (
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', margin: '8px 0 0', lineHeight: 1.6, maxWidth: '480px' }}>{subheading}</p>

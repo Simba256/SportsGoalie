@@ -3,9 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ClipboardList, ChevronLeft } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
+import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
+import { ApplicationSteps } from '@/components/ApplicationSteps';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
@@ -191,22 +195,7 @@ export default function TeamProgramsPage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />THE SYSTEM
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
@@ -351,7 +340,7 @@ export default function TeamProgramsPage() {
             <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
             {[
               { num: '01', label: 'Coach Observation Chart', desc: 'Structured framework for watching the goalie with educated eyes' },
-              { num: '02', label: 'Game Charting Data', desc: 'Factor Ratios, good goal / bad goal analysis, V.M.P. intensity' },
+              { num: '02', label: 'Game Charting Data', desc: 'Factor Ratios, good goal / weak goal analysis, V.M.P. intensity' },
               { num: '03', label: 'Practice Charting', desc: 'What was worked, what improved, what needs more attention' },
               { num: '04', label: 'Development Loop', desc: 'Game Chart → Practice Index → Practice Chart → Next Game Chart' },
               { num: '05', label: 'Cross-Reference Engine', desc: 'Compares your observations with the goalie\'s self-evaluation and parent observation' },
@@ -398,67 +387,13 @@ export default function TeamProgramsPage() {
           </div>
 
           {/* Description */}
-          <div style={{ maxWidth: '820px', marginBottom: '52px' }}>
+          <div style={{ maxWidth: '820px', marginBottom: '40px' }}>
             <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, marginBottom: '18px', fontWeight: 600 }}>
-              A self-directed learning experience across all 7 Pillars of the Smarter Goalie system.
+              A self-directed learning experience across all 8 Pillars of the Smarter Goalie system.
             </p>
             <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,240,0.85)', lineHeight: 1.9 }}>
               You select what you want to understand. Coach Mike guides every topic. No linear requirement. The system meets you where you are and grows with your knowledge.
             </p>
-          </div>
-
-          {/* 7 Pillar Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" style={{ maxWidth: '960px', marginBottom: '52px' }}>
-            {([
-              { accent: '#00f2ff', label: 'Mind-Set' },
-              { accent: BLUE2, label: 'Skating Tech' },
-              { accent: BLUE, label: '7AMS' },
-              { accent: BLUE3, label: '7 Point' },
-              { accent: '#38bdf8', label: 'Form Tech' },
-              { accent: '#22d3ee', label: 'Game & Practice' },
-              { accent: BLUE2, label: 'Lifestyle' },
-            ] as { accent: string; label: string }[]).map(({ accent, label }, i) => (
-              <TiltCard
-                key={i}
-                effect="gravitate"
-                tiltLimit={10}
-                scale={1.07}
-                style={{
-                  border: `1px solid ${accent}55`,
-                  borderRadius: '16px',
-                  boxShadow: `0 0 28px ${accent}14, inset 0 0 20px ${accent}06`,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                }}
-                onClick={() => router.push(`/team-programs/pillar/${i + 1}`)}
-              >
-                {/* Ghost number behind card content */}
-                <div style={{
-                  position: 'absolute', bottom: '-4px', right: '0px',
-                  fontSize: '60px', fontWeight: 900,
-                  color: `${accent}13`,
-                  lineHeight: 1, userSelect: 'none', pointerEvents: 'none', letterSpacing: '-3px',
-                }}>{String(i + 1).padStart(2, '0')}</div>
-                <div style={{
-                  padding: '24px 12px 20px',
-                  background: `linear-gradient(160deg, ${accent}0a, rgba(4,8,20,0.88))`,
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  borderRadius: '15px',
-                  textAlign: 'center',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                }}>
-                  {/* Top accent bar */}
-                  <div style={{ width: '28px', height: '3px', background: `linear-gradient(90deg, ${accent}, ${accent}44)`, borderRadius: '2px', boxShadow: `0 0 8px ${accent}55`, marginBottom: '2px' }} />
-                  <p style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 900, color: accent, lineHeight: 1, margin: 0, textShadow: `0 0 14px ${accent}60` }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </p>
-                  <p style={{ fontSize: '9px', color: `${accent}BB`, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', margin: 0 }}>PILLAR</p>
-                  <p style={{ fontSize: '8px', color: `${accent}99`, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
-                </div>
-              </TiltCard>
-            ))}
           </div>
 
           {/* Quote box + VoiceButton */}
@@ -472,6 +407,8 @@ export default function TeamProgramsPage() {
           </div>
         </div>
       </section>
+
+      <SevenPillarsCTA from="team-programs" eyebrow="For Team Programs" />
 
       {/* ── H: Founding Member ── */}
       <section id="apply" style={{ ...sec, background: 'linear-gradient(160deg, #092038 0%, #0e2848 100%)' }}>
@@ -488,18 +425,17 @@ export default function TeamProgramsPage() {
           <p style={{ fontSize: 'clamp(16px, 2vw, 21px)', color: 'rgba(175,215,238,0.9)', lineHeight: 1.8, maxWidth: '680px', margin: '0 auto 52px' }}>
             Coach Mike is personally selecting one hundred founding members. Your program becomes part of building what Smarter Goalie delivers to every team at every level.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            {[
-              { num: '01', text: 'Complete the coach questionnaire — 5 minutes' },
+          <ApplicationSteps
+            steps={[
+              // Registering as a Coach is what opens the coach questionnaire — the
+              // account has to exist first. The "5 minutes" claim was removed on
+              // 26 August; the baseline profile is much longer than that.
+              { num: '01', text: 'Create your coach account, then complete the coach questionnaire', href: '/auth/register', action: 'Start' },
               { num: '02', text: 'Coach Mike personally reviews your application' },
-              { num: '03', text: 'Coach Mike calls you personally' },
-            ].map((step) => (
-              <div key={step.num} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(96,205,255,0.22)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p style={{ fontSize: '38px', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
-                <p style={{ fontSize: '15px', color: 'rgba(155,200,228,0.9)', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
-              </div>
-            ))}
-          </div>
+              // /contact is the "Set Up the Call" form; its role list includes Team Manager.
+              { num: '03', text: 'Coach Mike calls you personally', href: '/contact', action: 'Set up the call' },
+            ]}
+          />
           <button
             onClick={() => router.push('/auth/register')}
             style={{ background: RED, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(192,0,0,0.35)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
@@ -514,9 +450,7 @@ export default function TeamProgramsPage() {
         </div>
       </section>
 
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
-      </div>
+      <Footer7 />
     </div>
   );
 }

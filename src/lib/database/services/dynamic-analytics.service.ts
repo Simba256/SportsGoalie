@@ -6,6 +6,7 @@ import {
   FormField,
   FieldAnalyticsResult,
   CategoryAnalyticsResult,
+  AnalyticsType,
   TrendDirection,
   ApiResponse,
   AnalyticsQueryOptions,
@@ -21,8 +22,74 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { logger } from '../../utils/logger';
+import { toDateSafe } from '../../utils/timestamp';
+import { calculateActivityStreak } from '../../utils/streak';
+import { scaleToPercentage } from '../../scoring/scale-score';
 import { formTemplateService } from './form-template.service';
 import { dynamicChartingService } from './dynamic-charting.service';
+
+/**
+ * Milliseconds for any date-shaped value Firestore may hand back, `null` when
+ * there's nothing usable.
+ *
+ * Every timestamp read in this service goes through here rather than calling
+ * `.toMillis()` / `.toDate()` directly. Entries written before the
+ * `removeUndefinedFields` fix hold `submittedAt` as a plain `{ seconds,
+ * nanoseconds }` map with no methods on it, so a direct call throws
+ * `toMillis is not a function` and takes the whole analytics calculation down —
+ * which is exactly how a single legacy entry could blank a student's board.
+ */
+function millisOf(value: unknown): number | null {
+  return toDateSafe(value)?.getTime() ?? null;
+}
+
+/**
+ * Sort comparator over entry timestamps, tolerant of the mangled shape above.
+ * Undatable entries sort last in both directions rather than poisoning the
+ * comparison with NaN.
+ */
+function compareBySubmittedAt(
+  a: { submittedAt: unknown },
+  b: { submittedAt: unknown },
+  direction: 'asc' | 'desc'
+): number {
+  const aMs = millisOf(a.submittedAt);
+  const bMs = millisOf(b.submittedAt);
+
+  if (aMs === null && bMs === null) return 0;
+  if (aMs === null) return 1;
+  if (bMs === null) return -1;
+
+  return direction === 'asc' ? aMs - bMs : bMs - aMs;
+}
+
+/**
+ * Flattens a thrown value into something loggable.
+ *
+ * FirebaseError puts the useful part on `code` (`permission-denied`,
+ * `failed-precondition` for a missing composite index) and, for a missing index,
+ * the console URL that creates it inside `message` — neither of which survives a
+ * bare `String(error)`.
+ */
+function describeError(error: unknown): { code: string; message: string; stack?: string } {
+  if (error instanceof Error) {
+    return {
+      code: (error as { code?: string }).code ?? error.name,
+      message: error.message || '(no message)',
+      stack: error.stack,
+    };
+  }
+
+  if (error && typeof error === 'object') {
+    const candidate = error as { code?: string; message?: string };
+    return {
+      code: candidate.code ?? 'unknown',
+      message: candidate.message ?? JSON.stringify(error),
+    };
+  }
+
+  return { code: 'unknown', message: String(error) };
+}
 
 /**
  * Service for calculating analytics from dynamic form responses
@@ -30,7 +97,11 @@ import { dynamicChartingService } from './dynamic-charting.service';
  */
 export class DynamicAnalyticsService extends BaseDatabaseService {
   private readonly ANALYTICS_COLLECTION = 'dynamic_charting_analytics';
-  private readonly CALCULATION_VERSION = 1; // Increment when algorithm changes
+  // 2: scores normalize against the field's configured scale instead of the
+  //    observed range, and scale fields mis-typed as `percentage` are repaired.
+  // 5: the check-in streak counts from yesterday as well as today, and the
+  //    longest streak is the true longest run rather than a running counter.
+  private readonly CALCULATION_VERSION = 5; // Increment when algorithm changes
 
   // ==================== MAIN ANALYTICS CALCULATION ====================
 
@@ -82,29 +153,36 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         };
       }
 
-      let entries = entriesResult.data;
-
-      // Apply date filters if provided
-      if (options.dateFrom || options.dateTo) {
-        entries = this.filterEntriesByDate(entries, options.dateFrom, options.dateTo);
-      }
-
-      // Filter by completion if specified
+      // Filter by completion if specified. This applies to the full history too,
+      // since a baseline should never be pinned to a partial/incomplete entry.
+      let allEntries = entriesResult.data;
       if (!options.includePartialEntries) {
-        entries = entries.filter((e) => e.isComplete);
+        allEntries = allEntries.filter((e) => e.isComplete);
       }
 
-      // Calculate analytics
-      const analytics = await this.calculateAnalytics(studentId, template, entries);
+      // The baseline always anchors to the full, unfiltered history — only the
+      // "current" side of the calculation respects a date window. Otherwise
+      // picking anything but All-Time would silently exclude the baseline entry.
+      const hasDateFilter = Boolean(options.dateFrom || options.dateTo);
+      const windowedEntries = hasDateFilter
+        ? this.filterEntriesByDate(allEntries, options.dateFrom, options.dateTo)
+        : allEntries;
 
-      // Save to database
-      const analyticsId = `${studentId}_${templateId}`;
-      await this.createWithId(this.ANALYTICS_COLLECTION, analyticsId, analytics);
+      const analytics = await this.calculateAnalytics(studentId, template, allEntries, windowedEntries);
+
+      // Only persist the canonical (full-history) calculation. A date-filtered
+      // result must never overwrite the cached ${studentId}_${templateId} doc
+      // that other consumers read from.
+      if (!hasDateFilter) {
+        const analyticsId = `${studentId}_${templateId}`;
+        await this.createWithId(this.ANALYTICS_COLLECTION, analyticsId, analytics);
+      }
 
       logger.info('Student analytics calculated successfully', 'DynamicAnalyticsService', {
         studentId,
         templateId,
-        entriesAnalyzed: entries.length,
+        entriesAnalyzed: windowedEntries.length,
+        persisted: !hasDateFilter,
       });
 
       return {
@@ -113,13 +191,25 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         timestamp: new Date(),
       };
     } catch (error) {
-      logger.error('Error calculating student analytics', 'DynamicAnalyticsService', { error: error instanceof Error ? error.message : String(error) });
+      // Firestore rejections (permission-denied, failed-precondition/missing index)
+      // carry their reason on `code` and, for a missing index, the URL to create it
+      // in `message`. Logging only `error.message` on a bare object loses all of it,
+      // which is how this surfaced as an unreadable `{}`.
+      const detail = describeError(error);
+      // Folded into the message rather than left in the data object: the Next.js
+      // error overlay renders the data argument shallowly, so a reason left in there
+      // is effectively invisible while debugging.
+      logger.error(
+        `Error calculating student analytics [${detail.code}] ${detail.message}`,
+        'DynamicAnalyticsService',
+        { studentId, templateId, ...detail }
+      );
       return {
         success: false,
         message: 'Failed to calculate analytics',
         error: {
-          code: 'CALCULATION_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          code: detail.code ?? 'CALCULATION_ERROR',
+          message: detail.message,
         },
         timestamp: new Date(),
       };
@@ -127,14 +217,24 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Gets cached analytics for a student
+   * Gets analytics for a student. With no options, returns the cached doc
+   * as before. Passing a date range (or recalculate: true) computes fresh
+   * instead — without persisting — so a filtered dashboard view can't
+   * clobber the canonical cached analytics other consumers rely on.
    */
   async getStudentAnalytics(
     studentId: string,
-    templateId: string
+    templateId: string,
+    options: Omit<AnalyticsQueryOptions, 'studentId'> = {}
   ): Promise<ApiResponse<DynamicStudentAnalytics | null>> {
-    const analyticsId = `${studentId}_${templateId}`;
-    return await this.getById<DynamicStudentAnalytics>(this.ANALYTICS_COLLECTION, analyticsId);
+    const hasDateFilter = Boolean(options.dateFrom || options.dateTo);
+
+    if (!hasDateFilter && !options.recalculate) {
+      const analyticsId = `${studentId}_${templateId}`;
+      return await this.getById<DynamicStudentAnalytics>(this.ANALYTICS_COLLECTION, analyticsId);
+    }
+
+    return await this.recalculateStudentAnalytics(studentId, templateId, options);
   }
 
   /**
@@ -150,7 +250,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       const q = query(
         analyticsRef,
         where('studentId', '==', studentId),
-        orderBy('lastCalculatedAt', 'desc'),
+        orderBy('lastCalculated', 'desc'),
         firestoreLimit(1)
       );
 
@@ -198,13 +298,14 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   private async calculateAnalytics(
     studentId: string,
     template: FormTemplate,
-    entries: DynamicChartingEntry[]
+    allEntries: DynamicChartingEntry[],
+    windowedEntries: DynamicChartingEntry[]
   ): Promise<Omit<DynamicStudentAnalytics, 'id' | 'createdAt' | 'updatedAt'>> {
     // Session stats
-    const sessionStats = this.calculateSessionStats(entries);
+    const sessionStats = this.calculateSessionStats(windowedEntries);
 
     // Streak data
-    const streak = this.calculateStreak(entries);
+    const streak = this.calculateStreak(windowedEntries);
 
     // Field-level analytics
     const fieldAnalytics: { [fieldId: string]: FieldAnalyticsResult } = {};
@@ -217,7 +318,8 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
           const fieldResult = this.calculateFieldAnalytics(
             field,
             section.id,
-            entries,
+            windowedEntries,
+            allEntries,
             section.isRepeatable
           );
 
@@ -281,11 +383,63 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         .slice(-3)
         .reverse()
         .map((f) => f.fieldLabel);
+
+      // Baseline/current tracking: average each field's raw baseline/latest value
+      // (not the normalized 0-100 score) so the category stays in the fields' own units.
+      const baselineValues = categoryData.fieldResults
+        .map((fr) => fr.baselineValue)
+        .filter((v): v is number => v !== undefined);
+      const latestValues = categoryData.fieldResults
+        .map((fr) => fr.latestValue)
+        .filter((v): v is number => v !== undefined);
+
+      if (baselineValues.length > 0) {
+        categoryData.baselineScore = this.round(
+          baselineValues.reduce((sum, v) => sum + v, 0) / baselineValues.length,
+          2
+        );
+
+        const baselineDates = categoryData.fieldResults
+          .map((fr) => fr.baselineDate)
+          .filter((d): d is Timestamp => d !== undefined);
+        if (baselineDates.length > 0) {
+          categoryData.baselineDate = baselineDates.reduce((earliest, d) => {
+            const dMs = millisOf(d);
+            const earliestMs = millisOf(earliest);
+            if (dMs === null) return earliest;
+            if (earliestMs === null) return d;
+            return dMs < earliestMs ? d : earliest;
+          });
+        }
+      }
+
+      if (latestValues.length > 0) {
+        categoryData.currentScore = this.round(
+          latestValues.reduce((sum, v) => sum + v, 0) / latestValues.length,
+          2
+        );
+      }
+
+      if (categoryData.baselineScore !== undefined && categoryData.currentScore !== undefined) {
+        categoryData.growthFromBaseline = this.round(
+          categoryData.currentScore - categoryData.baselineScore,
+          2
+        );
+      }
     }
 
     // Overall performance
+    // Rating fields only, scored on the same basis as the Progress Board's bars
+    // (latest answer, falling back to the average), so this number always matches
+    // what the goalie sees. Counts and yes/no answers are facts, not ratings.
     const allScores = Object.values(fieldAnalytics)
-      .map((fa) => this.getFieldScore(fa))
+      .filter((fa) => fa.scaleMax !== undefined)
+      .map((fa) => {
+        const value = fa.latestValue ?? fa.average;
+        return typeof value === 'number'
+          ? scaleToPercentage(value, fa.scaleMax as number, fa.scaleMin)
+          : null;
+      })
       .filter((s) => s !== null) as number[];
 
     const overallPerformanceScore =
@@ -315,6 +469,9 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       studentId,
       formTemplateId: template.id,
       formTemplateName: template.name,
+      pillar: template.pillar,
+      sport: template.sport,
+      totalEntries: allEntries.length,
       sessionStats,
       streak,
       fieldAnalytics,
@@ -331,12 +488,67 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   // ==================== FIELD ANALYTICS CALCULATION ====================
 
   /**
+   * The analytics type to actually calculate for a field.
+   *
+   * The template builder stamped every analytics-enabled field as `percentage`
+   * regardless of its input type. `percentage` counts boolean trues, so a 1-10
+   * scale field scored a flat 0% however the athlete answered — every template
+   * authored through the admin UI reported an overall score of 0. The builder
+   * now picks the right type up front, but templates saved before that fix are
+   * already in Firestore, so the mismatch is repaired here on read rather than
+   * by migrating documents: a stored type that cannot produce a number from
+   * this field's values gives way to the one that can.
+   */
+  private resolveAnalyticsType(field: FormField): AnalyticsType {
+    const stored = field.analytics.type;
+
+    if ((field.type === 'scale' || field.type === 'numeric') && stored === 'percentage') {
+      return 'average';
+    }
+
+    if (
+      (field.type === 'radio' || field.type === 'checkbox') &&
+      (stored === 'percentage' || stored === 'average')
+    ) {
+      return 'distribution';
+    }
+
+    return stored;
+  }
+
+  /**
+   * The bounds of the rating scale a field is answered on, or null when it has none.
+   *
+   * Scale fields fall back to 1-10 to match the input control (DynamicScaleField)
+   * and the history page's progress bars — the builder didn't record explicit
+   * bounds for them. A numeric field only counts as scaled when the author gave
+   * it both ends: an open-ended tally like "shots faced" has no ceiling to
+   * measure a percentage against.
+   */
+  private getConfiguredScale(field: FormField): { min: number; max: number } | null {
+    if (field.type === 'scale') {
+      return { min: field.validation?.min ?? 1, max: field.validation?.max ?? 10 };
+    }
+
+    if (
+      field.type === 'numeric' &&
+      field.validation?.min !== undefined &&
+      field.validation?.max !== undefined
+    ) {
+      return { min: field.validation.min, max: field.validation.max };
+    }
+
+    return null;
+  }
+
+  /**
    * Calculates analytics for a single field
    */
   private calculateFieldAnalytics(
     field: FormField,
     sectionId: string,
     entries: DynamicChartingEntry[],
+    allEntries: DynamicChartingEntry[],
     isRepeatable?: boolean
   ): FieldAnalyticsResult | null {
     // Extract values for this field from all entries
@@ -346,17 +558,27 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       return null;
     }
 
+    const analyticsType = this.resolveAnalyticsType(field);
+
     const result: FieldAnalyticsResult = {
       fieldId: field.id,
       fieldLabel: field.analytics.displayName || field.label,
       fieldType: field.type,
-      analyticsType: field.analytics.type,
+      analyticsType,
       category: field.analytics.category,
       dataPoints: values.length,
     };
 
+    // Carried onto the result so scoring can normalize against the scale the
+    // athlete answered on without needing the template back.
+    const scale = this.getConfiguredScale(field);
+    if (scale) {
+      result.scaleMin = scale.min;
+      result.scaleMax = scale.max;
+    }
+
     // Calculate based on analytics type
-    switch (field.analytics.type) {
+    switch (analyticsType) {
       case 'percentage':
         this.calculatePercentageAnalytics(result, values, field);
         break;
@@ -384,6 +606,24 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
       case 'count':
         this.calculateCountAnalytics(result, values);
         break;
+    }
+
+    // Baseline always anchors to the first-ever submission across full history,
+    // independent of the active date window, so switching dashboard filters
+    // can't move the anchor.
+    const baseline = this.extractFieldEdgeValue(field.id, sectionId, allEntries, isRepeatable, 'first');
+    if (baseline) {
+      result.baselineValue = baseline.value;
+      result.baselineDate = baseline.date;
+
+      // Latest reflects the current window, so growth reflects progress made
+      // within the selected period (Week/Month/3-Month/All-Time).
+      const latest = this.extractFieldEdgeValue(field.id, sectionId, entries, isRepeatable, 'last');
+      if (latest) {
+        result.latestValue = latest.value;
+        result.latestDate = latest.date;
+        result.growthFromBaseline = this.round(latest.value - baseline.value, 2);
+      }
     }
 
     // Target tracking
@@ -627,6 +867,34 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   }
 
   /**
+   * Finds the first (baseline) or last (latest) numeric value for a field
+   * across the given entries, scanning in chronological order and skipping
+   * non-numeric responses (e.g. yes/no or text fields have no meaningful
+   * baseline/growth value).
+   */
+  private extractFieldEdgeValue(
+    fieldId: string,
+    sectionId: string,
+    entries: DynamicChartingEntry[],
+    isRepeatable: boolean | undefined,
+    edge: 'first' | 'last'
+  ): { value: number; date: Timestamp } | null {
+    const sorted = [...entries].sort((a, b) =>
+      compareBySubmittedAt(a, b, edge === 'first' ? 'asc' : 'desc')
+    );
+
+    for (const entry of sorted) {
+      const values = this.extractFieldValues(fieldId, sectionId, [entry], isRepeatable);
+      const numericValue = values.map(Number).find((n) => !isNaN(n));
+      if (numericValue !== undefined) {
+        return { value: numericValue, date: entry.submittedAt };
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Calculates session statistics
    */
   private calculateSessionStats(entries: DynamicChartingEntry[]) {
@@ -645,9 +913,7 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
         : 0;
 
     // Date calculations
-    const sortedEntries = [...entries].sort(
-      (a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis()
-    );
+    const sortedEntries = [...entries].sort((a, b) => compareBySubmittedAt(a, b, 'desc'));
 
     const firstSessionDate = sortedEntries[sortedEntries.length - 1]?.submittedAt;
     const lastSessionDate = sortedEntries[0]?.submittedAt;
@@ -656,9 +922,11 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     let averageSessionsPerWeek = 0;
     let averageSessionsPerMonth = 0;
 
-    if (firstSessionDate && lastSessionDate) {
-      const daysDiff =
-        (lastSessionDate.toMillis() - firstSessionDate.toMillis()) / (1000 * 60 * 60 * 24);
+    const firstMs = millisOf(firstSessionDate);
+    const lastMs = millisOf(lastSessionDate);
+
+    if (firstMs !== null && lastMs !== null) {
+      const daysDiff = (lastMs - firstMs) / (1000 * 60 * 60 * 24);
 
       if (daysDiff > 0) {
         averageSessionsPerWeek = this.round((totalSessions / daysDiff) * 7, 1);
@@ -680,40 +948,20 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
   }
 
   /**
-   * Calculates streak data
+   * Calculates streak data. The counting rule is shared with the charting hub
+   * (see calculateActivityStreak) so the two screens cannot disagree.
    */
   private calculateStreak(entries: DynamicChartingEntry[]) {
-    const dates = entries
-      .map((e) => {
-        const date = e.submittedAt.toDate();
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
-      })
+    const submitted = entries
+      .map((e) => toDateSafe(e.submittedAt))
+      .filter((date): date is Date => date !== null);
+
+    const dates = submitted
+      .map((date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString())
       .filter((date, index, self) => self.indexOf(date) === index)
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-    let currentStreak = 0;
-    let longestStreak = 0;
-    let tempStreak = 0;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < dates.length; i++) {
-      const currentDate = new Date(dates[i]);
-      const expectedDate = new Date(today);
-      expectedDate.setDate(expectedDate.getDate() - i);
-
-      if (currentDate.toISOString() === expectedDate.toISOString()) {
-        tempStreak++;
-        if (i === 0 || currentStreak > 0) {
-          currentStreak = tempStreak;
-        }
-      } else {
-        tempStreak = 1;
-      }
-
-      longestStreak = Math.max(longestStreak, tempStreak);
-    }
+    const { currentStreak, longestStreak } = calculateActivityStreak(submitted);
 
     return {
       currentStreak,
@@ -774,15 +1022,33 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
    * Converts field analytics to a 0-100 score
    */
   private getFieldScore(fieldAnalytics: FieldAnalyticsResult): number | null {
+    // A count (shots faced, period, clock) is a fact, not a performance rating,
+    // whatever analytics type it was saved with. It never feeds a score.
+    if (fieldAnalytics.fieldType === 'numeric' && fieldAnalytics.scaleMax === undefined) {
+      return null;
+    }
+
     if (fieldAnalytics.percentage !== undefined) {
       return fieldAnalytics.percentage;
     }
 
-    if (fieldAnalytics.average !== undefined && fieldAnalytics.max !== undefined) {
-      // Normalize to 0-100
-      const range = fieldAnalytics.max - (fieldAnalytics.min || 0);
-      if (range === 0) return 100;
-      return Math.round(((fieldAnalytics.average - (fieldAnalytics.min || 0)) / range) * 100);
+    if (fieldAnalytics.average !== undefined) {
+      // Score against the scale the athlete was rating on, not the spread of
+      // their own answers. Measured against the observed range, entries of 4 and
+      // 7 always scored exactly 50%, and a run of identical answers always
+      // scored 100% — the number tracked the sample, never the performance.
+      if (fieldAnalytics.scaleMax === undefined) {
+        // An open-ended number has no ceiling, so it has no honest percentage.
+        // Leaving it out of the average beats inventing one for it.
+        return null;
+      }
+
+      // scaleToPercentage is the app-wide rule: 7 out of 10 reads 70%.
+      return scaleToPercentage(
+        fieldAnalytics.average,
+        fieldAnalytics.scaleMax,
+        fieldAnalytics.scaleMin
+      );
     }
 
     if (fieldAnalytics.consistencyScore !== undefined) {
@@ -801,7 +1067,13 @@ export class DynamicAnalyticsService extends BaseDatabaseService {
     dateTo?: Date
   ): DynamicChartingEntry[] {
     return entries.filter((entry) => {
-      const entryDate = entry.submittedAt.toDate();
+      const entryDate = toDateSafe(entry.submittedAt);
+
+      // An entry we can't date can't be placed in the window, so it's excluded
+      // rather than silently counted as in-range.
+      if (!entryDate) {
+        return false;
+      }
 
       if (dateFrom && entryDate < dateFrom) {
         return false;

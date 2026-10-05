@@ -5,13 +5,60 @@ import { Upload, Video, X, Loader2, CheckCircle2, AlertCircle, Info } from 'luci
 import ReactPlayer from 'react-player';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { storageService, UploadProgress, STORAGE_CONFIGS } from '@/lib/firebase/storage.service';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const BLUE = '#37b5ff';
+
+/**
+ * This component renders on two very different backgrounds: the navy admin/coach
+ * panels it was designed for, and the white shadcn cards on the coach content
+ * pages. Every colour below is therefore picked per surface — hard-coded
+ * `text-white` made the drop zone and its instructions literally invisible on
+ * white, so coaches could not tell where to click.
+ */
+type Surface = 'dark' | 'light';
+
+const SURFACE_STYLES: Record<Surface, Record<string, string>> = {
+  dark: {
+    shell: 'border-[#60cdff]/20 bg-white/[0.03]',
+    tabsList: 'bg-white/5 border-white/10',
+    tabInactive: 'text-white/50',
+    dropzone: 'border-white/15 hover:border-[#37b5ff]/50',
+    dropzoneIcon: 'text-white/30',
+    heading: 'text-white',
+    muted: 'text-white/50',
+    subtle: 'text-white/40',
+    button: 'border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white',
+    input: 'bg-white/5 border-white/15 text-white placeholder:text-white/30 focus-visible:ring-[#37b5ff]/40',
+    label: 'text-white/70',
+    infoBox: 'bg-white/5 border-white/10',
+    progressTrack: 'bg-white/10',
+    success: 'text-emerald-400',
+    error: 'text-red-400',
+  },
+  light: {
+    shell: 'border-zinc-200 bg-zinc-50',
+    tabsList: 'bg-zinc-100 border-zinc-200',
+    tabInactive: 'text-zinc-600 hover:text-zinc-900',
+    dropzone: 'border-zinc-300 bg-white hover:border-[#37b5ff] hover:bg-[#37b5ff]/[0.04]',
+    dropzoneIcon: 'text-zinc-400',
+    heading: 'text-zinc-900',
+    muted: 'text-zinc-600',
+    subtle: 'text-zinc-500',
+    button: 'border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 hover:text-zinc-900',
+    input: 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-[#37b5ff]/40',
+    label: 'text-zinc-700',
+    infoBox: 'bg-blue-50 border-blue-200',
+    progressTrack: 'bg-zinc-200',
+    success: 'text-emerald-600',
+    error: 'text-red-600',
+  },
+};
 
 type VideoSourceType = 'youtube' | 'vimeo' | 'google-drive' | 'direct';
 
@@ -48,6 +95,11 @@ interface VideoUploaderProps {
   onVideoUploaded: (url: string, duration?: number) => void;
   initialVideoUrl?: string;
   className?: string;
+  /**
+   * Background this renders on. Defaults to `dark` — the navy admin/coach panels
+   * it was built for. Pass `light` on white cards (the coach content pages).
+   */
+  surface?: Surface;
 }
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
@@ -59,7 +111,9 @@ export function VideoUploader({
   onVideoUploaded,
   initialVideoUrl,
   className,
+  surface = 'dark',
 }: VideoUploaderProps) {
+  const s = SURFACE_STYLES[surface];
   // Determine upload path - use custom folder, or fall back to coach/user path
   const effectiveUserId = coachId || userId || 'anonymous';
   const effectiveUploadFolder = uploadFolder || `coach-content/${effectiveUserId}/videos`;
@@ -78,6 +132,20 @@ export function VideoUploader({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  /**
+   * Mirror of `videoDuration` that `handleUpload` can read *after* its await.
+   *
+   * Duration detection is asynchronous and the upload itself takes seconds, so the
+   * state value captured in the handler's closure is routinely stale by the time
+   * the upload finishes — clicking Upload quickly meant the length was reported as
+   * undefined and the quiz saved a zero-length timeline.
+   */
+  const videoDurationRef = useRef<number | undefined>(undefined);
+
+  const applyVideoDuration = useCallback((duration: number | undefined) => {
+    videoDurationRef.current = duration;
+    setVideoDuration(duration);
+  }, []);
 
   const MAX_SIZE_BYTES = STORAGE_CONFIGS.VIDEOS.maxSizeBytes;
   const ALLOWED_TYPES = STORAGE_CONFIGS.VIDEOS.allowedTypes;
@@ -138,7 +206,7 @@ export function VideoUploader({
         durationSet = true;
         const flooredDuration = Math.floor(duration);
         console.log('🎬 Setting duration:', flooredDuration);
-        setVideoDuration(flooredDuration);
+        applyVideoDuration(flooredDuration);
         URL.revokeObjectURL(tempUrl);
       }
     };
@@ -178,7 +246,7 @@ export function VideoUploader({
     }, 5000);
 
     tempVideo.src = tempUrl;
-  }, []);
+  }, [applyVideoDuration]);
 
   const handleUpload = async () => {
     if (!selectedFile) return;
@@ -205,10 +273,13 @@ export function VideoUploader({
       );
 
       if (result.success && result.url) {
-        console.log('🎬 VideoUploader upload success, calling onVideoUploaded:', { url: result.url, videoDuration });
+        // Read through the ref, not the captured state — detection may only have
+        // finished during the upload we just awaited.
+        const detectedDuration = videoDurationRef.current;
+        console.log('🎬 VideoUploader upload success, calling onVideoUploaded:', { url: result.url, detectedDuration });
         setVideoUrl(result.url);
         setUploadState('success');
-        onVideoUploaded(result.url, videoDuration);
+        onVideoUploaded(result.url, detectedDuration);
         toast.success('Video uploaded successfully');
       } else {
         throw new Error(result.error || 'Upload failed');
@@ -249,6 +320,16 @@ export function VideoUploader({
     if (files && files.length > 0) {
       handleFileSelect(files[0]);
     }
+    /**
+     * Clear the input after reading it.
+     *
+     * A file input only fires `change` when its value actually changes, so
+     * re-picking the *same* file fires nothing at all and the button looks
+     * dead. That is what made uploading appear to work only after switching
+     * pages — navigating away remounts the input with an empty value, which
+     * silently un-sticks it. The captured `File` stays valid once cleared.
+     */
+    e.target.value = '';
   };
 
   const handleUrlSubmit = () => {
@@ -275,7 +356,7 @@ export function VideoUploader({
         onVideoUploaded(embedUrl, undefined);
         setUploadState('success');
         toast.success('Google Drive video URL added', {
-          description: 'Duration will be detected when video plays',
+          description: 'Open the Questions tab to load the video and pick up its length',
         });
         return;
       } else {
@@ -291,7 +372,7 @@ export function VideoUploader({
       const rawDuration = tempVideo.duration;
       if (Number.isFinite(rawDuration) && rawDuration > 0) {
         const duration = Math.floor(rawDuration);
-        setVideoDuration(duration);
+        applyVideoDuration(duration);
         onVideoUploaded(videoUrl, duration);
       } else {
         // Duration not available (e.g., streaming video)
@@ -315,7 +396,7 @@ export function VideoUploader({
     setUploadState('idle');
     setUploadProgress(0);
     setErrorMessage(null);
-    setVideoDuration(undefined);
+    applyVideoDuration(undefined);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -325,7 +406,7 @@ export function VideoUploader({
     if (uploadState === 'success' && videoUrl) {
       return (
         <div className="space-y-4">
-          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+          <div className="video-fit-frame [--video-chrome:38rem] short:[--video-chrome:32rem] relative aspect-video bg-black rounded-lg overflow-hidden">
             <video
               ref={videoRef}
               src={videoUrl}
@@ -334,16 +415,21 @@ export function VideoUploader({
             />
           </div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-green-600">
+            <div className={cn('flex items-center gap-2 text-sm', s.success)}>
               <CheckCircle2 className="h-4 w-4" />
               <span>Video ready</span>
               {videoDuration !== undefined && Number.isFinite(videoDuration) && (
-                <span className="text-muted-foreground">
+                <span className={s.subtle}>
                   ({Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')})
                 </span>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={handleRemove}>
+            <Button
+              variant="outline"
+              size="sm"
+              className={s.button}
+              onClick={handleRemove}
+            >
               <X className="h-4 w-4 mr-1" />
               Remove
             </Button>
@@ -356,11 +442,11 @@ export function VideoUploader({
       return (
         <div className="space-y-4 p-6">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: BLUE }} />
           </div>
           <div className="space-y-2">
-            <Progress value={uploadProgress} className="h-2" />
-            <p className="text-sm text-center text-muted-foreground">
+            <Progress value={uploadProgress} className={cn('h-2', s.progressTrack)} />
+            <p className={cn('text-sm text-center', s.muted)}>
               Uploading... {uploadProgress}%
             </p>
           </div>
@@ -370,15 +456,26 @@ export function VideoUploader({
 
     return (
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Upload a video file"
         className={cn(
-          'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
-          isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50',
-          uploadState === 'error' && 'border-destructive/50 bg-destructive/5'
+          'border-2 border-dashed rounded-lg p-8 short:p-4 max-sm:p-3 text-center transition-colors cursor-pointer',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#37b5ff]/60',
+          isDragging ? 'bg-[#37b5ff]/10' : s.dropzone,
+          uploadState === 'error' && 'border-red-400/50 bg-red-400/5'
         )}
+        style={{ borderColor: isDragging ? BLUE : undefined }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <input
           ref={fileInputRef}
@@ -390,42 +487,76 @@ export function VideoUploader({
 
         {uploadState === 'error' ? (
           <div className="space-y-2">
-            <AlertCircle className="h-12 w-12 mx-auto text-destructive" />
-            <p className="text-sm text-destructive">{errorMessage}</p>
-            <Button variant="outline" size="sm" onClick={(e) => {
-              e.stopPropagation();
-              handleRemove();
-            }}>
+            <AlertCircle className={cn('h-12 w-12 mx-auto', s.error)} />
+            <p className={cn('text-sm', s.error)}>{errorMessage}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className={s.button}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemove();
+              }}
+            >
               Try Again
             </Button>
           </div>
         ) : selectedFile ? (
           <div className="space-y-4">
-            <Video className="h-12 w-12 mx-auto text-primary" />
+            <Video className="h-12 w-12 mx-auto" style={{ color: BLUE }} />
             <div>
-              <p className="font-medium">{selectedFile.name}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className={cn('font-medium', s.heading)}>{selectedFile.name}</p>
+              <p className={cn('text-sm', s.muted)}>
                 {formatFileSize(selectedFile.size)}
                 {videoDuration !== undefined && Number.isFinite(videoDuration) && ` • ${Math.floor(videoDuration / 60)}:${(videoDuration % 60).toString().padStart(2, '0')}`}
               </p>
             </div>
-            <Button onClick={(e) => {
-              e.stopPropagation();
-              handleUpload();
-            }}>
+            <Button
+              className="bg-gradient-to-r from-[#37b5ff] to-[#2596d1] hover:from-[#37b5ff] hover:to-[#1f7fb3] text-white border-0 shadow-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleUpload();
+              }}
+            >
               <Upload className="h-4 w-4 mr-2" />
               Upload Video
             </Button>
           </div>
         ) : (
-          <div className="space-y-2">
-            <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
-            <div>
-              <p className="font-medium">Drop your video here or click to browse</p>
-              <p className="text-sm text-muted-foreground">
-                Supports MP4, WebM, MOV (max {formatFileSize(MAX_SIZE_BYTES)})
+          <div className="space-y-3 short:space-y-2">
+            <Upload className={cn('h-12 w-12 short:h-8 short:w-8 mx-auto', s.dropzoneIcon)} />
+            <div className="space-y-1">
+              <p className={cn('font-semibold', s.heading)}>Click here to upload a video</p>
+              <p className={cn('text-sm short:hidden', s.subtle)}>
+                or drag and drop it into this box
               </p>
             </div>
+            {/* Explicit target as well as the whole-box click — the box alone did not
+                read as clickable, which is what stalled coaches on this screen. */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={s.button}
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Choose File
+            </Button>
+            {/* Short viewports get one combined line instead of two, so the drop
+                zone still fits above the sticky footer without losing the info. */}
+            <p className={cn('text-xs short:hidden', s.subtle)}>
+              MP4, WebM or MOV — up to {formatFileSize(MAX_SIZE_BYTES)}
+            </p>
+            <p className={cn('text-xs hidden short:block', s.subtle)}>
+              {/* Drag-and-drop is meaningless on a phone and the extra words wrap
+                  to a second line there, so only mention it from `sm` up. */}
+              <span className="hidden sm:inline">or drag and drop — </span>
+              MP4, WebM or MOV, up to {formatFileSize(MAX_SIZE_BYTES)}
+            </p>
           </div>
         )}
       </div>
@@ -433,12 +564,12 @@ export function VideoUploader({
   };
 
   return (
-    <Card className={cn('overflow-hidden border-blue-100 shadow-sm', className)}>
-      <CardContent className="p-4">
+    <div className={cn('overflow-hidden rounded-xl border', s.shell, className)}>
+      <div className="p-4 short:p-3">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'upload' | 'url')}>
-          <TabsList className="grid w-full grid-cols-2 mb-4 rounded-xl bg-slate-100 p-1">
-            <TabsTrigger value="upload" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Upload Video</TabsTrigger>
-            <TabsTrigger value="url" className="rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">Video URL</TabsTrigger>
+          <TabsList className={cn('grid w-full grid-cols-2 mb-4 short:mb-2 rounded-xl border p-1', s.tabsList)}>
+            <TabsTrigger value="upload" className={cn('rounded-lg data-[state=active]:bg-[#f87171] data-[state=active]:text-white', s.tabInactive)}>Upload Video</TabsTrigger>
+            <TabsTrigger value="url" className={cn('rounded-lg data-[state=active]:bg-[#f87171] data-[state=active]:text-white', s.tabInactive)}>Video URL</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -448,7 +579,7 @@ export function VideoUploader({
           <TabsContent value="url">
             {uploadState === 'success' && videoUrl ? (
               <div className="space-y-4">
-                <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="video-fit-frame [--video-chrome:38rem] short:[--video-chrome:32rem] relative aspect-video bg-black rounded-lg overflow-hidden">
                   {isExternalPlatform ? (
                     <ReactPlayer
                       url={videoUrl}
@@ -479,16 +610,21 @@ export function VideoUploader({
                   )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-green-600">
+                  <div className={cn('flex items-center gap-2 text-sm', s.success)}>
                     <CheckCircle2 className="h-4 w-4" />
                     <span>Video URL added</span>
                     {videoDuration !== undefined && Number.isFinite(videoDuration) && (
-                      <span className="text-muted-foreground">
+                      <span className={s.subtle}>
                         ({Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')})
                       </span>
                     )}
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleRemove}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={s.button}
+                    onClick={handleRemove}
+                  >
                     <X className="h-4 w-4 mr-1" />
                     Remove
                   </Button>
@@ -497,37 +633,40 @@ export function VideoUploader({
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="videoUrl">Video URL</Label>
+                  <Label htmlFor="videoUrl" className={s.label}>Video URL</Label>
                   <Input
                     id="videoUrl"
                     placeholder="YouTube, Vimeo, Google Drive, or direct video URL"
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
-                    className="border-slate-300 focus-visible:ring-red-200"
+                    className={s.input}
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className={cn('text-xs', s.subtle)}>
                     Paste a YouTube, Vimeo, Google Drive, or direct video URL
                   </p>
                 </div>
                 {isExternalPlatform && (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
-                    <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-muted-foreground">
-                      {videoSourceType === 'youtube' ? 'YouTube' : videoSourceType === 'vimeo' ? 'Vimeo' : 'Google Drive'} videos will play correctly in quizzes. Duration may not be detected automatically.
+                  <div className={cn('flex items-start gap-2 p-3 rounded-md border', s.infoBox)}>
+                    <Info className={cn('h-4 w-4 mt-0.5 flex-shrink-0', s.subtle)} />
+                    <p className={cn('text-xs', s.muted)}>
+                      {videoSourceType === 'youtube' ? 'YouTube' : videoSourceType === 'vimeo' ? 'Vimeo' : 'Google Drive'} videos play normally in Knowledge Checks. The length is read from the player on the Questions tab, so open that tab once before saving.
                     </p>
                   </div>
                 )}
                 {errorMessage && (
-                  <p className="text-sm text-destructive">{errorMessage}</p>
+                  <p className={cn('text-sm', s.error)}>{errorMessage}</p>
                 )}
-                <Button onClick={handleUrlSubmit} className="w-full bg-gradient-to-r from-red-600 to-blue-600 text-white hover:from-red-700 hover:to-blue-700">
+                <Button
+                  onClick={handleUrlSubmit}
+                  className="w-full bg-gradient-to-r from-[#f87171] to-[#37b5ff] hover:from-[#f75c5c] hover:to-[#2596d1] text-white border-0"
+                >
                   Add Video URL
                 </Button>
               </div>
             )}
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

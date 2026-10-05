@@ -4,6 +4,8 @@ import React, { useState, useMemo } from 'react';
 import { db } from '@/lib/firebase/config';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { generateParentV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
+import type { ApplicationStatus } from '@/types/application';
+import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
   PARENT_BASELINE_SECTIONS,
   getParentActiveQuestions,
@@ -70,6 +72,14 @@ interface Props {
   userId: string;
   userName: string;
   onComplete: () => void;
+  /**
+   * The parent's application state, when they came in through /apply.
+   * Passed so submitting the questionnaire also joins Michael's queue, in the
+   * same write as the profile. See StudentBaselineQuestionnaire for the
+   * reasoning — a parent applies for their goalie exactly as an adult goalie
+   * applies for themselves.
+   */
+  applicationStatus?: ApplicationStatus;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -78,6 +88,7 @@ export function ParentBaselineQuestionnaire({
   userId,
   userName: _userName,
   onComplete,
+  applicationStatus,
 }: Props): React.ReactElement {
   const [state, setState] = useState<PState>({
     phase: 'hero',
@@ -316,9 +327,14 @@ export function ParentBaselineQuestionnaire({
         parentOnboardingCompletedAt: serverTimestamp(),
         parentPacingLevel: intelligenceProfile.pacingLevel,
         parentOverallScore: intelligenceProfile.overallScore,
+        // An applicant joins Michael's queue as their questionnaire lands (item 2).
+        ...(applicationStatus === 'applying'
+          ? { applicationStatus: 'submitted', applicationSubmittedAt: serverTimestamp() }
+          : {}),
       });
       onComplete();
-    } catch {
+    } catch (err) {
+      console.error('saveProfile failed:', err);
       setError('Unable to save your profile. Please try again.');
       setSaving(false);
     }
@@ -1576,7 +1592,8 @@ export function ParentBaselineQuestionnaire({
             </>
           ) : (
             <>
-              SUBMIT MY BASELINE PROFILE →
+              {/* An applicant's last click sends the application (copy pack 3.1). */}
+              {applicationStatus === 'applying' ? APPLICATION_PAGE.button : 'SUBMIT MY BASELINE PROFILE →'}
               <ChevronRight style={{ width: '18px', height: '18px' }} />
             </>
           )}

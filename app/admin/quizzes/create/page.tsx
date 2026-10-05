@@ -7,12 +7,14 @@ import { useAuth } from '@/lib/auth/context';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings, VideoStructuredTags, createEmptyStructuredTags } from '@/types';
+import { pillarFromSportId, pillarOptionLabel } from '@/types/onboarding';
 import { VideoTagEditor } from '@/components/video';
 import { ArrowLeft, Save, Loader2, Video, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { VideoUploader } from '@/components/coach/video-uploader';
+import { VideoLibraryPicker } from '@/components/video';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -181,7 +183,15 @@ function CreateVideoQuizContent() {
                     {fieldLabel('Sport', true)}
                     <select className="qc-sel" value={quizData.sportId || ''} onChange={e => handleInputChange('sportId', e.target.value)}>
                       <option value="">Select a sport</option>
-                      {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      {/* Numbered label from the code list, matching the coach panel.
+                          Reading the row's own `name` here would print whatever the
+                          database happens to hold — right today, but only because a
+                          migration just corrected it, and wrong again the moment
+                          someone edits a pillar. The doc ID is the identity. */}
+                      {sports.map(s => {
+                        const info = pillarFromSportId(s.id);
+                        return <option key={s.id} value={s.id}>{info ? pillarOptionLabel(info) : s.name}</option>;
+                      })}
                     </select>
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px', marginTop: '4px' }}>Required</p>
                   </div>
@@ -220,6 +230,9 @@ function CreateVideoQuizContent() {
                   <Video size={16} color={BLUE} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Provide a video by entering a URL or uploading a file. Duration will be automatically detected when you create questions.</p>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <VideoLibraryPicker onSelect={handleVideoUploaded} />
+                </div>
                 <VideoUploader userId={user?.id} uploadFolder="video-quizzes" onVideoUploaded={handleVideoUploaded} initialVideoUrl={quizData.videoUrl} />
                 {quizData.videoUrl && (
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
@@ -234,7 +247,7 @@ function CreateVideoQuizContent() {
             {/* Questions */}
             {activeTab === 'questions' && (
               videoDuration > 0 && quizData.videoUrl ? (
-                <VideoQuestionBuilder questions={quizData.questions || []} videoDuration={videoDuration} videoUrl={quizData.videoUrl} onChange={handleQuestionsChange} />
+                <VideoQuestionBuilder questions={quizData.questions || []} videoDuration={videoDuration} videoUrl={quizData.videoUrl} onChange={handleQuestionsChange} onDurationDetected={(seconds) => { setVideoDuration(seconds); handleInputChange('videoDuration', seconds); }} />
               ) : (
                 <div style={{ textAlign: 'center', padding: '64px' }}>
                   <AlertCircle size={44} color="rgba(255,255,255,0.15)" style={{ margin: '0 auto 12px' }} />

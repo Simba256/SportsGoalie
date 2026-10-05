@@ -59,7 +59,7 @@ interface PillarDef {
 const PILLARS: PillarDef[] = [
   {
     num: '1',
-    name: 'MIND-SET',
+    name: 'MINDSET',
     subtitle: 'The Foundation',
     desc: 'The sub-conscious. V.M.P. Character and leadership built from day one. Every other Pillar is built on this foundation.',
     Icon: Brain,
@@ -68,7 +68,7 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '2',
-    name: 'SKATING TECH',
+    name: 'SKATING',
     subtitle: 'Movement Command',
     desc: 'M.E.T. Your skating style. Game Sync. Movement command before the play moves.',
     Icon: Footprints,
@@ -76,7 +76,7 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '3',
-    name: '7 ANGLE-MARK SYSTEM',
+    name: '7AMS',
     subtitle: "The Goalie's GPS",
     desc: 'Seven markers. The Feel Factor. Positional certainty at all times.',
     Icon: Map,
@@ -84,7 +84,7 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '4',
-    name: '7 POINT SYSTEM',
+    name: '6 ZONE – 7 POINT SYSTEM™',
     subtitle: 'Net Management',
     desc: 'Below the icing line. Wraparounds. Net management made complete.',
     Icon: Grid3X3,
@@ -92,15 +92,20 @@ const PILLARS: PillarDef[] = [
   },
   {
     num: '5',
-    name: 'FORM TECH',
+    name: 'FORM',
     subtitle: 'Technical Precision',
     desc: 'Your set crouch. Maximum coverage. Minimal movement. Technical precision.',
     Icon: Target,
     ...TOOLBOX_PALETTES[1],
   },
+  // Numbers here follow the public marketing list (see PUBLIC_PILLARS in
+  // src/lib/pillar-public-routes.ts), which counts 7AMS and the 6 Zone – 7 Point
+  // System™ as pillars 3 and 4. In the app they are the two halves of Pillar 3,
+  // and Game and Practice are separate pillars. Renumbering this card set and
+  // splitting this entry in two both need Michael's sign-off and new copy.
   {
     num: '6',
-    name: 'GAME & PRACTICE PERFORMANCE',
+    name: 'GAME & PRACTICE',
     subtitle: 'The Development Loop',
     desc: 'Reading the play. The Development Loop. Charting everything.',
     Icon: BarChart3,

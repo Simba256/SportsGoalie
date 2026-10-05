@@ -1,40 +1,28 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Settings, Save, RefreshCw, Globe, Shield, Mail, Bell,
-  Database, Server, Key, Clock, Users,
+  Database, Server, Key, Clock, Users, CalendarClock,
 } from 'lucide-react';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { toast } from 'sonner';
+
+import { useAuth } from '@/lib/auth/context';
+import {
+  normalizePlatformSettings,
+  platformSettingsService,
+} from '@/lib/database/services/platform-settings.service';
+import {
+  isUsableBookingUrl,
+  MAX_WAITLIST_LINE_LENGTH,
+  type PlatformSettings,
+} from '@/types/platform-settings';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
 const GREEN = '#22c55e';
 const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
-
-interface PlatformSettings {
-  general: {
-    siteName: string; siteDescription: string; contactEmail: string; supportEmail: string;
-    defaultLanguage: string; defaultTimezone: string; maintenanceMode: boolean; registrationEnabled: boolean;
-  };
-  content: {
-    autoApproval: boolean; maxQuizQuestions: number; maxFileSize: number;
-    allowedFileTypes: string[]; contentRetentionDays: number;
-  };
-  security: {
-    sessionTimeout: number; maxLoginAttempts: number; requireEmailVerification: boolean;
-    enforceStrongPasswords: boolean; enableTwoFactor: boolean;
-  };
-  notifications: {
-    emailNotifications: boolean; pushNotifications: boolean; adminAlerts: boolean;
-    userRegistrationAlert: boolean; contentModerationAlert: boolean; systemHealthAlert: boolean;
-  };
-  performance: {
-    cacheDuration: number; rateLimitRequests: number; rateLimitWindow: number;
-    enableCompression: boolean; enableCDN: boolean;
-  };
-}
 
 const TABS = [
   { id: 'general', label: 'General', icon: Globe },
@@ -49,23 +37,59 @@ export default function AdminSettingsPage() {
 }
 
 function SettingsContent() {
-  const [settings, setSettings] = useState<PlatformSettings>({
-    general: { siteName: 'SmarterGoalie', siteDescription: 'A modern sports learning platform', contactEmail: 'contact@sportscoach.com', supportEmail: 'support@sportscoach.com', defaultLanguage: 'en', defaultTimezone: 'UTC', maintenanceMode: false, registrationEnabled: true },
-    content: { autoApproval: false, maxQuizQuestions: 50, maxFileSize: 10, allowedFileTypes: ['jpg', 'png', 'pdf', 'mp4'], contentRetentionDays: 365 },
-    security: { sessionTimeout: 24, maxLoginAttempts: 5, requireEmailVerification: true, enforceStrongPasswords: true, enableTwoFactor: false },
-    notifications: { emailNotifications: true, pushNotifications: false, adminAlerts: true, userRegistrationAlert: true, contentModerationAlert: true, systemHealthAlert: true },
-    performance: { cacheDuration: 300, rateLimitRequests: 100, rateLimitWindow: 900, enableCompression: true, enableCDN: false },
-  });
+  const { user } = useAuth();
+  // normalizePlatformSettings(null) hands back a fresh copy of the defaults, so the
+  // shared constant behind it is never edited in place.
+  const [settings, setSettings] = useState<PlatformSettings>(() => normalizePlatformSettings(null));
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
 
+  // Load whatever was saved last. Until this resolves the form is still showing
+  // defaults, so it stays behind a spinner rather than inviting an edit to a value
+  // that is about to be replaced by the stored one.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const result = await platformSettingsService.getSettings();
+      if (cancelled) return;
+      if (result.success && result.data) {
+        setSettings(result.data);
+      } else {
+        toast.error('Failed to load settings');
+      }
+      setInitialLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // The service drops an unusable booking link to empty on the way in, which would
+  // otherwise look like the save silently ignored what was typed. Catching it here
+  // means the reason is said out loud before anything is written.
+  // Empty can still be saved — the rest of the settings should not be held
+  // hostage to it — but the box says in red that it is required. The approval
+  // itself is what refuses to go without a link (see decision-email.server.ts).
+  const bookingUrlInvalid =
+    settings.general.bookingUrl.trim() !== '' && !isUsableBookingUrl(settings.general.bookingUrl);
+
   const handleSave = async () => {
+    if (!user?.id) { toast.error('Failed to save settings'); return; }
+    if (bookingUrlInvalid) {
+      toast.error('The booking link has to be a full web address starting with https://');
+      setActiveTab('general');
+      return;
+    }
     try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Settings saved successfully');
+      const result = await platformSettingsService.saveSettings(settings, user.id);
+      if (!result.success || !result.data) { throw new Error(result.error?.message); }
+      // Show what was stored rather than what was typed: a number outside its allowed
+      // range is clamped on the way in, and the form should not keep claiming the
+      // value that was rejected.
+      setSettings(result.data);
       setHasChanges(false);
+      toast.success('Settings saved successfully');
     } catch { toast.error('Failed to save settings'); }
     finally { setLoading(false); }
   };
@@ -94,7 +118,9 @@ function SettingsContent() {
         .st-save { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: linear-gradient(135deg, ${RED} 0%, #dc2626 100%); color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
         .st-save:disabled { opacity: 0.5 !important; cursor: not-allowed !important; }
         .st-reset { display: flex; align-items: center; gap: 6px; padding: 9px 14px; background: transparent; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .st-reset:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        .st-reset:hover:not(:disabled) { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        .st-reset:disabled { opacity: 0.5 !important; cursor: not-allowed !important; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 768px) { .st-2col { grid-template-columns: 1fr !important; } }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -109,10 +135,12 @@ function SettingsContent() {
             {hasChanges && (
               <span style={{ background: 'rgba(248,113,113,0.12)', color: RED, border: '1px solid rgba(248,113,113,0.25)', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>Unsaved Changes</span>
             )}
-            <button className="st-reset" onClick={() => { setHasChanges(false); toast.info('Settings reset to defaults'); }}>
+            {/* Puts the defaults back in the form. Saving them is still a separate, deliberate step. */}
+            <button className="st-reset" disabled={loading || initialLoading}
+              onClick={() => { setSettings(normalizePlatformSettings(null)); setHasChanges(true); toast.info('Settings reset to defaults'); }}>
               <RefreshCw size={13} /> Reset
             </button>
-            <button className="st-save" onClick={handleSave} disabled={loading || !hasChanges}>
+            <button className="st-save" onClick={handleSave} disabled={loading || initialLoading || !hasChanges}>
               <Save size={13} /> {loading ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
@@ -137,8 +165,15 @@ function SettingsContent() {
 
           <div style={{ padding: '24px' }}>
 
+            {initialLoading && (
+              <div style={{ textAlign: 'center', padding: '60px' }}>
+                <div style={{ width: '32px', height: '32px', border: '3px solid rgba(55,181,255,0.2)', borderTopColor: BLUE, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '15px' }}>Loading settings…</p>
+              </div>
+            )}
+
             {/* General */}
-            {activeTab === 'general' && (
+            {!initialLoading && activeTab === 'general' && (
               <div className="st-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -160,6 +195,61 @@ function SettingsContent() {
                     <div>
                       <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '5px' }}>SITE DESCRIPTION</label>
                       <textarea className="st-ta" value={settings.general.siteDescription} onChange={e => updateSetting('general', 'siteDescription', e.target.value)} />
+                    </div>
+                    {/* The booking link. Lives here rather than in the environment so it can
+                        be changed without a developer and without a redeploy. */}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                      <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
+                        <CalendarClock size={13} color={BLUE} /> BOOKING LINK
+                      </label>
+                      <input
+                        className="st-inp"
+                        type="url"
+                        placeholder="https://cal.com/your-name/intro-call"
+                        value={settings.general.bookingUrl}
+                        onChange={e => updateSetting('general', 'bookingUrl', e.target.value)}
+                      />
+                      {bookingUrlInvalid ? (
+                        <p style={{ color: RED, fontSize: '12px', marginTop: '4px' }}>
+                          That is not a valid link. It has to start with https:// — paste the whole address from your browser.
+                        </p>
+                      ) : settings.general.bookingUrl.trim() === '' ? (
+                        <p style={{ color: RED, fontSize: '12px', marginTop: '4px' }}>
+                          Required. Where an approved applicant books their call — the approval email
+                          cannot go without it, so set it here before approving anyone.
+                        </p>
+                      ) : (
+                        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', marginTop: '4px' }}>
+                          Where an approved applicant books their call. The approval email carries it, and
+                          so does the &ldquo;Book your call&rdquo; button they see while they wait.
+                        </p>
+                      )}
+                    </div>
+                    {/* The waiting-list line (copy pack 3.5, [COACH TO SET]). Michael's own
+                        words, so they are set here rather than written into the email. */}
+                    <div>
+                      <label htmlFor="waitlist-line" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
+                        <Clock size={13} color={BLUE} /> WAITING-LIST LINE
+                      </label>
+                      <textarea
+                        id="waitlist-line"
+                        className="st-ta"
+                        maxLength={MAX_WAITLIST_LINE_LENGTH}
+                        placeholder="What someone on the waiting list gets in the meantime."
+                        value={settings.general.waitlistLine}
+                        onChange={e => updateSetting('general', 'waitlistLine', e.target.value)}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginTop: '4px' }}>
+                        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', margin: 0 }}>
+                          What someone on the waiting list gets in the meantime. It goes into the
+                          waiting-list email just before &ldquo;When a place opens, I go to this list
+                          first.&rdquo; Leave it empty and the email goes without it. A blank line
+                          starts a new paragraph.
+                        </p>
+                        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                          {settings.general.waitlistLine.length}/{MAX_WAITLIST_LINE_LENGTH}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -211,7 +301,7 @@ function SettingsContent() {
             )}
 
             {/* Content */}
-            {activeTab === 'content' && (
+            {!initialLoading && activeTab === 'content' && (
               <div className="st-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -262,7 +352,7 @@ function SettingsContent() {
             )}
 
             {/* Security */}
-            {activeTab === 'security' && (
+            {!initialLoading && activeTab === 'security' && (
               <div className="st-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -331,7 +421,7 @@ function SettingsContent() {
             )}
 
             {/* Notifications */}
-            {activeTab === 'notifications' && (
+            {!initialLoading && activeTab === 'notifications' && (
               <div className="st-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 {[
                   {
@@ -377,7 +467,7 @@ function SettingsContent() {
             )}
 
             {/* Performance */}
-            {activeTab === 'performance' && (
+            {!initialLoading && activeTab === 'performance' && (
               <div className="st-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>

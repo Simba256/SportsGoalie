@@ -1,6 +1,7 @@
 'use client';
 
 import { GraduationCap, ChevronRight, Brain, Target, Clock, Eye, MessageCircle, TrendingUp, BookOpen } from 'lucide-react';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 
 const BLUE = '#37b5ff';
 const PURPLE = '#a78bfa';
@@ -62,6 +63,8 @@ export function CoachWelcomeScreen({ coachName, onBegin }: CoachWelcomeScreenPro
               <span style={{ color: BLUE, fontWeight: 700 }}>7 key areas</span>{' '}
               so we can calibrate cross-reference insights for your goalies.
             </p>
+
+            <ScreenVoice clipId="COACH-WELCOME" label="HEAR COACH MIKE: WELCOME" className="mb-5" />
 
             <button
               className="cw-begin"

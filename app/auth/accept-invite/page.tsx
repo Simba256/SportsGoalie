@@ -2,15 +2,14 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle, Mail, Lock, User, Shield } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Mail, Lock, User, Shield, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import { invitationService } from '@/lib/services/invitation.service';
 import { coachInvitationService } from '@/lib/services/coach-invitation.service';
-import { Invitation } from '@/types/invitation';
+import { Invitation, InvitationValidationReason } from '@/types/invitation';
 import { CoachInvitation } from '@/types/auth';
 import { useAuth } from '@/lib/auth/context';
+import { useCoachAudio } from '@/lib/audio/context';
 import Link from 'next/link';
 
 const BLUE = '#37b5ff';
@@ -28,6 +27,7 @@ function roleLabel(inv: AnyInvitation): string {
     coach: 'Coach',
     goalie_coach: 'Goalie Coach',
     parent: 'Parent',
+    admin: 'Administrator',
   };
   return roleMap[inv.data.role] ?? 'Member';
 }
@@ -102,11 +102,13 @@ function AcceptInviteContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const { register } = useAuth();
+  const { prime } = useCoachAudio();
 
   const [validating, setValidating] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [invitation, setInvitation] = useState<AnyInvitation | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [validationReason, setValidationReason] = useState<InvitationValidationReason | null>(null);
 
   const [form, setForm] = useState({
     displayName: '',
@@ -119,6 +121,7 @@ function AcceptInviteContent() {
   useEffect(() => {
     if (!token) {
       setValidationError('Invalid invitation link. No token provided.');
+      setValidationReason('not_found');
       setValidating(false);
       return;
     }
@@ -153,9 +156,11 @@ function AcceptInviteContent() {
       setValidationError(
         result.error ?? legacyResult.error ?? 'Invalid or expired invitation link.'
       );
+      setValidationReason(result.reason ?? legacyResult.reason ?? 'unknown');
       setValidating(false);
     } catch {
       setValidationError('Failed to validate your invitation. Please try again.');
+      setValidationReason('unknown');
       setValidating(false);
     }
   };
@@ -177,6 +182,11 @@ function AcceptInviteContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invitation || !token) return;
+
+    // An invited goalie hears Coach Mike's welcome by itself on the next screen.
+    // Unlock playback now, inside the tap and before any await, for the iPhone.
+    // Silent, and only for goalies: it can pause their music.
+    if (invitation.kind !== 'coach_legacy' && (invitation.data as Invitation).role === 'student') prime();
 
     if (form.password.length < 8) {
       toast.error('Password must be at least 8 characters');
@@ -203,9 +213,22 @@ function AcceptInviteContent() {
           role: 'coach',
           skipEmailVerification: true,
         });
-        await coachInvitationService.acceptInvitation(invitationId(invitation), userId);
-        toast.success('Coach account created!');
-        router.push(`/auth/login?email=${encodeURIComponent(invitation.data.email)}&verified=pending`);
+        // The account now exists — a failure past this point must not be
+        // reported as "Failed to create account". Retry once, then proceed
+        // with a truthful message; an admin can tidy the invite up later.
+        try {
+          await coachInvitationService.acceptInvitation(invitationId(invitation), userId);
+        } catch {
+          try {
+            await coachInvitationService.acceptInvitation(invitationId(invitation), userId);
+          } catch {
+            toast.error('Your account was created, but marking your invitation as used failed. You can log in normally — please let your administrator know.');
+            router.push('/coach');
+            return;
+          }
+        }
+        toast.success('Coach account created! Welcome aboard.');
+        router.push('/coach');
         return;
       }
 
@@ -215,9 +238,10 @@ function AcceptInviteContent() {
 
       // Map InvitableRole → RegisterCredentials role
       // goalie_coach doesn't exist in RegisterCredentials so register as 'coach' and patch Firestore
-      const registerRole: 'student' | 'coach' | 'parent' =
+      const registerRole: 'student' | 'coach' | 'parent' | 'admin' =
         role === 'student' ? 'student'
         : role === 'parent' ? 'parent'
+        : role === 'admin' ? 'admin'
         : 'coach'; // covers 'coach' and 'goalie_coach'
 
       const { userId } = await register({
@@ -230,7 +254,6 @@ function AcceptInviteContent() {
       });
 
       // Post-registration Firestore patches
-      const userRef = doc(db, 'users', userId);
       const patches: Record<string, unknown> = {};
 
       if (role === 'student' && inv.metadata?.assignedCoachId) {
@@ -242,15 +265,32 @@ function AcceptInviteContent() {
         patches.role = 'goalie_coach';
       }
 
-      if (Object.keys(patches).length > 0) {
-        await updateDoc(userRef, patches);
+      // Redirect directly to the appropriate destination — the user is already authenticated
+      // after register(), so routing through /auth/login would cause an immediate re-redirect.
+      const destination =
+        registerRole === 'student' ? '/onboarding'
+        : registerRole === 'parent' ? '/onboarding?role=parent'
+        : registerRole === 'admin' ? '/admin'
+        : '/coach';
+
+      // The account now exists — apply the coach link / role patch and mark the
+      // invitation accepted in ONE atomic batch, so a failure here can never
+      // leave the goalie half set up. Retry once before giving up; the batch is
+      // all-or-nothing, so a final failure means nothing extra was written.
+      try {
+        await invitationService.acceptInvitationWithUserSetup(invitationId(invitation), userId, patches);
+      } catch {
+        try {
+          await invitationService.acceptInvitationWithUserSetup(invitationId(invitation), userId, patches);
+        } catch {
+          toast.error('Your account was created, but finishing your invitation setup failed. Please contact support so we can complete it for you.');
+          router.push(destination);
+          return;
+        }
       }
 
-      // Mark invitation accepted in the generic collection
-      await invitationService.acceptInvitation(invitationId(invitation), userId);
-
-      toast.success(`${roleLabel(invitation)} account created!`);
-      router.push(`/auth/login?email=${encodeURIComponent(inv.email)}&verified=pending`);
+      toast.success(`${roleLabel(invitation)} account created! Welcome aboard.`);
+      router.push(destination);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
       setSubmitting(false);
@@ -280,6 +320,8 @@ function AcceptInviteContent() {
 
   // ─── Error state ──────────────────────────────────────────────────────────
   if (validationError || !invitation) {
+    const alreadyAccepted = validationReason === 'already_accepted';
+
     return (
       <div
         style={{
@@ -296,7 +338,7 @@ function AcceptInviteContent() {
             width: '100%',
             maxWidth: '420px',
             background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(248,113,113,0.25)',
+            border: alreadyAccepted ? '1px solid rgba(55,181,255,0.25)' : '1px solid rgba(248,113,113,0.25)',
             borderRadius: '16px',
             padding: '36px 32px',
             textAlign: 'center',
@@ -307,26 +349,35 @@ function AcceptInviteContent() {
               width: '56px',
               height: '56px',
               borderRadius: '50%',
-              background: 'rgba(248,113,113,0.12)',
-              border: '1px solid rgba(248,113,113,0.3)',
+              background: alreadyAccepted ? 'rgba(55,181,255,0.12)' : 'rgba(248,113,113,0.12)',
+              border: alreadyAccepted ? '1px solid rgba(55,181,255,0.3)' : '1px solid rgba(248,113,113,0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 20px',
             }}
           >
-            <XCircle size={26} color="#f87171" />
+            {alreadyAccepted ? (
+              <CheckCircle size={26} color={BLUE} />
+            ) : (
+              <XCircle size={26} color="#f87171" />
+            )}
           </div>
           <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>
-            Invalid Invitation
+            {alreadyAccepted ? 'You Already Have an Account' : 'Invalid Invitation'}
           </h2>
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '28px', lineHeight: 1.6 }}>
-            {validationError ?? 'This invitation link is invalid, expired, or has already been used.'}
+            {alreadyAccepted
+              ? "Looks like this invite was already used to set up your account. Log in below to continue — if you didn't finish your onboarding questionnaire, you'll be taken right back to it."
+              : (validationError ?? 'This invitation link is invalid, expired, or has already been used.')}
           </p>
           <Link
             href="/auth/login"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
               padding: '11px 28px',
               borderRadius: '8px',
               background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`,
@@ -337,7 +388,8 @@ function AcceptInviteContent() {
               letterSpacing: '0.5px',
             }}
           >
-            Go to Login
+            {alreadyAccepted && <LogIn size={15} />}
+            {alreadyAccepted ? 'Log In to Continue' : 'Go to Login'}
           </Link>
         </div>
       </div>

@@ -222,6 +222,17 @@ export class UserService extends BaseDatabaseService {
     });
   }
 
+  /**
+   * Records that a once-only Coach Mike voice moment has played for this
+   * account. Written under `voiceMoments.{key}` so marking one moment never
+   * rewrites another, and a second call for the same key simply restamps it.
+   */
+  async markVoiceMoment(userId: string, key: string): Promise<ApiResponse<void>> {
+    return this.update<User>(this.USERS_COLLECTION, userId, {
+      [`voiceMoments.${key}`]: Timestamp.now(),
+    } as Partial<User>);
+  }
+
   async updateLastLogin(userId: string): Promise<ApiResponse<void>> {
     return this.update<User>(this.USERS_COLLECTION, userId, {
       lastLoginAt: Timestamp.now(),
@@ -249,6 +260,62 @@ export class UserService extends BaseDatabaseService {
     return this.update<User>(this.USERS_COLLECTION, userId, { role: newRole });
   }
 
+  /**
+   * The subscription pause switch. Pausing freezes the account — the member
+   * can no longer enter the app and stops counting as active — while leaving
+   * every part of their record untouched. Admin-only, and admins themselves
+   * cannot be paused (an admin locked out of the admin panel could not be
+   * unlocked from the UI).
+   */
+  async pauseUser(userId: string, adminUserId: string): Promise<ApiResponse<void>> {
+    const permissionError = await this.verifyPauseRequest(userId, adminUserId);
+    if (permissionError) return permissionError;
+
+    return this.update<User>(this.USERS_COLLECTION, userId, {
+      isPaused: true,
+      pausedAt: Timestamp.fromDate(new Date()),
+    });
+  }
+
+  async resumeUser(userId: string, adminUserId: string): Promise<ApiResponse<void>> {
+    const permissionError = await this.verifyPauseRequest(userId, adminUserId);
+    if (permissionError) return permissionError;
+
+    return this.update<User>(this.USERS_COLLECTION, userId, {
+      isPaused: false,
+      resumedAt: Timestamp.fromDate(new Date()),
+    });
+  }
+
+  private async verifyPauseRequest(userId: string, adminUserId: string): Promise<ApiResponse<void> | null> {
+    const adminResult = await this.getUser(adminUserId);
+    if (!adminResult.success || !adminResult.data || adminResult.data.role !== 'admin') {
+      return {
+        success: false,
+        error: { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins can pause or resume accounts' },
+        timestamp: new Date(),
+      };
+    }
+
+    const targetResult = await this.getUser(userId);
+    if (!targetResult.success || !targetResult.data) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'User not found' },
+        timestamp: new Date(),
+      };
+    }
+    if (targetResult.data.role === 'admin') {
+      return {
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Admin accounts cannot be paused' },
+        timestamp: new Date(),
+      };
+    }
+
+    return null;
+  }
+
   async deactivateUser(userId: string): Promise<ApiResponse<void>> {
     // Soft delete by marking as inactive
     return this.update<User>(this.USERS_COLLECTION, userId, {
@@ -271,6 +338,38 @@ export class UserService extends BaseDatabaseService {
     if (userId === requestingAdminId) {
       return { success: false, error: { code: 'FORBIDDEN', message: 'Cannot delete your own account' }, timestamp: new Date() };
     }
+
+    // Release any custom-workflow goalies assigned to this user before deleting,
+    // otherwise they keep a dangling coach link and stay locked out of all content
+    // (custom access is gated on a coach-managed curriculum, and a goalie with an
+    // assignedCoachId can't be picked up by another coach either).
+    const assignedResult = await this.query<User>(this.USERS_COLLECTION, {
+      where: [
+        { field: 'role', operator: '==', value: 'student' },
+        { field: 'assignedCoachId', operator: '==', value: userId },
+      ],
+    });
+    if (assignedResult.success && assignedResult.data) {
+      for (const student of assignedResult.data.items) {
+        const release = await this.update<User>(this.USERS_COLLECTION, student.id, {
+          assignedCoachId: null as unknown as string,
+          assignedCoachName: null as unknown as string,
+          workflowType: 'automated',
+        });
+        if (!release.success) {
+          logger.error('Failed to release student from deleted coach', 'UserService', {
+            studentId: student.id,
+            coachId: userId,
+          });
+          return {
+            success: false,
+            error: { code: 'CASCADE_FAILED', message: 'Could not release this user\'s assigned goalies. No accounts were deleted — try again.' },
+            timestamp: new Date(),
+          };
+        }
+      }
+    }
+
     return this.delete(this.USERS_COLLECTION, userId);
   }
 
@@ -382,7 +481,8 @@ export class UserService extends BaseDatabaseService {
 
       // Calculate real stats
       const quizzesCompleted = attempts.length; // Total number of video quiz attempts
-      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+      // The quiz player records seconds in totalTimeSpent and never sets the legacy timeSpent alias.
+      const totalTimeSpent = attempts.reduce((sum, a) => sum + (a.totalTimeSpent || a.timeSpent || 0), 0);
       const averageQuizScore = quizzesCompleted > 0
         ? Math.round(attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizzesCompleted)
         : 0;
@@ -1067,10 +1167,13 @@ export class UserService extends BaseDatabaseService {
       };
     }
 
-    // Remove the assignment by setting assignedCoachId to null
-    // Note: We use a direct Firestore update to set the field to null
+    // Remove the assignment and return the goalie to the self-paced workflow.
+    // Leaving workflowType='custom' with no coach would silently lock them out
+    // of all content, because custom access is gated on a coach-managed curriculum.
     const updateResult = await this.update<User>(this.USERS_COLLECTION, studentId, {
       assignedCoachId: null as unknown as string, // Clear the assignment
+      assignedCoachName: null as unknown as string,
+      workflowType: 'automated',
     });
 
     if (updateResult.success) {

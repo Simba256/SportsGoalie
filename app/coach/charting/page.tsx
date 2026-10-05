@@ -72,7 +72,7 @@ export default function CoachChartingPage() {
           <h1 style={{ color: '#fff', fontSize: '22px', fontWeight: 800, margin: 0 }}>Charting</h1>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px', margin: 0 }}>
-          Select a goalie to view or add game charts
+          Select a goalie to add or continue your game charts
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export default function CoachChartingPage() {
           {goalies.map(goalie => (
             <Link
               key={goalie.id}
-              href={`/coach/students/${goalie.id}/charting`}
+              href={`/coach/charting/${goalie.id}`}
               style={{ ...card, display: 'flex', alignItems: 'center', gap: '16px', textDecoration: 'none', cursor: 'pointer' }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLElement).style.background = 'rgba(55,181,255,0.07)';

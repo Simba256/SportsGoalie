@@ -10,6 +10,7 @@ import { CustomContentLibrary } from '@/types';
 import { toast } from 'sonner';
 import { GrowthPointsToast } from '@/components/ui/GrowthPointsToast';
 import { GROWTH_POINTS } from '@/lib/config/growth-points';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -113,6 +114,13 @@ export default function CustomLessonPage() {
         setIsCompleted(true);
         setShowGpToast(true);
         toast.success('Lesson completed! Great job!');
+        growthPointsService.awardPointsOnce(
+          user.id,
+          'MODULE_COMPLETE',
+          GROWTH_POINTS.MODULE_COMPLETE,
+          'Module Completed',
+          `lesson_${lessonId}`
+        ).catch(() => {});
       } else {
         toast.error('Failed to mark lesson as complete');
       }
@@ -134,7 +142,7 @@ export default function CustomLessonPage() {
 
   return (
     <>
-      <GrowthPointsToast points={GROWTH_POINTS.MODULE} show={showGpToast} />
+      <GrowthPointsToast points={GROWTH_POINTS.MODULE_COMPLETE} show={showGpToast} />
       <style>{`
         .lesson-complete:hover:not(:disabled) { opacity: 0.9 !important; transform: translateY(-1px); }
         .lesson-back:hover { color: #fff !important; }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { VideoQuizQuestion, QuestionType } from '@/types';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,15 @@ interface VideoQuestionBuilderProps {
   videoDuration: number;
   videoUrl: string;
   onChange: (questions: VideoQuizQuestion[]) => void;
+  /**
+   * Fires once the player reports the real length of the video.
+   *
+   * YouTube/Vimeo/Drive links can't be measured by the `<video>` element the
+   * uploader uses, so those quizzes were saving `videoDuration: 0` and the
+   * student timeline came out broken. The player here knows the true duration —
+   * this hands it back to the form so it gets saved.
+   */
+  onDurationDetected?: (seconds: number) => void;
 }
 
 export function VideoQuestionBuilder({
@@ -45,8 +55,59 @@ export function VideoQuestionBuilder({
   videoDuration,
   videoUrl,
   onChange,
+  onDurationDetected,
 }: VideoQuestionBuilderProps) {
   const playerRef = useRef<ReactPlayer>(null);
+  const videoFrameRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  // Real leftover space below wherever this component sits, measured live instead
+  // of guessed — so the video grows as large as it can while the timeline/controls
+  // below it are always guaranteed to still fit, on any host page and at any zoom
+  // level. Falls back to the fixed-guess `.video-fit-frame` CSS class until the
+  // first measurement lands.
+  const [availableVideoHeight, setAvailableVideoHeight] = useState<number | null>(null);
+  useEffect(() => {
+    // The floor is the bottom of whatever actually scrolls this component. On the
+    // full-page builders that is the window, but inside the coach modals the
+    // builder sits in an `overflow-y: auto` box that ends well above the window
+    // bottom. Measuring against the window there overshoots by the height of the
+    // modal footer plus its margin, which pushed the timeline and the Add Question
+    // button below the modal's visible area.
+    // Capped at the window too: the video has to fit inside the scroll box *and*
+    // on screen, and a scroll container taller than the viewport would otherwise
+    // hand back a floor below the fold.
+    const findScrollFloor = (el: HTMLElement): number => {
+      for (let node = el.parentElement; node; node = node.parentElement) {
+        const { overflowY } = getComputedStyle(node);
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+          return Math.min(node.getBoundingClientRect().bottom, window.innerHeight);
+        }
+      }
+      return window.innerHeight;
+    };
+
+    const recompute = () => {
+      if (!videoFrameRef.current || !controlsRef.current) return;
+      const frameTop = videoFrameRef.current.getBoundingClientRect().top;
+      const controlsHeight = controlsRef.current.offsetHeight;
+      const available = findScrollFloor(videoFrameRef.current) - frameTop - controlsHeight - 24;
+      setAvailableVideoHeight(Math.max(160, available));
+    };
+
+    recompute();
+    window.addEventListener('resize', recompute);
+
+    // The transport controls render taller once the player reports duration and
+    // the timeline appears, so the first measurement is always short-lived.
+    // Re-measure when they actually change size rather than trusting mount.
+    const observer = new ResizeObserver(recompute);
+    if (controlsRef.current) observer.observe(controlsRef.current);
+
+    return () => {
+      window.removeEventListener('resize', recompute);
+      observer.disconnect();
+    };
+  }, []);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -61,6 +122,22 @@ export function VideoQuestionBuilder({
     points: 10,
     required: true,
   });
+  // What the coach has actually typed in the timestamp box, kept separate from the
+  // parsed number. null means "not being edited", so the box shows the canonical
+  // m:ss instead. Holding the raw text is what stops a half-typed "1:" from
+  // wiping the field mid-keystroke.
+  const [timestampDraft, setTimestampDraft] = useState<string | null>(null);
+  // Minimum gap enforced between two questions. Was a hard-coded 5s, which is
+  // right for most videos and wrong for a fast drill where three cues land in
+  // the same second. 0 turns the check off completely.
+  const [minQuestionSpacing, setMinQuestionSpacing] = useState(5);
+  // Same raw-text treatment as the timestamp box, for the rewind target.
+  const [rewindDraft, setRewindDraft] = useState<string | null>(null);
+
+  // The step this freeze point will be, unless Michael sets it himself. One past
+  // the highest already placed, so steps stay unique without him counting.
+  const nextStepNumber =
+    questions.reduce((highest, q) => Math.max(highest, q.stepNumber ?? 0), 0) + 1;
 
   // Fill in the blank split inputs
   const [blankBefore, setBlankBefore] = useState('');
@@ -82,23 +159,49 @@ export function VideoQuestionBuilder({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Accepts plain seconds ("90") or clock time ("1:30", "01:30", "1:02:03").
+  // On a long video a coach naturally thinks in minutes and types the colon, which
+  // the old number-only box silently rejected. Returns null for anything that isn't
+  // a time, which leaves the timestamp undefined for the Add validation to catch.
+  const parseTimestampInput = (raw: string): number | null => {
+    const parts = raw.trim().split(':');
+    if (parts.length > 3 || !parts.every((part) => /^\d+$/.test(part))) return null;
+    return parts.reduce((total, part) => total * 60 + parseInt(part, 10), 0);
+  };
+
   const handleProgress = (state: OnProgressProps) => {
     setCurrentTime(Math.floor(state.playedSeconds));
+  };
+
+  // Reported lengths arrive more than once (onReady, then onDuration, and again on
+  // some sources after the first seek). Only push a genuinely new value upward, so
+  // the parent form isn't re-rendered for a number it already holds.
+  const reportedDurationRef = useRef<number | null>(null);
+  const applyDetectedDuration = (raw: number | null | undefined) => {
+    if (raw == null || isNaN(raw) || !isFinite(raw) || raw <= 0) return;
+    const rounded = Math.floor(raw);
+    if (reportedDurationRef.current === rounded) return;
+    reportedDurationRef.current = rounded;
+    setDetectedDuration(rounded);
+    onDurationDetected?.(rounded);
   };
 
   const handleReady = () => {
     setVideoReady(true);
     // Get duration from the player when it's ready
     if (playerRef.current) {
-      const duration = playerRef.current.getDuration();
-      if (duration && !isNaN(duration) && isFinite(duration)) {
-        const roundedDuration = Math.floor(duration);
-        setDetectedDuration(roundedDuration);
-        toast.success('Video loaded successfully', {
-          description: `Duration detected: ${Math.floor(roundedDuration / 60)}m ${roundedDuration % 60}s`,
-        });
-      }
+      applyDetectedDuration(playerRef.current.getDuration());
+      // Duration is shown next to the progress bar; repeating it in a corner
+      // popup was the other timestamp readout Michael asked us to drop.
+      toast.success('Video loaded successfully');
     }
+  };
+
+  // YouTube and Vimeo frequently aren't ready to answer `getDuration()` at onReady
+  // and report it a beat later through this callback instead. Without it a pasted
+  // YouTube link saves a duration of 0.
+  const handleDuration = (duration: number) => {
+    applyDetectedDuration(duration);
   };
 
   const handlePlay = () => {
@@ -147,8 +250,10 @@ export function VideoQuestionBuilder({
       ...newQuestion,
       timestamp: Math.floor(currentTime),
     });
+    setTimestampDraft(null); // show the moment we just captured, not stale typing
     setIsPlaying(false);
-    toast.success(`Question timestamp set to ${formatTimestamp(Math.floor(currentTime))}`);
+    // No toast here: the timestamp it announced is already visible in the form
+    // field it just filled in, so the popup was noise on every click.
 
     // Scroll to the add question form
     const addQuestionForm = document.getElementById('add-question-form');
@@ -163,13 +268,28 @@ export function VideoQuestionBuilder({
   };
 
   const handleAddQuestion = () => {
-    if (!newQuestion.question || newQuestion.question.trim() === '') {
+    // A hold-only freeze point asks nothing, so there is no question text to
+    // demand. It still needs a line of its own for the list below to be
+    // readable, which is what holdText is.
+    const isHoldOnly = newQuestion.holdOnly === true;
+
+    if (!isHoldOnly && (!newQuestion.question || newQuestion.question.trim() === '')) {
       toast.error('Question text is required');
       return;
     }
 
-    if (newQuestion.timestamp === undefined || newQuestion.timestamp < 0) {
-      toast.error('Valid timestamp is required');
+    if (isHoldOnly && (!newQuestion.holdText || newQuestion.holdText.trim() === '')) {
+      toast.error('Say what the goalie should look at', {
+        description: 'A hold with no question still needs a line on screen.',
+      });
+      return;
+    }
+
+    // Number.isFinite rejects both undefined (empty box) and NaN. The old
+    // `=== undefined || < 0` check let NaN straight through, and a NaN timestamp
+    // poisons the sort and the spacing check for every question after it.
+    if (!Number.isFinite(newQuestion.timestamp) || newQuestion.timestamp! < 0) {
+      toast.error('Enter a timestamp for this question');
       return;
     }
 
@@ -180,27 +300,39 @@ export function VideoQuestionBuilder({
       return;
     }
 
-    // Check if timestamp conflicts with existing question
-    const conflictingQuestion = questions.find(
-      (q) => Math.abs(q.timestamp - newQuestion.timestamp!) < 5
-    );
-    if (conflictingQuestion) {
-      toast.error('Questions must be at least 5 seconds apart');
-      return;
+    // Check if timestamp conflicts with existing question. The gap is the coach's
+    // to set; 0 means overlapping timestamps are allowed on purpose.
+    if (minQuestionSpacing > 0) {
+      const conflictingQuestion = questions.find(
+        (q) => Math.abs(q.timestamp - newQuestion.timestamp!) < minQuestionSpacing
+      );
+      if (conflictingQuestion) {
+        toast.error(
+          `Questions must be at least ${minQuestionSpacing} second${minQuestionSpacing === 1 ? '' : 's'} apart`,
+          { description: 'Change the minimum gap below if you want them closer together.' }
+        );
+        return;
+      }
     }
 
-    // Validate question based on type
-    if (newQuestion.type === 'multiple_choice') {
+    // Validate question based on type. Reflective questions are exempt from every
+    // correct-answer rule — that is the entire point of them.
+    const isReflective = newQuestion.reflective === true;
+    if (isHoldOnly) {
+      // Nothing is asked, so nothing is graded. Fall straight through.
+    } else if (newQuestion.type === 'multiple_choice') {
       if (!newQuestion.options || newQuestion.options.length < 2) {
         toast.error('Multiple choice questions need at least 2 options');
         return;
       }
-      if (!newQuestion.options.some((opt: any) => opt.isCorrect)) {
-        toast.error('At least one option must be marked as correct');
+      if (!isReflective && !newQuestion.options.some((opt: any) => opt.isCorrect)) {
+        toast.error('At least one option must be marked as correct', {
+          description: 'Or switch on "No right answer" if this is a reflective question.',
+        });
         return;
       }
     } else if (newQuestion.type === 'true_false') {
-      if (newQuestion.correctAnswer === undefined) {
+      if (!isReflective && newQuestion.correctAnswer === undefined) {
         toast.error('Correct answer is required for true/false questions');
         return;
       }
@@ -214,17 +346,46 @@ export function VideoQuestionBuilder({
     const questionToAdd: VideoQuizQuestion = {
       id: `q_${Date.now()}`,
       type: newQuestion.type as QuestionType,
-      question: newQuestion.question,
+      // A hold-only freeze point has no question text, so its own on-screen line
+      // stands in - otherwise the list below shows a blank row with no way to
+      // tell which moment it is.
+      question: newQuestion.question?.trim() || newQuestion.holdText?.trim() || '',
       timestamp: newQuestion.timestamp!,
-      points: newQuestion.points || 10,
+      // Reflective questions score nothing, so they can't drag a percentage down
+      // and can't inflate it either.
+      points: isReflective ? 0 : newQuestion.points || 10,
       required: newQuestion.required !== false,
+      reflective: isReflective,
       explanation: newQuestion.explanation,
-      options: newQuestion.options,
-      correctAnswer: newQuestion.correctAnswer,
+      // Clear any correctness the coach set before switching the toggle on, so a
+      // stale tick can't come back as grading later.
+      options: isReflective
+        ? newQuestion.options?.map((opt: any) => ({ ...opt, isCorrect: false }))
+        : newQuestion.options,
+      correctAnswer: isReflective ? undefined : newQuestion.correctAnswer,
       correctAnswers: newQuestion.correctAnswers,
       caseSensitive: newQuestion.caseSensitive,
+
+      // The freeze point. Empty strings are turned back into undefined so an
+      // untouched field is absent on the record rather than stored blank.
+      holdOnly: isHoldOnly || undefined,
+      holdText: newQuestion.holdText?.trim() || undefined,
+      voiceClipId: newQuestion.voiceClipId?.trim() || undefined,
+      afterAnswer: newQuestion.afterAnswer === 'choose' ? 'choose' : undefined,
+      rewindTo:
+        newQuestion.afterAnswer === 'choose' && Number.isFinite(newQuestion.rewindTo)
+          ? newQuestion.rewindTo
+          : undefined,
+      stepNumber: Number.isFinite(newQuestion.stepNumber) ? newQuestion.stepNumber : nextStepNumber,
     };
 
+    // Sorting by timestamp here is the AUTHORING order - it is what Michael
+    // scrolls through while placing freeze points, and it should stay
+    // chronological.
+    //
+    // It is NOT the order the cumulative Knowledge Check asks in. That one runs
+    // newest step first, by design, because asking the freshest material while
+    // it is freshest is the teaching. Do not reuse this sort there.
     const updatedQuestions = [...questions, questionToAdd].sort(
       (a, b) => a.timestamp - b.timestamp
     );
@@ -236,7 +397,11 @@ export function VideoQuestionBuilder({
       timestamp: 0,
       points: 10,
       required: true,
+      reflective: false,
+      holdOnly: false,
     });
+    setTimestampDraft(null);
+    setRewindDraft(null);
     setBlankBefore('');
     setBlankAfter('');
 
@@ -256,6 +421,11 @@ export function VideoQuestionBuilder({
           <div className="space-y-4">
             <div>
               <Label>Options</Label>
+              {newQuestion.reflective && (
+                <p className="text-xs text-gray-500 mt-1">
+                  No right answer — whichever option the goalie picks is recorded as their response.
+                </p>
+              )}
               <div className="space-y-2 mt-2">
                 {(newQuestion.options || []).map((option: any, index: number) => (
                   <div key={index} className="flex items-center gap-2">
@@ -269,15 +439,19 @@ export function VideoQuestionBuilder({
                       placeholder={`Option ${index + 1}`}
                       className="flex-1"
                     />
-                    <Switch
-                      checked={option.isCorrect}
-                      onCheckedChange={(checked) => {
-                        const newOptions = [...(newQuestion.options || [])];
-                        newOptions[index] = { ...option, isCorrect: checked };
-                        setNewQuestion({ ...newQuestion, options: newOptions });
-                      }}
-                    />
-                    <Label className="text-sm">Correct</Label>
+                    {!newQuestion.reflective && (
+                      <>
+                        <Switch
+                          checked={option.isCorrect}
+                          onCheckedChange={(checked) => {
+                            const newOptions = [...(newQuestion.options || [])];
+                            newOptions[index] = { ...option, isCorrect: checked };
+                            setNewQuestion({ ...newQuestion, options: newOptions });
+                          }}
+                        />
+                        <Label className="text-sm">Correct</Label>
+                      </>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -313,6 +487,15 @@ export function VideoQuestionBuilder({
         );
 
       case 'true_false':
+        if (newQuestion.reflective) {
+          return (
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                No right answer — the goalie answers True or False and their choice is recorded as is.
+              </p>
+            </div>
+          );
+        }
         return (
           <div className="space-y-3">
             <Label>What is the correct answer? *</Label>
@@ -390,7 +573,7 @@ export function VideoQuestionBuilder({
                       question: `${e.target.value} ___ ${blankAfter}`.trim(),
                     });
                   }}
-                  placeholder="The goalkeeper position is also called the"
+                  placeholder="A goalie who drops both pads to seal the ice is in the"
                   className="flex-1 min-w-[200px]"
                 />
                 <div className="flex items-center gap-1 px-4 py-2 bg-primary/10 border-2 border-dashed border-primary rounded-lg">
@@ -406,7 +589,7 @@ export function VideoQuestionBuilder({
                       question: `${blankBefore} ___ ${e.target.value}`.trim(),
                     });
                   }}
-                  placeholder="in soccer. (optional)"
+                  placeholder="position. (optional)"
                   className="flex-1 min-w-[200px]"
                 />
               </div>
@@ -511,20 +694,37 @@ export function VideoQuestionBuilder({
   };
 
   return (
-    <div className="space-y-6">
+    // `no-button-zoom` here rather than only on the page, so the builder behaves
+    // the same wherever it is embedded (coach and admin quiz screens).
+    <div className="no-button-zoom space-y-6">
       {/* Video Player Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Video Preview & Controls</CardTitle>
-          <p className="text-sm text-gray-600 mt-1">
+      {/*
+        Tight header on purpose. The player is capped by the space left below it, so every
+        pixel this card spends on chrome comes off the video. `short:` drops the hint line
+        and squeezes further once the viewport can't afford it.
+      */}
+      <Card className="gap-3 py-3 short:gap-2 short:py-2">
+        <CardHeader className="short:px-4">
+          <CardTitle className="text-base short:text-sm">Video Preview & Controls</CardTitle>
+          <p className="text-sm text-gray-600 short:hidden">
             Watch the video and pause at any moment to add a question at that timestamp
           </p>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="short:px-4">
+          <div className="space-y-4 short:space-y-2">
             {/* Video Player */}
             <div
-              className="relative bg-black rounded-lg overflow-hidden aspect-video cursor-pointer group"
+              ref={videoFrameRef}
+              className={cn(
+                'relative bg-black rounded-lg overflow-hidden aspect-video cursor-pointer group mx-auto w-full',
+                availableVideoHeight == null &&
+                  'video-fit-frame [--video-chrome:36rem] short:[--video-chrome:28rem]'
+              )}
+              style={
+                availableVideoHeight != null
+                  ? { maxWidth: `${Math.round((availableVideoHeight * 16) / 9)}px` }
+                  : undefined
+              }
               onClick={handlePlayPause}
             >
               <ReactPlayer
@@ -539,6 +739,7 @@ export function VideoQuestionBuilder({
                 muted={muted}
                 onProgress={handleProgress}
                 onReady={handleReady}
+                onDuration={handleDuration}
                 onPlay={handlePlay}
                 onPause={handlePause}
                 progressInterval={100}
@@ -564,31 +765,33 @@ export function VideoQuestionBuilder({
             </div>
 
             {/* Custom Controls */}
-            <div className="space-y-4">
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{formatTimestamp(currentTime)}</span>
-                  <span className="text-gray-500">
-                    {formatTimestamp(detectedDuration || videoDuration)}
-                    {detectedDuration && detectedDuration !== videoDuration && (
-                      <span className="ml-2 text-xs text-green-600">(auto-detected)</span>
-                    )}
-                  </span>
-                </div>
+            <div ref={controlsRef} className="space-y-4 short:space-y-2">
+              {/*
+                Elapsed / scrubber / duration on one line rather than a caption row above
+                the bar. Same information, ~40px shorter — and the player is capped by the
+                space left below it, so those pixels go straight into the video.
+              */}
+              <div className="flex items-center gap-3 short:gap-2 text-sm">
+                <span className="font-medium tabular-nums shrink-0">{formatTimestamp(currentTime)}</span>
                 <input
                   type="range"
                   min="0"
                   max={detectedDuration || videoDuration}
                   value={currentTime}
                   onChange={(e) => handleSeek(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="flex-1 min-w-0 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
+                <span className="text-gray-500 tabular-nums shrink-0">
+                  {formatTimestamp(detectedDuration || videoDuration)}
+                  {detectedDuration && detectedDuration !== videoDuration && (
+                    <span className="ml-2 text-xs text-green-600">(auto-detected)</span>
+                  )}
+                </span>
               </div>
 
               {/* Control Buttons */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     variant="outline"
                     size="icon"
@@ -603,7 +806,7 @@ export function VideoQuestionBuilder({
                     variant="default"
                     size="icon"
                     onClick={handlePlayPause}
-                    className="h-12 w-12 bg-red-600 text-white hover:bg-red-700"
+                    className="h-12 w-12 short:h-10 short:w-10 bg-red-600 text-white hover:bg-red-700"
                   >
                     {isPlaying ? (
                       <Pause className="h-6 w-6" />
@@ -676,7 +879,7 @@ export function VideoQuestionBuilder({
                   onClick={handleAddQuestionAtCurrentTime}
                   variant="default"
                   size="lg"
-                  className="gap-2 bg-gradient-to-r from-red-600 to-blue-600 text-white hover:from-red-700 hover:to-blue-700"
+                  className="gap-2 short:h-9 bg-gradient-to-r from-red-600 to-blue-600 text-white hover:from-red-700 hover:to-blue-700"
                 >
                   <Plus className="h-5 w-5" />
                   Add Question Here
@@ -738,9 +941,15 @@ export function VideoQuestionBuilder({
                             <span className="text-xs px-2 py-1 bg-gray-100 rounded">
                               {question.type.replace('_', ' ')}
                             </span>
-                            <span className="text-xs text-gray-600">
-                              {question.points} points
-                            </span>
+                            {question.reflective ? (
+                              <span className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium">
+                                Reflective — not scored
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-600">
+                                {question.points} points
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -829,6 +1038,9 @@ export function VideoQuestionBuilder({
                     options: undefined,
                     correctAnswer: undefined,
                     correctAnswers: undefined,
+                    // Fill-in-the-blank is graded by matching text, so there is no
+                    // coherent reflective version of it.
+                    reflective: value === 'fill_in_blank' ? false : newQuestion.reflective,
                   });
                 }}
               >
@@ -846,24 +1058,36 @@ export function VideoQuestionBuilder({
 
             <div className="space-y-2">
               <Label htmlFor="timestamp">
-                Timestamp (seconds) - Max: {detectedDuration || videoDuration}s
+                Timestamp - Max: {formatTimestamp(detectedDuration || videoDuration)}
               </Label>
               <Input
                 id="timestamp"
-                type="number"
-                min="0"
-                max={detectedDuration || videoDuration}
-                value={newQuestion.timestamp}
-                onChange={(e) =>
+                type="text"
+                placeholder="1:30 or 90"
+                // Deliberately a text box, not type="number". A number input hands
+                // back '' for anything it rejects — including the colon in "1:30" —
+                // and parseInt('') is NaN. Storing NaN made React render value={NaN},
+                // which blanks the box and appears to the coach as a frozen field:
+                // "the time and point froze, question answer responded fine". Holding
+                // the raw text means no keystroke can ever wedge the field.
+                value={timestampDraft ?? (newQuestion.timestamp !== undefined ? formatTimestamp(newQuestion.timestamp) : '')}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setTimestampDraft(raw);
+                  const parsed = parseTimestampInput(raw);
                   setNewQuestion({
                     ...newQuestion,
-                    timestamp: parseInt(e.target.value),
-                  })
-                }
+                    timestamp: parsed === null ? undefined : parsed,
+                  });
+                }}
+                // Snapping back to m:ss on blur confirms we understood what they typed.
+                onBlur={() => setTimestampDraft(null)}
                 className="w-full border-slate-300 focus-visible:ring-red-200"
               />
               <p className="text-xs text-gray-500">
-                {formatTimestamp(newQuestion.timestamp || 0)}
+                {newQuestion.timestamp !== undefined
+                  ? `${formatTimestamp(newQuestion.timestamp)} — ${newQuestion.timestamp}s into the video`
+                  : 'Type minutes and seconds (1:30) or plain seconds (90)'}
               </p>
             </div>
 
@@ -873,15 +1097,45 @@ export function VideoQuestionBuilder({
                 id="points"
                 type="number"
                 min="1"
-                value={newQuestion.points}
-                onChange={(e) =>
+                disabled={newQuestion.reflective}
+                // Same NaN trap as the timestamp field above. Undefined is safe here:
+                // the add handler already falls back to 10 points.
+                value={newQuestion.reflective ? 0 : (newQuestion.points ?? '')}
+                onChange={(e) => {
+                  const next = parseInt(e.target.value, 10);
                   setNewQuestion({
                     ...newQuestion,
-                    points: parseInt(e.target.value),
-                  })
-                }
+                    points: Number.isFinite(next) ? Math.max(0, next) : undefined,
+                  });
+                }}
+                className="w-full border-slate-300 focus-visible:ring-red-200 disabled:bg-gray-100 disabled:text-gray-400"
+              />
+              {newQuestion.reflective && (
+                <p className="text-xs text-gray-500">
+                  Reflective questions aren&apos;t scored, so they don&apos;t affect the goalie&apos;s percentage.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="minSpacing">Minimum gap between questions</Label>
+              <Input
+                id="minSpacing"
+                type="number"
+                min="0"
+                max="120"
+                value={minQuestionSpacing}
+                onChange={(e) => {
+                  const next = parseInt(e.target.value);
+                  setMinQuestionSpacing(Number.isNaN(next) ? 0 : Math.max(0, Math.min(120, next)));
+                }}
                 className="w-full border-slate-300 focus-visible:ring-red-200"
               />
+              <p className="text-xs text-gray-500">
+                {minQuestionSpacing === 0
+                  ? 'Off — questions can sit at the same moment in the video.'
+                  : `Questions must be at least ${minQuestionSpacing}s apart. Set to 0 to turn this off.`}
+              </p>
             </div>
           </div>
 
@@ -905,6 +1159,175 @@ export function VideoQuestionBuilder({
               />
             </div>
           )}
+
+          {/*
+            Reflective mode. Sits above the answer fields on purpose — it changes what
+            those fields ask for, so it has to be decided first.
+          */}
+          {newQuestion.type !== 'fill_in_blank' && (
+            <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-amber-200 bg-amber-50/60">
+              <div>
+                <Label className="text-sm font-medium">No right answer (reflective question)</Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  For questions like &ldquo;Did that save feel balanced?&rdquo; — the goalie&apos;s answer is
+                  recorded and shown to you, but it is never marked wrong and never scored.
+                </p>
+              </div>
+              <Switch
+                checked={newQuestion.reflective === true}
+                onCheckedChange={(checked) =>
+                  setNewQuestion({ ...newQuestion, reflective: checked })
+                }
+              />
+            </div>
+          )}
+
+          {/*
+            The freeze point. Everything here describes what happens while the
+            frame is held - what is on screen, what is heard, and what the goalie
+            is allowed to do next. Leaving it all untouched gives exactly the
+            behaviour the player had before these fields existed.
+          */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 space-y-4">
+            <div>
+              <Label className="text-sm font-semibold">The freeze point</Label>
+              <p className="text-xs text-gray-600 mt-1">
+                The frame holds here. Optional - leave it alone and this behaves like any
+                other question.
+              </p>
+            </div>
+
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Label className="text-sm font-medium">Hold with no question</Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  The frame holds and your voice plays, but nothing is asked. Nothing is
+                  recorded and nothing is scored.
+                </p>
+              </div>
+              <Switch
+                checked={newQuestion.holdOnly === true}
+                onCheckedChange={(checked) =>
+                  setNewQuestion({ ...newQuestion, holdOnly: checked })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="holdText">
+                What to look at{newQuestion.holdOnly ? ' *' : ' (optional)'}
+              </Label>
+              <Textarea
+                id="holdText"
+                value={newQuestion.holdText || ''}
+                onChange={(e) => setNewQuestion({ ...newQuestion, holdText: e.target.value })}
+                placeholder="Watch where his stick is, not where the puck is."
+                rows={2}
+                className="border-slate-300 focus-visible:ring-red-200 bg-white"
+              />
+              <p className="text-xs text-gray-500">
+                Shown underneath the held frame, in your words. Change the wording any time -
+                it costs nothing.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="voiceClipId">Voice clip (optional)</Label>
+                <Input
+                  id="voiceClipId"
+                  type="text"
+                  placeholder="V-A-14"
+                  value={newQuestion.voiceClipId || ''}
+                  onChange={(e) =>
+                    setNewQuestion({ ...newQuestion, voiceClipId: e.target.value })
+                  }
+                  className="w-full border-slate-300 focus-visible:ring-red-200 bg-white"
+                />
+                <p className="text-xs text-gray-500">
+                  A clip id from your catalogue. Plays once while the frame is held.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stepNumber">Step</Label>
+                <Input
+                  id="stepNumber"
+                  type="number"
+                  min="1"
+                  value={newQuestion.stepNumber ?? nextStepNumber}
+                  onChange={(e) => {
+                    const next = parseInt(e.target.value);
+                    setNewQuestion({
+                      ...newQuestion,
+                      stepNumber: Number.isNaN(next) ? undefined : Math.max(1, next),
+                    });
+                  }}
+                  className="w-full border-slate-300 focus-visible:ring-red-200 bg-white"
+                />
+                <p className="text-xs text-gray-500">
+                  Which step of this clip it is. The Knowledge Check asks the newest step
+                  first, then works back.
+                </p>
+              </div>
+            </div>
+
+            {!newQuestion.holdOnly && (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Offer PLAY ON or REWIND</Label>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Nothing moves until he chooses. Off means the clip carries on by
+                      itself once he has answered.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={newQuestion.afterAnswer === 'choose'}
+                    onCheckedChange={(checked) =>
+                      setNewQuestion({
+                        ...newQuestion,
+                        afterAnswer: checked ? 'choose' : 'resume',
+                      })
+                    }
+                  />
+                </div>
+
+                {newQuestion.afterAnswer === 'choose' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="rewindTo">REWIND goes back to (optional)</Label>
+                    <Input
+                      id="rewindTo"
+                      type="text"
+                      placeholder="1:12 or 72"
+                      // Raw text for the same reason the timestamp box uses it.
+                      value={
+                        rewindDraft ??
+                        (Number.isFinite(newQuestion.rewindTo)
+                          ? formatTimestamp(newQuestion.rewindTo!)
+                          : '')
+                      }
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setRewindDraft(raw);
+                        const parsed = parseTimestampInput(raw);
+                        setNewQuestion({
+                          ...newQuestion,
+                          rewindTo: parsed === null ? undefined : parsed,
+                        });
+                      }}
+                      onBlur={() => setRewindDraft(null)}
+                      className="w-full border-slate-300 focus-visible:ring-red-200 bg-white"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Leave empty to go back to the previous freeze point, or the start of
+                      the clip if this is the first.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {renderQuestionTypeFields()}
 

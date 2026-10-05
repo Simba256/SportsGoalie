@@ -19,10 +19,21 @@ import {
   createAuthErrorFromFirebase,
   createErrorContext,
   InvalidCoachCodeError,
+  ParentAccountRequiredError,
   isAuthError,
 } from '@/lib/errors/auth-errors';
+import {
+  calculateAge,
+  getAgeBracket,
+  parseDateOfBirth,
+  requiresParentHeldAccount,
+  type AgeBracket,
+} from '@/lib/auth/signup-policy';
+import { resolveLoginIdentifier } from '@/lib/auth/child-account';
 import { userService } from '@/lib/database/services/user.service';
+import { ProgressService } from '@/lib/database/services/progress.service';
 import { normalizeCoachCode } from '@/lib/utils/coach-code-generator';
+import { CURRENT_LEGAL_VERSIONS } from '@/data/legal';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -92,12 +103,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Include student/coach specific fields from Firestore
           ...(userData.workflowType && { workflowType: userData.workflowType }),
           ...(userData.assignedCoachId && { assignedCoachId: userData.assignedCoachId }),
+          ...(userData.assignedCoachName && { assignedCoachName: userData.assignedCoachName }),
           ...(userData.studentNumber && { studentNumber: userData.studentNumber }),
           ...(userData.coachCode && { coachCode: userData.coachCode }),
+          // The pause switch must reach the route guards, or a paused member
+          // could keep using the app until their next full sign-out.
+          ...(userData.isPaused !== undefined && { isPaused: userData.isPaused }),
+          // Same reasoning as the pause switch: the content wall is enforced in
+          // ProtectedRoute off this field, so it has to survive the mapping or an
+          // applicant would walk straight into the app on their next page load.
+          ...(userData.applicationStatus && { applicationStatus: userData.applicationStatus }),
+          ...(userData.appliedAt && { appliedAt: userData.appliedAt }),
+          ...(userData.applicationSubmittedAt && { applicationSubmittedAt: userData.applicationSubmittedAt }),
           // Include onboarding fields
           ...(userData.onboardingCompleted !== undefined && { onboardingCompleted: userData.onboardingCompleted }),
           ...(userData.onboardingCompletedAt && { onboardingCompletedAt: userData.onboardingCompletedAt }),
           ...(userData.initialAssessmentLevel && { initialAssessmentLevel: userData.initialAssessmentLevel }),
+          // Which once-only Coach Mike voice moments have already played.
+          ...(userData.voiceMoments && { voiceMoments: userData.voiceMoments }),
           // Include parent-child linking fields (for students/goalies)
           ...(userData.linkedParentIds && { linkedParentIds: userData.linkedParentIds }),
           ...(userData.parentLinkCode && { parentLinkCode: userData.parentLinkCode }),
@@ -176,9 +199,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
+      // A goalie whose parent holds their account may sign in with a short
+      // handle instead of an email (item 6c). Resolved here rather than on the
+      // login page so that every caller of login() gets it, not just the one
+      // form that happens to exist today.
+      const identifier = resolveLoginIdentifier(credentials.email);
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        credentials.email,
+        identifier,
         credentials.password
       );
 
@@ -190,6 +219,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastLoginAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Update login streak for goalies (fire-and-forget — don't block auth flow)
+        if (user.role === 'student') {
+          ProgressService.updateStreak(user.id).catch(() => {});
+        }
       }
 
       setUser(user);
@@ -210,6 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Register function
   const register = async (credentials: RegisterCredentials) => {
     const context = createErrorContext('register', { email: credentials.email });
+    let createdAuthUser: FirebaseUser | undefined;
 
     try {
       isRegisteringRef.current = true; // Prevent auth state listener from signing out
@@ -232,6 +267,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ Coach code validated, assigning to coach:', coachResult.data.displayName);
       }
 
+      // Age check (item 6b), run BEFORE creating the Firebase user so a
+      // refusal leaves nothing behind to clean up.
+      //
+      // The sign-up form already routes an under-age goalie to the parent path
+      // rather than submitting, so in practice this never fires from there.
+      // It is here because register() is exported and callable from any flow,
+      // and what it creates is a real login — a rule this important should not
+      // depend on every future caller remembering to ask first.
+      let ageBracket: AgeBracket | undefined;
+      if (credentials.role === 'student' && credentials.dateOfBirth) {
+        const dob = parseDateOfBirth(credentials.dateOfBirth);
+        if (dob) {
+          if (requiresParentHeldAccount(dob)) {
+            throw new ParentAccountRequiredError(context);
+          }
+          ageBracket = getAgeBracket(calculateAge(dob));
+        }
+      }
+
       // Generate coach code for coaches BEFORE creating Firebase user
       let coachCode: string | undefined;
       if (credentials.role === 'coach') {
@@ -244,6 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.email,
         credentials.password
       );
+      createdAuthUser = userCredential.user;
 
       // Update Firebase profile
       await updateProfile(userCredential.user, {
@@ -270,9 +325,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...(credentials.role === 'student' && {
           workflowType: credentials.workflowType || 'automated',
           ...(assignedCoachId && { assignedCoachId }),
+          // Kept as the calendar date the goalie typed. Only written when it
+          // parsed and passed the age check above — a half-valid birthday is
+          // worse than none, because it looks like a verified one.
+          ...(ageBracket && {
+            dateOfBirth: credentials.dateOfBirth,
+            ageBracket,
+          }),
         }),
         // Add coach code for coaches
         ...(credentials.role === 'coach' && coachCode && { coachCode }),
+        // Application by questionnaire (item 2). Written only for /apply, so an
+        // ordinary sign-up carries no applicationStatus at all and stays a member.
+        // `appliedAt` is the date Michael asked for: their record starts the day
+        // they applied, not the day they paid.
+        ...(credentials.asApplicant === true && {
+          applicationStatus: 'applying' as const,
+          appliedAt: Timestamp.now(),
+        }),
+        // Terms and Privacy acceptance. The sign-up form has always required
+        // the tickbox, but until 27 August 2026 the answer was validated and
+        // then discarded — nothing was written down, so there was no way to
+        // show what any member had agreed to.
+        //
+        // Versions come from src/data/legal rather than being hard-coded here,
+        // so what is recorded cannot drift from what the pages actually say.
+        // Recording the version is the whole point: "they ticked a box" proves
+        // very little, "they accepted version 1.0 on this date" is the part
+        // that answers the question if it is ever asked.
+        //
+        // Gated on agreeToTerms so it is only stamped by a flow that genuinely
+        // showed the documents. The invitation flow has no tickbox, so invited
+        // coaches get no acceptance record — which is correct, because they
+        // have not given one.
+        ...(credentials.agreeToTerms === true && {
+          legalAcceptance: {
+            termsVersion: CURRENT_LEGAL_VERSIONS.terms,
+            privacyVersion: CURRENT_LEGAL_VERSIONS.privacy,
+            acceptedAt: Timestamp.now(),
+          },
+        }),
         preferences: {
           theme: 'light',
           notifications: true,
@@ -337,6 +429,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error code:', (error as { code: string }).code);
       }
 
+      // The Auth user was created but a later step (Firestore write, coach code, etc.)
+      // failed — delete it so the email isn't permanently orphaned in Firebase Auth
+      // with no corresponding Firestore user document.
+      if (createdAuthUser) {
+        try {
+          await createdAuthUser.delete();
+        } catch (cleanupError) {
+          console.error('❌ Failed to roll back orphaned auth user:', cleanupError);
+        }
+      }
+
       // If it's already an AuthError, just re-throw it
       if (isAuthError(error)) {
         throw error;
@@ -367,7 +470,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const context = createErrorContext('resetPassword', { email });
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      const continueUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/login`
+          : `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/login`;
+
+      await sendPasswordResetEmail(auth, email, {
+        url: continueUrl,
+        handleCodeInApp: false,
+      });
     } catch (error: unknown) {
       // Convert Firebase errors to AuthError
       const authError = createAuthErrorFromFirebase(error, context);
@@ -404,7 +515,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatedUser.workflowType = data.workflowType;
       }
       if (data.assignedCoachId !== undefined) {
-        updatedUser.assignedCoachId = data.assignedCoachId;
+        updatedUser.assignedCoachId = data.assignedCoachId ?? undefined;
+      }
+      if (data.assignedCoachName !== undefined) {
+        updatedUser.assignedCoachName = data.assignedCoachName ?? undefined;
       }
 
       setUser(updatedUser);
@@ -446,13 +560,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const user = await createUserFromFirebaseUser(firebaseUser);
-        setUser(user);
-      } else {
-        setUser(null);
+      // register() creates the Firestore user document and calls setUser itself.
+      // Firebase signs the new user in the moment createUserWithEmailAndPassword
+      // resolves, which fires this listener before register()'s own setDoc call
+      // lands — racing its write (correct role) against the fallback default
+      // ('student') below and letting whichever finishes last win. Skip while a
+      // registration is in flight so it can never clobber the intended role.
+      if (isRegisteringRef.current) {
+        return;
       }
-      setLoading(false);
+
+      try {
+        if (firebaseUser) {
+          const user = await createUserFromFirebaseUser(firebaseUser);
+          setUser(user);
+        } else {
+          setUser(null);
+        }
+      } finally {
+        // Always clear the flag. Every guarded page waits on it, so if this is
+        // skipped the app sits on a loading skeleton forever with no error to show
+        // for it — which is exactly what a blank page on refresh looks like.
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();

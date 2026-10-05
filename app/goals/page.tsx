@@ -1,36 +1,19 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CheckCircle2, Flame, Target, Trophy } from 'lucide-react';
 import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { GoalsList } from '@/components/goals/GoalsList';
 import { AchievementsList } from '@/components/achievements/AchievementsList';
-import { useAchievements } from '@/hooks/useProgress';
+import { useAchievements, useProgress } from '@/hooks/useProgress';
+import { useAuth } from '@/lib/auth/context';
+import { ProgressService } from '@/lib/database/services/progress.service';
+import { goalsService } from '@/lib/database/services/goals.service';
+import { goalBaseline, goalProgress } from '@/lib/goals/progress';
+import type { Goal, NewGoal } from '@/types/goals';
 
 const BLUE = '#37b5ff';
-
-const sampleGoals = [
-  { id: '1', title: 'Complete 5 Modules in 7AMS', description: 'Work through 5 modules in the Seven Angle-Mark System pillar to build positional mastery.', type: 'skill_completion' as const, targetValue: 5, currentValue: 3, unit: 'modules', deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), priority: 'high' as const, isCompleted: false, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-  { id: '2', title: 'Maintain 7-Day Learning Streak', description: 'Show up every day for 7 consecutive days. Consistency is the foundation of every great goaltender.', type: 'streak' as const, targetValue: 7, currentValue: 3, unit: 'days', deadline: undefined, priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-  { id: '3', title: 'Achieve 95-100 CLUB Grasp Level Average', description: 'Push your Knowledge Check Grasp Level average into the 95-100 CLUB tier across all pillars.', type: 'quiz_score' as const, targetValue: 95, currentValue: 78, unit: '%', deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), priority: 'medium' as const, isCompleted: false, createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
-  { id: '4', title: 'Complete Pillar 1 — MIND-SET', description: 'Finish every module in the MIND-SET pillar. The mental game is the foundation of everything.', type: 'sport_completion' as const, targetValue: 1, currentValue: 1, unit: 'pillar', deadline: undefined, priority: 'high' as const, isCompleted: true, createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) },
-  { id: '5', title: 'Log 20 Charting Hours This Month', description: 'Track 20 hours of game and practice charting this month to build real performance data.', type: 'time_spent' as const, targetValue: 20, currentValue: 12, unit: 'hours', deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), priority: 'low' as const, isCompleted: false, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
-];
-
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  type: 'skill_completion' | 'quiz_score' | 'time_spent' | 'streak' | 'sport_completion';
-  targetValue: number;
-  currentValue: number;
-  unit: string;
-  deadline?: Date;
-  priority: 'low' | 'medium' | 'high';
-  isCompleted: boolean;
-  createdAt: Date;
-}
 
 type ActiveTab = 'goals' | 'achievements';
 
@@ -43,25 +26,104 @@ export default function GoalsAndAchievementsPage() {
 }
 
 function GoalsAndAchievementsContent() {
-  const [goals, setGoals] = useState<Goal[]>(sampleGoals);
+  const { user } = useAuth();
+  const { userProgress, loading: progressLoading, error: progressError } = useProgress();
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goalsLoading, setGoalsLoading] = useState(true);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('goals');
   const { achievements, userAchievements, loading: achievementsLoading, error: achievementsError } = useAchievements();
+
+  useEffect(() => {
+    if (!user?.id) {
+      setGoalsLoading(false);
+      return;
+    }
+    const studentId = user.id;
+    let cancelled = false;
+
+    const loadGoals = async () => {
+      setGoalsLoading(true);
+      try {
+        const result = await goalsService.getGoalsByStudent(studentId);
+        if (cancelled) return;
+        if (result.success && result.data) {
+          setGoals(result.data);
+          setGoalsError(null);
+        } else {
+          setGoalsError(result.error?.message ?? 'Your goals could not be loaded. Please refresh and try again.');
+        }
+      } catch {
+        if (!cancelled) setGoalsError('Your goals could not be loaded. Please refresh and try again.');
+      } finally {
+        if (!cancelled) setGoalsLoading(false);
+      }
+    };
+
+    void loadGoals();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  // Open goals follow the goalie's live progress; finished goals keep the value they finished on.
+  const stats = userProgress?.overallStats ?? null;
+  const displayGoals = useMemo(
+    () => goals.map(g => ({ ...g, currentValue: goalProgress(g, stats) })),
+    [goals, stats]
+  );
 
   const completedGoalsCount = goals.filter(g => g.isCompleted).length;
   const activeGoalsCount = goals.length - completedGoalsCount;
   const goalCompletionRate = goals.length > 0 ? Math.round((completedGoalsCount / goals.length) * 100) : 0;
   const unlockedAchievements = userAchievements.filter(a => a.isCompleted).length;
 
-  const handleCreateGoal = (goalData: Omit<Goal, 'id' | 'createdAt'>) => {
-    setGoals([{ ...goalData, id: Math.random().toString(36).substr(2, 9), createdAt: new Date() }, ...goals]);
+  // Rejects with a message the create dialog shows; the dialog stays open so nothing typed is lost.
+  const handleCreateGoal = async (goalData: NewGoal) => {
+    if (!user?.id) throw new Error('Please sign in again to save a goal.');
+    setActionError(null);
+
+    // "Complete 5 skills" counts from where the goalie is today, so read the figures fresh.
+    const fresh = await ProgressService.getUserProgress(user.id);
+    if (!fresh.success) {
+      throw new Error('We could not read your current progress, so the goal was not saved. Please try again.');
+    }
+    const freshStats = fresh.data?.overallStats;
+    const baselineValue = freshStats ? goalBaseline(goalData.type, freshStats, goalData.unit) : 0;
+
+    const result = await goalsService.createGoal(user.id, { ...goalData, baselineValue });
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message ?? 'Your goal could not be saved. Please try again.');
+    }
+    const { id } = result.data;
+    setGoals(prev => [{ ...goalData, id, createdAt: new Date(), baselineValue }, ...prev]);
   };
 
-  const handleUpdateGoal = (goalId: string, updates: Partial<Goal>) => {
-    setGoals(goals.map(g => g.id === goalId ? { ...g, ...updates } : g));
+  const handleUpdateGoal = async (goalId: string, updates: Partial<Goal>) => {
+    setActionError(null);
+    const changes: Partial<Pick<Goal, 'isCompleted' | 'currentValue'>> = {};
+    if (updates.isCompleted !== undefined) changes.isCompleted = updates.isCompleted;
+    if (updates.currentValue !== undefined) changes.currentValue = updates.currentValue;
+
+    const result = await goalsService.updateGoal(goalId, changes);
+    if (!result.success) {
+      setActionError(result.error?.message ?? 'Your goal could not be updated. Please try again.');
+      return;
+    }
+    setGoals(prev => prev.map(g => (g.id === goalId ? { ...g, ...changes } : g)));
   };
 
-  const handleDeleteGoal = (goalId: string) => {
-    setGoals(goals.filter(g => g.id !== goalId));
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!window.confirm('Delete this goal? This cannot be undone.')) return;
+    setActionError(null);
+
+    const result = await goalsService.deleteGoal(goalId);
+    if (!result.success) {
+      setActionError(result.error?.message ?? 'Your goal could not be deleted. Please try again.');
+      return;
+    }
+    setGoals(prev => prev.filter(g => g.id !== goalId));
   };
 
   return (
@@ -122,7 +184,19 @@ function GoalsAndAchievementsContent() {
         {/* Tab content */}
         <div className="goals-tab-content" style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '18px' }}>
           {activeTab === 'goals' ? (
-            <GoalsList goals={goals} onCreateGoal={handleCreateGoal} onUpdateGoal={handleUpdateGoal} onDeleteGoal={handleDeleteGoal} loading={false} />
+            <>
+              {(goalsError || actionError) && (
+                <p role="alert" style={{ fontSize: '13px', color: '#f87171', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '10px 12px', margin: '0 0 16px 0' }}>
+                  {actionError ?? goalsError}
+                </p>
+              )}
+              {progressError && goals.some(g => !g.isCompleted) && (
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', padding: '10px 12px', margin: '0 0 16px 0' }}>
+                  We could not load your latest progress, so the bars below may be out of date. Refresh to try again.
+                </p>
+              )}
+              <GoalsList goals={displayGoals} onCreateGoal={handleCreateGoal} onUpdateGoal={handleUpdateGoal} onDeleteGoal={handleDeleteGoal} loading={goalsLoading || progressLoading} />
+            </>
           ) : (
             <>
               {achievementsLoading ? (

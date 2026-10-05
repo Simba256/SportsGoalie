@@ -3,13 +3,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
-import { chartingService } from '@/lib/database';
+import { chartingService, formTemplateService } from '@/lib/database';
 import { dynamicChartingService } from '@/lib/database/services/dynamic-charting.service';
-import { Session, SessionStats, DynamicChartingEntry, ChartingEntry } from '@/types';
+import { Session, SessionStats, DynamicChartingEntry, ChartingEntry, FormTemplate, PILLARS } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, X, ArrowRight, BarChart2 } from 'lucide-react';
+import {
+  Plus, Calendar, X, ArrowRight, BarChart2,
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+} from 'lucide-react';
 import { SkeletonBannerLight, SkeletonStatCards, SkeletonChart } from '@/components/ui/skeletons';
 import { format } from 'date-fns';
+import { calculateActivityStreak } from '@/lib/utils/streak';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import { NewSessionModal } from '@/components/charting/NewSessionModal';
 
@@ -20,6 +24,10 @@ const CORAL  = '#f87171';
 const MUTED  = 'rgba(255,255,255,0.38)';
 const LABEL  = 'rgba(255,255,255,0.55)';
 
+const PILLAR_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart,
+};
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const toDate = (value: unknown): Date | null => {
@@ -29,11 +37,6 @@ const toDate = (value: unknown): Date | null => {
     if (typeof candidate.toDate === 'function') return candidate.toDate();
   }
   return null;
-};
-
-const toDateKey = (value: unknown): string | null => {
-  const date = toDate(value);
-  return date ? format(date, 'yyyy-MM-dd') : null;
 };
 
 const calculateSessionStats = (sessions: Session[]): SessionStats => {
@@ -55,25 +58,12 @@ const calculateSessionStats = (sessions: Session[]): SessionStats => {
 };
 
 const calculateCurrentStreak = (sessions: Session[], chartingEntries: ChartingEntry[], dynamicEntries: DynamicChartingEntry[]): number => {
-  const activityDateKeys = new Set<string>();
-  sessions.filter(s => s.status === 'completed').forEach(s => { const k = toDateKey(s.date); if (k) activityDateKeys.add(k); });
-  chartingEntries.forEach(e => { const k = toDateKey(e.submittedAt); if (k) activityDateKeys.add(k); });
-  dynamicEntries.forEach(e => { const k = toDateKey(e.submittedAt); if (k) activityDateKeys.add(k); });
-  const streakDates = Array.from(activityDateKeys).sort((a, b) => b.localeCompare(a));
-  if (!streakDates.length) return 0;
-  const today     = toDateKey(new Date());
-  const yesterday = toDateKey(new Date(Date.now() - DAY_MS));
-  if (!today || !yesterday) return 0;
-  if (streakDates[0] !== today && streakDates[0] !== yesterday) return 0;
-  let streak = 1;
-  for (let i = 1; i < streakDates.length; i++) {
-    const prev = new Date(`${streakDates[i - 1]}T00:00:00`);
-    const curr = new Date(`${streakDates[i]}T00:00:00`);
-    const diff = Math.round((prev.getTime() - curr.getTime()) / DAY_MS);
-    if (diff === 1) { streak++; continue; }
-    if (diff > 1) break;
-  }
-  return streak;
+  const activityDates = [
+    ...sessions.filter(s => s.status === 'completed').map(s => toDate(s.date)),
+    ...chartingEntries.map(e => toDate(e.submittedAt)),
+    ...dynamicEntries.map(e => toDate(e.submittedAt)),
+  ].filter((date): date is Date => date !== null);
+  return calculateActivityStreak(activityDates).currentStreak;
 };
 
 export default function ChartingPage() {
@@ -82,6 +72,7 @@ export default function ChartingPage() {
   const [sessions,        setSessions]        = useState<Session[]>([]);
   const [chartingEntries, setChartingEntries] = useState<ChartingEntry[]>([]);
   const [dynamicEntries,  setDynamicEntries]  = useState<DynamicChartingEntry[]>([]);
+  const [pillarTemplates, setPillarTemplates] = useState<FormTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const stats         = useMemo<SessionStats>(() => calculateSessionStats(sessions), [sessions]);
@@ -90,7 +81,7 @@ export default function ChartingPage() {
   const chartedSessionIds = useMemo(() => {
     const ids = new Set<string>();
     chartingEntries.forEach(e => ids.add(e.sessionId));
-    dynamicEntries.forEach(e => ids.add(e.sessionId));
+    dynamicEntries.forEach(e => { if (e.sessionId) ids.add(e.sessionId); });
     return ids;
   }, [chartingEntries, dynamicEntries]);
 
@@ -111,14 +102,19 @@ export default function ChartingPage() {
     if (!user) return;
     try {
       setLoading(true);
-      const [sR, eR, dR] = await Promise.all([
+      const [sR, eR, dR, pR] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getChartingEntriesByStudent(user.id),
         dynamicChartingService.getDynamicEntriesByStudent(user.id),
+        formTemplateService.getActiveTemplatesForSport('Hockey'),
       ]);
       if (sR.success && sR.data) setSessions(sR.data);
       if (eR.success && eR.data) setChartingEntries(eR.data);
       if (dR.success && dR.data) setDynamicEntries(dR.data);
+      // A failure here silently hides the Pillar Check-Ins section, so log it rather than
+      // letting "query broke" look the same as "no pillar templates exist".
+      if (!pR.success) console.error('Failed to load pillar templates:', pR.error);
+      else if (pR.data) setPillarTemplates(pR.data.filter(t => t.pillar !== 'combined'));
     } catch (err) { console.error('Failed to load data:', err); }
     finally { setLoading(false); }
   };
@@ -174,7 +170,7 @@ export default function ChartingPage() {
               </h1>
               <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
                 {stats.totalSessions > 0
-                  ? `${stats.totalSessions} total sessions · ${chartingStats.completionRate}% charted · ${currentStreak} day streak`
+                  ? `${stats.totalSessions} total sessions · ${chartingStats.completionRate}% charted · ${currentStreak} day charting streak`
                   : 'Start charting your game and practice sessions to track your progress.'}
               </p>
               <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
@@ -209,6 +205,51 @@ export default function ChartingPage() {
         <MetricCard label="This Month"      value={stats.thisMonthSessions || 0}  sub="sessions logged"      icon={<IconMonth    color={VIOLET} />} accent={VIOLET} />
       </div>
 
+      {/* ── PILLAR CHECK-INS ── */}
+      {pillarTemplates.length > 0 && (
+        <div style={{ position: 'relative', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent 0%, #37b5ff 40%, #34d399 70%, transparent 100%)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '18px 22px 16px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-.01em' }}>Pillar Check-Ins</h3>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)', fontWeight: 500, marginTop: '1px' }}>Rate yourself anytime — no session needed</p>
+            </div>
+            {/* Pillar charts live in their own area — these cards are a shortcut
+                into the form, not the place to read your history back. */}
+            <button
+              type="button"
+              onClick={() => router.push('/charting/pillars')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '9px', padding: '7px 13px', color: 'rgba(255,255,255,0.78)', fontSize: '12px', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            >
+              View Charts
+              <ArrowRight size={12} />
+            </button>
+          </div>
+          <div style={{ padding: '18px 22px 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+            {pillarTemplates.map(template => {
+              const info = PILLARS.find(p => p.slug === template.pillar);
+              if (!info) return null;
+              const IconComponent = PILLAR_ICONS[info.icon] || Target;
+              return (
+                <div
+                  key={template.id}
+                  onClick={() => router.push(`/charting/pillars/${template.pillar}`)}
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '12px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.35)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(55,181,255,0.14)'; }}
+                >
+                  <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconComponent size={16} color={CYAN} />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{info.shortName}</span>
+                  <ArrowRight size={13} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ── ACTIVITY CALENDAR ── */}
       <div style={{ position: 'relative', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
         {/* Top accent line */}
@@ -226,7 +267,7 @@ export default function ChartingPage() {
           {currentStreak > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '99px', padding: '5px 12px' }}>
               <span style={{ fontSize: '14px' }}>🔥</span>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc' }}>{currentStreak} day streak</span>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc' }}>{currentStreak} day charting streak</span>
             </div>
           )}
         </div>

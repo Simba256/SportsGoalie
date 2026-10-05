@@ -3,9 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, Users, Check, ChevronLeft } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
+import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
+import { ApplicationSteps } from '@/components/ApplicationSteps';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
@@ -108,22 +112,7 @@ export default function ParentRolePage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />THE SYSTEM
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
@@ -565,20 +554,21 @@ export default function ParentRolePage() {
           <p style={{ fontSize: 'clamp(14px, 1.5vw, 17px)', color: 'rgba(148,192,222,0.85)', lineHeight: 1.85, maxWidth: '640px', margin: '0 auto 52px' }}>
             Not open to the general public. Founding members help build what Smarter Goalie becomes. In return &mdash; Coach Mike&rsquo;s personal attention, direct access, and a founding member rate locked in forever.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            {[
-              { num: '01', text: 'Complete the parent questionnaire — 5 minutes' },
+          <ApplicationSteps
+            steps={[
+              // /auth/register until 8 September. It works, but it makes an
+              // ordinary member account — the parent would be inside the content
+              // before Michael had read a word. /apply makes the same account
+              // walled, which is the point of the whole flow.
+              { num: '01', text: 'Do the questionnaire — about 20 minutes, and it becomes your goalie’s baseline', href: '/apply', action: 'Apply now' },
               { num: '02', text: 'Coach Mike personally reviews your application — no automation, no filter' },
-              { num: '03', text: 'Coach Mike calls you personally' },
-            ].map((step) => (
-              <div key={step.num} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(96,205,255,0.22)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p style={{ fontSize: '38px', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
-                <p style={{ fontSize: '15px', color: 'rgba(155,200,228,0.9)', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
-              </div>
-            ))}
-          </div>
+              // The booking link is carried by the approval email and nowhere
+              // else, so there is nothing to click here.
+              { num: '03', text: 'If he says yes, he emails you a link to book the call — and your account opens' },
+            ]}
+          />
           <button
-            onClick={() => router.push('/auth/register')}
+            onClick={() => router.push('/apply')}
             style={{ background: RED, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(192,0,0,0.35)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 44px rgba(192,0,0,0.5)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(192,0,0,0.35)'; }}
@@ -591,9 +581,9 @@ export default function ParentRolePage() {
         </div>
       </section>
 
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
-      </div>
+      <SevenPillarsCTA from="parent-role" eyebrow="For The Parent" />
+
+      <Footer7 />
     </div>
   );
 }

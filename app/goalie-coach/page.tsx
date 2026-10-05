@@ -3,9 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, Target, Check, ChevronLeft } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
+import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
+import { ApplicationSteps } from '@/components/ApplicationSteps';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
@@ -108,21 +112,7 @@ export default function GoalieCoachPage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            {(['WHO WE ARE', 'THE SYSTEM'] as const).map((item) => (
-              <button key={item} onClick={() => router.push(item === 'WHO WE ARE' ? '/explain' : '/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{item}
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
@@ -261,7 +251,7 @@ export default function GoalieCoachPage() {
                 Smarter Goalie is built on six decades of original IP. Every principle has been stress-tested against four filters. Not one has failed.
               </p>
               <p style={{ fontSize: 'clamp(15px, 1.9vw, 18px)', color: '#fff', lineHeight: 1.85, marginBottom: '40px', fontWeight: 600 }}>
-                The 7 Angle-Mark System. The 7 Point System. The Feel Factor. The Mind&rsquo;s Eye. The Development Loop. These are not philosophies. They are systems with mathematical foundations.
+                The 7 Angle-Mark System. The 6 Zone – 7 Point System™. The Feel Factor. The Mind&rsquo;s Eye. The Development Loop. These are not philosophies. They are systems with mathematical foundations.
               </p>
               <VoiceButton label="HEAR COACH MIKE: THE MATHEMATICAL FRAMEWORK BEHIND THE SMARTER GOALIE SYSTEM" />
             </div>
@@ -412,20 +402,22 @@ export default function GoalieCoachPage() {
           <p style={{ fontSize: 'clamp(16px, 2vw, 21px)', color: 'rgba(175,215,238,0.9)', lineHeight: 1.8, maxWidth: '680px', margin: '0 auto 52px' }}>
             Coach Mike is personally selecting one hundred founding members. The goalie coaches who join this phase become part of building the standard for the profession.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            {[
-              { num: '01', text: 'Complete the goalie coach questionnaire — 5 minutes' },
+          <ApplicationSteps
+            steps={[
+              // Was /auth/register until 26 August. Sending a goalie coach there
+              // put them in the general coach panel — there is no goalie coach
+              // area yet, and no agreement gate, so they reached Michael's content
+              // having signed nothing. /contact lists 'Goalie Coach' and routes the
+              // enquiry to him, which is the correct destination until both the
+              // panel and the agreements gate exist.
+              { num: '01', text: 'Tell Coach Mike about yourself — 5 minutes', href: '/contact', action: 'Start' },
               { num: '02', text: 'Coach Mike personally reviews your application' },
-              { num: '03', text: 'Coach Mike calls you personally — peer to peer' },
-            ].map((step) => (
-              <div key={step.num} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(96,205,255,0.22)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p style={{ fontSize: '38px', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
-                <p style={{ fontSize: '15px', color: 'rgba(155,200,228,0.9)', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
-              </div>
-            ))}
-          </div>
+              // /contact lists Goalie Coach in its role dropdown.
+              { num: '03', text: 'Coach Mike calls you personally — peer to peer', href: '/contact', action: 'Set up the call' },
+            ]}
+          />
           <button
-            onClick={() => router.push('/auth/register')}
+            onClick={() => router.push('/contact')}
             style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(14,165,233,0.35)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 44px rgba(14,165,233,0.55)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(14,165,233,0.35)'; }}
@@ -438,9 +430,9 @@ export default function GoalieCoachPage() {
         </div>
       </section>
 
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
-      </div>
+      <SevenPillarsCTA from="goalie-coach" eyebrow="For The Goalie Coach" />
+
+      <Footer7 />
     </div>
   );
 }

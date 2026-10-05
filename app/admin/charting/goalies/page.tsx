@@ -93,6 +93,7 @@ function GoaliesContent() {
 
   const legacyBySession = new Map(entries.map(e => [e.sessionId, e]));
   const dynamicBySession = dynamicEntries.reduce((acc, e) => {
+    if (!e.sessionId) return acc;
     const existing = acc.get(e.sessionId) || [];
     existing.push(e);
     acc.set(e.sessionId, existing);

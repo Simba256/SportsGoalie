@@ -2,7 +2,9 @@
 
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
+import { auth } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/context';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useParentOnboarding } from '@/hooks/useParentOnboarding';
@@ -24,6 +26,29 @@ import {
 } from '@/components/onboarding';
 
 /**
+ * Tell the server an application has landed, so the two emails go out — the
+ * acknowledgement to the applicant and the heads-up to Michael (item 2).
+ *
+ * Deliberately not awaited for anything that matters. The status flip itself
+ * already happened inside the questionnaire's atomic write; this is only the
+ * email, and an applicant who has just spent twenty minutes answering
+ * questions should not be held on a spinner because a mail server is slow.
+ * A failed send leaves the application in /admin/applications either way.
+ */
+async function notifyApplicationSubmitted(): Promise<void> {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return;
+    await fetch('/api/applications/submitted', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    console.error('Application acknowledgement email could not be triggered:', error);
+  }
+}
+
+/**
  * Main onboarding evaluation page.
  * Supports both goalie (student) and parent flows.
  * Full-screen immersive flow with 7-category, 1.0-4.0 scoring system.
@@ -31,7 +56,7 @@ import {
 function OnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading, refreshUser } = useAuth();
+  const { user, loading: authLoading, refreshUser, logout } = useAuth();
 
   // Determine if this is a parent onboarding flow
   const isParent = user?.role === 'parent' || searchParams.get('role') === 'parent';
@@ -127,7 +152,46 @@ function OnboardingPageContent() {
         })()
       : null;
 
-  const canGoBackInAssessment = currentCategoryIndex > 0 || currentQuestionIndex > 0;
+  // Back is available for the whole assessment, including its very first question:
+  // `previousQuestion` steps out onto the last intake screen from there rather than
+  // dead-ending, so an intake answer can still be corrected once the questions start.
+  const canGoBackInAssessment =
+    currentCategoryIndex > 0 || currentQuestionIndex > 0 || totalIntakeScreens > 0;
+
+  /**
+   * Called by the goalie and parent questionnaires once their save has landed.
+   *
+   * For an applicant this is where the acknowledgement email is triggered.
+   * refreshUser then pulls down the new status, and the redirect effects above
+   * send them to /dashboard — where ProtectedRoute swaps in the applicant
+   * holding screen, because the wall is still up. That is the intended
+   * landing: they finish, they are told the application is in, and they see
+   * nothing else.
+   */
+  const handleQuestionnaireComplete = async (): Promise<void> => {
+    const wasApplying = user?.applicationStatus === 'applying';
+    if (wasApplying) await notifyApplicationSubmitted();
+    await refreshUser();
+  };
+
+  const escapeHatch = user ? (
+    <div style={{ position: 'fixed', top: '14px', right: '16px', zIndex: 999 }}>
+      <button
+        onClick={() => logout()}
+        title={`Signed in as ${user.displayName || user.email} — click to sign out`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px',
+          padding: '6px 12px', cursor: 'pointer', color: 'rgba(255,255,255,0.55)',
+          fontSize: '12px', fontWeight: 600,
+        }}
+      >
+        <LogOut size={13} />
+        Not {user.displayName?.split(' ')[0] || 'you'}? Sign out
+      </button>
+    </div>
+  ) : null;
 
   // Wait for auth only — the three new questionnaires are self-contained
   // and must not be blocked by the legacy hook loading state
@@ -145,6 +209,7 @@ function OnboardingPageContent() {
   if (isCoach && !user.coachOnboardingComplete) {
     return (
       <OnboardingContainer>
+        {escapeHatch}
         <CoachBaselineQuestionnaire
           userId={user.id}
           userName={user.displayName?.split(' ')[0] || 'Coach'}
@@ -158,10 +223,12 @@ function OnboardingPageContent() {
   if (isParent && !user.parentOnboardingComplete) {
     return (
       <OnboardingContainer>
+        {escapeHatch}
         <ParentBaselineQuestionnaire
           userId={user.id}
           userName={user.displayName?.split(' ')[0] || 'Parent'}
-          onComplete={refreshUser}
+          applicationStatus={user.applicationStatus}
+          onComplete={handleQuestionnaireComplete}
         />
       </OnboardingContainer>
     );
@@ -171,10 +238,12 @@ function OnboardingPageContent() {
   if (!isParent && !isCoach && !user.onboardingCompleted) {
     return (
       <OnboardingContainer>
+        {escapeHatch}
         <StudentBaselineQuestionnaire
           userId={user.id}
           userName={user.displayName?.split(' ')[0] || 'Student'}
-          onComplete={refreshUser}
+          applicationStatus={user.applicationStatus}
+          onComplete={handleQuestionnaireComplete}
         />
       </OnboardingContainer>
     );
@@ -218,6 +287,7 @@ function OnboardingPageContent() {
 
   return (
     <OnboardingContainer>
+      {escapeHatch}
       {/* Progress bar (shown during intake and assessment phases) */}
       {(phase === 'intake' || phase === 'question' || phase === 'category_intro') && (
         <div style={{ padding: '24px 24px 12px' }}>
@@ -293,6 +363,7 @@ function OnboardingPageContent() {
             categoryIndex={currentCategoryIndex}
             totalCategories={onboarding.totalCategories}
             onStart={startCategory}
+            onBack={previousQuestion}
           />
         )}
 
