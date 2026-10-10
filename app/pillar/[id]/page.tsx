@@ -500,7 +500,7 @@ function PillarPageContent() {
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             onClick={() => router.push(from.href)}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: BLUE2, fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', flexShrink: 0 }}

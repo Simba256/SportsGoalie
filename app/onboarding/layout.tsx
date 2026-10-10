@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Goalie Evaluation | Smarter Goalie',
+  title: 'Goalie Evaluation',
   description: 'Complete your initial evaluation across the 6 Ice Hockey Goalie Pillars',
 };
 

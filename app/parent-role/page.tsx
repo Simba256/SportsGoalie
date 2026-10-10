@@ -116,7 +116,7 @@ export default function ParentRolePage() {
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <button
             onClick={() => router.push('/explain')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 10px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
@@ -126,7 +126,7 @@ export default function ParentRolePage() {
             <ChevronLeft size={12} />
             Back to Roles
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '8px', rowGap: '2px', minWidth: 0 }}>
             <Users size={13} color={BLUE2} />
             <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
             <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fff' }}>PARENT</span>

@@ -77,17 +77,18 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
       {/* Track + flanking arrows */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '0 clamp(16px,3vw,40px)' }}>
 
-        {/* Left arrow */}
+        {/* Left arrow — hidden on phones, where the track swipes and the arrows
+            would take 120px of a 390px screen and clip every card. */}
         <button
           onClick={() => scroll('prev')}
           disabled={!canPrev}
+          className="hidden md:flex items-center justify-center"
           style={{
             flexShrink: 0, width: '44px', height: '44px', borderRadius: '50%',
             background: canPrev ? 'rgba(55,181,255,0.15)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${canPrev ? 'rgba(55,181,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
             color: canPrev ? '#37b5ff' : 'rgba(255,255,255,0.18)',
             cursor: canPrev ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s',
             boxShadow: canPrev ? '0 4px 20px rgba(55,181,255,0.2)' : 'none',
           }}
@@ -115,7 +116,9 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   flexShrink: 0,
-                  width: 'clamp(270px, 28vw, 340px)',
+                  // min(…, 78vw) keeps a sliver of the next card showing on
+                  // narrow phones so it reads as swipeable.
+                  width: 'clamp(min(270px, 78vw), 28vw, 340px)',
                   height: '400px',
                   borderRadius: '22px',
                   overflow: 'hidden',
@@ -214,13 +217,13 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
         <button
           onClick={() => scroll('next')}
           disabled={!canNext}
+          className="hidden md:flex items-center justify-center"
           style={{
             flexShrink: 0, width: '44px', height: '44px', borderRadius: '50%',
             background: canNext ? 'rgba(55,181,255,0.15)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${canNext ? 'rgba(55,181,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
             color: canNext ? '#37b5ff' : 'rgba(255,255,255,0.18)',
             cursor: canNext ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s',
             boxShadow: canNext ? '0 4px 20px rgba(55,181,255,0.2)' : 'none',
           }}

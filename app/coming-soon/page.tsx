@@ -9,7 +9,8 @@ import type { Metadata } from 'next';
  * and a sign-in box on a closed site invites people to rattle the handle.
  */
 export const metadata: Metadata = {
-  title: 'Smarter Goalie — Opening Soon',
+  // absolute: the root layout's "%s | Smarter Goalie" template would repeat the brand.
+  title: { absolute: 'Smarter Goalie — Opening Soon' },
   description: 'Smarter Goalie Educational Systems opens to members in October 2026.',
   robots: { index: false, follow: false },
 };

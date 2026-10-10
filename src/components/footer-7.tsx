@@ -174,7 +174,7 @@ export const Footer7 = ({
           </div>
 
           {/* Link columns */}
-          <div className="grid w-full gap-6 md:grid-cols-3 lg:gap-20">
+          <div className="grid w-full gap-6 md:grid-cols-3 lg:gap-10 xl:gap-20">
             {sections.map((section, sectionIdx) => (
               <div key={sectionIdx}>
                 <h3

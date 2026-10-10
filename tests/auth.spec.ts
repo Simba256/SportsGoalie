@@ -698,13 +698,13 @@ test.describe('Authentication Flows', () => {
   test.describe('Page Titles and Meta', () => {
     test('should have proper page titles', async ({ page }) => {
       await page.goto('/auth/login');
-      await expect(page).toHaveTitle(/Login|Sign In|SmarterGoalie/i);
+      await expect(page).toHaveTitle(/Login|Sign In|Smarter ?Goalie/i);
 
       await page.goto('/auth/register');
-      await expect(page).toHaveTitle(/Register|Sign Up|Create Account|SmarterGoalie/i);
+      await expect(page).toHaveTitle(/Register|Sign Up|Create Account|Smarter ?Goalie/i);
 
       await page.goto('/auth/reset-password');
-      await expect(page).toHaveTitle(/Reset Password|Forgot Password|SmarterGoalie/i);
+      await expect(page).toHaveTitle(/Reset Password|Forgot Password|Smarter ?Goalie/i);
     });
   });
 });

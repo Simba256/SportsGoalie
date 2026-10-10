@@ -14,11 +14,25 @@ import './globals.css';
 const geistSans = GeistSans;
 const geistMono = GeistMono;
 
+const SITE_DESCRIPTION =
+  'Train the Mind. Understand the mechanics. Think Smart - Play Smarter. Build 8 Pillars of Intelligent Goaltending through cognitive awareness, technical precision, and proven positional systems.';
+
 export const metadata: Metadata = {
-  // Michael's wording, verbatim — the system's name as it is spoken and sold.
-  title: 'SMARTER GOALIE EDUCATIONAL SYSTEMS — DESIGNED FOR THE MOTIVATED',
-  description:
-    'Train the Mind. Understand the mechanics. Think Smart - Play Smarter. Build 8 Pillars of Intelligent Goaltending through cognitive awareness, technical precision, and proven positional systems.',
+  // A browser tab shows ~25 characters, so the tab leads with the short brand
+  // name and each page adds its own name through the template. The full system
+  // name and tagline lives in the Open Graph title, where link previews have
+  // room for it.
+  title: {
+    default: 'Smarter Goalie',
+    template: '%s | Smarter Goalie',
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    siteName: 'Smarter Goalie',
+    title: 'SMARTER GOALIE EDUCATIONAL SYSTEMS — DESIGNED FOR THE MOTIVATED',
+    description: SITE_DESCRIPTION,
+  },
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },

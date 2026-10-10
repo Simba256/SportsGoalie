@@ -28,11 +28,13 @@ export default function ExplainPage() {
   return (
     <div
       style={{
-        height: '100dvh',
+        // min-height, not height: five role cards don't fit one phone screen, and a
+        // fixed 100dvh with overflow hidden left the last role unreachable.
+        minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         background: '#000f28',
-        overflow: 'hidden',
+        overflowX: 'clip',
         position: 'relative',
       }}
     >
@@ -66,7 +68,10 @@ export default function ExplainPage() {
           justifyContent: 'center',
           alignItems: 'center',
           gap: 'clamp(20px,3.5vh,44px)',
-          padding: 'clamp(32px,6vh,80px) clamp(16px,4vw,48px) clamp(12px,2vh,24px)',
+          // The header is position: fixed, so it takes no space here. Clear it
+          // explicitly now the page can scroll, and leave room under the help
+          // button for the footer note.
+          padding: 'calc(76px + clamp(8px,1.5vh,24px)) clamp(16px,4vw,48px) 76px',
           position: 'relative',
           zIndex: 5,
         }}
@@ -113,10 +118,11 @@ export default function ExplainPage() {
 
         {/* ── Role cards ── */}
         <div
+          className="flex flex-wrap justify-center"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 'clamp(10px,1.5vw,20px)',
+            // --role-gap feeds both the gap and the per-row card widths below
+            ['--role-gap' as string]: 'clamp(10px,1.5vw,20px)',
+            gap: 'var(--role-gap)',
             width: '100%',
             maxWidth: '1100px',
             marginTop: 'clamp(28px,5vh,64px)',
@@ -128,6 +134,7 @@ export default function ExplainPage() {
             return (
               <div
                 key={role.id}
+                className="min-w-0 grow-0 basis-[calc((100%_-_var(--role-gap))/2)] sm:basis-[calc((100%_-_2*var(--role-gap))/3)] lg:grow lg:basis-0"
                 onClick={() => router.push(role.href)}
                 onMouseEnter={() => setHoveredId(role.id)}
                 onMouseLeave={() => setHoveredId(null)}
