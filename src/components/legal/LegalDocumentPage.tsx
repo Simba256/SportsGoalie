@@ -72,7 +72,7 @@ export function LegalDocumentPage({ doc }: { doc: LegalDocument }) {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '6px 16px', marginBottom: '20px' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Smarter Goalie · Legal</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Smarter Goalie · Legal</p>
           </div>
 
           <h1 style={{ fontSize: 'clamp(30px, 5.5vw, 60px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 16px', color: '#fff', textTransform: 'uppercase' }}>
@@ -111,7 +111,7 @@ export function LegalDocumentPage({ doc }: { doc: LegalDocument }) {
                 aria-label="Contents"
                 style={{ background: CARD_BG, border: CARD_BDR, borderRadius: '14px', padding: '20px 24px', margin: '0 0 24px' }}
               >
-                <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', margin: '0 0 12px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', margin: '0 0 12px' }}>
                   Contents
                 </p>
                 <ol style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: 0, listStyle: 'none' }}>

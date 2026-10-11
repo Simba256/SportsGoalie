@@ -114,11 +114,14 @@ export function CoachAudioButton({
           type="button"
           onClick={() => setEnabled(!enabled)}
           style={{
-            fontSize: '10px',
+            fontSize: '11px',
             color: enabled ? BLUE2 : MUTED,
             letterSpacing: '1.5px',
             background: 'none',
             border: 'none',
+            // padding, not margin, so the tap area is ~36px tall rather than the
+            // 15px the text alone gives it
+            padding: '10px 8px',
             cursor: 'pointer',
             fontWeight: 700,
             textTransform: 'uppercase',
@@ -129,7 +132,7 @@ export function CoachAudioButton({
       )}
 
       {!available && !isLoading && (
-        <span style={{ fontSize: '10px', color: MUTED, letterSpacing: '1.2px', fontWeight: 700 }}>
+        <span style={{ fontSize: '11px', color: MUTED, letterSpacing: '1.2px', fontWeight: 700 }}>
           NOT RECORDED YET
         </span>
       )}

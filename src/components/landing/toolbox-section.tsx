@@ -151,7 +151,7 @@ function ToolboxCard({
         </div>
 
         <span
-          className="relative z-20 mb-3 inline-flex w-fit rounded-full px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em]"
+          className="relative z-20 mb-3 inline-flex w-fit rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]"
           style={{
             color: '#fff',
             background: `linear-gradient(135deg, rgba(${item.accentRgb}, 0.35), rgba(${item.accentRgb}, 0.12))`,
@@ -230,7 +230,7 @@ export function ToolboxSection() {
 
       <div className="relative mx-auto max-w-[1100px]">
         <div className="mb-12 md:mb-16">
-          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>THE TOOLS</span>
+          <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>THE TOOLS</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white">
             What&rsquo;s In Your Tool Box?
           </h2>

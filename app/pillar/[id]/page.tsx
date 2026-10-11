@@ -386,7 +386,7 @@ function VoiceButton({ label }: { label: string }) {
         <span className="hidden sm:inline">{label}</span>
         <span className="sm:hidden">HEAR COACH MIKE</span>
       </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
         VOICE {on ? 'ON' : 'OFF'}
       </button>
     </div>
@@ -500,10 +500,12 @@ function PillarPageContent() {
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-1 flex flex-wrap items-center gap-x-4">
+          {/* Both buttons carry 10px of vertical padding so each is a ~36px tap
+              target on phones; py-1 on the bar keeps its overall height. */}
           <button
             onClick={() => router.push(from.href)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: BLUE2, fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', padding: '10px 0', cursor: 'pointer', color: BLUE2, fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', flexShrink: 0 }}
           >
             <ArrowLeft size={13} />
             {from.label}
@@ -513,15 +515,15 @@ function PillarPageContent() {
           <button
             type="button"
             onClick={() => router.push(sevenPillarsHubHref(fromKey))}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 800, letterSpacing: '2.5px', color: BLUE2, textTransform: 'uppercase', padding: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 800, letterSpacing: '2.5px', color: BLUE2, textTransform: 'uppercase', padding: '10px 0' }}
           >
             7 PILLARS
           </button>
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>/</span>
-          <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>/</span>
+          <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
             PILLAR {pillar.number}
           </span>
-          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
             {pillar.title}
           </span>
         </div>
@@ -538,7 +540,7 @@ function PillarPageContent() {
           {/* Pillar number badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.1)', border: `1px solid ${accent}55`, borderRadius: '50px', padding: '8px 20px', marginBottom: '32px', boxShadow: `0 2px 16px ${accent}22`, backdropFilter: 'blur(8px)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: accent, boxShadow: `0 0 0 3px ${accent}35`, flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: accent, margin: 0, textTransform: 'uppercase' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: accent, margin: 0, textTransform: 'uppercase' }}>
               PILLAR {pillar.number} — THE 7 PILLAR SYSTEM
             </p>
           </div>
@@ -573,37 +575,43 @@ function PillarPageContent() {
                     ))
             }
           </h1>
-          <p style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: accent, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
+          <p style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: accent, margin: '0 0 32px', letterSpacing: '-0.01em', textShadow: '0 1px 14px rgba(0,25,70,0.55)' }}>
             {pillar.subtitle}
           </p>
           <p style={{ fontSize: 'clamp(15px, 1.7vw, 19px)', color: 'rgba(255,255,255,0.72)', lineHeight: 1.8, maxWidth: '520px', margin: '0 0 44px' }}>
             {pillar.intro}
           </p>
 
-          {/* Pillar nav dots */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Pillar nav dots. The button is the tap target (24px wide, 32px tall);
+              the painted dot inside it stays the same 8px, and the negative
+              margin keeps the first dot on the text's left edge. */}
+          <div style={{ display: 'flex', alignItems: 'center', marginLeft: '-8px' }}>
             {Array.from({ length: 7 }, (_, i) => {
               const isActive = String(i + 1) === id;
               return (
                 <button
                   key={i}
+                  type="button"
+                  aria-label={`Pillar ${i + 1}`}
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={() => router.push(pillarDetailHref(i + 1, fromKey))}
-                  style={{
-                    width: isActive ? '28px' : '8px',
-                    height: '8px',
-                    borderRadius: isActive ? '4px' : '50%',
-                    background: isActive ? accent : 'rgba(255,255,255,0.35)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s',
-                    boxShadow: isActive ? `0 0 10px ${accent}` : 'none',
-                    padding: 0,
-                    flexShrink: 0,
-                  }}
-                />
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 8px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                >
+                  <span
+                    style={{
+                      display: 'block',
+                      width: isActive ? '28px' : '8px',
+                      height: '8px',
+                      borderRadius: isActive ? '4px' : '50%',
+                      background: isActive ? accent : 'rgba(255,255,255,0.35)',
+                      transition: 'all 0.25s',
+                      boxShadow: isActive ? `0 0 10px ${accent}` : 'none',
+                    }}
+                  />
+                </button>
               );
             })}
-            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.45)', marginLeft: '8px', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.6)', marginLeft: '8px', textTransform: 'uppercase' }}>
               {id} OF 7
             </span>
           </div>
@@ -638,7 +646,7 @@ function PillarPageContent() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                 <div style={{ width: '6px', height: '80px', background: accent, boxShadow: `0 0 15px ${accent}`, borderRadius: '3px', flexShrink: 0 }} />
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: accent, textTransform: 'uppercase', margin: '0 0 6px' }}>Now Entering</p>
+                  <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: accent, textTransform: 'uppercase', margin: '0 0 6px' }}>Now Entering</p>
                   <h2 style={{ fontSize: 'clamp(28px, 4vw, 56px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>
                     PILLAR 1 — MINDSET<br />
                     <span style={{ color: accent }}>THE FOUNDATION OF EVERYTHING.</span>
@@ -662,7 +670,7 @@ function PillarPageContent() {
               <div style={{ maxWidth: '820px', marginBottom: '52px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '32px' }}>
                   <div style={{ width: '6px', height: '48px', background: BLUE2, boxShadow: `0 0 14px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
-                  <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: 0 }}>PILLAR 02 — SKATING</p>
+                  <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: 0 }}>PILLAR 02 — SKATING</p>
                 </div>
                 {/* Placeholder for Michael's opening line */}
                 <div style={{ background: `${BLUE2}08`, border: `1px dashed ${BLUE2}28`, borderRadius: '10px', padding: '14px 18px', marginBottom: '24px' }}>
@@ -682,7 +690,7 @@ function PillarPageContent() {
 
               {/* WHERE THIS TAKES YOU */}
               <div style={{ background: 'rgba(55,181,255,0.05)', border: `1px solid ${BLUE2}22`, borderLeft: `4px solid ${BLUE2}`, borderRadius: '0 16px 16px 0', padding: 'clamp(24px,3vw,40px)', maxWidth: '820px', marginBottom: '48px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '4px', color: BLUE2, textTransform: 'uppercase', marginBottom: '24px' }}>WHERE THIS TAKES YOU</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '4px', color: BLUE2, textTransform: 'uppercase', marginBottom: '24px' }}>WHERE THIS TAKES YOU</p>
                 {[
                   { text: 'Movement with connection and purpose. This combination is very noticeable. When a goalie is in Game Frequency movement, it is poetry in motion.', highlight: false },
                   { text: 'Getting to that stage is our mission, and our record proves we are the leader.', highlight: false },
@@ -726,7 +734,7 @@ function PillarPageContent() {
 
               {/* 3 Live Inputs */}
               <div style={{ marginBottom: '48px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>THE 3 LIVE INPUTS</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>THE 3 LIVE INPUTS</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px', maxWidth: '960px' }}>
                   {[
                     { num: '01', label: 'READING THE PLAY', desc: 'Goaltending is a chess game. Always a couple of moves ahead.' },
@@ -734,7 +742,7 @@ function PillarPageContent() {
                     { num: '03', label: 'POSITIONAL GAME', desc: 'When you know where you are related to the net and crease, you\'re maximizing your coverage potential.' },
                   ].map((input) => (
                     <div key={input.num} style={{ background: `${BLUE2}0a`, border: `1px solid ${BLUE2}30`, borderRadius: '14px', padding: '22px 24px' }}>
-                      <p style={{ fontSize: '10px', fontWeight: 800, color: BLUE2, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>{input.num}</p>
+                      <p style={{ fontSize: '11px', fontWeight: 800, color: BLUE2, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>{input.num}</p>
                       <p style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>{input.label}</p>
                       <p style={{ fontSize: '14px', color: 'rgba(184,212,232,0.75)', lineHeight: 1.65, margin: 0 }}>{input.desc}</p>
                     </div>
@@ -744,7 +752,7 @@ function PillarPageContent() {
 
               {/* Game IQ */}
               <div style={{ maxWidth: '820px', marginBottom: '36px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '14px' }}>GAME IQ</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '14px' }}>GAME IQ</p>
                 <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '14px', fontStyle: 'italic' }}>
                   Game IQ grows across Pillars 1 through 6. Each Pillar adds a layer. Each layer expands what the goalie sees and reads in real time.
                 </p>
@@ -755,7 +763,7 @@ function PillarPageContent() {
 
               {/* Decision IQ + Two Enemies */}
               <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: 'clamp(20px,3vw,32px)', maxWidth: '820px', marginBottom: '36px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>DECISION MAKING IQ — THE TWO ENEMIES</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>DECISION MAKING IQ — THE TWO ENEMIES</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                   {[{ label: 'Over-Reacting', desc: 'Making the first move.' }, { label: 'Over-Anticipating', desc: 'Reacting to your imagination.' }].map((enemy) => (
                     <div key={enemy.label} style={{ background: 'rgba(248,113,113,0.07)', border: '1px solid rgba(248,113,113,0.22)', borderRadius: '12px', padding: '18px 20px' }}>
@@ -774,7 +782,7 @@ function PillarPageContent() {
 
               {/* Are You In Tonight? */}
               <div style={{ borderLeft: `4px solid ${BLUE2}`, paddingLeft: '24px', maxWidth: '720px', marginBottom: '48px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '12px' }}>&ldquo;ARE YOU IN TONIGHT?&rdquo;</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '12px' }}>&ldquo;ARE YOU IN TONIGHT?&rdquo;</p>
                 <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, fontStyle: 'italic' }}>
                   A goalie who knows how to prepare mentally comes ready to perform. Teammates play with the confidence to play their game; they have a goalie between the pipes they believe in. Building a reputation comes one game at a time.
                 </p>
@@ -810,7 +818,7 @@ function PillarPageContent() {
 
               {/* Set-Crouch story */}
               <div style={{ background: 'rgba(55,181,255,0.04)', border: `1px solid ${BLUE2}22`, borderLeft: `4px solid ${BLUE2}`, borderRadius: '0 16px 16px 0', padding: 'clamp(20px,3vw,36px)', maxWidth: '820px', marginBottom: '48px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '18px' }}>THE SET-CROUCH STORY — GERMANY 1981</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '18px' }}>THE SET-CROUCH STORY — GERMANY 1981</p>
                 <p style={{ fontSize: 'clamp(15px, 1.8vw, 19px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, marginBottom: '14px', fontStyle: 'italic' }}>
                   Coach Mike was having a good first half, but not a great one. He decided to go home, get some Puck Machine work and on-ice self-training. Two weeks came and went, and Coach Mike got too busy with family, so he trained mentally only, using visualization methods.
                 </p>
@@ -837,7 +845,7 @@ function PillarPageContent() {
 
               {/* Basketball study */}
               <div style={{ background: 'rgba(2,12,36,0.6)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: 'clamp(20px,3vw,36px)', maxWidth: '900px', marginBottom: '48px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '24px' }}>THE BASKETBALL STUDY — 3 TEAMS, 3 WEEKS</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '24px' }}>THE BASKETBALL STUDY — 3 TEAMS, 3 WEEKS</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                   {[
                     { team: 'TEAM 1', training: 'Physical training only', result: 'Improved', rc: '#4ade80' },
@@ -855,7 +863,7 @@ function PillarPageContent() {
 
               {/* 3 Lessons */}
               <div style={{ maxWidth: '820px', marginBottom: '48px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>THE 3 LESSONS</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px' }}>THE 3 LESSONS</p>
                 {[
                   'Mental training: visualization methods, sub-conscious training.',
                   'Sub-conscious training benefits: faster habit formation, emotional control, and increased problem-solving skills.',
@@ -926,7 +934,7 @@ function PillarPageContent() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full">
           {/* All 7 pillars overview */}
           <div style={{ marginBottom: '52px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 24px' }}>EXPLORE ALL 7 PILLARS</p>
+            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 24px' }}>EXPLORE ALL 7 PILLARS</p>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 items-start" style={{ maxWidth: '960px' }}>
               {([
                 { num: '01', label: 'MindSet', a: '#00f2ff' },
@@ -955,10 +963,10 @@ function PillarPageContent() {
                     <div style={{ padding: '18px 10px 16px', background: isCurrentPillar ? `linear-gradient(160deg, ${p.a}18, rgba(4,18,44,0.92))` : 'rgba(4,18,44,0.88)', backdropFilter: 'blur(16px)', borderRadius: '13px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                       <div style={{ width: '24px', height: '2px', background: p.a, borderRadius: '2px', opacity: isCurrentPillar ? 1 : 0.5 }} />
                       <p style={{ fontSize: '22px', fontWeight: 900, color: p.a, lineHeight: 1, margin: 0, textShadow: isCurrentPillar ? `0 0 16px ${p.a}80` : 'none' }}>{p.num}</p>
-                      <p style={{ fontSize: '9px', color: isCurrentPillar ? `${p.a}EE` : `${p.a}88`, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.4 }}>{p.label}</p>
+                      <p style={{ fontSize: '11px', color: isCurrentPillar ? `${p.a}EE` : `${p.a}88`, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.4 }}>{p.label}</p>
                       {isCurrentPillar && (
                         <div style={{ background: `${p.a}22`, border: `1px solid ${p.a}55`, borderRadius: '20px', padding: '2px 8px' }}>
-                          <p style={{ fontSize: '7px', color: p.a, fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>CURRENT</p>
+                          <p style={{ fontSize: '11px', color: p.a, fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>CURRENT</p>
                         </div>
                       )}
                     </div>
@@ -985,9 +993,9 @@ function PillarPageContent() {
             </div>
             <button
               onClick={() => router.push(sevenPillarsHubHref(fromKey))}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', transition: 'color 0.2s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', padding: '10px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', transition: 'color 0.2s' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = BLUE2; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.35)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'; }}
             >
               ALL 7 PILLARS
             </button>

@@ -81,7 +81,7 @@ export default function ExplainPage() {
           {/* Eyebrow */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: 'clamp(12px,1.8vh,20px)' }}>
             <div style={{ width: '36px', height: '1.5px', background: '#37b5ff', opacity: 0.6 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', margin: 0 }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', margin: 0 }}>
               THE SMARTER GOALIE DIFFERENCE
             </p>
             <div style={{ width: '36px', height: '1.5px', background: '#37b5ff', opacity: 0.6 }} />
@@ -199,7 +199,7 @@ export default function ExplainPage() {
         </div>
 
         {/* Footer note */}
-        <p style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>
           EVERY DOOR LEADS TO THE SAME DESTINATION &mdash; BUILDING THE INTELLIGENT ATHLETIC GOALTENDER
         </p>
       </main>

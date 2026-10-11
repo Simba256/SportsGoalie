@@ -57,7 +57,7 @@ export function ExploreMoreSection({
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
           <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
           <div>
-            <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>
               {roleLabel ? `More For The ${roleLabel}` : 'Explore More'}
             </p>
             <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>
@@ -70,7 +70,7 @@ export function ExploreMoreSection({
         </p>
 
         {/* 7 Pillars */}
-        <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.55)', textTransform: 'uppercase', marginBottom: '14px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.55)', textTransform: 'uppercase', marginBottom: '14px' }}>
           The 7 Pillars
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" style={{ maxWidth: '960px', marginBottom: '48px' }}>
@@ -103,7 +103,7 @@ export function ExploreMoreSection({
                 <p style={{ fontSize: 'clamp(18px, 2.4vw, 26px)', fontWeight: 900, color: accent, lineHeight: 1, margin: 0, textShadow: `0 0 14px ${accent}60` }}>
                   {String(i + 1).padStart(2, '0')}
                 </p>
-                <p style={{ fontSize: '8px', color: `${accent}99`, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
+                <p style={{ fontSize: '11px', color: `${accent}99`, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
               </div>
             </TiltCard>
           ))}
@@ -111,7 +111,7 @@ export function ExploreMoreSection({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '40px' }}>
           <Compass size={14} color="rgba(96,205,255,0.5)" />
-          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(96,205,255,0.45)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(96,205,255,0.45)', textTransform: 'uppercase' }}>
             Everything stays in your door — explore freely.
           </span>
         </div>

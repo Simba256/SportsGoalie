@@ -308,22 +308,6 @@ export default function Home() {
             className="absolute inset-0"
             style={{ background: 'linear-gradient(to bottom, rgba(2,14,46,0.3) 0%, rgba(2,14,46,0) 25%, rgba(2,14,46,0.25) 55%, rgba(2,14,46,0.8) 82%, #020e2e 100%)' }}
           />
-          {/* Coach Mike, as a small chip on the photo (top-left is open sky — the
-              goalie sits centre). Same placeholder as the pill in the desktop CTA
-              row below: no recording is wired to either yet, see
-              docs/2026-09-13-chase-to-michael.md section 3. */}
-          <button
-            type="button"
-            className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full py-1 pl-1 pr-3.5 max-[359px]:pr-1 cursor-pointer"
-            style={{ background: 'rgba(2,14,46,0.6)', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', color: '#fff', fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: '#fff' }}>
-              <Play size={12} fill="#020617" color="#020617" style={{ marginLeft: '2px' }} />
-            </span>
-            {/* under 360px the label would run into the goalie's mask, so it
-                drops to the play circle alone (still read out to screen readers) */}
-            <span className="max-[359px]:sr-only">Coach Mike</span>
-          </button>
         </div>
 
         {/* ── HERO CONTENT ── */}
@@ -367,15 +351,20 @@ export default function Home() {
 
               {/* CTAs */}
               <div className="flex flex-col items-start sm:flex-row sm:items-stretch gap-3 sm:gap-4">
-                {/* Video button */}
+                {/* Coach Mike. Placeholder: no recording is wired to this yet, see
+                    docs/2026-09-13-chase-to-michael.md section 3. Compact on
+                    phones (it used to sit on the photo, then the photo was left
+                    clean); stacked under the primary CTA there, and to its left
+                    from sm up. */}
                 <button
-                  className="hidden md:flex items-center gap-3 cursor-pointer transition-all"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 26px 8px 8px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '999px', whiteSpace: 'nowrap' }}
+                  type="button"
+                  className="order-2 sm:order-1 flex items-center gap-2.5 md:gap-3 cursor-pointer transition-all py-[5px] pl-[5px] pr-5 md:py-2 md:pl-2 md:pr-[26px] text-[11px] md:text-xs"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '999px', whiteSpace: 'nowrap' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                 >
-                  <span className="flex items-center justify-center shrink-0" style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
-                    <Play size={14} fill="#020617" color="#020617" style={{ marginLeft: '2px' }} />
+                  <span className="flex items-center justify-center shrink-0 h-[30px] w-[30px] md:h-[38px] md:w-[38px]" style={{ borderRadius: '50%', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+                    <Play className="h-3 w-3 md:h-3.5 md:w-3.5" fill="#020617" color="#020617" style={{ marginLeft: '2px' }} />
                   </span>
                   COACH MIKE
                 </button>
@@ -383,7 +372,7 @@ export default function Home() {
                 {/* Primary CTA */}
                 <button
                   onClick={() => router.push('/explain')}
-                  className="px-6 py-3 md:px-8 md:py-3.5 transition-all duration-200"
+                  className="order-1 sm:order-2 px-6 py-3 md:px-8 md:py-3.5 transition-all duration-200"
                   style={{ background: '#42a5f5', color: '#fff', fontWeight: 800, fontSize: '12px', letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 0 24px rgba(66,165,245,0.45)' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 36px rgba(66,165,245,0.7)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(66,165,245,0.45)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
@@ -397,7 +386,7 @@ export default function Home() {
 
         {/* Bottom brand watermark */}
         <div className="relative pb-6 flex justify-center md:justify-end md:px-12" style={{ zIndex: 2 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.15)', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '3px', textTransform: 'uppercase' }}>
             © SMARTER GOALIE
           </span>
         </div>
@@ -407,7 +396,7 @@ export default function Home() {
       <>
           <section id="features" className="pt-20 pb-0" style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
             <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-24">
-              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>FEATURES</span>
+              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>FEATURES</span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4">NOTHING LEFT TO THE IMAGINATION.</h2>
               <p className="text-zinc-300 text-base md:text-lg leading-relaxed max-w-2xl mb-3">
                 We get to know you. You get to know your game. You grow — and the system grows with you. And the best part? It&rsquo;s always there, for as long as you need it.

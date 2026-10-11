@@ -65,7 +65,7 @@ export default function PillarsPage() {
 
       {/* ── Hero ── */}
       <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,96px) 24px clamp(32px,5vw,56px)', maxWidth: '720px', margin: '0 auto' }}>
-        <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '16px' }}>
+        <p style={{ fontSize: '11px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase', marginBottom: '16px' }}>
           YOUR TRAINING PATH
         </p>
         <h1 style={{ fontSize: 'clamp(28px,5vw,56px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '18px' }}>
@@ -127,7 +127,7 @@ export default function PillarsPage() {
                       <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <IconComponent size={22} color={BLUE} />
                       </div>
-                      <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '20px', padding: '3px 10px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '20px', padding: '3px 10px' }}>
                         {/* The taxonomy's number, not the row's `order`. Admin can
                             reorder these cards from /admin/pillars, and a goalie's
                             "Pillar 03" has to keep matching the site and the audio. */}

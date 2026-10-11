@@ -211,7 +211,7 @@ function PillarCard({
             </div>
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: 800,
                 color: accentLight,
                 letterSpacing: '2.5px',
@@ -222,7 +222,7 @@ function PillarCard({
             </span>
             <span
               style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 fontWeight: 700,
                 color: '#fff',
                 letterSpacing: '1px',
@@ -238,7 +238,7 @@ function PillarCard({
             {pillar.foundation && (
               <span
                 style={{
-                  fontSize: '9px',
+                  fontSize: '11px',
                   fontWeight: 800,
                   color: '#041530',
                   letterSpacing: '1px',
@@ -368,7 +368,7 @@ export function PillarsArchitectureSection({ voiceButton }: PillarsArchitectureS
               <div style={{ width: 36, height: 1.5, background: BLUE2, opacity: 0.6 }} />
               <p
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontWeight: 800,
                   letterSpacing: '4px',
                   color: BLUE2,
@@ -483,7 +483,7 @@ export function PillarsArchitectureSection({ voiceButton }: PillarsArchitectureS
             </div>
             <p
               style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 fontWeight: 700,
                 letterSpacing: '2.5px',
                 color: 'rgba(96,205,255,0.55)',

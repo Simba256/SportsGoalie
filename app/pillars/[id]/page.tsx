@@ -67,11 +67,11 @@ function SkillCard({ skill, pillarId, progress }: {
         {/* Status badge */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
           {isCompleted ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
               <CheckCircle size={10} /> Completed
             </span>
           ) : isInProgress ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
               <Play size={10} /> In Progress
             </span>
           ) : null}
@@ -142,7 +142,7 @@ function SkillsGroup({ difficulty, skills, pillarId, userLevel, skillProgress }:
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>{cfg.label}</h3>
               {isUserLevel && (
-                <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: cfg.color, background: `${cfg.color}15`, borderRadius: '20px', padding: '2px 8px' }}>Your Level</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: cfg.color, background: `${cfg.color}15`, borderRadius: '20px', padding: '2px 8px' }}>Your Level</span>
               )}
             </div>
             <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{cfg.tagline}</p>
@@ -336,8 +336,8 @@ export default function PillarDetailPage() {
                 ) : userLevel && levelCfg ? (
                   <div style={{ background: 'rgba(55,181,255,0.07)', border: `1px solid ${levelCfg.color}30`, borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)' }}>Your Level</p>
-                      <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: levelCfg.color, background: `${levelCfg.color}18`, borderRadius: '20px', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)' }}>Your Level</p>
+                      <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: levelCfg.color, background: `${levelCfg.color}18`, borderRadius: '20px', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <TrendingUp size={10} /> {levelCfg.label}
                       </span>
                     </div>

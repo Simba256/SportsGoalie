@@ -30,7 +30,7 @@ function VoiceButton({ label }: { label: string }) {
         <span className="hidden sm:inline">{label}</span>
         <span className="sm:hidden">HEAR COACH MIKE</span>
       </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
         VOICE {on ? 'ON' : 'OFF'}
       </button>
     </div>
@@ -60,11 +60,11 @@ function AutoVoicePlayer() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '9px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
+          <p style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
           <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>Coach Mike</p>
         </div>
         <div style={{ background: playing ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${playing ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '20px', padding: '4px 10px', transition: 'all 0.3s', flexShrink: 0 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
         </div>
       </div>
       <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', margin: '0 0 18px', fontStyle: 'italic', lineHeight: 1.55 }}>
@@ -74,18 +74,18 @@ function AutoVoicePlayer() {
         {waveform.map((h, i) => { const isPast = (i / waveform.length) * 100 < progress; return (<div key={i} style={{ flex: 1, height: `${h * 100}%`, background: isPast ? '#00f0ff' : 'rgba(255,255,255,0.14)', borderRadius: '2px', transition: 'background 0.08s', boxShadow: isPast ? '0 0 4px rgba(0,240,255,0.4)' : 'none' }} />); })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '20px' }}>
-        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.7)', display: 'flex', padding: '10px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
         <button onClick={() => setPlaying(p => !p)} style={{ width: '60px', height: '60px', borderRadius: '50%', background: playing ? 'rgba(0,240,255,0.12)' : '#00f0ff', border: playing ? '2px solid #00f0ff' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: playing ? '0 0 0 8px rgba(0,240,255,0.1), 0 0 24px rgba(0,240,255,0.3)' : '0 0 20px rgba(0,240,255,0.4)', transition: 'all 0.25s' }}>
           {playing ? <Pause size={24} color="#00f0ff" /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="#051125"><path d="M8 5v14l11-7z"/></svg>}
         </button>
-        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.7)', display: 'flex', padding: '10px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
       </div>
       <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(100,116,139,0.4)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
+        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(148,163,184,0.7)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
           {[12, 20, 8, 16, 10].map((h, i) => (<div key={i} style={{ width: '3px', height: `${playing ? h : Math.round(h * 0.45)}px`, background: i === 1 ? '#00f0ff' : `rgba(0,240,255,${0.35 + i * 0.1})`, borderRadius: '1.5px', transition: `height ${0.2 + i * 0.05}s ease` }} />))}
         </div>
@@ -110,7 +110,7 @@ export default function OrganizationPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <button
             onClick={() => router.push('/explain')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 10px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '9px 12px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
             onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
             onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
           >
@@ -128,7 +128,7 @@ export default function OrganizationPage() {
       {/* ── Coming Soon Banner ── */}
       <div style={{ position: 'sticky', top: '64px', zIndex: 40, background: 'linear-gradient(90deg, rgba(2,18,44,0.97) 0%, rgba(6,35,68,0.97) 100%)', borderBottom: '1px solid rgba(96,205,255,0.35)', backdropFilter: 'blur(8px)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex items-center gap-3 flex-wrap">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(96,205,255,0.12)', border: '1px solid rgba(96,205,255,0.3)', borderRadius: '20px', padding: '3px 10px', fontSize: '10px', fontWeight: 800, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase', flexShrink: 0 }}>COMING SOON</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(96,205,255,0.12)', border: '1px solid rgba(96,205,255,0.3)', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 800, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase', flexShrink: 0 }}>COMING SOON</span>
           <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
             This experience is being finalized. <span style={{ color: BLUE2, fontWeight: 700 }}>Coach Mike will reveal it within 30 days of launch.</span>
           </p>
@@ -192,7 +192,7 @@ export default function OrganizationPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '40px' }}>
                 <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>The Problem</p>
+                  <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>The Problem</p>
                   <h2 style={{ fontSize: 'clamp(28px, 3.6vw, 46px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>The Gap in Every<br />Organization</h2>
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function OrganizationPage() {
               ] as { accent: string; label: string; desc: string }[]).map((card, i) => (
                 <TiltCard key={i} effect="gravitate" tiltLimit={6} scale={1.02} style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
                   <div style={{ borderLeft: `4px solid ${card.accent}`, padding: '22px 24px', borderRadius: '0 12px 12px 0', backdropFilter: 'blur(10px)' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: card.accent, textTransform: 'uppercase', margin: '0 0 8px' }}>Gap {String(i + 1).padStart(2, '0')}</p>
+                    <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: card.accent, textTransform: 'uppercase', margin: '0 0 8px' }}>Gap {String(i + 1).padStart(2, '0')}</p>
                     <h3 style={{ fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: 800, color: '#fff', margin: '0 0 10px', letterSpacing: '0.5px' }}>{card.label}</h3>
                     <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', color: 'rgba(185,210,235,0.82)', lineHeight: 1.65, margin: 0 }}>{card.desc}</p>
                   </div>
@@ -240,7 +240,7 @@ export default function OrganizationPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
             <div style={{ width: '6px', height: '100px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The System</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The System</p>
               <h2 style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.1 }}>What Smarter Goalie<br />Delivers</h2>
             </div>
           </div>
@@ -297,7 +297,7 @@ export default function OrganizationPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
             <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>The Architecture</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>The Architecture</p>
               <h2 style={{ fontSize: 'clamp(28px, 3.6vw, 46px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>The Scalability<br />Architecture</h2>
             </div>
           </div>
@@ -318,7 +318,7 @@ export default function OrganizationPage() {
                   <div style={{ position: 'absolute', bottom: '6px', right: '10px', fontSize: '48px', fontWeight: 900, color: 'rgba(55,181,255,0.07)', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>{String(i + 1).padStart(2, '0')}</div>
                   <p style={{ fontSize: 'clamp(26px,3.8vw,42px)', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '6px', textShadow: `0 0 18px rgba(55,181,255,0.5)` }}>{item.n}</p>
                   <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>{item.label}</p>
-                  <p style={{ fontSize: '10px', color: 'rgba(96,205,255,0.7)', fontWeight: 600, letterSpacing: '0.5px', margin: '0 0 16px' }}>{item.sub}</p>
+                  <p style={{ fontSize: '11px', color: 'rgba(96,205,255,0.7)', fontWeight: 600, letterSpacing: '0.5px', margin: '0 0 16px' }}>{item.sub}</p>
                 </div>
               </TiltCard>
             ))}
@@ -368,7 +368,7 @@ export default function OrganizationPage() {
               ] as { accent: string; label: string; desc: string }[]).map((card, i) => (
                 <TiltCard key={i} effect="gravitate" tiltLimit={6} scale={1.02} style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
                   <div style={{ borderLeft: `4px solid ${card.accent}`, padding: '22px 24px', borderRadius: '0 12px 12px 0', backdropFilter: 'blur(10px)' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: card.accent, textTransform: 'uppercase', margin: '0 0 8px' }}>Feature {String(i + 1).padStart(2, '0')}</p>
+                    <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: card.accent, textTransform: 'uppercase', margin: '0 0 8px' }}>Feature {String(i + 1).padStart(2, '0')}</p>
                     <h3 style={{ fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>{card.label}</h3>
                     <p style={{ fontSize: 'clamp(14px, 1.5vw, 16px)', color: 'rgba(185,210,235,0.82)', lineHeight: 1.65, margin: 0 }}>{card.desc}</p>
                   </div>
@@ -392,7 +392,7 @@ export default function OrganizationPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.32)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px', boxShadow: '0 2px 12px rgba(55,181,255,0.12)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE2, boxShadow: '0 0 0 3px rgba(55,181,255,0.22)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Founding Partner Opportunity</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Founding Partner Opportunity</p>
           </div>
           <h2 style={{ fontSize: 'clamp(30px, 5vw, 66px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>
             THIS IS THE EXPERIENCE<br /><span style={{ color: BLUE2 }}>BUILDING PHASE</span>

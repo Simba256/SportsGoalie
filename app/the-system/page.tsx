@@ -59,7 +59,7 @@ function VoiceButton({ label }: { label: string }) {
       </button>
       <button
         onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' as const }}
+        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' as const }}
       >
         VOICE {on ? 'ON' : 'OFF'}
       </button>
@@ -170,7 +170,7 @@ export default function TheSystemPage() {
           <div style={{ marginBottom: '48px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(96,205,255,0.25)', borderRadius: '50px', padding: '6px 16px', marginBottom: '24px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE2, boxShadow: `0 0 8px ${BLUE2}` }} />
-              <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const }}>Connected Architecture</span>
+              <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const }}>Connected Architecture</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
               <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(180deg, ${BLUE2}, rgba(96,205,255,0.15))`, boxShadow: `0 0 20px ${BLUE2}60`, borderRadius: '3px', flexShrink: 0 }} />
@@ -342,7 +342,7 @@ export default function TheSystemPage() {
                         style={{ background: `${item.color}14`, border: `1px solid ${item.color}38`, padding: '5px 12px' }}
                       >
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-                        <span className="font-black uppercase" style={{ fontSize: '9px', color: item.color, letterSpacing: '1.5px' }}>
+                        <span className="font-black uppercase" style={{ fontSize: '11px', color: item.color, letterSpacing: '1.5px' }}>
                           {item.metric}
                         </span>
                       </div>
@@ -370,7 +370,7 @@ export default function TheSystemPage() {
             <div style={{ flex: '1 1 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '28px' }}>
                 <div style={{ width: '48px', height: '2px', background: `linear-gradient(90deg, ${BLUE2}, rgba(96,205,255,0.2))`, flexShrink: 0 }} />
-                <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>THE MOST DIFFERENTIATED FEATURE</p>
+                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>THE MOST DIFFERENTIATED FEATURE</p>
               </div>
               <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 60px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 16px', color: '#fff' }}>
                 COACH MIKE<br />KNOWS YOUR NAME.
@@ -441,7 +441,7 @@ export default function TheSystemPage() {
             {/* Badge */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.28)', borderRadius: '50px', padding: '6px 16px', marginBottom: '24px', boxShadow: '0 2px 12px rgba(251,191,36,0.08)' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 8px #fbbf24' }} />
-              <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const }}>A Space Personal To Each Member</span>
+              <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const }}>A Space Personal To Each Member</span>
             </div>
             {/* Title block */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
@@ -611,7 +611,7 @@ export default function TheSystemPage() {
                         style={{ background: `${item.color}14`, border: `1px solid ${item.color}38`, padding: '5px 12px' }}
                       >
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-                        <span className="font-black uppercase" style={{ fontSize: '9px', color: item.color, letterSpacing: '1.5px' }}>
+                        <span className="font-black uppercase" style={{ fontSize: '11px', color: item.color, letterSpacing: '1.5px' }}>
                           {item.tag}
                         </span>
                       </div>
@@ -694,11 +694,11 @@ export default function TheSystemPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: '0 0 4px', lineHeight: 1 }}>Your Name</p>
-                        <p style={{ fontSize: '9px', fontWeight: 700, color: BLUE2, letterSpacing: '1.8px', textTransform: 'uppercase' as const, margin: 0 }}>GOALIE — MEMBER SINCE 2026</p>
+                        <p style={{ fontSize: '11px', fontWeight: 700, color: BLUE2, letterSpacing: '1.8px', textTransform: 'uppercase' as const, margin: 0 }}>GOALIE — MEMBER SINCE 2026</p>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.28)', borderRadius: '20px', padding: '5px 11px', flexShrink: 0 }}>
                         <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 5px #34d399' }} />
-                        <span style={{ fontSize: '8px', fontWeight: 800, color: '#34d399', letterSpacing: '1.2px' }}>ACTIVE</span>
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', letterSpacing: '1.2px' }}>ACTIVE</span>
                       </div>
                     </div>
 
@@ -748,7 +748,7 @@ export default function TheSystemPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '48px' }}>
             <div style={{ width: '6px', height: '80px', background: '#fbbf24', boxShadow: '0 0 15px #fbbf24', borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Built Into The Architecture</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Built Into The Architecture</p>
               <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 48px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>THE ACHIEVEMENT &amp; ACCOLADE ENGINE</h2>
               <p style={{ fontSize: 'clamp(13px, 1.5vw, 16px)', color: 'rgba(148,195,228,0.8)', margin: '12px 0 0', maxWidth: '600px', lineHeight: 1.65 }}>
                 Not an add-on. Not a gamification gimmick. Real recognition for real development.
@@ -772,7 +772,7 @@ export default function TheSystemPage() {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}`, flexShrink: 0 }} />
-                  <span style={{ fontSize: '10px', fontWeight: 800, color: item.color, letterSpacing: '3px', textTransform: 'uppercase' as const }}>{item.type} ACCOLADES</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: item.color, letterSpacing: '3px', textTransform: 'uppercase' as const }}>{item.type} ACCOLADES</span>
                 </div>
                 <p style={{ fontSize: '14px', color: 'rgba(148,200,232,0.85)', margin: 0, lineHeight: 1.75 }}>{item.desc}</p>
               </div>
@@ -793,7 +793,7 @@ export default function TheSystemPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
             <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Hosted By Coach Mike</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Hosted By Coach Mike</p>
               <h2 style={{ fontSize: 'clamp(28px, 4vw, 52px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>THE COMMUNITY</h2>
             </div>
           </div>
@@ -845,7 +845,7 @@ export default function TheSystemPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(96,205,255,0.26)', borderRadius: '50px', padding: '8px 20px', marginBottom: '36px', boxShadow: '0 2px 12px rgba(55,181,255,0.1)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: RED, boxShadow: '0 0 0 3px rgba(192,0,0,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>A System. Not A Program.</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>A System. Not A Program.</p>
           </div>
 
           <h2 style={{ fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '28px' }}>
@@ -884,7 +884,7 @@ export default function TheSystemPage() {
               NEXT: THE OFFER
               <ChevronRight size={18} />
             </button>
-            <p style={{ fontSize: '10px', color: 'rgba(148,192,222,0.45)', letterSpacing: '3px', textTransform: 'uppercase' as const, margin: '14px 0 0' }}>PAGE 6 OF 6</p>
+            <p style={{ fontSize: '11px', color: 'rgba(148,192,222,0.45)', letterSpacing: '3px', textTransform: 'uppercase' as const, margin: '14px 0 0' }}>PAGE 6 OF 6</p>
           </div>
         </div>
       </section>

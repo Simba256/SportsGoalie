@@ -68,7 +68,7 @@ export function SevenPillarsCTA({ from, eyebrow }: SevenPillarsCTAProps) {
               <div style={{ width: 36, height: 1.5, background: BLUE2, opacity: 0.6 }} />
               <p
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontWeight: 800,
                   letterSpacing: '4px',
                   color: BLUE2,
@@ -189,7 +189,7 @@ export function SevenPillarsCTA({ from, eyebrow }: SevenPillarsCTAProps) {
                     <div style={{ width: 18, height: 2, background: p.accent, opacity: 0.5, margin: '0 auto 9px' }} />
                     <p
                       style={{
-                        fontSize: 9.5,
+                        fontSize: 11,
                         fontWeight: 700,
                         letterSpacing: '0.3px',
                         color: `${p.accent}99`,

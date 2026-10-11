@@ -154,14 +154,14 @@ function PillarHubCard({
           <div className="mb-4 flex items-start justify-between gap-3">
             <span
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 800,
                 letterSpacing: '0.2em',
                 color: palette.accentLight,
                 background: `rgba(${palette.accentRgb}, 0.16)`,
                 border: `1px solid rgba(${palette.accentRgb}, 0.35)`,
                 borderRadius: 8,
-                padding: '5px 10px',
+                padding: '9px 12px',
                 boxShadow: `0 0 16px rgba(${palette.accentRgb}, 0.12)`,
               }}
             >
@@ -181,7 +181,7 @@ function PillarHubCard({
 
           <span
             style={{
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
@@ -314,7 +314,7 @@ function SevenPillarsHubContent() {
               padding: '7px 14px',
               cursor: 'pointer',
               color: BLUE2,
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: 700,
               letterSpacing: '2px',
               textTransform: 'uppercase',
@@ -333,7 +333,7 @@ function SevenPillarsHubContent() {
             {from.label}
           </button>
           <div style={{ width: 1, height: 16, background: 'rgba(96,205,255,0.25)' }} />
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.7)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.7)', textTransform: 'uppercase' }}>
             The 7 Pillars
           </span>
         </div>
@@ -427,7 +427,7 @@ function SevenPillarsHubContent() {
                     boxShadow: '0 0 0 3px rgba(55,181,255,0.25)',
                   }}
                 />
-                <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.28em', color: BLUE2, textTransform: 'uppercase', margin: 0 }}>
+                <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.28em', color: BLUE2, textTransform: 'uppercase', margin: 0 }}>
                   Open Architecture · No Login
                 </p>
               </div>
@@ -546,7 +546,7 @@ function SevenPillarsHubContent() {
               <p
                 style={{
                   marginTop: 14,
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: '0.22em',
                   color: 'rgba(96,205,255,0.5)',
