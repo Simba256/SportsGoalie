@@ -195,7 +195,7 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '6px 16px', marginBottom: '20px' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Organisations · Federations · Hockey Businesses</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Organisations · Federations · Hockey Businesses</p>
           </div>
 
           <div style={{ display: 'inline-block', marginBottom: '10px', fontSize: '11px', fontWeight: 700, letterSpacing: '.2em', color: BLUE2, border: '1px solid rgba(96,205,255,0.3)', borderRadius: '99px', padding: '6px 16px', textTransform: 'uppercase' }}>
@@ -226,7 +226,7 @@ export default function ContactPage() {
       {/* ── CREDENTIALS ── */}
       <section style={{ padding: S, background: 'linear-gradient(150deg, #061a38 0%, #0a2848 100%)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full">
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>Why We Get to Say This</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>Why We Get to Say This</p>
           <h2 style={{ fontSize: H, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '2px' }}>We Have Done It All.</h2>
           <h2 style={{ fontSize: H, fontWeight: 900, color: BLUE2, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>For Over Six Decades.</h2>
 
@@ -258,7 +258,7 @@ export default function ContactPage() {
       {/* ── PHILOSOPHY ── */}
       <section style={{ padding: S, background: 'radial-gradient(ellipse at 60% 30%, #0a1e42 0%, #050912 100%)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full">
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>The Most Important Position on the Team</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>The Most Important Position on the Team</p>
           <h2 style={{ fontSize: H, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '2px' }}>How the Goalie Goes —</h2>
           <h2 style={{ fontSize: H, fontWeight: 900, color: BLUE2, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>The Team Goes.</h2>
 
@@ -287,7 +287,7 @@ export default function ContactPage() {
       {/* ── SUPPORTING CAST ── */}
       <section style={{ padding: S, background: 'linear-gradient(150deg, #061830 0%, #0c2542 100%)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full">
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>The Supporting Cast</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>The Supporting Cast</p>
           <h2 style={{ fontSize: H, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '2px' }}>Nobody Stands in the Crease</h2>
           <h2 style={{ fontSize: H, fontWeight: 900, color: BLUE2, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '28px' }}>Alone.</h2>
 
@@ -321,7 +321,7 @@ export default function ContactPage() {
       {/* ── CONTACT FORM ── */}
       <section id="contact-form" style={{ padding: S, background: 'radial-gradient(ellipse at 35% 65%, #04152e 0%, #070f1e 100%)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full">
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>Start Here</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, textTransform: 'uppercase', marginBottom: '6px' }}>Start Here</p>
           <h2 style={{ fontSize: H, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '2px' }}>A Few Specific Questions.</h2>
           <h2 style={{ fontSize: H, fontWeight: 900, color: BLUE2, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>Then a Call on the Calendar.</h2>
 
@@ -352,7 +352,7 @@ export default function ContactPage() {
 
                 <div className="flex flex-col">
                   <label style={labelStyle}>Your Name</label>
-                  <input name="name" value={form.name} onChange={handleChange} placeholder="First and last name" required style={inputStyle} className="contact-input" />
+                  <input name="name" value={form.name} onChange={handleChange} placeholder="First and last name" required style={inputStyle} className="contact-input field-16" />
                 </div>
 
                 <div className="flex flex-col" id="field-role">
@@ -371,12 +371,12 @@ export default function ContactPage() {
 
                 <div className="flex flex-col">
                   <label style={labelStyle}>Organisation / Program Name</label>
-                  <input name="organisation" value={form.organisation} onChange={handleChange} placeholder="Your organisation, team, or business" required style={inputStyle} className="contact-input" />
+                  <input name="organisation" value={form.organisation} onChange={handleChange} placeholder="Your organisation, team, or business" required style={inputStyle} className="contact-input field-16" />
                 </div>
 
                 <div className="flex flex-col">
                   <label style={labelStyle}>Location <span style={{ color: MUTED, textTransform: 'none', letterSpacing: 0, fontWeight: 'normal' }}>(city & region)</span></label>
-                  <input name="location" value={form.location} onChange={handleChange} placeholder="e.g. Vaughan, Ontario" required style={inputStyle} className="contact-input" />
+                  <input name="location" value={form.location} onChange={handleChange} placeholder="e.g. Vaughan, Ontario" required style={inputStyle} className="contact-input field-16" />
                 </div>
 
                 <div className="flex flex-col">
@@ -405,17 +405,17 @@ export default function ContactPage() {
 
                 <div className="flex flex-col sm:col-span-2">
                   <label style={labelStyle}>Your Program's Goals <span style={{ color: MUTED, textTransform: 'none', letterSpacing: 0, fontWeight: 'normal' }}>(in your own words)</span></label>
-                  <textarea name="goals" value={form.goals} onChange={handleChange} placeholder="Where does your organisation want to go? What would a goaltending standard change for your teams, your coaches, your parents, your goalies?" style={{ ...inputStyle, minHeight: '110px', resize: 'vertical' }} className="contact-input" />
+                  <textarea name="goals" value={form.goals} onChange={handleChange} placeholder="Where does your organisation want to go? What would a goaltending standard change for your teams, your coaches, your parents, your goalies?" style={{ ...inputStyle, minHeight: '110px', resize: 'vertical' }} className="contact-input field-16" />
                 </div>
 
                 <div className="flex flex-col">
                   <label style={labelStyle}>Email</label>
-                  <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required style={inputStyle} className="contact-input" />
+                  <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required style={inputStyle} className="contact-input field-16" />
                 </div>
 
                 <div className="flex flex-col">
                   <label style={labelStyle}>Phone <span style={{ color: MUTED, textTransform: 'none', letterSpacing: 0, fontWeight: 'normal' }}>(optional)</span></label>
-                  <input type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="For the call" style={inputStyle} className="contact-input" />
+                  <input type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="For the call" style={inputStyle} className="contact-input field-16" />
                 </div>
 
                 <div className="flex flex-col sm:col-span-2">
