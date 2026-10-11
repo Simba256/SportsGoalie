@@ -11,7 +11,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-3 mb-5">
       <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
-      <p style={{ fontSize: '10px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
+      <p style={{ fontSize: '11px', letterSpacing: '4px', color: BLUE, fontWeight: 700, textTransform: 'uppercase' }}>
         {children}
       </p>
       <div style={{ width: '32px', height: '1.5px', background: BLUE, opacity: 0.5 }} />
@@ -520,7 +520,7 @@ export default function PricingPage() {
 
       {/* ── Footer ── */}
       <div className="text-center px-4 pb-10 flex-shrink-0">
-        <p style={{ fontSize: '9px', letterSpacing: '3px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700 }}>
+        <p style={{ fontSize: '11px', letterSpacing: '3px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700 }}>
           EVERY GOAL STARTS WITH THE RIGHT FOUNDATION — SMARTER GOALIE
         </p>
       </div>

@@ -59,7 +59,7 @@ function VoiceButton({ label }: { label: string }) {
         <span className="hidden sm:inline">{label}</span>
         <span className="sm:hidden">HEAR COACH MIKE</span>
       </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
         VOICE {on ? 'ON' : 'OFF'}
       </button>
     </div>
@@ -229,7 +229,7 @@ export default function WhoWeArePage() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}
           >
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>BUILT BY A GOALIE. FOR MOTIVATED GOALIES.</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>BUILT BY A GOALIE. FOR MOTIVATED GOALIES.</p>
           </motion.div>
 
           {/* Blue accent rule */}
@@ -273,7 +273,7 @@ export default function WhoWeArePage() {
             {[...ACTS, ACT_EIGHT].map((act, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: act.accent, boxShadow: `0 0 8px ${act.accent}99, 0 0 16px ${act.accent}44` }} />
-                <span style={{ fontSize: '9px', fontWeight: 700, color: act.accent, opacity: 0.6, letterSpacing: '1.5px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: act.accent, opacity: 0.6, letterSpacing: '1.5px' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
               </div>
@@ -298,7 +298,7 @@ export default function WhoWeArePage() {
               {/* Accent bar */}
               <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${act.accent}, ${act.accent}55)`, boxShadow: `0 0 20px ${act.accent}cc, 0 0 40px ${act.accent}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
               <div>
-                <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: act.accent, textTransform: 'uppercase', margin: '0 0 6px', textShadow: `0 0 12px ${act.accent}99` }}>{act.number}</p>
+                <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: act.accent, textTransform: 'uppercase', margin: '0 0 6px', textShadow: `0 0 12px ${act.accent}99` }}>{act.number}</p>
                 <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
                   {act.title}
                 </h2>
@@ -359,7 +359,7 @@ export default function WhoWeArePage() {
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
 
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: BLUE3, textTransform: 'uppercase', marginBottom: '18px', textShadow: '0 0 10px rgba(14,165,233,0.4)' }}>THE PUZZLE CLOSE</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: BLUE3, textTransform: 'uppercase', marginBottom: '18px', textShadow: '0 0 10px rgba(14,165,233,0.4)' }}>THE PUZZLE CLOSE</p>
 
           <h2 style={{ fontSize: 'clamp(22px, 4vw, 54px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.02em', margin: '0 0 36px', maxWidth: '900px' }}>
             IN THE BEGINNING, GOALTENDING WAS LIKE A THOUSAND-PIECE PUZZLE,{' '}
@@ -405,7 +405,7 @@ export default function WhoWeArePage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '32px' }}>
             <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${ACT_EIGHT.accent}, ${ACT_EIGHT.accent}55)`, boxShadow: `0 0 20px ${ACT_EIGHT.accent}cc, 0 0 40px ${ACT_EIGHT.accent}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: ACT_EIGHT.accent, textTransform: 'uppercase', margin: '0 0 6px', textShadow: `0 0 12px ${ACT_EIGHT.accent}99` }}>{ACT_EIGHT.number}</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: ACT_EIGHT.accent, textTransform: 'uppercase', margin: '0 0 6px', textShadow: `0 0 12px ${ACT_EIGHT.accent}99` }}>{ACT_EIGHT.number}</p>
               <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
                 {ACT_EIGHT.title}
               </h2>
@@ -441,7 +441,7 @@ export default function WhoWeArePage() {
             {STATS.map(s => (
               <div key={s.value} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', minWidth: '80px' }}>
                 <span style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 900, color: s.color, letterSpacing: '-0.03em', lineHeight: 1, textShadow: `0 0 28px ${s.color}77` }}>{s.value}</span>
-                <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', whiteSpace: 'pre-line', textAlign: 'center', lineHeight: 1.4 }}>{s.label}</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', whiteSpace: 'pre-line', textAlign: 'center', lineHeight: 1.4 }}>{s.label}</span>
               </div>
             ))}
           </div>
@@ -453,7 +453,7 @@ export default function WhoWeArePage() {
             ))}
           </div>
 
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px', textShadow: '0 0 10px rgba(96,205,255,0.33)' }}>WHAT COMES NEXT</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, textTransform: 'uppercase', marginBottom: '20px', textShadow: '0 0 10px rgba(96,205,255,0.33)' }}>WHAT COMES NEXT</p>
           <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 58px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.025em', marginBottom: '24px', maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto' }}>
             The system is ready.<br />
             <span style={{ color: BLUE, textShadow: '0 0 28px rgba(55,181,255,0.4)' }}>Are you?</span>

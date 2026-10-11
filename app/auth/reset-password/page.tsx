@@ -143,7 +143,7 @@ export default function ResetPasswordPage() {
                 autoComplete="email"
                 autoFocus
                 data-testid="email-input"
-                className="rp-input"
+                className="rp-input field-16"
                 style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: `1px solid ${errors.email ? '#f87171' : 'rgba(55,181,255,0.2)'}`, background: 'rgba(55,181,255,0.04)', color: '#fff', fontSize: '13px', transition: 'all 0.2s', boxSizing: 'border-box' }}
               />
               {errors.email && (

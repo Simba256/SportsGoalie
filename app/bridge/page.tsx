@@ -47,7 +47,7 @@ function VoiceButton({ label }: { label: string }) {
       </button>
       <button
         onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}
+        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}
       >
         VOICE {on ? 'ON' : 'OFF'}
       </button>
@@ -173,7 +173,7 @@ export default function BridgePage() {
           {/* Badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>SMARTER GOALIE</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>SMARTER GOALIE</p>
           </div>
 
           {/* Color bar */}
@@ -198,7 +198,7 @@ export default function BridgePage() {
             {DOORS.map((d, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: d.accent, boxShadow: `0 0 8px ${d.accent}99, 0 0 16px ${d.accent}44` }} />
-                <span style={{ fontSize: '9px', fontWeight: 700, color: d.accent, opacity: 0.7, letterSpacing: '1.8px', textTransform: 'uppercase' as const }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: d.accent, opacity: 0.7, letterSpacing: '1.8px', textTransform: 'uppercase' as const }}>
                   {d.number}
                 </span>
               </div>
@@ -240,7 +240,7 @@ export default function BridgePage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
             <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${BLUE2}, ${BLUE2}55)`, boxShadow: `0 0 20px ${BLUE2}cc, 0 0 40px ${BLUE2}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>THREE DOORS — ONE HOUSE</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>THREE DOORS — ONE HOUSE</p>
               <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
                 WHICH ONE IS <span style={{ color: BLUE2, fontStyle: 'italic' }}>YOURS?</span>
               </h2>
@@ -260,7 +260,7 @@ export default function BridgePage() {
                 {/* Door label */}
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: door.accent, boxShadow: `0 0 8px ${door.accent}` }} />
-                  <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: door.accent, textTransform: 'uppercase' as const }}>{door.number}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: door.accent, textTransform: 'uppercase' as const }}>{door.number}</span>
                 </div>
 
                 <h3 style={{ fontSize: 'clamp(20px, 2.5vw, 28px)', fontWeight: 900, color: '#fff', margin: '0 0 16px', letterSpacing: '-0.015em', fontStyle: 'italic' }}>
@@ -299,7 +299,7 @@ export default function BridgePage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '36px' }}>
             <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${GOLD}, ${GOLD}55)`, boxShadow: `0 0 20px ${GOLD}cc, 0 0 40px ${GOLD}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: GOLD, textTransform: 'uppercase', margin: '0 0 6px' }}>THE INFORMED GOALTENDER</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: GOLD, textTransform: 'uppercase', margin: '0 0 6px' }}>THE INFORMED GOALTENDER</p>
               <h2 style={{ fontSize: 'clamp(26px, 4vw, 56px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
                 A SMARTER GOALIE{' '}
                 <span style={{ color: BLUE2, fontStyle: 'italic' }}>DOESN&apos;T GET FOOLED</span>
@@ -367,7 +367,7 @@ export default function BridgePage() {
             <p style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontStyle: 'italic', color: 'rgba(255,255,255,0.9)', lineHeight: 1.5, margin: '0 0 10px' }}>
               &ldquo;A <span style={{ color: BLUE2, fontStyle: 'normal', fontWeight: 900 }}>Smarter Goalie</span> is in the house.&rdquo;
             </p>
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: MUTED, textTransform: 'uppercase', margin: 0 }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: MUTED, textTransform: 'uppercase', margin: 0 }}>
               Respect in the house — all around
             </p>
           </div>
@@ -421,7 +421,7 @@ export default function BridgePage() {
               ))}
             </div>
 
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: GOLD, textTransform: 'uppercase', marginBottom: '16px' }}>JOIN THE FOUNDING 100</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: GOLD, textTransform: 'uppercase', marginBottom: '16px' }}>JOIN THE FOUNDING 100</p>
 
             <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 56px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.025em', marginBottom: '16px' }}>
               Whatever your situation —{' '}

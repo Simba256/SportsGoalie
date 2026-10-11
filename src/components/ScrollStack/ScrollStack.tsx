@@ -76,24 +76,60 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     });
   }, []);
 
+  /* Phone cards differ in height, so when a shorter card parks over a taller
+     one the taller card's lower edge is left showing beneath it — stray
+     half-sentences under the stack. Once the next card has parked, the older
+     one adds nothing, so it fades out until the next card lets go again. */
+  const syncCoveredCards = useCallback(() => {
+    const root = scrollerRef.current;
+    if (!root) return;
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('.scroll-stack-card'));
+    const stacked = window.innerWidth <= STACKED_MAX_WIDTH;
+    cards.forEach((card, i) => {
+      const next = cards[i + 1];
+      let covered = false;
+      if (stacked && next) {
+        const parkedAt = parseFloat(next.style.top);
+        const pin = Number.isNaN(parkedAt) ? STACKED_PIN : parkedAt;
+        covered = next.getBoundingClientRect().top <= pin + 1;
+      }
+      card.classList.toggle('is-covered', covered);
+    });
+  }, []);
+
   useEffect(() => {
-    syncStackedOffsets();
+    const resync = () => {
+      syncStackedOffsets();
+      syncCoveredCards();
+    };
+    resync();
 
     const root = scrollerRef.current;
-    window.addEventListener('resize', syncStackedOffsets);
-    window.addEventListener('orientationchange', syncStackedOffsets);
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        syncCoveredCards();
+      });
+    };
+    window.addEventListener('resize', resync);
+    window.addEventListener('orientationchange', resync);
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     // Card heights move as fonts and images settle, and again whenever the
     // copy reflows, so re-measure instead of trusting the first pass.
-    const observer = new ResizeObserver(syncStackedOffsets);
+    const observer = new ResizeObserver(resync);
     root?.querySelectorAll('.scroll-stack-card').forEach(card => observer.observe(card));
 
     return () => {
-      window.removeEventListener('resize', syncStackedOffsets);
-      window.removeEventListener('orientationchange', syncStackedOffsets);
+      window.removeEventListener('resize', resync);
+      window.removeEventListener('orientationchange', resync);
+      window.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [syncStackedOffsets]);
+  }, [syncStackedOffsets, syncCoveredCards]);
 
   return (
     <div ref={scrollerRef} className={`scroll-stack-scroller ${className}`.trim()} style={customProperties}>

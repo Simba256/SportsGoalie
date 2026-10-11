@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageCircleQuestion, Send, X } from 'lucide-react';
 import type { QAAskResponse, QASubmitResponse } from '@/types/qa';
 
@@ -32,6 +32,30 @@ export function QuestionBox() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Phones only: the floating button sits over the copy the whole way down, so
+  // it tucks away while the visitor scrolls down and returns on any scroll up
+  // or once they stop. Wider screens never tuck it.
+  const [tucked, setTucked] = useState(false);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      if (window.innerWidth >= 640) { setTucked(false); return; }
+      const y = window.scrollY;
+      const delta = y - lastY;
+      if (Math.abs(delta) < 6) return;
+      lastY = y;
+      setTucked(delta > 0 && y > 120);
+      clearTimeout(idle);
+      idle = setTimeout(() => setTucked(false), 900);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(idle);
+    };
+  }, []);
 
   function reset() {
     setStage('ask');
@@ -96,13 +120,13 @@ export function QuestionBox() {
   }
 
   const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '2px',
+    display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '2px',
     textTransform: 'uppercase', color: BLUE2, marginBottom: '8px',
   };
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '11px 14px', background: 'rgba(4,20,45,0.85)',
     border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', color: '#fff',
-    fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+    fontSize: '16px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
   };
   const primaryBtn: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -119,7 +143,10 @@ export function QuestionBox() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', colorScheme: 'dark' }}>
       <style dangerouslySetInnerHTML={{ __html: `
+        .qa-fab { position: fixed; bottom: 20px; right: 20px; padding: 14px 20px; }
         .qa-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(55,181,255,0.5); }
+        .qa-fab.qa-fab--tucked { transform: translateY(28px); opacity: 0; pointer-events: none; }
+        @media (max-width: 639px) { .qa-fab { bottom: 14px; right: 14px; padding: 12px; } }
         .qa-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .qa-ghost:hover { background: rgba(55,181,255,0.1); }
         .qa-input:focus { border-color: ${BLUE} !important; box-shadow: 0 0 0 3px rgba(55,181,255,0.14); }
@@ -132,13 +159,13 @@ export function QuestionBox() {
       {!open && (
         <button
           onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-          className="qa-fab"
+          className={`qa-fab${tucked ? ' qa-fab--tucked' : ''}`}
           aria-label="Ask a question"
           style={{
-            position: 'fixed', bottom: '20px', right: '20px', zIndex: 60,
+            zIndex: 60,
             display: 'flex', alignItems: 'center', gap: '10px',
             background: `linear-gradient(135deg, ${BLUE}, #1a8fd6)`, border: 'none',
-            borderRadius: '50px', padding: '14px 20px', color: '#fff',
+            borderRadius: '50px', color: '#fff',
             fontSize: '13px', fontWeight: 800, letterSpacing: '.5px', cursor: 'pointer',
             boxShadow: '0 6px 22px rgba(55,181,255,0.4)', transition: 'all .2s',
           }}
@@ -167,7 +194,7 @@ export function QuestionBox() {
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 18px 0', flexShrink: 0 }}>
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: '0 0 4px', textTransform: 'uppercase' }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: '0 0 4px', textTransform: 'uppercase' }}>
                 Smarter Goalie
               </p>
               <p style={{ fontSize: '17px', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>

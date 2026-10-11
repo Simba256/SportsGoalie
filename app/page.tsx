@@ -7,7 +7,7 @@ import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack/ScrollSta
 // import { TestimonialsSection } from '@/components/ui/testimonials-with-marquee';
 import { GalleryHoverCarousel, type GalleryCarouselItem } from '@/components/ui/gallery-hover-carousel';
 import { ToolboxSection } from '@/components/landing/toolbox-section';
-import { Network, Lock, Filter, TrendingUp, Users, Trophy, Play, Pause, Menu, X } from 'lucide-react';
+import { Network, Lock, Filter, TrendingUp, Users, Trophy, Play, Pause } from 'lucide-react';
 
 /** Coach Mike clip — drop `7-pillars-video.mp4` into /public before go-live on THE 8 PILLARS card */
 const SEVEN_PILLARS_VIDEO_SRC = '/7-pillars-video.mp4';
@@ -178,7 +178,6 @@ const MIND_VAULT_ITEMS: GalleryCarouselItem[] = [
 
 export default function Home() {
   const router = useRouter();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Testimonials data on hold until client has real reviews to feature — re-enable along with
   // the TestimonialsSection import and JSX block below when ready.
@@ -278,76 +277,20 @@ export default function Home() {
           style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(2,6,23,0.6) 85%, #000f28 100%)', zIndex: 2 }}
         />
 
-        {/* ── NAV BAR ── */}
-        <nav className="relative flex items-center justify-between px-5 md:px-12 py-5" style={{ zIndex: 10 }}>
-          {/* Brand */}
-          <div className="flex items-center gap-2">
-            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#37b5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" fill="#000f28" />
-              </svg>
-            </div>
-            <span style={{ fontSize: '18px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-              SMARTER <span style={{ color: '#37b5ff' }}>GOALIE</span>
-            </span>
-          </div>
+        {/* The site header (components/header-7) is position: fixed and draws the
+            logo, menu and Login. This hero used to carry a second nav of its own
+            underneath it — fully covered, but its Login button showed through the
+            header's translucent background as a blue smudge — so it is gone and
+            this spacer just keeps the hero clear of the fixed header. */}
+        <div aria-hidden="true" className="shrink-0 h-[77px] md:h-[73px]" />
 
-          {/* Nav links — desktop only */}
-          <div className="hidden md:flex items-center gap-8">
-            {[
-              { label: 'Features', action: () => { const el = document.getElementById('features'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-              { label: 'About', action: () => router.push('/who-we-are') },
-              { label: 'Pricing', action: () => router.push('/pricing') },
-            ].map(({ label, action }) => (
-              <button key={label} onClick={action} style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', letterSpacing: '0.5px', transition: 'color 0.15s', background: 'none', border: 'none' }}
-                onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = '#37b5ff')}
-                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.75)')}
-              >{label}</button>
-            ))}
-          </div>
-
-          {/* Right side: Login + mobile hamburger */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="hover:opacity-90 transition-opacity"
-              style={{ background: '#37b5ff', color: '#000f28', padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px', cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' }}
-            >
-              Login
-            </button>
-            <button
-              className="flex items-center justify-center md:hidden"
-              onClick={() => setMobileNavOpen(o => !o)}
-              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', cursor: 'pointer', padding: '8px', color: '#fff', minWidth: '40px', minHeight: '40px' }}
-            >
-              {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </nav>
-
-        {/* Mobile nav dropdown */}
-        {mobileNavOpen && (
-          <div className="md:hidden" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'rgba(2,14,46,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '8px 20px 20px', zIndex: 9 }}>
-            {[
-              { label: 'Features', action: () => { setMobileNavOpen(false); const el = document.getElementById('features'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-              { label: 'About', action: () => { router.push('/who-we-are'); setMobileNavOpen(false); } },
-              { label: 'Pricing', action: () => { router.push('/pricing'); setMobileNavOpen(false); } },
-              { label: 'Contact', action: () => { router.push('/contact'); setMobileNavOpen(false); } },
-            ].map(({ label, action }) => (
-              <button key={label} onClick={action}
-                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: '15px', fontWeight: 600, color: 'rgba(255,255,255,0.85)', padding: '16px 0' }}
-              >{label}</button>
-            ))}
-          </div>
-        )}
-
-        {/* ── MOBILE HERO IMAGE ── phones only. Its own band, nothing drawn on
-            top, sized so the goalie reads head-to-pads; the copy starts below it.
+        {/* ── MOBILE HERO IMAGE ── phones only. Its own band with the goalie
+            uncovered; the copy below rides up over the faded foot of the photo
+            so the two read as one piece instead of a picture and then a page.
             `cover` on a band this shape leaves horizontal slack, so centring keeps
             him in frame from 320px up. */}
         <div
-          className="relative md:hidden w-full shrink-0 h-[30vh] min-h-[180px] max-h-[300px] [@media(max-height:700px)]:h-[24vh] [@media(max-height:700px)]:min-h-[140px]"
+          className="relative md:hidden w-full shrink-0 h-[36vh] min-h-[200px] max-h-[340px] [@media(max-height:700px)]:h-[28vh] [@media(max-height:700px)]:min-h-[160px]"
           style={{ zIndex: 3 }}
         >
           <div
@@ -363,12 +306,12 @@ export default function Home() {
           {/* melts the photo into the navy the copy sits on */}
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(to bottom, rgba(2,14,46,0.35) 0%, rgba(2,14,46,0.05) 30%, rgba(2,14,46,0.55) 78%, #020e2e 100%)' }}
+            style={{ background: 'linear-gradient(to bottom, rgba(2,14,46,0.3) 0%, rgba(2,14,46,0) 25%, rgba(2,14,46,0.25) 55%, rgba(2,14,46,0.8) 82%, #020e2e 100%)' }}
           />
         </div>
 
         {/* ── HERO CONTENT ── */}
-        <div className="relative flex-1 flex items-center" style={{ zIndex: 10 }}>
+        <div className="relative flex-1 flex items-start md:items-center -mt-8 md:mt-0" style={{ zIndex: 10 }}>
           <div className="w-full max-w-7xl mx-auto pl-4 md:pl-6 pr-6 md:pr-16 py-5 md:py-12">
             <div className="w-full md:max-w-[600px]">
 
@@ -400,23 +343,28 @@ export default function Home() {
               </h2>
 
               <p
-                className="uppercase font-semibold mb-5 md:mb-8"
-                style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', fontSize: '11px' }}
+                className="uppercase font-semibold mb-5 md:mb-8 text-white/60 md:text-white/40"
+                style={{ letterSpacing: '0.1em', fontSize: '11px' }}
               >
                 It meets you where you are — and takes you where you&rsquo;re going.
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                {/* Video button */}
+              <div className="flex flex-col items-start sm:flex-row sm:items-stretch gap-3 sm:gap-4">
+                {/* Coach Mike. Placeholder: no recording is wired to this yet, see
+                    docs/2026-09-13-chase-to-michael.md section 3. Compact on
+                    phones (it used to sit on the photo, then the photo was left
+                    clean); stacked under the primary CTA there, and to its left
+                    from sm up. */}
                 <button
-                  className="flex items-center gap-3 cursor-pointer transition-all"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 26px 8px 8px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '999px', whiteSpace: 'nowrap' }}
+                  type="button"
+                  className="order-2 sm:order-1 flex items-center gap-2.5 md:gap-3 cursor-pointer transition-all py-[5px] pl-[5px] pr-5 md:py-2 md:pl-2 md:pr-[26px] text-[11px] md:text-xs"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '999px', whiteSpace: 'nowrap' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                 >
-                  <span className="flex items-center justify-center shrink-0" style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
-                    <Play size={14} fill="#020617" color="#020617" style={{ marginLeft: '2px' }} />
+                  <span className="flex items-center justify-center shrink-0 h-[30px] w-[30px] md:h-[38px] md:w-[38px]" style={{ borderRadius: '50%', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+                    <Play className="h-3 w-3 md:h-3.5 md:w-3.5" fill="#020617" color="#020617" style={{ marginLeft: '2px' }} />
                   </span>
                   COACH MIKE
                 </button>
@@ -424,8 +372,8 @@ export default function Home() {
                 {/* Primary CTA */}
                 <button
                   onClick={() => router.push('/explain')}
-                  className="transition-all duration-200"
-                  style={{ background: '#42a5f5', color: '#fff', fontWeight: 800, fontSize: '12px', letterSpacing: '0.15em', padding: '14px 32px', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 0 24px rgba(66,165,245,0.45)' }}
+                  className="order-1 sm:order-2 px-6 py-3 md:px-8 md:py-3.5 transition-all duration-200"
+                  style={{ background: '#42a5f5', color: '#fff', fontWeight: 800, fontSize: '12px', letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '12px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 0 24px rgba(66,165,245,0.45)' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 36px rgba(66,165,245,0.7)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(66,165,245,0.45)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
                 >
@@ -438,7 +386,7 @@ export default function Home() {
 
         {/* Bottom brand watermark */}
         <div className="relative pb-6 flex justify-center md:justify-end md:px-12" style={{ zIndex: 2 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.15)', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '3px', textTransform: 'uppercase' }}>
             © SMARTER GOALIE
           </span>
         </div>
@@ -448,7 +396,7 @@ export default function Home() {
       <>
           <section id="features" className="pt-20 pb-0" style={{ background: 'linear-gradient(180deg, #000f28 0%, #041530 100%)' }}>
             <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 mb-24">
-              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>FEATURES</span>
+              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold tracking-[3px] uppercase mb-3" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>FEATURES</span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4">NOTHING LEFT TO THE IMAGINATION.</h2>
               <p className="text-zinc-300 text-base md:text-lg leading-relaxed max-w-2xl mb-3">
                 We get to know you. You get to know your game. You grow — and the system grows with you. And the best part? It&rsquo;s always there, for as long as you need it.

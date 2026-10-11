@@ -104,7 +104,7 @@ export default function FoundingPage() {
         <div className="max-w-3xl mx-auto px-5 sm:px-8 w-full" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '6px 16px', marginBottom: '20px' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>There Will Only Ever Be One First Group</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2.5px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>There Will Only Ever Be One First Group</p>
           </div>
 
           <h1 style={{ fontSize: 'clamp(28px, 5vw, 56px)', fontWeight: 900, lineHeight: 1.02, letterSpacing: '-0.03em', margin: '0 0 16px', color: '#fff', textTransform: 'uppercase' }}>
@@ -124,7 +124,7 @@ export default function FoundingPage() {
 
             {/* The offer */}
             <div className="founding-card" style={{ padding: '28px 26px' }}>
-              <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE, textTransform: 'uppercase', marginBottom: '14px' }}>The Founding Offer</p>
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE, textTransform: 'uppercase', marginBottom: '14px' }}>The Founding Offer</p>
               <ul style={{ display: 'flex', flexDirection: 'column', gap: '14px', margin: 0, padding: 0, listStyle: 'none' }}>
                 {OFFER_POINTS.map(point => (
                   <li key={point} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
@@ -179,30 +179,30 @@ export default function FoundingPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="founding-card" style={{ padding: '28px 26px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE, textTransform: 'uppercase', marginBottom: '18px' }}>Claim Your Spot</p>
+                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE, textTransform: 'uppercase', marginBottom: '18px' }}>Claim Your Spot</p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div>
                     <label htmlFor="founding-name" style={labelStyle}>Your Name *</label>
-                    <input id="founding-name" name="name" value={form.name} onChange={handleChange} placeholder="First and last name" required maxLength={120} style={inputStyle} className="founding-input" />
+                    <input id="founding-name" name="name" value={form.name} onChange={handleChange} placeholder="First and last name" required maxLength={120} style={inputStyle} className="founding-input field-16" />
                   </div>
                   <div>
                     <label htmlFor="founding-email" style={labelStyle}>Email *</label>
-                    <input id="founding-email" type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required maxLength={200} style={inputStyle} className="founding-input" />
+                    <input id="founding-email" type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required maxLength={200} style={inputStyle} className="founding-input field-16" />
                     <p style={{ fontSize: '11.5px', color: MUTED, margin: '6px 0 0', lineHeight: 1.5 }}>Your payment instructions arrive here.</p>
                   </div>
                   <div>
                     <label htmlFor="founding-goalie" style={labelStyle}>Goalie&apos;s Name *</label>
-                    <input id="founding-goalie" name="goalieName" value={form.goalieName} onChange={handleChange} placeholder="The goalie this membership is for" required maxLength={120} style={inputStyle} className="founding-input" />
+                    <input id="founding-goalie" name="goalieName" value={form.goalieName} onChange={handleChange} placeholder="The goalie this membership is for" required maxLength={120} style={inputStyle} className="founding-input field-16" />
                     <p style={{ fontSize: '11.5px', color: MUTED, margin: '6px 0 0', lineHeight: 1.5 }}>You&apos;ll put this name in the e-transfer message — it&apos;s how your payment is matched to your account.</p>
                   </div>
                   <div>
                     <label htmlFor="founding-phone" style={labelStyle}>Phone <span style={{ color: MUTED, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
-                    <input id="founding-phone" type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="Your number" maxLength={40} style={inputStyle} className="founding-input" />
+                    <input id="founding-phone" type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="Your number" maxLength={40} style={inputStyle} className="founding-input field-16" />
                   </div>
                   <div>
                     <label htmlFor="founding-note" style={labelStyle}>Anything You Want Us to Know <span style={{ color: MUTED, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
-                    <textarea id="founding-note" name="note" value={form.note} onChange={handleChange} placeholder="Age, level, what you're hoping to get out of it…" maxLength={2000} style={{ ...inputStyle, minHeight: '90px', resize: 'vertical' }} className="founding-input" />
+                    <textarea id="founding-note" name="note" value={form.note} onChange={handleChange} placeholder="Age, level, what you're hoping to get out of it…" maxLength={2000} style={{ ...inputStyle, minHeight: '90px', resize: 'vertical' }} className="founding-input field-16" />
                   </div>
                 </div>
 

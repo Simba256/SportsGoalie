@@ -4,7 +4,7 @@ test('homepage loads correctly', async ({ page }) => {
   await page.goto('/');
 
   // Check that the page title is correct
-  await expect(page).toHaveTitle(/SmarterGoalie/i);
+  await expect(page).toHaveTitle(/Smarter ?Goalie/i);
 
   // Check that the main heading is visible
   await expect(page.getByRole('heading', { name: /Master Skills/i })).toBeVisible();

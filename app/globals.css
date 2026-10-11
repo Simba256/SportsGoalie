@@ -545,3 +545,11 @@
 .gradient-border-stop-hover:hover {
   animation-play-state: paused;
 }
+
+/* iOS Safari zooms the page when a focused field's text is under 16px. The
+   public forms set their size inline, so the phone override needs !important. */
+@media (max-width: 767px) {
+  .field-16 {
+    font-size: 16px !important;
+  }
+}

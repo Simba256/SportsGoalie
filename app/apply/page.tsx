@@ -277,18 +277,19 @@ export default function ApplyPage() {
 
               <div style={{ marginBottom: '16px' }}>
                 <label htmlFor="displayName" style={labelStyle}>Your full name</label>
-                <input id="displayName" name="displayName" value={form.displayName} onChange={handleChange} style={inputStyle} autoComplete="name" required />
+                <input className="field-16" id="displayName" name="displayName" value={form.displayName} onChange={handleChange} style={inputStyle} autoComplete="name" required />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label htmlFor="email" style={labelStyle}>Email</label>
-                <input id="email" name="email" type="email" value={form.email} onChange={handleChange} style={inputStyle} autoComplete="email" required />
+                <input className="field-16" id="email" name="email" type="email" value={form.email} onChange={handleChange} style={inputStyle} autoComplete="email" required />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label htmlFor="password" style={labelStyle}>Choose a password</label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    className="field-16"
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
@@ -302,7 +303,7 @@ export default function ApplyPage() {
                     type="button"
                     onClick={() => setShowPassword(v => !v)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: MUTED, cursor: 'pointer', padding: 0, display: 'flex' }}
+                    style={{ position: 'absolute', right: '2px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: MUTED, cursor: 'pointer', padding: '10px', display: 'flex' }}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -316,6 +317,7 @@ export default function ApplyPage() {
                 <div style={{ marginBottom: '16px' }}>
                   <label htmlFor="dateOfBirth" style={labelStyle}>Your date of birth</label>
                   <input
+                    className="field-16"
                     id="dateOfBirth"
                     name="dateOfBirth"
                     type="date"

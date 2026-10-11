@@ -169,7 +169,7 @@ export default function RegisterPage() {
 
           {/* Header */}
           <div style={{ marginBottom: '16px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: '6px' }}>
               New here?
             </p>
             <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>
@@ -225,6 +225,7 @@ export default function RegisterPage() {
                 <label htmlFor="role" style={labelStyle}>I am a...</label>
                 <div style={{ position: 'relative' }}>
                   <select
+                    className="field-16"
                     id="role"
                     value={selectedRole}
                     onChange={(e) => setValue('role', e.target.value as 'parent' | 'coach' | 'student')}
@@ -247,6 +248,7 @@ export default function RegisterPage() {
               <div>
                 <label htmlFor="displayName" style={labelStyle}>Full Name</label>
                 <input
+                  className="field-16"
                   id="displayName"
                   placeholder="Your full name"
                   {...register('displayName')}
@@ -265,6 +267,7 @@ export default function RegisterPage() {
               <div>
                 <label htmlFor="dateOfBirth" style={labelStyle}>Date of Birth</label>
                 <input
+                  className="field-16"
                   id="dateOfBirth"
                   type="date"
                   max={todayISO}
@@ -328,6 +331,7 @@ export default function RegisterPage() {
             <div>
               <label htmlFor="email" style={labelStyle}>Email</label>
               <input
+                className="field-16"
                 id="email"
                 type="email"
                 placeholder="your@email.com"
@@ -346,6 +350,7 @@ export default function RegisterPage() {
                 <label htmlFor="password" style={labelStyle}>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    className="field-16"
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
@@ -356,7 +361,7 @@ export default function RegisterPage() {
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} data-testid="toggle-password"
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}>
+                    style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: '10px', display: 'flex' }}>
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
@@ -367,6 +372,7 @@ export default function RegisterPage() {
                 <label htmlFor="confirmPassword" style={labelStyle}>Confirm Password</label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    className="field-16"
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm"
@@ -377,7 +383,7 @@ export default function RegisterPage() {
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'} data-testid="toggle-confirm-password"
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}>
+                    style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: '10px', display: 'flex' }}>
                     {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
@@ -386,16 +392,16 @@ export default function RegisterPage() {
             </div>
 
             {/* Terms */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
               <input type="checkbox" {...register('agreeToTerms')} data-testid="agree-terms-checkbox"
-                style={{ width: '14px', height: '14px', accentColor: BLUE, cursor: 'pointer', marginTop: '2px', flexShrink: 0 }} />
+                style={{ width: '22px', height: '22px', accentColor: BLUE, cursor: 'pointer', marginTop: '-2px', flexShrink: 0 }} />
               <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
                 I agree to the{' '}
                 <Link href="/terms" style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>Terms of Service</Link>{' '}
                 and{' '}
                 <Link href="/privacy" style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</Link>
               </span>
-            </div>
+            </label>
             {errors.agreeToTerms && <p style={{ fontSize: '11px', color: '#f87171', marginTop: '-4px' }} data-testid="agree-terms-error">{errors.agreeToTerms.message}</p>}
 
             {/* Submit */}
