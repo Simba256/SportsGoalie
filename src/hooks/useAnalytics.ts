@@ -294,7 +294,7 @@ function aggregateAnalytics(
     pillarMap.set(slug, existing);
   }
 
-  // Always render all 7 official pillars in a stable order.
+  // Always render all 8 official pillars in a stable order.
   const pillarBreakdown: PillarBreakdown[] = PILLARS.map((pillar) => {
     const v = pillarMap.get(pillar.slug) || { attempts: 0, totalScore: 0, timeSpent: 0, bestScore: 0 };
 

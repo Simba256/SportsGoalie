@@ -183,7 +183,7 @@ const ACT_EIGHT = {
 
 const STATS = [
   { value: '60+', label: 'Years\nBuilding', color: BLUE },
-  { value: '7',   label: 'Pillars\nSystem',  color: BLUE2 },
+  { value: '8',   label: 'Pillars\nSystem',  color: BLUE2 },
   { value: '9',   label: 'Pro\nSeasons',     color: BLUE3 },
   { value: '100', label: 'Goalies\nSelected', color: BLUE4 },
 ];
@@ -256,7 +256,7 @@ export default function WhoWeArePage() {
             variants={heroItem}
             style={{ fontSize: 'clamp(20px, 2.8vw, 34px)', fontWeight: 800, color: BLUE2, margin: '0 0 28px', letterSpacing: '-0.01em', textShadow: '0 0 20px rgba(96,205,255,0.33)' }}
           >
-            Six decades. Seven pillars. One system built from nothing.
+            Six decades. Eight pillars. One system built from nothing.
           </motion.p>
           <motion.p
             variants={heroItem}
@@ -376,7 +376,7 @@ export default function WhoWeArePage() {
             </p>
 
             <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(184,212,232,0.88)', lineHeight: 1.85, maxWidth: '720px', marginBottom: '28px', fontStyle: 'italic', borderLeft: '3px solid rgba(14,165,233,0.4)', paddingLeft: '16px' }}>
-              And notice, puzzles, not a puzzle. Goaltending was never one picture. It&apos;s seven, the 7 Pillars, one complete system.
+              And notice, puzzles, not a puzzle. Goaltending was never one picture. It&apos;s eight, the 8 Pillars, one complete system.
             </p>
 
             <div style={{ background: 'rgba(55,181,255,0.06)', border: '1px solid rgba(55,181,255,0.22)', borderLeft: `4px solid ${BLUE}`, borderRadius: '0 16px 16px 0', padding: '28px 32px', maxWidth: '720px' }}>

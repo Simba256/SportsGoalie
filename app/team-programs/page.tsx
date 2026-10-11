@@ -365,12 +365,12 @@ export default function TeamProgramsPage() {
         </div>
       </section>
 
-      {/* ── G: 7 Pillar Dashboard ── */}
+      {/* ── G: 8 Pillar Dashboard ── */}
       <section style={{ ...sec, background: 'radial-gradient(circle at 28% 55%, #0d1b3a 0%, #050912 100%)' }}>
         {/* Diagonal texture */}
         <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 12px)', pointerEvents: 'none', zIndex: 0 }} />
-        {/* Ghost "VII" */}
-        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(180px, 28vw, 460px)', fontWeight: 900, fontStyle: 'italic', color: 'rgba(96,205,255,0.03)', letterSpacing: '-0.04em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>VII</div>
+        {/* Ghost "VIII" */}
+        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(180px, 28vw, 460px)', fontWeight: 900, fontStyle: 'italic', color: 'rgba(96,205,255,0.03)', letterSpacing: '-0.04em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>VIII</div>
         {/* Radial glows */}
         <div style={{ position: 'absolute', top: '-8%', left: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(0,242,255,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '10%', right: '30%', width: '440px', height: '440px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.05) 0%, transparent 65%)', pointerEvents: 'none' }} />
@@ -382,7 +382,7 @@ export default function TeamProgramsPage() {
             <div style={{ width: '6px', height: '100px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
               <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The Smarter Goalie System</p>
-              <h2 style={{ fontSize: 'clamp(36px, 5vw, 62px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>Your 7 Pillar Dashboard</h2>
+              <h2 style={{ fontSize: 'clamp(36px, 5vw, 62px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>Your 8 Pillar Dashboard</h2>
             </div>
           </div>
 

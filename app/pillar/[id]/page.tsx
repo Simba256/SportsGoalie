@@ -10,6 +10,8 @@ import { TiltCard } from '@/components/ui/tilt-card';
 import { ShaderBackground } from '@/components/ui/hero-shader';
 import {
   PILLAR_FROM_CONTEXT,
+  PUBLIC_PILLARS,
+  PUBLIC_PILLAR_PAGE_NUMBER,
   pillarDetailHref,
   resolvePillarFrom,
   sevenPillarsHubHref,
@@ -252,17 +254,18 @@ const PILLARS: Record<string, PillarData> = {
       },
     ],
   },
-  // NOTE: in the app, Game and Practice are now two separate pillars (5 and 6),
-  // and off-ice content has moved to Lifestyle. This public page is still the
-  // single combined sales page, because splitting it needs new long-form copy in
-  // Coach Mike's voice — including his voice-note labels — which we can't write
-  // for him. Awaiting his copy before this becomes two pages.
+  // NOTE: Game and Practice are separate pillars (6 and 7) on the hub and in the
+  // app, and off-ice content has moved to Lifestyle (8). This public page is still
+  // the single combined sales page — both the Game card and the Practice card open
+  // it — because splitting it needs new long-form copy in Coach Mike's voice,
+  // including his voice-note labels, which we can't write for him. Awaiting his
+  // copy before this becomes two pages.
   '6': {
-    number: '06',
+    number: '06–07',
     title: 'Game & Practice Performance',
     titleGroups: [2, 1, 1],
     subtitle: 'Game & practice charting — the building blocks of discovering your game.',
-    intro: 'Every goalie wants the tailored experience. Few understand where it comes from. It comes from your baseline — your game as it truly is, across all 7 Pillars. Hope is not a game plan. Your charts reveal your game — the good and the areas that need attention — and together we fill the gaps.',
+    intro: 'Every goalie wants the tailored experience. Few understand where it comes from. It comes from your baseline — your game as it truly is, across all 8 Pillars. Hope is not a game plan. Your charts reveal your game — the good and the areas that need attention — and together we fill the gaps.',
     accent: '#22d3ee',
     accentAlt: BLUE3,
     facts: [
@@ -273,14 +276,14 @@ const PILLARS: Record<string, PillarData> = {
       },
       {
         statement: 'THE 4 TIERS — FROM YOUR FIRST CHART TO THE #1 GOALIE.',
-        support: 'The 7 Pillars are what you learn. The 4 Tiers are how you climb — the journey of self-evaluation, knowledge acquisition, and consistent performance that merges mental and physical development into one path. Each Tier is earned. Nothing is skipped, nothing is rushed — the system moves with you as your knowledge and skill solidify.',
+        support: 'The 8 Pillars are what you learn. The 4 Tiers are how you climb — the journey of self-evaluation, knowledge acquisition, and consistent performance that merges mental and physical development into one path. Each Tier is earned. Nothing is skipped, nothing is rushed — the system moves with you as your knowledge and skill solidify.',
         voiceLabel: 'HEAR COACH MIKE: THE 4 TIERS AND HOW EACH ONE IS EARNED, NEVER RUSHED',
         extra: {
           label: 'The 4 Tiers',
           items: [
             'Tier 1: Growing Your Fundamentals Chart — your chart is a living document, the story of your journey',
             'Tier 2: Building Your Practice Schedule for Reaffirmation — every rep reaffirms knowledge until the technique is owned',
-            'Tier 3: Knowledge Base Across the 7 Pillars — the knowledge stops living on paper and starts living in you',
+            'Tier 3: Knowledge Base Across the 8 Pillars — the knowledge stops living on paper and starts living in you',
             'Tier 4: Pinnacle Routine & Lifestyle — The #1 Goalie — the Intelligent Athletic Goaltender',
           ],
         },
@@ -306,16 +309,16 @@ const PILLARS: Record<string, PillarData> = {
     ],
   },
   '7': {
-    number: '07',
+    number: '08',
     title: 'Lifestyle',
     titleOneLine: true,
     subtitle: 'The goalie you are when nobody is watching.',
-    intro: 'Six Pillars live at the rink. This one lives everywhere else — and it decides what the other six are worth. Lifestyle is the pillar that never takes a shift off: how you sleep, how you fuel, how you recover, how you carry yourself when there\'s no net in sight.',
+    intro: 'Seven Pillars live at the rink. This one lives everywhere else — and it decides what the other seven are worth. Lifestyle is the pillar that never takes a shift off: how you sleep, how you fuel, how you recover, how you carry yourself when there\'s no net in sight.',
     accent: BLUE2,
     accentAlt: BLUE,
     facts: [
       {
-        statement: 'SIX PILLARS LIVE AT THE RINK. THIS ONE LIVES EVERYWHERE ELSE.',
+        statement: 'SEVEN PILLARS LIVE AT THE RINK. THIS ONE LIVES EVERYWHERE ELSE.',
         support: 'Sport is athletic — hockey takes athletics — and athletics are built in the other twenty-two hours of the day. The disciplines, the commitments, the dedication — they\'re not rules we hand you. They\'re choices you grow into, until the goalie and the person are the same one.\n\nTier 4 told you where this journey ends — self-awareness as an individual and an athlete, merged into a lifestyle. This is that lifestyle.',
         voiceLabel: 'HEAR COACH MIKE: THE PILLAR THAT DECIDES WHAT ALL THE OTHERS ARE WORTH',
       },
@@ -337,7 +340,7 @@ const PILLARS: Record<string, PillarData> = {
       },
       {
         statement: 'FROM PILLAR TO IDENTITY — THE INTELLIGENT ATHLETIC GOALTENDER.',
-        support: 'Every Pillar climbs toward the same place. Tier 4 — the Pinnacle Routine & Lifestyle — is where the knowledge, the charts, the practice discipline, and the self-awareness stop being things you do and become who you are.\n\nThe routines aren\'t assigned anymore; they\'re custom-created from knowing yourself with precision. The disciplines, the commitments, the dedication — chosen, not imposed.\n\nThe other six Pillars build your game. This one decides how long you keep it.',
+        support: 'Every Pillar climbs toward the same place. Tier 4 — the Pinnacle Routine & Lifestyle — is where the knowledge, the charts, the practice discipline, and the self-awareness stop being things you do and become who you are.\n\nThe routines aren\'t assigned anymore; they\'re custom-created from knowing yourself with precision. The disciplines, the commitments, the dedication — chosen, not imposed.\n\nThe other seven Pillars build your game. This one decides how long you keep it.',
         voiceLabel: 'HEAR COACH MIKE: FROM PILLAR TO IDENTITY AND WHAT THE INTELLIGENT ATHLETIC GOALTENDER LOOKS LIKE',
       },
       {
@@ -355,7 +358,7 @@ const PILLARS: Record<string, PillarData> = {
       },
     ],
     close: {
-      statement: 'SEVEN PILLARS. ONE COMPLETE SYSTEM. BUILT ON SIX DECADES. PROVEN ON EVERY GOALIE IT HAS EVER TOUCHED.',
+      statement: 'EIGHT PILLARS. ONE COMPLETE SYSTEM. BUILT ON SIX DECADES. PROVEN ON EVERY GOALIE IT HAS EVER TOUCHED.',
       support: 'Every goalie Coach Mike has ever coached advanced to AA or AAA status. Not one stayed behind.\n\nThe system is not theory. It is not a program. It is a mathematical, systems-based approach to goaltending development that has been stress-tested for sixty years.\n\nIt has never been successfully challenged.\n\nTEST US AND SEE. CHALLENGE US AND KNOW.',
     },
   },
@@ -517,7 +520,7 @@ function PillarPageContent() {
             onClick={() => router.push(sevenPillarsHubHref(fromKey))}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 800, letterSpacing: '2.5px', color: BLUE2, textTransform: 'uppercase', padding: '10px 0' }}
           >
-            7 PILLARS
+            8 PILLARS
           </button>
           <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>/</span>
           <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
@@ -541,7 +544,7 @@ function PillarPageContent() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.1)', border: `1px solid ${accent}55`, borderRadius: '50px', padding: '8px 20px', marginBottom: '32px', boxShadow: `0 2px 16px ${accent}22`, backdropFilter: 'blur(8px)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: accent, boxShadow: `0 0 0 3px ${accent}35`, flexShrink: 0 }} />
             <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: accent, margin: 0, textTransform: 'uppercase' }}>
-              PILLAR {pillar.number} — THE 7 PILLAR SYSTEM
+              PILLAR {pillar.number} — THE 8 PILLAR SYSTEM
             </p>
           </div>
 
@@ -586,15 +589,16 @@ function PillarPageContent() {
               the painted dot inside it stays the same 8px, and the negative
               margin keeps the first dot on the text's left edge. */}
           <div style={{ display: 'flex', alignItems: 'center', marginLeft: '-8px' }}>
-            {Array.from({ length: 7 }, (_, i) => {
-              const isActive = String(i + 1) === id;
+            {PUBLIC_PILLARS.map((p) => {
+              // Game and Practice share one page today, so both dots read as active on it.
+              const isActive = String(p.id) === id;
               return (
                 <button
-                  key={i}
+                  key={p.num}
                   type="button"
-                  aria-label={`Pillar ${i + 1}`}
+                  aria-label={`Pillar ${p.num} — ${p.label}`}
                   aria-current={isActive ? 'page' : undefined}
-                  onClick={() => router.push(pillarDetailHref(i + 1, fromKey))}
+                  onClick={() => router.push(pillarDetailHref(p.id, fromKey))}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 8px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
                 >
                   <span
@@ -612,7 +616,7 @@ function PillarPageContent() {
               );
             })}
             <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.6)', marginLeft: '8px', textTransform: 'uppercase' }}>
-              {id} OF 7
+              {PUBLIC_PILLAR_PAGE_NUMBER[Number(id)]} OF 8
             </span>
           </div>
         </div>
@@ -896,10 +900,10 @@ function PillarPageContent() {
         <FactSection key={i} fact={fact} accent={accent} index={i} />
       ))}
 
-      {/* ── PILLAR 7 CLOSE ── */}
+      {/* ── LIFESTYLE CLOSE (last page of the public set) ── */}
       {id === '7' && pillar.close && (
           <section style={{ position: 'relative', overflow: 'hidden', padding: 'clamp(100px,12vw,160px) 0', background: 'linear-gradient(160deg, #0d2848 0%, #133050 100%)' }}>
-          <div style={{ position: 'absolute', right: '-60px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(200px,30vw,440px)', fontWeight: 900, color: 'rgba(255,255,255,0.018)', letterSpacing: '-20px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>VII</div>
+          <div style={{ position: 'absolute', right: '-60px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(200px,30vw,440px)', fontWeight: 900, color: 'rgba(255,255,255,0.018)', letterSpacing: '-20px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>VIII</div>
           <div style={{ position: 'absolute', top: '-20%', left: '50%', width: '800px', height: '800px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.1) 0%, transparent 70%)', pointerEvents: 'none', transform: 'translateX(-50%)' }} />
           <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
             <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 62px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.025em', margin: '0 0 36px', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -924,7 +928,7 @@ function PillarPageContent() {
                 );
               })}
             </div>
-            <VoiceButton label="HEAR COACH MIKE: SEVEN PILLARS, SIX DECADES, THE RECORD, AND THE INVITATION" />
+            <VoiceButton label="HEAR COACH MIKE: EIGHT PILLARS, SIX DECADES, THE RECORD, AND THE INVITATION" />
           </div>
         </section>
       )}
@@ -932,41 +936,35 @@ function PillarPageContent() {
       {/* ── PILLAR NAVIGATION ── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) 0', background: 'linear-gradient(160deg, #0d2848 0%, #041530 100%)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full">
-          {/* All 7 pillars overview */}
+          {/* All 8 pillars overview */}
           <div style={{ marginBottom: '52px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 24px' }}>EXPLORE ALL 7 PILLARS</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 items-start" style={{ maxWidth: '960px' }}>
-              {([
-                { num: '01', label: 'MindSet', a: '#00f2ff' },
-                { num: '02', label: 'Skating', a: BLUE2 },
-                { num: '03', label: '7AMS', a: BLUE },
-                { num: '04', label: '6 Zone – 7 Point System™', a: BLUE3 },
-                { num: '05', label: 'Form', a: '#38bdf8' },
-                { num: '06', label: 'Game & Practice', a: '#22d3ee' },
-                { num: '07', label: 'Lifestyle', a: BLUE2 },
-              ] as { num: string; label: string; a: string }[]).map((p, i) => {
-                const isCurrentPillar = String(i + 1) === id;
+            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 24px' }}>EXPLORE ALL 8 PILLARS</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start" style={{ maxWidth: '960px' }}>
+              {PUBLIC_PILLARS.map((p) => {
+                // Game and Practice share one page today, so both read as current on it.
+                const isCurrentPillar = String(p.id) === id;
+                const a = p.accent;
                 return (
                   <TiltCard
-                    key={i}
+                    key={p.num}
                     effect="gravitate"
                     tiltLimit={10}
                     scale={1.06}
                     style={{
-                      border: isCurrentPillar ? `2px solid ${p.a}` : `1px solid ${p.a}33`,
+                      border: isCurrentPillar ? `2px solid ${a}` : `1px solid ${a}33`,
                       borderRadius: '14px',
-                      boxShadow: isCurrentPillar ? `0 0 24px ${p.a}35` : 'none',
+                      boxShadow: isCurrentPillar ? `0 0 24px ${a}35` : 'none',
                       cursor: 'pointer',
                     }}
-                    onClick={() => router.push(pillarDetailHref(i + 1, fromKey))}
+                    onClick={() => router.push(pillarDetailHref(p.id, fromKey))}
                   >
-                    <div style={{ padding: '18px 10px 16px', background: isCurrentPillar ? `linear-gradient(160deg, ${p.a}18, rgba(4,18,44,0.92))` : 'rgba(4,18,44,0.88)', backdropFilter: 'blur(16px)', borderRadius: '13px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '24px', height: '2px', background: p.a, borderRadius: '2px', opacity: isCurrentPillar ? 1 : 0.5 }} />
-                      <p style={{ fontSize: '22px', fontWeight: 900, color: p.a, lineHeight: 1, margin: 0, textShadow: isCurrentPillar ? `0 0 16px ${p.a}80` : 'none' }}>{p.num}</p>
-                      <p style={{ fontSize: '11px', color: isCurrentPillar ? `${p.a}EE` : `${p.a}88`, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.4 }}>{p.label}</p>
+                    <div style={{ padding: '18px 10px 16px', background: isCurrentPillar ? `linear-gradient(160deg, ${a}18, rgba(4,18,44,0.92))` : 'rgba(4,18,44,0.88)', backdropFilter: 'blur(16px)', borderRadius: '13px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '24px', height: '2px', background: a, borderRadius: '2px', opacity: isCurrentPillar ? 1 : 0.5 }} />
+                      <p style={{ fontSize: '22px', fontWeight: 900, color: a, lineHeight: 1, margin: 0, textShadow: isCurrentPillar ? `0 0 16px ${a}80` : 'none' }}>{p.num}</p>
+                      <p style={{ fontSize: '11px', color: isCurrentPillar ? `${a}EE` : `${a}88`, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.4 }}>{p.label}</p>
                       {isCurrentPillar && (
-                        <div style={{ background: `${p.a}22`, border: `1px solid ${p.a}55`, borderRadius: '20px', padding: '2px 8px' }}>
-                          <p style={{ fontSize: '11px', color: p.a, fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>CURRENT</p>
+                        <div style={{ background: `${a}22`, border: `1px solid ${a}55`, borderRadius: '20px', padding: '2px 8px' }}>
+                          <p style={{ fontSize: '11px', color: a, fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>CURRENT</p>
                         </div>
                       )}
                     </div>
@@ -987,7 +985,7 @@ function PillarPageContent() {
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; }}
                 >
                   <ArrowLeft size={14} />
-                  PILLAR {prevId}
+                  PILLAR {PUBLIC_PILLAR_PAGE_NUMBER[Number(prevId)]}
                 </button>
               )}
             </div>
@@ -997,7 +995,7 @@ function PillarPageContent() {
               onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = BLUE2; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'; }}
             >
-              ALL 7 PILLARS
+              ALL 8 PILLARS
             </button>
             <div>
               {hasNext && (
@@ -1007,7 +1005,7 @@ function PillarPageContent() {
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.1)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; }}
                 >
-                  PILLAR {nextId}
+                  PILLAR {PUBLIC_PILLAR_PAGE_NUMBER[Number(nextId)]}
                   <ArrowLeft size={14} style={{ transform: 'rotate(180deg)' }} />
                 </button>
               )}

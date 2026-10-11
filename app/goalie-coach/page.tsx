@@ -352,7 +352,7 @@ export default function GoalieCoachPage() {
           <h2 className="pl-0 sm:pl-14" style={{ fontSize: 'clamp(24px, 3.6vw, 46px)', fontWeight: 900, letterSpacing: '-0.02em', color: '#fff', margin: '0 0 40px' }}>What Smarter Goalie gives the Goalie Coach:</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" style={{ gap: '14px', alignItems: 'stretch', width: '100%', maxWidth: '1400px', marginBottom: '40px' }}>
             {[
-              { label: 'Complete 7 Pillar System', desc: 'Access to the deepest goaltending curriculum available' },
+              { label: 'Complete 8 Pillar System', desc: 'Access to the deepest goaltending curriculum available' },
               { label: 'Charting Architecture', desc: 'Factor Ratios, Development Loop, cross-reference engine — all accessible' },
               { label: "Feel Factor & Mind's Eye Frameworks", desc: 'Trainable. Most programs do not train them at all.' },
               { label: 'A Peer Conversation with Coach Mike', desc: 'Not a student relationship. Coach Mike speaks to you as a peer.' },

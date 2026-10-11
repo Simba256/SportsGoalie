@@ -131,7 +131,7 @@ export default function TheSystemPage() {
             variants={heroItem}
             style={{ fontSize: 'clamp(30px, 5vw, 68px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 28px', color: '#fff', maxWidth: '920px' }}
           >
-            SEVEN PILLARS.<br />
+            EIGHT PILLARS.<br />
             <span style={{ color: BLUE2 }}>ONE COMPLETE ARCHITECTURE.</span><br />
             <span style={{ color: RED }}>BUILT ON SIX DECADES.</span>
           </motion.h1>
@@ -149,10 +149,10 @@ export default function TheSystemPage() {
         </motion.div>
       </section>
 
-      {/* ── C: 7 PILLARS OVERVIEW ── */}
+      {/* ── C: 8 PILLARS OVERVIEW ── */}
       <PillarsArchitectureSection
         voiceButton={
-          <VoiceButton label="Coach Mike: The 7 Pillars" />
+          <VoiceButton label="Coach Mike: The 8 Pillars" />
         }
       />
 
@@ -709,10 +709,10 @@ export default function TheSystemPage() {
                           <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: BLUE2, flexShrink: 0 }} />
                           <span style={{ fontSize: '11px', color: 'rgba(148,200,232,0.7)', fontWeight: 600 }}>Pillars Completed</span>
                         </div>
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: BLUE2 }}>4 / 7</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: BLUE2 }}>4 / 8</span>
                       </div>
                       <div style={{ height: '4px', background: 'rgba(55,181,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: '57%', background: `linear-gradient(90deg, ${BLUE}, ${BLUE2})`, borderRadius: '4px', boxShadow: `0 0 10px ${BLUE}80` }} />
+                        <div style={{ height: '100%', width: '50%', background: `linear-gradient(90deg, ${BLUE}, ${BLUE2})`, borderRadius: '4px', boxShadow: `0 0 10px ${BLUE}80` }} />
                       </div>
                     </div>
 
