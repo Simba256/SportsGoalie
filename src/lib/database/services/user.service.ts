@@ -17,6 +17,8 @@ import {
 import { VideoQuizProgress } from '@/types/video-quiz';
 import { Timestamp } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
+import { takeStreak } from '@/lib/training/attempt-streak';
+import { ownedSkillIds } from '@/lib/training/owned';
 import { generateCoachCode, normalizeCoachCode } from '../../utils/coach-code-generator';
 
 /**
@@ -487,68 +489,20 @@ export class UserService extends BaseDatabaseService {
         ? Math.round(attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / quizzesCompleted)
         : 0;
 
-      // Count unique skills attempted (not just passed) for video quizzes
-      const attemptedSkillIds = new Set<string>();
-      attempts.forEach(attempt => {
-        if (attempt.skillId) {
-          attemptedSkillIds.add(attempt.skillId);
-        }
-      });
+      // Skills done are skills OWNED (every graded question got right at least once), the
+      // same rule the pillar rings and the pillar page use. This used to count every skill a
+      // goalie had merely taken a check for, which put "Skills Done" ahead of the rings.
+      const skillsOwned = ownedSkillIds(attempts);
 
       const completedSportsCount = sportProgressItems.filter(
         (progress) => progress.status === 'completed'
       ).length;
 
-      // Calculate streak from quiz attempt dates
-      const attemptDates = attempts
-        .map(a => {
-          if (a.submittedAt) {
-            const date = typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt
-              ? a.submittedAt.toDate()
-              : new Date(a.submittedAt as unknown as string | number);
-            return date.toISOString().split('T')[0];
-          }
-          return null;
-        })
-        .filter((d): d is string => d !== null)
-        .sort()
-        .reverse();
-
-      let currentStreak = 0;
-      let longestStreak = 0;
-      let streakCount = 0;
-      let maxStreakCount = 0;
-      const today = new Date().toISOString().split('T')[0];
-
-      for (let i = 0; i < attemptDates.length; i++) {
-        const date = attemptDates[i];
-        const prevDate = i > 0 ? attemptDates[i - 1] : null;
-
-        if (i === 0) {
-          const daysDiff = Math.floor(
-            (new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24)
-          );
-          if (daysDiff <= 1) {
-            streakCount = 1;
-            currentStreak = 1;
-          }
-        } else if (prevDate) {
-          const daysBetween = Math.floor(
-            (new Date(prevDate).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24)
-          );
-          if (daysBetween === 1) {
-            streakCount++;
-            if (i === attemptDates.length - 1 || streakCount === attemptDates.length) {
-              currentStreak = streakCount;
-            }
-          } else {
-            maxStreakCount = Math.max(maxStreakCount, streakCount);
-            streakCount = 1;
-          }
-        }
-        maxStreakCount = Math.max(maxStreakCount, streakCount);
-      }
-      longestStreak = maxStreakCount;
+      // Streak from the days a take was finished. Read the shared rule rather than a local
+      // loop: the old one dated takes by `submittedAt` (which finishing never sets, so the
+      // streak read 0 for everyone), counted two takes on one day as a break, and only
+      // recorded the current run when it reached the oldest take.
+      const { currentStreak, longestStreak } = takeStreak(attempts);
 
       // Update progress data with calculated values
       const updatedProgress: UserProgress = {
@@ -556,7 +510,7 @@ export class UserService extends BaseDatabaseService {
         overallStats: {
           ...progressResult.data.overallStats,
           totalTimeSpent,
-          skillsCompleted: attemptedSkillIds.size, // Unique skills for which quizzes were attempted
+          skillsCompleted: skillsOwned.size,
           sportsCompleted: completedSportsCount,
           quizzesCompleted, // Total video quiz attempts
           averageQuizScore,

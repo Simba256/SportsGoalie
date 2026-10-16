@@ -10,7 +10,7 @@ import {
   Clock,
   Target,
   CheckCircle,
-  XCircle,
+  RotateCcw,
   AlertCircle,
   GraduationCap,
   BookOpen
@@ -50,10 +50,11 @@ export function CourseProgress({ courses, loading }: CourseProgressProps) {
 
   const getQuizStatusIcon = (status: string) => {
     switch (status) {
-      case 'passed':
+      case 'owned':
         return <CheckCircle className="h-4 w-4 text-green-400" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-400" />;
+      case 'open':
+        // Still open, not a failure: some question has not been got right yet
+        return <RotateCcw className="h-4 w-4 text-amber-300" />;
       default:
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }

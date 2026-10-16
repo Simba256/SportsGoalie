@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth/context';
 import { getPillarSlugFromDocId, pillarDisplayName } from '@/lib/utils/pillars';
 import { PillarTeachingVoice } from '@/components/audio/PillarTeachingVoice';
 import { scaleToPercentage } from '@/lib/scoring/scale-score';
+import { ownedSkillIds } from '@/lib/training/owned';
 import { SkeletonPillarDetail } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import {
@@ -239,9 +240,12 @@ export default function PillarDetailPage() {
       const map: SkillProgress = {};
       await Promise.all(skills.map(async skill => {
         try {
-          const res = await videoQuizService.getUserVideoQuizAttempts(user.id, { skillId: skill.id, completed: true, limit: 1 });
-          map[skill.id] = (res.success && res.data?.items?.length)
-            ? { percentage: res.data.items[0].percentage, isCompleted: res.data.items[0].isCompleted }
+          // Every finished take, newest first: a skill is done once each question has been got
+          // right on some take (owned), not because the latest take happened to be finished.
+          const res = await videoQuizService.getUserVideoQuizAttempts(user.id, { skillId: skill.id, completed: true, limit: 50 });
+          const takes = res.success ? res.data?.items ?? [] : [];
+          map[skill.id] = takes.length
+            ? { percentage: takes[0].percentage, isCompleted: ownedSkillIds(takes).has(skill.id) }
             : null;
         } catch { map[skill.id] = null; }
       }));

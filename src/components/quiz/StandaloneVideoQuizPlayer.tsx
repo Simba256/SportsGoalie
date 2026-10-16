@@ -10,6 +10,7 @@ import { useCoachAudio } from '@/lib/audio/context';
 import { Loader2 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { secondsToAnswer } from '@/lib/training/answer-timing';
 
 interface StandaloneVideoQuizPlayerProps {
   quiz: VideoQuiz;
@@ -69,6 +70,9 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
   const progressRef = useRef<VideoQuizProgress>(null!);
   const answeredQuestionsRef = useRef<Set<string>>(new Set());
   const shownQuestionsRef = useRef<Set<string>>(new Set());
+  // When the question now on screen appeared. Read when it is answered, so each
+  // answer carries how long the goalie took.
+  const questionShownAtRef = useRef<number | null>(null);
 
   // Dynamic tracking refs
   const currentTimeRef = useRef(0);
@@ -246,6 +250,7 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
     // Use setTimeout to defer state updates and avoid React batching issues
     setTimeout(() => {
       setPlaying(false);
+      questionShownAtRef.current = Date.now();
       setFrozenQuestion(question);
       // A hold that asks nothing, with the choice switched on, has no answer to
       // wait for - it goes straight to PLAY ON / REWIND.
@@ -399,7 +404,7 @@ export const StandaloneVideoQuizPlayer: React.FC<StandaloneVideoQuizPlayerProps>
       isCorrect,
       pointsEarned,
       reflective: isReflective,
-      timeToAnswer: 0,
+      timeToAnswer: secondsToAnswer(questionShownAtRef.current, Date.now()),
       answeredAt: Timestamp.now(),
     };
 

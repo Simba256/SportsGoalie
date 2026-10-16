@@ -20,10 +20,9 @@ interface QuizPerformanceChartProps {
 }
 
 export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
-  const getBarColor = (score: number, passed: boolean) => {
-    if (passed) return 'hsl(142, 76%, 36%)'; // Green for passed
-    if (score >= 70) return 'hsl(45, 93%, 47%)'; // Orange for close
-    return 'hsl(0, 84%, 60%)'; // Red for failed
+  const getBarColor = (passed: boolean) => {
+    if (passed) return 'hsl(142, 76%, 36%)'; // Green once owned
+    return 'hsl(45, 93%, 47%)'; // Amber while still open: never red, a miss is not a failure
   };
 
   // Calculate summary stats
@@ -58,12 +57,12 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
             </div>
             <div className="border rounded-lg p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Passed</p>
+                <p className="text-sm text-muted-foreground">Owned</p>
                 <TrendingUp className="h-4 w-4 text-green-400" />
               </div>
               <p className="text-2xl font-bold mt-2 text-green-400">{passedQuizzes}</p>
               <p className="text-xs text-muted-foreground">
-                {totalQuizzes > 0 ? Math.round((passedQuizzes / totalQuizzes) * 100) : 0}% pass rate
+                {totalQuizzes > 0 ? Math.round((passedQuizzes / totalQuizzes) * 100) : 0}% owned
               </p>
             </div>
             <div className="border rounded-lg p-4">
@@ -132,8 +131,8 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
                                 </div>
                                 <div>
                                   <p className="text-muted-foreground">Status</p>
-                                  <Badge variant={data.passed ? "default" : "destructive"} className="mt-1">
-                                    {data.passed ? "Passed" : "Failed"}
+                                  <Badge variant={data.passed ? "default" : "secondary"} className="mt-1">
+                                    {data.passed ? "Owned" : "Still open"}
                                   </Badge>
                                 </div>
                               </div>
@@ -148,7 +147,7 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
                     {data.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={getBarColor(entry.bestScore, entry.passed)}
+                        fill={getBarColor(entry.passed)}
                       />
                     ))}
                   </Bar>
@@ -180,8 +179,8 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
                         <p className="text-sm font-semibold">{quiz.bestScore}%</p>
                         <p className="text-xs text-muted-foreground">{quiz.attempts} attempts</p>
                       </div>
-                      <Badge variant={quiz.passed ? "default" : "destructive"}>
-                        {quiz.passed ? "Passed" : "Failed"}
+                      <Badge variant={quiz.passed ? "default" : "secondary"}>
+                        {quiz.passed ? "Owned" : "Still open"}
                       </Badge>
                     </div>
                   </div>

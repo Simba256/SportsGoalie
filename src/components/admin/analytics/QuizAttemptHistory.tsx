@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import {
   CheckCircle,
-  XCircle,
+  RotateCcw,
   Clock,
   Calendar,
   TrendingUp,
@@ -233,12 +233,12 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
                         <span className={`font-bold ${
                           attempt.percentage >= 80 ? 'text-green-400' :
                           attempt.percentage >= 60 ? 'text-yellow-400' :
-                          'text-red-400'
+                          'text-muted-foreground'
                         }`}>
                           {attempt.percentage}%
                         </span>
                         {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-400" />}
-                        {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-400" />}
+                        {trend === 'down' && <TrendingDown className="h-4 w-4 text-muted-foreground" />}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {attempt.score}/{attempt.maxScore} pts
@@ -251,8 +251,8 @@ export function QuizAttemptHistory({ attempts, loading }: QuizAttemptHistoryProp
                           <CheckCircle className="h-3 w-3 text-green-400" />
                           <span>{attempt.correctAnswers}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <XCircle className="h-3 w-3 text-red-400" />
+                        <div className="flex items-center gap-1" title="Not yet right">
+                          <RotateCcw className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                           <span>{attempt.incorrectAnswers}</span>
                         </div>
                       </div>
