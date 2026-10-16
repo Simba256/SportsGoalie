@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { VideoUploader } from '@/components/coach/video-uploader';
 import { VideoLibraryPicker } from '@/components/video';
+import { QuizVisibilityControl } from '@/components/admin/QuizVisibilityControl';
+import { visibilityFlags } from '@/lib/training/quiz-visibility';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -212,14 +214,10 @@ function CreateVideoQuizContent() {
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-                  {[{ key: 'isActive', label: 'Active' }, { key: 'isPublished', label: 'Published' }].map(({ key, label }) => (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Toggle checked={quizData[key as keyof typeof quizData] as boolean} onChange={v => handleInputChange(key, v)} />
-                      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px', fontWeight: 500 }}>{label}</p>
-                    </div>
-                  ))}
-                </div>
+                <QuizVisibilityControl
+                  quiz={quizData}
+                  onChange={live => setQuizData(prev => ({ ...prev, ...visibilityFlags(live) }))}
+                />
               </div>
             )}
 
