@@ -85,14 +85,18 @@ describe('placements', () => {
 
 describe('PillarTeachingVoice — 7 Angle-Marker System (pillar_positioning)', () => {
   beforeEach(() => {
-    getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-06', 'V-A-09', 'V-A-10']) });
+    getAllClips.mockResolvedValue({
+      success: true,
+      data: onFile(['V-A-06', 'V-A-08', 'V-A-09', 'V-A-10']),
+    });
   });
 
-  it('stacks V-A-06, then V-A-09, then V-A-10', async () => {
+  it('stacks V-A-06, then V-A-08, then V-A-09, then V-A-10', async () => {
     await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
 
     expect(playButtons()).toEqual([
       'Play Coach Mike: HEAR COACH MIKE: THE 7 ANGLE-MARKER SYSTEM',
+      'Play Coach Mike: HEAR COACH MIKE: ANGLES 1 AND 7 ARE THE SAME',
       'Play Coach Mike: HEAR COACH MIKE: THE 4 LEVEL ARCH SYSTEM',
       'Play Coach Mike: HEAR COACH MIKE: THE THREE LANES OF ATTACK',
     ]);
@@ -101,14 +105,17 @@ describe('PillarTeachingVoice — 7 Angle-Marker System (pillar_positioning)', (
   it('plays the right clip from each button', async () => {
     await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
 
-    const [first, second, third] = screen.getAllByRole('button', { name: /^Play Coach Mike/ });
+    const [first, second, third, fourth] = screen.getAllByRole('button', { name: /^Play Coach Mike/ });
     await act(async () => fireEvent.click(first));
     expect(media.state.playedSources.at(-1)).toBe(url('V-A-06'));
 
     await act(async () => fireEvent.click(second));
-    expect(media.state.playedSources.at(-1)).toBe(url('V-A-09'));
+    expect(media.state.playedSources.at(-1)).toBe(url('V-A-08'));
 
     await act(async () => fireEvent.click(third));
+    expect(media.state.playedSources.at(-1)).toBe(url('V-A-09'));
+
+    await act(async () => fireEvent.click(fourth));
     expect(media.state.playedSources.at(-1)).toBe(url('V-A-10'));
   });
 
@@ -146,26 +153,23 @@ describe('PillarTeachingVoice — 7 Angle-Marker System (pillar_positioning)', (
 });
 
 describe('PillarTeachingVoice — 6 Zone, 7 Point System (pillar_seven_point)', () => {
-  it('stacks V-A-07, then V-A-08 directly beneath it', async () => {
-    getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-07', 'V-A-08']) });
+  it('shows V-A-07 on its own', async () => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-07']) });
     await mount(<PillarTeachingVoice pillarId="pillar_seven_point" />);
 
-    expect(playButtons()).toEqual([
-      'Play Coach Mike: HEAR COACH MIKE: THE 6 ZONE, 7 POINT SYSTEM',
-      'Play Coach Mike: HEAR COACH MIKE: ANGLES 1 AND 7 ARE THE SAME',
-    ]);
+    expect(playButtons()).toEqual(['Play Coach Mike: HEAR COACH MIKE: THE 6 ZONE, 7 POINT SYSTEM']);
     expect(voiceToggles()).toHaveLength(1);
   });
 
-  it('does not carry the 7 Angle-Marker clips, and they do not carry its own', async () => {
+  it('does not carry the 7 Angle-Marker clips, V-A-08 included', async () => {
     getAllClips.mockResolvedValue({
       success: true,
       data: onFile(['V-A-06', 'V-A-07', 'V-A-08', 'V-A-09', 'V-A-10']),
     });
     await mount(<PillarTeachingVoice pillarId="pillar_seven_point" />);
 
-    expect(playButtons()).toHaveLength(2);
-    expect(playButtons().join(' ')).not.toMatch(/ANGLE-MARKER|ARCH|LANES/);
+    expect(playButtons()).toHaveLength(1);
+    expect(playButtons().join(' ')).not.toMatch(/ANGLE-MARKER|ANGLES 1 AND 7|ARCH|LANES/);
   });
 });
 
