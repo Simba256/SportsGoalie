@@ -11,6 +11,8 @@ import { coachChartingService } from '@/lib/database/services/coach-charting.ser
 import { User as UserType, Session, CoachChartEntry } from '@/types';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { PillarCheckInList } from '@/components/charting/PillarCheckInList';
+import { usePillarCheckIns } from '@/hooks/usePillarCheckIns';
 
 const BLUE  = '#37b5ff';
 const GOLD  = '#D4A93B';
@@ -29,6 +31,8 @@ export default function CoachChartingGoaliePage() {
   const [gameSessions, setGameSessions] = useState<Session[]>([]);
   const [coachCharts,  setCoachCharts]  = useState<CoachChartEntry[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
+  // The goalie's own pillar check-ins are saved apart from logged sessions.
+  const checkIns = usePillarCheckIns(goalieId);
 
   // ── Load goalie ───────────────────────────────────────────────────────────
 
@@ -168,6 +172,31 @@ export default function CoachChartingGoaliePage() {
           </div>
         </div>
 
+        {/* ── Pillar check-ins (the goalie's own charts, read-only) ── */}
+        {(checkIns.loading || checkIns.entries.length > 0) && (
+          <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(55,181,255,0.3), transparent)' }} />
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(55,181,255,0.1)' }}>
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>
+                Pillar Check-ins{!checkIns.loading && ` · ${checkIns.entries.length}`}
+              </h2>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px' }}>
+                Charts the goalie filled in from Charting &rarr; Pillar Check-Ins, such as Game Performance. Open one to read the answers.
+              </p>
+            </div>
+            <div style={{ padding: '12px 16px 16px' }}>
+              {checkIns.loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '24px' }}>
+                  <Loader2 size={18} color="rgba(255,255,255,0.3)" style={{ animation: 'spin 1s linear infinite' }} />
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>Loading check-ins…</span>
+                </div>
+              ) : (
+                <PillarCheckInList entries={checkIns.entries} templates={checkIns.templates} />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Game Sessions ── */}
         <div style={{ position: 'relative', background: cardBg, border, borderRadius: '16px', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(212,169,59,0.3), transparent)' }} />
@@ -190,7 +219,10 @@ export default function CoachChartingGoaliePage() {
                   <Trophy size={22} color="rgba(255,255,255,0.2)" />
                 </div>
                 <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>No game sessions yet</p>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>Game sessions will appear here once the goalie logs them.</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+                  Game sessions will appear here once the goalie logs them.
+                  {checkIns.entries.length > 0 && ' Pillar check-ins are listed above.'}
+                </p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
