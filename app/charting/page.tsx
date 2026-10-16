@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { calculateActivityStreak } from '@/lib/utils/streak';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
 import { NewSessionModal } from '@/components/charting/NewSessionModal';
+import { chartTitle } from '@/lib/templates/chart-title';
 
 const CYAN   = '#37b5ff';
 const MINT   = '#34d399';
@@ -230,6 +231,9 @@ export default function ChartingPage() {
               const info = PILLARS.find(p => p.slug === template.pillar);
               if (!info) return null;
               const IconComponent = PILLAR_ICONS[info.icon] || Target;
+              // The chart's own name leads, so a goalie hunting for "the
+              // tournament chart" finds that word; the pillar sits under it.
+              const heading = chartTitle(template.name, info.shortName);
               return (
                 <div
                   key={template.id}
@@ -241,7 +245,12 @@ export default function ChartingPage() {
                   <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <IconComponent size={16} color={CYAN} />
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{info.shortName}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#fff', lineHeight: 1.25 }}>{heading.title}</span>
+                    {heading.pillarLabel && (
+                      <span style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: MUTED, marginTop: '2px' }}>{heading.pillarLabel}</span>
+                    )}
+                  </div>
                   <ArrowRight size={13} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto', flexShrink: 0 }} />
                 </div>
               );

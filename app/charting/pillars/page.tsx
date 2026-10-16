@@ -9,6 +9,7 @@ import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { ArrowLeft, ClipboardList, AlertCircle, BarChart3, PenLine, Target } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toDateSafe } from '@/lib/utils/timestamp';
+import { chartTitle } from '@/lib/templates/chart-title';
 import {
   CYAN,
   MINT,
@@ -215,6 +216,9 @@ export default function PillarChartsIndexPage() {
           {cards.map((card) => {
             const IconComponent = PILLAR_ICONS[card.info.icon] || Target;
             const hasEntries = card.entryCount > 0;
+            // The chart's own name leads so a goalie can find "the tournament
+            // chart" by the word on the card; the pillar is the place it sits under.
+            const heading = chartTitle(card.template.name, card.info.name);
 
             return (
               <div key={card.template.id} style={{ ...panelStyle, display: 'flex', flexDirection: 'column' }}>
@@ -225,8 +229,13 @@ export default function PillarChartsIndexPage() {
                     <IconComponent size={18} color={CYAN} />
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
+                    {heading.pillarLabel && (
+                      <p style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '3px' }}>
+                        {heading.pillarLabel}
+                      </p>
+                    )}
                     <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-0.01em', lineHeight: 1.25 }}>
-                      {card.info.name}
+                      {heading.title}
                     </h3>
                     <p style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginTop: '3px', lineHeight: 1.45 }}>
                       {card.info.description}
