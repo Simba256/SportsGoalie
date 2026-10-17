@@ -128,19 +128,28 @@ export interface CoachAudioStatus {
  * Voice Blocks 3 to 6 (1 and 2 October) did the same for the rest of what is
  * recorded so far: DOP-INTRO and DOP-A to D, PARENT-WELCOME and PARENT-P2 to P8,
  * COACH-WELCOME, V-A-04, 11, 12, 13, 15 and 18, and V-B-02, 04, 06, 07 and 09.
- * V-A-27 to 37 and V-B-01, 03, 05 and 08 came back unchanged. V-A-16, V-A-17 and
- * V-B-10 to 22 are still the 12 September wording; they are updated the same
- * way when their final scripts arrive.
+ * V-A-27 to 37 and V-B-01, 03, 05 and 08 came back unchanged.
  *
- * Two deliberate divergences from the written copy pack, both his and both
- * correct:
+ * Voice Block 7 (his "FINAL, Coach's wording, 6 Oct 2026", received 11 October)
+ * replaced V-B-10 to V-B-19 with new scripts, word for word from his
+ * 00_BLOCK7_SCRIPTS.txt. He says the new takes replace every earlier take of
+ * those numbers. V-B-20 to 22 are Block 8 and are still the 12 September
+ * wording until it arrives. V-A-16 and V-A-17 are in no block so far and are
+ * also still the 12 September wording.
  *
- *   V-B-18 drops the "[N] weeks running." opening — he cannot speak a number
- *   that changes, so the streak count has to be rendered as on-screen text
- *   beside the audio.
+ * Block 7 changed what several triggers say, not just how they say it (V-B-11
+ * no longer mentions seven days, V-B-13 no longer mentions three weeks). When
+ * the message cards are built, their on-screen text must come from these
+ * lines, not from the 12 September copy pack.
+ *
+ * One deliberate divergence from the written copy pack, his and correct:
  *
  *   V-B-22 records only the banner line, not the sub-line. The sub-line was
  *   always meant to be read rather than heard.
+ *
+ * (V-B-18 was a second: it dropped a "[N] weeks running." opening because he
+ * cannot speak a number that changes. The Block 7 script replaced that line
+ * and contains no number.)
  */
 
 export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
@@ -388,70 +397,70 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'triggers',
     readsMessageId: 'B-10',
     scriptLine:
-      "You've got flags in more than one place this week. That usually isn't ten problems - it's one, showing up ten ways, and it's usually tired legs or a rushed read. Don't rebuild anything. Pick the earliest thing in the sequence and fix that.",
+      "You've got flags in more than one place this week. Don't sweat the flags. This is information that we build your knowledge and skill from. Kind of like a road map: we follow the crumbs and find our way to our dream, to becoming an \"Intelligent Athletic Goaltender\" who has created a reputation on being consistent in performance, a member of the team who holds the most important role on the team. How goes the goalie, goes the team. Learn Smart. Play Smart.",
   },
   {
     id: 'V-B-11',
     part: 'triggers',
     readsMessageId: 'B-11',
     scriptLine:
-      "Seven days, no chart. I'm not chasing you - I'm telling you the loop is open. Close it with one chart.",
+      'Charting your game or your practice gives you a voice, a role, a factor in development. You have a support team here, ready to assist you to reach your goal, fulfill your dream. So, are you the driver or a passenger? You chose the most important position on the team and the responsibility it carries. Your teammates, your coach, parents, the fans are looking to your leadership. How goes the goalie, goes the team. Think Smart. Play Smart.',
   },
   {
     id: 'V-B-12',
     part: 'triggers',
     readsMessageId: 'B-12',
     scriptLine:
-      "Three weeks. Whatever pushed you off the ice or off this - I've seen all of it before, and none of it is the end of anything. One chart puts you back in. Start there.",
+      "OK. When we see no action, we know as coaches a conversation to just support you, regardless of where you are, is still here, and if it's welcomed, Coach Mike would like to chat, if you're up to it. My intention is always to encourage and to understand. We all travel our own paths, and if friends and family can help, we should. Please let us know, and cheers for now.",
   },
   {
     id: 'V-B-13',
     part: 'triggers',
     readsMessageId: 'B-13',
     scriptLine:
-      "You're back. Don't try to make up three weeks in one day - that's how a goalie gets hurt and discouraged in the same week. One chart. One zone. Today.",
+      "You're back. Don't try to make up for lost time by rushing. Take a deep breath, and pound your chest like a giant gorilla, shout: I'm here, I'm ready, and I will succeed, knowing I'm never alone on this journey. A team of fellow goalies march with me. Support Smart. Goalie Smart.",
   },
   {
     id: 'V-B-14',
     part: 'triggers',
     readsMessageId: 'B-14',
     scriptLine:
-      "Knowledge Acquisition Confirmed. That means you don't just know it - you can use it. That's the only kind of knowing that's ever been worth anything to a goalie.",
+      'Knowledge Acquisition Confirmed. You are a Smarter Goalie, and that level of smarts is growing. With such knowledge you can be more self-aware, you can be more self-evaluative, leading to higher self-esteem and confidence. The effort is paying off. Translating your new knowledge to your game is a process that requires patience and discipline to stay on point, balanced in understanding, and this approach will serve you well. Think Smart. Play Smart.',
   },
   {
     id: 'V-B-15',
     part: 'triggers',
     readsMessageId: 'B-15',
     scriptLine:
-      'Not confirmed yet - and nobody is timing you. Go back through it once more, then answer it in your own words instead of mine. Your words are the test.',
+      "Hey, just a friendly reminder. When you fall down, and I am sure you have, did you get up most of the time, even if it took a moment or two? Of course you did. You fell off your bike, but you can ride today. You couldn't swim, but you can swim today. You couldn't walk, but one day later, your first steps. You're learning about a position in hockey that is the most complex for most, but not for us. It's broken down, and you might stumble, you might fall, but I promise you will not get up alone. You have a team of passionate goalies to help you and a platform designed for success. So shake it off, like a game after a goal, and play in the now. It's a fresh start. The past is the past, the future is now. Act Smart. Play Smart.",
   },
   {
     id: 'V-B-16',
     part: 'triggers',
     readsMessageId: 'B-16',
     scriptLine:
-      "That's in your Mind-Vault now. Read it again in a month. You'll be surprised how much of your progress was written down before you ever felt it.",
+      "That's in your Mind-Vault now. This is what you build your game mind on, while adding what you decide that will serve you to stay balanced and calm, along with a word that describes excellence. Look it up: \"poise\". Or better, let me: an athlete's ability to maintain emotional control, sharp focus and physical execution under extreme pressure. Mental toughness when the game is on the line, a mistake is made, or the battle becomes hostile. Act Smart. Play Smart.",
   },
   {
     id: 'V-B-17',
     part: 'triggers',
     readsMessageId: 'B-17',
     scriptLine:
-      "Logged. The Feel Factor is the part nobody else on your team is writing down, and it's the part that tells me the most.",
+      "Logged. The Feel Factor is the part nobody else on your team is writing down, and it's the part that tells your support team the most. The fact is, the Feel Factor clearly identifies game feel, pre-game feel, after-game feel, period by period, game in and game out. The game frequencies is a Feel Factor, Feel Factor on goals against, mental management. The Feel Factor is a barometer and measuring tool to find what works and what doesn't work for you. Think Smart. Play Smart.",
   },
   {
     id: 'V-B-18',
     part: 'triggers',
     readsMessageId: 'B-18',
     scriptLine:
-      'Consistency is the rarest thing I see in this game, and right now you have it. Protect it.',
+      'What makes a good goalie a great goalie? Three words: "Consistency in performance". When a team knows it has a goalie, they come to the rink with confidence, loose, knowing their goalie is always a game factor. Their goalie is always ready to perform. Their goalie gives them a chance to compete in every game. A good goalie is OK, but are they dependable? A great goalie demonstrates in practice the same game attitude to challenge their teammates to be sharp. Good versus great goaltending starts with a Smarter Goalie. Learn Smart. Play Smart.',
   },
   {
     id: 'V-B-19',
     part: 'triggers',
     readsMessageId: 'B-19',
     scriptLine:
-      "The run stopped. It happens to everyone who has ever had one. Don't mourn it - start the next one today.",
+      "Who is the most important person you compete with? Well, do you know? Seriously, do you know? It's yourself. Compete with yourself and the rest will fall into place. Examples will be provided on how to do this. So consistency in performance can be accomplished, and it should be understood that if a streak stops, it only means a chance to start it again. A tough game, a couple goals you want back: the past is the past, so learn and draw what you can from it so you don't carry it into the future. The future is a new day, a new game, a new start, so don't waste time on dwelling on something you can change today, this moment, this practice, this game, off ice and on ice. How you address this is the factor in whether you will succeed or not. Your back is full of bricks, which is a struggle to carry, or take the bricks out and fly. Manage Smart. Play Smart.",
   },
   {
     id: 'V-B-20',

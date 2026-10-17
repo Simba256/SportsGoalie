@@ -13,6 +13,8 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { VideoUploader } from '@/components/coach/video-uploader';
+import { QuizVisibilityControl } from '@/components/admin/QuizVisibilityControl';
+import { visibilityFlags } from '@/lib/training/quiz-visibility';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -330,16 +332,10 @@ function EditVideoQuizContent() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Toggle checked={quizData.isActive} onChange={v => handleInputChange('isActive', v)} />
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Active</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Toggle checked={quizData.isPublished} onChange={v => handleInputChange('isPublished', v)} />
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Published</span>
-                </div>
-              </div>
+              <QuizVisibilityControl
+                quiz={quizData}
+                onChange={live => setQuizData(prev => ({ ...prev, ...visibilityFlags(live) }))}
+              />
             </div>
           </div>
         )}

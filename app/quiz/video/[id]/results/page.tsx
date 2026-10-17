@@ -10,7 +10,7 @@ import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { customContentService } from '@/lib/database/services/custom-content.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import {
-  ArrowLeft, Home, Trophy, Clock, CheckCircle2, XCircle,
+  ArrowLeft, Home, Trophy, Clock, CheckCircle2,
   RotateCcw, ChevronRight, Target, MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -18,12 +18,15 @@ import { GrowthPointsToast } from '@/components/ui/GrowthPointsToast';
 import { GROWTH_POINTS } from '@/lib/config/growth-points';
 import { growthPointsService } from '@/lib/firebase/growth-points.service';
 import { getScoreBand } from '@/lib/config/score-bands';
+import { skillPagePath } from '@/lib/training/skill-path';
+import { reviewMarker } from '@/lib/training/review-marker';
 
 const BLUE = '#37b5ff';
-const RED = '#f87171';
 // Reflective answers are neither right nor wrong, so they get their own neutral
 // treatment rather than borrowing the pass/fail palette.
 const AMBER = '#d4a93b';
+// A question not yet got right is a "look again", in a quiet neutral. Never red.
+const LOOK_AGAIN = 'rgba(255,255,255,0.62)';
 
 function VideoQuizResultsContent() {
   const params = useParams();
@@ -242,25 +245,33 @@ function VideoQuizResultsContent() {
                 const question = quiz.questions?.find(q => q.id === answer.questionId);
                 if (!question) return null;
                 // Reflective answers are checked first and never fall through to the
-                // correct/incorrect styling — an honest "No" is not a wrong answer.
-                const isReflective = answer.reflective === true || question.reflective === true;
-                const tint = isReflective
+                // look-again styling — an honest "No" is not a wrong answer.
+                const marker = reviewMarker(answer, question);
+                const isReflective = marker === 'reflective';
+                const tint = marker === 'reflective'
                   ? { bg: 'rgba(212,169,59,0.05)', border: 'rgba(212,169,59,0.14)' }
-                  : answer.isCorrect
+                  : marker === 'right'
                     ? { bg: 'rgba(55,181,255,0.05)', border: 'rgba(55,181,255,0.12)' }
-                    : { bg: 'rgba(248,113,113,0.05)', border: 'rgba(248,113,113,0.12)' };
+                    : { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)' };
                 return (
                   <div key={answer.questionId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 14px', background: tint.bg, borderRadius: '10px', border: `1px solid ${tint.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                       <div style={{ flexShrink: 0 }}>
-                        {isReflective
+                        {marker === 'reflective'
                           ? <MessageSquare size={18} color={AMBER} />
-                          : answer.isCorrect
+                          : marker === 'right'
                             ? <CheckCircle2 size={18} color={BLUE} />
-                            : <XCircle size={18} color={RED} />}
+                            : <RotateCcw size={18} color={LOOK_AGAIN} aria-hidden="true" />}
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>Question {index + 1}</p>
+                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>
+                          Question {index + 1}
+                          {marker === 'look-again' && (
+                            <span style={{ marginLeft: '8px', color: LOOK_AGAIN, fontSize: '12px', fontWeight: 700 }}>
+                              Look again
+                            </span>
+                          )}
+                        </p>
                         <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>
                           At {Math.floor(answer.timestamp / 60)}:{String(Math.floor(answer.timestamp % 60)).padStart(2, '0')}
                         </p>
@@ -277,7 +288,11 @@ function VideoQuizResultsContent() {
                         </p>
                       )}
                       <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>
-                        {isReflective ? 'Your answer — not scored' : `${formatTime(answer.timeToAnswer)} to answer`}
+                        {/* Attempts taken before the clock existed stored 0 for every answer.
+                            A time that was never measured is left out, not shown as "0m 0s". */}
+                        {isReflective
+                          ? 'Your answer — not scored'
+                          : answer.timeToAnswer > 0 ? `${formatTime(answer.timeToAnswer)} to answer` : null}
                       </p>
                     </div>
                   </div>
@@ -324,7 +339,7 @@ function VideoQuizResultsContent() {
           )}
 
           <button
-            onClick={() => router.push(`/sports/${quiz.sportId}/skills/${quiz.skillId}`)}
+            onClick={() => router.push(skillPagePath(quiz.sportId, quiz.skillId))}
             className="qr-action"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '11px 20px', borderRadius: '10px', border: 'none', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 16px rgba(55,181,255,0.3)' }}
           >

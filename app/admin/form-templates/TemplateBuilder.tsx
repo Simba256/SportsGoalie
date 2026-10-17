@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { formTemplateService, describeValidationFailure } from '@/lib/database/services/form-template.service';
-import { FormTemplate, FormSection, FormField, FieldType, AnalyticsType, PillarSlug, PILLARS, pillarOptionLabel } from '@/types';
+import { FormTemplate, FormSection, FormField, FieldType, PillarSlug, PILLARS, pillarOptionLabel } from '@/types';
+import { defaultAnalyticsType } from '@/lib/templates/field-analytics';
+import { parseOptions } from '@/lib/templates/field-options';
 import { Loader2, Plus, Trash2, ArrowLeft, Save, AlertCircle, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -14,29 +16,6 @@ const RED = '#f87171';
 const GREEN = '#22c55e';
 const AMBER = '#fbbf24';
 const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
-
-/**
- * The only analytics that mean anything for a given input type.
- *
- * Enabling analytics used to save every field as `percentage`, which counts
- * yes/no answers. On a 1-10 scale nothing is ever `true`, so those fields scored
- * a permanent 0% and dragged the chart's overall score to zero however the
- * athlete rated themselves.
- */
-function defaultAnalyticsType(fieldType: FieldType): AnalyticsType {
-  switch (fieldType) {
-    case 'yesno':
-      return 'percentage';
-    case 'scale':
-    case 'numeric':
-      return 'average';
-    case 'radio':
-    case 'checkbox':
-      return 'distribution';
-    default:
-      return 'none'; // free text and dates have nothing to measure
-  }
-}
 
 /**
  * IDs used to be derived from how many sections or fields were currently in the
@@ -442,11 +421,10 @@ export default function TemplateBuilder({ mode, template }: TemplateBuilderProps
                               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>Options (comma-separated)</p>
                               <input className="tb-inp"
                                 value={(field as FormField & { _optionsRaw?: string })._optionsRaw ?? field.options?.join(', ') ?? ''}
-                                onChange={e => updateField(sectionIndex, fieldIndex, { _optionsRaw: e.target.value } as Partial<FormField>)}
-                                onBlur={e => {
-                                  const options = e.target.value.split(',').map(o => o.trim()).filter(o => o.length > 0);
-                                  updateField(sectionIndex, fieldIndex, { options, _optionsRaw: e.target.value } as Partial<FormField>);
-                                }}
+                                // The list follows every keystroke. It used to be committed on blur
+                                // only, so a save that skipped the blur left the box full and the
+                                // options empty.
+                                onChange={e => updateField(sectionIndex, fieldIndex, { options: parseOptions(e.target.value), _optionsRaw: e.target.value } as Partial<FormField>)}
                                 placeholder="e.g., poor, improving, team work, excellent"
                               />
                             </div>

@@ -20,7 +20,8 @@ const DEFAULT_PILLARS: ExplorePillar[] = [
   { accent: BLUE, label: '7AMS' },
   { accent: BLUE3, label: '6 Zone – 7 Point System™' },
   { accent: '#38bdf8', label: 'Form' },
-  { accent: '#22d3ee', label: 'Game & Practice' },
+  { accent: '#22d3ee', label: 'Game' },
+  { accent: '#5eead4', label: 'Practice' },
   { accent: BLUE2, label: 'Lifestyle' },
 ];
 
@@ -69,11 +70,11 @@ export function ExploreMoreSection({
           Curious about the full system? Every pillar is one click away — no need to leave this page.
         </p>
 
-        {/* 7 Pillars */}
+        {/* 8 Pillars */}
         <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.55)', textTransform: 'uppercase', marginBottom: '14px' }}>
-          The 7 Pillars
+          The 8 Pillars
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" style={{ maxWidth: '960px', marginBottom: '48px' }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" style={{ maxWidth: '960px', marginBottom: '48px' }}>
           {pillars.map(({ accent, label }, i) => (
             <TiltCard
               key={label}

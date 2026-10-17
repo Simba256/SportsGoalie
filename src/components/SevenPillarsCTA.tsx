@@ -23,7 +23,7 @@ interface SevenPillarsCTAProps {
  */
 export function SevenPillarsCTA({ from, eyebrow }: SevenPillarsCTAProps) {
   const router = useRouter();
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [hoveredNum, setHoveredNum] = useState<string | null>(null);
 
   return (
     <section
@@ -99,7 +99,7 @@ export function SevenPillarsCTA({ from, eyebrow }: SevenPillarsCTAProps) {
                   backgroundClip: 'text',
                 }}
               >
-                7 PILLARS
+                8 PILLARS
               </span>
             </h2>
 
@@ -112,7 +112,7 @@ export function SevenPillarsCTA({ from, eyebrow }: SevenPillarsCTAProps) {
                 maxWidth: 480,
               }}
             >
-              Seven connected layers. One complete system. Explore every Pillar — open to every role, no login required.
+              Eight connected layers. One complete system. Explore every Pillar — open to every role, no login required.
             </p>
 
             <button
@@ -142,26 +142,16 @@ export function SevenPillarsCTA({ from, eyebrow }: SevenPillarsCTAProps) {
 
           {/* Preview strip — not clickable destinations; CTA is the entry */}
           <div style={{ position: 'relative', flex: '1 1 auto', maxWidth: 660, width: '100%' }} aria-hidden>
-            {/* connecting thread — reinforces "seven connected layers" */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '38%',
-                left: 4,
-                right: 4,
-                height: 1,
-                background: 'linear-gradient(90deg, transparent, rgba(96,205,255,0.3) 15%, rgba(96,205,255,0.3) 85%, transparent)',
-                zIndex: 0,
-              }}
-            />
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-4" style={{ position: 'relative', zIndex: 1 }}>
+            {/* Two rows of four — eight cards don't fit one row at this width. Keyed by
+                `num`: Game and Practice share a page id. */}
+            <div className="grid grid-cols-4 gap-4" style={{ position: 'relative', zIndex: 1 }}>
               {PUBLIC_PILLARS.map((p) => {
-                const hovered = hoveredId === p.id;
+                const hovered = hoveredNum === p.num;
                 return (
                   <div
-                    key={p.id}
-                    onMouseEnter={() => setHoveredId(p.id)}
-                    onMouseLeave={() => setHoveredId(null)}
+                    key={p.num}
+                    onMouseEnter={() => setHoveredNum(p.num)}
+                    onMouseLeave={() => setHoveredNum(null)}
                     style={{
                       borderRadius: 12,
                       border: `1px solid ${hovered ? p.accent : `${p.accent}40`}`,

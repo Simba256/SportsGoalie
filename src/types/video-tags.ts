@@ -13,7 +13,7 @@ import { PillarSlug } from './onboarding';
 // ==========================================
 
 /**
- * Pillar tags - references the 7 learning pillars
+ * Pillar tags - references the 8 learning pillars
  */
 export type PillarTag = PillarSlug;
 

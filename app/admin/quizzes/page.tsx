@@ -12,6 +12,7 @@ import {
   Video, Clock, Target, Users, Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { describeVisibility, isQuizLive, quizMissing, visibilityFlags } from '@/lib/training/quiz-visibility';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -88,10 +89,18 @@ function AdminQuizzesPageContent() {
     setOpenMenuId(null);
   };
 
+  // One switch: Activate writes both flags (active and published) so a quiz that was saved
+  // as a draft actually becomes visible, and says what is missing when it cannot.
   const handleToggleStatus = async (quiz: VideoQuiz) => {
+    const goingLive = !isQuizLive(quiz);
+    if (goingLive && quizMissing(quiz).length > 0) {
+      toast.error("Can't activate yet", { description: describeVisibility(quiz, true).line });
+      setOpenMenuId(null);
+      return;
+    }
     try {
-      const result = await videoQuizService.updateVideoQuiz(quiz.id, { isActive: !quiz.isActive });
-      if (result.success) { toast.success(`Video quiz ${quiz.isActive ? 'deactivated' : 'activated'} successfully`); loadQuizzes(); }
+      const result = await videoQuizService.updateVideoQuiz(quiz.id, visibilityFlags(goingLive));
+      if (result.success) { toast.success(goingLive ? 'Knowledge Check is now visible to goalies' : 'Knowledge Check is now hidden from goalies'); loadQuizzes(); }
       else toast.error('Failed to update video quiz status');
     } catch { toast.error('Failed to update video quiz status'); }
     setOpenMenuId(null);
@@ -223,8 +232,9 @@ function AdminQuizzesPageContent() {
           <div className="aq-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {filteredQuizzes.map(quiz => {
               const ds = DIFF_STYLES[quiz.difficulty] || DIFF_STYLES.introduction;
-              const statusLabel = quiz.isActive && quiz.isPublished ? 'Active' : !quiz.isPublished ? 'Draft' : 'Inactive';
-              const statusColor = quiz.isActive && quiz.isPublished ? GREEN : !quiz.isPublished ? AMBER : RED;
+              const live = isQuizLive(quiz);
+              const statusLabel = live ? 'Active' : !quiz.isPublished ? 'Draft' : 'Inactive';
+              const statusColor = live ? GREEN : !quiz.isPublished ? AMBER : RED;
               const isMenuOpen = openMenuId === quiz.id;
               return (
                 <div key={quiz.id} className="aq-card" style={{ position: 'relative', ...card, overflow: 'hidden' }}>
@@ -253,7 +263,7 @@ function AdminQuizzesPageContent() {
                             <button className="aq-menu-item" onClick={() => { router.push(`/quiz/video/${quiz.id}`); setOpenMenuId(null); }}><Eye size={12} /> Preview</button>
                             <button className="aq-menu-item" onClick={() => handleShareQuiz(quiz.id, quiz.title)}><Share2 size={12} /> Share</button>
                             <button className="aq-menu-item" onClick={() => { router.push(`/admin/quizzes/${quiz.id}/edit`); setOpenMenuId(null); }}><Edit size={12} /> Edit</button>
-                            <button className="aq-menu-item" onClick={() => handleToggleStatus(quiz)}><Target size={12} /> {quiz.isActive ? 'Deactivate' : 'Activate'}</button>
+                            <button className="aq-menu-item" onClick={() => handleToggleStatus(quiz)}><Target size={12} /> {isQuizLive(quiz) ? 'Deactivate' : 'Activate'}</button>
                             <button className="aq-menu-item aq-menu-danger" onClick={() => handleDelete(quiz.id, quiz.title)}><Trash2 size={12} /> Delete</button>
                           </div>
                         )}

@@ -11,6 +11,7 @@ import {
   Grid3X3,
   Target,
   BarChart3,
+  Dumbbell,
   Heart,
   type LucideIcon,
 } from 'lucide-react';
@@ -63,6 +64,8 @@ const PILLAR_META: {
   { tag: 'Net Management', blurb: 'Below the icing line. Wraparounds. Complete coverage.', Icon: Grid3X3 },
   { tag: 'Technical Precision', blurb: 'Set crouch. Max coverage. Minimal movement.', Icon: Target },
   { tag: 'Development Loop', blurb: 'Read the play. Chart everything. Close the gaps.', Icon: BarChart3 },
+  // Blurb is the in-app Practice System description, word for word.
+  { tag: 'Purposeful Practice', blurb: 'Purposeful practice, planning, and repetition that earns the technique.', Icon: Dumbbell },
   { tag: 'Off-Ice Performance', blurb: 'Recovery. Fuel. Balance. The Maintenance Program.', Icon: Heart },
 ];
 
@@ -83,7 +86,7 @@ function PillarHubCard({
   index: number;
   isActive: boolean;
   isDimmed: boolean;
-  onHover: (id: number | null) => void;
+  onHover: (num: string | null) => void;
 }) {
   const router = useRouter();
   const palette = TOOLBOX_PALETTES[index % 3];
@@ -111,7 +114,7 @@ function PillarHubCard({
     >
       <div
         className="relative flex h-full min-h-[220px] flex-col overflow-hidden p-6 md:p-7"
-        onMouseEnter={() => onHover(id)}
+        onMouseEnter={() => onHover(num)}
         onMouseLeave={() => onHover(null)}
       >
         <div
@@ -261,7 +264,7 @@ function SevenPillarsHubContent() {
   const searchParams = useSearchParams();
   const fromKey = resolvePillarFrom(searchParams.get('from'));
   const from = PILLAR_FROM_CONTEXT[fromKey];
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [hoveredNum, setHoveredNum] = useState<string | null>(null);
 
   return (
     <div
@@ -334,7 +337,7 @@ function SevenPillarsHubContent() {
           </button>
           <div style={{ width: 1, height: 16, background: 'rgba(96,205,255,0.25)' }} />
           <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.7)', textTransform: 'uppercase' }}>
-            The 7 Pillars
+            The 8 Pillars
           </span>
         </div>
       </div>
@@ -403,7 +406,7 @@ function SevenPillarsHubContent() {
             letterSpacing: '-18px',
           }}
         >
-          7
+          8
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
@@ -461,7 +464,7 @@ function SevenPillarsHubContent() {
                     filter: 'drop-shadow(0 0 28px rgba(55,181,255,0.35))',
                   }}
                 >
-                  7 PILLARS
+                  8 PILLARS
                 </span>
               </h1>
 
@@ -474,7 +477,7 @@ function SevenPillarsHubContent() {
                   margin: 0,
                 }}
               >
-                Seven layers. One system. Pick a Pillar to go deeper — then return to your role overview whenever you&apos;re ready.
+                Eight layers. One system. Pick a Pillar to go deeper — then return to your role overview whenever you&apos;re ready.
               </p>
             </div>
 
@@ -513,17 +516,17 @@ function SevenPillarsHubContent() {
                       backgroundClip: 'text',
                     }}
                   >
-                    7
+                    8
                   </span>
                 </div>
                 {PUBLIC_PILLARS.map((p, i) => {
-                  const angle = (i / 7) * 2 * Math.PI - Math.PI / 2;
+                  const angle = (i / PUBLIC_PILLARS.length) * 2 * Math.PI - Math.PI / 2;
                   const x = 50 + 48 * Math.cos(angle);
                   const y = 50 + 48 * Math.sin(angle);
                   const palette = TOOLBOX_PALETTES[i % 3];
                   return (
                     <div
-                      key={p.id}
+                      key={p.num}
                       style={{
                         position: 'absolute',
                         left: `${x}%`,
@@ -536,7 +539,7 @@ function SevenPillarsHubContent() {
                         boxShadow: `0 0 10px ${palette.accent}`,
                         animation: 'hub-node-pulse 2.6s ease-in-out infinite',
                         animationDelay: `${i * 0.18}s`,
-                        opacity: hoveredId === null || hoveredId === p.id ? 1 : 0.3,
+                        opacity: hoveredNum === null || hoveredNum === p.num ? 1 : 0.3,
                         transition: 'opacity 0.25s',
                       }}
                     />
@@ -558,39 +561,21 @@ function SevenPillarsHubContent() {
             </div>
           </div>
 
-          {/* Cards */}
-          <div className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {PUBLIC_PILLARS.slice(0, 4).map((p, i) => (
-                <PillarHubCard
-                  key={p.id}
-                  id={p.id}
-                  num={p.num}
-                  label={p.label}
-                  fromKey={fromKey}
-                  index={i}
-                  isActive={hoveredId === p.id}
-                  isDimmed={hoveredId !== null && hoveredId !== p.id}
-                  onHover={setHoveredId}
-                />
-              ))}
-            </div>
-
-            <div className="mx-auto grid w-full grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:w-3/4 xl:grid-cols-3">
-              {PUBLIC_PILLARS.slice(4).map((p, i) => (
-                <PillarHubCard
-                  key={p.id}
-                  id={p.id}
-                  num={p.num}
-                  label={p.label}
-                  fromKey={fromKey}
-                  index={i + 4}
-                  isActive={hoveredId === p.id}
-                  isDimmed={hoveredId !== null && hoveredId !== p.id}
-                  onHover={setHoveredId}
-                />
-              ))}
-            </div>
+          {/* Cards — eight in a 4 × 2 grid */}
+          <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {PUBLIC_PILLARS.map((p, i) => (
+              <PillarHubCard
+                key={p.num}
+                id={p.id}
+                num={p.num}
+                label={p.label}
+                fromKey={fromKey}
+                index={i}
+                isActive={hoveredNum === p.num}
+                isDimmed={hoveredNum !== null && hoveredNum !== p.num}
+                onHover={setHoveredNum}
+              />
+            ))}
           </div>
 
           <p
@@ -604,7 +589,7 @@ function SevenPillarsHubContent() {
               color: 'rgba(148,195,228,0.4)',
             }}
           >
-            Seven layers · One architecture · Built for every role
+            Eight layers · One architecture · Built for every role
           </p>
         </div>
       </section>

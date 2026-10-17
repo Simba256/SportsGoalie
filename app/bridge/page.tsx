@@ -78,7 +78,7 @@ const DOORS = [
     bg: 'linear-gradient(135deg, rgba(55,181,255,0.08), rgba(14,165,233,0.04))',
     body: [
       'No goalie coach in your area. The nearest operation is hours away. The team\'s coaches mean well, but nobody speaks goaltender.',
-      'You are exactly who this system was built for: the full teaching architecture — the 7 Pillars, the charting, Coach Mike\'s voice — reaches you wherever the ice is.',
+      'You are exactly who this system was built for: the full teaching architecture — the 8 Pillars, the charting, Coach Mike\'s voice — reaches you wherever the ice is.',
     ],
     promise: null,
     promiseBold: null,

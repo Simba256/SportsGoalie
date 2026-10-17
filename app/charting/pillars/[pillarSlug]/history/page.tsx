@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow, subDays, subMonths } from 'date-fns';
 import { toDateSafe } from '@/lib/utils/timestamp';
+import { chartTitle } from '@/lib/templates/chart-title';
 import { scaleToPercentage } from '@/lib/scoring/scale-score';
 import { isStarScale } from '@/lib/scale/five-star';
 import { StarScaleReadout } from '@/components/charting/StarScale';
@@ -518,6 +519,8 @@ export default function PillarHistoryPage() {
   const IconComponent = PILLAR_ICONS[pillarInfo.icon] || Target;
   const lastEntryDate = toDateSafe(entries[0]?.submittedAt);
   const countLabel = `${entries.length} check-in${entries.length === 1 ? '' : 's'}`;
+  // The chart's own name leads; the pillar's "Charts" label sits above it.
+  const heading = chartTitle(template?.name, `${pillarInfo.shortName} Charts`);
   const headerSubtitle = entries.length === 0
     ? 'No check-ins submitted yet'
     : lastEntryDate
@@ -549,8 +552,13 @@ export default function PillarHistoryPage() {
           </div>
 
           <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+            {heading.pillarLabel && (
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>
+                {heading.pillarLabel}
+              </p>
+            )}
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-              {pillarInfo.shortName} Charts
+              {heading.title}
             </h1>
             <p style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.62)', fontWeight: 500, marginTop: '5px' }}>
               {headerSubtitle}

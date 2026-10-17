@@ -8,6 +8,7 @@ import {
   Grid3X3,
   Target,
   BarChart3,
+  Dumbbell,
   Heart,
   type LucideIcon,
 } from 'lucide-react';
@@ -17,7 +18,7 @@ const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 
-/** Same palettes as landing "What's In YOUR Tool Box?" cards — cycled across 7 pillars */
+/** Same palettes as landing "What's In YOUR Tool Box?" cards — cycled across 8 pillars */
 const TOOLBOX_PALETTES = [
   {
     accent: '#37b5ff',
@@ -100,24 +101,33 @@ const PILLARS: PillarDef[] = [
   },
   // Numbers here follow the public marketing list (see PUBLIC_PILLARS in
   // src/lib/pillar-public-routes.ts), which counts 7AMS and the 6 Zone – 7 Point
-  // System™ as pillars 3 and 4. In the app they are the two halves of Pillar 3,
-  // and Game and Practice are separate pillars. Renumbering this card set and
-  // splitting this entry in two both need Michael's sign-off and new copy.
+  // System™ as pillars 3 and 4. In the app they are the two halves of Pillar 3.
+  // Game and Practice are separate cards; their one-line descriptions are the
+  // in-app wording (src/types/onboarding.ts), pending Michael's own copy for the
+  // two public pages.
   {
     num: '6',
-    name: 'GAME & PRACTICE',
-    subtitle: 'The Development Loop',
-    desc: 'Reading the play. The Development Loop. Charting everything.',
+    name: 'GAME',
+    subtitle: 'Game Performance',
+    desc: 'Game-day routine, charting, and post-game review.',
     Icon: BarChart3,
     ...TOOLBOX_PALETTES[2],
   },
   {
     num: '7',
+    name: 'PRACTICE',
+    subtitle: 'Practice System',
+    desc: 'Purposeful practice, planning, and repetition that earns the technique.',
+    Icon: Dumbbell,
+    ...TOOLBOX_PALETTES[0],
+  },
+  {
+    num: '8',
     name: 'LIFESTYLE',
     subtitle: 'Off-Ice as Performance',
     desc: 'Off-ice as performance. Mental preparation. Balance. The Maintenance Program.',
     Icon: Heart,
-    ...TOOLBOX_PALETTES[0],
+    ...TOOLBOX_PALETTES[1],
   },
 ];
 
@@ -358,7 +368,7 @@ export function PillarsArchitectureSection({ voiceButton }: PillarsArchitectureS
           letterSpacing: '-20px',
         }}
       >
-        7
+        8
       </div>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
@@ -401,7 +411,7 @@ export function PillarsArchitectureSection({ voiceButton }: PillarsArchitectureS
                   filter: 'drop-shadow(0 0 24px rgba(55,181,255,0.35))',
                 }}
               >
-                7 PILLARS
+                8 PILLARS
               </span>
             </h2>
 
@@ -452,11 +462,11 @@ export function PillarsArchitectureSection({ voiceButton }: PillarsArchitectureS
                     backgroundClip: 'text',
                   }}
                 >
-                  7
+                  8
                 </span>
               </div>
               {PILLARS.map((p, i) => {
-                const angle = (i / 7) * 2 * Math.PI - Math.PI / 2;
+                const angle = (i / PILLARS.length) * 2 * Math.PI - Math.PI / 2;
                 const x = 50 + 46 * Math.cos(angle);
                 const y = 50 + 46 * Math.sin(angle);
                 return (
@@ -497,29 +507,16 @@ export function PillarsArchitectureSection({ voiceButton }: PillarsArchitectureS
           </div>
         </div>
 
-        <div className="mb-10 flex flex-col gap-5">
-          <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {PILLARS.slice(0, 4).map((p) => (
-              <PillarCard
-                key={p.num}
-                pillar={p}
-                isActive={activeNum === null || activeNum === p.num}
-                onHover={() => setActiveNum(p.num)}
-              />
-            ))}
-          </div>
-
-          {/* 3 pillars centered under the row of 4 — each card = 25% of full width */}
-          <div className="mx-auto grid w-full grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:w-3/4 xl:grid-cols-3">
-            {PILLARS.slice(4).map((p) => (
-              <PillarCard
-                key={p.num}
-                pillar={p}
-                isActive={activeNum === null || activeNum === p.num}
-                onHover={() => setActiveNum(p.num)}
-              />
-            ))}
-          </div>
+        {/* Eight cards: two even rows of four on desktop */}
+        <div className="mb-10 grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {PILLARS.map((p) => (
+            <PillarCard
+              key={p.num}
+              pillar={p}
+              isActive={activeNum === null || activeNum === p.num}
+              onHover={() => setActiveNum(p.num)}
+            />
+          ))}
         </div>
 
         {voiceButton}

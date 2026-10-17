@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, ClipboardList, CheckCircle2, XCircle, MessageSquare,
+  ArrowLeft, ClipboardList, CheckCircle2, RotateCcw, MessageSquare,
   ChevronDown, ChevronUp, Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
@@ -15,11 +15,13 @@ import {
   User as UserType, VideoQuiz, VideoQuizProgress, VideoQuestionAnswer, VideoQuizQuestion,
 } from '@/types';
 import { toast } from 'sonner';
+import { reviewMarker } from '@/lib/training/review-marker';
 
 const BLUE  = '#37b5ff';
 const GOLD  = '#D4A93B';
-const RED    = '#f87171';
 const GREEN  = '#22c55e';
+// A question not yet got right is a "look again", in a quiet neutral. Never red.
+const LOOK_AGAIN = 'rgba(255,255,255,0.62)';
 const cardBg = 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)';
 const border = '1px solid rgba(55,181,255,0.22)';
 
@@ -261,21 +263,22 @@ export default function CoachStudentResponsesPage() {
                         const question = quiz?.questions?.find(q => q.id === answer.questionId);
                         // Reflective is checked before correctness everywhere — an
                         // honest "No" must never be presented to the coach as wrong.
-                        const isReflective = answer.reflective === true || question?.reflective === true;
-                        const tint = isReflective
+                        const marker = reviewMarker(answer, question);
+                        const isReflective = marker === 'reflective';
+                        const tint = marker === 'reflective'
                           ? { bg: 'rgba(212,169,59,0.05)', bd: 'rgba(212,169,59,0.16)', fg: GOLD }
-                          : answer.isCorrect
+                          : marker === 'right'
                             ? { bg: 'rgba(34,197,94,0.05)', bd: 'rgba(34,197,94,0.16)', fg: GREEN }
-                            : { bg: 'rgba(248,113,113,0.05)', bd: 'rgba(248,113,113,0.16)', fg: RED };
+                            : { bg: 'rgba(255,255,255,0.04)', bd: 'rgba(255,255,255,0.1)', fg: LOOK_AGAIN };
 
                         return (
                           <div key={`${answer.questionId}_${index}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', background: tint.bg, border: `1px solid ${tint.bd}`, borderRadius: '10px' }}>
                             <div style={{ flexShrink: 0, marginTop: '1px' }}>
-                              {isReflective
+                              {marker === 'reflective'
                                 ? <MessageSquare size={16} color={GOLD} />
-                                : answer.isCorrect
+                                : marker === 'right'
                                   ? <CheckCircle2 size={16} color={GREEN} />
-                                  : <XCircle size={16} color={RED} />}
+                                  : <RotateCcw size={16} color={LOOK_AGAIN} aria-hidden="true" />}
                             </div>
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '12px', margin: 0, lineHeight: 1.45 }}>

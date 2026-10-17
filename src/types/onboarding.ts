@@ -967,11 +967,11 @@ export interface PillarInfo {
  * of one pillar taught above and below the icing line. Michael's 20 August list
  * numbers them separately as 3 and 4, so they are now eight numbered pillars.
  *
- * NOTE: the public marketing site still runs on seven — the "/7-pillars" route,
- * the pricing FAQ and the footer all say 7, and PUBLIC_PILLARS in
- * src/lib/pillar-public-routes.ts keeps its own numbering because those URLs are
- * already shared. Bringing the two into line needs Michael's sign-off and new
- * sales copy in his voice, so it is deliberately not done here.
+ * NOTE: the public marketing site now shows the same eight pillars, but
+ * PUBLIC_PILLARS in src/lib/pillar-public-routes.ts keeps its own page ids
+ * because the "/7-pillars" and "/pillar/6" URLs are already shared: Game and
+ * Practice are two cards that still open one combined sales page, until Michael
+ * sends separate Practice copy in his voice.
  */
 export const PILLARS: PillarInfo[] = [
   {

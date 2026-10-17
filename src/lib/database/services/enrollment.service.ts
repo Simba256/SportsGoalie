@@ -10,6 +10,7 @@ import { logger } from '../../utils/logger';
 import { sportsService } from './sports.service';
 import { videoQuizService } from './video-quiz.service';
 import { VideoQuizProgress } from '@/types/video-quiz';
+import { attemptedSkillIds, ownedSkillIds } from '@/lib/training/owned';
 
 /**
  * Service for managing sports enrollment and progress.
@@ -19,31 +20,39 @@ export class EnrollmentService extends BaseDatabaseService {
   private readonly SPORT_PROGRESS_COLLECTION = 'sport_progress';
   private readonly DASHBOARD_ATTEMPTS_LIMIT = 200;
 
-  private getAttemptPercentage(attempt: VideoQuizProgress): number | null {
-    if (attempt.percentage !== undefined && attempt.percentage !== null) {
-      return attempt.percentage;
+  /**
+   * How far through a pillar a goalie is, on the one "owned" rule (src/lib/training/owned.ts).
+   *
+   * A skill counts as done only once every graded question under it has been got right at
+   * least once, so a take at 0% no longer reads as a finished skill, and the pillar's
+   * progress is simply owned skills out of all skills in it.
+   */
+  private measurePillar(
+    skills: Array<{ id: string }>,
+    attempts: VideoQuizProgress[]
+  ): {
+    completedSkillIds: string[];
+    progressPercentage: number;
+    status: 'not_started' | 'in_progress' | 'completed';
+  } {
+    const owned = ownedSkillIds(attempts);
+    const attempted = attemptedSkillIds(attempts);
+    const totalSkills = skills.length;
+
+    const completedSkillIds = skills.filter((skill) => owned.has(skill.id)).map((skill) => skill.id);
+    const startedCount = skills.filter((skill) => attempted.has(skill.id)).length;
+
+    const progressPercentage =
+      totalSkills > 0 ? (completedSkillIds.length / totalSkills) * 100 : 0;
+
+    let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
+    if (totalSkills > 0 && completedSkillIds.length === totalSkills) {
+      status = 'completed';
+    } else if (startedCount > 0) {
+      status = 'in_progress';
     }
 
-    if (attempt.score !== undefined && attempt.score !== null && attempt.maxScore) {
-      return (attempt.score / attempt.maxScore) * 100;
-    }
-
-    return null;
-  }
-
-  private buildLatestAttemptBySkill(attempts: VideoQuizProgress[]): Map<string, VideoQuizProgress> {
-    const latestAttemptBySkill = new Map<string, VideoQuizProgress>();
-
-    // Attempts are queried in descending completion order, so first seen per skill is the latest.
-    for (const attempt of attempts) {
-      if (!attempt.skillId || latestAttemptBySkill.has(attempt.skillId)) {
-        continue;
-      }
-
-      latestAttemptBySkill.set(attempt.skillId, attempt);
-    }
-
-    return latestAttemptBySkill;
+    return { completedSkillIds, progressPercentage, status };
   }
 
   /**
@@ -197,8 +206,6 @@ export class EnrollmentService extends BaseDatabaseService {
       limit: this.DASHBOARD_ATTEMPTS_LIMIT,
     });
     const attempts = attemptsResult.success ? attemptsResult.data?.items || [] : [];
-    const latestAttemptBySkill = this.buildLatestAttemptBySkill(attempts);
-
     const progressRecords =
       progressResult.data.items.length > 0
         ? progressResult.data.items
@@ -242,46 +249,13 @@ export class EnrollmentService extends BaseDatabaseService {
       const { progress, sport, skills } = detail;
       const totalSkills = skills.length;
 
-      // Calculate progress based on actual quiz attempts for each skill
-      let totalScore = 0;
-      let completedSkillsCount = 0;
-      const completedSkillIds: string[] = [];
-
-      for (const skill of skills) {
-        const latestAttempt = latestAttemptBySkill.get(skill.id);
-        if (!latestAttempt) {
-          continue;
-        }
-
-        const percentage = this.getAttemptPercentage(latestAttempt);
-        if (percentage !== null) {
-          totalScore += percentage;
-          completedSkillsCount++;
-          completedSkillIds.push(skill.id);
-        }
-      }
-
-      // Calculate average progress percentage based on quiz scores
-      let progressPercentage = 0;
-      if (completedSkillsCount > 0 && totalSkills > 0) {
-        // Average of completed quiz scores, scaled by how many skills have been attempted
-        const averageScore = totalScore / completedSkillsCount;
-        const completionRatio = completedSkillsCount / totalSkills;
-        progressPercentage = averageScore * completionRatio;
-      }
+      // Progress comes from the goalie's own finished takes, never from stored counters
+      const { completedSkillIds, progressPercentage, status } = this.measurePillar(skills, attempts);
 
       // Use stored time and streak data
       const totalTime = progress.timeSpent || 0;
       const currentStreak = progress.streak?.current || 0;
       const longestStreak = progress.streak?.longest || 0;
-
-      // Determine status based on completed skills
-      let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
-      if (completedSkillsCount === totalSkills && totalSkills > 0) {
-        status = 'completed';
-      } else if (completedSkillsCount > 0) {
-        status = 'in_progress';
-      }
 
       // Update progress with calculated values
       const updatedProgress: SportProgress = {
@@ -298,7 +272,7 @@ export class EnrollmentService extends BaseDatabaseService {
         },
       };
 
-      logger.debug(`Course ${sport.id} progress: ${progressPercentage}% (${completedSkillsCount}/${totalSkills} skills)`, 'EnrollmentService');
+      logger.debug(`Course ${sport.id} progress: ${progressPercentage}% (${completedSkillIds.length}/${totalSkills} skills)`, 'EnrollmentService');
 
       enrolledSports.push({
         sport,
@@ -355,43 +329,7 @@ export class EnrollmentService extends BaseDatabaseService {
       limit: this.DASHBOARD_ATTEMPTS_LIMIT,
     });
     const attempts = attemptsResult.success ? attemptsResult.data?.items || [] : [];
-    const latestAttemptBySkill = this.buildLatestAttemptBySkill(attempts);
-
-    // Calculate progress based on actual quiz attempts for each skill
-    let totalScore = 0;
-    let completedSkillsCount = 0;
-    const completedSkillIds: string[] = [];
-
-    for (const skill of skills) {
-      const latestAttempt = latestAttemptBySkill.get(skill.id);
-      if (!latestAttempt) {
-        continue;
-      }
-
-      const percentage = this.getAttemptPercentage(latestAttempt);
-      if (percentage !== null) {
-        totalScore += percentage;
-        completedSkillsCount++;
-        completedSkillIds.push(skill.id);
-      }
-    }
-
-    // Calculate average progress percentage based on quiz scores
-    let progressPercentage = 0;
-    if (completedSkillsCount > 0 && totalSkills > 0) {
-      // Average of completed quiz scores, scaled by how many skills have been attempted
-      const averageScore = totalScore / completedSkillsCount;
-      const completionRatio = completedSkillsCount / totalSkills;
-      progressPercentage = averageScore * completionRatio;
-    }
-
-    // Determine status based on completed skills
-    let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
-    if (completedSkillsCount === totalSkills && totalSkills > 0) {
-      status = 'completed';
-    } else if (completedSkillsCount > 0) {
-      status = 'in_progress';
-    }
+    const { completedSkillIds, progressPercentage, status } = this.measurePillar(skills, attempts);
 
     // Update progress with calculated values
     const updatedProgress: SportProgress = {

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { V2ChartReadOnlyView } from './V2ChartReadOnlyView';
+import { PillarCheckInList } from './PillarCheckInList';
+import { usePillarCheckIns } from '@/hooks/usePillarCheckIns';
 
 const BLUE = '#37b5ff';
 
@@ -39,6 +41,8 @@ export function GoalieChartingHistory({ studentId, onOpenSession }: GoalieCharti
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  // Pillar check-ins are saved apart from sessions, so they are loaded on their own.
+  const checkIns = usePillarCheckIns(studentId);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +86,7 @@ export function GoalieChartingHistory({ studentId, onOpenSession }: GoalieCharti
     return { all: all.length, game: all.filter(s => s.type === 'game').length, practice: all.filter(s => s.type === 'practice').length };
   }, [sessions, entriesBySession]);
 
-  if (loading) {
+  if (loading || checkIns.loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 20px', gap: '12px' }}>
         <Loader2 size={24} color="rgba(255,255,255,0.3)" style={{ animation: 'spin 1s linear infinite' }} />
@@ -92,6 +96,18 @@ export function GoalieChartingHistory({ studentId, onOpenSession }: GoalieCharti
     );
   }
 
+  const hasCheckIns = checkIns.entries.length > 0;
+  const checkInsSection = hasCheckIns ? (
+    <section aria-label="Pillar check-ins" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <h3 style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
+        Pillar check-ins · {checkIns.entries.length}
+      </h3>
+      <PillarCheckInList entries={checkIns.entries} templates={checkIns.templates} />
+    </section>
+  ) : null;
+
+  if (counts.all === 0 && hasCheckIns) return checkInsSection;
+
   if (counts.all === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '48px 20px' }}>
@@ -99,13 +115,19 @@ export function GoalieChartingHistory({ studentId, onOpenSession }: GoalieCharti
           <ClipboardList size={26} color="rgba(255,255,255,0.2)" />
         </div>
         <p style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>No charting history yet</p>
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.6 }}>Once the goalie charts a game or practice session, it will appear here.</p>
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.6 }}>Once the goalie charts a game, a practice session or a pillar check-in, it will appear here.</p>
       </div>
     );
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {checkInsSection}
+      {hasCheckIns && (
+        <h3 style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
+          Games and practices · {counts.all}
+        </h3>
+      )}
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         <Filter size={13} color="rgba(255,255,255,0.3)" />

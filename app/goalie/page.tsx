@@ -623,7 +623,7 @@ export default function GoaliePage() {
         </div>
       </section>
 
-      {/* ── 7 Pillars (public hub) ── */}
+      {/* ── 8 Pillars (public hub) ── */}
       <SevenPillarsCTA from="goalie" eyebrow="For The Goalie" />
 
       {/* ── J: Age Routing ── */}

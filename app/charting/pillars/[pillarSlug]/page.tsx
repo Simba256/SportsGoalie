@@ -19,6 +19,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { toDateSafe } from '@/lib/utils/timestamp';
+import { chartTitle } from '@/lib/templates/chart-title';
 import {
   CYAN,
   MINT,
@@ -246,6 +247,8 @@ export default function PillarCheckInPage() {
   // own rather than crashing the page or printing "Invalid Date".
   const lastEntryDate = toDateSafe(entries[0]?.submittedAt);
   const countLabel = `${entries.length} check-in${entries.length === 1 ? '' : 's'}`;
+  // The chart's own name leads; the pillar is the place it sits under.
+  const heading = chartTitle(template?.name, pillarInfo.name);
   const headerSubtitle = !template
     ? pillarInfo.description
     : entries.length === 0
@@ -279,8 +282,13 @@ export default function PillarCheckInPage() {
           </div>
 
           <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+            {heading.pillarLabel && (
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>
+                {heading.pillarLabel}
+              </p>
+            )}
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-              {pillarInfo.name}
+              {heading.title}
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '5px', flexWrap: 'wrap' }}>
               {template && isBaseline && (

@@ -322,7 +322,7 @@ export default function ParentRolePage() {
             <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
 
             {[
-              { num: '01', label: 'Self-Directed Dashboard', desc: 'A 7 Pillar dashboard — learn about every aspect of your goalie\'s development at your own pace' },
+              { num: '01', label: 'Self-Directed Dashboard', desc: 'An 8 Pillar dashboard — learn about every aspect of your goalie\'s development at your own pace' },
               { num: '02', label: 'The Language', desc: 'The language to have the right conversation after every game and every practice' },
               { num: '03', label: 'Parent Observation Chart', desc: 'A structured way to watch your goalie with educated eyes' },
               { num: '04', label: 'Coach Mike as Your Guide', desc: 'Through every stage of your goalie\'s development' },

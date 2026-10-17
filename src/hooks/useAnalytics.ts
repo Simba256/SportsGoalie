@@ -6,6 +6,7 @@ import { videoQuizService } from '@/lib/database';
 import { VideoQuizProgress } from '@/types/video-quiz';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { takeStreak } from '@/lib/training/attempt-streak';
 
 export interface DailyProgress {
   date: string;
@@ -198,6 +199,12 @@ function aggregateAnalytics(
   const avgSessionTime = totalQuizzes > 0 ? Math.round(totalTimeMinutes / totalQuizzes) : 0;
 
   // ── Streak calculation ──
+  // Same rule as the dashboard card, so the two screens show the same number: local
+  // calendar days, dated by when each take was finished.
+  const { currentStreak, longestStreak } = takeStreak(attempts);
+
+  // Distinct days with a finished take, newest first. Feeds the weekly/monthly
+  // consistency counts below; the streak above no longer reads it.
   const attemptDates = [
     ...new Set(
       attempts
@@ -208,44 +215,6 @@ function aggregateAnalytics(
         .filter((d): d is string => d !== null)
     ),
   ].sort().reverse();
-
-  let currentStreak = 0;
-  let longestStreak = 0;
-  const today = dateStr(new Date());
-  const yesterday = dateStr(new Date(Date.now() - 86400000));
-
-  if (attemptDates.length > 0) {
-    // Check if streak is active (today or yesterday)
-    if (attemptDates[0] === today || attemptDates[0] === yesterday) {
-      let streak = 1;
-      for (let i = 1; i < attemptDates.length; i++) {
-        const prev = new Date(attemptDates[i - 1]).getTime();
-        const curr = new Date(attemptDates[i]).getTime();
-        const diff = (prev - curr) / 86400000;
-        if (diff === 1) {
-          streak++;
-        } else {
-          break;
-        }
-      }
-      currentStreak = streak;
-    }
-
-    // Longest streak
-    let streak = 1;
-    for (let i = 1; i < attemptDates.length; i++) {
-      const prev = new Date(attemptDates[i - 1]).getTime();
-      const curr = new Date(attemptDates[i]).getTime();
-      const diff = (prev - curr) / 86400000;
-      if (diff === 1) {
-        streak++;
-      } else {
-        longestStreak = Math.max(longestStreak, streak);
-        streak = 1;
-      }
-    }
-    longestStreak = Math.max(longestStreak, streak);
-  }
 
   // ── Daily progress (last 30 days) ──
   const thirtyDaysAgo = new Date();
@@ -294,7 +263,7 @@ function aggregateAnalytics(
     pillarMap.set(slug, existing);
   }
 
-  // Always render all 7 official pillars in a stable order.
+  // Always render all 8 official pillars in a stable order.
   const pillarBreakdown: PillarBreakdown[] = PILLARS.map((pillar) => {
     const v = pillarMap.get(pillar.slug) || { attempts: 0, totalScore: 0, timeSpent: 0, bestScore: 0 };
 
