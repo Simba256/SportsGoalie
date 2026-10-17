@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
 import { PillarsArchitectureSection } from '@/components/the-system/pillars-architecture-section';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -14,6 +17,22 @@ const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
+
+const heroContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+  },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 56 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
 
 function VoiceButton({ label }: { label: string }) {
   const [playing, setPlaying] = useState(false);
@@ -40,7 +59,7 @@ function VoiceButton({ label }: { label: string }) {
       </button>
       <button
         onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' as const }}
+        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' as const }}
       >
         VOICE {on ? 'ON' : 'OFF'}
       </button>
@@ -56,11 +75,11 @@ export default function TheSystemPage() {
   const sec: React.CSSProperties = {
     position: 'relative',
     overflow: 'hidden',
-    minHeight: '100vh',
+    minHeight: '100svh',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    padding: 'clamp(80px,10vw,130px) 0',
+    padding: 'clamp(60px,8vw,130px) 0',
   };
 
   return (
@@ -84,58 +103,10 @@ export default function TheSystemPage() {
         }
       `}} />
 
-      {/* ── NAV ── */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button
-              onClick={() => router.push('/who-we-are')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />
-              WHO WE ARE
-            </button>
-            {/* Active state — THE SYSTEM */}
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'default', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: BLUE, display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, boxShadow: `0 0 0 3px rgba(55,181,255,0.22)`, flexShrink: 0 }} />
-              THE SYSTEM
-            </button>
-            <button
-              onClick={() => router.push('/contact')}
-              style={{
-                background: `linear-gradient(135deg, ${BLUE}, #0ea5e9)`,
-                border: 'none', borderRadius: '50px',
-                padding: '9px 20px', cursor: 'pointer',
-                fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#fff',
-                boxShadow: '0 2px 12px rgba(55,181,255,0.3)',
-              }}
-            >
-              CONTACT US
-            </button>
-          </div>
-          {/* Mobile contact button */}
-          <button
-            onClick={() => router.push('/contact')}
-            className="sm:hidden"
-            style={{
-              background: `linear-gradient(135deg, ${BLUE}, #0ea5e9)`,
-              border: 'none', borderRadius: '50px',
-              padding: '8px 16px', cursor: 'pointer',
-              fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: '#fff',
-            }}
-          >
-            CONTACT
-          </button>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* ── B: OPENING STATEMENT ── */}
-      <section style={{ ...sec, background: '#060f28' }}>
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #081d3f 0%, #0a2248 55%, #071840 100%)' }}>
         <MeshGradientBg
           colors={['#060f28', '#0f2847', '#1F3864', '#1850b4', '#37b5ff', '#0a2040']}
           distortion={0.9}
@@ -144,35 +115,49 @@ export default function TheSystemPage() {
           veilOpacity={0.48}
         />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '32px' }}>
+        <motion.div
+          className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full"
+          style={{ position: 'relative', zIndex: 1 }}
+          variants={heroContainer}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={heroItem} style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '32px' }}>
             <div style={{ width: '48px', height: '2px', background: `linear-gradient(90deg, ${BLUE2}, rgba(96,205,255,0.2))`, flexShrink: 0 }} />
             <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>THE SMARTER GOALIE SYSTEM</p>
-          </div>
+          </motion.div>
 
-          <h1 style={{ fontSize: 'clamp(30px, 5vw, 68px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 28px', color: '#fff', maxWidth: '920px' }}>
-            SEVEN PILLARS.<br />
+          <motion.h1
+            variants={heroItem}
+            style={{ fontSize: 'clamp(30px, 5vw, 68px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 28px', color: '#fff', maxWidth: '920px' }}
+          >
+            EIGHT PILLARS.<br />
             <span style={{ color: BLUE2 }}>ONE COMPLETE ARCHITECTURE.</span><br />
             <span style={{ color: RED }}>BUILT ON SIX DECADES.</span>
-          </h1>
+          </motion.h1>
 
-          <p style={{ fontSize: 'clamp(15px, 1.8vw, 20px)', color: 'rgba(255,255,255,0.68)', lineHeight: 1.85, maxWidth: '680px', margin: '0 0 44px', fontStyle: 'italic' }}>
+          <motion.p
+            variants={heroItem}
+            style={{ fontSize: 'clamp(15px, 1.8vw, 20px)', color: 'rgba(255,255,255,0.68)', lineHeight: 1.85, maxWidth: '680px', margin: '0 0 44px', fontStyle: 'italic' }}
+          >
             Every component shown on this page is connected to every other. Nothing operates in isolation. The goalie who engages with the full system develops faster, more completely, and more permanently than any program has ever produced.
-          </p>
+          </motion.p>
 
-          <VoiceButton label="Coach Mike: The Complete System" />
-        </div>
+          <motion.div variants={heroItem}>
+            <VoiceButton label="Coach Mike: The Complete System" />
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* ── C: 7 PILLARS OVERVIEW ── */}
+      {/* ── C: 8 PILLARS OVERVIEW ── */}
       <PillarsArchitectureSection
         voiceButton={
-          <VoiceButton label="Coach Mike: The 7 Pillars" />
+          <VoiceButton label="Coach Mike: The 8 Pillars" />
         }
       />
 
       {/* ── D: CHARTING ARCHITECTURE ── */}
-      <section style={{ ...sec, background: 'linear-gradient(140deg, #060d1f 0%, #0a1835 55%, #061228 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(140deg, #091c40 0%, #0d2448 55%, #081a3c 100%)' }}>
         {/* Grid overlay */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(55,181,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(55,181,255,0.025) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
         {/* Glow orbs */}
@@ -185,7 +170,7 @@ export default function TheSystemPage() {
           <div style={{ marginBottom: '48px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(96,205,255,0.25)', borderRadius: '50px', padding: '6px 16px', marginBottom: '24px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE2, boxShadow: `0 0 8px ${BLUE2}` }} />
-              <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const }}>Connected Architecture</span>
+              <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const }}>Connected Architecture</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
               <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(180deg, ${BLUE2}, rgba(96,205,255,0.15))`, boxShadow: `0 0 20px ${BLUE2}60`, borderRadius: '3px', flexShrink: 0 }} />
@@ -222,7 +207,7 @@ export default function TheSystemPage() {
               {
                 num: '01',
                 title: 'Game Charting',
-                desc: 'Factor Ratios, good goal / bad goal, V.M.P. intensity, period by period',
+                desc: 'Factor Ratios, good goal / weak goal, V.M.P. intensity, period by period',
                 metric: 'Factor Ratio',
                 color: BLUE2,
                 icon: (
@@ -278,7 +263,7 @@ export default function TheSystemPage() {
                   spotlight
                   className="group h-full rounded-[18px] cursor-default"
                   style={{
-                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #060d1f 80%)`,
+                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #091c40 80%)`,
                     border: `1px solid ${item.color}${isActive ? '55' : '28'}`,
                     boxShadow: isActive
                       ? `0 16px 48px ${item.color}22, inset 0 1px 0 rgba(255,255,255,0.08)`
@@ -357,7 +342,7 @@ export default function TheSystemPage() {
                         style={{ background: `${item.color}14`, border: `1px solid ${item.color}38`, padding: '5px 12px' }}
                       >
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-                        <span className="font-black uppercase" style={{ fontSize: '9px', color: item.color, letterSpacing: '1.5px' }}>
+                        <span className="font-black uppercase" style={{ fontSize: '11px', color: item.color, letterSpacing: '1.5px' }}>
                           {item.metric}
                         </span>
                       </div>
@@ -373,16 +358,19 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── E: PERSONALIZED COMPANION SYSTEM ── */}
-      <section style={{ ...sec, background: 'linear-gradient(145deg, #1e5ec4 0%, #1850b4 58%, #0f3d9e 100%)' }}>
-        <FloatingPaths position={-1} color="rgba(96,205,255,0.7)" />
-        <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: '55vw', height: '55vw', maxWidth: '680px', maxHeight: '680px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.13) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #0d2d6b 0%, #0a2358 55%, #071940 100%)' }}>
+        <FloatingPaths position={-1} color="rgba(96,205,255,0.45)" />
+        {/* Grid overlay */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(55,181,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(55,181,255,0.03) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: '55vw', height: '55vw', maxWidth: '680px', maxHeight: '680px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.22) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.1) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 items-center">
             <div style={{ flex: '1 1 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '28px' }}>
                 <div style={{ width: '48px', height: '2px', background: `linear-gradient(90deg, ${BLUE2}, rgba(96,205,255,0.2))`, flexShrink: 0 }} />
-                <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>THE MOST DIFFERENTIATED FEATURE</p>
+                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>THE MOST DIFFERENTIATED FEATURE</p>
               </div>
               <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 60px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 16px', color: '#fff' }}>
                 COACH MIKE<br />KNOWS YOUR NAME.
@@ -436,7 +424,7 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── F: MOTIVATIONAL LIBRARY ── */}
-      <section style={{ ...sec, background: 'linear-gradient(145deg, #0b0f1e 0%, #080d18 60%, #0f0d1c 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(145deg, #0a1428 0%, #091220 60%, #0c1128 100%)' }}>
         {/* Amber glow bottom-left */}
         <div style={{ position: 'absolute', bottom: '-8%', left: '-5%', width: '700px', height: '700px', background: 'radial-gradient(ellipse, rgba(251,191,36,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
         {/* Blue glow top-right */}
@@ -453,7 +441,7 @@ export default function TheSystemPage() {
             {/* Badge */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.28)', borderRadius: '50px', padding: '6px 16px', marginBottom: '24px', boxShadow: '0 2px 12px rgba(251,191,36,0.08)' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 8px #fbbf24' }} />
-              <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const }}>A Space Personal To Each Member</span>
+              <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const }}>A Space Personal To Each Member</span>
             </div>
             {/* Title block */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
@@ -544,7 +532,7 @@ export default function TheSystemPage() {
                   spotlight
                   className={`group h-full rounded-[18px] cursor-default${i === 4 ? ' sm:col-span-2 lg:col-span-1' : ''}`}
                   style={{
-                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #0b0f1e 80%)`,
+                    background: `linear-gradient(155deg, ${item.color}16, ${item.color}07, #0a1428 80%)`,
                     border: `1px solid ${item.color}${isActive ? '55' : '28'}`,
                     boxShadow: isActive
                       ? `0 16px 48px ${item.color}22, inset 0 1px 0 rgba(255,255,255,0.08)`
@@ -623,7 +611,7 @@ export default function TheSystemPage() {
                         style={{ background: `${item.color}14`, border: `1px solid ${item.color}38`, padding: '5px 12px' }}
                       >
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-                        <span className="font-black uppercase" style={{ fontSize: '9px', color: item.color, letterSpacing: '1.5px' }}>
+                        <span className="font-black uppercase" style={{ fontSize: '11px', color: item.color, letterSpacing: '1.5px' }}>
                           {item.tag}
                         </span>
                       </div>
@@ -653,7 +641,7 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── G: YOUR INDIVIDUAL PAGE ── */}
-      <section style={{ ...sec, background: 'linear-gradient(155deg, #07101f 0%, #0b1d36 55%, #060f22 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(155deg, #091c3e 0%, #0d2448 55%, #081a3c 100%)' }}>
         {/* Dot grid */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(55,181,255,0.13) 1.5px, transparent 1.5px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
         {/* Blue glow orb top-right */}
@@ -676,7 +664,7 @@ export default function TheSystemPage() {
               <VoiceButton label="Coach Mike: Your Individual Page" />
             </div>
 
-            <div style={{ flex: '0 0 auto', maxWidth: '420px', width: '100%', marginLeft: 'auto' }}>
+            <div style={{ flex: '0 0 auto', maxWidth: '420px', width: '100%' }}>
               <TiltCard
                 tiltLimit={10}
                 scale={1.03}
@@ -684,7 +672,7 @@ export default function TheSystemPage() {
                 spotlight
                 className="rounded-[24px]"
                 style={{
-                  background: 'linear-gradient(145deg, rgba(10,20,44,0.97) 0%, rgba(7,15,34,0.99) 100%)',
+                  background: 'linear-gradient(145deg, rgba(12,26,56,0.97) 0%, rgba(9,20,46,0.99) 100%)',
                   backdropFilter: 'blur(24px)',
                   WebkitBackdropFilter: 'blur(24px)',
                   border: '1px solid rgba(55,181,255,0.22)',
@@ -706,11 +694,11 @@ export default function TheSystemPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: '0 0 4px', lineHeight: 1 }}>Your Name</p>
-                        <p style={{ fontSize: '9px', fontWeight: 700, color: BLUE2, letterSpacing: '1.8px', textTransform: 'uppercase' as const, margin: 0 }}>GOALIE — MEMBER SINCE 2026</p>
+                        <p style={{ fontSize: '11px', fontWeight: 700, color: BLUE2, letterSpacing: '1.8px', textTransform: 'uppercase' as const, margin: 0 }}>GOALIE — MEMBER SINCE 2026</p>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.28)', borderRadius: '20px', padding: '5px 11px', flexShrink: 0 }}>
                         <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 5px #34d399' }} />
-                        <span style={{ fontSize: '8px', fontWeight: 800, color: '#34d399', letterSpacing: '1.2px' }}>ACTIVE</span>
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', letterSpacing: '1.2px' }}>ACTIVE</span>
                       </div>
                     </div>
 
@@ -721,10 +709,10 @@ export default function TheSystemPage() {
                           <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: BLUE2, flexShrink: 0 }} />
                           <span style={{ fontSize: '11px', color: 'rgba(148,200,232,0.7)', fontWeight: 600 }}>Pillars Completed</span>
                         </div>
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: BLUE2 }}>4 / 7</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: BLUE2 }}>4 / 8</span>
                       </div>
                       <div style={{ height: '4px', background: 'rgba(55,181,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: '57%', background: `linear-gradient(90deg, ${BLUE}, ${BLUE2})`, borderRadius: '4px', boxShadow: `0 0 10px ${BLUE}80` }} />
+                        <div style={{ height: '100%', width: '50%', background: `linear-gradient(90deg, ${BLUE}, ${BLUE2})`, borderRadius: '4px', boxShadow: `0 0 10px ${BLUE}80` }} />
                       </div>
                     </div>
 
@@ -760,7 +748,7 @@ export default function TheSystemPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '48px' }}>
             <div style={{ width: '6px', height: '80px', background: '#fbbf24', boxShadow: '0 0 15px #fbbf24', borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Built Into The Architecture</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fbbf24', textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Built Into The Architecture</p>
               <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 48px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>THE ACHIEVEMENT &amp; ACCOLADE ENGINE</h2>
               <p style={{ fontSize: 'clamp(13px, 1.5vw, 16px)', color: 'rgba(148,195,228,0.8)', margin: '12px 0 0', maxWidth: '600px', lineHeight: 1.65 }}>
                 Not an add-on. Not a gamification gimmick. Real recognition for real development.
@@ -784,7 +772,7 @@ export default function TheSystemPage() {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}`, flexShrink: 0 }} />
-                  <span style={{ fontSize: '10px', fontWeight: 800, color: item.color, letterSpacing: '3px', textTransform: 'uppercase' as const }}>{item.type} ACCOLADES</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: item.color, letterSpacing: '3px', textTransform: 'uppercase' as const }}>{item.type} ACCOLADES</span>
                 </div>
                 <p style={{ fontSize: '14px', color: 'rgba(148,200,232,0.85)', margin: 0, lineHeight: 1.75 }}>{item.desc}</p>
               </div>
@@ -796,15 +784,16 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── I: THE COMMUNITY ── */}
-      <section style={{ ...sec, background: 'linear-gradient(140deg, #1b3c7c 0%, #163272 100%)' }}>
-        <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.01) 60px, rgba(255,255,255,0.01) 61px)', pointerEvents: 'none' }} />
+      <section style={{ ...sec, background: 'linear-gradient(140deg, #0d2255 0%, #0b1d48 100%)' }}>
+        <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(96,205,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '500px', height: '500px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.013) 60px, rgba(255,255,255,0.013) 61px)', pointerEvents: 'none' }} />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
             <div style={{ width: '6px', height: '80px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Hosted By Coach Mike</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase' as const, margin: '0 0 8px' }}>Hosted By Coach Mike</p>
               <h2 style={{ fontSize: 'clamp(28px, 4vw, 52px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>THE COMMUNITY</h2>
             </div>
           </div>
@@ -848,7 +837,7 @@ export default function TheSystemPage() {
       </section>
 
       {/* ── J: THE CLOSE ── */}
-      <section style={{ ...sec, background: 'linear-gradient(160deg, #092038 0%, #0e2848 100%)' }}>
+      <section style={{ ...sec, background: 'linear-gradient(160deg, #0b2244 0%, #102c52 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(96,205,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(96,205,255,0.018) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', right: '-40px', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(140px, 24vw, 380px)', fontWeight: 900, color: 'rgba(255,255,255,0.016)', letterSpacing: '-10px', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', textTransform: 'uppercase' as const }}>SYSTEM</div>
         <div style={{ position: 'absolute', top: '-20%', left: '50%', width: '800px', height: '800px', background: 'radial-gradient(ellipse, rgba(55,181,255,0.06) 0%, transparent 70%)', pointerEvents: 'none', transform: 'translateX(-50%)' }} />
@@ -856,7 +845,7 @@ export default function TheSystemPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(96,205,255,0.26)', borderRadius: '50px', padding: '8px 20px', marginBottom: '36px', boxShadow: '0 2px 12px rgba(55,181,255,0.1)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: RED, boxShadow: '0 0 0 3px rgba(192,0,0,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>A System. Not A Program.</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' as const }}>A System. Not A Program.</p>
           </div>
 
           <h2 style={{ fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '28px' }}>
@@ -895,17 +884,12 @@ export default function TheSystemPage() {
               NEXT: THE OFFER
               <ChevronRight size={18} />
             </button>
-            <p style={{ fontSize: '10px', color: 'rgba(148,192,222,0.45)', letterSpacing: '3px', textTransform: 'uppercase' as const, margin: '14px 0 0' }}>PAGE 6 OF 6</p>
+            <p style={{ fontSize: '11px', color: 'rgba(148,192,222,0.45)', letterSpacing: '3px', textTransform: 'uppercase' as const, margin: '14px 0 0' }}>PAGE 6 OF 6</p>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
-          &copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER
-        </p>
-      </div>
+      <Footer7 />
     </div>
   );
 }

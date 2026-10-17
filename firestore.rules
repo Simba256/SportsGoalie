@@ -131,11 +131,31 @@ service cloud.firestore {
       // After createUserWithEmailAndPassword, the user is automatically signed in
       allow create: if request.auth != null && request.auth.uid == userId;
 
-      // Users can update their own profile (except role and email), admins can update any
+      // Users can update their own profile (except role, email, and the admin-only
+      // pause switch — otherwise a paused member could simply unpause themselves)
+      //
+      // The application fields are locked for the same reason (item 2). An
+      // applicant is walled out of the content by applicationStatus, so if they
+      // could set it themselves the wall would be a suggestion. The single
+      // self-transition allowed is 'applying' -> 'submitted', which is the flip
+      // the baseline questionnaire makes in the same write as the profile.
+      // Everything recording Michael's decision is admin-only, and so is the
+      // record of him opening the account after the call.
+      //
       // Parents can update a student's linkedParentIds (needed for parent-child linking)
       allow update: if (isOwner(userId) &&
                        !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
-                       !('email' in request.resource.data.diff(resource.data).affectedKeys())) ||
+                       !('email' in request.resource.data.diff(resource.data).affectedKeys()) &&
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPaused', 'pausedAt', 'resumedAt']) &&
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'appliedAt', 'applicationDecidedAt', 'applicationDecidedBy',
+                         'applicationDecidedByName', 'applicationNote',
+                         'applicationReceivedEmailSent', 'applicationDecisionEmailSent',
+                         'applicationOpenedAt', 'applicationOpenedBy', 'applicationOpenedByName'
+                       ]) &&
+                       (!('applicationStatus' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                        (resource.data.get('applicationStatus', '') == 'applying' &&
+                         request.resource.data.applicationStatus == 'submitted'))) ||
                       isAdmin() ||
                       (isParent() &&
                        resource.data.role == 'student' &&
@@ -299,13 +319,26 @@ service cloud.firestore {
     }
 
     // User Achievements collection
-    match /user_achievements/{achievementId} {
+    match /user_achievements/{userAchievementId} {
       // Users can read their own achievements, admins can read all
       allow read: if isOwnerOrAdmin(resource.data.userId);
 
-      // System/admins can create achievements for users
-      allow create: if isAdmin() &&
-                       hasRequiredFields(['userId', 'achievementId']);
+      // Admins can create achievements for users. A goalie can record their own unlock: the app
+      // awards it from the browser when a Knowledge Check or streak crosses a threshold (the same
+      // way it saves the rest of their progress). It must be a completed unlock of an active
+      // achievement, written under the one document id that belongs to that goalie and achievement,
+      // so an unlock cannot be recorded twice or written for someone else.
+      allow create: if (isAdmin() &&
+                        hasRequiredFields(['userId', 'achievementId'])) ||
+                       (isOwner(request.resource.data.userId) &&
+                        request.resource.data.keys().hasOnly(['id', 'userId', 'achievementId', 'progress', 'isCompleted', 'unlockedAt', 'isNotified']) &&
+                        hasRequiredFields(['userId', 'achievementId', 'progress', 'isCompleted']) &&
+                        request.resource.data.achievementId is string &&
+                        userAchievementId == request.resource.data.userId + '_' + request.resource.data.achievementId &&
+                        request.resource.data.isCompleted == true &&
+                        request.resource.data.progress == 100 &&
+                        exists(/databases/$(database)/documents/achievements/$(request.resource.data.achievementId)) &&
+                        get(/databases/$(database)/documents/achievements/$(request.resource.data.achievementId)).data.isActive == true);
 
       // System/admins can update achievements
       allow update: if isAdmin();
@@ -535,8 +568,12 @@ service cloud.firestore {
 
     // Video Quiz Progress collection - Student progress through video quizzes
     match /video_quiz_progress/{progressId} {
-      // Users can read their own progress, admins can read all
-      allow read: if isOwnerOrAdmin(resource.data.userId);
+      // Users can read their own progress, coaches can read the progress of
+      // goalies assigned to them (so they can see individual answers), admins read all
+      allow read: if isOwnerOrAdmin(resource.data.userId) ||
+                     (isCoach() &&
+                      exists(/databases/$(database)/documents/users/$(resource.data.userId)) &&
+                      get(/databases/$(database)/documents/users/$(resource.data.userId)).data.assignedCoachId == getUserId());
 
       // Users can create their own progress
       allow create: if isAuthenticated() &&
@@ -714,9 +751,13 @@ service cloud.firestore {
       // Students can list/query their own entries (application filters by studentId), admins can list all
       allow list: if isAuthenticated();
 
-      // Students can create entries for themselves, admins can create for any student
+      // Students can create entries for themselves, admins can create for any student.
+      // `sessionId` is deliberately NOT required: standalone pillar check-ins are not tied
+      // to a logged game or practice session. It is still type-checked when present.
       allow create: if isAuthenticated() &&
-                       hasRequiredFields(['sessionId', 'studentId', 'formTemplateId', 'formTemplateVersion', 'submittedBy', 'submitterRole', 'responses']) &&
+                       hasRequiredFields(['studentId', 'formTemplateId', 'formTemplateVersion', 'submittedBy', 'submitterRole', 'responses']) &&
+                       (!request.resource.data.keys().hasAny(['sessionId']) ||
+                        request.resource.data.sessionId is string) &&
                        (isOwner(request.resource.data.studentId) || isAdmin()) &&
                        request.resource.data.formTemplateId is string &&
                        request.resource.data.formTemplateId.size() > 0 &&
@@ -931,6 +972,29 @@ service cloud.firestore {
       );
     }
 
+    // Video Library collection - shared pool of reusable videos for quizzes
+    // Lets admins/coaches upload a video once and reuse it across many quizzes
+    // instead of re-uploading the same footage every time
+    match /library_videos/{videoId} {
+      // Only coaches/admins browse the library (it's a content-creation tool, not public content)
+      allow read: if isCoachOrAdmin();
+
+      allow create: if isCoachOrAdmin() &&
+                       hasRequiredFields(['title', 'videoUrl', 'source', 'tags', 'createdBy', 'createdAt', 'updatedAt']) &&
+                       request.resource.data.createdBy == getUserId() &&
+                       request.resource.data.title is string &&
+                       request.resource.data.title.size() > 0 &&
+                       request.resource.data.videoUrl is string &&
+                       request.resource.data.videoUrl.size() > 0 &&
+                       request.resource.data.tags is list;
+
+      // Creator can update their own entry, admins can update any
+      allow update: if isAdmin() || (isCoach() && resource.data.createdBy == getUserId());
+
+      // Creator can delete their own entry, admins can delete any
+      allow delete: if isAdmin() || (isCoach() && resource.data.createdBy == getUserId());
+    }
+
     // ==================== PARENT LINKING SYSTEM ====================
 
     // Parent Link Codes collection - Lookup table for XXXX-XXXX codes
@@ -988,6 +1052,23 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
                        isOwner(request.resource.data.studentId);
       allow update: if isOwnerOrAdmin(resource.data.studentId);
+      allow delete: if isOwnerOrAdmin(resource.data.studentId);
+    }
+
+    // Learning goals — private to the goalie who set them.
+    // The studentId on a goal can never be changed, so a goal cannot be handed to someone else.
+    match /student_goals/{goalId} {
+      allow read: if isOwnerOrAdmin(resource.data.studentId);
+      allow create: if isOwner(request.resource.data.studentId) &&
+                       request.resource.data.title is string &&
+                       request.resource.data.title.size() > 0 &&
+                       request.resource.data.title.size() <= 100 &&
+                       request.resource.data.targetValue is number &&
+                       request.resource.data.targetValue > 0 &&
+                       request.resource.data.type in ['skill_completion', 'quiz_score', 'time_spent', 'streak', 'sport_completion'] &&
+                       request.resource.data.priority in ['low', 'medium', 'high'];
+      allow update: if isOwnerOrAdmin(resource.data.studentId) &&
+                       request.resource.data.studentId == resource.data.studentId;
       allow delete: if isOwnerOrAdmin(resource.data.studentId);
     }
 
@@ -1092,6 +1173,93 @@ service cloud.firestore {
                        hasRequiredFields(['goalieId', 'suggestedName', 'suggestedCategory', 'status']);
       allow update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // Student Baseline Profiles collection - onboarding questionnaire results
+    match /studentBaselineProfiles/{userId} {
+      // Students can read their own profile, coaches/admins and linked parents can read
+      allow read: if isOwnerOrAdmin(userId) || isCoachOrAdmin() || isParent();
+
+      // Students can create or update their own profile
+      allow create, update: if isAuthenticated() && isOwner(userId);
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Coach Baseline Profiles collection - coach onboarding questionnaire results
+    match /coachBaselineProfiles/{userId} {
+      // Coaches can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Coaches can create or update their own profile
+      allow create, update: if isAuthenticated() && isOwner(userId);
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Parent Baseline Profiles collection - parent onboarding questionnaire results
+    match /parentBaselineProfiles/{userId} {
+      // Parents can read their own profile, admins can read all
+      allow read: if isOwnerOrAdmin(userId);
+
+      // Parents can create or update their own profile
+      allow create, update: if isAuthenticated() && isOwner(userId);
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Growth Points - the goalie rewards ledger (balance doc per goalie, plus an
+    // append-only transaction log).
+    //
+    // These two collections had no rules at all, so the catch-all below was denying every
+    // read and write. Both collections are empty in production as a result: the feature has
+    // never recorded a single point since it was built.
+    //
+    // Points are awarded from the browser (there is no Cloud Function behind this), so
+    // these rules can only enforce that a goalie touches nobody's ledger but their own.
+    // Someone determined could still award themselves points from the dev console. Closing
+    // that properly means moving awardPoints server-side, which is a separate piece of work.
+    match /growth_points_balance/{userId} {
+      allow read: if isOwnerOrAdmin(userId);
+
+      // On update, request.resource.data is the merged post-write document, so goalieId
+      // is still checked even though awardPoints only sends the changed counters.
+      allow create, update: if isAdmin() ||
+                               (isOwner(userId) &&
+                                request.resource.data.goalieId == userId);
+
+      allow delete: if isAdmin();
+    }
+
+    match /growth_points_transactions/{transactionId} {
+      // Reads are per-document, including inside a query: the ledger is queried with
+      // where('goalieId','==',uid), so every returned document satisfies this.
+      allow read: if isOwnerOrAdmin(resource.data.goalieId);
+
+      allow create: if isAdmin() ||
+                       (isOwner(request.resource.data.goalieId) &&
+                        hasRequiredFields(['goalieId', 'transactionType', 'points', 'eventType', 'description']) &&
+                        request.resource.data.points is number);
+
+      // The log is append-only: nobody rewrites history except an admin.
+      allow update, delete: if isAdmin();
+    }
+
+    // Coach Audio - Michael's recorded voice lines (V-A-01 ... V-B-22).
+    // Metadata only: url, storage path, duration, size.
+    match /coach_audio_clips/{clipId} {
+      // Public read. The marketing pages play these to visitors who are not
+      // signed in, and the client loads the whole collection in one query, so
+      // this cannot be narrowed per-document without splitting that query.
+      // If Michael decides the trigger recordings (V-B-*) should be
+      // goalie-only, that becomes two queries and a rule on the id prefix.
+      allow read: if true;
+
+      // Only Michael uploads. Everything here is written by /admin/coach-audio.
+      allow create, update, delete: if isAdmin();
     }
 
     // Catch-all rule for any other collections

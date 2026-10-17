@@ -41,7 +41,7 @@ test.describe('Coach Code System', () => {
       });
 
       // Verify page loaded correctly
-      await expect(page).toHaveTitle(/Register|SmarterGoalie/i);
+      await expect(page).toHaveTitle(/Register|Smarter ?Goalie/i);
       console.log('✓ Registration page loaded successfully');
     });
 

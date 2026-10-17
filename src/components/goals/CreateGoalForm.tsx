@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import type { NewGoal } from '@/types/goals';
 
 const goalSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
@@ -24,22 +25,9 @@ const goalSchema = z.object({
 
 type GoalFormData = z.infer<typeof goalSchema>;
 
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  type: 'skill_completion' | 'quiz_score' | 'time_spent' | 'streak' | 'sport_completion';
-  targetValue: number;
-  currentValue: number;
-  unit: string;
-  deadline?: Date;
-  priority: 'low' | 'medium' | 'high';
-  isCompleted: boolean;
-  createdAt: Date;
-}
-
 interface CreateGoalFormProps {
-  onSubmit: (goal: Omit<Goal, 'id' | 'createdAt'>) => void;
+  /** May be async: the form shows "Creating Goal..." until it settles. A rejection is for the caller to display. */
+  onSubmit: (goal: NewGoal) => void | Promise<void>;
 }
 
 const goalTypes = [
@@ -80,6 +68,22 @@ const goalTypes = [
   },
 ];
 
+/**
+ * A date input gives "YYYY-MM-DD". `new Date()` of that string is midnight UTC, which is the
+ * evening before in North America: a goal due on the 20th would show as due the 19th and go
+ * overdue a day early. A deadline is the end of that day where the goalie is.
+ */
+function endOfLocalDay(dateValue: string): Date {
+  const [year, month, day] = dateValue.split('-').map(Number);
+  return new Date(year, month - 1, day, 23, 59, 59);
+}
+
+/** Today's date as the date input wants it, in local time (toISOString would use UTC). */
+function toDateInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
   const [selectedType, setSelectedType] = useState<string>('');
 
@@ -106,20 +110,20 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
     }
   };
 
-  const onFormSubmit = (data: GoalFormData) => {
-    const goalData: Omit<Goal, 'id' | 'createdAt'> = {
+  const onFormSubmit = async (data: GoalFormData) => {
+    const goalData: NewGoal = {
       title: data.title,
       description: data.description,
       type: data.type,
       targetValue: data.targetValue,
       currentValue: 0,
       unit: data.unit,
-      deadline: data.deadline ? new Date(data.deadline) : undefined,
+      deadline: data.deadline ? endOfLocalDay(data.deadline) : undefined,
       priority: data.priority,
       isCompleted: false,
     };
 
-    onSubmit(goalData);
+    await onSubmit(goalData);
   };
 
   return (
@@ -243,7 +247,7 @@ export function CreateGoalForm({ onSubmit }: CreateGoalFormProps) {
           <Input
             id="deadline"
             type="date"
-            min={new Date().toISOString().split('T')[0]}
+            min={toDateInputValue(new Date())}
             className="border-slate-200 focus-visible:ring-red-500/30 focus-visible:border-red-300"
             {...register('deadline')}
           />

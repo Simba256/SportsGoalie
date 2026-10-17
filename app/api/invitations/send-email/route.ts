@@ -5,8 +5,8 @@ import { Invitation } from '@/types/invitation';
 /**
  * POST /api/invitations/send-email
  *
- * Sends a goalie invite email via Resend.
- * Called server-side from the admin GoalieInviteForm after the Firestore record is created.
+ * Sends an invite email via Resend, branching template by invitation.role.
+ * Called server-side from admin invite forms (goalie, admin) after the Firestore record is created.
  *
  * Body: { invitation: Invitation }
  */
@@ -24,10 +24,11 @@ export async function POST(request: NextRequest) {
 
     // INVITE_BASE_URL is the live deployment URL — ensures invite links work for
     // recipients even when the admin sends from a local dev environment
-    const appUrl =
+    const appUrl = (
       process.env.INVITE_BASE_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    ).replace(/\/$/, '');
 
     const inviteUrl = `${appUrl}/auth/accept-invite?token=${invitation.token}`;
 
@@ -38,7 +39,11 @@ export async function POST(request: NextRequest) {
       expiresAt: new Date(invitation.expiresAt),
     };
 
-    await emailService.sendGoalieInvitation({ invitation: hydratedInvitation, inviteUrl });
+    if (hydratedInvitation.role === 'admin') {
+      await emailService.sendAdminInvitation({ invitation: hydratedInvitation, inviteUrl });
+    } else {
+      await emailService.sendGoalieInvitation({ invitation: hydratedInvitation, inviteUrl });
+    }
 
     return NextResponse.json({ success: true, inviteUrl });
   } catch (error) {

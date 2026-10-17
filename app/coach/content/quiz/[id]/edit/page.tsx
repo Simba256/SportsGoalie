@@ -33,6 +33,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { VideoUploader } from '@/components/coach/video-uploader';
+import { VideoLibraryPicker } from '@/components/video';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { customContentService } from '@/lib/database';
 import { videoQuizService } from '@/lib/database';
@@ -276,7 +277,7 @@ export default function EditVideoQuizPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="no-button-zoom min-h-screen flex flex-col bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
@@ -447,10 +448,14 @@ export default function EditVideoQuizPage() {
                 <p className="text-sm text-muted-foreground">
                   Upload or add a video URL. Questions will be added at specific timestamps.
                 </p>
+                <div className="flex justify-end">
+                  <VideoLibraryPicker onSelect={handleVideoUploaded} />
+                </div>
                 <VideoUploader
                   coachId={user.id}
                   onVideoUploaded={handleVideoUploaded}
                   initialVideoUrl={videoUrl}
+                  surface="light"
                 />
                 {videoDuration > 0 && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -485,6 +490,9 @@ export default function EditVideoQuizPage() {
                 videoDuration={videoDuration}
                 videoUrl={videoUrl}
                 onChange={setQuestions}
+                // Also repairs quizzes already saved with a 0 duration: opening the
+                // Questions tab detects the real length and the next save stores it.
+                onDurationDetected={setVideoDuration}
               />
             )}
           </TabsContent>

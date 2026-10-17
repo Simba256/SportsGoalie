@@ -203,7 +203,7 @@ export default function LoginPage() {
 
           {/* Header */}
           <div style={{ marginBottom: '36px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: '10px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: '10px' }}>
               Already registered?
             </p>
             <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>
@@ -215,18 +215,36 @@ export default function LoginPage() {
             <VerificationMessage />
           </Suspense>
 
+          <style>{`
+            .auth-input:-webkit-autofill,
+            .auth-input:-webkit-autofill:hover,
+            .auth-input:-webkit-autofill:focus,
+            .auth-input:-webkit-autofill:active {
+              -webkit-text-fill-color: #fff !important;
+              -webkit-box-shadow: 0 0 0px 1000px #00101f inset !important;
+              box-shadow: 0 0 0px 1000px #00101f inset !important;
+              caret-color: #fff !important;
+              transition: background-color 5000s ease-in-out 0s !important;
+            }
+          `}</style>
+
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} data-testid="login-form">
 
-            {/* Email */}
+            {/* Email, or a goalie handle for an account a parent holds (item 6c).
+                Deliberately type="text" rather than type="email": the browser's
+                own validation would reject a handle before the form ever sees
+                it. */}
             <div>
-              <label htmlFor="email" style={labelStyle}>Email</label>
+              <label htmlFor="email" style={labelStyle}>Email or goalie username</label>
               <input
                 id="email"
-                type="email"
+                type="text"
+                inputMode="email"
                 placeholder="your@email.com"
                 {...register('email')}
-                autoComplete="email"
+                autoComplete="username"
                 data-testid="email-input"
+                className="auth-input field-16"
                 style={inputStyle}
                 onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
                 onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
@@ -244,7 +262,7 @@ export default function LoginPage() {
                 <label htmlFor="password" style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
                 <Link
                   href="/auth/reset-password"
-                  style={{ fontSize: '12px', color: BLUE, textDecoration: 'none', fontWeight: 600 }}
+                  style={{ fontSize: '12px', color: BLUE, textDecoration: 'none', fontWeight: 600, padding: '8px 0', margin: '-8px 0' }}
                   data-testid="forgot-password-link"
                 >
                   Forgot password?
@@ -258,6 +276,7 @@ export default function LoginPage() {
                   {...register('password')}
                   autoComplete="current-password"
                   data-testid="password-input"
+                  className="auth-input field-16"
                   style={{ ...inputStyle, paddingRight: '44px' }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = BLUE)}
                   onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(55,181,255,0.2)')}
@@ -266,7 +285,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}
+                  style={{ position: 'absolute', right: '2px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: '10px', display: 'flex' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -285,7 +304,7 @@ export default function LoginPage() {
                 type="checkbox"
                 {...register('rememberMe')}
                 data-testid="remember-me-checkbox"
-                style={{ width: '15px', height: '15px', accentColor: BLUE, cursor: 'pointer' }}
+                style={{ width: '22px', height: '22px', accentColor: BLUE, cursor: 'pointer' }}
               />
               <label htmlFor="rememberMe" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', cursor: 'pointer' }}>
                 Remember me for 30 days

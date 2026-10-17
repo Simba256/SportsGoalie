@@ -9,6 +9,7 @@ import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { customCurriculumService } from '@/lib/database';
 import { customContentService } from '@/lib/database/services/custom-content.service';
+import { pillarDisplayName } from '@/lib/utils/pillars';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -207,6 +208,8 @@ export default function SkillDetailPage() {
         .sd-resource:hover { background: rgba(55,181,255,0.05) !important; }
         @keyframes sd-spin { to { transform: rotate(360deg); } }
         .sd-spinner { animation: sd-spin 0.8s linear infinite; border-radius: 50%; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; }
+        .sd-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+        @media (min-width: 640px) { .sd-stats { grid-template-columns: repeat(4, 1fr); } }
       `}</style>
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
@@ -215,12 +218,12 @@ export default function SkillDetailPage() {
           <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
             <Link href="/pillars" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Pillars</Link>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
-            <Link href={`/pillars/${sportId}`} style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>{sport.name}</Link>
+            <Link href={`/pillars/${sportId}`} style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>{pillarDisplayName(sport.id, sport.name)}</Link>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
             <span style={{ color: 'rgba(255,255,255,0.6)' }}>{skill.name}</span>
           </nav>
           <button onClick={() => router.back()} className="sd-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', background: 'transparent', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', width: 'fit-content', transition: 'all 0.2s' }}>
-            <ArrowLeft size={15} /> Back to {sport.name}
+            <ArrowLeft size={15} /> Back to {pillarDisplayName(sport.id, sport.name)}
           </button>
         </div>
 
@@ -246,7 +249,7 @@ export default function SkillDetailPage() {
           </div>
 
           {/* Stats Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginTop: '20px' }}>
+          <div className="sd-stats">
             {[
               { icon: Clock, label: 'Est. Time', value: formatDuration(skill.estimatedTimeToComplete) },
               { icon: Target, label: 'Objectives', value: String(skill.learningObjectives.length) },

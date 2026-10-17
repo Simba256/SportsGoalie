@@ -6,6 +6,7 @@ import { videoQuizService } from '@/lib/database';
 import { VideoQuizProgress } from '@/types/video-quiz';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { takeStreak } from '@/lib/training/attempt-streak';
 
 export interface DailyProgress {
   date: string;
@@ -27,6 +28,8 @@ export interface PillarBreakdown {
 export interface RecentAttempt {
   id: string;
   quizId: string;
+  /** Name of the Knowledge Check. Empty only if the check itself has been deleted. */
+  quizTitle: string;
   skillId: string;
   sportId: string;
   pillarName: string;
@@ -84,6 +87,41 @@ function dateStr(d: Date): string {
   return d.toISOString().split('T')[0];
 }
 
+/**
+ * Fills in the Knowledge Check name on attempts that were taken before the title was
+ * stored alongside the attempt. Mutates in place.
+ *
+ * Only the rows actually on screen are looked up, one read per distinct check rather
+ * than per attempt, and the quiz service caches them — so a goalie who has retaken the
+ * same check ten times still costs a single read.
+ */
+async function fillInMissingTitles(recentAttempts: RecentAttempt[]): Promise<void> {
+  const missingIds = [
+    ...new Set(recentAttempts.filter(a => !a.quizTitle && a.quizId).map(a => a.quizId)),
+  ];
+  if (missingIds.length === 0) return;
+
+  const titles = new Map<string, string>();
+  await Promise.all(
+    missingIds.map(async quizId => {
+      try {
+        const result = await videoQuizService.getVideoQuiz(quizId);
+        if (result.success && result.data?.title) {
+          titles.set(quizId, result.data.title);
+        }
+      } catch {
+        // A deleted check just keeps its fallback label.
+      }
+    })
+  );
+
+  for (const attempt of recentAttempts) {
+    if (!attempt.quizTitle) {
+      attempt.quizTitle = titles.get(attempt.quizId) || '';
+    }
+  }
+}
+
 export function useAnalytics() {
   const { user } = useAuth();
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -96,6 +134,8 @@ export function useAnalytics() {
       return;
     }
 
+    let cancelled = false;
+
     const load = async () => {
       try {
         setLoading(true);
@@ -106,6 +146,8 @@ export function useAnalytics() {
           limit: 2000,
         });
 
+        if (cancelled) return;
+
         if (!result.success || !result.data) {
           setError('Failed to load analytics data');
           return;
@@ -113,17 +155,23 @@ export function useAnalytics() {
 
         const attempts = result.data.items;
         const analytics = aggregateAnalytics(attempts);
+        await fillInMissingTitles(analytics.recentAttempts);
+        if (cancelled) return;
         setData(analytics);
         setError(null);
       } catch (err) {
         console.error('useAnalytics load error:', err);
         setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   return { data, loading, error };
@@ -151,6 +199,12 @@ function aggregateAnalytics(
   const avgSessionTime = totalQuizzes > 0 ? Math.round(totalTimeMinutes / totalQuizzes) : 0;
 
   // ── Streak calculation ──
+  // Same rule as the dashboard card, so the two screens show the same number: local
+  // calendar days, dated by when each take was finished.
+  const { currentStreak, longestStreak } = takeStreak(attempts);
+
+  // Distinct days with a finished take, newest first. Feeds the weekly/monthly
+  // consistency counts below; the streak above no longer reads it.
   const attemptDates = [
     ...new Set(
       attempts
@@ -161,44 +215,6 @@ function aggregateAnalytics(
         .filter((d): d is string => d !== null)
     ),
   ].sort().reverse();
-
-  let currentStreak = 0;
-  let longestStreak = 0;
-  const today = dateStr(new Date());
-  const yesterday = dateStr(new Date(Date.now() - 86400000));
-
-  if (attemptDates.length > 0) {
-    // Check if streak is active (today or yesterday)
-    if (attemptDates[0] === today || attemptDates[0] === yesterday) {
-      let streak = 1;
-      for (let i = 1; i < attemptDates.length; i++) {
-        const prev = new Date(attemptDates[i - 1]).getTime();
-        const curr = new Date(attemptDates[i]).getTime();
-        const diff = (prev - curr) / 86400000;
-        if (diff === 1) {
-          streak++;
-        } else {
-          break;
-        }
-      }
-      currentStreak = streak;
-    }
-
-    // Longest streak
-    let streak = 1;
-    for (let i = 1; i < attemptDates.length; i++) {
-      const prev = new Date(attemptDates[i - 1]).getTime();
-      const curr = new Date(attemptDates[i]).getTime();
-      const diff = (prev - curr) / 86400000;
-      if (diff === 1) {
-        streak++;
-      } else {
-        longestStreak = Math.max(longestStreak, streak);
-        streak = 1;
-      }
-    }
-    longestStreak = Math.max(longestStreak, streak);
-  }
 
   // ── Daily progress (last 30 days) ──
   const thirtyDaysAgo = new Date();
@@ -247,7 +263,7 @@ function aggregateAnalytics(
     pillarMap.set(slug, existing);
   }
 
-  // Always render all 7 official pillars in a stable order.
+  // Always render all 8 official pillars in a stable order.
   const pillarBreakdown: PillarBreakdown[] = PILLARS.map((pillar) => {
     const v = pillarMap.get(pillar.slug) || { attempts: 0, totalScore: 0, timeSpent: 0, bestScore: 0 };
 
@@ -269,9 +285,11 @@ function aggregateAnalytics(
     return {
       id: a.id,
       quizId: a.videoQuizId,
+      // Filled in from the check itself for attempts saved before the title was stored.
+      quizTitle: a.quizTitle?.trim() || '',
       skillId: a.skillId,
       sportId: a.sportId,
-      pillarName: pillarInfo?.shortName || 'Quiz',
+      pillarName: pillarInfo?.shortName || '',
       percentage: Math.round(a.percentage || 0),
       timeSpent: Math.round((a.timeSpent || a.totalTimeSpent || 0) / 60),
       submittedAt: toDate(a.submittedAt || a.completedAt),

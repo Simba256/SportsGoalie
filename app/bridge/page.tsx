@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
 
 const BeamsBackground = dynamic(
@@ -45,7 +47,7 @@ function VoiceButton({ label }: { label: string }) {
       </button>
       <button
         onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}
+        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}
       >
         VOICE {on ? 'ON' : 'OFF'}
       </button>
@@ -76,7 +78,7 @@ const DOORS = [
     bg: 'linear-gradient(135deg, rgba(55,181,255,0.08), rgba(14,165,233,0.04))',
     body: [
       'No goalie coach in your area. The nearest operation is hours away. The team\'s coaches mean well, but nobody speaks goaltender.',
-      'You are exactly who this system was built for: the full teaching architecture — the 7 Pillars, the charting, Coach Mike\'s voice — reaches you wherever the ice is.',
+      'You are exactly who this system was built for: the full teaching architecture — the 8 Pillars, the charting, Coach Mike\'s voice — reaches you wherever the ice is.',
     ],
     promise: null,
     promiseBold: null,
@@ -110,15 +112,6 @@ export default function BridgePage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const navBtnStyle: React.CSSProperties = {
-    background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px',
-    color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px',
-  };
-  const dotStyle: React.CSSProperties = {
-    width: '6px', height: '6px', borderRadius: '50%', background: BLUE3, flexShrink: 0,
-  };
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (email.trim()) setSubmitted(true);
@@ -127,41 +120,7 @@ export default function BridgePage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* ── NAV ── */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={navBtnStyle}>
-              <span style={dotStyle} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={navBtnStyle}>
-              <span style={dotStyle} />THE SYSTEM
-            </button>
-            <button
-              style={{ ...navBtnStyle, color: BLUE3 }}
-            >
-              <span style={{ ...dotStyle, background: BLUE3, boxShadow: `0 0 0 3px rgba(14,165,233,0.2)` }} />
-              WHO IT&apos;S FOR
-            </button>
-            <button
-              onClick={() => router.push('/contact')}
-              style={{ background: `linear-gradient(135deg, ${BLUE}, ${BLUE3})`, border: 'none', borderRadius: '50px', padding: '9px 20px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: NAVY, boxShadow: '0 2px 12px rgba(55,181,255,0.35)' }}
-            >
-              CONTACT US
-            </button>
-          </div>
-          <button
-            onClick={() => router.push('/contact')}
-            className="sm:hidden"
-            style={{ background: `linear-gradient(135deg, ${BLUE}, ${BLUE3})`, border: 'none', borderRadius: '50px', padding: '8px 16px', cursor: 'pointer', fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: NAVY }}
-          >
-            CONTACT
-          </button>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* ── HERO ── */}
       <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 'clamp(80px,10vw,120px)', paddingBottom: 'clamp(60px,8vw,100px)' }}>
@@ -214,7 +173,7 @@ export default function BridgePage() {
           {/* Badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', background: 'rgba(55,181,255,0.08)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: BLUE, boxShadow: '0 0 0 3px rgba(55,181,255,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>SMARTER GOALIE</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3.5px', color: BLUE, margin: 0, textTransform: 'uppercase' }}>SMARTER GOALIE</p>
           </div>
 
           {/* Color bar */}
@@ -239,7 +198,7 @@ export default function BridgePage() {
             {DOORS.map((d, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: d.accent, boxShadow: `0 0 8px ${d.accent}99, 0 0 16px ${d.accent}44` }} />
-                <span style={{ fontSize: '9px', fontWeight: 700, color: d.accent, opacity: 0.7, letterSpacing: '1.8px', textTransform: 'uppercase' as const }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: d.accent, opacity: 0.7, letterSpacing: '1.8px', textTransform: 'uppercase' as const }}>
                   {d.number}
                 </span>
               </div>
@@ -281,7 +240,7 @@ export default function BridgePage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '44px' }}>
             <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${BLUE2}, ${BLUE2}55)`, boxShadow: `0 0 20px ${BLUE2}cc, 0 0 40px ${BLUE2}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>THREE DOORS — ONE HOUSE</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 6px' }}>THREE DOORS — ONE HOUSE</p>
               <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
                 WHICH ONE IS <span style={{ color: BLUE2, fontStyle: 'italic' }}>YOURS?</span>
               </h2>
@@ -301,7 +260,7 @@ export default function BridgePage() {
                 {/* Door label */}
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: door.accent, boxShadow: `0 0 8px ${door.accent}` }} />
-                  <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: door.accent, textTransform: 'uppercase' as const }}>{door.number}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: door.accent, textTransform: 'uppercase' as const }}>{door.number}</span>
                 </div>
 
                 <h3 style={{ fontSize: 'clamp(20px, 2.5vw, 28px)', fontWeight: 900, color: '#fff', margin: '0 0 16px', letterSpacing: '-0.015em', fontStyle: 'italic' }}>
@@ -340,7 +299,7 @@ export default function BridgePage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '36px' }}>
             <div style={{ width: '6px', minHeight: '80px', background: `linear-gradient(to bottom, ${GOLD}, ${GOLD}55)`, boxShadow: `0 0 20px ${GOLD}cc, 0 0 40px ${GOLD}44`, borderRadius: '3px', flexShrink: 0, marginTop: '4px' }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px', color: GOLD, textTransform: 'uppercase', margin: '0 0 6px' }}>THE INFORMED GOALTENDER</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px', color: GOLD, textTransform: 'uppercase', margin: '0 0 6px' }}>THE INFORMED GOALTENDER</p>
               <h2 style={{ fontSize: 'clamp(26px, 4vw, 56px)', fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em', margin: 0 }}>
                 A SMARTER GOALIE{' '}
                 <span style={{ color: BLUE2, fontStyle: 'italic' }}>DOESN&apos;T GET FOOLED</span>
@@ -408,7 +367,7 @@ export default function BridgePage() {
             <p style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontStyle: 'italic', color: 'rgba(255,255,255,0.9)', lineHeight: 1.5, margin: '0 0 10px' }}>
               &ldquo;A <span style={{ color: BLUE2, fontStyle: 'normal', fontWeight: 900 }}>Smarter Goalie</span> is in the house.&rdquo;
             </p>
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: MUTED, textTransform: 'uppercase', margin: 0 }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: MUTED, textTransform: 'uppercase', margin: 0 }}>
               Respect in the house — all around
             </p>
           </div>
@@ -462,7 +421,7 @@ export default function BridgePage() {
               ))}
             </div>
 
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: GOLD, textTransform: 'uppercase', marginBottom: '16px' }}>JOIN THE FOUNDING 100</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '4px', color: GOLD, textTransform: 'uppercase', marginBottom: '16px' }}>JOIN THE FOUNDING 100</p>
 
             <h2 style={{ fontSize: 'clamp(26px, 4.5vw, 56px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.025em', marginBottom: '16px' }}>
               Whatever your situation —{' '}
@@ -525,28 +484,7 @@ export default function BridgePage() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <div style={{ background: NAVY, padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ height: '2px', background: `linear-gradient(to right, ${BLUE}, ${BLUE2}, ${GOLD}, ${BLUE3})`, marginBottom: '20px', boxShadow: '0 0 12px rgba(55,181,255,0.3)' }} />
-        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-          {[
-            { label: 'WHO WE ARE', path: '/who-we-are' },
-            { label: 'THE SYSTEM',  path: '/the-system' },
-            { label: 'CONTACT US', path: '/contact' },
-          ].map(link => (
-            <button
-              key={link.path}
-              onClick={() => router.push(link.path)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: 'rgba(55,181,255,0.6)', textTransform: 'uppercase' }}
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
-          &copy; 2026 SMARTER GOALIE INC. | LEARN SMART · PLAY SMART
-        </p>
-      </div>
+      <Footer7 />
 
     </div>
   );

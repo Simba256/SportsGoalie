@@ -5,6 +5,7 @@ import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 import { MindVaultCategoryCard } from '@/components/mind-vault/MindVaultCategoryCard';
+import { FirstVisitVoice } from '@/components/audio/FirstVisitVoice';
 import { Brain, ListChecks, Flame } from 'lucide-react';
 import { MIND_VAULT_CATEGORIES, type MindVaultCategorySummary } from '@/types/mind-vault';
 
@@ -44,6 +45,11 @@ export default function MindVaultPage() {
           <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '8px' }}>
             Build the <span style={{ color: BLUE }}>Mental Game</span>
           </h1>
+          <FirstVisitVoice
+            moment="mindVaultFirstVisit"
+            label="HEAR COACH MIKE: THE MIND-VAULT"
+            className="mb-3 justify-center"
+          />
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>
             Your personal mental armor, expanded one entry at a time.
           </p>

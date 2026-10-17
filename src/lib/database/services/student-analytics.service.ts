@@ -3,7 +3,10 @@ import { sportsService } from './sports.service';
 import { videoQuizService } from './video-quiz.service';
 import { ApiResponse } from '@/types';
 import { VideoQuizProgress } from '@/types/video-quiz';
+import { sportDisplayName } from '@/lib/utils/pillars';
 import { logger } from '../../utils/logger';
+import { finishedTakeDate, takeStreak } from '@/lib/training/attempt-streak';
+import { ownedSkillIds, quizIsOwned, skillOwnedDates } from '@/lib/training/owned';
 
 // Type alias for backwards compatibility
 type QuizAttempt = VideoQuizProgress;
@@ -59,7 +62,7 @@ export interface QuizPerformanceData {
   averageScore: number;
   timeSpent: number;
   lastAttempt: Date;
-  passed: boolean; // Whether the quiz was passed (best score >= passing threshold)
+  passed: boolean; // Whether the quiz is owned: every graded question got right at least once
 }
 
 export interface ProgressOverTimeData {
@@ -88,7 +91,7 @@ export interface SkillProgressDetail {
   status: 'not_started' | 'in_progress' | 'completed';
   progressPercentage: number;
   latestQuizScore: number | null;
-  quizStatus: 'not_attempted' | 'passed' | 'failed';
+  quizStatus: 'not_attempted' | 'owned' | 'open';
   lastAttemptDate: Date | null;
   timeSpent: number;
   completedAt: Date | null;
@@ -192,24 +195,19 @@ export class StudentAnalyticsService extends BaseDatabaseService {
       const worstQuizScore = quizScores.length > 0 ? Math.min(...quizScores) : 0;
       const completedQuizzes = quizzes.filter(q => q.isCompleted).length;
 
-      // Calculate progress metrics based on video quiz data
-      // Count unique skills passed
-      const passedSkillIds = new Set<string>();
+      // Skills done are skills OWNED, the one rule the goalie's own pages use. This used to
+      // read `quiz.passed`, a field nothing ever writes, so it was always 0 here.
       const attemptedSkillIds = new Set<string>();
 
       quizzes.forEach(quiz => {
-        if (quiz.skillId) {
-          attemptedSkillIds.add(quiz.skillId);
-          if (quiz.passed) {
-            passedSkillIds.add(quiz.skillId);
-          }
-        }
+        if (quiz.skillId) attemptedSkillIds.add(quiz.skillId);
       });
 
-      const skillsCompleted = passedSkillIds.size;
-      const skillsInProgress = attemptedSkillIds.size - passedSkillIds.size;
+      const ownedSkills = ownedSkillIds(quizzes);
+      const skillsCompleted = ownedSkills.size;
+      const skillsInProgress = attemptedSkillIds.size - ownedSkills.size;
       const completionRate = attemptedSkillIds.size > 0
-        ? Math.round((passedSkillIds.size / attemptedSkillIds.size) * 100)
+        ? Math.round((ownedSkills.size / attemptedSkillIds.size) * 100)
         : 0;
 
       // Calculate engagement metrics from quiz activity
@@ -328,15 +326,19 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           return currentDate > latestDate ? current : latest;
         });
 
+        // Resolved once: the generated title has to go through the code list too, or a
+        // quiz with no title of its own bakes a stale pillar name into the row.
+        const sportName = sportDisplayName(sport?.data);
+
         // Better fallback for quiz title - use quiz ID as last resort
         const quizTitle = quiz.data?.title ||
-                         (sport?.data?.name && skill?.data?.name ? `${sport.data.name} - ${skill.data.name} Quiz` :
+                         (sport?.data?.name && skill?.data?.name ? `${sportName} - ${skill.data.name} Quiz` :
                           `Quiz ${quizId.substring(0, 8)}...`);
 
         performanceData.push({
           quizId,
           quizTitle,
-          sportName: sport?.data?.name || 'Unknown Sport',
+          sportName,
           skillName: skill?.data?.name || 'Unknown Skill',
           attempts: quizAttempts.length,
           bestScore: Math.max(...scores),
@@ -346,7 +348,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
             const dateField = lastAttempt.completedAt || lastAttempt.submittedAt;
             return dateField?.toDate ? dateField.toDate() : new Date(dateField || 0);
           })(),
-          passed: quizAttempts.some(a => (a.percentage || 0) >= 70),
+          passed: quizIsOwned(quizAttempts),
         });
       }
 
@@ -388,25 +390,14 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
       const quizAttempts = quizAttemptsResult.data?.items || [];
 
-      // Track skills passed over time
-      const skillsPassedByDate = new Map<string, Set<string>>();
+      // The day each skill became owned: the take that got its last open question right.
+      // Same day keys as the rest of this chart (UTC), so they compare as plain strings.
+      const ownedOnDay = new Map<string, string>();
+      for (const [skillId, date] of skillOwnedDates(quizAttempts)) {
+        ownedOnDay.set(skillId, date.toISOString().split('T')[0]);
+      }
 
-      quizAttempts.forEach(attempt => {
-        if (attempt.passed && attempt.skillId) {
-          const dateField = attempt.completedAt || attempt.submittedAt;
-          if (dateField) {
-            const date = dateField.toDate ? dateField.toDate() : new Date(dateField);
-            const dateStr = date.toISOString().split('T')[0];
-
-            if (!skillsPassedByDate.has(dateStr)) {
-              skillsPassedByDate.set(dateStr, new Set());
-            }
-            skillsPassedByDate.get(dateStr)!.add(attempt.skillId);
-          }
-        }
-      });
-
-      // Build cumulative skills passed
+      // Cumulative skills owned, including any owned before the window starts
       const cumulativeSkills = new Set<string>();
 
       // Build data for each day
@@ -424,11 +415,9 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           return attemptDate.toISOString().split('T')[0] === dateStr;
         });
 
-        // Add any new passed skills to cumulative
-        if (skillsPassedByDate.has(dateStr)) {
-          skillsPassedByDate.get(dateStr)!.forEach(skillId => {
-            cumulativeSkills.add(skillId);
-          });
+        // Add any skills owned by the end of this day
+        for (const [skillId, ownedDay] of ownedOnDay) {
+          if (ownedDay <= dateStr) cumulativeSkills.add(skillId);
         }
 
         const avgScore = dayQuizzes.length > 0
@@ -508,20 +497,18 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           data.sportId ? sportsService.getSport(data.sportId) : null
         ]);
 
-        // Get latest attempt for score
+        // Get latest attempt for score. Finishing a take sets `completedAt`, never `submittedAt`.
         const latestAttempt = data.attempts.sort((a, b) => {
-          const dateA = a.submittedAt && typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt ? a.submittedAt.toDate() : new Date(0);
-          const dateB = b.submittedAt && typeof b.submittedAt === 'object' && 'toDate' in b.submittedAt ? b.submittedAt.toDate() : new Date(0);
+          const dateA = finishedTakeDate(a) ?? new Date(0);
+          const dateB = finishedTakeDate(b) ?? new Date(0);
           return dateB.getTime() - dateA.getTime();
         })[0];
 
         // Calculate total time spent
         const totalTimeSpent = data.attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
 
-        // Determine status based on whether any attempt passed (70% or higher)
-        const passingThreshold = 70;
-        const hasPassed = data.attempts.some(a => (a.percentage || 0) >= passingThreshold);
-        const status = hasPassed ? 'completed' : 'in_progress';
+        // Done once owned, not on a 70% pass mark
+        const status = ownedSkillIds(data.attempts).has(skillId) ? 'completed' : 'in_progress';
 
         // Calculate progress (use best score)
         const bestScore = Math.max(...data.attempts.map(a => a.percentage || 0));
@@ -529,7 +516,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         performanceData.push({
           skillId,
           skillName: skill.data?.name || 'Unknown Skill',
-          sportName: sport?.data?.name || 'Unknown Sport',
+          sportName: sportDisplayName(sport?.data),
           progress: bestScore,
           timeSpent: Math.round(totalTimeSpent / 60), // Convert to minutes
           quizScore: latestAttempt.percentage || null,
@@ -606,44 +593,38 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           // Get latest quiz attempt and calculate progress from video quiz attempts
           let latestQuizScore: number | null = null;
           let lastAttemptDate: Date | null = null;
-          let quizStatus: 'not_attempted' | 'passed' | 'failed' = 'not_attempted';
+          let quizStatus: 'not_attempted' | 'owned' | 'open' = 'not_attempted';
           let progressPercentage = 0;
           let timeSpent = 0;
           let completedAt: Date | null = null;
           let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
 
           if (skillAttempts.length > 0) {
-            // Sort by date to get latest
+            // Sort by date to get latest (finishing a take sets `completedAt`, not `submittedAt`)
             const sortedAttempts = [...skillAttempts].sort((a, b) => {
-              const dateA = a.submittedAt && typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt ? a.submittedAt.toDate() : new Date(0);
-              const dateB = b.submittedAt && typeof b.submittedAt === 'object' && 'toDate' in b.submittedAt ? b.submittedAt.toDate() : new Date(0);
+              const dateA = finishedTakeDate(a) ?? new Date(0);
+              const dateB = finishedTakeDate(b) ?? new Date(0);
               return dateB.getTime() - dateA.getTime();
             });
 
             const latestAttempt = sortedAttempts[0];
             latestQuizScore = latestAttempt.percentage;
-            lastAttemptDate = latestAttempt.submittedAt && typeof latestAttempt.submittedAt === 'object' && 'toDate' in latestAttempt.submittedAt
-              ? latestAttempt.submittedAt.toDate()
-              : new Date(0);
+            lastAttemptDate = finishedTakeDate(latestAttempt) ?? new Date(0);
 
             // Calculate best score as progress
             progressPercentage = Math.max(...skillAttempts.map(a => a.percentage || 0));
 
-            // Check if any attempt passed (70% or higher)
-            const passingThreshold = 70;
-            const hasPassed = skillAttempts.some(a => (a.percentage || 0) >= passingThreshold);
-            quizStatus = hasPassed ? 'passed' : 'failed';
-            status = hasPassed ? 'completed' : 'in_progress';
+            // Owned once every graded question has been got right at least once
+            const owned = ownedSkillIds(skillAttempts).has(skill.id);
+            quizStatus = owned ? 'owned' : 'open';
+            status = owned ? 'completed' : 'in_progress';
 
             // Calculate total time spent
             timeSpent = skillAttempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
 
-            // If passed, set completion date
-            if (hasPassed) {
-              const firstPassedAttempt = skillAttempts.find(a => (a.percentage || 0) >= passingThreshold);
-              if (firstPassedAttempt?.submittedAt && typeof firstPassedAttempt.submittedAt === 'object' && 'toDate' in firstPassedAttempt.submittedAt) {
-                completedAt = firstPassedAttempt.submittedAt.toDate();
-              }
+            // The day it became owned is the day of the take that finished the job
+            if (owned) {
+              completedAt = skillOwnedDates(skillAttempts).get(skill.id) ?? null;
             }
           }
 
@@ -683,14 +664,12 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         // Get last activity date (most recent quiz attempt)
         const lastAttempt = sportQuizAttempts.sort((a, b) => {
-          const dateA = a.submittedAt && typeof a.submittedAt === 'object' && 'toDate' in a.submittedAt ? a.submittedAt.toDate() : new Date(0);
-          const dateB = b.submittedAt && typeof b.submittedAt === 'object' && 'toDate' in b.submittedAt ? b.submittedAt.toDate() : new Date(0);
+          const dateA = finishedTakeDate(a) ?? new Date(0);
+          const dateB = finishedTakeDate(b) ?? new Date(0);
           return dateB.getTime() - dateA.getTime();
         })[0];
 
-        const lastActivityDate = lastAttempt?.submittedAt && typeof lastAttempt.submittedAt === 'object' && 'toDate' in lastAttempt.submittedAt
-          ? lastAttempt.submittedAt.toDate()
-          : null;
+        const lastActivityDate = lastAttempt ? finishedTakeDate(lastAttempt) : null;
 
         // Calculate progress percentage
         const progressPercentage = totalSkills > 0
@@ -704,7 +683,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
         courseDetails.push({
           sportId,
-          sportName: sport.data.name,
+          sportName: sportDisplayName(sport.data),
           description: sport.data.description,
           enrolledAt,
           status,
@@ -778,16 +757,18 @@ export class StudentAnalyticsService extends BaseDatabaseService {
             attempt.submittedAt.toDate() :
             new Date(attempt.completedAt || attempt.submittedAt || 0);
 
+        const sportName = sportDisplayName(sport?.data);
+
         // Better fallback for quiz title - use sport/skill names if available
         const quizTitle = quiz.data?.title ||
-                         (sport?.data?.name && skill?.data?.name ? `${sport.data.name} - ${skill.data.name} Quiz` :
+                         (sport?.data?.name && skill?.data?.name ? `${sportName} - ${skill.data.name} Quiz` :
                           `Quiz ${attempt.quizId.substring(0, 8)}...`);
 
         attemptDetails.push({
           attemptId: attempt.id,
           quizId: quizId,
           quizTitle,
-          sportName: sport?.data?.name || 'Unknown Sport',
+          sportName,
           skillName: skill?.data?.name || 'Unknown Skill',
           startedAt: startTime,
           submittedAt: endTime,
@@ -796,7 +777,9 @@ export class StudentAnalyticsService extends BaseDatabaseService {
           maxScore: attempt.maxScore,
           percentage: attempt.percentage,
           questionsAnswered: attempt.questionsAnswered?.length || 0,
-          totalQuestions: quiz.data?.questions?.length || 0,
+          // A freeze point that holds the frame but asks nothing is not a question
+          // and is never answered, so it is not counted here either.
+          totalQuestions: quiz.data?.questions?.filter((q: { holdOnly?: boolean }) => !q.holdOnly).length || 0,
           correctAnswers: attempt.questionsAnswered?.filter((q: { isCorrect?: boolean }) => q.isCorrect).length || 0,
           incorrectAnswers: attempt.questionsAnswered?.filter((q: { isCorrect?: boolean }) => !q.isCorrect).length || 0,
         });
@@ -822,95 +805,24 @@ export class StudentAnalyticsService extends BaseDatabaseService {
 
   // Private helper methods
 
+  // Both streaks read the shared rule (src/lib/training/attempt-streak.ts) so a coach sees the
+  // same number the goalie does. The local loops these replace dated takes by `submittedAt`,
+  // which finishing a take never sets, so every student read 0 here.
   private calculateCurrentStreak(quizAttempts: QuizAttempt[]): number {
-    if (quizAttempts.length === 0) return 0;
-
-    const toDate = (ts: unknown): Date => {
-      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
-      return new Date(0);
-    };
-
-    const sortedAttempts = [...quizAttempts].sort((a, b) => {
-      const dateA = toDate(a.submittedAt);
-      const dateB = toDate(b.submittedAt);
-      return dateB.getTime() - dateA.getTime();
-    });
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let streak = 0;
-    let currentDate = new Date(today);
-
-    for (const attempt of sortedAttempts) {
-      const attemptDate = toDate(attempt.submittedAt);
-      const attemptDay = new Date(attemptDate);
-      attemptDay.setHours(0, 0, 0, 0);
-
-      const daysDiff = Math.floor((currentDate.getTime() - attemptDay.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (daysDiff === 0) {
-        streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else if (daysDiff === 1 && streak === 0) {
-        streak = 1;
-        break;
-      } else {
-        break;
-      }
-    }
-
-    return streak;
+    return takeStreak(quizAttempts).currentStreak;
   }
 
   private calculateLongestStreak(quizAttempts: QuizAttempt[]): number {
-    if (quizAttempts.length === 0) return 0;
-
-    const toDate = (ts: unknown): Date => {
-      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
-      return new Date(0);
-    };
-
-    const dates = quizAttempts
-      .map(a => {
-        const date = toDate(a.submittedAt);
-        const day = new Date(date);
-        day.setHours(0, 0, 0, 0);
-        return day.getTime();
-      })
-      .sort((a, b) => a - b);
-
-    const uniqueDates = [...new Set(dates)];
-
-    let maxStreak = 1;
-    let currentStreak = 1;
-
-    for (let i = 1; i < uniqueDates.length; i++) {
-      const daysDiff = (uniqueDates[i] - uniqueDates[i - 1]) / (1000 * 60 * 60 * 24);
-
-      if (daysDiff === 1) {
-        currentStreak++;
-        maxStreak = Math.max(maxStreak, currentStreak);
-      } else {
-        currentStreak = 1;
-      }
-    }
-
-    return maxStreak;
+    return takeStreak(quizAttempts).longestStreak;
   }
 
   private determineStudyPattern(quizAttempts: QuizAttempt[]): 'morning' | 'afternoon' | 'evening' | 'night' | 'varied' {
     if (quizAttempts.length === 0) return 'varied';
 
-    const toDate = (ts: unknown): Date => {
-      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
-      return new Date(0);
-    };
-
     const hourCounts = { morning: 0, afternoon: 0, evening: 0, night: 0 };
 
     quizAttempts.forEach(attempt => {
-      const date = toDate(attempt.submittedAt);
+      const date = finishedTakeDate(attempt) ?? new Date(0);
       const hour = date.getHours();
 
       if (hour >= 6 && hour < 12) hourCounts.morning++;
@@ -936,16 +848,13 @@ export class StudentAnalyticsService extends BaseDatabaseService {
   ): Promise<ActivityRecord[]> {
     const activities: ActivityRecord[] = [];
 
-    const toDate = (ts: unknown): Date => {
-      if (ts && typeof ts === 'object' && 'toDate' in ts) return (ts as { toDate: () => Date }).toDate();
-      return new Date(0);
-    };
+    const toDate = (attempt: QuizAttempt): Date => finishedTakeDate(attempt) ?? new Date(0);
 
     // Add quiz completions
     const recentQuizzes = quizzes
       .sort((a, b) => {
-        const dateA = toDate(a.submittedAt);
-        const dateB = toDate(b.submittedAt);
+        const dateA = toDate(a);
+        const dateB = toDate(b);
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 10);
@@ -963,7 +872,7 @@ export class StudentAnalyticsService extends BaseDatabaseService {
         type: 'quiz_completed',
         title,
         description: `Score: ${quiz.percentage}%`,
-        timestamp: toDate(quiz.submittedAt),
+        timestamp: toDate(quiz),
         metadata: {
           score: quiz.percentage,
           timeSpent: quiz.timeSpent,

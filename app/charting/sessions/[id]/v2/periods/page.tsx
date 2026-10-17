@@ -89,7 +89,10 @@ function createEmptyPeriod(): V2PeriodData {
     goals: [],
     mindControlRating: 3,
     mindControlVoiceNote: undefined,
-    periodFactorRatio: 1,
+    // Factor Ratio starts unanswered, like the four technical Pillars. Seeding
+    // it with 1 meant an untouched period saved as "low challenge" and counted
+    // as real data in every average downstream.
+    periodFactorRatio: undefined,
   };
 }
 
@@ -245,7 +248,7 @@ export default function V2PeriodsPage() {
       }
 
       toast.success('Period charting saved!');
-      router.push(`/charting/sessions/${sessionId}`);
+      router.push(`/charting/sessions/${sessionId}/v2/post-game`);
     } catch (error) {
       console.error('Failed to save:', error);
       toast.error('Failed to save data');
@@ -306,15 +309,7 @@ export default function V2PeriodsPage() {
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <h1 className="text-sm font-bold text-white">Period Charting</h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: 'linear-gradient(135deg, #37b5ff, #0ea5e9)', color: '#fff' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
 
         {/* Period tabs */}
@@ -408,7 +403,7 @@ export default function V2PeriodsPage() {
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
               label="Goal Classification"
-              helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Bad Goal: Breakdown in position, read, form, or mental execution within your control."
+              helpText="Good Goal: Correct position, correct read, correct decision — puck still went in. Not your fault. Weak Goal: Breakdown in position, read, form, or mental execution within your control."
             >
               <GoalClassifier
                 goalCount={activePeriod.goalsAgainst}
@@ -431,29 +426,39 @@ export default function V2PeriodsPage() {
                 onChange={(val) => updatePeriod('periodFactorRatio', val as number)}
                 options={FACTOR_RATIO_OPTIONS}
               />
+              {/*
+                Nothing is pre-selected, so say so — an empty row of buttons on
+                its own reads as a rendering glitch rather than a question.
+              */}
+              {activePeriod.periodFactorRatio === undefined && (
+                <p className="text-[11px] text-white/35 mt-2">
+                  Not rated yet — leave it blank if you&apos;re not sure. Skipped periods are
+                  left out of your averages rather than counted as a 1.
+                </p>
+              )}
             </ContextualHelp>
           </div>
         )}
 
-        {/* ── Pillar Ratings (Mind-Set · Skating · 7AMS · 6ZS · Form) ─────── */}
+        {/* ── Pillar Ratings (MindSet · Skating · 7AMS · 6 Zone · Form) ─────── */}
         <div className="space-y-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-white/40">Pillar Ratings</p>
             <p className="text-[11px] text-white/30 mt-0.5">
-              {isBasic ? 'Rate your mental command this period' : 'Mind-Set · Skating · 7AMS · 6ZS · Form — tap any star to see its definition'}
+              {isBasic ? 'Rate your mental command this period' : 'MindSet · Skating · 7AMS · 6 Zone – 7 Point System™ · Form — tap any star to see its definition'}
             </p>
           </div>
 
           <div className="space-y-5">
 
-            {/* ── Mind-Set (Mind Control) ──────────────────────────────────── */}
+            {/* ── MindSet (Mind Control) ──────────────────────────────────── */}
             <div className="rounded-xl p-4 space-y-3 transition-colors duration-300" style={
               activePeriod.mindControlRating <= 2
                 ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }
                 : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
             }>
               <ContextualHelp
-                label="Mind Control"
+                label="Emotional Balance"
                 helpText="Rate your mental command during this period. 1 = Not in the Now, 5 = Command Center Operating. Tap any star to see its full definition."
               >
                 <StarRating
@@ -543,7 +548,7 @@ export default function V2PeriodsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
-                      <p className="text-xs font-semibold text-white/70">Work on Mindset — Mind-Set Development</p>
+                      <p className="text-xs font-semibold text-white/70">Work on Pillar 1 — MindSet</p>
                     </div>
                   </div>
 
@@ -644,7 +649,7 @@ export default function V2PeriodsPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
-                        <p className="text-xs font-semibold text-white/70">Work on 7AMS — Seven Angle-Mark System</p>
+                        <p className="text-xs font-semibold text-white/70">Work on 7AMS — 7 Angle-Marker System</p>
                       </div>
                     </div>
                   </div>
@@ -658,7 +663,7 @@ export default function V2PeriodsPage() {
                   : { background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.26)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }
               }>
                 <ContextualHelp
-                  label="6ZS — Zone Command"
+                  label="6 Zone – 7 Point System™ — Zone Command"
                   helpText="Rate your command below the icing line — reading the six zones, anticipating passes, and repositioning ahead of the play."
                 >
                   <StarRating
@@ -679,7 +684,7 @@ export default function V2PeriodsPage() {
                       <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.2)' }}>
                         <span className="text-[10px] font-black text-red-400">!</span>
                       </div>
-                      <p className="text-xs font-semibold text-red-400">6ZS breakdown flagged — what broke down?</p>
+                      <p className="text-xs font-semibold text-red-400">6 Zone – 7 Point System™ breakdown flagged — what broke down?</p>
                     </div>
                     <VoiceRecorder
                       onTranscriptionComplete={(text) => updatePeriod('sixZSVoiceNote', text)}
@@ -692,7 +697,7 @@ export default function V2PeriodsPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Training Focus</p>
-                        <p className="text-xs font-semibold text-white/70">Work on 6ZS — Six Zone System</p>
+                        <p className="text-xs font-semibold text-white/70">Work on Pillar 3 — 6 Zone – 7 Point System™</p>
                       </div>
                     </div>
                   </div>

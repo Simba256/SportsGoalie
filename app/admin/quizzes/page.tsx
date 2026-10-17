@@ -12,6 +12,7 @@ import {
   Video, Clock, Target, Users, Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { describeVisibility, isQuizLive, quizMissing, visibilityFlags } from '@/lib/training/quiz-visibility';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -34,6 +35,12 @@ function AdminQuizzesPageContent() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<VideoTagFilter>({});
   const [tagFacets, setTagFacets] = useState<TagFacetCounts | undefined>();
+  // Counted from the attempts, because a quiz's own metadata counter is never written:
+  // only admins and coaches can write to video_quizzes, so a goalie completing a check
+  // cannot increment it.
+  const [completionStats, setCompletionStats] = useState<
+    Record<string, { completions: number; averageScore: number }>
+  >({});
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => { loadQuizzes(); loadTagFacets(); }, []);
@@ -41,7 +48,15 @@ function AdminQuizzesPageContent() {
   const loadQuizzes = async () => {
     try {
       setLoading(true);
-      const result = await videoQuizService.getVideoQuizzes({ limit: 100 });
+      const [result, statsResult] = await Promise.all([
+        videoQuizService.getVideoQuizzes({ limit: 100 }),
+        videoQuizService.getCompletionStatsByQuiz(),
+      ]);
+
+      if (statsResult.success && statsResult.data) {
+        setCompletionStats(statsResult.data);
+      }
+
       if (result.success && result.data) {
         setQuizzes(result.data.items);
       } else {
@@ -74,10 +89,18 @@ function AdminQuizzesPageContent() {
     setOpenMenuId(null);
   };
 
+  // One switch: Activate writes both flags (active and published) so a quiz that was saved
+  // as a draft actually becomes visible, and says what is missing when it cannot.
   const handleToggleStatus = async (quiz: VideoQuiz) => {
+    const goingLive = !isQuizLive(quiz);
+    if (goingLive && quizMissing(quiz).length > 0) {
+      toast.error("Can't activate yet", { description: describeVisibility(quiz, true).line });
+      setOpenMenuId(null);
+      return;
+    }
     try {
-      const result = await videoQuizService.updateVideoQuiz(quiz.id, { isActive: !quiz.isActive });
-      if (result.success) { toast.success(`Video quiz ${quiz.isActive ? 'deactivated' : 'activated'} successfully`); loadQuizzes(); }
+      const result = await videoQuizService.updateVideoQuiz(quiz.id, visibilityFlags(goingLive));
+      if (result.success) { toast.success(goingLive ? 'Knowledge Check is now visible to goalies' : 'Knowledge Check is now hidden from goalies'); loadQuizzes(); }
       else toast.error('Failed to update video quiz status');
     } catch { toast.error('Failed to update video quiz status'); }
     setOpenMenuId(null);
@@ -105,7 +128,10 @@ function AdminQuizzesPageContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const totalCompletions = quizzes.reduce((sum, q) => sum + (q.metadata?.totalCompletions || 0), 0);
+  const totalCompletions = quizzes.reduce(
+    (sum, q) => sum + (completionStats[q.id]?.completions || 0),
+    0
+  );
   const activeCount = quizzes.filter(q => q.isActive && q.isPublished).length;
   const avgDuration = Math.round(quizzes.reduce((sum, q) => sum + q.videoDuration, 0) / (quizzes.length || 1) / 60);
 
@@ -179,7 +205,7 @@ function AdminQuizzesPageContent() {
         </div>
 
         {/* Tag Filters */}
-        <VideoFilterPanel filter={tagFilter} onFilterChange={setTagFilter} facets={tagFacets} loading={loading} defaultCollapsed={true} />
+        <VideoFilterPanel filter={tagFilter} onFilterChange={setTagFilter} facets={tagFacets} loading={loading} defaultCollapsed={true} theme="dark" />
 
         {/* Quiz Grid */}
         {loading ? (
@@ -206,8 +232,9 @@ function AdminQuizzesPageContent() {
           <div className="aq-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {filteredQuizzes.map(quiz => {
               const ds = DIFF_STYLES[quiz.difficulty] || DIFF_STYLES.introduction;
-              const statusLabel = quiz.isActive && quiz.isPublished ? 'Active' : !quiz.isPublished ? 'Draft' : 'Inactive';
-              const statusColor = quiz.isActive && quiz.isPublished ? GREEN : !quiz.isPublished ? AMBER : RED;
+              const live = isQuizLive(quiz);
+              const statusLabel = live ? 'Active' : !quiz.isPublished ? 'Draft' : 'Inactive';
+              const statusColor = live ? GREEN : !quiz.isPublished ? AMBER : RED;
               const isMenuOpen = openMenuId === quiz.id;
               return (
                 <div key={quiz.id} className="aq-card" style={{ position: 'relative', ...card, overflow: 'hidden' }}>
@@ -236,7 +263,7 @@ function AdminQuizzesPageContent() {
                             <button className="aq-menu-item" onClick={() => { router.push(`/quiz/video/${quiz.id}`); setOpenMenuId(null); }}><Eye size={12} /> Preview</button>
                             <button className="aq-menu-item" onClick={() => handleShareQuiz(quiz.id, quiz.title)}><Share2 size={12} /> Share</button>
                             <button className="aq-menu-item" onClick={() => { router.push(`/admin/quizzes/${quiz.id}/edit`); setOpenMenuId(null); }}><Edit size={12} /> Edit</button>
-                            <button className="aq-menu-item" onClick={() => handleToggleStatus(quiz)}><Target size={12} /> {quiz.isActive ? 'Deactivate' : 'Activate'}</button>
+                            <button className="aq-menu-item" onClick={() => handleToggleStatus(quiz)}><Target size={12} /> {isQuizLive(quiz) ? 'Deactivate' : 'Activate'}</button>
                             <button className="aq-menu-item aq-menu-danger" onClick={() => handleDelete(quiz.id, quiz.title)}><Trash2 size={12} /> Delete</button>
                           </div>
                         )}
@@ -249,8 +276,8 @@ function AdminQuizzesPageContent() {
                       {[
                         { icon: Video, label: formatDuration(quiz.videoDuration) },
                         { icon: Target, label: `${quiz.questions.length} questions` },
-                        { icon: Users, label: `${quiz.metadata?.totalCompletions || 0} completions` },
-                        { icon: Clock, label: `${quiz.metadata?.averageScore?.toFixed(0) || 0}% avg` },
+                        { icon: Users, label: `${completionStats[quiz.id]?.completions || 0} completions` },
+                        { icon: Clock, label: `${(completionStats[quiz.id]?.averageScore || 0).toFixed(0)}% avg` },
                       ].map(({ icon: Icon, label }) => (
                         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
                           <Icon size={12} color="rgba(255,255,255,0.25)" /> {label}

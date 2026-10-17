@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import { PillarSlug } from './onboarding';
 
 // Field Types
 export type FieldType =
@@ -25,6 +26,11 @@ export type AnalyticsType =
 
 // Trend Direction
 export type TrendDirection = 'improving' | 'declining' | 'stable';
+
+// Mini-Chart Mode (Flash Learning / Reinforcement / Maintenance loop).
+// Carried on templates now so charts don't need retrofitting once mode-specific
+// behavior is built; the mode behavior itself is not implemented yet.
+export type ChartMode = 'learning' | 'reinforcement' | 'maintenance';
 
 // Field Analytics Configuration
 export interface FieldAnalyticsConfig {
@@ -112,10 +118,12 @@ export interface FormTemplate {
   name: string;                 // e.g., "Hockey Goalie Performance Tracker"
   description?: string;
   sport?: string;               // e.g., "Hockey", "Soccer", "Basketball"
+  pillar: PillarSlug | 'combined'; // Which pillar this template tracks, or 'combined' for the whole-sport tracker
+  mode?: ChartMode;             // Optional Mini-Chart mode tag (Learning/Reinforcement/Maintenance); unset = standard chart
   version: number;              // Version number for tracking changes
 
   // Status
-  isActive: boolean;            // Only one template can be active at a time per sport
+  isActive: boolean;            // Only one template can be active at a time per (sport, pillar) pair
   isArchived: boolean;          // Archived templates can't be used for new entries
 
   // Structure
@@ -161,7 +169,7 @@ export interface FormResponses {
 // Updated Charting Entry Interface (extends existing)
 export interface DynamicChartingEntry {
   id: string;
-  sessionId: string;
+  sessionId?: string;           // Absent for standalone pillar check-ins (not tied to a logged session)
   studentId: string;
 
   // Template information
@@ -208,8 +216,10 @@ export interface FieldAnalyticsResult {
 
   // Average analytics (for numeric, scale)
   average?: number;
-  min?: number;
-  max?: number;
+  min?: number;                 // Lowest value the athlete actually entered
+  max?: number;                 // Highest value the athlete actually entered
+  scaleMin?: number;            // Floor of the rating scale the field was answered on
+  scaleMax?: number;            // Ceiling of that scale — absent when the field is open-ended
   median?: number;
   averageTrend?: TrendDirection;
 
@@ -241,6 +251,13 @@ export interface FieldAnalyticsResult {
   targetValue?: number;
   targetProgress?: number;      // Percentage toward target
   isOnTarget?: boolean;
+
+  // Baseline tracking (first-ever entry for this field, vs. latest)
+  baselineValue?: number;
+  baselineDate?: Timestamp;
+  latestValue?: number;
+  latestDate?: Timestamp;
+  growthFromBaseline?: number;
 }
 
 // Category Analytics (grouped fields)
@@ -260,6 +277,12 @@ export interface CategoryAnalyticsResult {
   // Strengths and weaknesses
   topPerformingFields: string[];
   needsImprovementFields: string[];
+
+  // Baseline tracking (first-ever entry for this category, vs. current)
+  baselineScore?: number;
+  baselineDate?: Timestamp;
+  currentScore?: number;
+  growthFromBaseline?: number;
 }
 
 // Complete Analytics for a Student
@@ -267,6 +290,8 @@ export interface DynamicStudentAnalytics {
   studentId: string;
   formTemplateId: string;
   formTemplateName: string;
+  pillar?: PillarSlug | 'combined'; // Denormalized from the template at calculation time
+  sport?: string;                   // Denormalized from the template at calculation time
   totalEntries?: number; // Total number of entries for this student
 
   // Session stats (general)
@@ -340,6 +365,7 @@ export interface TemplateValidationResult {
 // Form Template Query Options
 export interface FormTemplateQueryOptions {
   sport?: string;
+  pillar?: PillarSlug | 'combined';
   isActive?: boolean;
   isArchived?: boolean;
   createdBy?: string;
