@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { db } from '@/lib/firebase/config';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { generateParentV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 import type { ApplicationStatus } from '@/types/application';
 import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
@@ -998,6 +999,8 @@ export function ParentBaselineQuestionnaire({
             <span style={{ color: BLUE, fontWeight: 700 }}>Smarter Goalie</span> was built from six decades of studying this position. What you share here helps us serve your goalie at the highest level.
           </p>
         </div>
+
+        <ScreenVoice clipId="PARENT-WELCOME" label="HEAR COACH MIKE: WELCOME" className="mb-5 justify-center" />
 
         {/* Stats */}
         <p

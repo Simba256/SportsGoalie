@@ -2,6 +2,7 @@
 
 import { Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart } from 'lucide-react';
 import { FieldResponseValue, FormField } from '@/types';
+import { ratingScale } from '@/lib/charting/rating-average';
 
 /**
  * Shared visual language for the pillar-charting area (`/charting/pillars/**`).
@@ -64,11 +65,5 @@ export function formatResponseValue(value: FieldResponseValue | undefined): stri
  * scored out of 10, averaged into a score, or counted as a checkpoint.
  */
 export function isRatingField(field: FormField | undefined): boolean {
-  if (!field) return false;
-  if (field.type === 'scale') return true;
-  return (
-    field.type === 'numeric' &&
-    field.validation?.min !== undefined &&
-    field.validation?.max !== undefined
-  );
+  return ratingScale(field) !== null;
 }

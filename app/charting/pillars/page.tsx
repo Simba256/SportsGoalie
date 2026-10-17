@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { formTemplateService, dynamicChartingService } from '@/lib/database';
-import { FormTemplate, DynamicChartingEntry, PILLARS, PillarInfo } from '@/types';
+import { FormTemplate, PILLARS, PillarInfo } from '@/types';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { ArrowLeft, ClipboardList, AlertCircle, BarChart3, PenLine, Target } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -17,8 +17,8 @@ import {
   panelStyle,
   headerPanelStyle,
   accentLineStyle,
-  isRatingField,
 } from '@/components/charting/pillar-chrome';
+import { averageRatingPercent } from '@/lib/charting/rating-average';
 
 /**
  * Pillar Charts — the goalie's own view of the check-in forms they've filled in.
@@ -33,31 +33,12 @@ interface PillarCard {
   info: PillarInfo;
   entryCount: number;
   lastDate: Date | null;
-  /** Mean of every numeric answer in the newest entry, or null if it has none. */
+  /**
+   * Mean of the rating answers in the newest entry, as a whole percent of the
+   * scale each was answered on, or null if it has none. Counts (shots faced,
+   * period, clock) are left out, and 1-5 and 1-10 ratings are not mixed raw.
+   */
   latestAverage: number | null;
-}
-
-/**
- * The rating answers on a submitted entry. Counts (shots faced, period, clock)
- * are left out — averaging them in made the card read 3.8 on four 2/10 ratings.
- */
-function ratingAnswers(entry: DynamicChartingEntry, template: FormTemplate): number[] {
-  const values: number[] = [];
-
-  template.sections.forEach((section) => {
-    const sectionData = entry.responses?.[section.id];
-    if (!sectionData) return;
-    const instances = Array.isArray(sectionData) ? sectionData : [sectionData];
-    instances.forEach((instance) => {
-      section.fields.forEach((field) => {
-        if (!isRatingField(field)) return;
-        const value = (instance as Record<string, { value: unknown }>)[field.id]?.value;
-        if (typeof value === 'number' && !isNaN(value)) values.push(value);
-      });
-    });
-  });
-
-  return values;
 }
 
 export default function PillarChartsIndexPage() {
@@ -101,16 +82,13 @@ export default function PillarChartsIndexPage() {
           );
           const entries = entriesResult.success && entriesResult.data ? entriesResult.data : [];
           const newest = entries[0];
-          const numbers = newest ? ratingAnswers(newest, template) : [];
 
           return {
             template,
             info,
             entryCount: entries.length,
             lastDate: toDateSafe(newest?.submittedAt),
-            latestAverage: numbers.length
-              ? numbers.reduce((sum, n) => sum + n, 0) / numbers.length
-              : null,
+            latestAverage: newest ? averageRatingPercent(newest, template) : null,
           };
         })
       );
@@ -257,7 +235,7 @@ export default function PillarChartsIndexPage() {
                   </div>
                   <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 12px' }}>
                     <div style={{ fontSize: '19px', fontWeight: 800, color: card.latestAverage === null ? 'rgba(255,255,255,0.3)' : MINT, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
-                      {card.latestAverage === null ? '–' : card.latestAverage.toFixed(1)}
+                      {card.latestAverage === null ? '–' : `${card.latestAverage}%`}
                     </div>
                     <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, marginTop: '2px' }}>
                       latest average

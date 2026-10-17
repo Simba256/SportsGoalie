@@ -32,6 +32,13 @@ export default function FormTemplatesPage() {
   useEffect(() => { loadTemplates(); }, [showArchived]);
   useEffect(() => { checkTemplates(); }, []);
 
+  // The confirmation strip opens inside the card, below the buttons. On a tall card
+  // or a short window that is off screen, and the click looks like it did nothing.
+  useEffect(() => {
+    if (!pending) return;
+    document.getElementById(`confirm-${pending.templateId}`)?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+  }, [pending]);
+
   // Group by pillar so concurrently-active templates read as expected, not like a bug.
   const pillarGroups = useMemo(() => {
     const order: { key: string; label: string }[] = [
@@ -334,7 +341,7 @@ export default function FormTemplatesPage() {
 
                 {/* Inline confirmation — states the consequence before the action runs */}
                 {pendingHere && (
-                  <div style={{ marginBottom: '12px', padding: '14px 16px', borderRadius: '10px', background: pendingHere === 'delete' ? 'rgba(248,113,113,0.07)' : 'rgba(251,191,36,0.07)', border: `1px solid ${pendingHere === 'delete' ? 'rgba(248,113,113,0.25)' : 'rgba(251,191,36,0.25)'}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div id={`confirm-${template.id}`} style={{ marginBottom: '12px', padding: '14px 16px', borderRadius: '10px', background: pendingHere === 'delete' ? 'rgba(248,113,113,0.07)' : 'rgba(251,191,36,0.07)', border: `1px solid ${pendingHere === 'delete' ? 'rgba(248,113,113,0.25)' : 'rgba(251,191,36,0.25)'}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                       <AlertTriangle size={15} color={pendingHere === 'delete' ? RED : AMBER} style={{ flexShrink: 0, marginTop: '2px' }} />
                       <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', lineHeight: 1.55 }}>{confirmCopy(template, pendingHere)}</p>

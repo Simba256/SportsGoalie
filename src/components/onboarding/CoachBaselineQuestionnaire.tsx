@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { db } from '@/lib/firebase/config';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { generateCoachV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 import {
   COACH_BASELINE_SECTIONS,
   getCoachActiveQuestions,
@@ -855,6 +856,8 @@ export function CoachBaselineQuestionnaire({ userId, userName: _userName, onComp
             Welcome, Coach. Whether you have coached for many years or this is your first season, your role in your goalie&rsquo;s development is irreplaceable. The goalie&rsquo;s coach sees what nobody else sees — the practice habits, the game intensity, the response to instruction, the way a young athlete handles the unique pressure of this position. Smarter Goalie has worked with coaches for decades. We have seen the gap most coaches were never trained to fill — and we have built the support system that fills it. Without judgment. Without overstepping. Just shoulder-to-shoulder partnership in raising the standard of goaltender development. Your honest answers shape how Smarter Goalie serves your program.
           </p>
         </div>
+
+        <ScreenVoice clipId="COACH-WELCOME" label="HEAR COACH MIKE: WELCOME" className="mb-5 justify-center" />
 
         <p style={{ fontSize: '13px', color: GOLD, marginBottom: '28px', letterSpacing: '0.04em' }}>
           44 questions &middot; 8 sections &middot; 12–18 minutes &middot; Progress saves automatically
