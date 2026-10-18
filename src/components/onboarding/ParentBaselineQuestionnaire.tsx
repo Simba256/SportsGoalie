@@ -4,7 +4,8 @@ import React, { useState, useMemo } from 'react';
 import { db } from '@/lib/firebase/config';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { generateParentV2IntelligenceProfile } from '@/lib/scoring/v2-baseline-scoring';
-import { ScreenVoice } from '@/components/audio/ScreenVoice';
+import { useCoachAudioClip } from '@/lib/audio/context';
+import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
 import type { ApplicationStatus } from '@/types/application';
 import { APPLICATION_PAGE } from '@/data/applicant-flow-copy';
 import {
@@ -57,7 +58,7 @@ const btnPrimary: React.CSSProperties = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Phase = 'hero' | 'privacy_gate' | 'section_intro' | 'question' | 'closing';
+type Phase = 'welcome' | 'hero' | 'privacy_gate' | 'section_intro' | 'question' | 'closing';
 
 interface PState {
   phase: Phase;
@@ -92,7 +93,7 @@ export function ParentBaselineQuestionnaire({
   applicationStatus,
 }: Props): React.ReactElement {
   const [state, setState] = useState<PState>({
-    phase: 'hero',
+    phase: 'welcome',
     sectionIndex: 0,
     questionIndex: 0,
     responses: {},
@@ -103,6 +104,12 @@ export function ParentBaselineQuestionnaire({
   const [error, setError] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [micTooltip, setMicTooltip] = useState<boolean>(false);
+
+  // The welcome screen is only worth showing with Coach Mike's recording behind
+  // it. Until that is known the screen waits blank; with no recording the
+  // questionnaire opens on the hero, as it did before the welcome existed.
+  const welcomeClip = useCoachAudioClip('PARENT-WELCOME');
+  const showWelcome = welcomeClip.isLoading || welcomeClip.available;
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
@@ -120,7 +127,7 @@ export function ParentBaselineQuestionnaire({
   // ── Progress ───────────────────────────────────────────────────────────────
 
   const progressPct = useMemo((): number => {
-    if (state.phase === 'hero' || state.phase === 'privacy_gate') return 0;
+    if (state.phase === 'welcome' || state.phase === 'hero' || state.phase === 'privacy_gate') return 0;
     if (state.phase === 'closing') return 100;
     const sectionContrib = state.sectionIndex / totalSections;
     const questionContrib =
@@ -195,6 +202,13 @@ export function ParentBaselineQuestionnaire({
 
   const goNext = (): void => {
     setShowTooltip(false);
+
+    if (state.phase === 'welcome') {
+      // With no welcome on offer the hero is what is on screen, so its begin
+      // button lands here and has to go a step further.
+      setState((prev) => ({ ...prev, phase: showWelcome ? 'hero' : 'privacy_gate' }));
+      return;
+    }
 
     if (state.phase === 'hero') {
       setState((prev) => ({ ...prev, phase: 'privacy_gate' }));
@@ -1000,8 +1014,6 @@ export function ParentBaselineQuestionnaire({
           </p>
         </div>
 
-        <ScreenVoice clipId="PARENT-WELCOME" label="HEAR COACH MIKE: WELCOME" className="mb-5 justify-center" />
-
         {/* Stats */}
         <p
           style={{
@@ -1626,6 +1638,21 @@ export function ParentBaselineQuestionnaire({
 
   const renderPhase = (): React.ReactElement => {
     switch (state.phase) {
+      case 'welcome':
+        if (welcomeClip.isLoading) return <div style={{ flex: 1 }} />;
+        return welcomeClip.available ? (
+          <WelcomeScreen
+            heading="Welcome to Smarter Goalie."
+            clipId="PARENT-WELCOME"
+            accent={GREEN}
+            fadeClassName="pbq-fade"
+            buttonClassName="pbq-btn"
+            buttonStyle={btnPrimary}
+            onContinue={goNext}
+          />
+        ) : (
+          renderHero()
+        );
       case 'hero':
         return renderHero();
       case 'privacy_gate':

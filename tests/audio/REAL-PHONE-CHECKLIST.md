@@ -165,10 +165,9 @@ Each uploads over the old file at the same storage path.
 
 Only some of these clips have a page that plays them. **They play on the site:**
 V-A-04 (charting, section 6), DOP-INTRO and DOP-A to DOP-D (section 5). **Stored,
-with no page that plays them yet:** PARENT-WELCOME and COACH-WELCOME (the two
-welcome screens exist, but parents and coaches go straight to their baseline
-questionnaires, so neither screen is ever shown), PARENT-P2 to P8, V-A-11, 12, 13,
-15, 18, V-A-27 to 37 and V-B-01 to 09. To hear one of these, press play on its row
+with no page that plays them yet (as of 5 Oct; PARENT-WELCOME, COACH-WELCOME and
+V-A-18 have a place now, see section 10):** PARENT-P2 to P8, V-A-11, 12, 13,
+15, V-A-27 to 37 and V-B-01 to 09. To hear one of these, press play on its row
 in Admin → Coach Audio.
 
 Hard-refresh first (same storage path as the old takes).
@@ -183,6 +182,27 @@ Hard-refresh first (same storage path as the old takes).
       Play Smart.", D ends "Learn Smart. Play Smart."
 - [ ] Admin → Coach Audio, play PARENT-WELCOME: it ends "Built Not Born. Think
       Smart. Play Smart." Play COACH-WELCOME: it ends "Six decades. One system."
+
+## 10. Placements from Coach Mike's 17 Oct answers
+
+Needs PARENT-WELCOME, COACH-WELCOME, V-A-17, V-A-18 and the pillar welcomes
+V-A-19 to 26 uploaded. V-A-17, V-A-19 and V-A-13 were re-worded: their old takes
+stay silent until a new one is uploaded (Admin → Coach Audio shows which).
+
+- [ ] New parent account, first sign-in: the first screen reads "Welcome to Smarter
+      Goalie." / "Hear from Coach Mike before you begin." with a play button and
+      **Continue**. The voice does not start by itself.
+- [ ] Same for a new coach: "Welcome, Coach."
+- [ ] **Continue** works before play, during play (the voice stops) and after it
+      ends. The next screen is the baseline profile page, with no voice button.
+- [ ] With the clip not uploaded, a parent or coach lands on the baseline profile
+      page straight away and sees no welcome screen.
+- [ ] /pillars: V-A-18 sits under the "Complete Goalie" heading.
+- [ ] Each pillar page: its own welcome (V-A-19 to 26) is the first button under
+      the pillar name. Pillar 3 shows the V-A-21 welcome above V-A-06, 08, 09, 10.
+- [ ] Student dashboard: V-A-17 button between the top banner and the stats. A
+      coach, parent or admin does not see it.
+- [ ] Mind-Vault page: no first-visit button (V-A-14 is parked).
 
 ## Clean up
 
