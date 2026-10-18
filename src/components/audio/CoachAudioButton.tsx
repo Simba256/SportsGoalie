@@ -156,7 +156,7 @@ export function CoachAudioButton({
  */
 function transcriptFor(clipId: string): string | undefined {
   const entry = getCoachAudioEntry(clipId);
-  return entry && !entry.reRecord ? entry.scriptLine : undefined;
+  return entry && (!entry.reRecord || entry.reRecord.wordingFinal) ? entry.scriptLine : undefined;
 }
 
 /**

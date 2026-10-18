@@ -267,13 +267,13 @@ function CoachAudioAdminPage() {
   const previewIds = useMemo(
     () =>
       statuses
-        .filter(row => row.clip !== null && !isHeld(row))
+        .filter(row => row.clip !== null && !isHeld(row) && !row.entry.parked)
         .slice(0, 3)
         .map(row => row.entry.id),
     [statuses]
   );
   const missingPreviewId = useMemo(
-    () => statuses.find(row => row.clip === null)?.entry.id ?? null,
+    () => statuses.find(row => row.clip === null && !row.entry.parked)?.entry.id ?? null,
     [statuses]
   );
 
@@ -281,6 +281,9 @@ function CoachAudioAdminPage() {
     const total = statuses.length;
     const uploaded = statuses.filter(s => s.clip !== null).length;
     const held = statuses.filter(isHeld).length;
+    const parked = statuses.filter(s => s.entry.parked).length;
+    // A parked clip Michael has set aside is not "missing": nobody owes a take.
+    const missing = statuses.filter(s => s.clip === null && !s.entry.parked).length;
     const byPart = COACH_AUDIO_PART_ORDER.map(part => {
       const rows = statuses.filter(s => s.entry.part === part);
       return {
@@ -289,7 +292,7 @@ function CoachAudioAdminPage() {
         uploaded: rows.filter(s => s.clip !== null).length,
       };
     });
-    return { total, uploaded, held, missing: total - uploaded, byPart };
+    return { total, uploaded, held, parked, missing, byPart };
   }, [statuses]);
 
   if (isLoading) return <SkeletonDarkPage />;
@@ -325,7 +328,7 @@ function CoachAudioAdminPage() {
             {summary.uploaded}
           </span>
           <span style={{ fontSize: '15px', color: MUTED }}>of {summary.total} recordings in</span>
-          {(summary.missing > 0 || summary.held > 0) && (
+          {(summary.missing > 0 || summary.held > 0 || summary.parked > 0) && (
             <span
               style={{
                 marginLeft: 'auto',
@@ -341,6 +344,7 @@ function CoachAudioAdminPage() {
               {[
                 summary.missing > 0 ? `${summary.missing} still missing` : null,
                 summary.held > 0 ? `${summary.held} held for re-recording` : null,
+                summary.parked > 0 ? `${summary.parked} parked` : null,
               ]
                 .filter(Boolean)
                 .join(' · ')}
@@ -611,7 +615,11 @@ function ClipRow({
               reads {entry.readsMessageId}
             </span>
           )}
-          {held ? (
+          {entry.parked ? (
+            <span style={{ fontSize: '10px', color: FAINT, fontWeight: 700 }}>
+              PARKED · PLAYS NOWHERE
+            </span>
+          ) : held ? (
             <span style={{ fontSize: '10px', color: AMBER, fontWeight: 700 }}>
               HELD · SILENT ON THE SITE
             </span>
@@ -639,12 +647,19 @@ function ClipRow({
             {entry.notYetRecorded}
           </div>
         )}
+        {entry.parked && (
+          <div style={{ color: FAINT, fontSize: '11px', marginTop: '3px', fontStyle: 'italic' }}>
+            {entry.parked}
+          </div>
+        )}
         {entry.reRecord && (
           <div style={{ color: FAINT, fontSize: '11px', marginTop: '3px', fontStyle: 'italic' }}>
             {held
               ? `${entry.reRecord.reason} Upload the new take here and it plays straight away.`
               : clip
-                ? 'New take in and playing. The line above is still the old wording; its words are kept off the site until the new wording is added.'
+                ? entry.reRecord.wordingFinal
+                  ? 'New take in and playing.'
+                  : 'New take in and playing. The line above is still the old wording; its words are kept off the site until the new wording is added.'
                 : entry.reRecord.reason}
           </div>
         )}
