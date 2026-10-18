@@ -306,6 +306,93 @@ describe('PillarTeachingVoice — 7 Angle-Marker System (pillar_positioning)', (
   });
 });
 
+describe('PillarTeachingVoice — the 7 Angle-Marker chips', () => {
+  const ALL = ['V-A-21', 'V-A-06', 'V-A-08', 'V-A-09', 'V-A-10'];
+  const labelOf = (id: string) => clipsForPillar('pillar_positioning').find(item => item.clipId === id)!.label;
+
+  beforeEach(() => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile(ALL) });
+  });
+
+  it('draws the four teaching lines as chips with their short names, on any screen width', async () => {
+    await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+
+    const shown = screen
+      .getAllByRole('button', { name: /^Play Coach Mike/ })
+      .slice(1)
+      .map(b => b.textContent);
+    expect(shown).toEqual(['7 ANGLE-MARKER', 'ANGLES 1 AND 7', '4 LEVEL ARCH', '3 LANES OF ATTACK']);
+  });
+
+  it('still names each chip in full for a screen reader, so none sound alike', async () => {
+    await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+
+    const names = playButtons().slice(1);
+    expect(new Set(names).size).toBe(4);
+    expect(names[1]).toBe('Play Coach Mike: HEAR COACH MIKE: ANGLES 1 AND 7 ARE THE SAME');
+  });
+
+  it('keeps the welcome as the one full button, ahead of the chips', async () => {
+    await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+
+    const welcome = screen.getAllByRole('button', { name: /^Play Coach Mike/ })[0];
+    expect(welcome.textContent).toContain('WELCOME TO THE 7 ANGLE-MARKER SYSTEM');
+  });
+
+  it('puts the four chips in one row, apart from the welcome', async () => {
+    const { container } = await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+    const [welcome, ...chips] = screen.getAllByRole('button', { name: /^Play Coach Mike/ });
+
+    const rows = new Set(chips.map(chip => chip.parentElement!.parentElement));
+    expect(rows.size).toBe(1);
+    const [row] = [...rows];
+    expect(row).toHaveClass('flex-wrap');
+    expect(row!.contains(welcome)).toBe(false);
+    expect(container.querySelectorAll('.flex-wrap')).toHaveLength(1);
+  });
+
+  it('plays the right clip from each chip', async () => {
+    await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+
+    for (const id of ['V-A-06', 'V-A-08', 'V-A-09', 'V-A-10']) {
+      const chip = screen
+        .getAllByRole('button', { name: /^Play Coach Mike/ })
+        .find(b => b.getAttribute('aria-label') === `Play Coach Mike: ${labelOf(id)}`)!;
+      await act(async () => fireEvent.click(chip));
+      expect(media.state.playedSources.at(-1)).toBe(url(id));
+    }
+  });
+
+  it('leaves no empty row behind when none of the four is uploaded', async () => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-21']) });
+    const { container } = await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+
+    expect(playButtons()).toHaveLength(1);
+    expect(container.querySelectorAll('.flex-wrap')).toHaveLength(0);
+  });
+
+  it('still shows the chips when the welcome is not uploaded, with one switch beside the first', async () => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-08', 'V-A-10']) });
+    await mount(<PillarTeachingVoice pillarId="pillar_positioning" />);
+
+    expect(screen.getAllByRole('button', { name: /^Play Coach Mike/ }).map(b => b.textContent)).toEqual([
+      'ANGLES 1 AND 7',
+      '3 LANES OF ATTACK',
+    ]);
+    expect(voiceToggles()).toHaveLength(1);
+  });
+
+  it('keeps the 6 Zone, 7 Point line as a full button under its welcome', async () => {
+    getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-22', 'V-A-07']) });
+    const { container } = await mount(<PillarTeachingVoice pillarId="pillar_seven_point" />);
+
+    const [welcome, line] = screen.getAllByRole('button', { name: /^Play Coach Mike/ });
+    expect(welcome.textContent).toContain('WELCOME TO THE 6 ZONE, 7 POINT SYSTEM');
+    expect(line.textContent).toContain('THE 6 ZONE, 7 POINT SYSTEM');
+    expect(container.querySelectorAll('.flex-wrap')).toHaveLength(0);
+  });
+});
+
 describe('PillarTeachingVoice — 6 Zone, 7 Point System (pillar_seven_point)', () => {
   it('shows V-A-07 on its own', async () => {
     getAllClips.mockResolvedValue({ success: true, data: onFile(['V-A-07']) });

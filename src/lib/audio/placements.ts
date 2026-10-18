@@ -11,6 +11,12 @@ export interface PlacedClip {
   clipId: string;
   /** Button text on wider screens. A phone shows just "HEAR COACH MIKE". */
   label: string;
+  /**
+   * When set, the clip is drawn as a small chip with this text, on every screen
+   * width, and sits in a row with the other chips. For a pillar that carries
+   * several lines. `label` still names the button for screen readers.
+   */
+  short?: string;
 }
 
 /**
@@ -54,11 +60,14 @@ export const PILLAR_TEACHING_CLIPS: Record<string, readonly PlacedClip[]> = {
   //
   // V-A-08 opens "In the 7 Angle-Marker System", so it sits here and not under
   // Pillar 04 (moved 12 Oct, as agreed in the 6 Oct reply).
+  //
+  // Four lines under the welcome would be four full-width buttons, and on a phone
+  // four that all read "HEAR COACH MIKE". They are chips instead, in one row.
   pillar_positioning: [
-    { clipId: 'V-A-06', label: 'HEAR COACH MIKE: THE 7 ANGLE-MARKER SYSTEM' },
-    { clipId: 'V-A-08', label: 'HEAR COACH MIKE: ANGLES 1 AND 7 ARE THE SAME' },
-    { clipId: 'V-A-09', label: 'HEAR COACH MIKE: THE 4 LEVEL ARCH SYSTEM' },
-    { clipId: 'V-A-10', label: 'HEAR COACH MIKE: THE THREE LANES OF ATTACK' },
+    { clipId: 'V-A-06', label: 'HEAR COACH MIKE: THE 7 ANGLE-MARKER SYSTEM', short: '7 ANGLE-MARKER' },
+    { clipId: 'V-A-08', label: 'HEAR COACH MIKE: ANGLES 1 AND 7 ARE THE SAME', short: 'ANGLES 1 AND 7' },
+    { clipId: 'V-A-09', label: 'HEAR COACH MIKE: THE 4 LEVEL ARCH SYSTEM', short: '4 LEVEL ARCH' },
+    { clipId: 'V-A-10', label: 'HEAR COACH MIKE: THE THREE LANES OF ATTACK', short: '3 LANES OF ATTACK' },
   ],
   // Pillar 04 · 6 Zone – 7 Point System: V-A-07 alone.
   pillar_seven_point: [

@@ -9,6 +9,8 @@ interface ScreenVoiceProps {
   label: string;
   /** Render the VOICE ON/OFF control beside the button. On by default. */
   showToggle?: boolean;
+  /** Show a small chip with this text instead of the full pill. */
+  chipLabel?: string;
   className?: string;
 }
 
@@ -18,7 +20,7 @@ interface ScreenVoiceProps {
  * take is uploaded, and while a take is held for re-recording, so no screen
  * offers audio it cannot play.
  */
-export function ScreenVoice({ clipId, label, showToggle, className }: ScreenVoiceProps): React.ReactElement {
+export function ScreenVoice({ clipId, label, showToggle, chipLabel, className }: ScreenVoiceProps): React.ReactElement {
   const { stopClip } = useCoachAudio();
 
   useEffect(() => () => stopClip(clipId), [clipId, stopClip]);
@@ -28,6 +30,7 @@ export function ScreenVoice({ clipId, label, showToggle, className }: ScreenVoic
       clipId={clipId}
       label={label}
       showToggle={showToggle}
+      chipLabel={chipLabel}
       whenMissing="hide"
       className={className}
     />

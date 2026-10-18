@@ -33,6 +33,12 @@ interface CoachAudioButtonProps {
   showToggle?: boolean;
   /** What to do when the recording has not been uploaded. */
   whenMissing?: 'disable' | 'hide';
+  /**
+   * Draws a smaller chip showing this text on every screen width, for a page
+   * that carries several lines. `label` still names the button for screen
+   * readers, so two chips never sound alike.
+   */
+  chipLabel?: string;
   className?: string;
 }
 
@@ -41,8 +47,10 @@ export function CoachAudioButton({
   label,
   showToggle = true,
   whenMissing = 'disable',
+  chipLabel,
   className,
 }: CoachAudioButtonProps) {
+  const isChip = chipLabel !== undefined;
   const { clip, available, isLoading, isPlaying, enabled, toggle } = useCoachAudioClip(clipId);
   const { setEnabled } = useCoachAudio();
 
@@ -70,17 +78,17 @@ export function CoachAudioButton({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
+          gap: isChip ? '7px' : '10px',
           background: interactive
             ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))'
             : 'rgba(255,255,255,0.04)',
           border: `1px solid ${interactive ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`,
           borderRadius: '50px',
-          padding: '9px 18px 9px 10px',
+          padding: isChip ? '6px 14px 6px 7px' : '9px 18px 9px 10px',
           color: interactive ? BLUE2 : MUTED,
-          fontSize: '11px',
+          fontSize: isChip ? '10px' : '11px',
           fontWeight: 700,
-          letterSpacing: '1.2px',
+          letterSpacing: isChip ? '1px' : '1.2px',
           textAlign: 'left',
           cursor: interactive ? 'pointer' : 'not-allowed',
           transition: 'all 0.2s',
@@ -89,8 +97,8 @@ export function CoachAudioButton({
       >
         <span
           style={{
-            width: '26px',
-            height: '26px',
+            width: isChip ? '20px' : '26px',
+            height: isChip ? '20px' : '26px',
             borderRadius: '50%',
             background: interactive ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155',
             display: 'flex',
@@ -100,13 +108,19 @@ export function CoachAudioButton({
           }}
         >
           {isPlaying ? (
-            <Pause size={10} color="#fff" fill="#fff" />
+            <Pause size={isChip ? 8 : 10} color="#fff" fill="#fff" />
           ) : (
-            <Play size={10} color="#fff" fill="#fff" />
+            <Play size={isChip ? 8 : 10} color="#fff" fill="#fff" />
           )}
         </span>
-        <span className="hidden sm:inline">{displayLabel}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
+        {isChip ? (
+          <span>{chipLabel}</span>
+        ) : (
+          <>
+            <span className="hidden sm:inline">{displayLabel}</span>
+            <span className="sm:hidden">HEAR COACH MIKE</span>
+          </>
+        )}
       </button>
 
       {showToggle && available && (
