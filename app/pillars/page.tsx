@@ -5,6 +5,7 @@ import { Sport, PILLARS } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { getExactPillarSlug, getPillarSlugFromDocId, pillarDisplayName } from '@/lib/utils/pillars';
 import { SkeletonPillarsPage } from '@/components/ui/skeletons';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 import Link from 'next/link';
 import {
   ArrowRight, Brain, Footprints, Shapes, Target, Grid3X3, Dumbbell, Heart, Trophy, RefreshCw, BookOpen,
@@ -72,6 +73,7 @@ export default function PillarsPage() {
           The Architecture of a<br />
           <span style={{ color: BLUE }}>Complete Goalie</span>
         </h1>
+        <ScreenVoice clipId="V-A-18" label="HEAR COACH MIKE: THE EIGHT PILLARS" className="mb-5 justify-center" />
         <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto' }}>
           Every pillar connects to every other. Master all eight and you master the game — physically, mentally, and technically.
         </p>
