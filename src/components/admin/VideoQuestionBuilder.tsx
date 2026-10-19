@@ -3,7 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { VideoQuizQuestion, QuestionType } from '@/types';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DEFAULT_QUESTION_SPACING,
+  MAX_QUESTION_SPACING,
+  clampQuestionSpacing,
+  questionsTooClose,
+} from '@/lib/quiz/question-spacing';
+import { Card,CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -127,10 +133,11 @@ export function VideoQuestionBuilder({
   // m:ss instead. Holding the raw text is what stops a half-typed "1:" from
   // wiping the field mid-keystroke.
   const [timestampDraft, setTimestampDraft] = useState<string | null>(null);
-  // Minimum gap enforced between two questions. Was a hard-coded 5s, which is
-  // right for most videos and wrong for a fast drill where three cues land in
-  // the same second. 0 turns the check off completely.
-  const [minQuestionSpacing, setMinQuestionSpacing] = useState(5);
+  // Minimum gap enforced between two questions. It started as a hard-coded 5s and
+  // then as a 5s default that reset every time the builder opened, which is wrong
+  // for a fast drill. It now starts at one second, the closest whole-second
+  // timestamps can sit; see lib/quiz/question-spacing.
+  const [minQuestionSpacing, setMinQuestionSpacing] = useState(DEFAULT_QUESTION_SPACING);
   // Same raw-text treatment as the timestamp box, for the rewind target.
   const [rewindDraft, setRewindDraft] = useState<string | null>(null);
 
@@ -301,18 +308,19 @@ export function VideoQuestionBuilder({
     }
 
     // Check if timestamp conflicts with existing question. The gap is the coach's
-    // to set; 0 means overlapping timestamps are allowed on purpose.
-    if (minQuestionSpacing > 0) {
-      const conflictingQuestion = questions.find(
-        (q) => Math.abs(q.timestamp - newQuestion.timestamp!) < minQuestionSpacing
-      );
-      if (conflictingQuestion) {
-        toast.error(
-          `Questions must be at least ${minQuestionSpacing} second${minQuestionSpacing === 1 ? '' : 's'} apart`,
-          { description: 'Change the minimum gap below if you want them closer together.' }
-        );
-        return;
+    // to widen; it never goes below one second, because the player skips a
+    // question that shares a second with the one before it.
+    if (questionsTooClose(newQuestion.timestamp!, questions.map((q) => q.timestamp), minQuestionSpacing)) {
+      if (minQuestionSpacing <= 1) {
+        toast.error('There is already a question at this second', {
+          description: 'Put it a second earlier or later. Timestamps are in whole seconds.',
+        });
+      } else {
+        toast.error(`Questions must be at least ${minQuestionSpacing} seconds apart`, {
+          description: 'Change the minimum gap below if you want them closer together.',
+        });
       }
+      return;
     }
 
     // Validate question based on type. Reflective questions are exempt from every
@@ -1122,19 +1130,18 @@ export function VideoQuestionBuilder({
               <Input
                 id="minSpacing"
                 type="number"
-                min="0"
-                max="120"
+                min="1"
+                max={MAX_QUESTION_SPACING}
                 value={minQuestionSpacing}
                 onChange={(e) => {
-                  const next = parseInt(e.target.value);
-                  setMinQuestionSpacing(Number.isNaN(next) ? 0 : Math.max(0, Math.min(120, next)));
+                  setMinQuestionSpacing(clampQuestionSpacing(parseInt(e.target.value)));
                 }}
                 className="w-full border-slate-300 focus-visible:ring-red-200"
               />
               <p className="text-xs text-gray-500">
-                {minQuestionSpacing === 0
-                  ? 'Off — questions can sit at the same moment in the video.'
-                  : `Questions must be at least ${minQuestionSpacing}s apart. Set to 0 to turn this off.`}
+                {minQuestionSpacing <= 1
+                  ? 'No gap needed. Questions can be one second apart, the closest the builder allows.'
+                  : `Questions must be at least ${minQuestionSpacing}s apart. Set to 1 to allow them as close as possible.`}
               </p>
             </div>
           </div>
