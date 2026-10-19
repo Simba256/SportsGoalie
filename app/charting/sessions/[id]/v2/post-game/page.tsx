@@ -16,6 +16,7 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
 import { growthPointsService } from '@/lib/firebase/growth-points.service';
 import { GROWTH_POINTS } from '@/lib/config/growth-points';
 import { generatePracticeIndex } from '@/lib/scoring/practice-index-generator';
@@ -138,6 +139,7 @@ type PeriodKey = 'period1' | 'period2' | 'period3' | 'overtime';
 export default function V2PostGamePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const sessionId = params.id as string;
 
@@ -315,6 +317,7 @@ export default function V2PostGamePage() {
       ).catch(() => {});
 
       toast.success('Post-Game section saved!');
+      say('chartSaved');
       router.push(`/charting/sessions/${sessionId}`);
     } catch (error) {
       console.error('Failed to save:', error);

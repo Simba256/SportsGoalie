@@ -11,12 +11,14 @@ import { MindVaultEntryForm } from '@/components/mind-vault/MindVaultEntryForm';
 import { MindVaultEntryCard } from '@/components/mind-vault/MindVaultEntryCard';
 import { ACCEPTANCE_SUBCATEGORIES, ACCEPTANCE_PROMPTS, type MindVaultEntry } from '@/types/mind-vault';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
 
 const BLUE = '#37b5ff';
 
 export default function AcceptanceListPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const say = useEventVoice();
   const [entries, setEntries] = useState<MindVaultEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>(() =>
@@ -45,6 +47,7 @@ export default function AcceptanceListPage() {
         const reload = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
         if (reload.success && reload.data) setEntries(reload.data);
         toast.success('Saved to your Acceptance List.');
+        say('vaultSaved');
       } else {
         toast.error(result.error?.message || result.message || 'Failed to add entry');
       }
@@ -66,6 +69,7 @@ export default function AcceptanceListPage() {
       const reload = await mindVaultService.getEntriesByCategory(user.id, 'acceptance');
       if (reload.success && reload.data) setEntries(reload.data);
       toast.success('Saved to your Acceptance List.');
+      say('vaultSaved');
     } else toast.error(result.error?.message || result.message || 'Failed to add entry');
   };
 

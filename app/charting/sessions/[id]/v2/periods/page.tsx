@@ -17,6 +17,7 @@ import {
 } from '@/components/charting/inputs';
 import type { StarDefinition } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -158,6 +159,7 @@ function StatRow({ label, value, onChange, helpText }: StatRowProps) {
 export default function V2PeriodsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const sessionId = params.id as string;
 
@@ -248,6 +250,7 @@ export default function V2PeriodsPage() {
       }
 
       toast.success('Period charting saved!');
+      say('nextStep', 'periods');
       router.push(`/charting/sessions/${sessionId}/v2/post-game`);
     } catch (error) {
       console.error('Failed to save:', error);

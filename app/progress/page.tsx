@@ -39,6 +39,7 @@ import { SkeletonAnalytics } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
 import { useAuth } from '@/lib/auth/context';
+import { EventVoice } from '@/components/audio/EventVoice';
 import { dynamicChartingService } from '@/lib/database';
 import { PILLARS } from '@/types';
 import { getScoreBand, getScoreBandRangeLabel, SCORE_BANDS, type ScoreTier } from '@/lib/config/score-bands';
@@ -658,6 +659,7 @@ function PillarTooltip({ active, payload }: { active?: boolean; payload?: Array<
 function EmptyState({ icon, title, message }: { icon: React.ReactNode; title?: string; message: string }) {
   return (
     <div style={{ textAlign: 'center', padding: '40px 0' }}>
+      <EventVoice event="emptyScreen" />
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>{icon}</div>
       {title && <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>{title}</p>}
       <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', maxWidth: '280px', margin: '0 auto' }}>{message}</p>
