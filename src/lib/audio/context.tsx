@@ -67,6 +67,13 @@ interface CoachAudioContextValue {
    * not played yet. Call it from a tap handler on an iPhone, as with `play`.
    */
   playSequence: (ids: string[]) => void;
+  /**
+   * Plays a short line for something that has just happened, if it is fine to
+   * talk: voice on, the clip on file, and nothing already being said or waiting
+   * to be said. A line that cannot start is dropped, never queued, and never
+   * cuts another clip off. Returns whether it started.
+   */
+  playLine: (id: string) => boolean;
   pause: () => void;
   /** Stops `id` if it is the clip playing, and leaves anything else alone. */
   stopClip: (id: string) => void;
@@ -259,6 +266,20 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
     [clips, startOne]
   );
 
+  const playLine = useCallback(
+    (id: string) => {
+      const element = audioRef.current;
+      if (!enabled || !element || !clips[id]) return false;
+      // `paused` goes false the moment play() is called, so this also covers a
+      // clip that is still loading.
+      if (!element.paused || queueRef.current.length > 0) return false;
+
+      startOne(id);
+      return true;
+    },
+    [enabled, clips, startOne]
+  );
+
   const prime = useCallback(() => {
     const element = audioRef.current;
     // A playing element is already unlocked, and priming it would cut it off.
@@ -311,6 +332,7 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
       setEnabled,
       play,
       playSequence,
+      playLine,
       pause,
       stopClip,
       toggle,
@@ -326,6 +348,7 @@ export function CoachAudioProvider({ children }: { children: ReactNode }) {
       setEnabled,
       play,
       playSequence,
+      playLine,
       pause,
       stopClip,
       toggle,
