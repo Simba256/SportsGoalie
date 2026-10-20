@@ -1643,6 +1643,7 @@ export function ParentBaselineQuestionnaire({
         return welcomeClip.available ? (
           <WelcomeScreen
             heading="Welcome to Smarter Goalie."
+            badge="Smarter Goalie — Parent Pathway"
             clipId="PARENT-WELCOME"
             accent={GREEN}
             fadeClassName="pbq-fade"

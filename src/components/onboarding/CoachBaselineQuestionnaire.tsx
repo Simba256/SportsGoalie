@@ -53,6 +53,15 @@ const btnPrimary: React.CSSProperties = {
   boxShadow: `0 8px 32px rgba(212,169,59,0.22)`,
 };
 
+// The welcome screen wears the parent pathway's green, so both welcomes match.
+const WELCOME_GREEN = '#1D9E75';
+const welcomeBtn: React.CSSProperties = {
+  ...btnPrimary,
+  background: `linear-gradient(135deg, ${WELCOME_GREEN} 0%, #158C64 100%)`,
+  color: '#fff',
+  boxShadow: `0 8px 32px rgba(29,158,117,0.22)`,
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Phase = 'welcome' | 'hero' | 'privacy_gate' | 'nda_note' | 'section_intro' | 'question' | 'closing';
@@ -1433,11 +1442,12 @@ export function CoachBaselineQuestionnaire({ userId, userName: _userName, onComp
         return welcomeClip.available ? (
           <WelcomeScreen
             heading="Welcome, Coach."
+            badge="Smarter Goalie — Coach Pathway"
             clipId="COACH-WELCOME"
-            accent={GOLD}
+            accent={WELCOME_GREEN}
             fadeClassName="cbq-fade"
             buttonClassName="cbq-btn"
-            buttonStyle={btnPrimary}
+            buttonStyle={welcomeBtn}
             onContinue={goNext}
           />
         ) : (
