@@ -11,6 +11,8 @@ import { MindVaultEntryForm } from '@/components/mind-vault/MindVaultEntryForm';
 import { AcceptancePromptItem } from '@/components/mind-vault/AcceptancePromptItem';
 import { getMindVaultCategoryInfo, getCategoryPrompts, type MindVaultCategory, type MindVaultEntry } from '@/types/mind-vault';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
+import { EventVoice } from '@/components/audio/EventVoice';
 
 const BLUE = '#37b5ff';
 
@@ -18,6 +20,7 @@ export default function MindVaultCategoryPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const say = useEventVoice();
   const categorySlug = params.category as MindVaultCategory;
   const categoryInfo = getMindVaultCategoryInfo(categorySlug);
 
@@ -46,6 +49,7 @@ export default function MindVaultCategoryPage() {
       const reload = await mindVaultService.getEntriesByCategory(user.id, categorySlug);
       if (reload.success && reload.data) setEntries(reload.data);
       toast.success('Saved to your Mind Vault.');
+      say('vaultSaved');
     } else toast.error(result.error?.message || 'Failed to add entry');
   };
 
@@ -122,6 +126,7 @@ export default function MindVaultCategoryPage() {
           <div style={{ padding: '8px 0' }}><SkeletonListPage cols={2} count={4} /></div>
         ) : entries.length === 0 ? (
           <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px dashed rgba(55,181,255,0.2)', borderRadius: '14px', padding: '48px 24px', textAlign: 'center' }}>
+            <EventVoice event="emptyScreen" />
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>No entries yet.</p>
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', marginTop: '4px' }}>
               Tap &quot;Add Entry&quot; above to start building this part of your vault.

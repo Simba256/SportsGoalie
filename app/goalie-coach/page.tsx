@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Target, Check, ChevronLeft } from 'lucide-react';
+import { Pause, Target, Check, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -15,28 +16,6 @@ const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer() {
   const [playing, setPlaying] = useState(false);
@@ -187,7 +166,7 @@ export default function GoalieCoachPage() {
             </p>
           </div>
           <br />
-          <VoiceButton label="HEAR COACH MIKE: THE GOALIE COACH'S ROLE AND WHY IT MATTERS MORE THAN ANY OTHER COACHING POSITION" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE GOALIE COACH'S ROLE AND WHY IT MATTERS MORE THAN ANY OTHER COACHING POSITION" />
         </div>
       </section>
 
@@ -224,7 +203,7 @@ export default function GoalieCoachPage() {
 
         {/* Bottom: VoiceButton */}
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <VoiceButton label="HEAR COACH MIKE: THE RESPECT FACTOR AND THE FEEL FACTOR" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE RESPECT FACTOR AND THE FEEL FACTOR" />
         </div>
       </section>
 
@@ -253,7 +232,7 @@ export default function GoalieCoachPage() {
               <p style={{ fontSize: 'clamp(15px, 1.9vw, 18px)', color: '#fff', lineHeight: 1.85, marginBottom: '40px', fontWeight: 600 }}>
                 The 7 Angle-Mark System. The 6 Zone – 7 Point System™. The Feel Factor. The Mind&rsquo;s Eye. The Development Loop. These are not philosophies. They are systems with mathematical foundations.
               </p>
-              <VoiceButton label="HEAR COACH MIKE: THE MATHEMATICAL FRAMEWORK BEHIND THE SMARTER GOALIE SYSTEM" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE MATHEMATICAL FRAMEWORK BEHIND THE SMARTER GOALIE SYSTEM" />
             </div>
 
             {/* Right — 4 filter TiltCards */}
@@ -313,7 +292,7 @@ export default function GoalieCoachPage() {
               <p style={{ fontSize: 'clamp(15px, 1.9vw, 18px)', color: '#fff', lineHeight: 1.85, marginBottom: '40px', fontWeight: 600 }}>
                 One of our goals is to help goalie coach entrepreneurs grow. We share knowledge. We build the profession together. We raise the standard of goaltending development at every level.
               </p>
-              <VoiceButton label="HEAR COACH MIKE: THE GOALIE COACH COMMUNITY AND WHAT WE ARE BUILDING TOGETHER" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE GOALIE COACH COMMUNITY AND WHAT WE ARE BUILDING TOGETHER" />
             </div>
 
             {/* Right: 2 insight cards + quote */}
@@ -383,7 +362,7 @@ export default function GoalieCoachPage() {
               </TiltCard>
             ))}
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE TOOLS AVAILABLE TO THE GOALIE COACH" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE TOOLS AVAILABLE TO THE GOALIE COACH" />
         </div>
       </section>
 
@@ -425,7 +404,7 @@ export default function GoalieCoachPage() {
             ENQUIRE →
           </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR GOALIE COACHES" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR GOALIE COACHES" />
           </div>
         </div>
       </section>

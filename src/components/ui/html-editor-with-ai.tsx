@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Loader2, Eye, Code, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { auth } from '@/lib/firebase/config';
+
+/** The generate route is admin-only, so every call carries the admin's ID token. */
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await auth.currentUser?.getIdToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 interface HTMLEditorWithAIProps {
   label?: string;
@@ -64,9 +74,7 @@ export function HTMLEditorWithAI({
     try {
       const response = await fetch('/api/ai/generate-html', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await authHeaders(),
         body: JSON.stringify({
           skillName,
           description,
@@ -118,9 +126,7 @@ export function HTMLEditorWithAI({
     try {
       const response = await fetch('/api/ai/generate-html', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await authHeaders(),
         body: JSON.stringify({
           skillName,
           description,

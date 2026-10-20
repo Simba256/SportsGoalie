@@ -21,7 +21,12 @@ export const VOICE_MOMENTS = {
   firstLogin: { clips: ['V-A-01', 'V-A-02', 'V-A-03'] },
   /** First time the goalie opens the charting screen. V-A-04, then V-A-05. */
   chartingFirstOpen: { clips: ['V-A-04', 'V-A-05'] },
-  /** First visit to the Mind-Vault page, where V-A-14 shows as a button once. */
+  /**
+   * First visit to the Mind-Vault page, where V-A-14 shows as a button once.
+   * V-A-14 has been parked since 17 Oct (the Mind-Vault is welcomed by V-A-19 on
+   * the MindSet pillar), so this shows nothing until the clip is un-parked in
+   * the catalogue.
+   */
   mindVaultFirstVisit: { clips: ['V-A-14'] },
 } as const;
 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Users, Check, ChevronLeft } from 'lucide-react';
+import { Pause, Users, Check, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -11,32 +12,9 @@ import { Boxes } from '@/components/ui/background-boxes';
 import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
 import { ApplicationSteps } from '@/components/ApplicationSteps';
 
-const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer() {
   const [playing, setPlaying] = useState(false);
@@ -177,7 +155,7 @@ export default function ParentRolePage() {
             </p>
           </div>
           <br />
-          <VoiceButton label="HEAR COACH MIKE: WHAT THE GOALIE PARENT'S ROLE ACTUALLY IS" />
+          <GemVoiceButton label="HEAR COACH MIKE: WHAT THE GOALIE PARENT'S ROLE ACTUALLY IS" />
         </div>
       </section>
 
@@ -226,7 +204,7 @@ export default function ParentRolePage() {
                 Not the practice. Not the game.<br />The 20 minutes after.
               </p>
 
-              <VoiceButton label="HEAR COACH MIKE: THE CAR RIDE HOME AND WHY IT MATTERS MORE THAN THE PRACTICE" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE CAR RIDE HOME AND WHY IT MATTERS MORE THAN THE PRACTICE" />
             </div>
 
             {/* Right column — 3 insight cards */}
@@ -299,7 +277,7 @@ export default function ParentRolePage() {
             <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: 'rgba(184,212,232,0.9)', lineHeight: 1.9, marginBottom: '22px' }}>A parent who understands the position produces a goalie who is easier to coach, more resilient under pressure, and more self-aware for life.</p>
             <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, marginBottom: '40px', fontWeight: 600 }}>This is not about knowing the technical details. It is about knowing how to support the person in the pads.</p>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: WHAT THE BEST GOALIE PARENTS DO DIFFERENTLY" />
+          <GemVoiceButton label="HEAR COACH MIKE: WHAT THE BEST GOALIE PARENTS DO DIFFERENTLY" />
         </div>
       </section>
 
@@ -352,7 +330,7 @@ export default function ParentRolePage() {
               </div>
             ))}
           </div>
-          <div style={{ marginLeft: '48px' }}><VoiceButton label="HEAR COACH MIKE: THE PARENT DASHBOARD AND HOW IT WORKS" /></div>
+          <div style={{ marginLeft: '48px' }}><GemVoiceButton label="HEAR COACH MIKE: THE PARENT DASHBOARD AND HOW IT WORKS" /></div>
         </div>
       </section>
 
@@ -403,7 +381,7 @@ export default function ParentRolePage() {
                 You do not need to be a hockey expert. You need to be present, consistent, and honest.
               </p>
 
-              <VoiceButton label="HEAR COACH MIKE: THE PARENT OBSERVATION CHART AND WHAT IT REVEALS" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE PARENT OBSERVATION CHART AND WHAT IT REVEALS" />
             </div>
 
             {/* Right column — 3 Level TiltCards */}
@@ -532,7 +510,7 @@ export default function ParentRolePage() {
             ))}
           </div>
           <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.85, maxWidth: '720px', marginBottom: '40px', fontWeight: 600 }}>These are not hockey skills. These are life skills. Smarter Goalie builds both simultaneously.</p>
-          <VoiceButton label="HEAR COACH MIKE: WHAT YOUR GOALIE IS ACTUALLY BECOMING" />
+          <GemVoiceButton label="HEAR COACH MIKE: WHAT YOUR GOALIE IS ACTUALLY BECOMING" />
         </div>
       </section>
 
@@ -576,7 +554,7 @@ export default function ParentRolePage() {
             APPLY TO JOIN THE EXPERIENCE →
           </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: WHAT IT MEANS TO BE A FOUNDING MEMBER PARENT" />
+            <GemVoiceButton label="HEAR COACH MIKE: WHAT IT MEANS TO BE A FOUNDING MEMBER PARENT" />
           </div>
         </div>
       </section>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
 import { toDateSafe } from '@/lib/utils/timestamp';
 import { chartTitle } from '@/lib/templates/chart-title';
 import {
@@ -103,6 +104,7 @@ function SubmitButton({ saving, onClick }: { saving: boolean; onClick: () => voi
 export default function PillarCheckInPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const pillarSlug = params.pillarSlug as string;
   const pillarInfo = PILLARS.find((p) => p.slug === pillarSlug);
@@ -198,6 +200,7 @@ export default function PillarCheckInPage() {
 
       if (result.success) {
         toast.success('Check-in submitted');
+        say('chartSaved');
         setResponses({});
         loadTemplateAndHistory();
       } else {

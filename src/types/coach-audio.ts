@@ -67,6 +67,12 @@ export interface CoachAudioReRecord {
   reason: string;
   /** A take uploaded before this instant is the old one. ISO 8601. */
   heldBefore: string;
+  /**
+   * True once the entry's `scriptLine` already holds the new wording, so only
+   * the recording is out of date. The new take can then show its transcript as
+   * soon as it is uploaded. Left unset while the wording itself is unsettled.
+   */
+  wordingFinal?: boolean;
 }
 
 /** One expected recording. */
@@ -88,6 +94,12 @@ export interface CoachAudioCatalogueEntry {
    * wording, so it is kept off the public pages until the new wording arrives.
    */
   reRecord?: CoachAudioReRecord;
+  /**
+   * Set when Michael has taken the clip out of use for now (his "Held /
+   * Potential builds" list). The entry and any upload stay on file and on the
+   * admin screen, but the clip plays nowhere. Removing this line puts it back.
+   */
+  parked?: string;
 }
 
 /** An uploaded recording. Firestore: `coach_audio_clips/{id}`. */
@@ -137,6 +149,15 @@ export interface CoachAudioStatus {
  * wording until it arrives. V-A-16 and V-A-17 are in no block so far and are
  * also still the 12 September wording.
  *
+ * Coach's answers of 17 October (parts 1 and 2) changed five scripts: V-A-13
+ * (what the Factor Ratio means), V-A-17 (goalie dashboard), V-A-19 (MindSet
+ * opening), V-A-32 and V-B-12. Each has the new wording below and a `reRecord`
+ * hold, so the old take stays silent and the new one plays the moment it is
+ * uploaded. The same answers parked V-A-14 and V-A-16 (held), V-A-31, 33 and 34
+ * (they assume a spoken answer) and V-A-36 (the goalie decides when the day is
+ * done). A parked clip stays in this list and on the admin page, and plays
+ * nowhere. Nothing was deleted.
+ *
  * Block 7 changed what several triggers say, not just how they say it (V-B-11
  * no longer mentions seven days, V-B-13 no longer mentions three weeks). When
  * the message cards are built, their on-screen text must come from these
@@ -151,6 +172,9 @@ export interface CoachAudioStatus {
  * cannot speak a number that changes. The Block 7 script replaced that line
  * and contains no number.)
  */
+
+const PARKED_SPOKEN_ANSWER =
+  'Potential build, 17 October. It assumes the goalie speaks an answer, which is not built. Kept on file to add as the experience grows.';
 
 export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
   // ── Part 1 · Orientation ──────────────────────────────────────────────────
@@ -232,13 +256,20 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'V-A-13',
     part: 'systems',
     scriptLine:
-      "The Factor Ratio is the bar. It shows what level of the bar you're at, and where you need to go. Getting down to the bare knuckles, that's the Factor Ratio. Your influences, your prep, your game, your practice, your daily life: they all factor into your Factor Ratio. Charting is your oversight mechanism, your barometer, your support to guide you and direct you, from what works for you and what does not. Understanding where you are today is the key to reaching the goals that take your game to the next level. Whether you stay at your current playing level or move up the ladder, as a goalie I wanted to earn the respect of my teammates, coaches, family and friends. I wanted to have a reputation that represented my efforts and consistency in performance. Think Smart. Play Smart.",
+      "The Factor Ratio is the bar that illustrates how you handled the game challenges you were confronted with: the standard of play, the challenge level, the speed of the play, and more. Period by period, you rate how much of a factor you were. No two games or shifts are exactly the same. A tough opponent, a slow start, a late push. So the question is never just how hard the game was. It's how you faced each challenge, overall and in comparison. Judging the goals against, for example, or the decisions made that need adjusting. Then we ask why. Your concentration. Your decisions. Over-reacting. Your game chart confirms what you observed about yourself across the pillars, and the patterns show you where to go next. Think smart, play smart.",
+    reRecord: {
+      reason: 'New wording from Coach Mike, 17 October. The take on file reads the earlier script.',
+      heldBefore: '2026-10-17T22:53:00Z',
+      wordingFinal: true,
+    },
   },
   {
     id: 'V-A-14',
     part: 'systems',
     scriptLine:
       "The Mind-Vault is your impenetrable inner sanctuary and personal repository for peak mental performance. Designed to help goalies move beyond fleeting feelings of confidence, it serves as a carefully curated vault where you store your hard-won successes, proven strategies, and core mental anchors. When high-pressure game situations hit, you don't have to hope for poise. You simply access it, filter out the noise, master the quick reset, and command your game with complete composure. Build Smart. Play Smart.",
+    parked:
+      'Held, 17 October. There is no separate Mind-Vault welcome: the Mind-Vault is part of the MindSet pillar, and V-A-19 now opens that pillar.',
   },
   {
     id: 'V-A-15',
@@ -251,12 +282,19 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'systems',
     scriptLine:
       'Knowledge Acquisition. The technique is not just known. It is owned, and it can be reliably deployed under any circumstance.',
+    parked:
+      'Held, 17 October. It repeats what the onboarding questionnaire already does. Its first line is kept for a later moment on the success trail.',
   },
   {
     id: 'V-A-17',
     part: 'systems',
     scriptLine:
-      'Self-evaluation builds self-awareness, and self-awareness leads to self-coaching. Development. Improvement. Maintenance. That is the formula.',
+      "Smarter Goalie's ultimate goal is that you become that 'Intelligent Athletic Goaltender' you dream about. True growth comes with determination and the will to succeed. Mastering your Technical Eye leads you to self-evaluation skills that spring you forward in your self-awareness and eventually self-coaching in real time.",
+    reRecord: {
+      reason:
+        'New wording from Coach Mike, 17 October, for the goalie dashboard. His message gave two passages separated by "...", so a line may be missing between them. Confirm the full wording before recording.',
+      heldBefore: '2026-10-17T22:53:00Z',
+    },
   },
 
   // ── Part 3 · The 8 Pillars ────────────────────────────────────────────────
@@ -270,7 +308,13 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     id: 'V-A-19',
     part: 'pillars',
     scriptLine:
-      "Coach Mike here. Welcome to the Mind-Vault.\n\nAt Smarter Goalie, we believe that high performance isn't just a byproduct of natural talent. It is the result of a systematic, disciplined approach to every aspect of the game. You are the last line of defense. You occupy the most demanding position in hockey, where a split-second decision determines the outcome of the game. That kind of pressure requires more than physical skill. It requires an unshakable mental framework.\n\nThis is your Mind-Vault.\n\nThink of your Mind-Vault not as a fleeting feeling of confidence, but as a carefully curated repository of your greatest mental assets. It is an impenetrable inner sanctuary where we store your proven strategies, your hard-won successes, and the clarity required to perform under intense pressure.\n\nIn the heat of competition, when distractions rise and mistakes happen, you don't need to hope for confidence. You need to access it. Your Mind-Vault allows you to:\n\nStore and retrieve. Bank your brilliant saves and successful game scenarios, so you can withdraw that confidence exactly when you need it most.\n\nFilter the noise. Develop the laser-like focus necessary to see only what matters: the puck and the play.\n\nTrain the subconscious, the quickest part of your brain. We teach it to play in the now, free of negative influence, controlling the noise with the mantras you develop as your own.\n\nMaster the reset. Transform a challenging goal or a mistake into data, allowing you to re-calibrate and return to peak performance in seconds.\n\nI have spent my career studying what separates the good from the truly great, and it always comes back to one truth: Greatness is built, not born. We don't leave your mental game to chance. We teach you to organize, access, and command your mind with the same precision you apply to your skating and save selection.\n\nWhether you are just starting your journey or refining your game at the highest levels, your Mind-Vault is where your consistency, resilience, and ultimate performance begin.\n\nYour first deposit starts today. The next time the noise shows up, catch it, name it, and write down what you did. That's how a Mind-Vault is built, one deposit at a time.\n\nLet's start building yours.",
+      "Coach Mike here. Welcome to MindSet, where your Mind-Vault grows and lives. It lives in a state of change: as your situation changes, some of it holds steady and some of it changes with you and your situation.\n\nAt Smarter Goalie, we believe that high performance isn't just a byproduct of natural talent. It is the result of a systematic, disciplined approach to every aspect of the game. You are the last line of defense. You occupy the most demanding position in hockey, where a split-second decision determines the outcome of the game. That kind of pressure requires more than physical skill. It requires an unshakable mental framework.\n\nThis is your Mind-Vault.\n\nThink of your Mind-Vault not as a fleeting feeling of confidence, but as a carefully curated repository of your greatest mental assets. It is an impenetrable inner sanctuary where we store your proven strategies, your hard-won successes, and the clarity required to perform under intense pressure.\n\nIn the heat of competition, when distractions rise and mistakes happen, you don't need to hope for confidence. You need to access it. Your Mind-Vault allows you to:\n\nStore and retrieve. Bank your brilliant saves and successful game scenarios, so you can withdraw that confidence exactly when you need it most.\n\nFilter the noise. Develop the laser-like focus necessary to see only what matters: the puck and the play.\n\nTrain the subconscious, the quickest part of your brain. We teach it to play in the now, free of negative influence, controlling the noise with the mantras you develop as your own.\n\nMaster the reset. Transform a challenging goal or a mistake into data, allowing you to re-calibrate and return to peak performance in seconds.\n\nI have spent my career studying what separates the good from the truly great, and it always comes back to one truth: Greatness is built, not born. We don't leave your mental game to chance. We teach you to organize, access, and command your mind with the same precision you apply to your skating and save selection.\n\nWhether you are just starting your journey or refining your game at the highest levels, your Mind-Vault is where your consistency, resilience, and ultimate performance begin.\n\nYour first deposit starts today. The next time the noise shows up, catch it, name it, and write down what you did. That's how a Mind-Vault is built, one deposit at a time.\n\nLet's start building yours.",
+    reRecord: {
+      reason:
+        'New opening from Coach Mike, 17 October: it now welcomes the goalie to MindSet instead of the Mind-Vault. The rest is as recorded. The take on file has the old opening.',
+      heldBefore: '2026-10-17T22:53:00Z',
+      wordingFinal: true,
+    },
   },
   {
     id: 'V-A-20',
@@ -320,12 +364,42 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
   { id: 'V-A-28', part: 'utility', scriptLine: 'Got it.' },
   { id: 'V-A-29', part: 'utility', scriptLine: "That's in your record." },
   { id: 'V-A-30', part: 'utility', scriptLine: 'Take your time.' },
-  { id: 'V-A-31', part: 'utility', scriptLine: 'Go ahead.' },
-  { id: 'V-A-32', part: 'utility', scriptLine: "Let's go back one step." },
-  { id: 'V-A-33', part: 'utility', scriptLine: 'Say that again for me.' },
-  { id: 'V-A-34', part: 'utility', scriptLine: "I didn't catch that one." },
+  {
+    id: 'V-A-31',
+    part: 'utility',
+    scriptLine: 'Go ahead.',
+    parked: PARKED_SPOKEN_ANSWER,
+  },
+  {
+    id: 'V-A-32',
+    part: 'utility',
+    scriptLine: "Let's take a moment to review.",
+    reRecord: {
+      reason: 'New wording from Coach Mike, 17 October. The take on file says "Let\'s go back one step."',
+      heldBefore: '2026-10-17T22:53:00Z',
+      wordingFinal: true,
+    },
+  },
+  {
+    id: 'V-A-33',
+    part: 'utility',
+    scriptLine: 'Say that again for me.',
+    parked: PARKED_SPOKEN_ANSWER,
+  },
+  {
+    id: 'V-A-34',
+    part: 'utility',
+    scriptLine: "I didn't catch that one.",
+    parked: PARKED_SPOKEN_ANSWER,
+  },
   { id: 'V-A-35', part: 'utility', scriptLine: "Nothing here yet. That's normal on day one." },
-  { id: 'V-A-36', part: 'utility', scriptLine: "That's all for today." },
+  {
+    id: 'V-A-36',
+    part: 'utility',
+    scriptLine: "That's all for today.",
+    parked:
+      'Potential build, 17 October. The goalie decides when the day is done, not the system. Kept on file.',
+  },
   { id: 'V-A-37', part: 'utility', scriptLine: 'Good. Next.' },
 
   // ── Part 5 · Trigger messages (read B-01 to B-22 verbatim) ────────────────
@@ -411,7 +485,12 @@ export const COACH_AUDIO_CATALOGUE: CoachAudioCatalogueEntry[] = [
     part: 'triggers',
     readsMessageId: 'B-12',
     scriptLine:
-      "OK. When we see no action, we know as coaches a conversation to just support you, regardless of where you are, is still here, and if it's welcomed, Coach Mike would like to chat, if you're up to it. My intention is always to encourage and to understand. We all travel our own paths, and if friends and family can help, we should. Please let us know, and cheers for now.",
+      'Hey, just checking in. Smarter Goalie is big on support. Wondering if you would be open to a chat on goaltending?',
+    reRecord: {
+      reason: 'New script from Coach Mike, 17 October (21 days, no chart). The take on file reads the earlier script.',
+      heldBefore: '2026-10-17T22:53:00Z',
+      wordingFinal: true,
+    },
   },
   {
     id: 'V-B-13',
@@ -636,12 +715,20 @@ export function isHeldForReRecord(clip: Pick<CoachAudioClip, 'id' | 'uploadedAt'
   return !(clip.uploadedAt.getTime() >= Date.parse(hold.heldBefore));
 }
 
-/** The clips that may play on the site: everything uploaded, less the held takes. */
+/** True when Michael has set the clip aside (held, or a potential build). */
+export function isParked(id: string): boolean {
+  return Boolean(CATALOGUE_BY_ID.get(id)?.parked);
+}
+
+/**
+ * The clips that may play on the site: everything uploaded, less the held old
+ * takes and the parked clips.
+ */
 export function playableClips(
   clips: Record<string, CoachAudioClip>
 ): Record<string, CoachAudioClip> {
   return Object.fromEntries(
-    Object.entries(clips).filter(([, clip]) => !isHeldForReRecord(clip))
+    Object.entries(clips).filter(([, clip]) => !isHeldForReRecord(clip) && !isParked(clip.id))
   );
 }
 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Shield, Check, ChevronLeft } from 'lucide-react';
+import { Pause, Shield, Check, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -15,39 +16,6 @@ const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '50px', padding: '9px 18px 9px 10px',
-          color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700,
-          letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
-          boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none',
-        }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button
-        onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}
-      >
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer({ autoPlay = true }: { autoPlay?: boolean }) {
   const [playing, setPlaying] = useState(false);
@@ -283,7 +251,7 @@ export default function GoaliePage() {
               FAILURE IS NOT IN OUR VOCABULARY.
             </p>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: WHAT IT MEANS TO BE IN THE RIGHT PLACE" />
+          <GemVoiceButton label="HEAR COACH MIKE: WHAT IT MEANS TO BE IN THE RIGHT PLACE" />
         </div>
       </section>
 
@@ -313,7 +281,7 @@ export default function GoaliePage() {
               BUILT NOT BORN &middot; SIX DECADES &middot; ONE SYSTEM.
             </p>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: DISCOVERING YOUR GAME, NOT COPYING SOMEONE ELSE'S" />
+          <GemVoiceButton label="HEAR COACH MIKE: DISCOVERING YOUR GAME, NOT COPYING SOMEONE ELSE'S" />
         </div>
       </section>
 
@@ -482,22 +450,7 @@ export default function GoaliePage() {
 
         {/* Bottom: audio pill player */}
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50px', padding: '8px 20px 8px 8px', width: 'fit-content', maxWidth: '100%' }}>
-            <button style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#00f2ff', boxShadow: '0 0 20px rgba(0,242,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
-            <span className="hidden sm:inline" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-              HEAR COACH MIKE: THE FEEL FACTOR AND THE MIND&rsquo;S EYE
-            </span>
-            <span className="sm:hidden" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase' }}>
-              HEAR COACH MIKE
-            </span>
-            <span className="hidden sm:inline" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-              VOICE ON
-            </span>
-          </div>
+          <GemVoiceButton label="HEAR COACH MIKE: THE FEEL FACTOR AND THE MIND’S EYE" />
         </div>
       </section>
 
@@ -573,7 +526,7 @@ export default function GoaliePage() {
 
           {/* Voice button */}
           <div style={{ marginTop: '56px' }}>
-            <VoiceButton label="HEAR COACH MIKE: THE DEVELOPMENT LOOP AND WHY NOTHING IS EVER LOST" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE DEVELOPMENT LOOP AND WHY NOTHING IS EVER LOST" />
           </div>
         </div>
       </section>
@@ -619,7 +572,7 @@ export default function GoaliePage() {
               </TiltCard>
             ))}
           </div>
-          <VoiceButton label="HEAR COACH MIKE: WHAT SMARTER GOALIE ACTUALLY BUILDS IN A GOALIE" />
+          <GemVoiceButton label="HEAR COACH MIKE: WHAT SMARTER GOALIE ACTUALLY BUILDS IN A GOALIE" />
         </div>
       </section>
 
@@ -752,7 +705,7 @@ export default function GoaliePage() {
           </button>
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: WHAT IT MEANS TO BE A FOUNDING MEMBER" />
+            <GemVoiceButton label="HEAR COACH MIKE: WHAT IT MEANS TO BE A FOUNDING MEMBER" />
           </div>
         </div>
       </section>

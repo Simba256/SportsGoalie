@@ -18,7 +18,7 @@ Smarter Goalie is a comprehensive digital sports coaching platform that combines
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS
 - **Components**: shadcn/ui component library
 - **Backend**: Firebase (Firestore, Auth, Storage)
 - **Deployment**: Vercel with CI/CD pipeline

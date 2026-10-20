@@ -16,6 +16,7 @@ type FakeUser = {
   role: string;
   onboardingCompleted?: boolean;
   voiceMoments?: Record<string, unknown>;
+  createdAt?: unknown;
 };
 
 let user: FakeUser | null = null;

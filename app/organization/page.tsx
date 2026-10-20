@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Building2, ChevronLeft } from 'lucide-react';
+import { Pause, Building2, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -14,28 +15,6 @@ import { ApplicationSteps } from '@/components/ApplicationSteps';
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer() {
   const [playing, setPlaying] = useState(false);
@@ -176,7 +155,7 @@ export default function OrganizationPage() {
             <p style={{ fontSize: 'clamp(14px, 1.8vw, 22px)', fontWeight: 900, color: BLUE2, margin: 0, textTransform: 'uppercase' }}>One system. Every age group. No gaps.</p>
           </div>
           <br />
-          <VoiceButton label="HEAR COACH MIKE: WHAT CONSISTENT ORGANIZATION-WIDE GOALTENDING DEVELOPMENT PRODUCES" />
+          <GemVoiceButton label="HEAR COACH MIKE: WHAT CONSISTENT ORGANIZATION-WIDE GOALTENDING DEVELOPMENT PRODUCES" />
         </div>
       </section>
 
@@ -205,7 +184,7 @@ export default function OrganizationPage() {
               <p style={{ fontSize: 'clamp(15px, 1.6vw, 18px)', color: '#fff', lineHeight: 1.8, marginBottom: '40px', fontWeight: 600 }}>
                 Parents choose organizations that can demonstrate measurable goalie development. Can you demonstrate it? What data do you have?
               </p>
-              <VoiceButton label="HEAR COACH MIKE: WHAT ORGANIZATIONS ARE MISSING AND WHAT IT COSTS THEM" />
+              <GemVoiceButton label="HEAR COACH MIKE: WHAT ORGANIZATIONS ARE MISSING AND WHAT IT COSTS THEM" />
             </div>
             {/* RIGHT */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -282,7 +261,7 @@ export default function OrganizationPage() {
               </div>
             ))}
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE ORGANIZATION-WIDE SYSTEM AND HOW IT IS STRUCTURED" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE ORGANIZATION-WIDE SYSTEM AND HOW IT IS STRUCTURED" />
         </div>
       </section>
 
@@ -329,7 +308,7 @@ export default function OrganizationPage() {
             </p>
             <p style={{ fontSize: '11px', fontWeight: 700, color: BLUE2, letterSpacing: '2px', textTransform: 'uppercase', margin: '14px 0 0' }}>— COACH MIKE</p>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE SCALABILITY ARCHITECTURE AND ADMIN CONTROLS" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE SCALABILITY ARCHITECTURE AND ADMIN CONTROLS" />
         </div>
       </section>
 
@@ -357,7 +336,7 @@ export default function OrganizationPage() {
               <p style={{ fontSize: 'clamp(15px, 1.5vw, 17px)', color: '#fff', lineHeight: 1.8, marginBottom: '36px', fontWeight: 600 }}>
                 The conversation starts with Coach Mike. Not a sales team. Not an automated system. Coach Mike.
               </p>
-              <VoiceButton label="HEAR COACH MIKE: THE CUSTOM PACKAGE MODEL AND WHAT THE FIRST CONVERSATION LOOKS LIKE" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE CUSTOM PACKAGE MODEL AND WHAT THE FIRST CONVERSATION LOOKS LIKE" />
             </div>
             {/* RIGHT */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -422,7 +401,7 @@ export default function OrganizationPage() {
             BUILD A PACKAGE →
           </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: WHAT THE FOUNDING ORGANIZATION RELATIONSHIP LOOKS LIKE" />
+            <GemVoiceButton label="HEAR COACH MIKE: WHAT THE FOUNDING ORGANIZATION RELATIONSHIP LOOKS LIKE" />
           </div>
         </div>
       </section>

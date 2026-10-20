@@ -33,6 +33,8 @@ import type {
   SignupLevelId,
 } from '@/data/goalie-signup-intake';
 import { ScreenVoice } from '@/components/audio/ScreenVoice';
+import { EventVoice } from '@/components/audio/EventVoice';
+import { useEventVoice } from '@/hooks/useEventVoice';
 import {
   Mic,
   ChevronRight,
@@ -201,6 +203,7 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [privacyRejected, setPrivacyRejected] = useState<boolean>(false);
   const [micTooltip, setMicTooltip] = useState<boolean>(false);
+  const say = useEventVoice();
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
@@ -489,15 +492,18 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
     };
 
     setSaving(true);
+    let intakeSaved = false;
     try {
       await updateDoc(doc(db, 'users', userId), {
         signupIntake: intake,
         signupIntakeAt: serverTimestamp(),
       });
+      intakeSaved = true;
     } catch (err) {
       console.error('submitIntake: early write failed, continuing anyway', err);
     }
     setSaving(false);
+    if (intakeSaved) say('answerSaved');
 
     // Baseline questions A1 (full name) and A2 (age) ask exactly what we just
     // asked. Pre-fill them from the intake so nobody types the same answer
@@ -1138,7 +1144,7 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           Smarter Goalie
         </p>
         <h1 style={{ fontSize: 'clamp(26px,5vw,44px)', fontWeight: 900, color: '#fff', marginBottom: '10px', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
-          THE STUDENT BASELINE PROFILE
+          YOUR BASELINE PROFILE
         </h1>
         <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', fontStyle: 'italic', color: 'rgba(255,255,255,0.55)', marginBottom: '28px' }}>
           Tell us who you are and what brought you here.
@@ -2020,6 +2026,7 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
         {state.phase === 'privacy_gate' && renderPrivacyGate()}
         {state.phase === 'poise_note' && renderPoiseNote()}
         {state.phase === 'section_intro' && renderSectionIntro()}
+        {state.phase === 'section_intro' && state.sectionIndex === 0 && <EventVoice event="longFormOpen" />}
         {state.phase === 'question' && renderQuestion()}
         {state.phase === 'closing' && renderClosing()}
       </div>

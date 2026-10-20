@@ -27,6 +27,7 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
 import { growthPointsService } from '@/lib/firebase/growth-points.service';
 import { GROWTH_POINTS } from '@/lib/config/growth-points';
 
@@ -133,6 +134,7 @@ const newItemId = () =>
 export default function V2PracticeChartPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const sessionId = params.id as string;
 
@@ -322,6 +324,7 @@ export default function V2PracticeChartPage() {
       ).catch(() => {});
 
       toast.success('Practice chart saved!');
+      say('chartSaved');
       router.push(`/charting/sessions/${sessionId}`);
     } catch (error) {
       console.error('Failed to save:', error);

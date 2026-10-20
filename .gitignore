@@ -127,6 +127,9 @@ PROJECT_TRACKER.md
 # subfolder later means going back to `docs/*` plus a `!docs/<folder>/` line.
 docs/
 
+# Real-phone test checklist for the voice work. A working document, kept locally.
+tests/audio/REAL-PHONE-CHECKLIST.md
+
 # Firestore snapshots taken before a migration (scripts/backup-firestore.ts).
 # These contain live student data — never commit them.
 backups/

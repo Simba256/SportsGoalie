@@ -14,6 +14,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { SkeletonDashboard } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
+import { useCoachAudio } from '@/lib/audio/context';
 import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
 import { useEnrollment } from '@/hooks/useEnrollment';
@@ -54,6 +56,17 @@ function DashboardContent() {
   // fall back to the standard self-paced dashboard instead of a dead end.
   if (user?.role === 'student' && user?.workflowType === 'custom' && user?.assignedCoachId) return <CustomCurriculumDashboard user={user} />;
   return <StandardDashboard />;
+}
+
+/** V-A-17, front and centre under the hero. Takes no room until the take is uploaded. */
+function UltimateGoalVoice() {
+  const { clips } = useCoachAudio();
+  if (!clips['V-A-17']) return null;
+  return (
+    <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 0', display: 'flex', justifyContent: 'center' }}>
+      <ScreenVoice clipId="V-A-17" label="HEAR COACH MIKE: YOUR ULTIMATE GOAL" />
+    </div>
+  );
 }
 
 type BaselineIntelligenceProfile = {
@@ -215,6 +228,10 @@ function StandardDashboard() {
           </div>
         </div>
       </section>
+
+      {/* ── COACH MIKE: THE ULTIMATE GOAL (V-A-17) ──
+          Front and centre for a goalie, hidden until the new take is uploaded. */}
+      {user?.role === 'student' && <UltimateGoalVoice />}
 
       {/* ── STATS + ACTIVITY STRIP ── */}
       <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 0' }}>

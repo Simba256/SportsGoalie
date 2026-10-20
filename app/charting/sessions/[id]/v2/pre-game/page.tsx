@@ -15,6 +15,7 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
 
 // ─── Start Time Options ──────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ const MENTAL_STATE_OPTIONS = [
 export default function V2PreGamePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const sessionId = params.id as string;
 
@@ -125,6 +127,7 @@ export default function V2PreGamePage() {
       }
 
       toast.success('Pre-Game section saved!');
+      say('nextStep', 'pre-game');
       router.push(`/charting/sessions/${sessionId}/v2/periods`);
     } catch (error) {
       console.error('Failed to save:', error);
