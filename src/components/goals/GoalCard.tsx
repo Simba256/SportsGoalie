@@ -1,20 +1,7 @@
 'use client';
 
 import { Calendar, Target, Clock, CheckCircle, Circle } from 'lucide-react';
-
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  type: 'skill_completion' | 'quiz_score' | 'time_spent' | 'streak' | 'sport_completion';
-  targetValue: number;
-  currentValue: number;
-  unit: string;
-  deadline?: Date;
-  priority: 'low' | 'medium' | 'high';
-  isCompleted: boolean;
-  createdAt: Date;
-}
+import type { Goal } from '@/types/goals';
 
 interface GoalCardProps {
   goal: Goal;

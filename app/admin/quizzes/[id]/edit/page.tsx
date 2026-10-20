@@ -6,12 +6,15 @@ import { AdminRoute } from '@/components/auth/protected-route';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { Sport, Skill, DifficultyLevel, VideoQuiz, VideoQuizQuestion, VideoQuizSettings, VideoStructuredTags, createEmptyStructuredTags } from '@/types';
-import { VideoTagEditor } from '@/components/video';
+import { pillarFromSportId, pillarOptionLabel } from '@/types/onboarding';
+import { VideoTagEditor, VideoLibraryPicker } from '@/components/video';
 import { ArrowLeft, Save, Loader2, Video, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { VideoUploader } from '@/components/coach/video-uploader';
+import { QuizVisibilityControl } from '@/components/admin/QuizVisibilityControl';
+import { visibilityFlags } from '@/lib/training/quiz-visibility';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
@@ -300,7 +303,12 @@ function EditVideoQuizContent() {
                   <label style={labelStyle}>Sport *</label>
                   <select className="qe-sel" value={quizData.sportId || ''} onChange={e => handleInputChange('sportId', e.target.value)} style={selectStyle}>
                     <option value="">Select a sport</option>
-                    {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    {/* Numbered label from the code list — see the matching comment
+                        on the create page. The stored value stays the document ID. */}
+                    {sports.map(s => {
+                      const info = pillarFromSportId(s.id);
+                      return <option key={s.id} value={s.id}>{info ? pillarOptionLabel(info) : s.name}</option>;
+                    })}
                   </select>
                   <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px', marginTop: '4px' }}>Required</p>
                 </div>
@@ -324,16 +332,10 @@ function EditVideoQuizContent() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Toggle checked={quizData.isActive} onChange={v => handleInputChange('isActive', v)} />
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Active</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Toggle checked={quizData.isPublished} onChange={v => handleInputChange('isPublished', v)} />
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Published</span>
-                </div>
-              </div>
+              <QuizVisibilityControl
+                quiz={quizData}
+                onChange={live => setQuizData(prev => ({ ...prev, ...visibilityFlags(live) }))}
+              />
             </div>
           </div>
         )}
@@ -348,6 +350,9 @@ function EditVideoQuizContent() {
 
             <div style={{ position: 'relative', ...card, padding: '24px', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}66, transparent)` }} />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                <VideoLibraryPicker onSelect={handleVideoUploaded} />
+              </div>
               <VideoUploader
                 uploadFolder="video-quizzes"
                 onVideoUploaded={handleVideoUploaded}
@@ -383,6 +388,13 @@ function EditVideoQuizContent() {
               videoDuration={videoDuration}
               videoUrl={quizData.videoUrl}
               onChange={handleQuestionsChange}
+              // Replaces a hand-typed duration with the real one once the player
+              // reports it — including for YouTube/Vimeo, which can't be measured
+              // ahead of time.
+              onDurationDetected={(seconds) => {
+                setVideoDuration(seconds);
+                setQuizData(prev => ({ ...prev, videoDuration: seconds }));
+              }}
             />
           ) : (
             <div style={{ position: 'relative', ...card, padding: '64px', textAlign: 'center', overflow: 'hidden' }}>

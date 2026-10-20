@@ -16,7 +16,7 @@ const cardVariants = cva(
         gray:   'bg-gradient-to-br from-slate-100 to-slate-200/60',
         purple: 'bg-gradient-to-br from-purple-100 to-violet-200/60',
         green:  'bg-gradient-to-br from-emerald-100 to-teal-200/60',
-        // Extended for 7 Pillars
+        // Extended for the 8 Pillars
         red:    'bg-gradient-to-br from-red-100 to-rose-200/60',
         blue:   'bg-gradient-to-br from-blue-100 to-sky-200/60',
         lightBlue: 'bg-gradient-to-br from-sky-100 to-blue-200/60',

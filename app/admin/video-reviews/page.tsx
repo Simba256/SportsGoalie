@@ -1,20 +1,23 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { SkeletonDarkPage } from '@/components/ui/skeletons';
-import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users, X } from 'lucide-react';
+import { Play, MessageSquare, Send, Eye, CheckCircle, AlertCircle, Search, Users, X, Clock, Pause, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
-import { videoReviewService, StudentVideo } from '@/lib/database/services/video-review.service';
+import { videoReviewService, StudentVideo, VideoReviewSession } from '@/lib/database/services/video-review.service';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { VideoFeedbackComposer } from '@/components/messages/VideoFeedbackComposer';
 import { Sport } from '@/types';
+import { pillarDisplayName } from '@/lib/utils/pillars';
+import { pillarFromSportId, pillarOptionLabel } from '@/types/onboarding';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
 const AMBER = '#fbbf24';
 const GREEN = '#22c55e';
+const GOLD = '#D4A93B';
 
 const card = {
   background: 'rgba(2,18,44,0.85)',
@@ -43,6 +46,12 @@ function VideoReviewsContent() {
   const [showVideoFeedbackComposer, setShowVideoFeedbackComposer] = useState(false);
   const [selectedVideoForMessage, setSelectedVideoForMessage] = useState<StudentVideo | null>(null);
 
+  // Timer state
+  const [timerState, setTimerState] = useState<'idle' | 'running' | 'paused'>('idle');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     loadVideos();
   }, []);
@@ -62,7 +71,11 @@ function VideoReviewsContent() {
       }
 
       if (sportsResult.success && sportsResult.data) {
-        setSports(sportsResult.data.items.sort((a, b) => a.name.localeCompare(b.name)));
+        // Pillar order, not alphabetical. Sorting by name lists the eight as
+        // 4, 3, 5, 6, 8, 1, 7, 2 — "6 Zone" and "7 Angle-Marker" both start with
+        // a digit, so they sort above every other pillar. getAllSports already
+        // returns them ordered; re-sorting here was throwing that away.
+        setSports(sportsResult.data.items.sort((a, b) => a.order - b.order));
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -72,17 +85,86 @@ function VideoReviewsContent() {
     }
   };
 
+  const resetTimer = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimerState('idle');
+    setElapsedSeconds(0);
+    setSessionStartTime(null);
+  }, []);
+
+  const saveAndStopTimer = useCallback(async (videoId: string) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!sessionStartTime || elapsedSeconds < 1) { resetTimer(); return; }
+    const session: VideoReviewSession = {
+      id: `${Date.now()}`,
+      reviewerId: user?.id || '',
+      reviewerName: user?.displayName || user?.email || 'Coach',
+      startedAt: sessionStartTime,
+      endedAt: new Date(),
+      durationSeconds: elapsedSeconds,
+    };
+    await videoReviewService.addCompletedSession(videoId, session);
+    resetTimer();
+    await loadVideos();
+  }, [sessionStartTime, elapsedSeconds, user, resetTimer]);
+
   const handleReviewVideo = (video: StudentVideo) => {
+    resetTimer();
     setSelectedVideo(video);
     setFeedback(video.coachFeedback || '');
     setRecommendedSports(video.recommendedCourses || []);
+  };
+
+  const handleCloseModal = async () => {
+    if (selectedVideo && (timerState === 'running' || timerState === 'paused') && elapsedSeconds > 0) {
+      await saveAndStopTimer(selectedVideo.id);
+    } else {
+      resetTimer();
+    }
+    setSelectedVideo(null);
+    setFeedback('');
+    setRecommendedSports([]);
+  };
+
+  const startTimer = () => {
+    setSessionStartTime(new Date());
+    setTimerState('running');
+    intervalRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+  };
+
+  const pauseTimer = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimerState('paused');
+  };
+
+  const resumeTimer = () => {
+    setTimerState('running');
+    intervalRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+  };
+
+  const formatTimer = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   const addRecommendedSport = () => {
     if (selectedSportToAdd && !recommendedSports.includes(selectedSportToAdd)) {
       const sport = sports.find(c => c.id === selectedSportToAdd);
       if (sport) {
-        setRecommendedSports([...recommendedSports, sport.name]);
+        // Stored as the name itself — see the matching handler on the coach page.
+        setRecommendedSports([...recommendedSports, pillarDisplayName(sport.id, sport.name)]);
         setSelectedSportToAdd('');
       }
     }
@@ -345,7 +427,7 @@ function VideoReviewsContent() {
 
       {/* Review Modal */}
       {selectedVideo && (
-        <div className="vr-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setSelectedVideo(null); }}>
+        <div className="vr-modal-overlay" onClick={e => { if (e.target === e.currentTarget) handleCloseModal(); }}>
           <div className="vr-modal">
             {/* Modal Header */}
             <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(55,181,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -357,7 +439,7 @@ function VideoReviewsContent() {
               </div>
               <button
                 className="vr-close-btn"
-                onClick={() => setSelectedVideo(null)}
+                onClick={handleCloseModal}
                 style={{ background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
               >
                 <X size={18} />
@@ -405,6 +487,78 @@ function VideoReviewsContent() {
                 </div>
               )}
 
+              {/* Analysis Timer */}
+              <div style={{ background: 'rgba(212,169,59,0.06)', border: '1px solid rgba(212,169,59,0.2)', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock size={15} color={GOLD} />
+                    <span style={{ color: GOLD, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px' }}>Analysis Timer</span>
+                  </div>
+                  {(selectedVideo.totalTimeSpentSeconds || 0) > 0 && (
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                      Total logged: <span style={{ color: GOLD, fontWeight: 700 }}>{formatDuration(selectedVideo.totalTimeSpentSeconds || 0)}</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Timer display */}
+                <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+                  <span style={{
+                    fontSize: '38px', fontWeight: 800, letterSpacing: '3px', fontVariantNumeric: 'tabular-nums',
+                    color: timerState === 'running' ? GOLD : timerState === 'paused' ? AMBER : 'rgba(255,255,255,0.35)',
+                    transition: 'color 0.3s',
+                  }}>
+                    {formatTimer(elapsedSeconds)}
+                  </span>
+                </div>
+
+                {/* Timer controls */}
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: (selectedVideo.timeSessions?.length || 0) > 0 ? '12px' : 0 }}>
+                  {timerState === 'idle' && (
+                    <button onClick={startTimer} style={{ padding: '8px 22px', borderRadius: '8px', border: 'none', background: GOLD, color: '#0c0800', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Play size={13} /> Start Timer
+                    </button>
+                  )}
+                  {timerState === 'running' && (
+                    <>
+                      <button onClick={pauseTimer} style={{ padding: '8px 16px', borderRadius: '8px', border: `1px solid rgba(212,169,59,0.35)`, background: 'rgba(212,169,59,0.1)', color: GOLD, fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Pause size={13} /> Pause
+                      </button>
+                      <button onClick={() => selectedVideo && saveAndStopTimer(selectedVideo.id)} style={{ padding: '8px 16px', borderRadius: '8px', border: `1px solid rgba(34,197,94,0.35)`, background: 'rgba(34,197,94,0.1)', color: GREEN, fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Square size={13} /> Save Session
+                      </button>
+                    </>
+                  )}
+                  {timerState === 'paused' && (
+                    <>
+                      <button onClick={resumeTimer} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: GOLD, color: '#0c0800', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Play size={13} /> Resume
+                      </button>
+                      <button onClick={() => selectedVideo && saveAndStopTimer(selectedVideo.id)} style={{ padding: '8px 16px', borderRadius: '8px', border: `1px solid rgba(34,197,94,0.35)`, background: 'rgba(34,197,94,0.1)', color: GREEN, fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Square size={13} /> Save Session
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Past sessions log */}
+                {(selectedVideo.timeSessions?.length || 0) > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(212,169,59,0.15)', paddingTop: '12px' }}>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '8px' }}>Session Log</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {selectedVideo.timeSessions!.map((s, i) => (
+                        <div key={s.id || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.45)' }}>
+                            {formatFirestoreDate(s.startedAt)} — {s.reviewerName}
+                          </span>
+                          <span style={{ color: GOLD, fontWeight: 700 }}>{formatDuration(s.durationSeconds)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Feedback Textarea */}
               <div>
                 <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -433,9 +587,19 @@ function VideoReviewsContent() {
                       style={{ flex: 1 }}
                     >
                       <option value="">Select a course to recommend...</option>
-                      {sports.map(sport => (
-                        <option key={sport.id} value={sport.id}>{sport.name}</option>
-                      ))}
+                      {/* Numbered in the picker so the coach can find a pillar by
+                          the number Michael uses. What gets STORED on the review is
+                          still the plain name (see addRecommendedSport) — a saved
+                          recommendation reading "Pillar 6 — …" would freeze the
+                          numbering into student-facing data. */}
+                      {sports.map(sport => {
+                        const info = pillarFromSportId(sport.id);
+                        return (
+                          <option key={sport.id} value={sport.id}>
+                            {info ? pillarOptionLabel(info) : pillarDisplayName(sport.id, sport.name)}
+                          </option>
+                        );
+                      })}
                     </select>
                     <button
                       className="vr-sport-add"

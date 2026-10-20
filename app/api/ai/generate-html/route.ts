@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { claudeAIService } from '@/lib/ai/claude.service';
+import { verifyAdminRequest } from '@/lib/auth/admin-request';
 import { logger } from '@/lib/utils/logger';
 
 interface GenerateHTMLRequest {
@@ -11,10 +12,12 @@ interface GenerateHTMLRequest {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    // TODO: Add proper admin authentication when ready
-    // For now, assuming this endpoint is only accessible to admin users
+  const auth = await verifyAdminRequest(request);
+  if (!auth.ok) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+  }
 
+  try {
     const body: GenerateHTMLRequest = await request.json();
 
     // Validate required fields

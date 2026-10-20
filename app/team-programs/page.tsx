@@ -2,37 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, ClipboardList, ChevronLeft } from 'lucide-react';
+import { Pause, ClipboardList, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
+import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
+import { ApplicationSteps } from '@/components/ApplicationSteps';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer() {
   const [playing, setPlaying] = useState(false);
@@ -57,11 +40,11 @@ function AutoVoicePlayer() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '9px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
+          <p style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
           <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>Coach Mike</p>
         </div>
         <div style={{ background: playing ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${playing ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '20px', padding: '4px 10px', transition: 'all 0.3s', flexShrink: 0 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
         </div>
       </div>
       <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', margin: '0 0 18px', fontStyle: 'italic', lineHeight: 1.55 }}>
@@ -71,18 +54,18 @@ function AutoVoicePlayer() {
         {waveform.map((h, i) => { const isPast = (i / waveform.length) * 100 < progress; return (<div key={i} style={{ flex: 1, height: `${h * 100}%`, background: isPast ? '#00f0ff' : 'rgba(255,255,255,0.14)', borderRadius: '2px', transition: 'background 0.08s', boxShadow: isPast ? '0 0 4px rgba(0,240,255,0.4)' : 'none' }} />); })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '20px' }}>
-        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.7)', display: 'flex', padding: '10px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
         <button onClick={() => setPlaying(p => !p)} style={{ width: '60px', height: '60px', borderRadius: '50%', background: playing ? 'rgba(0,240,255,0.12)' : '#00f0ff', border: playing ? '2px solid #00f0ff' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: playing ? '0 0 0 8px rgba(0,240,255,0.1), 0 0 24px rgba(0,240,255,0.3)' : '0 0 20px rgba(0,240,255,0.4)', transition: 'all 0.25s' }}>
           {playing ? <Pause size={24} color="#00f0ff" /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="#051125"><path d="M8 5v14l11-7z"/></svg>}
         </button>
-        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.7)', display: 'flex', padding: '10px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
       </div>
       <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(100,116,139,0.4)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
+        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(148,163,184,0.7)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
           {[12, 20, 8, 16, 10].map((h, i) => (<div key={i} style={{ width: '3px', height: `${playing ? h : Math.round(h * 0.45)}px`, background: i === 1 ? '#00f0ff' : `rgba(0,240,255,${0.35 + i * 0.1})`, borderRadius: '1.5px', transition: `height ${0.2 + i * 0.05}s ease` }} />))}
         </div>
@@ -148,7 +131,7 @@ function DevLoopDiagram() {
                   boxShadow: `0 0 14px ${step.accent}30`,
                   flexShrink: 0,
                 }}>
-                  <span style={{ fontSize: '10px', fontWeight: 900, color: step.accent }}>{step.num}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 900, color: step.accent }}>{step.num}</span>
                 </div>
                 <p style={{ fontSize: 'clamp(11px, 1.4vw, 14px)', fontWeight: 800, color: '#fff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1.3 }}>{step.label}</p>
                 <p style={{ fontSize: '11px', color: `${step.accent}CC`, margin: 0, lineHeight: 1.5 }}>{step.sub}</p>
@@ -176,7 +159,7 @@ function DevLoopDiagram() {
           <path d="M13 2 C13 2 13 5 10 7 C7 9 4 9 2 7" stroke={BLUE2} strokeWidth="1.5" fill="none" strokeOpacity="0.55" />
           <path d="M0 5 L2 7 L4 5" stroke={BLUE2} strokeWidth="1.5" fill="none" strokeOpacity="0.65" />
         </svg>
-        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.45)', textTransform: 'uppercase' }}>CONTINUOUS LOOP</span>
+        <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2.5px', color: 'rgba(96,205,255,0.45)', textTransform: 'uppercase' }}>CONTINUOUS LOOP</span>
         <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(96,205,255,0.22), transparent)' }} />
       </div>
     </div>
@@ -191,29 +174,14 @@ export default function TeamProgramsPage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            <button onClick={() => router.push('/who-we-are')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />WHO WE ARE
-            </button>
-            <button onClick={() => router.push('/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />THE SYSTEM
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <button
             onClick={() => router.push('/explain')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 10px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '9px 12px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
             onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
             onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
           >
@@ -224,7 +192,7 @@ export default function TeamProgramsPage() {
             <ClipboardList size={16} color={BLUE2} style={{ flexShrink: 0 }} />
             <div className="flex items-baseline gap-3 flex-wrap">
               <span style={{ fontSize: 'clamp(13px,1.6vw,16px)', fontWeight: 900, letterSpacing: '3px', color: '#fff', textTransform: 'uppercase' }}>TEAM PROGRAMS</span>
-              <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase' }}>TEAM</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase' }}>TEAM</span>
             </div>
           </div>
         </div>
@@ -273,7 +241,7 @@ export default function TeamProgramsPage() {
             </p>
           </div>
           <br />
-          <VoiceButton label="HEAR COACH MIKE: HOW SMARTER GOALIE WORKS ALONGSIDE YOUR EXISTING PROGRAM" />
+          <GemVoiceButton label="HEAR COACH MIKE: HOW SMARTER GOALIE WORKS ALONGSIDE YOUR EXISTING PROGRAM" />
         </div>
       </section>
 
@@ -296,7 +264,7 @@ export default function TeamProgramsPage() {
               </p>
             </div>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE ONE DIRECTIVE PER PRACTICE MODEL" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE ONE DIRECTIVE PER PRACTICE MODEL" />
         </div>
       </section>
 
@@ -322,7 +290,7 @@ export default function TeamProgramsPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '28px' }}>
             <div style={{ width: '6px', height: '100px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>Coach Charting System</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>Coach Charting System</p>
               <h2 style={{ fontSize: 'clamp(36px, 5vw, 62px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>What the Data<br />Gives You</h2>
             </div>
           </div>
@@ -339,7 +307,7 @@ export default function TeamProgramsPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '28px' }}>
             <div style={{ width: '6px', height: '64px', background: BLUE2, boxShadow: `0 0 12px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The System</p>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The System</p>
               <h3 style={{ fontSize: 'clamp(22px, 3vw, 38px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>The Development Loop</h3>
             </div>
           </div>
@@ -351,7 +319,7 @@ export default function TeamProgramsPage() {
             <div style={{ position: 'absolute', left: '-36px', top: '16px', width: '6px', bottom: 0, background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', zIndex: 0 }} />
             {[
               { num: '01', label: 'Coach Observation Chart', desc: 'Structured framework for watching the goalie with educated eyes' },
-              { num: '02', label: 'Game Charting Data', desc: 'Factor Ratios, good goal / bad goal analysis, V.M.P. intensity' },
+              { num: '02', label: 'Game Charting Data', desc: 'Factor Ratios, good goal / weak goal analysis, V.M.P. intensity' },
               { num: '03', label: 'Practice Charting', desc: 'What was worked, what improved, what needs more attention' },
               { num: '04', label: 'Development Loop', desc: 'Game Chart → Practice Index → Practice Chart → Next Game Chart' },
               { num: '05', label: 'Cross-Reference Engine', desc: 'Compares your observations with the goalie\'s self-evaluation and parent observation' },
@@ -372,16 +340,16 @@ export default function TeamProgramsPage() {
             ))}
           </div>
 
-          <VoiceButton label="HEAR COACH MIKE: THE COACH OBSERVATION CHART AND WHAT IT REVEALS" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE COACH OBSERVATION CHART AND WHAT IT REVEALS" />
         </div>
       </section>
 
-      {/* ── G: 7 Pillar Dashboard ── */}
+      {/* ── G: 8 Pillar Dashboard ── */}
       <section style={{ ...sec, background: 'radial-gradient(circle at 28% 55%, #0d1b3a 0%, #050912 100%)' }}>
         {/* Diagonal texture */}
         <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 12px)', pointerEvents: 'none', zIndex: 0 }} />
-        {/* Ghost "VII" */}
-        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(180px, 28vw, 460px)', fontWeight: 900, fontStyle: 'italic', color: 'rgba(96,205,255,0.03)', letterSpacing: '-0.04em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>VII</div>
+        {/* Ghost "VIII" */}
+        <div style={{ position: 'absolute', right: '-2%', top: '50%', transform: 'translateY(-50%)', fontSize: 'clamp(180px, 28vw, 460px)', fontWeight: 900, fontStyle: 'italic', color: 'rgba(96,205,255,0.03)', letterSpacing: '-0.04em', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', zIndex: 0 }}>VIII</div>
         {/* Radial glows */}
         <div style={{ position: 'absolute', top: '-8%', left: '-5%', width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(0,242,255,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '10%', right: '30%', width: '440px', height: '440px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.05) 0%, transparent 65%)', pointerEvents: 'none' }} />
@@ -392,73 +360,19 @@ export default function TeamProgramsPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '28px' }}>
             <div style={{ width: '6px', height: '100px', background: BLUE2, boxShadow: `0 0 15px ${BLUE2}`, borderRadius: '3px', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The Smarter Goalie System</p>
-              <h2 style={{ fontSize: 'clamp(36px, 5vw, 62px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>Your 7 Pillar Dashboard</h2>
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2, textTransform: 'uppercase', margin: '0 0 4px' }}>The Smarter Goalie System</p>
+              <h2 style={{ fontSize: 'clamp(36px, 5vw, 62px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>Your 8 Pillar Dashboard</h2>
             </div>
           </div>
 
           {/* Description */}
-          <div style={{ maxWidth: '820px', marginBottom: '52px' }}>
+          <div style={{ maxWidth: '820px', marginBottom: '40px' }}>
             <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: '#fff', lineHeight: 1.9, marginBottom: '18px', fontWeight: 600 }}>
-              A self-directed learning experience across all 7 Pillars of the Smarter Goalie system.
+              A self-directed learning experience across all 8 Pillars of the Smarter Goalie system.
             </p>
             <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(184,212,240,0.85)', lineHeight: 1.9 }}>
               You select what you want to understand. Coach Mike guides every topic. No linear requirement. The system meets you where you are and grows with your knowledge.
             </p>
-          </div>
-
-          {/* 7 Pillar Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" style={{ maxWidth: '960px', marginBottom: '52px' }}>
-            {([
-              { accent: '#00f2ff', label: 'Mind-Set' },
-              { accent: BLUE2, label: 'Skating Tech' },
-              { accent: BLUE, label: '7AMS' },
-              { accent: BLUE3, label: '7 Point' },
-              { accent: '#38bdf8', label: 'Form Tech' },
-              { accent: '#22d3ee', label: 'Game & Practice' },
-              { accent: BLUE2, label: 'Lifestyle' },
-            ] as { accent: string; label: string }[]).map(({ accent, label }, i) => (
-              <TiltCard
-                key={i}
-                effect="gravitate"
-                tiltLimit={10}
-                scale={1.07}
-                style={{
-                  border: `1px solid ${accent}55`,
-                  borderRadius: '16px',
-                  boxShadow: `0 0 28px ${accent}14, inset 0 0 20px ${accent}06`,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                }}
-                onClick={() => router.push(`/team-programs/pillar/${i + 1}`)}
-              >
-                {/* Ghost number behind card content */}
-                <div style={{
-                  position: 'absolute', bottom: '-4px', right: '0px',
-                  fontSize: '60px', fontWeight: 900,
-                  color: `${accent}13`,
-                  lineHeight: 1, userSelect: 'none', pointerEvents: 'none', letterSpacing: '-3px',
-                }}>{String(i + 1).padStart(2, '0')}</div>
-                <div style={{
-                  padding: '24px 12px 20px',
-                  background: `linear-gradient(160deg, ${accent}0a, rgba(4,8,20,0.88))`,
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  borderRadius: '15px',
-                  textAlign: 'center',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                }}>
-                  {/* Top accent bar */}
-                  <div style={{ width: '28px', height: '3px', background: `linear-gradient(90deg, ${accent}, ${accent}44)`, borderRadius: '2px', boxShadow: `0 0 8px ${accent}55`, marginBottom: '2px' }} />
-                  <p style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 900, color: accent, lineHeight: 1, margin: 0, textShadow: `0 0 14px ${accent}60` }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </p>
-                  <p style={{ fontSize: '9px', color: `${accent}BB`, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', margin: 0 }}>PILLAR</p>
-                  <p style={{ fontSize: '8px', color: `${accent}99`, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
-                </div>
-              </TiltCard>
-            ))}
           </div>
 
           {/* Quote box + VoiceButton */}
@@ -468,10 +382,12 @@ export default function TeamProgramsPage() {
                 &ldquo;No linear requirement. Every coach brings a different level of understanding. The system meets you where you are and grows with your knowledge.&rdquo;
               </p>
             </div>
-            <VoiceButton label="HEAR COACH MIKE: THE COACH DASHBOARD AND HOW IT WORKS" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE COACH DASHBOARD AND HOW IT WORKS" />
           </div>
         </div>
       </section>
+
+      <SevenPillarsCTA from="team-programs" eyebrow="For Team Programs" />
 
       {/* ── H: Founding Member ── */}
       <section id="apply" style={{ ...sec, background: 'linear-gradient(160deg, #092038 0%, #0e2848 100%)' }}>
@@ -480,7 +396,7 @@ export default function TeamProgramsPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(96,205,255,0.26)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px', boxShadow: '0 2px 12px rgba(55,181,255,0.1)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: RED, boxShadow: '0 0 0 3px rgba(192,0,0,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Limited Availability</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Limited Availability</p>
           </div>
           <h2 style={{ fontSize: 'clamp(30px, 5vw, 66px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>
             THIS IS THE EXPERIENCE<br /><span style={{ color: BLUE2 }}>BUILDING PHASE</span>
@@ -488,18 +404,17 @@ export default function TeamProgramsPage() {
           <p style={{ fontSize: 'clamp(16px, 2vw, 21px)', color: 'rgba(175,215,238,0.9)', lineHeight: 1.8, maxWidth: '680px', margin: '0 auto 52px' }}>
             Coach Mike is personally selecting one hundred founding members. Your program becomes part of building what Smarter Goalie delivers to every team at every level.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            {[
-              { num: '01', text: 'Complete the coach questionnaire — 5 minutes' },
+          <ApplicationSteps
+            steps={[
+              // Registering as a Coach is what opens the coach questionnaire — the
+              // account has to exist first. The "5 minutes" claim was removed on
+              // 26 August; the baseline profile is much longer than that.
+              { num: '01', text: 'Create your coach account, then complete the coach questionnaire', href: '/auth/register', action: 'Start' },
               { num: '02', text: 'Coach Mike personally reviews your application' },
-              { num: '03', text: 'Coach Mike calls you personally' },
-            ].map((step) => (
-              <div key={step.num} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(96,205,255,0.22)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p style={{ fontSize: '38px', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
-                <p style={{ fontSize: '15px', color: 'rgba(155,200,228,0.9)', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
-              </div>
-            ))}
-          </div>
+              // /contact is the "Set Up the Call" form; its role list includes Team Manager.
+              { num: '03', text: 'Coach Mike calls you personally', href: '/contact', action: 'Set up the call' },
+            ]}
+          />
           <button
             onClick={() => router.push('/auth/register')}
             style={{ background: RED, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(192,0,0,0.35)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
@@ -509,14 +424,12 @@ export default function TeamProgramsPage() {
             APPLY TO JOIN THE EXPERIENCE →
           </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR COACHES" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR COACHES" />
           </div>
         </div>
       </section>
 
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
-      </div>
+      <Footer7 />
     </div>
   );
 }

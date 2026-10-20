@@ -20,6 +20,7 @@ import {
   where,
   Timestamp,
   orderBy,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import {
@@ -41,7 +42,7 @@ function generateToken(): string {
   return Array.from(values, v => chars[v % chars.length]).join('');
 }
 
-function expiryDate(days = 7): Date {
+function expiryDate(days = 30): Date {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d;
@@ -100,7 +101,7 @@ class InvitationService {
       const token = generateToken();
       const ref = doc(collection(db, COLLECTION));
       const now = new Date();
-      const expires = expiryDate(data.expiresInDays ?? 7);
+      const expires = expiryDate(data.expiresInDays ?? 30);
 
       const invitation: Invitation = {
         id: ref.id,
@@ -179,18 +180,19 @@ class InvitationService {
     try {
       const invitation = await this.getInvitationByToken(token);
 
-      if (!invitation) return { valid: false, error: 'Invalid invitation link.' };
-      if (invitation.status === 'accepted') return { valid: false, error: 'This invitation has already been used.' };
-      if (invitation.status === 'revoked') return { valid: false, error: 'This invitation has been revoked.' };
+      if (!invitation) return { valid: false, error: 'Invalid invitation link.', reason: 'not_found' };
+      if (invitation.status === 'accepted') return { valid: false, error: 'This invitation has already been used.', reason: 'already_accepted' };
+      if (invitation.status === 'revoked') return { valid: false, error: 'This invitation has been revoked.', reason: 'revoked' };
       if (isExpired(invitation.expiresAt)) {
-        await this.updateStatus(invitation.id, 'expired');
-        return { valid: false, error: 'This invitation has expired. Ask your admin to resend it.' };
+        // Best-effort status update — fails silently if the user isn't authenticated yet
+        this.updateStatus(invitation.id, 'expired').catch(() => {});
+        return { valid: false, error: 'This invitation has expired. Ask your admin to resend it.', reason: 'expired' };
       }
 
       return { valid: true, invitation };
     } catch (error) {
       logError('Failed to validate invitation', error instanceof Error ? error : undefined);
-      return { valid: false, error: 'Failed to validate the invitation link.' };
+      return { valid: false, error: 'Failed to validate the invitation link.', reason: 'unknown' };
     }
   }
 
@@ -204,6 +206,36 @@ class InvitationService {
       logInfo('Invitation accepted', { invitationId, userId });
     } catch (error) {
       logError('Failed to accept invitation', error instanceof Error ? error : undefined);
+      throw error;
+    }
+  }
+
+  /**
+   * Marks the invitation accepted and applies the post-registration patches to
+   * the new user's document in ONE atomic batch. Either the coach link, role
+   * patch, and acceptance all land, or none of them do — a goalie can never end
+   * up half set up (e.g. account created but coach missing, or coach attached
+   * while the invite still reads pending).
+   */
+  async acceptInvitationWithUserSetup(
+    invitationId: string,
+    userId: string,
+    userPatches: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      const batch = writeBatch(db);
+      if (Object.keys(userPatches).length > 0) {
+        batch.update(doc(db, 'users', userId), userPatches);
+      }
+      batch.update(doc(db, COLLECTION, invitationId), {
+        status: 'accepted',
+        acceptedAt: Timestamp.fromDate(new Date()),
+        acceptedUserId: userId,
+      });
+      await batch.commit();
+      logInfo('Invitation accepted with user setup', { invitationId, userId });
+    } catch (error) {
+      logError('Failed to accept invitation with user setup', error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -225,7 +257,7 @@ class InvitationService {
   async resendInvitation(invitationId: string): Promise<Invitation> {
     try {
       const newToken = generateToken();
-      const newExpiry = expiryDate(7);
+      const newExpiry = expiryDate(30);
 
       await updateDoc(doc(db, COLLECTION, invitationId), {
         token: newToken,

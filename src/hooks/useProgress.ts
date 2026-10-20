@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { UserProgress, SportProgress, SkillProgress, UserAchievement, Achievement } from '@/types';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 
 export function useProgress() {
   const { user } = useAuth();
@@ -43,8 +45,28 @@ export function useProgress() {
 
     try {
       const result = await ProgressService.updateStreak(user.id);
-      if (result.success) {
-        // Refresh user progress
+      if (result.success && result.data) {
+        const streak = result.data.current;
+        const today = new Date().toISOString().slice(0, 10);
+
+        const milestones: { days: number; pts: number }[] = [
+          { days: 7,  pts: GROWTH_POINTS.STREAK_7_DAYS  },
+          { days: 14, pts: GROWTH_POINTS.STREAK_14_DAYS },
+          { days: 30, pts: GROWTH_POINTS.STREAK_30_DAYS },
+        ];
+
+        for (const m of milestones) {
+          if (streak >= m.days) {
+            growthPointsService.awardPointsOnce(
+              user.id,
+              'STREAK_MILESTONE',
+              m.pts,
+              `${m.days}-Day Streak Milestone`,
+              `streak_${m.days}_${today}`
+            ).catch(() => {});
+          }
+        }
+
         const progressResult = await ProgressService.getUserProgress(user.id);
         if (progressResult.success) {
           setUserProgress(progressResult.data ?? null);

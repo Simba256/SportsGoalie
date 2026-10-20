@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { claudeAIService, GradeAnswerOptions } from '@/lib/ai/claude.service';
+import { verifyUserRequest } from '@/lib/auth/admin-request';
 import { logger } from '@/lib/utils/logger';
 
 export async function POST(request: NextRequest) {
+  const auth = await verifyUserRequest(request);
+  if (!auth.ok) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+  }
+
   try {
     const body: GradeAnswerOptions = await request.json();
 

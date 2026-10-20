@@ -1,4 +1,8 @@
 import { Timestamp } from 'firebase/firestore';
+import type { LegalAcceptance, ParentalConsent } from './legal';
+import type { GoalieSignupIntake } from '@/data/goalie-signup-intake';
+import type { AgeBracket } from '@/lib/auth/signup-policy';
+import type { ApplicationStatus } from './application';
 
 export type UserRole = 'student' | 'admin' | 'coach' | 'parent';
 export type WorkflowType = 'automated' | 'custom';
@@ -19,6 +23,7 @@ export interface User {
   studentNumber?: string; // Random unique ID for students (e.g., "SG-K7M9-P2X4")
   workflowType?: WorkflowType; // Learning workflow: automated (self-paced) or custom (coach-guided)
   assignedCoachId?: string; // Required for custom workflow students
+  assignedCoachName?: string; // Display name of the assigned coach, written at invite acceptance / coach-code entry
   coachCode?: string; // Unique code for coaches (LASTNAME-XXXX format)
   profileImage?: string;
   emailVerified: boolean;
@@ -29,6 +34,74 @@ export interface User {
   onboardingCompleted?: boolean;
   onboardingCompletedAt?: Timestamp;
   initialAssessmentLevel?: 'beginner' | 'intermediate' | 'advanced';
+  driverOrPassenger?: 'driver' | 'aspiring_driver' | 'passenger' | 'undecided'; // Michael's Driver-or-Passenger screen (Item 4) — which button the goalie pressed before the baseline questionnaire
+
+  /**
+   * Coach Mike's once-only voice moments this account has already had, by key
+   * (`firstLogin`, `chartingFirstOpen`, `mindVaultFirstVisit`; see
+   * `src/lib/audio/moments.ts`), each stamped with when it happened. Absent
+   * means the moment has not fired yet. Kept on the account rather than in the
+   * browser so a goalie who signs in on a second phone does not hear their
+   * welcome twice.
+   */
+  voiceMoments?: Record<string, Timestamp>;
+
+  /**
+   * The four sign-up intake answers — name, age, level and why they are here.
+   * Written as soon as the goalie leaves the intake screen, before the 74
+   * baseline questions, so an abandoned questionnaire still leaves a record.
+   * Absent on every account created before 6 September 2026.
+   */
+  signupIntake?: GoalieSignupIntake;
+  signupIntakeAt?: Timestamp;
+
+  /**
+   * Date of birth, asked of goalies at sign-up (Item 6b) and of nobody else.
+   *
+   * Stored as the calendar date the goalie typed — `YYYY-MM-DD` — rather than a
+   * Timestamp. A birthday is a date, not an instant: stored as an instant it
+   * shifts a day either side of midnight depending on the reader's timezone,
+   * which is enough to move a goalie across the age line on their birthday.
+   *
+   * Distinct from `profile.dateOfBirth`, which is an older optional field the
+   * sign-up form has never written to.
+   */
+  dateOfBirth?: string;
+
+  /**
+   * Which consent bracket applied when the account was created.
+   *
+   * Derived from `dateOfBirth` and stored anyway, because the question a
+   * privacy request asks is "what rules applied to this account when it was
+   * made", and re-deriving that years later answers a different question.
+   */
+  ageBracket?: AgeBracket;
+
+  /**
+   * The parent who holds this account, for goalies too young to hold their own
+   * (item 6c). Set once, when the parent creates the account, and never after.
+   *
+   * Distinct from `linkedParentIds`, which says who can *see* this goalie and
+   * can hold several people. This says who the account belongs to, and there
+   * is exactly one of them. A goalie who signed themselves up has none.
+   */
+  accountHolderId?: string;
+
+  /**
+   * Consent the account holder gave on this goalie's behalf, stamped when the
+   * account was created. Present only on parent-created accounts.
+   */
+  parentalConsent?: ParentalConsent;
+
+  /**
+   * Short login name for a goalie who has no email address of their own —
+   * `jake-a7k2`, which the login page turns back into the address Firebase
+   * stores. Present only when the parent chose the no-email option.
+   *
+   * Its presence is also what says "this account cannot be emailed": no
+   * verification, no password reset. The parent resets it instead.
+   */
+  loginHandle?: string;
 
   // Charting configuration — admin-assigned
   chartLevel?: 'basic' | 'five_pillar'; // Basic = 2-3 min entry experience; 5-Pillar = full advanced chart. Default (undefined) = five_pillar.
@@ -45,6 +118,54 @@ export interface User {
   parentOnboardingComplete?: boolean; // Whether parent has completed onboarding
   coachOnboardingComplete?: boolean;      // Whether coach has completed baseline profile
   coachOnboardingCompletedAt?: Timestamp; // When coach completed baseline profile
+
+  /**
+   * Terms and Privacy acceptance, stamped at registration from the versions in
+   * `src/data/legal`. Optional because every account created before 27 August
+   * 2026 predates this being recorded — absent means unknown, not refused.
+   */
+  legalAcceptance?: LegalAcceptance;
+
+  /**
+   * Subscription pause switch, flipped only by an admin. Paused accounts stop
+   * counting as active and cannot enter the app, but every part of their
+   * record is left exactly as it was — resuming puts them back where they
+   * left off. Absent means active: accounts predate the field. Distinct from
+   * `isActive`, which is the soft-delete flag.
+   */
+  isPaused?: boolean;
+  pausedAt?: Timestamp;
+  resumedAt?: Timestamp;
+
+  /**
+   * Application by questionnaire (item 2). Present only on accounts that came
+   * in through the front door at /apply; absent on every member who did not,
+   * which is every account created before 8 September 2026.
+   *
+   * ABSENT MEANS ORDINARY MEMBER, NOT "PENDING". The content wall in
+   * ProtectedRoute keys off this field, so a default of anything other than
+   * undefined would lock out the entire existing membership. Use
+   * `isWalledApplicant` from `@/types/application` rather than testing it by
+   * hand.
+   */
+  applicationStatus?: ApplicationStatus;
+  /** When the applicant account was created — the date their record starts. */
+  appliedAt?: Timestamp;
+  /** When they finished the baseline questionnaire and joined Michael's queue. */
+  applicationSubmittedAt?: Timestamp;
+  applicationDecidedAt?: Timestamp;
+  applicationDecidedBy?: string;
+  applicationDecidedByName?: string;
+  /** Michael's note against the decision, in his words. */
+  applicationNote?: string;
+  /**
+   * Send-once guards for the two application emails. Server-side only — they
+   * are not mapped onto the client User by createUserFromFirebaseUser, and
+   * nothing in the UI reads them. Declared here so the shape of the document
+   * is written down in one place rather than only in the API routes.
+   */
+  applicationReceivedEmailSent?: boolean;
+  applicationDecisionEmailSent?: boolean;
 
   // Timestamps
   createdAt: Timestamp;
@@ -190,7 +311,7 @@ export type {
   VideoQuestionAnswer,
   VideoQuizQuestionWithState,
   VideoPlayerState,
-  QuestionOverlayProps,
+  QuestionPanelProps,
   VideoControlsProps,
   DropOffPoint
 } from './video-quiz';
@@ -329,13 +450,14 @@ export interface UserProgress {
 }
 
 export interface OverallStats {
-  totalTimeSpent: number; // minutes
+  totalTimeSpent: number; // seconds (summed from quiz attempts)
   skillsCompleted: number;  // Number of unique skills attempted
   sportsCompleted: number;
   quizzesCompleted: number;  // Total quiz attempts
   averageQuizScore: number;  // Average percentage from video quizzes
   currentStreak: number;
   longestStreak: number;
+  lastStreakDate?: Timestamp;
   // Deprecated - keeping for backward compatibility but always return default values
   totalPoints: number;       // Always returns 0
   level: number;             // Always returns 1
@@ -841,6 +963,7 @@ export type {
   FieldType,
   AnalyticsType,
   TrendDirection,
+  ChartMode,
   FieldAnalyticsConfig,
   FieldValidation,
   FormField,
@@ -926,6 +1049,9 @@ export type {
 export {
   PILLARS,
   getPillarInfo,
+  pillarOptionLabel,
+  pillarShortLabel,
+  pillarFromSportId,
   DEFAULT_PACING_THRESHOLDS,
   GOALIE_CATEGORY_WEIGHTS,
   PARENT_CATEGORY_WEIGHTS,
@@ -944,7 +1070,7 @@ export {
 
 /**
  * Pillar type alias - Pillars use the same structure as Sports
- * but represent the fixed 6 Ice Hockey Goalie learning pillars
+ * but represent the fixed 8 Ice Hockey Goalie learning pillars
  */
 export type Pillar = Sport;
 

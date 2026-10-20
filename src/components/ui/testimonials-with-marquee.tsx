@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { TestimonialCard, TestimonialAuthor } from "@/components/ui/testimonial-card";
 
 interface TestimonialsSectionProps {
+  eyebrow?: string;
   title: string;
   description: string;
   testimonials: Array<{
@@ -15,6 +16,7 @@ interface TestimonialsSectionProps {
 }
 
 export function TestimonialsSection({
+  eyebrow,
   title,
   description,
   testimonials,
@@ -32,8 +34,11 @@ export function TestimonialsSection({
     >
       <div className="mx-auto flex max-w-container flex-col items-center gap-4 text-center sm:gap-16">
         <div className="flex flex-col items-center gap-4 px-4 sm:gap-8">
+          {eyebrow && (
+            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[3px] uppercase" style={{ background: 'rgba(55,181,255,0.1)', color: '#37b5ff', border: '1px solid rgba(55,181,255,0.25)' }}>{eyebrow}</span>
+          )}
           <h2
-            className="max-w-[720px] text-3xl font-semibold leading-tight sm:text-5xl sm:leading-tight"
+            className="max-w-[720px] text-3xl font-black leading-tight sm:text-5xl sm:leading-tight"
             style={dark ? { color: '#ffffff' } : undefined}
           >
             {title}

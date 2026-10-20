@@ -479,7 +479,21 @@ function UserDetailsContent() {
                       {fieldLabel('Date of Birth')}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Calendar size={14} color="rgba(255,255,255,0.3)" />
-                        <p style={{ color: '#fff', fontSize: '15px' }}>{user.profile?.dateOfBirth ? new Date(user.profile.dateOfBirth).toLocaleDateString() : 'Not provided'}</p>
+                        {/* Sign-up writes the top-level `dateOfBirth` (item 6b) as a plain
+                            `YYYY-MM-DD` string; `profile.dateOfBirth` is the older field kept
+                            for accounts that have one. Prefer the one the form actually sets.
+                            Rendered by its parts rather than via Date, so the calendar date
+                            shown is the one the goalie typed and not a timezone away from it. */}
+                        <p style={{ color: '#fff', fontSize: '15px' }}>
+                          {user.dateOfBirth
+                            ? user.dateOfBirth.split('-').reverse().join('/')
+                            : user.profile?.dateOfBirth
+                              ? new Date(user.profile.dateOfBirth).toLocaleDateString()
+                              : 'Not provided'}
+                          {user.ageBracket === 'under_13' && (
+                            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginLeft: '8px' }}>under 13 at sign-up</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                     <div>
@@ -499,7 +513,13 @@ function UserDetailsContent() {
               loadingAnalytics ? (
                 <div style={{ textAlign: 'center', padding: '48px', color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Loading analytics…</div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                /*
+                  These seven panels are shadcn Cards built for a light page,
+                  which is why this tab rendered as a stack of white slabs
+                  inside the navy shell. `.surface-dark` repoints the design
+                  tokens for everything inside it — see globals.css.
+                */
+                <div className="surface-dark" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {analytics && (
                     <EngagementMetrics
                       currentStreak={analytics.engagement.currentStreak}
@@ -543,7 +563,7 @@ function UserDetailsContent() {
                         {[
                           { label: 'Average Quiz Score', value: `${userProgress.overallStats.averageQuizScore}%` },
                           { label: 'Current Streak', value: `${userProgress.overallStats.currentStreak} days` },
-                          { label: 'Total Time', value: `${Math.round(userProgress.overallStats.totalTimeSpent / 60)} hours` },
+                          { label: 'Total Time', value: `${Math.round((userProgress.overallStats.totalTimeSpent / 3600) * 10) / 10} hours` },
                         ].map(({ label, value }) => (
                           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px' }}>{label}</span>

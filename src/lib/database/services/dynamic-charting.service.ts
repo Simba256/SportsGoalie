@@ -13,6 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
+import { toDateSafe } from '../../utils/timestamp';
 import { db } from '../../firebase/config';
 import { formTemplateService } from './form-template.service';
 
@@ -83,11 +84,53 @@ export class DynamicChartingService extends BaseDatabaseService {
         completion: completion.percentage,
       });
 
-      // TODO: Trigger analytics recalculation
-      // this.recalculateDynamicAnalytics(entryData.studentId, entryData.formTemplateId);
+      await this.refreshAnalytics(entryData.studentId, entryData.formTemplateId);
     }
 
     return result;
+  }
+
+  /**
+   * Rewrites the cached `${studentId}_${templateId}` analytics doc after an entry
+   * changes.
+   *
+   * Without this the cached doc drifts from the entries it summarises, so anything
+   * reading it plainly (rather than forcing `recalculate: true`) shows stale numbers
+   * — or an empty board, since a student who has never had analytics computed has no
+   * doc at all.
+   *
+   * Awaited rather than fired-and-forgotten: charting submits from the client and
+   * usually navigate straight after, which would cancel an in-flight write and leave
+   * the very staleness this exists to prevent. A failure here is logged and swallowed
+   * — the entry itself is already saved, and a missing cache entry is recoverable
+   * (the next recalculation rebuilds it) while a failed submit is not.
+   */
+  private async refreshAnalytics(studentId: string, templateId: string): Promise<void> {
+    try {
+      // Imported lazily: dynamic-analytics.service imports this module at the top
+      // level, so a static import here would close the cycle.
+      const { dynamicAnalyticsService } = await import('./dynamic-analytics.service');
+
+      // No options — that's what persists the canonical full-history calculation.
+      const result = await dynamicAnalyticsService.recalculateStudentAnalytics(
+        studentId,
+        templateId
+      );
+
+      if (!result.success) {
+        logger.warn('Analytics refresh failed after entry change', 'DynamicChartingService', {
+          studentId,
+          templateId,
+          reason: result.error?.message,
+        });
+      }
+    } catch (error) {
+      logger.warn('Analytics refresh threw after entry change', 'DynamicChartingService', {
+        studentId,
+        templateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   /**
@@ -108,6 +151,10 @@ export class DynamicChartingService extends BaseDatabaseService {
   ): Promise<ApiResponse<{ id: string }>> {
     logger.database('update', this.DYNAMIC_ENTRIES_COLLECTION, entryId);
 
+    // Only a change to the answers can move the analytics, so the refresh below is
+    // scoped to that case — and the entry we need its owner from is already loaded.
+    let analyticsScope: { studentId: string; templateId: string } | null = null;
+
     // If responses are being updated, recalculate completion
     if (updates.responses) {
       const currentResult = await this.getDynamicEntry(entryId);
@@ -122,6 +169,11 @@ export class DynamicChartingService extends BaseDatabaseService {
           timestamp: new Date(),
         };
       }
+
+      analyticsScope = {
+        studentId: currentResult.data.studentId,
+        templateId: currentResult.data.formTemplateId,
+      };
 
       const templateResult = await formTemplateService.getTemplate(
         currentResult.data.formTemplateId
@@ -144,7 +196,10 @@ export class DynamicChartingService extends BaseDatabaseService {
         entryId,
       });
 
-      // TODO: Trigger analytics recalculation
+      if (analyticsScope) {
+        await this.refreshAnalytics(analyticsScope.studentId, analyticsScope.templateId);
+      }
+
       return {
         success: true,
         data: { id: entryId },
@@ -166,7 +221,23 @@ export class DynamicChartingService extends BaseDatabaseService {
   async deleteDynamicEntry(entryId: string): Promise<ApiResponse<void>> {
     logger.database('delete', this.DYNAMIC_ENTRIES_COLLECTION, entryId);
 
-    return await this.delete(this.DYNAMIC_ENTRIES_COLLECTION, entryId);
+    // Read before deleting — afterwards there's nothing left to tell us whose
+    // analytics just became wrong.
+    const currentResult = await this.getDynamicEntry(entryId);
+    const scope = currentResult.success && currentResult.data
+      ? {
+          studentId: currentResult.data.studentId,
+          templateId: currentResult.data.formTemplateId,
+        }
+      : null;
+
+    const result = await this.delete(this.DYNAMIC_ENTRIES_COLLECTION, entryId);
+
+    if (result.success && scope) {
+      await this.refreshAnalytics(scope.studentId, scope.templateId);
+    }
+
+    return result;
   }
 
   // ==================== QUERY OPERATIONS ====================
@@ -202,9 +273,15 @@ export class DynamicChartingService extends BaseDatabaseService {
           ...doc.data(),
         })) as DynamicChartingEntry[])
         .sort((a, b) => {
-          // Sort by submittedAt descending (newest first)
-          const aTime = a.submittedAt?.toMillis?.() || 0;
-          const bTime = b.submittedAt?.toMillis?.() || 0;
+          // Sort by submittedAt descending (newest first).
+          //
+          // This used to read `a.submittedAt?.toMillis?.() || 0`. On entries
+          // whose timestamp was stored as a plain map (see toDateSafe) there is
+          // no toMillis, so every entry scored 0 and the sort became a no-op —
+          // callers treating the first element as "the latest" got an arbitrary
+          // one. toDateSafe handles both the intact and the mangled shape.
+          const aTime = toDateSafe(a.submittedAt)?.getTime() ?? 0;
+          const bTime = toDateSafe(b.submittedAt)?.getTime() ?? 0;
           return bTime - aTime;
         });
 
@@ -257,9 +334,15 @@ export class DynamicChartingService extends BaseDatabaseService {
           ...doc.data(),
         })) as DynamicChartingEntry[])
         .sort((a, b) => {
-          // Sort by submittedAt descending (newest first)
-          const aTime = a.submittedAt?.toMillis?.() || 0;
-          const bTime = b.submittedAt?.toMillis?.() || 0;
+          // Sort by submittedAt descending (newest first).
+          //
+          // This used to read `a.submittedAt?.toMillis?.() || 0`. On entries
+          // whose timestamp was stored as a plain map (see toDateSafe) there is
+          // no toMillis, so every entry scored 0 and the sort became a no-op —
+          // callers treating the first element as "the latest" got an arbitrary
+          // one. toDateSafe handles both the intact and the mangled shape.
+          const aTime = toDateSafe(a.submittedAt)?.getTime() ?? 0;
+          const bTime = toDateSafe(b.submittedAt)?.getTime() ?? 0;
           return bTime - aTime;
         });
 
@@ -314,9 +397,15 @@ export class DynamicChartingService extends BaseDatabaseService {
           ...doc.data(),
         })) as DynamicChartingEntry[])
         .sort((a, b) => {
-          // Sort by submittedAt descending (newest first)
-          const aTime = a.submittedAt?.toMillis?.() || 0;
-          const bTime = b.submittedAt?.toMillis?.() || 0;
+          // Sort by submittedAt descending (newest first).
+          //
+          // This used to read `a.submittedAt?.toMillis?.() || 0`. On entries
+          // whose timestamp was stored as a plain map (see toDateSafe) there is
+          // no toMillis, so every entry scored 0 and the sort became a no-op —
+          // callers treating the first element as "the latest" got an arbitrary
+          // one. toDateSafe handles both the intact and the mangled shape.
+          const aTime = toDateSafe(a.submittedAt)?.getTime() ?? 0;
+          const bTime = toDateSafe(b.submittedAt)?.getTime() ?? 0;
           return bTime - aTime;
         });
 

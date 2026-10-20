@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "test": "vitest",
@@ -17,7 +17,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "clean": "rm -rf .next && rm -rf node_modules/.cache",
+    "test:e2e:audio": "playwright test -c playwright.audio.config.ts",
+    "clean": "node -e \"['.next','node_modules/.cache'].forEach(p=>fs.rmSync(p,{recursive:true,force:true}))\"",
     "setup-hooks": "husky install"
   },
   "dependencies": {
@@ -50,6 +51,7 @@
     "firebase": "^12.3.0",
     "firebase-admin": "^13.5.0",
     "framer-motion": "^11.18.2",
+    "geist": "^1.7.2",
     "lucide-react": "^0.544.0",
     "motion": "^12.40.0",
     "next": "^16.2.7",

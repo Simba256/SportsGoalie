@@ -8,24 +8,75 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ParentSidebar } from '@/components/parent/ParentSidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { CoachSidebar } from '@/components/coach/CoachSidebar';
+import { QuestionBox } from '@/components/qa/QuestionBox';
+import { PausedAccountScreen } from '@/components/auth/PausedAccountScreen';
+import { ApplicantHoldingScreen } from '@/components/auth/ApplicantHoldingScreen';
+import { useAuth } from '@/lib/auth/context';
+import { isWalledApplicant } from '@/types/application';
 
-const BARE_ROUTES = ['/auth'];
-const NAKED_ROUTES = ['/explain', '/goalie', '/parent-role', '/team-programs', '/goalie-coach', '/organization', '/who-we-are', '/the-system', '/contact', '/bridge'];
+// /coming-soon is the closed-site holding page (see preLaunchGate in proxy.ts).
+// It renders its own full-screen layout, so it must not pick up the dashboard
+// sidebar the default branch at the bottom of this file would wrap it in.
+const BARE_ROUTES = ['/auth', '/coming-soon'];
+const NAKED_ROUTES = [
+  '/explain',
+  '/goalie',
+  '/parent-role',
+  '/team-programs',
+  '/goalie-coach',
+  '/organization',
+  '/who-we-are',
+  '/the-system',
+  '/contact',
+  '/bridge',
+  '/7-pillars',
+  '/pillar',
+  '/offer',
+  // The founding-member sign-up renders its own PublicPageNav and Footer7, like
+  // the rest of the marketing site. Without this entry it falls through to the
+  // default branch at the bottom of this file and comes out wrapped in the
+  // goalie dashboard sidebar.
+  '/founding',
+  // /apply renders its own PublicPageNav, same as /founding. It is also the one
+  // page a walled applicant must never be walled out of by mistake — though in
+  // practice it redirects a signed-in visitor away before they see it.
+  '/apply',
+  // Legal pages render their own PublicPageNav and Footer7, like the rest of
+  // the marketing site. Without these entries they fall through to the default
+  // branch at the bottom of this file and come out wrapped in the goalie
+  // dashboard sidebar — which is wrong for a page a logged-out visitor reaches
+  // from the sign-up tickbox.
+  '/terms',
+  '/privacy',
+];
 const ONBOARDING_ROUTES = ['/onboarding', '/coach/onboarding', '/coach/assessment'];
 const PUBLIC_ROUTES = ['/', '/pricing'];
 
+/**
+ * Prefix match that stops at a path segment: '/pillar' matches '/pillar' and
+ * '/pillar/3', but NOT '/pillars'.
+ *
+ * A plain startsWith() made the goalie pillar list (/pillars) and its detail
+ * pages (/pillars/[id]) match the public sales route (/pillar), so they were
+ * rendered naked — no sidebar, no top bar, and no dark page background. Their
+ * white heading text then sat on the white body and vanished.
+ */
+function matchesRoute(pathname: string, route: string): boolean {
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
+
 function isPublicRoute(pathname: string): boolean {
   if (pathname === '/') return true;
-  return PUBLIC_ROUTES.some(route => route !== '/' && pathname.startsWith(route));
+  return PUBLIC_ROUTES.some(route => route !== '/' && matchesRoute(pathname, route));
 }
 function isBareRoute(pathname: string): boolean {
-  return BARE_ROUTES.some(route => pathname.startsWith(route));
+  return BARE_ROUTES.some(route => matchesRoute(pathname, route));
 }
 function isNakedRoute(pathname: string): boolean {
-  return NAKED_ROUTES.some(route => pathname.startsWith(route));
+  return NAKED_ROUTES.some(route => matchesRoute(pathname, route));
 }
 function isOnboardingRoute(pathname: string): boolean {
-  return ONBOARDING_ROUTES.some(route => pathname.startsWith(route));
+  return ONBOARDING_ROUTES.some(route => matchesRoute(pathname, route));
 }
 function isAdminRoute(pathname: string): boolean { return pathname.startsWith('/admin'); }
 function isCoachRoute(pathname: string): boolean { return pathname.startsWith('/coach'); }
@@ -42,6 +93,7 @@ function getPageTitle(pathname: string): string {
       admin: 'Dashboard', analytics: 'Analytics', users: 'Users', coaches: 'Coaches',
       pillars: 'Pillars', quizzes: 'Quizzes', 'video-reviews': 'Video Reviews',
       'form-templates': 'Form Templates', messages: 'Messages', moderation: 'Moderation',
+      'question-index': 'Question Index', 'coach-audio': 'Coach Audio',
       charting: 'Charting', settings: 'Settings', 'project-assistant': 'Project Assistant',
     };
     return titles[segments[1]] || 'Dashboard';
@@ -56,6 +108,7 @@ function getPageTitle(pathname: string): string {
   if (first === 'parent') {
     const titles: Record<string, string> = {
       parent: 'Dashboard', goalies: 'My Goalies', 'link-child': 'Link Goalie',
+      'add-goalie': 'Add a Goalie',
       onboarding: 'Assessment', perception: 'Perception', profile: 'Profile', child: 'Goalie Details',
     };
     return titles[segments[1]] || 'Dashboard';
@@ -95,12 +148,53 @@ const adminBg = 'linear-gradient(145deg, #010b1e 0%, #020f24 50%, #010d20 100%)'
 export function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggle = () => setSidebarOpen(o => !o);
 
   if (searchParams.get('embedded') === '1') return <>{children}</>;
-  if (isNakedRoute(pathname)) return <>{children}</>;
+  // The question box rides on the visitor-facing site: the marketing pages
+  // (naked routes) and the public routes below. It stays off auth forms,
+  // onboarding, and the logged-in app, where a floating public Q&A box would
+  // sit on top of working UI.
+  if (isNakedRoute(pathname)) return <>{children}<QuestionBox /></>;
   if (isBareRoute(pathname)) return <>{children}</>;
+
+  // The subscription pause switch. A paused member can still browse the
+  // public marketing site (the branches above and isPublicRoute below), but
+  // every app shell — onboarding included — is replaced by the paused screen,
+  // with no sidebar around it. ProtectedRoute repeats this check as a second
+  // layer. Admins are exempt: the switch is controlled from their panel.
+  if (user?.isPaused && user.role !== 'admin' && !isPublicRoute(pathname)) {
+    return <PausedAccountScreen />;
+  }
+
+  // The applicant content wall (item 2). Michael's requirement was blunt: an
+  // applicant "sees nothing, not one video" until he has approved them.
+  //
+  // It sits here, beside the pause switch, for the same reason the pause
+  // switch does — every app shell is replaced in one place, so no individual
+  // area has to know applicants exist. Bolting it onto each area's own guard
+  // instead would have left holes: /parent and /coach do their own auth checks
+  // and never touch ProtectedRoute, so a walled parent applicant would have
+  // walked straight into the parent dashboard.
+  //
+  // Two doors stay open. The marketing site, via the naked / bare / public
+  // branches (the first two return above this line, the third is excluded
+  // here) — they applied after reading it and can carry on reading it. And
+  // /onboarding, because the questionnaire IS the application; walling that
+  // off would wall them out of the only thing they are here to do.
+  //
+  // Admins are exempt, as with the pause switch. ProtectedRoute repeats this
+  // check as a second layer.
+  if (
+    isWalledApplicant(user?.applicationStatus) &&
+    user?.role !== 'admin' &&
+    !isOnboardingRoute(pathname) &&
+    !isPublicRoute(pathname)
+  ) {
+    return <ApplicantHoldingScreen />;
+  }
 
   // Onboarding: Header7 navbar (fixed) + dark content below it, no footer
   if (isOnboardingRoute(pathname)) {
@@ -120,6 +214,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <Header7 />
         <main className="flex-1">{children}</main>
         <Footer7 />
+        <QuestionBox />
       </div>
     );
   }
@@ -132,7 +227,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <AdminSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -144,7 +239,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <CoachSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
         </div>
       </div>
     );
@@ -156,7 +251,21 @@ export function LayoutShell({ children }: { children: ReactNode }) {
         <ParentSidebar isOpen={sidebarOpen} onToggle={toggle} />
         <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
           <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />
-          <main className="p-6">{children}</main>
+          <main className="p-3 md:p-6">{children}</main>
+        </div>
+      </div>
+    );
+  }
+
+  // Parent-chart pages live under /charting/sessions/[id]/parent-chart/* (shared session
+  // namespace) but must show the ParentSidebar, not the DashboardSidebar. These pages have
+  // their own sticky header so we skip the LayoutShell TopBar (fullscreen-style layout).
+  if (pathname.includes('/parent-chart')) {
+    return (
+      <div style={{ minHeight: '100vh', background: appBg }}>
+        <ParentSidebar isOpen={sidebarOpen} onToggle={toggle} />
+        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+          <main>{children}</main>
         </div>
       </div>
     );
@@ -169,7 +278,7 @@ export function LayoutShell({ children }: { children: ReactNode }) {
       <DashboardSidebar isOpen={sidebarOpen} onToggle={toggle} />
       <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {!fullscreen && <TopBar pageTitle={pageTitle} onToggleSidebar={toggle} />}
-        <main className={fullscreen ? '' : 'p-6'}>{children}</main>
+        <main className={fullscreen ? '' : 'p-3 md:p-6'}>{children}</main>
       </div>
     </div>
   );

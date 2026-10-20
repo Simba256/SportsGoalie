@@ -64,14 +64,10 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
       {/* Header */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 clamp(24px,5vw,80px)', marginBottom: '40px' }}>
         {eyebrow && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#37b5ff', boxShadow: '0 0 10px rgba(55,181,255,0.8)' }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '4px', color: '#37b5ff', textTransform: 'uppercase', margin: 0 }}>{eyebrow}</p>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#37b5ff', boxShadow: '0 0 10px rgba(55,181,255,0.8)' }} />
-          </div>
+          <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: '99px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', color: '#37b5ff', fontSize: '11px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '14px' }}>{eyebrow}</span>
         )}
         {heading && (
-          <h2 style={{ fontSize: 'clamp(22px,2.8vw,34px)', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{heading}</h2>
+          <h2 style={{ fontSize: 'clamp(28px,3.5vw,48px)', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{heading}</h2>
         )}
         {subheading && (
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', margin: '8px 0 0', lineHeight: 1.6, maxWidth: '480px' }}>{subheading}</p>
@@ -81,17 +77,18 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
       {/* Track + flanking arrows */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '0 clamp(16px,3vw,40px)' }}>
 
-        {/* Left arrow */}
+        {/* Left arrow — hidden on phones, where the track swipes and the arrows
+            would take 120px of a 390px screen and clip every card. */}
         <button
           onClick={() => scroll('prev')}
           disabled={!canPrev}
+          className="hidden md:flex items-center justify-center"
           style={{
             flexShrink: 0, width: '44px', height: '44px', borderRadius: '50%',
             background: canPrev ? 'rgba(55,181,255,0.15)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${canPrev ? 'rgba(55,181,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
             color: canPrev ? '#37b5ff' : 'rgba(255,255,255,0.18)',
             cursor: canPrev ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s',
             boxShadow: canPrev ? '0 4px 20px rgba(55,181,255,0.2)' : 'none',
           }}
@@ -119,7 +116,9 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   flexShrink: 0,
-                  width: 'clamp(270px, 28vw, 340px)',
+                  // min(…, 78vw) keeps a sliver of the next card showing on
+                  // narrow phones so it reads as swipeable.
+                  width: 'clamp(min(270px, 78vw), 28vw, 340px)',
                   height: '400px',
                   borderRadius: '22px',
                   overflow: 'hidden',
@@ -164,7 +163,7 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
 
                 {/* Label */}
                 <p style={{
-                  fontSize: '10px', fontWeight: 800, letterSpacing: '3.5px',
+                  fontSize: '11px', fontWeight: 800, letterSpacing: '3.5px',
                   color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase',
                   margin: '0 0 14px',
                 }}>
@@ -196,7 +195,7 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
                   transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease',
                 }}>
                   <p style={{
-                    fontSize: '10px', fontWeight: 800, letterSpacing: '3px',
+                    fontSize: '11px', fontWeight: 800, letterSpacing: '3px',
                     color: item.accent, textTransform: 'uppercase',
                     margin: '0 0 12px',
                   }}>
@@ -218,13 +217,13 @@ export function GalleryHoverCarousel({ eyebrow, heading, subheading, items }: Pr
         <button
           onClick={() => scroll('next')}
           disabled={!canNext}
+          className="hidden md:flex items-center justify-center"
           style={{
             flexShrink: 0, width: '44px', height: '44px', borderRadius: '50%',
             background: canNext ? 'rgba(55,181,255,0.15)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${canNext ? 'rgba(55,181,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
             color: canNext ? '#37b5ff' : 'rgba(255,255,255,0.18)',
             cursor: canNext ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s',
             boxShadow: canNext ? '0 4px 20px rgba(55,181,255,0.2)' : 'none',
           }}

@@ -7,6 +7,7 @@ import {
   FieldType,
   AnalyticsType,
   ApiResponse,
+  PillarSlug,
 } from '@/types';
 import {
   Timestamp,
@@ -19,6 +20,8 @@ import {
   doc,
   updateDoc,
   increment,
+  writeBatch,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { logger } from '../../utils/logger';
 import { db } from '../../firebase/config';
@@ -42,9 +45,37 @@ import { db } from '../../firebase/config';
  * });
  *
  * // Activate a template
- * await formTemplateService.activateTemplate(templateId, 'Hockey');
+ * await formTemplateService.activateTemplate(templateId);
  * ```
  */
+/**
+ * Renders a validation path such as `sections[0].fields[2].label` in the wording
+ * the builder screen uses, so an error can be read against the thing on screen
+ * rather than against an internal path.
+ */
+export function describeValidationPath(path: string): string {
+  const section = /sections\[(\d+)\]/.exec(path);
+  const field = /fields\[(\d+)\]/.exec(path);
+  if (section && field) return `Section ${Number(section[1]) + 1}, field ${Number(field[1]) + 1}`;
+  if (section) return `Section ${Number(section[1]) + 1}`;
+  return '';
+}
+
+/**
+ * The message a save failure reports.
+ *
+ * This used to be the fixed string "Template validation failed", which named
+ * neither the reason nor the field, leaving no way to correct the template. The
+ * reason was already known here — it was just being discarded.
+ */
+export function describeValidationFailure(errors: { path: string; message: string }[]): string {
+  if (errors.length === 0) return 'Template validation failed';
+  const [first] = errors;
+  const where = describeValidationPath(first.path);
+  const headline = where ? `${where} — ${first.message}` : first.message;
+  return errors.length === 1 ? headline : `${headline} (and ${errors.length - 1} more)`;
+}
+
 export class FormTemplateService extends BaseDatabaseService {
   private readonly TEMPLATES_COLLECTION = 'form_templates';
 
@@ -66,7 +97,7 @@ export class FormTemplateService extends BaseDatabaseService {
     if (!validation.isValid) {
       return {
         success: false,
-        message: 'Template validation failed',
+        message: describeValidationFailure(validation.errors),
         error: {
           code: 'VALIDATION_ERROR',
           message: validation.errors.map((e) => e.message).join(', '),
@@ -76,9 +107,9 @@ export class FormTemplateService extends BaseDatabaseService {
       };
     }
 
-    // If this template should be active, deactivate others
+    // If this template should be active, deactivate others in the same (sport, pillar) scope
     if (templateData.isActive && templateData.sport) {
-      await this.deactivateOtherTemplates(templateData.sport);
+      await this.deactivateTemplatesInScope(templateData.sport, templateData.pillar);
     }
 
     const cleanedData = {
@@ -110,8 +141,13 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
-   * Updates a form template
-   * Creates a new version if the template is in use
+   * Updates a form template.
+   *
+   * A template that has already been filled in is never edited in place. Every
+   * stored entry keys its answers by field ID, so rewording or removing a field
+   * would retroactively change what past answers claim to say. The edit is
+   * written as a new version instead and the current one archived, leaving
+   * recorded entries pointing at the wording they were actually answered under.
    */
   async updateTemplate(
     templateId: string,
@@ -138,19 +174,7 @@ export class FormTemplateService extends BaseDatabaseService {
 
     // Check if we should create a new version
     if (createNewVersion || (currentTemplate.usageCount && currentTemplate.usageCount > 0)) {
-      // Create new version
-      const newTemplateData = {
-        ...currentTemplate,
-        ...updates,
-        version: currentTemplate.version + 1,
-        usageCount: 0,
-      };
-
-      // Archive the old version
-      await this.archiveTemplate(templateId);
-
-      // Create new version
-      return await this.createTemplate(newTemplateData);
+      return await this.createNextVersion(currentTemplate, updates);
     }
 
     // Validate updated template
@@ -159,7 +183,7 @@ export class FormTemplateService extends BaseDatabaseService {
     if (!validation.isValid) {
       return {
         success: false,
-        message: 'Template validation failed',
+        message: describeValidationFailure(validation.errors),
         error: {
           code: 'VALIDATION_ERROR',
           message: validation.errors.map((e) => e.message).join(', '),
@@ -169,9 +193,10 @@ export class FormTemplateService extends BaseDatabaseService {
       };
     }
 
-    // If activating this template, deactivate others
+    // If activating this template, deactivate others in the same (sport, pillar) scope
     if (updates.isActive && currentTemplate.sport) {
-      await this.deactivateOtherTemplates(templateId);
+      const pillar = updates.pillar ?? currentTemplate.pillar ?? 'combined';
+      await this.deactivateTemplatesInScope(currentTemplate.sport, pillar, templateId);
     }
 
     const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, updates);
@@ -190,6 +215,107 @@ export class FormTemplateService extends BaseDatabaseService {
     return {
       success: false,
       error: result.error,
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * Writes an edit as version n+1 and retires version n.
+   *
+   * Two things here were previously wrong in ways that only surface once a
+   * template is actually edited:
+   *
+   * 1. The version number was computed and then thrown away. This routed through
+   *    `createTemplate`, which hardcodes `version: 1` on everything it writes, so
+   *    every "new version" of a template came out as v1 again — leaving no way to
+   *    tell which of two archived templates came first.
+   * 2. The old version was archived *before* the replacement was written. If the
+   *    new version then failed to validate or the write failed, the admin was
+   *    left with the edit discarded and the only working template archived. The
+   *    replacement is created first now, and the old one retired only once its
+   *    successor exists.
+   */
+  private async createNextVersion(
+    current: FormTemplate,
+    updates: Partial<FormTemplate>
+  ): Promise<ApiResponse<{ id: string }>> {
+    // `id` and the timestamps describe the document being replaced. Carried over,
+    // they write a stale `id` field inside the new document and backdate it to
+    // the moment the original was created.
+    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...carried } = current;
+
+    const nextVersion = {
+      ...carried,
+      ...updates,
+      version: current.version + 1,
+      usageCount: 0,
+      isArchived: false,
+    } as Omit<FormTemplate, 'id' | 'createdAt' | 'updatedAt'>;
+
+    // Validate before anything is written, so a rejected edit leaves the current
+    // version exactly as it was.
+    const validation = this.validateTemplate(nextVersion as FormTemplate);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message: describeValidationFailure(validation.errors),
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.errors.map((e) => e.message).join(', '),
+          details: validation.errors,
+        },
+        timestamp: new Date(),
+      };
+    }
+
+    // Stand down any other active template in this scope — but not the one being
+    // replaced, which stays live until its successor is safely written.
+    if (nextVersion.isActive && nextVersion.sport) {
+      await this.deactivateTemplatesInScope(
+        nextVersion.sport,
+        nextVersion.pillar ?? 'combined',
+        current.id
+      );
+    }
+
+    const created = await this.create<FormTemplate>(this.TEMPLATES_COLLECTION, nextVersion);
+    if (!created.success || !created.data) {
+      return {
+        success: false,
+        message: created.message || 'Could not save the new version. The current version is unchanged.',
+        error: created.error,
+        timestamp: new Date(),
+      };
+    }
+
+    const archived = await this.archiveTemplate(current.id);
+    if (!archived.success) {
+      // The new version is live; the old one simply did not get retired, which
+      // leaves two active templates in one scope. Reported rather than swallowed,
+      // because the admin has to resolve it by hand.
+      logger.error(
+        'New template version saved, but the previous version could not be archived',
+        'FormTemplateService',
+        { previousTemplateId: current.id, newTemplateId: created.data.id }
+      );
+      return {
+        success: true,
+        data: { id: created.data.id },
+        message: `Saved as version ${nextVersion.version}, but version ${current.version} could not be archived — archive it manually.`,
+        timestamp: new Date(),
+      };
+    }
+
+    logger.info('Form template saved as a new version', 'FormTemplateService', {
+      previousTemplateId: current.id,
+      newTemplateId: created.data.id,
+      version: nextVersion.version,
+    });
+
+    return {
+      success: true,
+      data: { id: created.data.id },
+      message: `Saved as version ${nextVersion.version}. Version ${current.version} has been archived.`,
       timestamp: new Date(),
     };
   }
@@ -302,6 +428,9 @@ export class FormTemplateService extends BaseDatabaseService {
       if (options.sport !== undefined) {
         q = query(q, where('sport', '==', options.sport));
       }
+      if (options.pillar !== undefined) {
+        q = query(q, where('pillar', '==', options.pillar));
+      }
       if (options.isActive !== undefined) {
         q = query(q, where('isActive', '==', options.isActive));
       }
@@ -348,14 +477,23 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
-   * Gets the active template
+   * Gets the active template for a specific (sport, pillar) scope.
+   * Multiple pillar templates can be active at once for the same sport
+   * (e.g. "combined", "mindset", "skating" can all be active simultaneously) —
+   * this returns only the one matching the given scope.
    */
-  async getActiveTemplate(): Promise<ApiResponse<FormTemplate | null>> {
+  async getActiveTemplate(scope: {
+    sport: string;
+    pillar: PillarSlug | 'combined';
+  }): Promise<ApiResponse<FormTemplate | null>> {
     logger.database('query', this.TEMPLATES_COLLECTION, undefined, {
       isActive: true,
+      ...scope,
     });
 
     const result = await this.getTemplates({
+      sport: scope.sport,
+      pillar: scope.pillar,
       isActive: true,
       isArchived: false,
       limit: 1,
@@ -378,6 +516,24 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
+   * Gets every simultaneously-active template for a sport, across all pillars.
+   * Used by the student dashboard to render all active pillar charts at once
+   * instead of issuing one getActiveTemplate() call per pillar.
+   */
+  async getActiveTemplatesForSport(sport: string): Promise<ApiResponse<FormTemplate[]>> {
+    logger.database('query', this.TEMPLATES_COLLECTION, undefined, {
+      sport,
+      isActive: true,
+    });
+
+    return await this.getTemplates({
+      sport,
+      isActive: true,
+      isArchived: false,
+    });
+  }
+
+  /**
    * Gets templates by creator
    */
   async getTemplatesByCreator(
@@ -395,23 +551,19 @@ export class FormTemplateService extends BaseDatabaseService {
   // ==================== TEMPLATE ACTIVATION ====================
 
   /**
-   * Activates a template for a specific sport
-   * Deactivates all other templates for that sport
+   * Activates a template. Deactivates all other templates in the same
+   * (sport, pillar) scope, so templates for a different pillar (or a
+   * different sport) are left untouched — multiple pillars can be
+   * concurrently active.
    */
   async activateTemplate(templateId: string): Promise<ApiResponse<void>> {
-    console.log('🔵 [ACTIVATE] Starting activation for template:', templateId);
     logger.database('update', this.TEMPLATES_COLLECTION, templateId, {
       action: 'activate',
     });
 
     try {
-      // Get template to verify it exists
-      console.log('🔵 [ACTIVATE] Step 1: Fetching template...');
       const templateResult = await this.getTemplate(templateId);
-      console.log('🔵 [ACTIVATE] Step 1 result:', templateResult.success ? '✅ Success' : '❌ Failed', templateResult);
-
       if (!templateResult.success || !templateResult.data) {
-        console.error('❌ [ACTIVATE] Template not found');
         return {
           success: false,
           message: 'Template not found',
@@ -419,53 +571,30 @@ export class FormTemplateService extends BaseDatabaseService {
         };
       }
 
-      // FIRST: Deactivate ALL templates (including the one we want to activate)
-      console.log('🔵 [ACTIVATE] Step 2: Deactivating ALL templates...');
-      try {
-        await this.deactivateAllTemplates();
-        console.log('🔵 [ACTIVATE] Step 2: ✅ All templates deactivated');
-      } catch (error) {
-        console.error('❌ [ACTIVATE] Step 2 FAILED - Error deactivating templates:', error);
-        throw error;
-      }
+      const template = templateResult.data;
+      const sport = template.sport || 'Hockey';
+      const pillar = template.pillar || 'combined';
 
-      // THEN: Activate this template
-      console.log('🔵 [ACTIVATE] Step 3: Activating template', templateId);
-      try {
-        const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
-          isActive: true,
+      await this.deactivateTemplatesInScope(sport, pillar, templateId);
+
+      const result = await this.update<FormTemplate>(this.TEMPLATES_COLLECTION, templateId, {
+        isActive: true,
+      });
+
+      if (result.success) {
+        logger.info('Form template activated successfully', 'FormTemplateService', {
+          templateId,
+          sport,
+          pillar,
         });
-        console.log('🔵 [ACTIVATE] Step 3 result:', result.success ? '✅ Success' : '❌ Failed', result);
-
-        if (!result.success) {
-          console.error('❌ [ACTIVATE] Failed to activate template');
-          return result;
-        }
-
-        // VERIFY: Check that only this template is active
-        console.log('🔵 [ACTIVATE] Step 4: Verifying activation...');
-        const verifyResult = await this.getTemplates({ isActive: true });
-        if (verifyResult.success && verifyResult.data) {
-          const activeCount = verifyResult.data.length;
-          const isCorrectlyActivated = activeCount === 1 && verifyResult.data[0].id === templateId;
-          console.log('🔵 [ACTIVATE] Verification:', {
-            activeCount,
-            isCorrectlyActivated,
-            activeTemplates: verifyResult.data.map(t => ({ id: t.id, name: t.name }))
-          });
-
-          if (!isCorrectlyActivated) {
-            console.error('❌ [ACTIVATE] Verification FAILED - Multiple templates are active or wrong template active');
-          }
-        }
-
-        return result;
-      } catch (error) {
-        console.error('❌ [ACTIVATE] Step 3 FAILED - Error activating template:', error);
-        throw error;
       }
+
+      return result;
     } catch (error) {
-      console.error('❌ [ACTIVATE] CRITICAL ERROR in activateTemplate:', error);
+      logger.error('Error activating template', 'FormTemplateService', {
+        error: error instanceof Error ? error.message : String(error),
+        templateId,
+      });
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error during activation',
@@ -479,93 +608,44 @@ export class FormTemplateService extends BaseDatabaseService {
   }
 
   /**
-   * Deactivates ALL active templates (used before activating a new one)
+   * Deactivates all active templates within a (sport, pillar) scope, optionally
+   * excluding one template ID. Applied atomically via writeBatch so a failure
+   * partway through can't leave two templates simultaneously active in the
+   * same scope.
    */
-  private async deactivateAllTemplates(): Promise<void> {
-    console.log('🟡 [DEACTIVATE-ALL] Querying for ALL active templates...');
-    try {
-      const templates = await this.getTemplates({
-        isActive: true,
-      });
-      console.log('🟡 [DEACTIVATE-ALL] Query result:', templates.success ? '✅ Success' : '❌ Failed',
-        `Found ${templates.data?.length || 0} active templates`);
+  private async deactivateTemplatesInScope(
+    sport: string,
+    pillar: PillarSlug | 'combined',
+    exceptTemplateId?: string
+  ): Promise<void> {
+    const templatesRef = collection(db, this.TEMPLATES_COLLECTION);
+    const q = query(
+      templatesRef,
+      where('sport', '==', sport),
+      where('pillar', '==', pillar),
+      where('isActive', '==', true)
+    );
 
-      if (!templates.success || !templates.data || templates.data.length === 0) {
-        console.log('🟡 [DEACTIVATE-ALL] No active templates to deactivate');
-        return;
-      }
+    const snapshot = await getDocs(q);
+    const toDeactivate = snapshot.docs.filter((docSnap) => docSnap.id !== exceptTemplateId);
 
-      console.log('🟡 [DEACTIVATE-ALL] Templates to deactivate:', templates.data.map(t => `${t.name} (${t.id})`));
-
-      const templateData = templates.data;
-      const updatePromises = templateData.map((t, index) => {
-        console.log(`🟡 [DEACTIVATE-ALL] Deactivating ${index + 1}/${templateData.length}: ${t.name} (${t.id})`);
-        return this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
-          isActive: false,
-        }).then(result => {
-          console.log(`🟡 [DEACTIVATE-ALL] Result for ${t.name}:`, result.success ? '✅ Success' : '❌ Failed');
-          if (!result.success) {
-            console.error(`❌ [DEACTIVATE-ALL] Failed to deactivate ${t.name}:`, result.message);
-          }
-          return result;
-        }).catch(error => {
-          console.error(`❌ [DEACTIVATE-ALL] ERROR deactivating ${t.name} (${t.id}):`, error);
-          throw error;
-        });
-      });
-
-      await Promise.all(updatePromises);
-      console.log('🟡 [DEACTIVATE-ALL] ✅ All templates deactivated successfully');
-    } catch (error) {
-      console.error('❌ [DEACTIVATE-ALL] CRITICAL ERROR in deactivateAllTemplates:', error);
-      throw error;
+    if (toDeactivate.length === 0) {
+      return;
     }
-  }
 
-  /**
-   * Deactivates all active templates except the specified one
-   */
-  private async deactivateOtherTemplates(exceptTemplateId?: string): Promise<void> {
-    console.log('🟡 [DEACTIVATE] Querying for active templates...');
-    try {
-      const templates = await this.getTemplates({
-        isActive: true,
-      });
-      console.log('🟡 [DEACTIVATE] Query result:', templates.success ? '✅ Success' : '❌ Failed',
-        `Found ${templates.data?.length || 0} active templates`);
+    const batch = writeBatch(db);
+    toDeactivate.forEach((docSnap) => {
+      batch.update(docSnap.ref, { isActive: false, updatedAt: serverTimestamp() });
+    });
 
-      if (!templates.success || !templates.data) {
-        console.log('🟡 [DEACTIVATE] No templates to deactivate');
-        return;
-      }
+    await batch.commit();
 
-      const templatesToDeactivate = templates.data.filter((t) => t.id !== exceptTemplateId);
-      console.log('🟡 [DEACTIVATE] Templates to deactivate:', templatesToDeactivate.map(t => `${t.name} (${t.id})`));
-
-      if (templatesToDeactivate.length === 0) {
-        console.log('🟡 [DEACTIVATE] No other active templates found');
-        return;
-      }
-
-      const updatePromises = templatesToDeactivate.map((t, index) => {
-        console.log(`🟡 [DEACTIVATE] Deactivating ${index + 1}/${templatesToDeactivate.length}: ${t.name} (${t.id})`);
-        return this.update<FormTemplate>(this.TEMPLATES_COLLECTION, t.id, {
-          isActive: false,
-        }).then(result => {
-          console.log(`🟡 [DEACTIVATE] Result for ${t.name}:`, result.success ? '✅ Success' : '❌ Failed');
-          return result;
-        }).catch(error => {
-          console.error(`❌ [DEACTIVATE] ERROR deactivating ${t.name} (${t.id}):`, error);
-          throw error;
-        });
-      });
-
-      await Promise.all(updatePromises);
-      console.log('🟡 [DEACTIVATE] ✅ All templates deactivated successfully');
-    } catch (error) {
-      console.error('❌ [DEACTIVATE] CRITICAL ERROR in deactivateOtherTemplates:', error);
-      throw error;
-    }
+    logger.info('Deactivated templates in scope', 'FormTemplateService', {
+      sport,
+      pillar,
+      count: toDeactivate.length,
+      exceptTemplateId,
+    });
   }
 
   // ==================== TEMPLATE VALIDATION ====================
@@ -597,7 +677,7 @@ export class FormTemplateService extends BaseDatabaseService {
         if (sectionIds.has(section.id)) {
           errors.push({
             path: `${sectionPath}.id`,
-            message: `Duplicate section ID: ${section.id}`,
+            message: `This section shares an internal ID (${section.id}) with an earlier section. Delete it and add it again.`,
           });
         }
         sectionIds.add(section.id);
@@ -628,7 +708,7 @@ export class FormTemplateService extends BaseDatabaseService {
             if (fieldIds.has(field.id)) {
               errors.push({
                 path: `${fieldPath}.id`,
-                message: `Duplicate field ID: ${field.id}`,
+                message: `This field shares an internal ID (${field.id}) with an earlier field in the same section. Delete it and add it again.`,
               });
             }
             fieldIds.add(field.id);

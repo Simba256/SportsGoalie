@@ -70,6 +70,8 @@ export async function checkDefaultTemplatesExist(): Promise<{
 }> {
   try {
     const hockeyResult = await formTemplateService.getTemplates({
+      sport: 'Hockey',
+      pillar: 'combined',
       isActive: true,
       isArchived: false,
       limit: 1,
@@ -97,9 +99,22 @@ export async function ensureHockeyGoalieTemplate(adminUserId: string): Promise<{
 }> {
   try {
     // Check if template already exists
-    const existingResult = await formTemplateService.getActiveTemplate();
+    const existingResult = await formTemplateService.getActiveTemplate({
+      sport: 'Hockey',
+      pillar: 'combined',
+    });
 
-    if (existingResult.success && existingResult.data) {
+    // A failed lookup is not proof of absence. Creating on a failed read would mint a
+    // duplicate active template every time this runs while the query is broken, so bail.
+    if (!existingResult.success) {
+      logger.error('Could not check for an existing Hockey Goalie template; refusing to create one', 'TemplateInit', { error: existingResult.error });
+      return {
+        success: false,
+        message: 'Could not verify whether a template already exists. No template was created.',
+      };
+    }
+
+    if (existingResult.data) {
       return {
         success: true,
         templateId: existingResult.data.id,

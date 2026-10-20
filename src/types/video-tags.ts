@@ -13,7 +13,7 @@ import { PillarSlug } from './onboarding';
 // ==========================================
 
 /**
- * Pillar tags - references the 7 learning pillars
+ * Pillar tags - references the 8 learning pillars
  */
 export type PillarTag = PillarSlug;
 
@@ -86,8 +86,10 @@ export const SYSTEM_TAG_METADATA: Record<SystemTag, { name: string; description:
     description: 'Movement patterns based on 7 angles from the net',
     color: 'blue',
   },
+  // The key '6ZS' is a stored tag value and must not change — only the display
+  // name is synced to the pillar list.
   '6ZS': {
-    name: '6-Zone System',
+    name: '6 Zone – 7 Point System™',
     description: 'Puck tracking methodology for visual acquisition',
     color: 'green',
   },

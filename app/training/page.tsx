@@ -8,6 +8,7 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { TrainingLogEntry, TrainingCategory } from '@/types/charting';
 import { computeTrainingAnalytics, TrainingAnalytics } from '@/lib/training/analytics';
 import { TrainingAnalyticsDashboard } from '@/components/training/TrainingAnalyticsDashboard';
+import { EventVoice } from '@/components/audio/EventVoice';
 import { Dumbbell, Leaf, Droplet, Trophy, Plus, ChevronRight, BarChart3, CalendarDays, Flame } from 'lucide-react';
 
 const CYAN = '#37b5ff';
@@ -368,6 +369,7 @@ export default function TrainingHubPage() {
             ) : pastLogs.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '80px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                 <CalendarDays size={40} style={{ color: 'rgba(255,255,255,0.1)' }} />
+                <EventVoice event="emptyScreen" />
                 <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '15px' }}>No saved logs yet.</p>
                 <p style={{ color: 'rgba(255,255,255,0.18)', fontSize: '13px' }}>Start logging your daily training to see your history here.</p>
               </div>

@@ -4,24 +4,12 @@ import { useState } from 'react';
 import { Plus, Target, Filter } from 'lucide-react';
 import { GoalCard } from './GoalCard';
 import { CreateGoalForm } from './CreateGoalForm';
-
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  type: 'skill_completion' | 'quiz_score' | 'time_spent' | 'streak' | 'sport_completion';
-  targetValue: number;
-  currentValue: number;
-  unit: string;
-  deadline?: Date;
-  priority: 'low' | 'medium' | 'high';
-  isCompleted: boolean;
-  createdAt: Date;
-}
+import type { Goal, NewGoal } from '@/types/goals';
 
 interface GoalsListProps {
   goals: Goal[];
-  onCreateGoal?: (goal: Omit<Goal, 'id' | 'createdAt'>) => void;
+  /** May be async. If it rejects, the message is shown in the dialog and the dialog stays open. */
+  onCreateGoal?: (goal: NewGoal) => void | Promise<void>;
   onUpdateGoal?: (goalId: string, updates: Partial<Goal>) => void;
   onDeleteGoal?: (goalId: string) => void;
   loading?: boolean;
@@ -41,6 +29,7 @@ const cardStyle: React.CSSProperties = {
 export function GoalsList({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, loading = false }: GoalsListProps) {
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('active');
 
   const filteredGoals = goals.filter(g => filterPriority === 'all' || g.priority === filterPriority);
@@ -53,9 +42,19 @@ export function GoalsList({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, loa
   const activeCount = activeGoals.length;
   const overdueCount = overdueGoals.length;
 
-  const handleCreateGoal = (goalData: Omit<Goal, 'id' | 'createdAt'>) => {
-    onCreateGoal?.(goalData);
-    setIsCreateOpen(false);
+  const openCreate = () => {
+    setCreateError(null);
+    setIsCreateOpen(true);
+  };
+
+  const handleCreateGoal = async (goalData: NewGoal) => {
+    setCreateError(null);
+    try {
+      await onCreateGoal?.(goalData);
+      setIsCreateOpen(false);
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : 'Your goal could not be saved. Please try again.');
+    }
   };
 
   const allTabs: Array<{ key: TabKey; label: string }> = [
@@ -107,6 +106,11 @@ export function GoalsList({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, loa
               </div>
               <button onClick={() => setIsCreateOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '22px', lineHeight: 1, padding: '2px 6px' }}>×</button>
             </div>
+            {createError && (
+              <p role="alert" style={{ fontSize: '13px', color: '#f87171', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '10px 12px', margin: '0 0 16px 0' }}>
+                {createError}
+              </p>
+            )}
             <CreateGoalForm onSubmit={handleCreateGoal} />
           </div>
         </div>
@@ -123,7 +127,7 @@ export function GoalsList({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, loa
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Set and track your learning objectives</p>
           </div>
           <button
-            onClick={() => setIsCreateOpen(true)}
+            onClick={openCreate}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
           >
             <Plus style={{ width: '14px', height: '14px' }} />
@@ -207,7 +211,7 @@ export function GoalsList({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, loa
             </p>
             {emptyMessage.showCreate && (
               <button
-                onClick={() => setIsCreateOpen(true)}
+                onClick={openCreate}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 <Plus style={{ width: '14px', height: '14px' }} />

@@ -23,8 +23,11 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
     }
   };
 
-  const getRarityStyle = (rarity: string): React.CSSProperties => {
-    switch (rarity?.toUpperCase()) {
+  // The pill names the achievement's category (Wins, Streaks, ...). Older records kept it in `rarity`.
+  const categoryLabel = achievement.category ?? achievement.rarity;
+
+  const getCategoryStyle = (category: string): React.CSSProperties => {
+    switch (category?.toUpperCase()) {
       case 'WINS':
         return { background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' };
       case 'BREAKTHROUGHS':
@@ -83,9 +86,9 @@ export function AchievementCard({ achievement, userAchievement, isLocked = false
               )}
               <span style={{
                 fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px',
-                textTransform: 'capitalize', ...getRarityStyle(achievement.rarity),
+                textTransform: 'capitalize', ...getCategoryStyle(categoryLabel),
               }}>
-                {achievement.rarity}
+                {categoryLabel}
               </span>
             </div>
           </div>

@@ -1,17 +1,23 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Users, UserPlus, ShieldCheck, MoreHorizontal, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, Users, UserPlus, ShieldCheck, MoreHorizontal, Trash2, AlertTriangle, X, PauseCircle, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
+import { auth } from '@/lib/firebase/config';
 import { userService } from '@/lib/database/services/user.service';
 import { invitationService } from '@/lib/services/invitation.service';
 import { User, UserRole } from '@/types';
+import { Invitation } from '@/types/invitation';
+import { AdminInviteForm } from './components/AdminInviteForm';
+import { AdminInviteList } from './components/AdminInviteList';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 const BLUE = '#37b5ff';
 const RED = '#f87171';
+const AMBER = '#fbbf24';
 const card = { background: 'rgba(2,18,44,0.85)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px' } as const;
 
 const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
@@ -31,20 +37,37 @@ function UsersManagementContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmPauseId, setConfirmPauseId] = useState<string | null>(null);
+  const [showInvitePanel, setShowInvitePanel] = useState(false);
+  const [adminInvitations, setAdminInvitations] = useState<Invitation[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(true);
+
+  const fetchAdminInvitations = async () => {
+    try {
+      setInvitesLoading(true);
+      const data = await invitationService.getAllInvitations('admin');
+      setAdminInvitations(data);
+    } catch {
+      toast.error('Failed to load admin invitations');
+    } finally {
+      setInvitesLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const result = await userService.getAllUsers({ searchTerm: searchTerm.trim() || undefined, role: roleFilter === 'all' ? undefined : roleFilter, limit: 100 });
+      const result = await userService.getAllUsers({ role: roleFilter === 'all' ? undefined : roleFilter, limit: 100 });
       if (result.success && result.data) setUsers(result.data.items);
       else toast.error('Failed to load users');
     } catch { toast.error('Failed to load users'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchUsers(); }, [searchTerm, roleFilter]);
+  useEffect(() => { fetchUsers(); }, [roleFilter]);
+  useEffect(() => { fetchAdminInvitations(); }, []);
 
   const handleDeleteUser = async (user: User) => {
     if (!currentUser?.id) return;
@@ -52,8 +75,18 @@ function UsersManagementContent() {
     try {
       const result = await userService.deleteUser(user.id, currentUser.id);
       if (result.success) {
-        // Also remove any accepted invitations for this user
         await invitationService.deleteByAcceptedUserId(user.id);
+
+        // Delete the Firebase Auth record so the email can be re-invited
+        const idToken = await auth.currentUser?.getIdToken();
+        if (idToken) {
+          await fetch('/api/admin/delete-user', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+            body: JSON.stringify({ uid: user.id }),
+          });
+        }
+
         toast.success(`${user.displayName || user.email} has been deleted`);
         setUsers(prev => prev.filter(u => u.id !== user.id));
       } else {
@@ -62,9 +95,37 @@ function UsersManagementContent() {
     } catch { toast.error('Failed to delete user'); }
   };
 
+  // The subscription pause switch. Pause and resume touch nothing except the
+  // switch itself — the member's record stays exactly as it was.
+  const handlePauseUser = async (user: User) => {
+    if (!currentUser?.id) return;
+    setConfirmPauseId(null);
+    try {
+      const result = await userService.pauseUser(user.id, currentUser.id);
+      if (result.success) {
+        toast.success(`${user.displayName || user.email} is paused — their record is kept intact`);
+        setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isPaused: true } : u)));
+      } else {
+        toast.error(result.error?.message || 'Failed to pause account');
+      }
+    } catch { toast.error('Failed to pause account'); }
+  };
+
+  const handleResumeUser = async (user: User) => {
+    if (!currentUser?.id) return;
+    try {
+      const result = await userService.resumeUser(user.id, currentUser.id);
+      if (result.success) {
+        toast.success(`${user.displayName || user.email} is active again`);
+        setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isPaused: false } : u)));
+      } else {
+        toast.error(result.error?.message || 'Failed to resume account');
+      }
+    } catch { toast.error('Failed to resume account'); }
+  };
+
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     if (!currentUser?.id) return;
-    setOpenMenuId(null);
     try {
       const result = await userService.changeUserRole(userId, newRole, currentUser.id);
       if (result.success) { toast.success(`Role updated to ${newRole}`); fetchUsers(); }
@@ -75,10 +136,11 @@ function UsersManagementContent() {
   const filteredUsers = users.filter(u => {
     const s = searchTerm.toLowerCase();
     const matchSearch = !searchTerm || (u.displayName || '').toLowerCase().includes(s) || (u.email || '').toLowerCase().includes(s);
-    return matchSearch && (roleFilter === 'all' || u.role === roleFilter);
+    const matchStatus = statusFilter === 'all' || (statusFilter === 'paused' ? u.isPaused === true : u.isPaused !== true);
+    return matchSearch && matchStatus && (roleFilter === 'all' || u.role === roleFilter);
   });
 
-  const counts = { total: users.length, student: users.filter(u => u.role === 'student').length, coach: users.filter(u => u.role === 'coach').length, parent: users.filter(u => u.role === 'parent').length, admin: users.filter(u => u.role === 'admin').length };
+  const counts = { total: users.length, student: users.filter(u => u.role === 'student').length, coach: users.filter(u => u.role === 'coach').length, parent: users.filter(u => u.role === 'parent').length, admin: users.filter(u => u.role === 'admin').length, paused: users.filter(u => u.isPaused === true).length };
 
   return (
     <>
@@ -94,7 +156,8 @@ function UsersManagementContent() {
         .au-menu-delete:hover { background: rgba(248,113,113,0.12) !important; color: #f87171 !important; }
         .au-view:hover { background: rgba(55,181,255,0.12) !important; color: ${BLUE} !important; border-color: rgba(55,181,255,0.3) !important; }
         .au-view { transition: all 0.2s !important; }
-        @media (max-width: 1024px) { .au-stats { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (max-width: 1440px) { .au-stats { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (max-width: 768px) { .au-invite-layout { grid-template-columns: 1fr !important; } }
         @media (max-width: 640px) {
           .au-stats { grid-template-columns: repeat(2, 1fr) !important; }
           .au-row-actions { flex-direction: column !important; align-items: flex-start !important; gap: '4px' !important; }
@@ -109,19 +172,53 @@ function UsersManagementContent() {
             <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>User Management</h1>
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px' }}>Manage user accounts, roles, and permissions</p>
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: `linear-gradient(135deg, ${RED} 0%, #dc2626 100%)`, color: '#fff', padding: '10px 18px', borderRadius: '10px', border: 'none', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>
-            <UserPlus size={15} /> Add User
+          <button onClick={() => setShowInvitePanel(prev => !prev)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: `linear-gradient(135deg, ${RED} 0%, #dc2626 100%)`, color: '#fff', padding: '10px 18px', borderRadius: '10px', border: 'none', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>
+            {showInvitePanel ? <X size={15} /> : <UserPlus size={15} />}
+            {showInvitePanel ? 'Close' : 'Invite Admin'}
           </button>
         </div>
 
+        {/* Invite Admin Panel */}
+        {showInvitePanel && (
+          <div className="au-invite-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', alignItems: 'start' }}>
+            <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${RED}, transparent)` }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <ShieldCheck size={16} color={RED} />
+                <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Invite New Admin</h2>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', marginBottom: '18px' }}>Send an email invite to create an administrator account</p>
+              {currentUser && (
+                <AdminInviteForm
+                  invitedBy={currentUser.id}
+                  invitedByName={currentUser.displayName ?? 'Admin'}
+                  onInvitationCreated={inv => setAdminInvitations(prev => [inv, ...prev])}
+                />
+              )}
+            </div>
+            <div style={{ position: 'relative', ...card, padding: '20px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '15px', marginBottom: '14px' }}>Admin Invitations ({adminInvitations.length})</h2>
+              <AdminInviteList
+                invitations={adminInvitations}
+                loading={invitesLoading}
+                onResend={updated => setAdminInvitations(prev => prev.map(i => (i.id === updated.id ? updated : i)))}
+                onRevoke={revoked => setAdminInvitations(prev => prev.map(i => (i.id === revoked.id ? { ...i, status: 'revoked' as const } : i)))}
+                onDelete={deleted => setAdminInvitations(prev => prev.filter(i => i.id !== deleted.id))}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Stat Cards */}
-        <div className="au-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+        <div className="au-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
           {[
             { label: 'Total Users', value: counts.total, sub: 'All accounts', icon: Users, color: BLUE },
             { label: 'Students', value: counts.student, sub: 'Athletes', icon: Users, color: '#22c55e' },
             { label: 'Coaches', value: counts.coach, sub: 'Coach accounts', icon: Users, color: BLUE },
             { label: 'Parents', value: counts.parent, sub: 'Parent accounts', icon: Users, color: '#fbbf24' },
             { label: 'Admins', value: counts.admin, sub: 'Administrators', icon: ShieldCheck, color: RED },
+            { label: 'Paused', value: counts.paused, sub: 'On hold, kept intact', icon: PauseCircle, color: AMBER },
           ].map(({ label, value, sub, icon: Icon, color }) => (
             <div key={label} style={{ position: 'relative', ...card, padding: '16px', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}66, transparent)` }} />
@@ -148,6 +245,11 @@ function UsersManagementContent() {
             <option value="parent">Parents</option>
             <option value="admin">Administrators</option>
           </select>
+          <select className="au-sel" value={statusFilter} onChange={e => setStatusFilter(e.target.value as 'all' | 'active' | 'paused')} style={{ minWidth: '140px' }}>
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+          </select>
         </div>
 
         {/* Users Table */}
@@ -171,9 +273,10 @@ function UsersManagementContent() {
               {filteredUsers.map((user, i) => {
                 const initials = (user.displayName || user.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
                 const rs = ROLE_STYLES[user.role] || ROLE_STYLES.student;
-                const isMenuOpen = openMenuId === user.id;
                 const isConfirmingDelete = confirmDeleteId === user.id;
+                const isConfirmingPause = confirmPauseId === user.id;
                 const isSelf = user.id === currentUser?.id;
+                const isPaused = user.isPaused === true;
                 return (
                   <div key={user.id} style={{ borderBottom: i < filteredUsers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     <div className="au-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', gap: '12px', position: 'relative' }}>
@@ -184,8 +287,13 @@ function UsersManagementContent() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                            <p style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>{user.displayName || user.email || 'Unknown'}</p>
+                            <p style={{ color: isPaused ? 'rgba(255,255,255,0.6)' : '#fff', fontWeight: 600, fontSize: '15px' }}>{user.displayName || user.email || 'Unknown'}</p>
                             <span style={{ background: rs.bg, color: rs.color, padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textTransform: 'capitalize' }}>{user.role}</span>
+                            {isPaused && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(251,191,36,0.12)', color: AMBER, border: '1px solid rgba(251,191,36,0.3)', padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                                <PauseCircle size={11} /> Paused
+                              </span>
+                            )}
                           </div>
                           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>{user.email}</p>
                           <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', marginTop: '2px' }}>
@@ -199,33 +307,69 @@ function UsersManagementContent() {
                           View Profile
                         </Link>
                         {/* Actions menu */}
-                        <div style={{ position: 'relative' }}>
-                          <button onClick={() => { setOpenMenuId(isMenuOpen ? null : user.id); setConfirmDeleteId(null); }} style={{ padding: '7px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <MoreHorizontal size={16} />
-                          </button>
-                          {isMenuOpen && (
-                            <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', padding: '4px', zIndex: 50, minWidth: '172px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-                              {(['student', 'coach', 'parent', 'admin'] as UserRole[]).filter(r => r !== user.role).map(role => (
-                                <button key={role} className="au-menu-item" onClick={() => handleRoleChange(user.id, role)}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '7px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.15s', textAlign: 'left' }}>
-                                  {role === 'admin' ? <ShieldCheck size={13} /> : <Users size={13} />}
-                                  Make {role}
-                                </button>
-                              ))}
-                              {!isSelf && (
-                                <>
-                                  <div style={{ margin: '4px 8px', borderTop: '1px solid rgba(248,113,113,0.15)' }} />
-                                  <button className="au-menu-delete" onClick={() => { setOpenMenuId(null); setConfirmDeleteId(user.id); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '7px', border: 'none', background: 'transparent', color: 'rgba(248,113,113,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left' }}>
-                                    <Trash2 size={13} /> Delete User
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <button onClick={() => { setConfirmDeleteId(null); setConfirmPauseId(null); }} style={{ padding: '7px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                              <MoreHorizontal size={16} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" style={{ background: 'rgba(2,18,44,0.98)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '10px', padding: '4px', minWidth: '172px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                            {(['student', 'coach', 'parent', 'admin'] as UserRole[]).filter(r => r !== user.role).map(role => (
+                              <DropdownMenuItem key={role} className="au-menu-item" onSelect={() => handleRoleChange(user.id, role)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '7px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
+                                {role === 'admin' ? <ShieldCheck size={13} /> : <Users size={13} />}
+                                Make {role}
+                              </DropdownMenuItem>
+                            ))}
+                            {/* The pause switch — admins can never be paused (they'd be locked
+                                out of the very panel that unpauses them). */}
+                            {user.role !== 'admin' && (
+                              <>
+                                <DropdownMenuSeparator style={{ margin: '4px 8px', background: 'rgba(251,191,36,0.15)' }} />
+                                {isPaused ? (
+                                  <DropdownMenuItem className="au-menu-item" onSelect={() => handleResumeUser(user)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '7px', color: '#22c55e', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                    <PlayCircle size={13} /> Resume Account
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem className="au-menu-item" onSelect={() => setConfirmPauseId(user.id)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '7px', color: AMBER, fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                    <PauseCircle size={13} /> Pause Account
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
+                            {!isSelf && (
+                              <>
+                                <DropdownMenuSeparator style={{ margin: '4px 8px', background: 'rgba(248,113,113,0.15)' }} />
+                                <DropdownMenuItem className="au-menu-delete" onSelect={() => setConfirmDeleteId(user.id)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '7px', color: 'rgba(248,113,113,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                  <Trash2 size={13} /> Delete User
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
+
+                    {/* Inline pause confirmation */}
+                    {isConfirmingPause && (
+                      <div style={{ margin: '0 20px 14px', padding: '14px 16px', borderRadius: '10px', background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <PauseCircle size={15} color={AMBER} style={{ flexShrink: 0 }} />
+                          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>
+                            Pause <strong style={{ color: '#fff' }}>{user.displayName || user.email}</strong>? They can&apos;t sign in and stop counting as active — their record is kept exactly as it is, and you can resume them any time.
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                          <button onClick={() => setConfirmPauseId(null)} style={{ padding: '6px 14px', borderRadius: '7px', border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                          <button onClick={() => handlePauseUser(user)} style={{ padding: '6px 14px', borderRadius: '7px', border: 'none', background: `linear-gradient(135deg, ${AMBER} 0%, #d97706 100%)`, color: '#1a1200', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <PauseCircle size={12} /> Pause
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Inline delete confirmation */}
                     {isConfirmingDelete && (

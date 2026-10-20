@@ -8,9 +8,18 @@ import { VoiceRecorder } from '@/components/charting/inputs/VoiceRecorder';
 interface Props {
   onSubmit: (content: string, isVoice: boolean) => Promise<void>;
   placeholder?: string;
+  /**
+   * Text on the collapsed button. Defaults to "Add Entry".
+   *
+   * The Acceptance and Cannot Accept pages now sit one of these at the bottom of
+   * every category rather than a single one after the last, so the button has to
+   * name the category it files into — otherwise eight identical "Add Entry"
+   * buttons give the goalie no clue where the entry lands.
+   */
+  label?: string;
 }
 
-export function MindVaultEntryForm({ onSubmit, placeholder }: Props) {
+export function MindVaultEntryForm({ onSubmit, placeholder, label }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState('');
   const [isVoice, setIsVoice] = useState(false);
@@ -39,16 +48,22 @@ export function MindVaultEntryForm({ onSubmit, placeholder }: Props) {
       <Button
         variant="outline"
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-xl border-dashed border-blue-300 bg-white text-blue-700 transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800"
+        className="w-full rounded-xl border-dashed border-[rgba(55,181,255,0.3)] bg-[rgba(55,181,255,0.08)] text-[#37b5ff] transition-all hover:-translate-y-0.5 hover:border-[rgba(55,181,255,0.5)] hover:bg-[rgba(55,181,255,0.14)] hover:text-[#5ac4ff]"
       >
         <Plus className="h-4 w-4 mr-2" />
-        Add Entry
+        {label || 'Add Entry'}
       </Button>
     );
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50/60 to-white p-4 shadow-sm">
+    /*
+      Every Mind Vault page this form sits on is the navy shell, but this card
+      was built light — which left VoiceRecorder's white note text sitting on a
+      white background, invisible. `.surface-dark` repoints the shadcn tokens so
+      the Cancel/Save buttons read correctly on it (see globals.css).
+    */
+    <div className="surface-dark space-y-4 rounded-2xl border border-[rgba(55,181,255,0.2)] bg-[rgba(2,18,44,0.82)] p-4 shadow-sm">
       <VoiceRecorder
         onTranscriptionComplete={handleTranscription}
         initialText={content}

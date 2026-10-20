@@ -33,6 +33,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { VideoUploader } from '@/components/coach/video-uploader';
+import { VideoLibraryPicker } from '@/components/video';
 import { VideoQuestionBuilder } from '@/components/admin/VideoQuestionBuilder';
 import { customContentService } from '@/lib/database';
 import { videoQuizService } from '@/lib/database';
@@ -169,7 +170,7 @@ export default function CreateVideoQuizPage() {
         sportId: 'coach-custom',
         skillId: 'coach-custom',
         createdBy: user.id,
-        source: 'coach',
+        source: 'coach' as const,
         metadata: {
           totalAttempts: 0,
           totalCompletions: 0,
@@ -239,11 +240,11 @@ export default function CreateVideoQuizPage() {
   }
 
   return (
-    <div className={`${embedded ? 'h-full' : 'min-h-screen'} flex flex-col bg-gradient-to-b from-zinc-50 via-white to-blue-50/30`}>
+    <div className={`no-button-zoom ${embedded ? 'h-full' : 'min-h-screen'} flex flex-col bg-gradient-to-b from-zinc-50 via-white to-blue-50/30`}>
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-zinc-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-4 py-3 shadow-md shadow-zinc-300/30">
+        <div className="container mx-auto px-4 py-3 short:py-2">
+          <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-gradient-to-r from-zinc-950 via-blue-950 to-zinc-900 px-4 py-3 short:py-2 shadow-md shadow-zinc-300/30">
             {embedded ? (
               <Button
                 variant="ghost"
@@ -269,12 +270,12 @@ export default function CreateVideoQuizPage() {
               </Link>
             )}
             <div className="flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300 mb-1">Curriculum</p>
-              <h1 className="text-2xl font-black text-white flex items-center gap-2">
-                <PlayCircle className="h-6 w-6" />
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-red-300 mb-1 short:hidden">Curriculum</p>
+              <h1 className="text-2xl short:text-xl font-black text-white flex items-center gap-2">
+                <PlayCircle className="h-6 w-6 short:h-5 short:w-5" />
                 Create Video Quiz
               </h1>
-              <p className="text-sm text-blue-100/80">
+              <p className="text-sm text-blue-100/80 short:hidden">
                 Create an interactive video quiz with questions at specific timestamps
               </p>
             </div>
@@ -283,8 +284,8 @@ export default function CreateVideoQuizPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <div className="flex-1 container mx-auto px-4 py-4 short:py-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 short:space-y-2">
           <TabsList className="grid w-full grid-cols-4 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
             <TabsTrigger value="info" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-800">
               <FileText className="h-4 w-4" />
@@ -434,18 +435,23 @@ export default function CreateVideoQuizPage() {
 
           {/* Video Tab */}
           <TabsContent value="video" className="space-y-6">
-            <Card className="border-zinc-200 bg-white shadow-sm">
+            <Card className="border-zinc-200 bg-white shadow-sm short:gap-3 short:py-4">
               <CardHeader>
                 <CardTitle>Quiz Video</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Upload or add a video URL. Questions will be added at specific timestamps.
-                </p>
+              <CardContent className="space-y-4 short:space-y-3">
+                {/* Blurb and library picker share a row so the player below stays on screen */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Upload or add a video URL. Questions will be added at specific timestamps.
+                  </p>
+                  <VideoLibraryPicker onSelect={handleVideoUploaded} />
+                </div>
                 <VideoUploader
                   coachId={user.id}
                   onVideoUploaded={handleVideoUploaded}
                   initialVideoUrl={videoUrl}
+                  surface="light"
                 />
                 {videoDuration > 0 && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -480,6 +486,10 @@ export default function CreateVideoQuizPage() {
                 videoDuration={videoDuration}
                 videoUrl={videoUrl}
                 onChange={setQuestions}
+                // YouTube/Vimeo/Drive links can't be measured by the uploader's
+                // <video> element, so the player here is the only thing that knows
+                // how long the video is. Without this the quiz saves a 0 duration.
+                onDurationDetected={setVideoDuration}
               />
             )}
           </TabsContent>
@@ -616,7 +626,7 @@ export default function CreateVideoQuizPage() {
 
       {/* Sticky Footer */}
       <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-zinc-200">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3 short:py-2">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               {questions.length > 0 && (
