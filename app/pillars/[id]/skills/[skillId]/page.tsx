@@ -375,7 +375,7 @@ export default function SkillDetailPage() {
                       </div>
                       <div>
                         <p style={{ color: '#fff', fontWeight: 700, fontSize: '14px', marginBottom: '2px' }}>Knowledge Check</p>
-                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Test your understanding with an interactive quiz</p>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Ready? Show what you know in a Knowledge Check.</p>
                       </div>
                     </div>
                     <button onClick={handleTakeQuiz} className="sd-quiz" style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '10px 20px', borderRadius: '10px', border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>

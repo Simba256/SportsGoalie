@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
@@ -33,39 +34,6 @@ const heroItem = {
     transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '50px', padding: '9px 18px 9px 10px',
-          color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700,
-          letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
-          boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none',
-        }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button
-        onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' as const }}
-      >
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 export default function TheSystemPage() {
   const router = useRouter();
@@ -144,7 +112,7 @@ export default function TheSystemPage() {
           </motion.p>
 
           <motion.div variants={heroItem}>
-            <VoiceButton label="Coach Mike: The Complete System" />
+            <GemVoiceButton label="Coach Mike: The Complete System" />
           </motion.div>
         </motion.div>
       </section>
@@ -152,7 +120,7 @@ export default function TheSystemPage() {
       {/* ── C: 8 PILLARS OVERVIEW ── */}
       <PillarsArchitectureSection
         voiceButton={
-          <VoiceButton label="Coach Mike: The 8 Pillars" />
+          <GemVoiceButton label="Coach Mike: The 8 Pillars" />
         }
       />
 
@@ -353,7 +321,7 @@ export default function TheSystemPage() {
             })}
           </div>
 
-          <VoiceButton label="Coach Mike: The Development Loop" />
+          <GemVoiceButton label="Coach Mike: The Development Loop" />
         </div>
       </section>
 
@@ -381,7 +349,7 @@ export default function TheSystemPage() {
               <p style={{ fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.85, margin: '0 0 36px', maxWidth: '480px' }}>
                 Not a generic message. Not automation pretending to be personal. Coach Mike&rsquo;s actual voice. Your actual name. Your actual milestone. Delivered the moment you earn it.
               </p>
-              <VoiceButton label="Coach Mike: Your Personal Companion" />
+              <GemVoiceButton label="Coach Mike: Your Personal Companion" />
             </div>
 
             <div style={{ flex: '0 0 auto', maxWidth: '400px', width: '100%' }}>
@@ -636,7 +604,7 @@ export default function TheSystemPage() {
             </div>
           </div>
 
-          <VoiceButton label="Coach Mike: The Motivational Library" />
+          <GemVoiceButton label="Coach Mike: The Motivational Library" />
         </div>
       </section>
 
@@ -661,7 +629,7 @@ export default function TheSystemPage() {
               <p style={{ fontSize: 'clamp(14px, 1.7vw, 18px)', color: 'rgba(255,255,255,0.68)', lineHeight: 1.9, margin: '0 0 36px' }}>
                 Every goalie, parent, and coach has their own page within the system. Progress. Charts. Videos. GEMs earned. Development milestones. It does not disappear when the season ends. It is the permanent record of everything you have built.
               </p>
-              <VoiceButton label="Coach Mike: Your Individual Page" />
+              <GemVoiceButton label="Coach Mike: Your Individual Page" />
             </div>
 
             <div style={{ flex: '0 0 auto', maxWidth: '420px', width: '100%' }}>
@@ -779,7 +747,7 @@ export default function TheSystemPage() {
             ))}
           </div>
 
-          <VoiceButton label="Coach Mike: The Achievement Engine" />
+          <GemVoiceButton label="Coach Mike: The Achievement Engine" />
         </div>
       </section>
 
@@ -832,7 +800,7 @@ export default function TheSystemPage() {
             ))}
           </div>
 
-          <VoiceButton label="Coach Mike: The Community" />
+          <GemVoiceButton label="Coach Mike: The Community" />
         </div>
       </section>
 
@@ -863,7 +831,7 @@ export default function TheSystemPage() {
           </p>
 
           <div style={{ marginBottom: '36px' }}>
-            <VoiceButton label="Coach Mike: Program vs. System" />
+            <GemVoiceButton label="Coach Mike: Program vs. System" />
           </div>
 
           {/* CTA to Page 6 */}

@@ -1144,7 +1144,7 @@ export function StudentBaselineQuestionnaire({ userId, userName, onComplete, app
           Smarter Goalie
         </p>
         <h1 style={{ fontSize: 'clamp(26px,5vw,44px)', fontWeight: 900, color: '#fff', marginBottom: '10px', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
-          THE STUDENT BASELINE PROFILE
+          YOUR BASELINE PROFILE
         </h1>
         <p style={{ fontSize: 'clamp(14px,1.8vw,17px)', fontStyle: 'italic', color: 'rgba(255,255,255,0.55)', marginBottom: '28px' }}>
           Tell us who you are and what brought you here.

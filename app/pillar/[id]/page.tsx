@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { Play, Pause, ArrowLeft, ClipboardList, Shield, Users, Target, Building2 } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Shield, Users, Target, Building2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -366,36 +367,6 @@ const PILLARS: Record<string, PillarData> = {
 
 // ─── Shared components ───────────────────────────────────────────────────────
 
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '50px', padding: '9px 18px 9px 10px',
-          color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700,
-          letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
-          boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none',
-        }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
-
 function FactSection({ fact, accent, index }: { fact: PillarFact; accent: string; index: number }) {
   const isAlt = index % 2 === 1;
   const bg = isAlt
@@ -458,7 +429,7 @@ function FactSection({ fact, accent, index }: { fact: PillarFact; accent: string
           </div>
         )}
 
-        <VoiceButton label={fact.voiceLabel} />
+        <GemVoiceButton label={fact.voiceLabel} />
       </div>
     </section>
   );
@@ -640,7 +611,7 @@ function PillarPageContent() {
                   The First Test Subject: Michael Locicero was his own first experiment. Every principle was proven on himself before it was taught to anyone else.
                 </p>
               </div>
-              <VoiceButton label="HEAR COACH MIKE: THE PUZZLE WITH NO PICTURE — WHAT IT MEANS AND WHY IT STILL APPLIES TO EVERY GOALIE TODAY" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE PUZZLE WITH NO PICTURE — WHAT IT MEANS AND WHY IT STILL APPLIES TO EVERY GOALIE TODAY" />
             </div>
           </section>
 
@@ -706,7 +677,7 @@ function PillarPageContent() {
                 ))}
               </div>
 
-              <VoiceButton label="HEAR COACH MIKE EXPLAIN" />
+              <GemVoiceButton label="HEAR COACH MIKE EXPLAIN" />
             </div>
           </section>
 
@@ -792,7 +763,7 @@ function PillarPageContent() {
                 </p>
               </div>
 
-              <VoiceButton label="HEAR COACH MIKE: THE DECISION-MAKING ENGINE" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE DECISION-MAKING ENGINE" />
             </div>
           </section>
 
@@ -889,7 +860,7 @@ function PillarPageContent() {
                 </p>
               </div>
 
-              <VoiceButton label="HEAR COACH MIKE: TECHNIQUE + THE TECHNICAL EYE" />
+              <GemVoiceButton label="HEAR COACH MIKE: TECHNIQUE + THE TECHNICAL EYE" />
             </div>
           </section>
         </>
@@ -928,7 +899,7 @@ function PillarPageContent() {
                 );
               })}
             </div>
-            <VoiceButton label="HEAR COACH MIKE: EIGHT PILLARS, SIX DECADES, THE RECORD, AND THE INVITATION" />
+            <GemVoiceButton label="HEAR COACH MIKE: EIGHT PILLARS, SIX DECADES, THE RECORD, AND THE INVITATION" />
           </div>
         </section>
       )}

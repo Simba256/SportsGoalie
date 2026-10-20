@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import dynamic from 'next/dynamic';
@@ -21,39 +22,6 @@ const NAVY  = '#000f28';
 const NAVY2 = '#041530';
 const BODY  = 'rgba(200,230,255,0.84)';
 const MUTED = 'rgba(148,192,228,0.72)';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '50px', padding: '9px 18px 9px 10px',
-          color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700,
-          letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
-          boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none',
-        }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button
-        onClick={() => { setOn(v => !v); if (on) setPlaying(false); }}
-        style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}
-      >
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 const DOORS = [
   {
@@ -397,7 +365,7 @@ export default function BridgePage() {
               Maybe there&apos;s no goalie coach within a hundred miles. Maybe you have a good one. Or maybe you&apos;re just driven — and nothing around you matches the drive. Coach Mike built this for every one of you.
             </p>
 
-            <VoiceButton label="HEAR COACH MIKE: EVERY GOALIE. EVERY SITUATION. BRIDGED." />
+            <GemVoiceButton label="HEAR COACH MIKE: EVERY GOALIE. EVERY SITUATION. BRIDGED." />
           </div>
         </div>
       </section>

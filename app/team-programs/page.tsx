@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, ClipboardList, ChevronLeft } from 'lucide-react';
+import { Pause, ClipboardList, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
 import { Footer7 } from '@/components/footer-7';
 import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -15,28 +16,6 @@ const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', fontSize: '11px', color: on ? BLUE2 : '#94a3b8', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer() {
   const [playing, setPlaying] = useState(false);
@@ -262,7 +241,7 @@ export default function TeamProgramsPage() {
             </p>
           </div>
           <br />
-          <VoiceButton label="HEAR COACH MIKE: HOW SMARTER GOALIE WORKS ALONGSIDE YOUR EXISTING PROGRAM" />
+          <GemVoiceButton label="HEAR COACH MIKE: HOW SMARTER GOALIE WORKS ALONGSIDE YOUR EXISTING PROGRAM" />
         </div>
       </section>
 
@@ -285,7 +264,7 @@ export default function TeamProgramsPage() {
               </p>
             </div>
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE ONE DIRECTIVE PER PRACTICE MODEL" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE ONE DIRECTIVE PER PRACTICE MODEL" />
         </div>
       </section>
 
@@ -361,7 +340,7 @@ export default function TeamProgramsPage() {
             ))}
           </div>
 
-          <VoiceButton label="HEAR COACH MIKE: THE COACH OBSERVATION CHART AND WHAT IT REVEALS" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE COACH OBSERVATION CHART AND WHAT IT REVEALS" />
         </div>
       </section>
 
@@ -403,7 +382,7 @@ export default function TeamProgramsPage() {
                 &ldquo;No linear requirement. Every coach brings a different level of understanding. The system meets you where you are and grows with your knowledge.&rdquo;
               </p>
             </div>
-            <VoiceButton label="HEAR COACH MIKE: THE COACH DASHBOARD AND HOW IT WORKS" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE COACH DASHBOARD AND HOW IT WORKS" />
           </div>
         </div>
       </section>
@@ -445,7 +424,7 @@ export default function TeamProgramsPage() {
             APPLY TO JOIN THE EXPERIENCE →
           </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR COACHES" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR COACHES" />
           </div>
         </div>
       </section>
