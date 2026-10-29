@@ -1,20 +1,8 @@
 'use client';
 
 import { Calendar, Target, Clock, CheckCircle, Circle } from 'lucide-react';
-
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  type: 'skill_completion' | 'quiz_score' | 'time_spent' | 'streak' | 'sport_completion';
-  targetValue: number;
-  currentValue: number;
-  unit: string;
-  deadline?: Date;
-  priority: 'low' | 'medium' | 'high';
-  isCompleted: boolean;
-  createdAt: Date;
-}
+import type { Goal } from '@/types/goals';
+import { formatDeadline } from '@/lib/goals/deadline';
 
 interface GoalCardProps {
   goal: Goal;
@@ -49,15 +37,6 @@ export function GoalCard({ goal, onUpdate, onDelete }: GoalCardProps) {
       case 'sport_completion': return <Target style={s} />;
       default: return <Circle style={s} />;
     }
-  };
-
-  const formatDeadline = (deadline: Date) => {
-    const diffDays = Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} day(s)`;
-    if (diffDays === 0) return 'Due today';
-    if (diffDays === 1) return 'Due tomorrow';
-    if (diffDays <= 7) return `Due in ${diffDays} day(s)`;
-    return `Due ${deadline.toLocaleDateString()}`;
   };
 
   const handleMarkComplete = () => {

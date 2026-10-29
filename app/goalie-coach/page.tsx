@@ -2,37 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Target, Check, ChevronLeft } from 'lucide-react';
+import { Pause, Target, Check, ChevronLeft } from 'lucide-react';
+import { GemVoiceButton } from '@/components/audio/GemVoiceButton';
+import { Footer7 } from '@/components/footer-7';
+import { PublicPageNav } from '@/components/PublicPageNav';
 import { TiltCard } from '@/components/ui/tilt-card';
 import { FloatingPaths } from '@/components/ui/background-paths';
 import { Boxes } from '@/components/ui/background-boxes';
+import { SevenPillarsCTA } from '@/components/SevenPillarsCTA';
+import { ApplicationSteps } from '@/components/ApplicationSteps';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60cdff';
 const BLUE3 = '#0ea5e9';
 const RED = '#C00000';
-
-function VoiceButton({ label }: { label: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [on, setOn] = useState(true);
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button
-        onClick={() => on && setPlaying(p => !p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: on ? 'linear-gradient(135deg, rgba(55,181,255,0.14), rgba(96,205,255,0.07))' : 'rgba(255,255,255,0.04)', border: `1px solid ${on ? 'rgba(96,205,255,0.32)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '50px', padding: '9px 18px 9px 10px', color: on ? BLUE2 : '#475569', fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', cursor: on ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: on ? '0 2px 10px rgba(55,181,255,0.12)' : 'none' }}
-      >
-        <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: on ? `linear-gradient(135deg, ${BLUE}, ${BLUE3})` : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {playing ? <Pause size={10} color="#fff" /> : <Play size={10} color="#fff" fill="#fff" />}
-        </span>
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">HEAR COACH MIKE</span>
-      </button>
-      <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ fontSize: '10px', color: on ? BLUE2 : '#475569', letterSpacing: '1.5px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
-        VOICE {on ? 'ON' : 'OFF'}
-      </button>
-    </div>
-  );
-}
 
 function AutoVoicePlayer() {
   const [playing, setPlaying] = useState(false);
@@ -57,11 +40,11 @@ function AutoVoicePlayer() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '9px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
+          <p style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(0,240,255,0.65)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 3px' }}>VOICE MESSAGE</p>
           <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>Coach Mike</p>
         </div>
         <div style={{ background: playing ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${playing ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '20px', padding: '4px 10px', transition: 'all 0.3s', flexShrink: 0 }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: playing ? '#4ade80' : 'rgba(255,255,255,0.35)', letterSpacing: '0.5px' }}>{playing ? 'LIVE' : '3:45'}</span>
         </div>
       </div>
       <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', margin: '0 0 18px', fontStyle: 'italic', lineHeight: 1.55 }}>
@@ -71,18 +54,18 @@ function AutoVoicePlayer() {
         {waveform.map((h, i) => { const isPast = (i / waveform.length) * 100 < progress; return (<div key={i} style={{ flex: 1, height: `${h * 100}%`, background: isPast ? '#00f0ff' : 'rgba(255,255,255,0.14)', borderRadius: '2px', transition: 'background 0.08s', boxShadow: isPast ? '0 0 4px rgba(0,240,255,0.4)' : 'none' }} />); })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>{fmt(progress)}</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(100,116,139,0.8)' }}>3:45</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '20px' }}>
-        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button onClick={() => setProgress(p => Math.max(0, p - 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.7)', display: 'flex', padding: '10px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
         <button onClick={() => setPlaying(p => !p)} style={{ width: '60px', height: '60px', borderRadius: '50%', background: playing ? 'rgba(0,240,255,0.12)' : '#00f0ff', border: playing ? '2px solid #00f0ff' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: playing ? '0 0 0 8px rgba(0,240,255,0.1), 0 0 24px rgba(0,240,255,0.3)' : '0 0 20px rgba(0,240,255,0.4)', transition: 'all 0.25s' }}>
           {playing ? <Pause size={24} color="#00f0ff" /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="#051125"><path d="M8 5v14l11-7z"/></svg>}
         </button>
-        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.55)', display: 'flex', padding: '4px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+        <button onClick={() => setProgress(p => Math.min(100, p + 8))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.7)', display: 'flex', padding: '10px' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
       </div>
       <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(100,116,139,0.4)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
+        <button onClick={() => { setOn(v => !v); if (on) setPlaying(false); }} style={{ padding: '10px 8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, color: on ? '#00f0ff' : 'rgba(148,163,184,0.7)', letterSpacing: '3px', textTransform: 'uppercase' }}>VOICE {on ? 'ON' : 'OFF'}</button>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
           {[12, 20, 8, 16, 10].map((h, i) => (<div key={i} style={{ width: '3px', height: `${playing ? h : Math.round(h * 0.45)}px`, background: i === 1 ? '#00f0ff' : `rgba(0,240,255,${0.35 + i * 0.1})`, borderRadius: '1.5px', transition: `height ${0.2 + i * 0.05}s ease` }} />))}
         </div>
@@ -108,35 +91,21 @@ export default function GoalieCoachPage() {
   return (
     <div style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif', color: '#fff' }}>
 
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Smarter Goalie" className="h-10 sm:h-11 w-auto object-contain" />
-          </button>
-          <div className="hidden sm:flex gap-6 items-center">
-            {(['WHO WE ARE', 'THE SYSTEM'] as const).map((item) => (
-              <button key={item} onClick={() => router.push(item === 'WHO WE ARE' ? '/explain' : '/the-system')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{item}
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
+      <PublicPageNav />
 
       {/* Role bar */}
       <div style={{ background: '#0e2448', borderBottom: '1px solid rgba(96,205,255,0.22)' }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <button
             onClick={() => router.push('/explain')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 10px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '9px 12px', color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
             onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(55,181,255,0.12)'; el.style.borderColor = 'rgba(55,181,255,0.4)'; el.style.color = '#fff'; }}
             onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = 'rgba(255,255,255,0.15)'; el.style.color = 'rgba(255,255,255,0.75)'; }}
           >
             <ChevronLeft size={12} />
             Back to Roles
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '8px', rowGap: '2px', minWidth: 0 }}>
             <Target size={13} color={BLUE2} />
             <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: BLUE2 }}>YOU SELECTED:</span>
             <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '3px', color: '#fff' }}>GOALIE COACH</span>
@@ -147,7 +116,7 @@ export default function GoalieCoachPage() {
       {/* ── Coming Soon Banner ── */}
       <div style={{ position: 'sticky', top: '64px', zIndex: 40, background: 'linear-gradient(90deg, rgba(2,18,44,0.97) 0%, rgba(6,35,68,0.97) 100%)', borderBottom: '1px solid rgba(96,205,255,0.35)', backdropFilter: 'blur(8px)' }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 flex items-center gap-3 flex-wrap">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(96,205,255,0.12)', border: '1px solid rgba(96,205,255,0.3)', borderRadius: '20px', padding: '3px 10px', fontSize: '10px', fontWeight: 800, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase', flexShrink: 0 }}>COMING SOON</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(96,205,255,0.12)', border: '1px solid rgba(96,205,255,0.3)', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 800, letterSpacing: '2px', color: BLUE2, textTransform: 'uppercase', flexShrink: 0 }}>COMING SOON</span>
           <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
             This experience is being finalized. <span style={{ color: BLUE2, fontWeight: 700 }}>Coach Mike will reveal it within 30 days of launch.</span>
           </p>
@@ -197,7 +166,7 @@ export default function GoalieCoachPage() {
             </p>
           </div>
           <br />
-          <VoiceButton label="HEAR COACH MIKE: THE GOALIE COACH'S ROLE AND WHY IT MATTERS MORE THAN ANY OTHER COACHING POSITION" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE GOALIE COACH'S ROLE AND WHY IT MATTERS MORE THAN ANY OTHER COACHING POSITION" />
         </div>
       </section>
 
@@ -234,7 +203,7 @@ export default function GoalieCoachPage() {
 
         {/* Bottom: VoiceButton */}
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <VoiceButton label="HEAR COACH MIKE: THE RESPECT FACTOR AND THE FEEL FACTOR" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE RESPECT FACTOR AND THE FEEL FACTOR" />
         </div>
       </section>
 
@@ -261,9 +230,9 @@ export default function GoalieCoachPage() {
                 Smarter Goalie is built on six decades of original IP. Every principle has been stress-tested against four filters. Not one has failed.
               </p>
               <p style={{ fontSize: 'clamp(15px, 1.9vw, 18px)', color: '#fff', lineHeight: 1.85, marginBottom: '40px', fontWeight: 600 }}>
-                The 7 Angle-Mark System. The 7 Point System. The Feel Factor. The Mind&rsquo;s Eye. The Development Loop. These are not philosophies. They are systems with mathematical foundations.
+                The 7 Angle-Mark System. The 6 Zone – 7 Point System™. The Feel Factor. The Mind&rsquo;s Eye. The Development Loop. These are not philosophies. They are systems with mathematical foundations.
               </p>
-              <VoiceButton label="HEAR COACH MIKE: THE MATHEMATICAL FRAMEWORK BEHIND THE SMARTER GOALIE SYSTEM" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE MATHEMATICAL FRAMEWORK BEHIND THE SMARTER GOALIE SYSTEM" />
             </div>
 
             {/* Right — 4 filter TiltCards */}
@@ -281,7 +250,7 @@ export default function GoalieCoachPage() {
                       {item.icon}
                     </div>
                     <div>
-                      <p style={{ fontSize: '10px', fontWeight: 800, color: item.accent, letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 4px' }}>{item.num}</p>
+                      <p style={{ fontSize: '11px', fontWeight: 800, color: item.accent, letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 4px' }}>{item.num}</p>
                       <p style={{ fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '0.5px', margin: '0 0 6px', textTransform: 'uppercase' }}>{item.label}</p>
                       <p style={{ fontSize: '13px', color: 'rgba(200,225,242,0.7)', margin: 0, lineHeight: 1.55 }}>{item.desc}</p>
                     </div>
@@ -323,7 +292,7 @@ export default function GoalieCoachPage() {
               <p style={{ fontSize: 'clamp(15px, 1.9vw, 18px)', color: '#fff', lineHeight: 1.85, marginBottom: '40px', fontWeight: 600 }}>
                 One of our goals is to help goalie coach entrepreneurs grow. We share knowledge. We build the profession together. We raise the standard of goaltending development at every level.
               </p>
-              <VoiceButton label="HEAR COACH MIKE: THE GOALIE COACH COMMUNITY AND WHAT WE ARE BUILDING TOGETHER" />
+              <GemVoiceButton label="HEAR COACH MIKE: THE GOALIE COACH COMMUNITY AND WHAT WE ARE BUILDING TOGETHER" />
             </div>
 
             {/* Right: 2 insight cards + quote */}
@@ -335,9 +304,9 @@ export default function GoalieCoachPage() {
                 <div key={i} style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: `1px solid ${card.accent}40`, borderLeft: `4px solid ${card.accent}`, borderRadius: '0 16px 16px 0', padding: '22px 24px', boxShadow: `0 0 30px ${card.accent}14, inset 0 0 20px ${card.accent}08` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                     <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: `${card.accent}18`, border: `1.5px solid ${card.accent}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: '10px', fontWeight: 900, color: card.accent }}>{card.symbol}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 900, color: card.accent }}>{card.symbol}</span>
                     </div>
-                    <p style={{ fontSize: '10px', fontWeight: 800, color: card.accent, letterSpacing: '2.5px', textTransform: 'uppercase', margin: 0 }}>{card.tag}</p>
+                    <p style={{ fontSize: '11px', fontWeight: 800, color: card.accent, letterSpacing: '2.5px', textTransform: 'uppercase', margin: 0 }}>{card.tag}</p>
                   </div>
                   <p style={{ fontSize: 'clamp(14px, 1.6vw, 16px)', fontStyle: 'italic', color: 'rgba(220,235,248,0.92)', lineHeight: 1.55, marginBottom: '10px' }}>{card.quote}</p>
                   <p style={{ fontSize: '13px', color: 'rgba(148,195,228,0.65)', lineHeight: 1.65, margin: 0 }}>{card.desc}</p>
@@ -362,7 +331,7 @@ export default function GoalieCoachPage() {
           <h2 className="pl-0 sm:pl-14" style={{ fontSize: 'clamp(24px, 3.6vw, 46px)', fontWeight: 900, letterSpacing: '-0.02em', color: '#fff', margin: '0 0 40px' }}>What Smarter Goalie gives the Goalie Coach:</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" style={{ gap: '14px', alignItems: 'stretch', width: '100%', maxWidth: '1400px', marginBottom: '40px' }}>
             {[
-              { label: 'Complete 7 Pillar System', desc: 'Access to the deepest goaltending curriculum available' },
+              { label: 'Complete 8 Pillar System', desc: 'Access to the deepest goaltending curriculum available' },
               { label: 'Charting Architecture', desc: 'Factor Ratios, Development Loop, cross-reference engine — all accessible' },
               { label: "Feel Factor & Mind's Eye Frameworks", desc: 'Trainable. Most programs do not train them at all.' },
               { label: 'A Peer Conversation with Coach Mike', desc: 'Not a student relationship. Coach Mike speaks to you as a peer.' },
@@ -393,7 +362,7 @@ export default function GoalieCoachPage() {
               </TiltCard>
             ))}
           </div>
-          <VoiceButton label="HEAR COACH MIKE: THE TOOLS AVAILABLE TO THE GOALIE COACH" />
+          <GemVoiceButton label="HEAR COACH MIKE: THE TOOLS AVAILABLE TO THE GOALIE COACH" />
         </div>
       </section>
 
@@ -404,7 +373,7 @@ export default function GoalieCoachPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(96,205,255,0.26)', borderRadius: '50px', padding: '8px 20px', marginBottom: '28px', boxShadow: '0 2px 12px rgba(55,181,255,0.1)' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: RED, boxShadow: '0 0 0 3px rgba(192,0,0,0.2)', flexShrink: 0 }} />
-            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Limited Availability</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', color: BLUE2, margin: 0, textTransform: 'uppercase' }}>Limited Availability</p>
           </div>
           <h2 style={{ fontSize: 'clamp(30px, 5vw, 66px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.025em', marginBottom: '24px' }}>
             THIS IS THE EXPERIENCE<br /><span style={{ color: BLUE2 }}>BUILDING PHASE</span>
@@ -412,20 +381,22 @@ export default function GoalieCoachPage() {
           <p style={{ fontSize: 'clamp(16px, 2vw, 21px)', color: 'rgba(175,215,238,0.9)', lineHeight: 1.8, maxWidth: '680px', margin: '0 auto 52px' }}>
             Coach Mike is personally selecting one hundred founding members. The goalie coaches who join this phase become part of building the standard for the profession.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            {[
-              { num: '01', text: 'Complete the goalie coach questionnaire — 5 minutes' },
+          <ApplicationSteps
+            steps={[
+              // Was /auth/register until 26 August. Sending a goalie coach there
+              // put them in the general coach panel — there is no goalie coach
+              // area yet, and no agreement gate, so they reached Michael's content
+              // having signed nothing. /contact lists 'Goalie Coach' and routes the
+              // enquiry to him, which is the correct destination until both the
+              // panel and the agreements gate exist.
+              { num: '01', text: 'Tell Coach Mike about yourself — 5 minutes', href: '/contact', action: 'Start' },
               { num: '02', text: 'Coach Mike personally reviews your application' },
-              { num: '03', text: 'Coach Mike calls you personally — peer to peer' },
-            ].map((step) => (
-              <div key={step.num} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(96,205,255,0.22)', borderRadius: '16px', padding: '28px 24px', flex: '1', maxWidth: '240px', width: '100%', margin: '0 auto', textAlign: 'left', boxShadow: '0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p style={{ fontSize: '38px', fontWeight: 900, color: BLUE2, lineHeight: 1, marginBottom: '14px' }}>{step.num}</p>
-                <p style={{ fontSize: '15px', color: 'rgba(155,200,228,0.9)', lineHeight: 1.65, margin: 0 }}>{step.text}</p>
-              </div>
-            ))}
-          </div>
+              // /contact lists Goalie Coach in its role dropdown.
+              { num: '03', text: 'Coach Mike calls you personally — peer to peer', href: '/contact', action: 'Set up the call' },
+            ]}
+          />
           <button
-            onClick={() => router.push('/auth/register')}
+            onClick={() => router.push('/contact')}
             style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE3} 100%)`, color: '#fff', border: 'none', padding: 'clamp(16px,2vw,22px) clamp(32px,4vw,56px)', borderRadius: '12px', fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 900, letterSpacing: '2px', cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 8px 32px rgba(14,165,233,0.35)', transition: 'all 0.2s', display: 'inline-block', marginBottom: '36px' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 44px rgba(14,165,233,0.55)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(14,165,233,0.35)'; }}
@@ -433,14 +404,14 @@ export default function GoalieCoachPage() {
             ENQUIRE →
           </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <VoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR GOALIE COACHES" />
+            <GemVoiceButton label="HEAR COACH MIKE: THE FOUNDING MEMBER OPPORTUNITY FOR GOALIE COACHES" />
           </div>
         </div>
       </section>
 
-      <div style={{ background: '#061530', padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '3px', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>&copy; 2026 SMARTER GOALIE INC. | THE INTELLIGENT ATHLETIC GOALTENDER</p>
-      </div>
+      <SevenPillarsCTA from="goalie-coach" eyebrow="For The Goalie Coach" />
+
+      <Footer7 />
     </div>
   );
 }

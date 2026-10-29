@@ -217,7 +217,7 @@ export class BaseDatabaseService {
         message: 'Document created successfully',
         timestamp: new Date(),
       };
-    }, options.retries);
+    }, options.retries, `${collectionName}:create`);
   }
 
   /**
@@ -249,7 +249,7 @@ export class BaseDatabaseService {
         message: 'Document created successfully',
         timestamp: new Date(),
       };
-    }, options.retries);
+    }, options.retries, `${collectionName}:createWithId`);
   }
 
   async getById<T>(
@@ -307,7 +307,7 @@ export class BaseDatabaseService {
         data,
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${collectionName}:get`);
   }
 
   async update<T>(
@@ -349,7 +349,7 @@ export class BaseDatabaseService {
         message: 'Document updated successfully',
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${collectionName}:update`);
   }
 
   async delete(
@@ -379,7 +379,7 @@ export class BaseDatabaseService {
         message: 'Document deleted successfully',
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${collectionName}:delete`);
   }
 
   async query<T>(
@@ -485,7 +485,7 @@ export class BaseDatabaseService {
         data: result,
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${collectionName}:query`);
   }
 
   // Enhanced real-time subscriptions
@@ -629,7 +629,7 @@ export class BaseDatabaseService {
         message: 'Batch operation completed successfully',
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${[...new Set(operations.map(op => op.collection))].join('+')}:batchWrite`);
   }
 
   // Transaction-based write operations
@@ -696,7 +696,7 @@ export class BaseDatabaseService {
         message: 'Field incremented successfully',
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${collectionName}:incrementField(${field})`);
   }
 
   async arrayOperations(
@@ -724,7 +724,7 @@ export class BaseDatabaseService {
         message: 'Array operations completed successfully',
         timestamp: new Date(),
       };
-    });
+    }, undefined, `${collectionName}:arrayOperations`);
   }
 
   // Network state management
@@ -857,6 +857,16 @@ export class BaseDatabaseService {
   }
 
   // Helper to remove undefined fields recursively
+  //
+  // Only plain objects and arrays are walked. Everything else is passed through
+  // untouched, which matters more than it looks: Firestore's own value types
+  // (Timestamp, GeoPoint, DocumentReference, Bytes) and the FieldValue sentinels
+  // (serverTimestamp, increment, arrayUnion) are class instances, and rebuilding
+  // one key-by-key strips its prototype. A Timestamp came out the other side as
+  // a plain { seconds, nanoseconds }, which Firestore then stored as a *map*
+  // field rather than a timestamp — so it read back with no .toDate() on it and
+  // crashed any caller that expected one. A Date was worse: it has no own
+  // enumerable properties, so it serialised to an empty {}.
   private removeUndefinedFields(obj: any): any {
     if (obj === null || typeof obj !== 'object') {
       return obj;
@@ -866,9 +876,15 @@ export class BaseDatabaseService {
       return obj.map(item => this.removeUndefinedFields(item));
     }
 
+    // Object.create(null) has a null prototype and is still a plain bag of keys.
+    const proto = Object.getPrototypeOf(obj);
+    if (proto !== Object.prototype && proto !== null) {
+      return obj;
+    }
+
     const cleaned: any = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+      if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
         cleaned[key] = this.removeUndefinedFields(obj[key]);
       }
     }
@@ -888,9 +904,17 @@ export class BaseDatabaseService {
   }
 
   // Retry logic with exponential backoff
+  //
+  // `context` is a "collection:operation" label. Firestore's permission errors say only
+  // "Missing or insufficient permissions" with no indication of which read or write was
+  // blocked, and because permission-denied is non-retryable it gets rethrown straight past
+  // the ApiResponse wrapper into the UI. Without the label there is nothing in the message
+  // or the stack that names the collection, which makes a rules mismatch near-impossible to
+  // locate from a bug report.
   private async executeWithRetry<T>(
     operation: () => Promise<T>,
-    maxRetries: number = 3
+    maxRetries: number = 3,
+    context?: string
   ): Promise<T> {
     return this.circuitBreaker.execute(async () => {
       let lastError: Error = new Error('Unknown error');
@@ -903,7 +927,7 @@ export class BaseDatabaseService {
 
           // Don't retry on certain errors
           if (this.isNonRetryableError(error)) {
-            throw error;
+            throw this.withContext(error, context);
           }
 
           if (attempt < maxRetries) {
@@ -914,12 +938,26 @@ export class BaseDatabaseService {
       }
 
       throw new DatabaseError(
-        `Operation failed after ${maxRetries + 1} attempts: ${lastError.message}`,
+        `${context ? `[${context}] ` : ''}Operation failed after ${maxRetries + 1} attempts: ${lastError.message}`,
         'MAX_RETRIES_EXCEEDED',
         lastError,
         false
       );
     });
+  }
+
+  /**
+   * Rewrites a Firestore error so its message names the collection and operation that
+   * failed, while preserving the original `code` that callers switch on.
+   */
+  private withContext(error: any, context?: string): any {
+    if (!context || !error?.code) return error;
+
+    const labelled = new Error(`[${context}] ${error.message || error.code}`);
+    (labelled as any).code = error.code;
+    (labelled as any).cause = error;
+    labelled.stack = error.stack;
+    return labelled;
   }
 
   private isNonRetryableError(error: any): boolean {

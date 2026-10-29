@@ -28,10 +28,10 @@ interface Footer7Props {
 
 const defaultSections = [
   {
-    title: "Platform",
+    title: "The System",
     links: [
-      { name: "Goaltending: 7 Pillars", href: "#features" },
-      { name: "Test Your Knowledge", href: "#features" },
+      { name: "Goaltending: 8 Pillars", href: "#features" },
+      { name: "Knowledge Checks", href: "#features" },
       { name: "Performance Analytics", href: "#features" },
       { name: "Dashboard Command Center", href: "#" },
     ],
@@ -51,7 +51,7 @@ const defaultSections = [
       { name: "info@smartergoalie.com", href: "mailto:info@smartergoalie.com" },
       { name: "+1 (416) 939-0555", href: "tel:+14169390555" },
       { name: "Help Center", href: "#" },
-      { name: "Privacy", href: "#" },
+      { name: "Privacy", href: "/privacy" },
     ],
   },
 ];
@@ -66,9 +66,13 @@ const defaultSocialLinks = [
   { icon: <FaReddit className="size-5" />, href: "#", label: "Reddit" },
 ];
 
+// Both were href="#" until 27 August 2026 — the pages did not exist. Named
+// "Terms of Service" rather than "Terms and Conditions" to match the sign-up
+// tickbox and the document's own title; three names for one document is how
+// people end up unsure whether they have read it.
 const defaultLegalLinks = [
-  { name: "Terms and Conditions", href: "#" },
-  { name: "Privacy Policy", href: "#" },
+  { name: "Terms of Service", href: "/terms" },
+  { name: "Privacy Policy", href: "/privacy" },
 ];
 
 export const Footer7 = ({
@@ -80,7 +84,7 @@ export const Footer7 = ({
   },
   sections = defaultSections,
   description =
-    "Train the Mind. Understand the mechanics. Think Smart - Play Smarter. Build 7 Pillars of Intelligent Goaltending through cognitive awareness, technical precision, and proven positional systems.",
+    "Train the Mind. Understand the mechanics. Think Smart - Play Smarter. Build 8 Pillars of Intelligent Goaltending through cognitive awareness, technical precision, and proven positional systems.",
   socialLinks = defaultSocialLinks,
   copyright = "© 2026 Smarter Goalie. All rights reserved.",
   legalLinks = defaultLegalLinks,
@@ -140,7 +144,7 @@ export const Footer7 = ({
               style={{
                 maxWidth: '320px',
                 fontSize: '13px',
-                color: 'rgba(255,255,255,0.45)',
+                color: 'rgba(255,255,255,0.55)',
                 lineHeight: 1.75,
               }}
             >
@@ -148,19 +152,22 @@ export const Footer7 = ({
             </p>
 
             {/* Social icons */}
-            <ul style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            {/* On phones each icon gets a 40px square to tap (the 20px glyph sits in
+                it, so the visible spacing is the same 20px); the negative margin
+                keeps the first glyph on the text's left edge. */}
+            <ul className="-ml-2.5 flex flex-wrap items-center md:ml-0 md:gap-5">
               {socialLinks.map((social, idx) => (
                 <li key={idx}>
                   <a
                     href={social.href}
                     aria-label={social.label}
+                    className="flex h-10 w-10 items-center justify-center md:block md:h-auto md:w-auto"
                     style={{
-                      color: 'rgba(255,255,255,0.35)',
+                      color: 'rgba(255,255,255,0.45)',
                       transition: 'color 0.2s',
-                      display: 'block',
                     }}
                     onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = '#37b5ff')}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.35)')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.45)')}
                   >
                     {social.icon}
                   </a>
@@ -170,13 +177,13 @@ export const Footer7 = ({
           </div>
 
           {/* Link columns */}
-          <div className="grid w-full gap-6 md:grid-cols-3 lg:gap-20">
+          <div className="grid w-full gap-6 md:grid-cols-3 lg:gap-10 xl:gap-20">
             {sections.map((section, sectionIdx) => (
               <div key={sectionIdx}>
                 <h3
                   style={{
                     marginBottom: '16px',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 800,
                     letterSpacing: '2.5px',
                     textTransform: 'uppercase',
@@ -185,11 +192,12 @@ export const Footer7 = ({
                 >
                   {section.title}
                 </h3>
-                <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <ul className="flex flex-col md:gap-2.5">
                   {section.links.map((link, linkIdx) => (
                     <li key={linkIdx}>
                       <a
                         href={link.href}
+                        className="inline-block py-2 md:py-0"
                         style={{
                           fontSize: '13px',
                           fontWeight: 500,
@@ -211,7 +219,9 @@ export const Footer7 = ({
         </div>
 
         {/* Bottom bar */}
+        {/* pb-14 on phones leaves the legal links clear of the floating help button */}
         <div
+          className="pb-14 sm:pb-0"
           style={{
             marginTop: '40px',
             paddingTop: '20px',
@@ -224,23 +234,24 @@ export const Footer7 = ({
             gap: '12px',
           }}
         >
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>
             {copyright}
           </p>
-          <ul style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <ul className="flex flex-wrap gap-x-5">
             {legalLinks.map((link, idx) => (
               <li key={idx}>
                 <a
                   href={link.href}
+                  className="inline-block py-2 md:py-0"
                   style={{
                     fontSize: '12px',
-                    color: 'rgba(255,255,255,0.3)',
+                    color: 'rgba(255,255,255,0.5)',
                     fontWeight: 500,
                     textDecoration: 'none',
                     transition: 'color 0.2s',
                   }}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = '#37b5ff')}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.3)')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)')}
                 >
                   {link.name}
                 </a>

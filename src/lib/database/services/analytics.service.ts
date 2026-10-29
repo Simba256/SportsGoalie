@@ -2,16 +2,20 @@ import { BaseDatabaseService } from '../base.service';
 import { userService } from './user.service';
 import { sportsService } from './sports.service';
 import { ApiResponse } from '@/types';
+import { sportDisplayName } from '@/lib/utils/pillars';
 import { logger } from '../../utils/logger';
+import { toLocalDateKey } from '@/lib/utils/local-date';
 
 export interface PlatformAnalytics {
   users: {
     total: number;
     active: number;
     inactive: number;
+    paused: number;
     newThisMonth: number;
     adminCount: number;
     studentCount: number;
+    activeStudentCount: number;
   };
   content: {
     totalSports: number;
@@ -82,6 +86,15 @@ export interface SystemHealth {
  * const health = await analyticsService.getSystemHealth();
  * ```
  */
+/**
+ * A finished knowledge check, as opposed to the record progress.service writes
+ * when a lesson is marked done (id `lesson_<skill>`, always 100%). Those would
+ * count as attempts and pull the average score up.
+ */
+export function isKnowledgeCheckAttempt(attempt: { videoQuizId?: unknown }): boolean {
+  return !(typeof attempt.videoQuizId === 'string' && attempt.videoQuizId.startsWith('lesson_'));
+}
+
 export class AnalyticsService extends BaseDatabaseService {
   private readonly ANALYTICS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   private analyticsCache: { data: PlatformAnalytics; timestamp: number } | null = null;
@@ -174,7 +187,7 @@ export class AnalyticsService extends BaseDatabaseService {
     try {
       // Query quiz attempts and users in parallel
       const [quizAttemptsResult, usersResult] = await Promise.all([
-        this.query<any>('quiz_attempts', {
+        this.query<any>('video_quiz_progress', {
           where: [{ field: 'isCompleted', operator: '==', value: true }],
           limit: 10000,
         }),
@@ -184,7 +197,8 @@ export class AnalyticsService extends BaseDatabaseService {
         }),
       ]);
 
-      const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+      const quizAttempts = (quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [])
+        .filter(isKnowledgeCheckAttempt);
       const users = usersResult.success ? usersResult.data?.items || [] : [];
 
       // Group quiz attempts by date
@@ -197,7 +211,7 @@ export class AnalyticsService extends BaseDatabaseService {
           const date = u.lastLoginAt.toDate
             ? u.lastLoginAt.toDate()
             : new Date(u.lastLoginAt);
-          const dateStr = date.toISOString().split('T')[0];
+          const dateStr = toLocalDateKey(date);
           if (!usersByDate.has(dateStr)) {
             usersByDate.set(dateStr, new Set());
           }
@@ -206,11 +220,12 @@ export class AnalyticsService extends BaseDatabaseService {
       });
 
       quizAttempts.forEach((attempt: any) => {
-        if (attempt.submittedAt) {
-          const date = attempt.submittedAt.toDate
-            ? attempt.submittedAt.toDate()
-            : new Date(attempt.submittedAt);
-          const dateStr = date.toISOString().split('T')[0];
+        const finishedAt = attempt.completedAt ?? attempt.submittedAt;
+        if (finishedAt) {
+          const date = finishedAt.toDate
+            ? finishedAt.toDate()
+            : new Date(finishedAt);
+          const dateStr = toLocalDateKey(date);
 
           // Group attempts by date
           if (!attemptsByDate.has(dateStr)) {
@@ -232,7 +247,7 @@ export class AnalyticsService extends BaseDatabaseService {
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = toLocalDateKey(date);
 
         const dayAttempts = attemptsByDate.get(dateStr) || [];
         const activeUsers = usersByDate.get(dateStr)?.size || 0;
@@ -288,7 +303,7 @@ export class AnalyticsService extends BaseDatabaseService {
       // Use real metadata from sports or return zero values for new data
       const popularityData: ContentPopularity[] = sportsResult.data.items.map(sport => ({
         sportId: sport.id,
-        sportName: sport.name,
+        sportName: sportDisplayName(sport),
         views: sport.metadata?.totalEnrollments || 0,
         completions: sport.metadata?.totalCompletions || 0,
         averageRating: sport.metadata?.averageRating || 0,
@@ -373,8 +388,12 @@ export class AnalyticsService extends BaseDatabaseService {
 
     const userStats = {
       total: users.length,
-      active: users.filter(u => u.isActive).length,
+      // Paused accounts are Michael's subscription pause switch: still fully
+      // on the books, but not active until switched back on.
+      active: users.filter(u => u.isActive && u.isPaused !== true).length,
       inactive: users.filter(u => !u.isActive).length,
+      paused: users.filter(u => u.isPaused === true).length,
+      activeStudentCount: users.filter(u => u.role === 'student' && u.isPaused !== true).length,
       newThisMonth: users.filter(u => u.createdAt && (typeof u.createdAt === 'object' && 'toDate' in u.createdAt ? u.createdAt.toDate() : new Date(u.createdAt as unknown as string | number)) >= startOfMonth).length,
       adminCount: users.filter(u => u.role === 'admin').length,
       studentCount: users.filter(u => u.role === 'student').length,
@@ -407,18 +426,21 @@ export class AnalyticsService extends BaseDatabaseService {
   }
 
   private async getEngagementAnalytics() {
-    // Query real engagement data from sport_progress and quiz_attempts collections
+    // Query real engagement data from sport_progress and video_quiz_progress. The
+    // old quiz_attempts collection is no longer written to, so counting it left
+    // the dashboard at zero however many knowledge checks goalies finished.
     try {
       const [progressResult, quizAttemptsResult] = await Promise.all([
         this.query<any>('sport_progress', {}),
-        this.query<any>('quiz_attempts', {
+        this.query<any>('video_quiz_progress', {
           where: [{ field: 'isCompleted', operator: '==', value: true }],
           limit: 10000
         }),
       ]);
 
       const progressData = progressResult.success ? progressResult.data?.items || [] : [];
-      const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [];
+      const quizAttempts = (quizAttemptsResult.success ? quizAttemptsResult.data?.items || [] : [])
+        .filter(isKnowledgeCheckAttempt);
 
       // Calculate total quiz attempts and average score
       const totalQuizAttempts = quizAttempts.length;
@@ -431,14 +453,19 @@ export class AnalyticsService extends BaseDatabaseService {
         ? Math.round((progressData.filter(p => p.status === 'completed').length / progressData.length) * 100)
         : 0;
 
-      // Calculate active users today
+      // Calculate active users today. sport_progress holds one row per goalie per
+      // pillar, so count the goalies, not the rows, or one person reads as several.
       const today = new Date().toDateString();
-      const activeUsersToday = progressData.filter(p => {
-        const lastAccessed = p.lastAccessedAt && typeof p.lastAccessedAt.toDate === 'function'
-          ? p.lastAccessedAt.toDate().toDateString()
-          : null;
-        return lastAccessed === today;
-      }).length;
+      const activeUsersToday = new Set(
+        progressData
+          .filter(p => {
+            const lastAccessed = p.lastAccessedAt && typeof p.lastAccessedAt.toDate === 'function'
+              ? p.lastAccessedAt.toDate().toDateString()
+              : null;
+            return lastAccessed === today;
+          })
+          .map(p => p.userId)
+      ).size;
 
       const engagementStats = {
         totalQuizAttempts,

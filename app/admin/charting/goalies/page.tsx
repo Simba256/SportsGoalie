@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { chartingService, dynamicChartingService, userService } from '@/lib/database';
 import { ChartingEntry, DynamicChartingEntry, Session, User } from '@/types';
 import { AdminRoute } from '@/components/auth/protected-route';
-import { ArrowLeft, ArrowRight, Search, Users, Activity, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, Users, Activity, CheckCircle2, Clock, ClipboardCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { tallyByStudent } from '@/lib/charting/check-ins';
 
 const BLUE = '#37b5ff';
 const GREEN = '#22c55e';
@@ -26,6 +27,9 @@ interface GoalieSummary {
   chartedSessions: number;
   completionRate: number;
   lastActive: Date | null;
+  /** Pillar check-ins saved on their own, with no logged session behind them. */
+  checkIns: number;
+  lastCheckIn: Date | null;
 }
 
 export default function AdminChartingGoaliesPage() {
@@ -93,11 +97,15 @@ function GoaliesContent() {
 
   const legacyBySession = new Map(entries.map(e => [e.sessionId, e]));
   const dynamicBySession = dynamicEntries.reduce((acc, e) => {
+    if (!e.sessionId) return acc;
     const existing = acc.get(e.sessionId) || [];
     existing.push(e);
     acc.set(e.sessionId, existing);
     return acc;
   }, new Map<string, DynamicChartingEntry[]>());
+
+  // Standalone pillar check-ins have no session, so the session counts below never see them.
+  const checkInTallies = tallyByStudent(dynamicEntries.filter(e => !e.sessionId));
 
   const buildGoalieSummary = (studentId: string): GoalieSummary => {
     const studentSessions = sessions.filter(s => s.studentId === studentId);
@@ -112,17 +120,18 @@ function GoaliesContent() {
     });
     const user = users.get(studentId);
     const completion = studentSessions.length > 0 ? (complete / studentSessions.length) * 100 : 0;
-    return { studentId, name: user?.displayName || user?.email || `Student ${studentId.slice(-6)}`, email: user?.email, avatar: user?.profileImage, totalSessions: studentSessions.length, completeSessions: complete, partialSessions: partial, chartedSessions: complete + partial, completionRate: completion, lastActive };
+    const tally = checkInTallies.get(studentId);
+    return { studentId, name: user?.displayName || user?.email || `Student ${studentId.slice(-6)}`, email: user?.email, avatar: user?.profileImage, totalSessions: studentSessions.length, completeSessions: complete, partialSessions: partial, chartedSessions: complete + partial, completionRate: completion, lastActive, checkIns: tally?.count ?? 0, lastCheckIn: tally?.latest ?? null };
   };
 
   const uniqueStudentIds = Array.from(new Set([...entries.map(e => e.studentId), ...dynamicEntries.map(e => e.studentId), ...sessions.map(s => s.studentId)]));
-  const goalies: GoalieSummary[] = uniqueStudentIds.filter(id => users.has(id)).map(buildGoalieSummary).filter(g => g.chartedSessions > 0 || g.totalSessions > 0);
+  const goalies: GoalieSummary[] = uniqueStudentIds.filter(id => users.has(id)).map(buildGoalieSummary).filter(g => g.chartedSessions > 0 || g.totalSessions > 0 || g.checkIns > 0);
   const filtered = goalies.filter(g => !searchQuery || g.name.toLowerCase().includes(searchQuery.toLowerCase()) || g.email?.toLowerCase().includes(searchQuery.toLowerCase()));
   const sorted = [...filtered].sort((a, b) => {
     switch (sortBy) {
       case 'completion': return b.completionRate - a.completionRate;
       case 'sessions': return b.totalSessions - a.totalSessions;
-      case 'recent': return (b.lastActive?.getTime() || 0) - (a.lastActive?.getTime() || 0);
+      case 'recent': return Math.max(b.lastActive?.getTime() || 0, b.lastCheckIn?.getTime() || 0) - Math.max(a.lastActive?.getTime() || 0, a.lastCheckIn?.getTime() || 0);
       case 'name': return a.name.localeCompare(b.name);
       default: return 0;
     }
@@ -131,6 +140,7 @@ function GoaliesContent() {
   const totalGoalies = goalies.length;
   const totalSessionsAcross = goalies.reduce((sum, g) => sum + g.totalSessions, 0);
   const totalChartedAcross = goalies.reduce((sum, g) => sum + g.chartedSessions, 0);
+  const totalCheckInsAcross = goalies.reduce((sum, g) => sum + g.checkIns, 0);
 
   if (loading) {
     return (
@@ -147,7 +157,7 @@ function GoaliesContent() {
         .cg-inp:focus { border-color: rgba(55,181,255,0.45) !important; }
         .cg-inp::placeholder { color: rgba(255,255,255,0.25) !important; }
         .cg-card:hover { border-color: rgba(55,181,255,0.3) !important; transform: translateY(-2px); }
-        @media (max-width: 1024px) { .cg-stats { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (max-width: 1024px) { .cg-stats { grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 640px) { .cg-stats { grid-template-columns: repeat(1, 1fr) !important; } }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -162,11 +172,12 @@ function GoaliesContent() {
         </div>
 
         {/* Summary strip */}
-        <div className="cg-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+        <div className="cg-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
           {[
             { label: 'Active Goalies', value: totalGoalies, icon: Users, color: BLUE },
             { label: 'Total Sessions', value: totalSessionsAcross, icon: Activity, color: AMBER },
             { label: 'Charted Sessions', value: totalChartedAcross, icon: CheckCircle2, color: GREEN },
+            { label: 'Pillar Check-ins', value: totalCheckInsAcross, icon: ClipboardCheck, color: BLUE },
           ].map(({ label, value, icon: Icon, color }) => (
             <div key={label} style={{ position: 'relative', ...card, padding: '18px', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}66, transparent)` }} />
@@ -206,10 +217,10 @@ function GoaliesContent() {
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
             <Users size={44} color="rgba(255,255,255,0.1)" style={{ margin: '0 auto 12px' }} />
             <p style={{ color: '#fff', fontWeight: 600, fontSize: '17px', marginBottom: '6px' }}>No goalies found</p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>{searchQuery ? 'Try adjusting your search.' : 'No goalies have charted any sessions yet.'}</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>{searchQuery ? 'Try adjusting your search.' : 'No goalies have charted a session or a pillar check-in yet.'}</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '16px' }}>
             {sorted.map(goalie => {
               const initials = goalie.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
               return (
@@ -231,7 +242,7 @@ function GoaliesContent() {
                   <div style={{ marginBottom: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600 }}>Completion rate</span>
-                      <span style={{ color: '#fff', fontWeight: 800, fontSize: '17px' }}>{goalie.completionRate.toFixed(0)}%</span>
+                      <span style={{ color: '#fff', fontWeight: 800, fontSize: '17px' }}>{goalie.totalSessions === 0 ? '—' : `${goalie.completionRate.toFixed(0)}%`}</span>
                     </div>
                     <div style={{ width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${Math.min(goalie.completionRate, 100)}%`, background: `linear-gradient(90deg, ${BLUE}, #0ea5e9)`, borderRadius: '3px', transition: 'width 0.5s' }} />
@@ -239,8 +250,8 @@ function GoaliesContent() {
                   </div>
 
                   {/* Stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
-                    {[['Total', goalie.totalSessions], ['Complete', goalie.completeSessions], ['Partial', goalie.partialSessions]].map(([label, value]) => (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
+                    {[['Total', goalie.totalSessions], ['Complete', goalie.completeSessions], ['Partial', goalie.partialSessions], ['Check-ins', goalie.checkIns]].map(([label, value]) => (
                       <div key={String(label)} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '10px 6px' }}>
                         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>{label}</p>
                         <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>{value}</p>
@@ -249,9 +260,10 @@ function GoaliesContent() {
                   </div>
 
                   {/* Last active */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px 12px', flexWrap: 'wrap', marginBottom: '16px' }}>
                     {goalie.lastActive && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}><Clock size={12} /> Last session {goalie.lastActive.toLocaleDateString()}</span>}
-                    {goalie.chartedSessions === 0 && <span style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>No entries yet</span>}
+                    {goalie.lastCheckIn && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}><ClipboardCheck size={12} /> Last check-in {goalie.lastCheckIn.toLocaleDateString()}</span>}
+                    {goalie.chartedSessions === 0 && goalie.checkIns === 0 && <span style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', padding: '1px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>No entries yet</span>}
                   </div>
 
                   {/* CTA */}

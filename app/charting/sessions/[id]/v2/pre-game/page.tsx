@@ -15,6 +15,8 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
+import { hasPreGameAnswer } from '@/lib/charting/v2-sections';
 
 // ─── Start Time Options ──────────────────────────────────────────────────────
 
@@ -39,6 +41,7 @@ const MENTAL_STATE_OPTIONS = [
 export default function V2PreGamePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const sessionId = params.id as string;
 
@@ -46,17 +49,10 @@ export default function V2PreGamePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [formData, setFormData] = useState<V2PreGameData>({
-    personalStartTime: 'at_the_rink',
-    mentalStateRating: 1,
-    mentalStateVoiceNote: undefined,
-    routineCompleted: true,
-    routineVoiceNote: undefined,
-    anxietyPresent: false,
-    anxietyVoiceNote: undefined,
-    targetStateAchieved: true,
-    targetStateVoiceNote: undefined,
-  });
+  // Every answer starts blank. The form used to open with "At the rink", a
+  // mental state of 1, routine and target met, and no stress already chosen, so
+  // a goalie who skipped a question was recorded as having given that answer.
+  const [formData, setFormData] = useState<V2PreGameData>({});
 
   // ── Load session & existing v2 data ──────────────────────────────────────
   useEffect(() => {
@@ -94,6 +90,10 @@ export default function V2PreGamePage() {
   // ── Save ─────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!user || !session) return;
+    if (!hasPreGameAnswer(formData)) {
+      toast.error('Answer at least one question before saving.');
+      return;
+    }
     setSaving(true);
     try {
       // Load existing entry to preserve other sections
@@ -125,7 +125,8 @@ export default function V2PreGamePage() {
       }
 
       toast.success('Pre-Game section saved!');
-      router.push(`/charting/sessions/${sessionId}`);
+      say('nextStep', 'pre-game');
+      router.push(`/charting/sessions/${sessionId}/v2/periods`);
     } catch (error) {
       console.error('Failed to save:', error);
       toast.error('Failed to save data');
@@ -174,15 +175,7 @@ export default function V2PreGamePage() {
           <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#7dd3fc] to-white bg-clip-text text-transparent">
             Pre-Game
           </h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="text-white rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: '#7dd3fc' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
       </div>
 
@@ -227,7 +220,7 @@ export default function V2PreGamePage() {
             </ContextualHelp>
 
             {/* Conditional voice for low ratings */}
-            {formData.mentalStateRating <= 2 && (
+            {formData.mentalStateRating !== undefined && formData.mentalStateRating <= 2 && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t" style={{ borderColor: 'rgba(55,181,255,0.15)' }}>
                 <p className="text-xs text-white/60 mb-2 italic">What is on your mind?</p>
                 <VoiceRecorder
@@ -246,7 +239,7 @@ export default function V2PreGamePage() {
               helpText="Did you complete your pre-game routine? Your routine is your anchor — it sets the stage for how you'll perform."
             >
               <YesNoToggle
-                value={formData.routineCompleted}
+                value={formData.routineCompleted ?? null}
                 onChange={(val) => update('routineCompleted', val)}
                 yesVoicePrompt="How did it go? Any highlights?"
                 noVoicePrompt="What got in the way?"
@@ -259,11 +252,11 @@ export default function V2PreGamePage() {
           {/* 4. Anxiety Present */}
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.28)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <ContextualHelp
-              label="Anxiety Present?"
+              label="Pre-Game Stress?"
               helpText="If anxiety is present, this is normal. What matters is what you do with it. Your response feeds your Mind Vault — methods that work get stored."
             >
               <YesNoToggle
-                value={formData.anxietyPresent}
+                value={formData.anxietyPresent ?? null}
                 onChange={(val) => update('anxietyPresent', val)}
                 yesVoicePrompt="What did you do with it?"
                 noVoicePrompt="How are you feeling going into the game?"
@@ -280,7 +273,7 @@ export default function V2PreGamePage() {
               helpText="Excited, calm, controlled — did you get there? Your target state is the mental place you need to be before competing."
             >
               <YesNoToggle
-                value={formData.targetStateAchieved}
+                value={formData.targetStateAchieved ?? null}
                 onChange={(val) => update('targetStateAchieved', val)}
                 yesVoicePrompt="Describe your mental state right now."
                 noVoicePrompt="What happened?"

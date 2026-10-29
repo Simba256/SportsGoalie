@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Calendar,
   TrendingUp,
@@ -12,8 +12,7 @@ import {
   Clock,
   Award,
   Zap,
-  ArrowUpRight,
-  ArrowDownRight,
+  RotateCcw,
   Trophy,
   Activity,
 } from 'lucide-react';
@@ -37,9 +36,20 @@ import {
 } from 'recharts';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { SkeletonAnalytics } from '@/components/ui/skeletons';
+import Link from 'next/link';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
+import { useAuth } from '@/lib/auth/context';
+import { EventVoice } from '@/components/audio/EventVoice';
+import { dynamicChartingService, formTemplateService } from '@/lib/database';
+import { countBoardCheckIns } from '@/lib/charting/pillar-boards';
+import { PILLARS } from '@/types';
+import { getScoreBand, getScoreBandRangeLabel, SCORE_BANDS, type ScoreTier } from '@/lib/config/score-bands';
 
 const BLUE = '#37b5ff';
+
+// The floor for the history tab's middle tile. Taken from the band table so the
+// label and the threshold it counts can never say two different things.
+const OWNING_IT = getScoreBand(70);
 const card = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px' };
 
 export default function ProgressPage() {
@@ -55,6 +65,25 @@ type TabKey = 'overview' | 'pillars' | 'performance' | 'history';
 function ProgressContent() {
   const { data, loading, error } = useAnalytics();
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const { user } = useAuth();
+  // Pillar-chart check-ins aren't Knowledge Checks, so they never reach the
+  // figures above; the count is fetched here so submitted check-ins still show.
+  // Only check-ins on a board the Progress Boards page lists are counted, so this
+  // number is the sum of that page's cards.
+  const [checkInCount, setCheckInCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    Promise.all([
+      formTemplateService.getActiveTemplatesForSport('Hockey'),
+      dynamicChartingService.getDynamicEntriesByStudent(user.id),
+    ]).then(([templates, entries]) => {
+      if (cancelled || !templates.success || !templates.data || !entries.success || !entries.data) return;
+      setCheckInCount(countBoardCheckIns(templates.data, entries.data));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [user]);
 
   if (loading) return <SkeletonAnalytics />;
 
@@ -77,19 +106,26 @@ function ProgressContent() {
     ? Math.round((data.consistency.thisMonthDays / data.consistency.daysInCurrentMonth) * 100)
     : 0;
 
-  const PILLAR_ORDER = ['MIND-SET', 'SKATING', '7AMS', '7PTS', 'FORM', 'TEAM-PRACTICE', 'LIFE STYLE'];
+  // Michael's approved pillar order is the order of the PILLARS list. Sorting is
+  // keyed on the pillar's slug, not its display name: Pillar 4's short name is
+  // "6Z-7PS", which a name match missed, so it was pushed to the end of the list.
+  const PILLAR_ORDER: string[] = PILLARS.map(p => p.slug);
 
-  const scoreDistribution = [
-    { name: '95-100 CLUB', value: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },
-    { name: '80-100 CLUB', value: data.attempts.filter(a => a.percentage >= 80 && a.percentage < 95).length, color: '#60cdff' },
-    { name: 'OWNING IT', value: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length, color: BLUE },
-    { name: 'DEVELOPING', value: data.attempts.filter(a => a.percentage >= 40 && a.percentage < 70).length, color: '#93c5fd' },
-    { name: 'FOUNDATION', value: data.attempts.filter(a => a.percentage < 40).length, color: '#f59e0b' },
-  ].filter(s => s.value > 0);
+  // One pass over the attempts, shared by the ring and the legend beside it. The
+  // bands live in score-bands.ts so the two can never drift apart again.
+  const attemptsByBand = new Map<ScoreTier, number>();
+  data.attempts.forEach(a => {
+    const tier = getScoreBand(a.percentage).tier;
+    attemptsByBand.set(tier, (attemptsByBand.get(tier) ?? 0) + 1);
+  });
+
+  const scoreDistribution = SCORE_BANDS
+    .map(band => ({ name: band.label, value: attemptsByBand.get(band.tier) ?? 0, color: band.color }))
+    .filter(s => s.value > 0);
 
   const sortedPillarBreakdown = [...data.pillarBreakdown].sort((a, b) => {
-    const ai = PILLAR_ORDER.findIndex(p => a.pillarName.toUpperCase().includes(p) || p.includes(a.pillarName.toUpperCase()));
-    const bi = PILLAR_ORDER.findIndex(p => b.pillarName.toUpperCase().includes(p) || p.includes(b.pillarName.toUpperCase()));
+    const ai = PILLAR_ORDER.indexOf(a.pillarId);
+    const bi = PILLAR_ORDER.indexOf(b.pillarId);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
@@ -116,28 +152,30 @@ function ProgressContent() {
             <span style={{ color: BLUE }}>Learning Journey</span>
           </h1>
           <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto' }}>
-            Detailed analytics and insights to measure your growth across all seven pillars.
+            Detailed analytics and insights to measure your growth across all eight pillars.
           </p>
         </div>
       </section>
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(16px,3vw,28px) clamp(14px,4vw,24px) 48px' }}>
         <style>{`
-          .progress-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-          @media (min-width: 768px) { .progress-stats { grid-template-columns: repeat(4, 1fr); } }
-          .progress-two-col { display: grid; grid-template-columns: 1fr; gap: 16px; }
-          @media (min-width: 768px) { .progress-two-col { grid-template-columns: 1fr 1fr; } }
-          .progress-perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-          @media (min-width: 640px) { .progress-perf-grid { grid-template-columns: repeat(4, 1fr); } }
-          .progress-streak-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-          @media (min-width: 768px) { .progress-streak-grid { grid-template-columns: 2fr 3fr; } }
-          .progress-pillar-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-          @media (min-width: 640px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr; } }
-          @media (min-width: 1024px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr 1fr; } }
-          .progress-eff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-          @media (min-width: 768px) { .progress-eff-grid { grid-template-columns: repeat(5, 1fr); } }
-          .progress-hist-sum { display: grid; grid-template-columns: 1fr; gap: 10px; }
-          @media (min-width: 480px) { .progress-hist-sum { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+          .progress-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+          @media (min-width: 520px) { .progress-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          .progress-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+          @media (min-width: 768px) { .progress-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          .progress-two-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+          @media (min-width: 768px) { .progress-two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+          .progress-perf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+          @media (min-width: 640px) { .progress-perf-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          .progress-streak-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+          @media (min-width: 768px) { .progress-streak-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); } }
+          .progress-pillar-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+          @media (min-width: 640px) { .progress-pillar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+          @media (min-width: 1024px) { .progress-pillar-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+          .progress-eff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+          @media (min-width: 768px) { .progress-eff-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+          .progress-hist-sum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+          @media (min-width: 480px) { .progress-hist-sum { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
         `}</style>
 
         {/* Stat Cards */}
@@ -145,16 +183,28 @@ function ProgressContent() {
           <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" icon={<Clock size={17} color={BLUE} />} />
           <BigStatCard label="Knowledge Checks" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} icon={<Trophy size={17} color={BLUE} />} />
           <BigStatCard label="Avg Grasp Level" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
-          <BigStatCard label="Current Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
+          <BigStatCard label="Learning Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} ${data.longestStreak === 1 ? 'day' : 'days'}`} icon={<Flame size={17} color={BLUE} />} />
         </div>
 
+        {checkInCount !== null && checkInCount > 0 && (
+          <Link
+            href="/charting/pillars"
+            style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '14px 18px', marginBottom: '24px', textDecoration: 'none' }}
+          >
+            <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>
+              Pillar Check-ins: {checkInCount} submitted
+            </span>
+            <span style={{ color: BLUE, fontSize: '12px', fontWeight: 700 }}>Open Progress Boards →</span>
+          </Link>
+        )}
+
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '24px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px', flexWrap: 'wrap' }}>
+        <div className="progress-tabs" style={{ marginBottom: '24px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px' }}>
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              style={{ flex: 1, minWidth: '80px', padding: '9px 16px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+              style={{ minWidth: 0, padding: '9px 8px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
                 background: activeTab === t.key ? BLUE : 'transparent',
                 color: activeTab === t.key ? '#000f28' : 'rgba(255,255,255,0.5)',
               }}
@@ -208,7 +258,7 @@ function ProgressContent() {
                   <GlowProgressBar label="This Month" current={data.consistency.thisMonthDays} total={data.consistency.daysInCurrentMonth} suffix="days" pct={monthPct} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                  <MiniStat label="Pass Rate" value={`${data.completionRate}%`} icon={<CheckCircle2 size={14} color={BLUE} />} />
+                  <MiniStat label="KA SCORE" value={`${data.completionRate}%`} icon={<CheckCircle2 size={14} color={BLUE} />} />
                   <MiniStat label="Avg Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime}m` : '--'} icon={<Clock size={14} color={BLUE} />} />
                 </div>
               </div>
@@ -236,17 +286,11 @@ function ProgressContent() {
                       </div>
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {[
-                        { label: '95-100 CLUB (95-100%)', count: data.attempts.filter(a => a.percentage >= 95).length, color: '#fbbf24' },
-                        { label: '80-100 CLUB (80-94%)', count: data.attempts.filter(a => a.percentage >= 80 && a.percentage < 95).length, color: '#60cdff' },
-                        { label: 'OWNING IT (70-79%)', count: data.attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length, color: BLUE },
-                        { label: 'DEVELOPING (40-69%)', count: data.attempts.filter(a => a.percentage >= 40 && a.percentage < 70).length, color: '#93c5fd' },
-                        { label: 'FOUNDATION (0-39%)', count: data.attempts.filter(a => a.percentage < 40).length, color: '#f59e0b' },
-                      ].map(item => (
-                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', flex: 1 }}>{item.label}</span>
-                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{item.count}</span>
+                      {SCORE_BANDS.map(band => (
+                        <div key={band.tier} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: band.color, flexShrink: 0 }} />
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', flex: 1 }}>{getScoreBandRangeLabel(band)}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{attemptsByBand.get(band.tier) ?? 0}</span>
                         </div>
                       ))}
                     </div>
@@ -321,7 +365,7 @@ function ProgressContent() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="progress-perf-grid">
               <HighlightCard icon={<Clock size={16} color={BLUE} />} label="Avg KC Time" value={data.avgSessionTime > 0 ? `${data.avgSessionTime} min` : '--'} />
-              <HighlightCard icon={<CheckCircle2 size={16} color={BLUE} />} label="Pass Rate" value={`${data.completionRate}%`} />
+              <HighlightCard icon={<CheckCircle2 size={16} color={BLUE} />} label="KA SCORE" value={`${data.completionRate}%`} />
               <HighlightCard icon={<BookOpen size={16} color={BLUE} />} label="Skills Covered" value={data.uniqueSkills} />
               <HighlightCard icon={<Award size={16} color={BLUE} />} label="Best Score" value={`${data.bestScore}%`} />
             </div>
@@ -338,9 +382,9 @@ function ProgressContent() {
                     <span style={{ fontSize: '28px', fontWeight: 900, color: '#000f28' }}>{data.currentStreak}</span>
                   </div>
                   <div>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Day Streak</p>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Day Learning Streak</p>
                     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
-                      {data.currentStreak === 0 ? 'Start a quiz today!' : data.currentStreak >= data.longestStreak ? 'Personal best!' : `${data.longestStreak - data.currentStreak} days to beat your best`}
+                      {data.currentStreak === 0 ? 'Start a Knowledge Check today!' : data.currentStreak >= data.longestStreak ? 'Personal best!' : `${data.longestStreak - data.currentStreak} days to beat your best`}
                     </p>
                   </div>
                 </div>
@@ -420,7 +464,7 @@ function ProgressContent() {
               <div className="progress-hist-sum">
                 {[
                   { label: 'Total Attempts', value: data.totalQuizzes },
-                  { label: 'Passed', value: data.attempts.filter(a => a.percentage >= 70).length },
+                  { label: `${OWNING_IT.label} OR BETTER`, value: data.attempts.filter(a => a.percentage >= OWNING_IT.min).length },
                   { label: 'Best Score', value: `${data.bestScore}%` },
                 ].map(s => (
                   <div key={s.label} style={{ ...card, padding: '18px', textAlign: 'center' }}>
@@ -449,27 +493,33 @@ function ProgressContent() {
               {data.recentAttempts.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {data.recentAttempts.map((attempt, idx) => {
-                    const passed = attempt.percentage >= 70;
+                    const band = getScoreBand(attempt.percentage);
                     return (
-                      <div key={attempt.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '12px', border: `1px solid ${passed ? 'rgba(55,181,255,0.2)' : 'rgba(248,113,113,0.2)'}`, background: passed ? 'rgba(55,181,255,0.04)' : 'rgba(248,113,113,0.04)', transition: 'all 0.2s' }}>
+                      <div key={attempt.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '12px', border: `1px solid ${band.color}33`, background: `${band.color}0a` }}>
                         <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', width: '20px', textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: passed ? 'rgba(55,181,255,0.15)' : 'rgba(248,113,113,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          {passed ? <ArrowUpRight size={16} color={BLUE} /> : <ArrowDownRight size={16} color="#f87171" />}
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${band.color}26`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Target size={16} color={band.color} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{attempt.pillarName}</p>
-                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{attempt.quizTitle || attempt.pillarName || 'Knowledge Check'}</p>
+                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {attempt.submittedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             {attempt.timeSpent > 0 && ` · ${attempt.timeSpent}m`}
+                            {attempt.pillarName && ` · ${attempt.pillarName}`}
                           </p>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <p style={{ fontSize: '16px', fontWeight: 800, color: passed ? BLUE : '#f87171' }}>{attempt.percentage}%</p>
-                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{passed ? 'Passed' : 'Retry'}</p>
+                          <p style={{ fontSize: '16px', fontWeight: 800, color: band.color }}>{attempt.percentage}%</p>
+                          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{band.label}</p>
                         </div>
-                        <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', flexShrink: 0 }}>
-                          <div style={{ height: '100%', borderRadius: '99px', background: passed ? BLUE : '#f87171', width: `${attempt.percentage}%` }} />
-                        </div>
+                        <Link
+                          href={`/quiz/video/${attempt.quizId}`}
+                          aria-label={`Retake ${attempt.quizTitle || 'this Knowledge Check'}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', width: '84px', flexShrink: 0, padding: '7px 0', borderRadius: '99px', border: `1px solid ${BLUE}40`, background: 'rgba(55,181,255,0.1)', color: BLUE, fontSize: '11px', fontWeight: 700, textDecoration: 'none' }}
+                        >
+                          <RotateCcw size={12} />
+                          Retake
+                        </Link>
                       </div>
                     );
                   })}
@@ -489,13 +539,13 @@ function ProgressContent() {
 
 function BigStatCard({ label, value, sub, icon }: { label: string; value: string | number; sub: string; icon: React.ReactNode }) {
   return (
-    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>{label}</p>
-        <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: 'clamp(12px, 3.5vw, 20px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px', minHeight: '140px', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+        <p style={{ fontSize: 'clamp(9px, 2.4vw, 10px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 'clamp(0.3px, 0.2vw, 2px)', color: 'rgba(255,255,255,0.4)', minWidth: 0, overflowWrap: 'anywhere' }}>{label}</p>
+        <div style={{ width: 'clamp(28px, 8vw, 34px)', height: 'clamp(28px, 8vw, 34px)', borderRadius: '9px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       </div>
       <div>
-        <p style={{ fontSize: '42px', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>{value}</p>
+        <p style={{ fontSize: 'clamp(32px, 9vw, 42px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>{value}</p>
         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>{sub}</p>
       </div>
     </div>
@@ -553,6 +603,7 @@ function EffTile({ label, value, icon }: { label: string; value: string | number
 }
 
 function PillarCard({ pillar }: { pillar: PillarBreakdown }) {
+  const band = getScoreBand(pillar.avgScore);
   return (
     <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '14px', padding: '18px 20px', transition: 'all 0.3s' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
@@ -570,8 +621,8 @@ function PillarCard({ pillar }: { pillar: PillarBreakdown }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
         <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>Best: {pillar.bestScore}%</span>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: pillar.avgScore >= 95 ? '#fbbf24' : pillar.avgScore >= 80 ? '#60cdff' : pillar.avgScore >= 70 ? BLUE : pillar.avgScore >= 40 ? '#93c5fd' : '#f59e0b' }}>
-          {pillar.avgScore >= 95 ? '95-100 CLUB' : pillar.avgScore >= 80 ? '80-100 CLUB' : pillar.avgScore >= 70 ? 'OWNING IT' : pillar.avgScore >= 40 ? 'DEVELOPING' : 'FOUNDATION'}
+        <span style={{ fontSize: '11px', fontWeight: 600, color: band.color }}>
+          {band.label}
         </span>
       </div>
     </div>
@@ -617,6 +668,7 @@ function PillarTooltip({ active, payload }: { active?: boolean; payload?: Array<
 function EmptyState({ icon, title, message }: { icon: React.ReactNode; title?: string; message: string }) {
   return (
     <div style={{ textAlign: 'center', padding: '40px 0' }}>
+      <EventVoice event="emptyScreen" />
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>{icon}</div>
       {title && <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>{title}</p>}
       <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', maxWidth: '280px', margin: '0 auto' }}>{message}</p>

@@ -278,12 +278,12 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
 
       {/* Form Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="pre-game">Pre-Game</TabsTrigger>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="periods">Periods</TabsTrigger>
-          <TabsTrigger value="overtime">OT/Shootout</TabsTrigger>
-          <TabsTrigger value="post-game">Post-Game</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:grid-cols-5">
+          <TabsTrigger value="pre-game" className="py-2">Pre-Game</TabsTrigger>
+          <TabsTrigger value="overview" className="py-2">Overview</TabsTrigger>
+          <TabsTrigger value="periods" className="py-2">Periods</TabsTrigger>
+          <TabsTrigger value="overtime" className="py-2">OT/Shootout</TabsTrigger>
+          <TabsTrigger value="post-game" className="py-2">Post-Game</TabsTrigger>
         </TabsList>
 
         {/* Pre-Game Tab */}
@@ -307,7 +307,7 @@ export default function LegacyChartingForm({ session, user }: LegacyChartingForm
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-bold mb-4">Mind-Set</h2>
+            <h2 className="text-xl font-bold mb-4">MindSet</h2>
             <div className="space-y-3">
               <YesNoField
                 label="Mind Cleared"

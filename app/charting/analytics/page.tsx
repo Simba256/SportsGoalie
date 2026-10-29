@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { SkeletonAnalytics } from '@/components/ui/skeletons';
-import { chartingService } from '@/lib/database';
-import { Session, ChartingEntry } from '@/types';
+import { chartingService, dynamicChartingService, formTemplateService } from '@/lib/database';
+import { Session, ChartingEntry, DynamicChartingEntry, FormTemplate } from '@/types';
+import { toDateSafe as toDateSafeShared } from '@/lib/utils/timestamp';
+import { filledPeriods } from '@/lib/charting/v2-periods';
+import { hasPostGameAnswer, hasPreGameAnswer } from '@/lib/charting/v2-sections';
+import { CheckInAnswers } from '@/components/charting/CheckInAnswers';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -46,10 +51,15 @@ export default function ChartingAnalyticsPage() {
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [entries, setEntries] = useState<ChartingEntry[]>([]);
+  // Pillar-chart check-ins live in their own collection, apart from sessions, so
+  // they are loaded separately and shown beside the session stats.
+  const [checkIns, setCheckIns] = useState<DynamicChartingEntry[]>([]);
+  const [checkInTemplates, setCheckInTemplates] = useState<Record<string, FormTemplate>>({});
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [openV2Game, setOpenV2Game] = useState(false);
   const [openV2Practice, setOpenV2Practice] = useState(false);
+  const [openCheckInId, setOpenCheckInId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -59,12 +69,24 @@ export default function ChartingAnalyticsPage() {
     if (!user) return;
     try {
       setLoading(true);
-      const [sessionsResult, allEntriesResult] = await Promise.all([
+      const [sessionsResult, allEntriesResult, checkInsResult] = await Promise.all([
         chartingService.getSessionsByStudent(user.id, { limit: 500, orderBy: 'date', orderDirection: 'desc' }),
         chartingService.getChartingEntriesByStudent(user.id),
+        dynamicChartingService.getDynamicEntriesByStudent(user.id),
       ]);
       if (sessionsResult.success && sessionsResult.data) setSessions(sessionsResult.data);
       if (allEntriesResult.success && allEntriesResult.data) setEntries(allEntriesResult.data);
+      if (checkInsResult.success && checkInsResult.data) {
+        const loaded = checkInsResult.data;
+        setCheckIns(loaded);
+        const templateIds = Array.from(new Set(loaded.map((e) => e.formTemplateId)));
+        const templateResults = await Promise.all(templateIds.map((id) => formTemplateService.getTemplate(id)));
+        const byId: Record<string, FormTemplate> = {};
+        templateResults.forEach((r, i) => {
+          if (r.success && r.data) byId[templateIds[i]] = r.data;
+        });
+        setCheckInTemplates(byId);
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -84,6 +106,22 @@ export default function ChartingAnalyticsPage() {
     return sessions.filter((s) => {
       const sessionDate = toDateSafe((s as unknown as { date?: unknown }).date);
       return sessionDate ? sessionDate >= startDate : false;
+    });
+  };
+
+  const getFilteredCheckIns = () => {
+    const now = new Date();
+    let startDate: Date | null;
+    switch (timeRange) {
+      case 'week': startDate = startOfWeek(now); break;
+      case 'month': startDate = startOfMonth(now); break;
+      case '3months': startDate = subMonths(now, 3); break;
+      default: startDate = null;
+    }
+    if (!startDate) return checkIns;
+    return checkIns.filter((e) => {
+      const d = toDateSafeShared(e.submittedAt);
+      return d ? d >= startDate! : false;
     });
   };
 
@@ -287,9 +325,9 @@ export default function ChartingAnalyticsPage() {
   const extractV2 = (entry: ChartingEntry) => {
     const raw = entry as unknown as Record<string, unknown>;
     return {
-      preGame: raw.v2PreGame as { routineCompleted: boolean; anxietyPresent: boolean; targetStateAchieved: boolean; mentalStateRating: number } | undefined,
-      periods: raw.v2Periods as Record<'period1' | 'period2' | 'period3' | 'overtime', { mindControlRating: number; periodFactorRatio: number; goalsAgainst: number; shots: number; saves: number; standardSaves: number; keySaves: number; weakGoals: number; midChallengeCount: number; highChallengeCount: number; goals?: { isGoodGoal: boolean }[] } | undefined> | undefined,
-      postGame: raw.v2PostGame as { overallGameFactorRating: number; gameRetentionRating: number; goodDecisionRate: number; mindVaultEntry?: string } | undefined,
+      preGame: raw.v2PreGame as { routineCompleted?: boolean; anxietyPresent?: boolean; targetStateAchieved?: boolean; mentalStateRating?: number; personalStartTime?: string } | undefined,
+      periods: raw.v2Periods as Record<'period1' | 'period2' | 'period3' | 'overtime', { mindControlRating?: number; periodFactorRatio?: number; goalsAgainst: number; shots: number; saves: number; standardSaves: number; keySaves: number; weakGoals: number; midChallengeCount: number; highChallengeCount: number; goals?: { isGoodGoal: boolean }[] } | undefined> | undefined,
+      postGame: raw.v2PostGame as { overallGameFactorRating?: number; gameRetentionRating?: number; goodDecisionRate?: number; mindVaultEntry?: string; overallFeeling?: string; improvementFocus?: string; whatWillYouDoDifferently?: string } | undefined,
       practice: raw.v2Practice as { practiceValueRating: number; technicalEyeDevelopmentRating: number; designatedTrainingReceived: boolean; designatedTrainingDuration?: number; videoCaptured: boolean; practiceIndex?: { category: 'immediate_development' | 'refinement' | 'maintenance' }[]; indexItemsWorkedOn?: string[]; improvementRatings?: { rating: number }[]; mindVaultEntry?: string } | undefined,
     };
   };
@@ -297,22 +335,34 @@ export default function ChartingAnalyticsPage() {
   const calculateV2GameStats = () => {
     const filtered = getFilteredEntries();
     let totalV2 = 0, mindSample = 0, routine = 0, anxiety = 0, targetState = 0, mentalStateSum = 0;
-    let periodSamples = 0, mindSum = 0, factorSum = 0, goalsAgainst = 0, goodGoals = 0, badGoals = 0;
+    // Every rating and yes/no answer is optional, so each gets its own sample
+    // count. Dividing by the number of games or periods would score a skipped
+    // question as a zero (or a "no") and drag the average down.
+    let routineSamples = 0, anxietySamples = 0, targetSamples = 0, mentalStateSamples = 0;
+    let periodSamples = 0, mindSum = 0, mindSamples = 0, factorSum = 0, factorSamples = 0, goalsAgainst = 0, goodGoals = 0, badGoals = 0;
     let totalShots = 0, totalSaves = 0, totalStandardSaves = 0, totalKeySaves = 0, totalWeakGoals = 0, totalMidChallenge = 0, totalHighChallenge = 0;
-    let postSample = 0, overallFactorSum = 0, retentionSum = 0, decisionSum = 0, vaultCount = 0;
+    let postSample = 0, overallFactorSum = 0, overallFactorSamples = 0, retentionSum = 0, retentionSamples = 0, decisionSum = 0, decisionSamples = 0, vaultCount = 0;
 
     filtered.forEach((entry) => {
       const v2 = extractV2(entry);
-      if (!v2.preGame && !v2.periods && !v2.postGame) return;
+      const answeredPeriods = filledPeriods(v2.periods);
+      const preAnswered = hasPreGameAnswer(v2.preGame);
+      const postAnswered = hasPostGameAnswer(v2.postGame);
+      // A section opened and saved with nothing in it does not make a game.
+      if (!preAnswered && answeredPeriods.length === 0 && !postAnswered) return;
       totalV2++;
-      if (v2.preGame) { mindSample++; if (v2.preGame.routineCompleted) routine++; if (v2.preGame.anxietyPresent) anxiety++; if (v2.preGame.targetStateAchieved) targetState++; mentalStateSum += v2.preGame.mentalStateRating || 0; }
-      if (v2.periods) {
-        (['period1', 'period2', 'period3', 'overtime'] as const).forEach((key) => {
-          const p = v2.periods?.[key];
-          if (!p) return;
+      if (preAnswered && v2.preGame) {
+        mindSample++;
+        if (typeof v2.preGame.routineCompleted === 'boolean') { routineSamples++; if (v2.preGame.routineCompleted) routine++; }
+        if (typeof v2.preGame.anxietyPresent === 'boolean') { anxietySamples++; if (v2.preGame.anxietyPresent) anxiety++; }
+        if (typeof v2.preGame.targetStateAchieved === 'boolean') { targetSamples++; if (v2.preGame.targetStateAchieved) targetState++; }
+        if (typeof v2.preGame.mentalStateRating === 'number') { mentalStateSamples++; mentalStateSum += v2.preGame.mentalStateRating; }
+      }
+      if (answeredPeriods.length > 0) {
+        answeredPeriods.forEach(([, p]) => {
           periodSamples++;
-          mindSum += p.mindControlRating || 0;
-          factorSum += p.periodFactorRatio || 0;
+          if (typeof p.mindControlRating === 'number') { mindSum += p.mindControlRating; mindSamples++; }
+          if (typeof p.periodFactorRatio === 'number') { factorSum += p.periodFactorRatio; factorSamples++; }
           goalsAgainst += p.goalsAgainst || 0;
           totalShots        += p.shots             || 0;
           totalSaves        += p.saves             || 0;
@@ -326,13 +376,19 @@ export default function ChartingAnalyticsPage() {
           badGoals += (p.goals?.length || 0) - good;
         });
       }
-      if (v2.postGame) { postSample++; overallFactorSum += v2.postGame.overallGameFactorRating || 0; retentionSum += v2.postGame.gameRetentionRating || 0; decisionSum += v2.postGame.goodDecisionRate || 0; if (v2.postGame.mindVaultEntry?.trim().length) vaultCount++; }
+      if (v2.postGame) {
+        if (postAnswered) postSample++;
+        if (typeof v2.postGame.overallGameFactorRating === 'number') { overallFactorSum += v2.postGame.overallGameFactorRating; overallFactorSamples++; }
+        if (typeof v2.postGame.gameRetentionRating === 'number') { retentionSum += v2.postGame.gameRetentionRating; retentionSamples++; }
+        if (typeof v2.postGame.goodDecisionRate === 'number') { decisionSum += v2.postGame.goodDecisionRate; decisionSamples++; }
+        if (v2.postGame.mindVaultEntry?.trim().length) vaultCount++;
+      }
     });
 
     if (totalV2 === 0) return null;
     const avg = (sum: number, count: number) => (count > 0 ? sum / count : 0);
     const savePct = totalShots > 0 ? ((totalShots - goalsAgainst) / totalShots) * 100 : 0;
-    return { totalV2, mindSample, routinePct: avg(routine, mindSample) * 100, anxietyPct: avg(anxiety, mindSample) * 100, targetStatePct: avg(targetState, mindSample) * 100, avgMentalState: avg(mentalStateSum, mindSample), periodSamples, avgMindControl: avg(mindSum, periodSamples), avgFactorRatio: avg(factorSum, periodSamples), goalsAgainst, goodGoals, badGoals, goodBadRatio: badGoals > 0 ? goodGoals / badGoals : goodGoals, totalShots, totalSaves, totalStandardSaves, totalKeySaves, totalWeakGoals, totalMidChallenge, totalHighChallenge, savePct, postSample, avgOverallFactor: avg(overallFactorSum, postSample), avgRetention: avg(retentionSum, postSample), avgGoodDecisionRate: avg(decisionSum, postSample), vaultCount };
+    return { totalV2, mindSample, routinePct: avg(routine, routineSamples) * 100, anxietyPct: avg(anxiety, anxietySamples) * 100, targetStatePct: avg(targetState, targetSamples) * 100, avgMentalState: avg(mentalStateSum, mentalStateSamples), periodSamples, avgMindControl: avg(mindSum, mindSamples), factorSamples, avgFactorRatio: avg(factorSum, factorSamples), goalsAgainst, goodGoals, badGoals, goodBadRatio: badGoals > 0 ? goodGoals / badGoals : goodGoals, totalShots, totalSaves, totalStandardSaves, totalKeySaves, totalWeakGoals, totalMidChallenge, totalHighChallenge, savePct, postSample, avgOverallFactor: avg(overallFactorSum, overallFactorSamples), avgRetention: avg(retentionSum, retentionSamples), avgGoodDecisionRate: avg(decisionSum, decisionSamples), vaultCount };
   };
 
   const calculateV2PracticeStats = () => {
@@ -376,6 +432,7 @@ export default function ChartingAnalyticsPage() {
   const preGameStats = calculatePreGameStats();
   const postGameStats = calculatePostGameStats();
   const filteredSessions = getFilteredSessions();
+  const filteredCheckIns = getFilteredCheckIns();
 
   // ── helpers ──────────────────────────────────────────────────────────────────
   const getTrendIcon = (trend: string) => {
@@ -473,8 +530,8 @@ export default function ChartingAnalyticsPage() {
                   Analyse Your <span style={{ color: CYAN, textShadow: `0 0 20px rgba(55,181,255,0.4)` }}>Game</span>
                 </h1>
                 <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, maxWidth: '380px' }}>
-                  {sessions.length > 0
-                    ? `${sessions.length} total sessions · ${entries.length} charted · select a time window below`
+                  {sessions.length > 0 || checkIns.length > 0
+                    ? `${sessions.length} total sessions · ${entries.length} charted · ${checkIns.length} pillar check-in${checkIns.length === 1 ? '' : 's'} · select a time window below`
                     : 'Chart your sessions to unlock deep performance insights.'}
                 </p>
               </div>
@@ -491,6 +548,7 @@ export default function ChartingAnalyticsPage() {
           <AnMetricCard label="Game Sessions"  value={sessions.filter(s => s.type === 'game').length}     sub="game sessions"     color={CORAL}  icon="games" />
           <AnMetricCard label="Practice"       value={sessions.filter(s => s.type === 'practice').length} sub="practice sessions" color={MINT}   icon="practice" />
           <AnMetricCard label="Charted"        value={entries.length}                                     sub="with chart data"   color={VIOLET} icon="charted" />
+          <AnMetricCard label="Pillar Check-ins" value={checkIns.length}                                  sub="pillar charts"     color={CYAN}   icon="charted" />
         </div>
 
         {/* ── Time Range Filter ─────────────────────────────────────────────── */}
@@ -552,9 +610,10 @@ export default function ChartingAnalyticsPage() {
             {openV2Game && (
               <div style={{ borderRadius: '18px', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: `1px solid rgba(248,113,113,0.18)`, padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatTile label="Mind Control Avg" value={v2GameStats.avgMindControl.toFixed(1)} unit="/ 5" sub={`${v2GameStats.periodSamples} periods`} accent={VIOLET} />
-                  <StatTile label="Factor Ratio Avg" value={v2GameStats.avgFactorRatio.toFixed(1)} unit="/ 5" sub="Across periods" accent={CORAL} />
-                  <StatTile label="Good / Bad Goals" value={`${v2GameStats.goodGoals} / ${v2GameStats.badGoals}`} sub={`Ratio ${v2GameStats.goodBadRatio.toFixed(2)}:1`} accent={MINT} />
+                  <StatTile label="Emotional Balance Avg" value={v2GameStats.avgMindControl.toFixed(1)} unit="/ 5" sub={`${v2GameStats.periodSamples} periods`} accent={VIOLET} />
+                  {/* Factor Ratio is optional — with nothing rated there is no average to show, and "0.0 / 5" would read as a real score below the scale's floor. */}
+                  <StatTile label="Factor Ratio Avg" value={v2GameStats.factorSamples > 0 ? v2GameStats.avgFactorRatio.toFixed(1) : '—'} unit={v2GameStats.factorSamples > 0 ? '/ 5' : undefined} sub={v2GameStats.factorSamples > 0 ? `${v2GameStats.factorSamples} rated` : 'Not rated'} accent={CORAL} />
+                  <StatTile label="Good / Weak Goals" value={`${v2GameStats.goodGoals} / ${v2GameStats.badGoals}`} sub={`Ratio ${v2GameStats.goodBadRatio.toFixed(2)}:1`} accent={MINT} />
                   <StatTile label="Goals Against" value={v2GameStats.goalsAgainst} sub="Total across sessions" accent={CORAL} />
                 </div>
 
@@ -596,7 +655,7 @@ export default function ChartingAnalyticsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
                       <ProgressRow label="Routine Completed" value={`${v2GameStats.routinePct.toFixed(0)}%`} />
                       <ProgressRow label="Target State" value={`${v2GameStats.targetStatePct.toFixed(0)}%`} />
-                      <ProgressRow label="Anxiety Present" value={`${v2GameStats.anxietyPct.toFixed(0)}%`} />
+                      <ProgressRow label="Pre-Game Stress" value={`${v2GameStats.anxietyPct.toFixed(0)}%`} />
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Avg Mental State</p>
                         <p className="text-base font-black text-white tabular-nums">{v2GameStats.avgMentalState.toFixed(1)}<span className="text-xs font-medium text-white/40 ml-1">/ 5</span></p>
@@ -615,7 +674,7 @@ export default function ChartingAnalyticsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
                       <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Overall Game Factor</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgOverallFactor.toFixed(1)}<span className="text-xs text-white/40 ml-1">/ 5</span></p></div>
                       <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Game Retention</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgRetention.toFixed(1)}<span className="text-xs text-white/40 ml-1">/ 5</span></p></div>
-                      <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Good Decision Rate</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgGoodDecisionRate.toFixed(0)}%</p></div>
+                      <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Good Decision Factor</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.avgGoodDecisionRate.toFixed(0)}%</p></div>
                       <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Mind Vault Entries</p><p className="text-base font-black text-white tabular-nums">{v2GameStats.vaultCount}</p></div>
                     </div>
                   </div>
@@ -708,9 +767,58 @@ export default function ChartingAnalyticsPage() {
           </div>
         )}
 
+        {/* ── Pillar check-ins ──────────────────────────────────────────────── */}
+        {filteredCheckIns.length > 0 && (
+          <SectionCard>
+            <SectionTitle>Pillar Check-ins</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {filteredCheckIns.slice(0, 20).map((entry) => {
+                const template = checkInTemplates[entry.formTemplateId];
+                const date = toDateSafeShared(entry.submittedAt);
+                const board = template ? `/charting/pillars/${template.pillar}/history` : null;
+                const open = openCheckInId === entry.id;
+                const Chevron = open ? ChevronDown : ChevronRight;
+                return (
+                  <div key={entry.id} style={{ ...innerCard, borderRadius: '12px' }}>
+                    <button
+                      type="button"
+                      disabled={!template}
+                      onClick={() => setOpenCheckInId(open ? null : entry.id)}
+                      aria-expanded={open}
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      style={{ padding: '12px 16px', background: 'transparent', border: 'none', cursor: template ? 'pointer' : 'default' }}
+                    >
+                      <div className="min-w-0">
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{template?.name ?? 'Pillar chart'}</p>
+                        <p style={{ fontSize: '11px', color: MUTED, marginTop: '2px' }}>{date ? format(date, 'MMM d, yyyy · h:mm a') : 'Date unavailable'}</p>
+                      </div>
+                      {template && <Chevron className="w-4 h-4 flex-shrink-0" style={{ color: MUTED }} />}
+                    </button>
+                    {open && template && (
+                      <div style={{ padding: '14px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                        <CheckInAnswers entry={entry} template={template} />
+                        {board && (
+                          <button
+                            type="button"
+                            onClick={() => router.push(board)}
+                            className="flex items-center gap-1"
+                            style={{ marginTop: '14px', fontSize: '12px', fontWeight: 700, color: CYAN, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+                          >
+                            View Progress Board <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
+        )}
+
         {/* ── Legacy analytics (only shown if there's data) ─────────────────── */}
         {filteredSessions.length === 0 ? (
-          <div style={{ borderRadius: '18px', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.2)', padding: '64px 32px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+          filteredCheckIns.length > 0 ? null : <div style={{ borderRadius: '18px', background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.2)', padding: '64px 32px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
             <BarChart3 className="w-14 h-14 mx-auto mb-4" style={{ color: 'rgba(55,181,255,0.3)' }} />
             <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>No Sessions Found</h3>
             <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', marginBottom: '20px' }}>No sessions found for the selected time period.</p>
@@ -732,13 +840,13 @@ export default function ChartingAnalyticsPage() {
                   <StatTile label="Avg Good Goals / Game" value={goalsStats.avgGoodGoals} sub={`Across ${goalsStats.totalGames} games`} />
                   <div className="rounded-xl p-4" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Avg Bad Goals / Game</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Avg Weak Goals / Game</p>
                       {getTrendIcon(goalsStats.trend)}
                     </div>
                     <p className="text-3xl font-black tabular-nums text-white">{goalsStats.avgBadGoals}</p>
                     <p className="text-[11px] text-white/35 mt-1">{goalsStats.improvement}% vs earlier period</p>
                   </div>
-                  <StatTile label="Good / Bad Ratio" value={`${(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1`} sub={parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals) ? 'More good than bad' : 'Work on reducing bad goals'} />
+                  <StatTile label="Good / Weak Ratio" value={`${(parseFloat(goalsStats.avgGoodGoals) / parseFloat(goalsStats.avgBadGoals) || 0).toFixed(2)}:1`} sub={parseFloat(goalsStats.avgGoodGoals) > parseFloat(goalsStats.avgBadGoals) ? 'More good than weak' : 'Work on reducing weak goals'} />
                 </div>
               </SectionCard>
             )}
@@ -754,10 +862,10 @@ export default function ChartingAnalyticsPage() {
               </SectionCard>
             )}
 
-            {/* Mind-Set Performance */}
+            {/* MindSet Performance */}
             {focusStats && (
               <SectionCard>
-                <SectionTitle>Mind-Set Performance</SectionTitle>
+                <SectionTitle>MindSet Performance</SectionTitle>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '20px' }}>
                     <div className="flex items-center justify-between">

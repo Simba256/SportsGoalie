@@ -7,6 +7,9 @@ import { chartingService, userService } from '@/lib/database';
 import { ChartingEntry, Session, User } from '@/types';
 import { AdminRoute } from '@/components/auth/protected-route';
 import { CalendarHeatmap } from '@/components/charting/CalendarHeatmap';
+import { PillarCheckInList } from '@/components/charting/PillarCheckInList';
+import { usePillarCheckIns } from '@/hooks/usePillarCheckIns';
+import { checkInName, checkInsFor, checkInsSince, tallyByStudent } from '@/lib/charting/check-ins';
 import {
   BarChart3,
   TrendingUp,
@@ -19,6 +22,7 @@ import {
   RefreshCw,
   Target,
   Activity,
+  ClipboardCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { startOfWeek, startOfMonth, subMonths, isAfter, format } from 'date-fns';
@@ -54,13 +58,31 @@ function AdminChartingContent() {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'entries'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'entries' | 'checkins'>('overview');
+  // Pillar check-ins are saved apart from sessions and entries, so they load on their own.
+  const checkIns = usePillarCheckIns();
+  const [checkInUsers, setCheckInUsers] = useState<Map<string, User>>(new Map());
 
   const [entriesTabStudent, setEntriesTabStudent] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDateSessions, setSelectedDateSessions] = useState<Session[]>([]);
 
   useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    const ids = Array.from(new Set(checkIns.entries.map(e => e.studentId)));
+    if (ids.length === 0) return;
+    let cancelled = false;
+    Promise.all(ids.map(async id => {
+      const result = await userService.getUser(id);
+      return result.success && result.data ? ([id, result.data] as const) : null;
+    })).then(pairs => {
+      if (cancelled) return;
+      const found = new Map<string, User>();
+      pairs.forEach(pair => { if (pair) found.set(pair[0], pair[1]); });
+      setCheckInUsers(found);
+    });
+    return () => { cancelled = true; };
+  }, [checkIns.entries]);
   useEffect(() => { applyFilters(); }, [timeRange, searchQuery, selectedStudent, allEntries]);
 
   const loadData = async () => {
@@ -129,9 +151,11 @@ function AdminChartingContent() {
   };
 
   const uniqueStudents = Array.from(new Set(allEntries.map(e => e.studentId)));
+  // The Student filter also offers goalies who have only pillar check-ins.
+  const filterStudents = Array.from(new Set([...uniqueStudents, ...checkIns.entries.map(e => e.studentId)]));
 
   const getStudentName = (studentId: string): string => {
-    const user = users.get(studentId);
+    const user = users.get(studentId) ?? checkInUsers.get(studentId);
     if (user) return user.displayName || user.email || `Student ${studentId.slice(-6)}`;
     return `Student ${studentId.slice(-6)}`;
   };
@@ -313,6 +337,28 @@ function AdminChartingContent() {
   const preGameStats   = calculatePreGameStats();
   const postGameStats  = calculatePostGameStats();
 
+  const checkInRangeStart = (): Date | null => {
+    const now = new Date();
+    switch (timeRange) {
+      case 'week':    return startOfWeek(now);
+      case 'month':   return startOfMonth(now);
+      case '3months': return subMonths(now, 3);
+      default:        return null;
+    }
+  };
+  const filteredCheckIns = (() => {
+    let list = checkInsSince(checkInsFor(checkIns.entries, selectedStudent === 'all' ? undefined : selectedStudent), checkInRangeStart());
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      list = list.filter(e =>
+        checkInName(checkIns.templates[e.formTemplateId]).toLowerCase().includes(query) ||
+        getStudentName(e.studentId).toLowerCase().includes(query) ||
+        e.additionalComments?.toLowerCase().includes(query));
+    }
+    return list;
+  })();
+  const checkInTallies = tallyByStudent(filteredCheckIns);
+
   const totalSessions  = new Set(filteredEntries.map(e => e.sessionId)).size;
   const completeEntries = filteredEntries.filter(e => e.preGame && e.gameOverview && e.period1 && e.period2 && e.period3 && e.postGame).length;
   const completionRate  = filteredEntries.length > 0 ? (completeEntries / filteredEntries.length) * 100 : 0;
@@ -358,6 +404,7 @@ function AdminChartingContent() {
     { id: 'overview' as const,     label: 'Overview' },
     { id: 'performance' as const,  label: 'Performance Metrics' },
     { id: 'entries' as const,      label: 'All Entries' },
+    { id: 'checkins' as const,     label: 'Pillar Check-ins' },
   ];
 
   return (
@@ -385,7 +432,7 @@ function AdminChartingContent() {
               <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '6px', fontSize: '15px' }}>Comprehensive charting statistics and student performance data</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="ach-btn" onClick={loadData} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(55,181,255,0.25)', background: 'rgba(55,181,255,0.08)', color: BLUE, fontWeight: 600, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <button className="ach-btn" onClick={() => { loadData(); checkIns.reload(); }} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(55,181,255,0.25)', background: 'rgba(55,181,255,0.08)', color: BLUE, fontWeight: 600, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
                 <RefreshCw size={14} /> Refresh
               </button>
               <button className="ach-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
@@ -400,8 +447,8 @@ function AdminChartingContent() {
               <div>
                 <label style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student</label>
                 <select className="ach-sel" value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)}>
-                  <option value="all">All Students ({uniqueStudents.length})</option>
-                  {uniqueStudents.map(sid => <option key={sid} value={sid}>{getStudentName(sid)}</option>)}
+                  <option value="all">All Students ({filterStudents.length})</option>
+                  {filterStudents.map(sid => <option key={sid} value={sid}>{getStudentName(sid)}</option>)}
                 </select>
               </div>
               <div>
@@ -444,6 +491,7 @@ function AdminChartingContent() {
                 {[
                   { label: 'Total Sessions', value: totalSessions, sub: `${filteredEntries.length} charting entries`, icon: <Calendar size={16} />, color: BLUE },
                   { label: 'Completion Rate', value: `${completionRate.toFixed(1)}%`, sub: `${completeEntries} complete entries`, icon: <Activity size={16} />, color: GREEN },
+                  { label: 'Pillar Check-ins', value: filteredCheckIns.length, sub: `${checkInTallies.size} goalie${checkInTallies.size === 1 ? '' : 's'}`, icon: <ClipboardCheck size={16} />, color: BLUE },
                   goalsStats ? { label: 'Avg Goals/Game', value: `${goalsStats.avgGoodGoals}/${goalsStats.avgBadGoals}`, sub: 'Good / Bad', icon: <Target size={16} />, color: AMBER } : null,
                   goalsStats ? { label: 'Improvement', value: `${goalsStats.improvement}%`, sub: 'Bad goals reduction', icon: getTrendIcon(goalsStats.trend), color: goalsStats.trend === 'up' ? GREEN : goalsStats.trend === 'down' ? RED : 'rgba(255,255,255,0.4)' } : null,
                 ].filter(Boolean).map((s, i) => s && (
@@ -494,7 +542,7 @@ function AdminChartingContent() {
               {challengeStats && (
                 <div style={{ ...card, padding: '24px' }}>
                   <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Challenge Level & Consistency</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px' }}>
                     <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '12px', padding: '16px' }}>
                       <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: '0 0 6px' }}>Average Challenge Rating</p>
                       <p style={{ fontSize: '32px', fontWeight: 700, color: '#818cf8', margin: '0 0 4px' }}>{challengeStats.avgChallenge}<span style={{ fontSize: '15px' }}>/10</span></p>
@@ -511,11 +559,11 @@ function AdminChartingContent() {
                 </div>
               )}
 
-              {/* Mind-Set Performance */}
+              {/* MindSet Performance */}
               {focusStats && (
                 <div style={{ ...card, padding: '24px' }}>
-                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Mind-Set Performance</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>MindSet Performance</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px' }}>
                     <MetricPanel title="Focus Consistency" value={focusStats.percentage} label="consistent" color="#14b8a6" detail={`${focusStats.consistentCount} consistent / ${focusStats.inconsistentCount} inconsistent periods`} trend={focusStats.trend} />
                     {skatingStats && (
                       <MetricPanel title="Skating In Sync" value={skatingStats.percentage} label="in sync" color="#06b6d4" detail={`${skatingStats.inSyncCount} in sync / ${skatingStats.notInSyncCount} not in sync periods`} trend={skatingStats.trend} />
@@ -585,7 +633,7 @@ function AdminChartingContent() {
               {(decisionMaking || bodyLanguage) && (
                 <div style={{ ...card, padding: '24px' }}>
                   <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Decision Making & Body Language</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px' }}>
                     {decisionMaking && <MetricPanel title="Decision Making — Strong" value={decisionMaking.strongPercentage} label="strong" color="#10b981" detail={`${decisionMaking.strongCount} strong / ${decisionMaking.improvingCount} improving / ${decisionMaking.needsWorkCount} needs work`} />}
                     {bodyLanguage && <MetricPanel title="Body Language" value={bodyLanguage.consistentPercentage} label="consistent" color="#84cc16" detail={`${bodyLanguage.consistentCount} consistent / ${bodyLanguage.inconsistentCount} inconsistent`} />}
                   </div>
@@ -595,7 +643,7 @@ function AdminChartingContent() {
               {reboundControl && (
                 <div style={{ ...card, padding: '24px' }}>
                   <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Rebound Control</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px' }}>
                     <MetricPanel title="Quality" value={reboundControl.qualityGood} label="good" color="#8b5cf6" detail={`${reboundControl.goodCount} good / ${reboundControl.totalQuality} total`} />
                     <MetricPanel title="Consistency" value={reboundControl.consistencyPercentage} label="consistent" color="#d946ef" detail={`${reboundControl.consistentCount} consistent / ${reboundControl.totalConsistency} total`} />
                   </div>
@@ -605,7 +653,7 @@ function AdminChartingContent() {
               {freezingPuck && (
                 <div style={{ ...card, padding: '24px' }}>
                   <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Freezing Puck</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px' }}>
                     <MetricPanel title="Quality" value={freezingPuck.qualityGood} label="good" color="#ec4899" detail={`${freezingPuck.goodCount} good / ${freezingPuck.totalQuality} total`} />
                     <MetricPanel title="Consistency" value={freezingPuck.consistencyPercentage} label="consistent" color="#f43f5e" detail={`${freezingPuck.consistentCount} consistent / ${freezingPuck.totalConsistency} total`} />
                   </div>
@@ -615,7 +663,7 @@ function AdminChartingContent() {
               {teamPlayStats && (
                 <div style={{ ...card, padding: '24px' }}>
                   <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Team Play (Period 3)</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px' }}>
                     <MetricPanel title="Setting Up Defense" value={teamPlayStats.defensePercentage} label="good" color="#0ea5e9" detail={`${teamPlayStats.defenseGoodCount} good / ${teamPlayStats.defenseImprovingCount} improving / ${teamPlayStats.defensePoorCount} poor`} />
                     <MetricPanel title="Setting Up Forwards" value={teamPlayStats.forwardsPercentage} label="good" color="#64748b" detail={`${teamPlayStats.forwardsGoodCount} good / ${teamPlayStats.forwardsImprovingCount} improving / ${teamPlayStats.forwardsPoorCount} poor`} />
                   </div>
@@ -627,6 +675,56 @@ function AdminChartingContent() {
                   <BarChart3 size={48} style={{ color: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>No performance data available for the selected filters.</p>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ===== PILLAR CHECK-INS TAB ===== */}
+          {activeTab === 'checkins' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ ...card, padding: '24px' }}>
+                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 700, marginBottom: '6px' }}>Pillar Check-ins</h2>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px', margin: 0 }}>
+                  Charts goalies fill in from Charting &rarr; Pillar Check-Ins, such as Game Performance. They are kept apart from logged
+                  game and practice sessions, so they have their own tab. The Student, Time Period and Search filters above apply.
+                </p>
+              </div>
+
+              {checkIns.loading ? (
+                <div style={{ ...card, padding: '48px', textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: '14px' }}>Loading check-ins…</div>
+              ) : filteredCheckIns.length === 0 ? (
+                <div style={{ ...card, padding: '48px', textAlign: 'center' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '16px', fontWeight: 600, margin: '0 0 6px' }}>
+                    {checkIns.entries.length === 0 ? 'No pillar check-ins yet' : 'No check-ins match these filters'}
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px', margin: 0 }}>
+                    {checkIns.entries.length === 0
+                      ? 'Check-ins appear here once a goalie saves one.'
+                      : 'Try a longer Time Period or All Students.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div style={{ ...card, padding: '20px' }}>
+                    <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>
+                      By goalie
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {Array.from(checkInTallies.entries())
+                        .sort((a, b) => b[1].count - a[1].count)
+                        .map(([sid, tally]) => (
+                          <div key={sid} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '14px' }}>
+                            <span style={{ color: '#fff', fontWeight: 600 }}>{getStudentName(sid)}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.5)' }}>
+                              {tally.count} check-in{tally.count === 1 ? '' : 's'}
+                              {tally.latest && ` · latest ${format(tally.latest, 'MMM d, yyyy')}`}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                  <PillarCheckInList entries={filteredCheckIns} templates={checkIns.templates} goalieName={getStudentName} />
+                </>
               )}
             </div>
           )}

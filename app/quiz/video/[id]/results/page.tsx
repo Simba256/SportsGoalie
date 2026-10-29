@@ -10,15 +10,23 @@ import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { customContentService } from '@/lib/database/services/custom-content.service';
 import { VideoQuiz, VideoQuizProgress } from '@/types';
 import {
-  ArrowLeft, Home, Trophy, Clock, CheckCircle2, XCircle,
-  RotateCcw, ChevronRight, Target,
+  ArrowLeft, Home, Trophy, Clock, CheckCircle2,
+  RotateCcw, ChevronRight, Target, MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { GrowthPointsToast } from '@/components/ui/GrowthPointsToast';
 import { GROWTH_POINTS } from '@/lib/config/growth-points';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
+import { getScoreBand } from '@/lib/config/score-bands';
+import { skillPagePath } from '@/lib/training/skill-path';
+import { reviewMarker } from '@/lib/training/review-marker';
 
 const BLUE = '#37b5ff';
-const RED = '#f87171';
+// Reflective answers are neither right nor wrong, so they get their own neutral
+// treatment rather than borrowing the pass/fail palette.
+const AMBER = '#d4a93b';
+// A question not yet got right is a "look again", in a quiet neutral. Never red.
+const LOOK_AGAIN = 'rgba(255,255,255,0.62)';
 
 function VideoQuizResultsContent() {
   const params = useParams();
@@ -31,10 +39,16 @@ function VideoQuizResultsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGpToast, setShowGpToast] = useState(false);
+  const [gpToastPoints, setGpToastPoints] = useState(0);
 
   useEffect(() => {
-    if (quizId && user) { loadResults(); }
-  }, [quizId, user]);
+    if (quizId && user?.id) {
+      loadResults();
+    } else {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizId, user?.id]);
 
   const loadResults = async () => {
     try {
@@ -70,11 +84,32 @@ function VideoQuizResultsContent() {
       setQuiz(quizResult.data);
       setProgress(progressData);
 
-      const sessionKey = `gp_shown_quiz_${quizId}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, '1');
-        setTimeout(() => setShowGpToast(true), 600);
+      const pct = progressData.percentage;
+      let totalPoints = GROWTH_POINTS.KNOWLEDGE_CHECK_COMPLETE;
+      let bonusLabel = '';
+      if (pct >= 95) {
+        totalPoints += GROWTH_POINTS.KC_CLUB_95_BONUS;
+        bonusLabel = ' — 95-100 Club bonus!';
+      } else if (pct >= 80) {
+        totalPoints += GROWTH_POINTS.KC_CLUB_80_BONUS;
+        bonusLabel = ' — 80-100 Club bonus!';
+      } else if (pct >= 70) {
+        totalPoints += GROWTH_POINTS.KC_OWNING_IT_BONUS;
+        bonusLabel = ' — Owning It bonus!';
       }
+
+      growthPointsService.awardPointsOnce(
+        user!.id,
+        'KNOWLEDGE_CHECK_COMPLETE',
+        totalPoints,
+        `Knowledge Check Completed${bonusLabel}`,
+        `quiz_${actualQuizId}`
+      ).then((awarded) => {
+        if (awarded) {
+          setGpToastPoints(totalPoints);
+          setTimeout(() => setShowGpToast(true), 600);
+        }
+      }).catch(() => {});
     } catch (err) {
       console.error('Error loading results:', err);
       setError('Failed to load quiz results');
@@ -117,14 +152,16 @@ function VideoQuizResultsContent() {
     );
   }
 
-  const passed = progress.percentage >= 70;
-  const scoreColor = passed ? BLUE : RED;
+  // A score is a Grasp Level band, not a pass or a fail. The band carries its own
+  // colour so no result is ever painted red.
+  const band = getScoreBand(progress.percentage);
+  const scoreColor = band.color;
 
   const cardStyle = { background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.14)', borderRadius: '16px', padding: '24px', marginBottom: '0' };
 
   return (
     <>
-      <GrowthPointsToast points={GROWTH_POINTS.KNOWLEDGE_CHECK} show={showGpToast} />
+      <GrowthPointsToast points={gpToastPoints} show={showGpToast} />
       <style>{`
         .qr-action:hover { opacity: 0.85 !important; transform: translateY(-1px); }
         .qr-outline:hover { background: rgba(55,181,255,0.08) !important; }
@@ -133,7 +170,7 @@ function VideoQuizResultsContent() {
 
         {/* Header */}
         <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(55,181,255,0.2)', background: 'linear-gradient(135deg, #000f28 0%, #062344 50%, #0a1628 100%)', padding: '24px', boxShadow: '0 4px 32px rgba(0,0,0,0.4)' }}>
-          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: passed ? 'rgba(55,181,255,0.1)' : 'rgba(248,113,113,0.08)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: `${scoreColor}1a`, filter: 'blur(50px)', pointerEvents: 'none' }} />
           <Link href="/dashboard" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none', marginBottom: '16px', fontWeight: 600 }}>
             <ArrowLeft size={14} /> Back to Dashboard
           </Link>
@@ -144,11 +181,11 @@ function VideoQuizResultsContent() {
         </div>
 
         {/* Score Card */}
-        <div style={{ ...cardStyle, background: passed ? 'rgba(2,18,44,0.9)' : 'rgba(20,5,5,0.9)', border: `1px solid ${passed ? 'rgba(55,181,255,0.2)' : 'rgba(248,113,113,0.2)'}` }}>
+        <div style={{ ...cardStyle, background: 'rgba(2,18,44,0.9)', border: `1px solid ${scoreColor}33` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <h2 style={{ color: '#fff', fontSize: '15px', fontWeight: 700 }}>Your Score</h2>
             <div style={{ color: scoreColor }}>
-              {passed ? <Trophy size={22} /> : <Target size={22} />}
+              {progress.percentage >= 70 ? <Trophy size={22} /> : <Target size={22} />}
             </div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px 0' }}>
@@ -157,7 +194,7 @@ function VideoQuizResultsContent() {
             </div>
             {/* Custom progress bar */}
             <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', marginBottom: '20px' }}>
-              <div style={{ height: '100%', width: `${Math.min(100, progress.percentage)}%`, background: passed ? `linear-gradient(90deg, ${BLUE}, #0ea5e9)` : 'linear-gradient(90deg, #dc2626, #f87171)', borderRadius: '99px', transition: 'width 0.8s ease', boxShadow: `0 0 12px ${scoreColor}60` }} />
+              <div style={{ height: '100%', width: `${Math.min(100, progress.percentage)}%`, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}b3)`, borderRadius: '99px', transition: 'width 0.8s ease', boxShadow: `0 0 12px ${scoreColor}60` }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px' }}>
@@ -169,8 +206,8 @@ function VideoQuizResultsContent() {
                 <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Points</div>
               </div>
             </div>
-            <div style={{ marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '20px', background: passed ? 'rgba(55,181,255,0.1)' : 'rgba(248,113,113,0.1)', border: `1px solid ${passed ? 'rgba(55,181,255,0.25)' : 'rgba(248,113,113,0.25)'}` }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor }}>{passed ? '✓ Passed' : '✗ Not Passed'}</span>
+            <div style={{ marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '20px', background: `${scoreColor}1a`, border: `1px solid ${scoreColor}40` }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor }}>{band.label}</span>
             </div>
           </div>
         </div>
@@ -182,7 +219,7 @@ function VideoQuizResultsContent() {
               <div>
                 <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Questions Answered</p>
                 <p style={{ fontSize: '26px', fontWeight: 900, color: '#fff' }}>
-                  {progress.questionsAnswered.length} <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>/ {quiz.questions?.length || 0}</span>
+                  {progress.questionsAnswered.length} <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>/ {quiz.questions?.filter(q => !q.holdOnly).length || 0}</span>
                 </p>
               </div>
               <CheckCircle2 size={28} color={BLUE} style={{ opacity: 0.7 }} />
@@ -207,27 +244,55 @@ function VideoQuizResultsContent() {
               {progress.questionsAnswered.map((answer, index) => {
                 const question = quiz.questions?.find(q => q.id === answer.questionId);
                 if (!question) return null;
+                // Reflective answers are checked first and never fall through to the
+                // look-again styling — an honest "No" is not a wrong answer.
+                const marker = reviewMarker(answer, question);
+                const isReflective = marker === 'reflective';
+                const tint = marker === 'reflective'
+                  ? { bg: 'rgba(212,169,59,0.05)', border: 'rgba(212,169,59,0.14)' }
+                  : marker === 'right'
+                    ? { bg: 'rgba(55,181,255,0.05)', border: 'rgba(55,181,255,0.12)' }
+                    : { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)' };
                 return (
-                  <div key={answer.questionId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: answer.isCorrect ? 'rgba(55,181,255,0.05)' : 'rgba(248,113,113,0.05)', borderRadius: '10px', border: `1px solid ${answer.isCorrect ? 'rgba(55,181,255,0.12)' : 'rgba(248,113,113,0.12)'}` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div key={answer.questionId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 14px', background: tint.bg, borderRadius: '10px', border: `1px solid ${tint.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                       <div style={{ flexShrink: 0 }}>
-                        {answer.isCorrect
-                          ? <CheckCircle2 size={18} color={BLUE} />
-                          : <XCircle size={18} color={RED} />}
+                        {marker === 'reflective'
+                          ? <MessageSquare size={18} color={AMBER} />
+                          : marker === 'right'
+                            ? <CheckCircle2 size={18} color={BLUE} />
+                            : <RotateCcw size={18} color={LOOK_AGAIN} aria-hidden="true" />}
                       </div>
-                      <div>
-                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>Question {index + 1}</p>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>
+                          Question {index + 1}
+                          {marker === 'look-again' && (
+                            <span style={{ marginLeft: '8px', color: LOOK_AGAIN, fontSize: '12px', fontWeight: 700 }}>
+                              Look again
+                            </span>
+                          )}
+                        </p>
                         <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>
                           At {Math.floor(answer.timestamp / 60)}:{String(Math.floor(answer.timestamp % 60)).padStart(2, '0')}
                         </p>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
-                        {answer.pointsEarned} / {question.points} pts
-                      </p>
+                    <div style={{ textAlign: 'right', minWidth: 0 }}>
+                      {isReflective ? (
+                        <p style={{ color: AMBER, fontSize: '13px', fontWeight: 700, overflowWrap: 'anywhere' }}>
+                          {answer.answerText || 'Answered'}
+                        </p>
+                      ) : (
+                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>
+                          {answer.pointsEarned} / {question.points} pts
+                        </p>
+                      )}
                       <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>
-                        {formatTime(answer.timeToAnswer)} to answer
+                        {/* Attempts taken before the clock existed stored 0 for every answer.
+                            A time that was never measured is left out, not shown as "0m 0s". */}
+                        {isReflective
+                          ? 'Your answer — not scored'
+                          : answer.timeToAnswer > 0 ? `${formatTime(answer.timeToAnswer)} to answer` : null}
                       </p>
                     </div>
                   </div>
@@ -274,7 +339,7 @@ function VideoQuizResultsContent() {
           )}
 
           <button
-            onClick={() => router.push(`/sports/${quiz.sportId}/skills/${quiz.skillId}`)}
+            onClick={() => router.push(skillPagePath(quiz.sportId, quiz.skillId))}
             className="qr-action"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '11px 20px', borderRadius: '10px', border: 'none', background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', fontSize: '13px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 16px rgba(55,181,255,0.3)' }}
           >

@@ -9,6 +9,7 @@ import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { ProgressService } from '@/lib/database/services/progress.service';
 import { customCurriculumService } from '@/lib/database';
 import { customContentService } from '@/lib/database/services/custom-content.service';
+import { pillarDisplayName } from '@/lib/utils/pillars';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -207,30 +208,32 @@ export default function SkillDetailPage() {
         .sd-resource:hover { background: rgba(55,181,255,0.05) !important; }
         @keyframes sd-spin { to { transform: rotate(360deg); } }
         .sd-spinner { animation: sd-spin 0.8s linear infinite; border-radius: 50%; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; }
+        .sd-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+        @media (min-width: 640px) { .sd-stats { grid-template-columns: repeat(4, 1fr); } }
       `}</style>
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* Breadcrumb + Back */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+          <nav style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 6px', fontSize: '12px' }}>
             <Link href="/pillars" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Pillars</Link>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
-            <Link href={`/pillars/${sportId}`} style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>{sport.name}</Link>
+            <Link href={`/pillars/${sportId}`} style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>{pillarDisplayName(sport.id, sport.name)}</Link>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
             <span style={{ color: 'rgba(255,255,255,0.6)' }}>{skill.name}</span>
           </nav>
           <button onClick={() => router.back()} className="sd-back" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.5)', background: 'transparent', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', width: 'fit-content', transition: 'all 0.2s' }}>
-            <ArrowLeft size={15} /> Back to {sport.name}
+            <ArrowLeft size={15} /> Back to {pillarDisplayName(sport.id, sport.name)}
           </button>
         </div>
 
         {/* Skill Hero */}
-        <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', padding: '24px', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', background: cardBg, border, borderRadius: '20px', padding: 'clamp(16px, 5vw, 24px)', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: '1 1 260px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <h1 style={{ color: '#fff', fontWeight: 800, fontSize: '24px' }}>{skill.name}</h1>
+                <h1 style={{ color: '#fff', fontWeight: 800, fontSize: 'clamp(20px, 5.5vw, 24px)', minWidth: 0, overflowWrap: 'break-word' }}>{skill.name}</h1>
                 <span style={{ background: diffStyle.bg, color: diffStyle.color, padding: '3px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textTransform: 'capitalize' }}>{skill.difficulty}</span>
               </div>
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px', lineHeight: 1.6 }}>{skill.description}</p>
@@ -246,7 +249,7 @@ export default function SkillDetailPage() {
           </div>
 
           {/* Stats Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginTop: '20px' }}>
+          <div className="sd-stats">
             {[
               { icon: Clock, label: 'Est. Time', value: formatDuration(skill.estimatedTimeToComplete) },
               { icon: Target, label: 'Objectives', value: String(skill.learningObjectives.length) },
@@ -294,7 +297,7 @@ export default function SkillDetailPage() {
               const active = activeTab === id;
               return (
                 <button key={id} className={!active ? 'sd-tab' : ''} onClick={() => setActiveTab(id as typeof activeTab)}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '14px 8px', background: active ? 'rgba(55,181,255,0.08)' : 'transparent', border: 'none', borderBottom: active ? `2px solid ${BLUE}` : '2px solid transparent', color: active ? BLUE : 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                  style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '14px 6px', background: active ? 'rgba(55,181,255,0.08)' : 'transparent', border: 'none', borderBottom: active ? `2px solid ${BLUE}` : '2px solid transparent', color: active ? BLUE : 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
                   <Icon size={13} /><span>{label}</span>
                 </button>
               );
@@ -372,7 +375,7 @@ export default function SkillDetailPage() {
                       </div>
                       <div>
                         <p style={{ color: '#fff', fontWeight: 700, fontSize: '14px', marginBottom: '2px' }}>Knowledge Check</p>
-                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Test your understanding with an interactive quiz</p>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Ready? Show what you know in a Knowledge Check.</p>
                       </div>
                     </div>
                     <button onClick={handleTakeQuiz} className="sd-quiz" style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #0ea5e9 100%)`, color: '#000f28', padding: '10px 20px', borderRadius: '10px', border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>

@@ -5,6 +5,7 @@ import { SkeletonCardGrid } from '@/components/ui/skeletons';
 import { useAuth } from '@/lib/auth/context';
 import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 import { MindVaultCategoryCard } from '@/components/mind-vault/MindVaultCategoryCard';
+import { FirstVisitVoice } from '@/components/audio/FirstVisitVoice';
 import { Brain, ListChecks, Flame } from 'lucide-react';
 import { MIND_VAULT_CATEGORIES, type MindVaultCategorySummary } from '@/types/mind-vault';
 
@@ -44,6 +45,11 @@ export default function MindVaultPage() {
           <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: '8px' }}>
             Build the <span style={{ color: BLUE }}>Mental Game</span>
           </h1>
+          <FirstVisitVoice
+            moment="mindVaultFirstVisit"
+            label="HEAR COACH MIKE: THE MIND-VAULT"
+            className="mb-3 justify-center"
+          />
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>
             Your personal mental armor, expanded one entry at a time.
           </p>
@@ -95,7 +101,9 @@ export default function MindVaultPage() {
               <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
                 <div style={{ height: '100%', background: BLUE, borderRadius: '99px', width: `${safeMomentum}%`, transition: 'width 0.5s' }} />
               </div>
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', fontWeight: 600 }}>Keep your streak alive!</p>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', fontWeight: 600 }}>
+                {loading ? ' ' : `${activeCategories} of ${MIND_VAULT_CATEGORIES.length} sections started`}
+              </p>
             </div>
           </div>
         </div>
@@ -109,7 +117,7 @@ export default function MindVaultPage() {
           <>
             <section style={{ marginBottom: '28px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '14px' }}>Core Lists</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '14px' }}>
                 {MIND_VAULT_CATEGORIES.filter(c => c.slug === 'acceptance' || c.slug === 'cannot_accept').map(cat => (
                   <MindVaultCategoryCard key={cat.slug} category={cat} summary={getSummary(cat.slug)} />
                 ))}
@@ -118,7 +126,7 @@ export default function MindVaultPage() {
 
             <section>
               <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '14px' }}>All Categories</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '14px' }}>
                 {MIND_VAULT_CATEGORIES.filter(c => c.slug !== 'acceptance' && c.slug !== 'cannot_accept').map(cat => (
                   <MindVaultCategoryCard key={cat.slug} category={cat} summary={getSummary(cat.slug)} />
                 ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Users, ChevronRight, Eye, Brain, Clock, Car, Target, MessageCircle } from 'lucide-react';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
 
 const BLUE = '#37b5ff';
 
@@ -62,6 +63,8 @@ export function ParentWelcomeScreen({ parentName, onBegin }: ParentWelcomeScreen
               Help us understand your perspective on your goalie&apos;s development across{' '}
               <span style={{ color: BLUE, fontWeight: 700 }}>7 key areas</span>.
             </p>
+
+            <ScreenVoice clipId="PARENT-WELCOME" label="HEAR COACH MIKE: WELCOME" className="mb-5" />
 
             {/* CTA */}
             <button

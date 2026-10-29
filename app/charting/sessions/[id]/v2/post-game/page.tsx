@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth/context';
 import { SkeletonContentPage } from '@/components/ui/skeletons';
 import { useRouter, useParams } from 'next/navigation';
 import { chartingService } from '@/lib/database';
-import { Session, V2PostGameData, V2PeriodData } from '@/types';
+import { Session, V2PostGameData, V2PeriodData, V2PreGameData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Loader2, Brain, Vault, ClipboardList, Flag, ChevronDown, ArrowRight } from 'lucide-react';
 import { getPillarUrl } from '@/lib/utils/pillars';
@@ -16,7 +16,13 @@ import {
   VoiceRecorder,
 } from '@/components/charting/inputs';
 import { toast } from 'sonner';
+import { useEventVoice } from '@/hooks/useEventVoice';
+import { growthPointsService } from '@/lib/firebase/growth-points.service';
+import { GROWTH_POINTS } from '@/lib/config/growth-points';
 import { generatePracticeIndex } from '@/lib/scoring/practice-index-generator';
+import { isPeriodFilled } from '@/lib/charting/v2-periods';
+import { isV2ChartComplete } from '@/lib/charting/v2-sections';
+import { mindVaultService } from '@/lib/database/services/mind-vault.service';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -37,15 +43,15 @@ const GAME_RETENTION_OPTIONS = [
 ];
 
 const IMPROVEMENT_FOCUS_OPTIONS = [
-  { value: 'mind_control',         label: 'Mind Control',            detail: 'Stay in the now, period by period',        pillar: 'Mindset' },
+  { value: 'mind_control',         label: 'Emotional Balance',        detail: 'Stay in the now, period by period',        pillar: 'Mindset' },
   { value: 'pre_game_routine',     label: 'Pre-Game Routine',        detail: 'Preparation & mental activation',          pillar: 'Mindset' },
-  { value: 'positioning',          label: 'Positioning',             detail: 'Angle play, depth & reads',                pillar: 'Positioning' },
+  { value: 'positioning',          label: '7AMS',                    detail: 'Angle play, depth & reads',                pillar: '7AMS' },
   { value: 'form',                 label: 'Form & Structure',        detail: 'Mechanics, technique & fundamentals',      pillar: 'Form' },
   { value: 'skating',              label: 'Skating',                 detail: 'Edge work, recovery & movement',           pillar: 'Skating' },
-  { value: 'seven_point',          label: '7 Point System',          detail: 'Below icing line — angles & reads',        pillar: '7 Point System' },
+  { value: 'seven_point',          label: '6 Zone – 7 Point System™', detail: 'Below icing line — angles & reads',        pillar: '6 Zone – 7 Point System™' },
   { value: 'game_retention',       label: 'Game Retention',          detail: 'Recall, replay & self-review',             pillar: 'Mindset' },
   { value: 'pressure_performance', label: 'Pressure Performance',    detail: 'High-challenge, breakaway, 2-on-1',        pillar: 'Mindset' },
-  { value: 'goal_decisions',       label: 'Goal Decision-Making',    detail: 'Read → position → execute under pressure', pillar: 'Positioning' },
+  { value: 'goal_decisions',       label: 'Reading the Play',        detail: 'Read → position → execute under pressure', pillar: '7AMS' },
   { value: 'training',             label: 'Training Quality',        detail: 'Designated training & intentional reps',   pillar: 'Training' },
   { value: 'lifestyle',            label: 'Lifestyle Foundations',   detail: 'Sleep, fuel & recovery habits',            pillar: 'Lifestyle' },
 ];
@@ -62,11 +68,11 @@ function derivePriorityArea(
   mindControlAvg: number,
   badGoals: number,
   goodGoals: number,
-  gameRetentionRating: number,
-  overallGameFactorRating: number,
+  gameRetentionRating: number | undefined,
+  overallGameFactorRating: number | undefined,
 ): PriorityArea | null {
   // Only run when we have meaningful data
-  if (mindControlAvg === 0 && badGoals === 0 && goodGoals === 0 && gameRetentionRating === 0) return null;
+  if (mindControlAvg === 0 && badGoals === 0 && goodGoals === 0 && !gameRetentionRating) return null;
 
   const candidates: Array<{ score: number } & PriorityArea> = [];
 
@@ -75,10 +81,10 @@ function derivePriorityArea(
     const pct = (mindControlAvg / 5) * 100;
     candidates.push({
       score: pct,
-      label: 'Mind Control',
-      pillarLabel: 'Mindset — Mind-Set Development',
+      label: 'Emotional Balance',
+      pillarLabel: 'Pillar 1 — MindSet',
       pillarSlug: 'mindset',
-      reason: `Mind control averaged ${mindControlAvg.toFixed(1)}/5 across periods`,
+      reason: `Emotional balance averaged ${mindControlAvg.toFixed(1)}/5 across periods`,
       urgency: mindControlAvg <= 2 ? 'critical' : mindControlAvg <= 3 ? 'high' : 'moderate',
     });
   }
@@ -89,21 +95,21 @@ function derivePriorityArea(
     const goodPct = (goodGoals / totalGoals) * 100;
     candidates.push({
       score: goodPct,
-      label: 'Goal Decision-Making',
+      label: 'Reading the Play',
       pillarLabel: 'Positioning — Positional Systems',
       pillarSlug: 'positioning',
-      reason: `${badGoals} bad goal${badGoals !== 1 ? 's' : ''} — ${(100 - goodPct).toFixed(0)}% error rate on goals`,
+      reason: `${badGoals} weak goal${badGoals !== 1 ? 's' : ''} — ${(100 - goodPct).toFixed(0)}% error rate on goals`,
       urgency: goodPct < 40 ? 'critical' : goodPct < 70 ? 'high' : 'moderate',
     });
   }
 
   // Game retention signal (lower = worse)
-  if (gameRetentionRating > 0) {
+  if (gameRetentionRating !== undefined && gameRetentionRating > 0) {
     const pct = (gameRetentionRating / 5) * 100;
     candidates.push({
       score: pct,
       label: 'Game Retention',
-      pillarLabel: 'Mindset — Mind-Set Development',
+      pillarLabel: 'Pillar 1 — MindSet',
       pillarSlug: 'mindset',
       reason: `Game retention rated ${gameRetentionRating}/5 — game memory is unclear`,
       urgency: gameRetentionRating <= 2 ? 'critical' : gameRetentionRating <= 3 ? 'high' : 'moderate',
@@ -111,11 +117,11 @@ function derivePriorityArea(
   }
 
   // High pressure + low mind control cross-signal
-  if (overallGameFactorRating >= 4 && mindControlAvg > 0 && mindControlAvg <= 3) {
+  if (overallGameFactorRating !== undefined && overallGameFactorRating >= 4 && mindControlAvg > 0 && mindControlAvg <= 3) {
     candidates.push({
       score: (mindControlAvg / 5) * 40,
       label: 'Pressure Performance',
-      pillarLabel: 'Mindset — Mind-Set Development',
+      pillarLabel: 'Pillar 1 — MindSet',
       pillarSlug: 'mindset',
       reason: `Mind broke down (${mindControlAvg.toFixed(1)}/5) in a ${overallGameFactorRating}/5 challenge game`,
       urgency: 'critical',
@@ -136,6 +142,7 @@ type PeriodKey = 'period1' | 'period2' | 'period3' | 'overtime';
 export default function V2PostGamePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const say = useEventVoice();
   const params = useParams();
   const sessionId = params.id as string;
 
@@ -146,15 +153,17 @@ export default function V2PostGamePage() {
     period1: null, period2: null, period3: null, overtime: null,
   });
 
+  // Both ratings start blank. They used to open on "1 — Low challenge" and
+  // "1 — Very fuzzy", so skipping them saved those answers.
   const [formData, setFormData] = useState<V2PostGameData>({
     overallFeeling: '',
-    overallGameFactorRating: 1,
+    overallGameFactorRating: undefined,
     overallGameFactorVoiceNote: undefined,
     mindControlAverage: 0,
     goodGoalCount: 0,
     badGoalCount: 0,
     goodDecisionRate: 0,
-    gameRetentionRating: 1,
+    gameRetentionRating: undefined,
     gameRetentionVoiceNote: undefined,
     mindVaultEntry: '',
     factorRatioSummary: 0,
@@ -179,11 +188,13 @@ export default function V2PostGamePage() {
             // Load period data for auto-calculations
             const v2Periods = (myEntry as unknown as { v2Periods?: Record<PeriodKey, V2PeriodData> }).v2Periods;
             if (v2Periods) {
+              // A period that was saved untouched is not data.
+              const keep = (p?: V2PeriodData) => (isPeriodFilled(p) ? p! : null);
               setPeriodData({
-                period1: v2Periods.period1 || null,
-                period2: v2Periods.period2 || null,
-                period3: v2Periods.period3 || null,
-                overtime: v2Periods.overtime || null,
+                period1: keep(v2Periods.period1),
+                period2: keep(v2Periods.period2),
+                period3: keep(v2Periods.period3),
+                overtime: keep(v2Periods.overtime),
               });
             }
 
@@ -208,9 +219,13 @@ export default function V2PostGamePage() {
   const calculations = useMemo(() => {
     const activePeriods = Object.values(periodData).filter((p): p is V2PeriodData => p !== null);
 
-    // Mind Control Average
-    const mindControlAvg = activePeriods.length > 0
-      ? activePeriods.reduce((sum, p) => sum + (p.mindControlRating || 0), 0) / activePeriods.length
+    // Mind Control Average — over the periods that were rated. A period left
+    // unrated is not a zero and not a 3, so it stays out of the average.
+    const ratedMind = activePeriods.filter(
+      (p): p is V2PeriodData & { mindControlRating: number } => typeof p.mindControlRating === 'number',
+    );
+    const mindControlAvg = ratedMind.length > 0
+      ? ratedMind.reduce((sum, p) => sum + p.mindControlRating, 0) / ratedMind.length
       : 0;
 
     // Good / Bad Goal totals
@@ -225,17 +240,26 @@ export default function V2PostGamePage() {
     const totalGoals = goodGoals + badGoals;
     const goodDecisionRate = totalGoals > 0 ? Math.round((goodGoals / totalGoals) * 100) : 0;
 
-    // Factor Ratio Summary
-    const factorRatioAvg = activePeriods.length > 0
-      ? activePeriods.reduce((sum, p) => sum + (p.periodFactorRatio || 0), 0) / activePeriods.length
-      : 0;
-
-    // Per-period factor ratios for visual breakdown
+    // Per-period factor ratios for the visual breakdown. Factor Ratio is
+    // optional, so an unrated period is left out entirely rather than folded in
+    // as a zero — otherwise skipping the question would drag the game's average
+    // challenge below its lowest possible answer.
     const periodFactorRatios: { label: string; value: number }[] = [];
-    if (periodData.period1) periodFactorRatios.push({ label: 'P1', value: periodData.period1.periodFactorRatio || 0 });
-    if (periodData.period2) periodFactorRatios.push({ label: 'P2', value: periodData.period2.periodFactorRatio || 0 });
-    if (periodData.period3) periodFactorRatios.push({ label: 'P3', value: periodData.period3.periodFactorRatio || 0 });
-    if (periodData.overtime) periodFactorRatios.push({ label: 'OT', value: periodData.overtime.periodFactorRatio || 0 });
+    for (const [label, period] of [
+      ['P1', periodData.period1],
+      ['P2', periodData.period2],
+      ['P3', periodData.period3],
+      ['OT', periodData.overtime],
+    ] as const) {
+      if (typeof period?.periodFactorRatio === 'number') {
+        periodFactorRatios.push({ label, value: period.periodFactorRatio });
+      }
+    }
+
+    // Factor Ratio Summary — averaged over the rated periods only.
+    const factorRatioAvg = periodFactorRatios.length > 0
+      ? periodFactorRatios.reduce((sum, r) => sum + r.value, 0) / periodFactorRatios.length
+      : 0;
 
     return { mindControlAvg, goodGoals, badGoals, goodDecisionRate, factorRatioAvg, periodFactorRatios };
   }, [periodData]);
@@ -298,9 +322,41 @@ export default function V2PostGamePage() {
         await chartingService.createChartingEntry(entryData as any);
       }
 
-      await chartingService.updateSession(sessionId, { status: 'completed' });
+      // The "one thing" typed here belongs in the Mind Vault as well as on the
+      // chart. Only the goalie's own save writes it: the vault is private to
+      // them, and the rules refuse a write made for someone else.
+      const vaultText = postGameData.mindVaultEntry?.trim();
+      let vaultSaved = true;
+      if (vaultText && user.id === session.studentId) {
+        const vaultResult = await mindVaultService.saveGameEntry({
+          studentId: user.id,
+          sessionId,
+          content: vaultText,
+          isVoiceEntry: false,
+        });
+        vaultSaved = vaultResult.success;
+      }
 
+      // Saving the last section is not the same as finishing the chart. The
+      // game is only marked completed once pre-game, periods and post-game all
+      // hold answers; otherwise it stays in progress.
+      const chartComplete = isV2ChartComplete({
+        v2PreGame: (myEntry as unknown as { v2PreGame?: V2PreGameData } | undefined)?.v2PreGame,
+        v2Periods: (myEntry as unknown as { v2Periods?: Record<string, V2PeriodData> } | undefined)?.v2Periods,
+        v2PostGame: postGameData,
+      });
+      if (chartComplete) {
+        await chartingService.updateSession(sessionId, { status: 'completed' });
+      }
+      growthPointsService.awardPointsOnce(
+        user!.id, 'CHART_LOGGED', GROWTH_POINTS.CHART_LOGGED, 'Chart Logged', `chart_${sessionId}`
+      ).catch(() => {});
+
+      if (!vaultSaved) {
+        toast.warning('Post-Game saved, but the Mind Vault entry could not be added. Try saving again.');
+      }
       toast.success('Post-Game section saved!');
+      say('chartSaved');
       router.push(`/charting/sessions/${sessionId}`);
     } catch (error) {
       console.error('Failed to save:', error);
@@ -353,15 +409,7 @@ export default function V2PostGamePage() {
           <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-[#FF6B6B] to-white bg-clip-text text-transparent">
             Post-Game
           </h1>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving}
-            className="text-white rounded-lg px-4 h-9 text-sm font-semibold border-0"
-            style={{ background: '#FF6B6B' }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1.5" /> Save</>}
-          </Button>
+          <div className="w-16" />
         </div>
       </div>
 
@@ -406,7 +454,7 @@ export default function V2PostGamePage() {
                 />
               </ContextualHelp>
 
-              {formData.overallGameFactorRating >= 4 && (
+              {formData.overallGameFactorRating !== undefined && formData.overallGameFactorRating >= 4 && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t" style={{ borderColor: 'rgba(255,107,107,0.1)' }}>
                   <p className="text-xs text-white/60 mb-2 italic">
                     What made this game most demanding?
@@ -427,7 +475,7 @@ export default function V2PostGamePage() {
 
               {/* #3 Mind Control Average */}
               <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ background: 'linear-gradient(160deg, #0c2e56 0%, #04213f 30%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.3)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-                <p className="text-xs font-semibold text-white">#3 — Mind Control</p>
+                <p className="text-xs font-semibold text-white">#3 — Emotional Balance</p>
                 {hasPeriodData ? (
                   <>
                     <div className="flex justify-center">
@@ -464,7 +512,7 @@ export default function V2PostGamePage() {
                       })()}
                     </div>
                     <p className="text-[10px] text-white/35 text-center leading-relaxed">
-                      System calculates average of per-period Mind Control ratings automatically.
+                      System calculates average of per-period Emotional Balance ratings automatically.
                     </p>
                   </>
                 ) : (
@@ -502,7 +550,7 @@ export default function V2PostGamePage() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
                               <p className="text-sm font-black text-white text-center leading-tight">
-                                {calculations.goodGoals} Good,<br />{calculations.badGoals} Bad
+                                {calculations.goodGoals} Good,<br />{calculations.badGoals} Weak
                               </p>
                               <p className="text-[11px] font-bold" style={{ color: '#37b5ff' }}>
                                 {calculations.goodDecisionRate}%
@@ -513,7 +561,7 @@ export default function V2PostGamePage() {
                       })()}
                     </div>
                     <p className="text-[10px] text-white/35 text-center leading-relaxed">
-                      {calculations.goodDecisionRate}% Good Decision Rate this game
+                      {calculations.goodDecisionRate}% Good Decision Factor this game
                     </p>
                   </>
                 ) : (
@@ -540,7 +588,7 @@ export default function V2PostGamePage() {
                 />
               </ContextualHelp>
 
-              {formData.gameRetentionRating <= 2 && (
+              {formData.gameRetentionRating !== undefined && formData.gameRetentionRating <= 2 && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t" style={{ borderColor: 'rgba(255,107,107,0.1)' }}>
                   <p className="text-xs text-white/60 mb-2 italic">
                     What do you remember most clearly?
@@ -623,24 +671,31 @@ export default function V2PostGamePage() {
                         </div>
                       );
                     })}
-                    <div className="flex items-center gap-3 pt-2.5 border-t" style={{ borderColor: 'rgba(255,107,107,0.15)' }}>
-                      <span className="text-xs font-bold w-10 flex-shrink-0" style={{ color: '#FF6B6B' }}>Overall</span>
-                      <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,107,107,0.14)' }}>
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${(formData.overallGameFactorRating / 5) * 100}%`, background: 'linear-gradient(90deg, #ef4444 0%, #f97316 55%, #fbbf24 100%)' }}
-                        />
+                    {formData.overallGameFactorRating !== undefined && (
+                      <div className="flex items-center gap-3 pt-2.5 border-t" style={{ borderColor: 'rgba(255,107,107,0.15)' }}>
+                        <span className="text-xs font-bold w-10 flex-shrink-0" style={{ color: '#FF6B6B' }}>Overall</span>
+                        <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,107,107,0.14)' }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${(formData.overallGameFactorRating / 5) * 100}%`, background: 'linear-gradient(90deg, #ef4444 0%, #f97316 55%, #fbbf24 100%)' }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-0.5 w-12 justify-end flex-shrink-0">
+                          <span className="text-xs font-bold" style={{ color: '#FF6B6B' }}>{formData.overallGameFactorRating.toFixed(1)}</span>
+                          <span className="text-xs font-black leading-none" style={{ color: formData.overallGameFactorRating >= 3 ? '#4ade80' : '#f87171' }}>
+                            {formData.overallGameFactorRating >= 3 ? ' ↗' : ' ↘'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-0.5 w-12 justify-end flex-shrink-0">
-                        <span className="text-xs font-bold" style={{ color: '#FF6B6B' }}>{formData.overallGameFactorRating.toFixed(1)}</span>
-                        <span className="text-xs font-black leading-none" style={{ color: formData.overallGameFactorRating >= 3 ? '#4ade80' : '#f87171' }}>
-                          {formData.overallGameFactorRating >= 3 ? ' ↗' : ' ↘'}
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
-              })() : (
+              })() : hasPeriodData ? (
+                <p className="text-xs text-white/35">
+                  No period was rated for challenge level. Factor Ratio is optional — skipped
+                  periods are left out of this breakdown rather than shown as a zero.
+                </p>
+              ) : (
                 <p className="text-xs text-white/35">Complete Period Charting to see visual breakdown.</p>
               )}
             </div>
@@ -657,8 +712,8 @@ export default function V2PostGamePage() {
               ? { background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.32)', boxShadow: '0 2px 20px rgba(249,115,22,0.1)' }
               : { background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', boxShadow: '0 2px 20px rgba(245,158,11,0.08)' }
           }>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0 basis-56">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={
                   priorityArea.urgency === 'critical' ? { background: 'rgba(239,68,68,0.22)' }
                   : priorityArea.urgency === 'high' ? { background: 'rgba(249,115,22,0.22)' }

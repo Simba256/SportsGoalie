@@ -341,7 +341,7 @@ describe('EnrollmentService', () => {
         createMockSkill({ id: 'skill_1' }),
         createMockSkill({ id: 'skill_2' }),
       ];
-      const quizAttempt = createMockQuizAttempt({ skillId: 'skill_1', percentage: 90 });
+      const quizAttempt = createMockQuizAttempt({ skillId: 'skill_1', percentage: 100 });
 
       // Query for existing progress
       mockQuery.mockResolvedValue(
@@ -395,6 +395,80 @@ describe('EnrollmentService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data?.completedSkills).toContain('skill_1');
+      expect(result.data?.progressPercentage).toBe(50);
+    });
+
+    it('does not count a finished take at 0% as a completed skill', async () => {
+      const progress = createMockSportProgress({ completedSkills: [] });
+      const skills = [createMockSkill({ id: 'skill_1' }), createMockSkill({ id: 'skill_2' })];
+      const quizAttempt = createMockQuizAttempt({
+        skillId: 'skill_1',
+        videoQuizId: 'quiz_1',
+        percentage: 0,
+        score: 0,
+        questionsAnswered: [
+          { questionId: 'q1', isCorrect: false },
+          { questionId: 'q2', isCorrect: false },
+        ],
+      });
+
+      mockQuery.mockResolvedValue(
+        createMockApiResponse({ items: [progress], total: 1, page: 1, limit: 1, hasMore: false, totalPages: 1 })
+      );
+      mockGetSkillsBySport.mockResolvedValue(
+        createMockApiResponse({ items: skills, total: 2, page: 1, limit: 50, hasMore: false, totalPages: 1 })
+      );
+      mockGetUserVideoQuizAttempts.mockResolvedValue(
+        createMockApiResponse({ items: [quizAttempt], total: 1, page: 1, limit: 1, hasMore: false, totalPages: 1 })
+      );
+
+      const result = await service.getUserSportProgress('user123', 'sport123');
+
+      expect(result.data?.completedSkills).toEqual([]);
+      expect(result.data?.progressPercentage).toBe(0);
+      expect(result.data?.status).toBe('in_progress');
+    });
+
+    it('completes a skill once every question has been got right across takes', async () => {
+      const progress = createMockSportProgress({ completedSkills: [] });
+      const skills = [createMockSkill({ id: 'skill_1' })];
+      const secondLook = createMockQuizAttempt({
+        id: 'attempt_2',
+        skillId: 'skill_1',
+        videoQuizId: 'quiz_1',
+        percentage: 50,
+        completedAt: { toDate: () => new Date(2026, 9, 2) },
+        questionsAnswered: [
+          { questionId: 'q1', isCorrect: false },
+          { questionId: 'q2', isCorrect: true },
+        ],
+      });
+      const firstLook = createMockQuizAttempt({
+        id: 'attempt_1',
+        skillId: 'skill_1',
+        videoQuizId: 'quiz_1',
+        percentage: 50,
+        completedAt: { toDate: () => new Date(2026, 9, 1) },
+        questionsAnswered: [
+          { questionId: 'q1', isCorrect: true },
+          { questionId: 'q2', isCorrect: false },
+        ],
+      });
+
+      mockQuery.mockResolvedValue(
+        createMockApiResponse({ items: [progress], total: 1, page: 1, limit: 1, hasMore: false, totalPages: 1 })
+      );
+      mockGetSkillsBySport.mockResolvedValue(
+        createMockApiResponse({ items: skills, total: 1, page: 1, limit: 50, hasMore: false, totalPages: 1 })
+      );
+      mockGetUserVideoQuizAttempts.mockResolvedValue(
+        createMockApiResponse({ items: [secondLook, firstLook], total: 2, page: 1, limit: 2, hasMore: false, totalPages: 1 })
+      );
+
+      const result = await service.getUserSportProgress('user123', 'sport123');
+
+      expect(result.data?.completedSkills).toEqual(['skill_1']);
+      expect(result.data?.status).toBe('completed');
     });
 
     it('should return null when not enrolled', async () => {

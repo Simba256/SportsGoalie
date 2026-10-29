@@ -6,8 +6,13 @@ import { Sport, Skill, DifficultyLevel, PILLARS, PacingLevel } from '@/types';
 import { sportsService } from '@/lib/database/services/sports.service';
 import { videoQuizService } from '@/lib/database/services/video-quiz.service';
 import { onboardingService } from '@/lib/database';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/context';
-import { getPillarSlugFromDocId } from '@/lib/utils/pillars';
+import { getPillarSlugFromDocId, pillarDisplayName } from '@/lib/utils/pillars';
+import { PillarTeachingVoice } from '@/components/audio/PillarTeachingVoice';
+import { scaleToPercentage } from '@/lib/scoring/scale-score';
+import { ownedSkillIds } from '@/lib/training/owned';
 import { SkeletonPillarDetail } from '@/components/ui/skeletons';
 import Link from 'next/link';
 import {
@@ -27,7 +32,9 @@ const DIFFICULTY_ORDER: DifficultyLevel[] = ['introduction', 'development', 'ref
 interface SkillProgress { [skillId: string]: { percentage: number; isCompleted: boolean } | null; }
 
 function ScoreBar({ score, level }: { score: number; level: PacingLevel }) {
-  const pct = Math.round(((score - 1.0) / 3.0) * 100);
+  // Out of 4.0, the app-wide rule: 3.0 reads 75%, and the floor of the scale
+  // still shows something rather than an empty bar.
+  const pct = scaleToPercentage(score, 4, 1) ?? 0;
   const cfg = LEVEL_CONFIG[level];
   return (
     <div>
@@ -61,11 +68,11 @@ function SkillCard({ skill, pillarId, progress }: {
         {/* Status badge */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
           {isCompleted ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
               <CheckCircle size={10} /> Completed
             </span>
           ) : isInProgress ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: BLUE, background: 'rgba(55,181,255,0.1)', border: '1px solid rgba(55,181,255,0.25)', borderRadius: '20px', padding: '3px 9px' }}>
               <Play size={10} /> In Progress
             </span>
           ) : null}
@@ -136,7 +143,7 @@ function SkillsGroup({ difficulty, skills, pillarId, userLevel, skillProgress }:
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>{cfg.label}</h3>
               {isUserLevel && (
-                <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: cfg.color, background: `${cfg.color}15`, borderRadius: '20px', padding: '2px 8px' }}>Your Level</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: cfg.color, background: `${cfg.color}15`, borderRadius: '20px', padding: '2px 8px' }}>Your Level</span>
               )}
             </div>
             <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{cfg.tagline}</p>
@@ -148,7 +155,7 @@ function SkillsGroup({ difficulty, skills, pillarId, userLevel, skillProgress }:
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))', gap: '14px' }}>
         {skills.map(skill => (
           <SkillCard key={skill.id} skill={skill} pillarId={pillarId} progress={skillProgress[skill.id]} />
         ))}
@@ -162,6 +169,14 @@ export default function PillarDetailPage() {
   const router = useRouter();
   const pillarId = params.id as string;
   const { user } = useAuth();
+
+  /**
+   * Progress, level and the onboarding assessment are goalie concerns. A non-goalie
+   * who lands here — an admin browsing the public site, a coach, a parent — was being
+   * shown these panels filled with their *own* records, reading as if the platform
+   * expected them to train. Content renders for everyone; the rest is learner-only.
+   */
+  const isLearner = user?.role === 'student';
 
   const [pillar, setPillar] = useState<Sport | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -195,10 +210,17 @@ export default function PillarDetailPage() {
   }, [pillarId]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isLearner) return;
     const load = async () => {
       setLevelLoading(true);
       try {
+        const baselineSnap = await getDoc(doc(db, 'studentBaselineProfiles', user.id));
+        const baselineProfile = baselineSnap.exists() ? baselineSnap.data()?.intelligenceProfile : null;
+        if (baselineProfile) {
+          setUserLevel(baselineProfile.pacingLevel);
+          setUserScore(baselineProfile.overallScore);
+          return;
+        }
         const result = await onboardingService.getEvaluation(user.id);
         if (result.success && result.data?.intelligenceProfile) {
           setUserLevel(result.data.intelligenceProfile.pacingLevel);
@@ -210,24 +232,27 @@ export default function PillarDetailPage() {
       finally { setLevelLoading(false); }
     };
     load();
-  }, [user]);
+  }, [user, isLearner]);
 
   useEffect(() => {
-    if (!user || !skills.length) return;
+    if (!user || !isLearner || !skills.length) return;
     const load = async () => {
       const map: SkillProgress = {};
       await Promise.all(skills.map(async skill => {
         try {
-          const res = await videoQuizService.getUserVideoQuizAttempts(user.id, { skillId: skill.id, completed: true, limit: 1 });
-          map[skill.id] = (res.success && res.data?.items?.length)
-            ? { percentage: res.data.items[0].percentage, isCompleted: res.data.items[0].isCompleted }
+          // Every finished take, newest first: a skill is done once each question has been got
+          // right on some take (owned), not because the latest take happened to be finished.
+          const res = await videoQuizService.getUserVideoQuizAttempts(user.id, { skillId: skill.id, completed: true, limit: 50 });
+          const takes = res.success ? res.data?.items ?? [] : [];
+          map[skill.id] = takes.length
+            ? { percentage: takes[0].percentage, isCompleted: ownedSkillIds(takes).has(skill.id) }
             : null;
         } catch { map[skill.id] = null; }
       }));
       setSkillProgress(map);
     };
     load();
-  }, [user, skills]);
+  }, [user, isLearner, skills]);
 
   if (loading) return <SkeletonPillarDetail />;
 
@@ -262,7 +287,7 @@ export default function PillarDetailPage() {
     <div style={{ minHeight: '100vh' }}>
 
       {/* ── Hero ── */}
-      <section style={{ padding: '20px 24px 0' }}>
+      <section style={{ padding: '20px clamp(14px,4vw,24px) 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', borderRadius: '20px', background: 'rgba(2,18,44,0.9)', border: '1.5px solid rgba(55,181,255,0.25)', padding: 'clamp(16px,3vw,28px) clamp(16px,4vw,32px)', overflow: 'hidden', boxShadow: '0 0 60px rgba(55,181,255,0.08)' }}>
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '50%', height: '1px', background: `linear-gradient(90deg, transparent, ${BLUE}, transparent)` }} />
 
@@ -272,10 +297,11 @@ export default function PillarDetailPage() {
           </button>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: '1 1 260px', minWidth: 0 }}>
               <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '12px' }}>
-                {pillar.name}
+                {pillarDisplayName(pillar.id, pillar.name)}
               </h1>
+              <PillarTeachingVoice pillarId={pillar.id} />
               <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: '560px', marginBottom: '16px' }}>
                 {pillar.description}
               </p>
@@ -284,14 +310,14 @@ export default function PillarDetailPage() {
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <BookOpen size={13} /> {skills.length} skills
                 </span>
-                {user && completedTotal > 0 && (
+                {isLearner && completedTotal > 0 && (
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#4ade80' }}>
                     <CheckCircle size={13} /> {completedTotal} completed
                   </span>
                 )}
               </div>
 
-              {user && skills.length > 0 && (
+              {isLearner && skills.length > 0 && (
                 <div style={{ maxWidth: '360px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>
                     <span>Your progress</span>
@@ -305,8 +331,8 @@ export default function PillarDetailPage() {
             </div>
 
             {/* Level Panel */}
-            {user && (
-              <div style={{ width: '240px', flexShrink: 0 }}>
+            {isLearner && (
+              <div style={{ width: '240px', maxWidth: '100%', flexShrink: 0 }}>
                 {levelLoading ? (
                   <div style={{ background: 'rgba(55,181,255,0.07)', border: '1px solid rgba(55,181,255,0.2)', borderRadius: '14px', padding: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
                     <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading your level…
@@ -314,8 +340,8 @@ export default function PillarDetailPage() {
                 ) : userLevel && levelCfg ? (
                   <div style={{ background: 'rgba(55,181,255,0.07)', border: `1px solid ${levelCfg.color}30`, borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)' }}>Your Level</p>
-                      <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: levelCfg.color, background: `${levelCfg.color}18`, borderRadius: '20px', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)' }}>Your Level</p>
+                      <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: levelCfg.color, background: `${levelCfg.color}18`, borderRadius: '20px', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <TrendingUp size={10} /> {levelCfg.label}
                       </span>
                     </div>

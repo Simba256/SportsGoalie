@@ -10,8 +10,12 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { SkeletonDashboard } from '@/components/ui/skeletons';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { ScreenVoice } from '@/components/audio/ScreenVoice';
+import { useCoachAudio } from '@/lib/audio/context';
 import { useAuth } from '@/lib/auth/context';
 import { useProgress } from '@/hooks/useProgress';
 import { useEnrollment } from '@/hooks/useEnrollment';
@@ -19,6 +23,10 @@ import { useRecentQuizzes } from '@/hooks/useRecentQuizzes';
 import { CustomCurriculumDashboard } from '@/components/dashboard/CustomCurriculumDashboard';
 import { PILLARS } from '@/types';
 import { getPillarSlugFromDocId, getPillarByDocId } from '@/lib/utils/pillars';
+import { scaleToPercentage } from '@/lib/scoring/scale-score';
+import { useGrowthPoints } from '@/hooks/useGrowthPoints';
+import { mindVaultService } from '@/lib/database/services/mind-vault.service';
+import { getMindVaultCategoryInfo, type MindVaultCategorySummary } from '@/types/mind-vault';
 
 const BLUE = '#37b5ff';
 const BLUE2 = '#60a5fa';
@@ -43,15 +51,59 @@ function DashboardContent() {
     if (user?.role === 'student' && !user?.onboardingCompleted) router.push('/onboarding');
   }, [user, router]);
   if (user?.role === 'student' && !user?.onboardingCompleted) return <SkeletonDashboard />;
-  if (user?.role === 'student' && user?.workflowType === 'custom') return <CustomCurriculumDashboard user={user} />;
+  // Custom-workflow goalies get the coach-curriculum dashboard only while they
+  // actually have a coach — without one there is no curriculum to show, so they
+  // fall back to the standard self-paced dashboard instead of a dead end.
+  if (user?.role === 'student' && user?.workflowType === 'custom' && user?.assignedCoachId) return <CustomCurriculumDashboard user={user} />;
   return <StandardDashboard />;
 }
+
+/** V-A-17, front and centre under the hero. Takes no room until the take is uploaded. */
+function UltimateGoalVoice() {
+  const { clips } = useCoachAudio();
+  if (!clips['V-A-17']) return null;
+  return (
+    <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 0', display: 'flex', justifyContent: 'center' }}>
+      <ScreenVoice clipId="V-A-17" label="HEAR COACH MIKE: YOUR ULTIMATE GOAL" />
+    </div>
+  );
+}
+
+type BaselineIntelligenceProfile = {
+  overallScore: number;
+  pacingLevel: string;
+  identifiedStrengths: Array<{ categoryName: string; score: number }>;
+  identifiedGaps: Array<{ categoryName: string; score: number; priority?: string }>;
+};
 
 function StandardDashboard() {
   const { user } = useAuth();
   const { userProgress, loading } = useProgress();
   const { enrolledSports, loading: enrollmentsLoading, error: enrollmentsError } = useEnrollment();
   const { quizzes: recentQuizzes, loading: quizzesLoading } = useRecentQuizzes(14);
+  const { currentPoints } = useGrowthPoints();
+  const [baselineProfile, setBaselineProfile] = useState<BaselineIntelligenceProfile | null>(null);
+  // null while loading; a failed read settles to an empty vault rather than hanging the card.
+  const [vaultSummaries, setVaultSummaries] = useState<MindVaultCategorySummary[] | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    mindVaultService.getCategorySummary(user.id)
+      .then(result => setVaultSummaries(result.success && result.data ? result.data : []))
+      .catch(() => setVaultSummaries([]));
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !user?.onboardingCompleted) return;
+    getDoc(doc(db, 'studentBaselineProfiles', user.id))
+      .then(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data?.intelligenceProfile) setBaselineProfile(data.intelligenceProfile as BaselineIntelligenceProfile);
+        }
+      })
+      .catch(() => {});
+  }, [user?.id, user?.onboardingCompleted]);
 
   if (loading || enrollmentsLoading) return <SkeletonDashboard />;
 
@@ -94,8 +146,11 @@ function StandardDashboard() {
         .pillar-row:hover{background:rgba(255,255,255,0.04)!important;padding-left:26px!important}
         .qa-btn{transition:transform .18s,box-shadow .18s,border-color .18s,background .18s}
         .qa-btn:hover{transform:translateY(-3px) scale(1.02)}
-        .dash-grid{display:grid;grid-template-columns:1fr;gap:24px}
-        @media(min-width:1024px){.dash-grid{grid-template-columns:1.6fr 1fr}}
+        .dash-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+        @media(min-width:1024px){.dash-grid{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}}
+        .dash-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        @media(min-width:600px){.dash-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+        @media(min-width:1200px){.dash-stats{grid-template-columns:repeat(6,minmax(0,1fr))}}
         .hero-ring{display:none}
         @media(min-width:520px){.hero-ring{display:block}}
         .continue-hover{transition:border-color .2s,box-shadow .2s}
@@ -127,7 +182,7 @@ function StandardDashboard() {
                 color: '#fb923c',
               }}>
                 <Flame size={13} color="#fb923c" />
-                <span style={{ fontSize: '12px', fontWeight: 700 }}>{stats.currentStreak} day streak</span>
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>{stats.currentStreak} day learning streak</span>
               </div>
             )}
             <div className="s1" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(55,181,255,.12)', border: '1px solid rgba(55,181,255,.28)', borderRadius: '30px', padding: '5px 14px', marginBottom: '18px' }}>
@@ -177,14 +232,18 @@ function StandardDashboard() {
         </div>
       </section>
 
+      {/* ── COACH MIKE: THE ULTIMATE GOAL (V-A-17) ──
+          Front and centre for a goalie, hidden until the new take is uploaded. */}
+      {user?.role === 'student' && <UltimateGoalVoice />}
+
       {/* ── STATS + ACTIVITY STRIP ── */}
       <div className="s5" style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(16px,3vw,24px) clamp(14px,4vw,28px) 0' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '14px' }}>
+        <div className="dash-stats">
           <StatCard label="Knowledge Checks" value={stats?.quizzesCompleted ?? 0} icon={<Trophy size={16} />} color={BLUE} delay="0s" />
           <StatCard label="Skills Done" value={stats?.skillsCompleted ?? 0} icon={<BookOpen size={16} />} color="#a78bfa" delay=".05s" />
           <StatCard label="Avg Grasp Level" value={stats?.averageQuizScore ? `${Math.round(stats.averageQuizScore)}%` : '--'} icon={<Target size={16} />} color="#4ade80" delay=".10s" />
-          <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
-          <StatCard label="Growth Points" value={(user as unknown as { growthPoints?: number })?.growthPoints ?? 0} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
+          <StatCard label="Learning Streak" value={stats?.currentStreak ? `${stats.currentStreak}d` : '0d'} icon={<Flame size={16} />} color="#fb923c" delay=".15s" />
+          <StatCard label="Growth Points" value={currentPoints} icon={<Zap size={16} />} color="#fbbf24" delay=".20s" />
           <ActivityDots days={last7} active={activeDayStrings} today={today.toDateString()} />
         </div>
       </div>
@@ -262,39 +321,8 @@ function StandardDashboard() {
             {/* Continue Learning */}
             {activePillar && <ContinueLearningCard pillar={activePillar} />}
 
-            {/* MY MIND-VAULT — Coming Soon */}
-            <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.12) 0%, rgba(2,18,44,0.95) 55%, rgba(109,40,217,0.08) 100%)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(167,139,250,0.12)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Brain size={18} color="#a78bfa" />
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>MY MIND-VAULT</h2>
-                    <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)', margin: 0 }}>Your personal performance foundation</p>
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.32)', borderRadius: '20px', padding: '5px 14px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#a78bfa', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Coming Soon</span>
-                </div>
-              </div>
-              <div style={{ padding: '36px 24px', textAlign: 'center' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 28px rgba(167,139,250,0.18)' }}>
-                  <Brain size={28} color="#a78bfa" />
-                </div>
-                <h3 style={{ fontSize: '19px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Building Your Personal Vault</h3>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, maxWidth: '340px', margin: '0 auto 24px' }}>
-                  Your MIND-VAULT is where only the most valuable foundational thoughts and behaviors are stored — for game performance and for life.
-                </p>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {['Mental Filters', 'Acceptance List', 'Focus Protocol'].map((item) => (
-                    <div key={item} style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '20px', padding: '6px 14px' }}>
-                      <span style={{ fontSize: '11px', color: 'rgba(167,139,250,0.7)', fontWeight: 600 }}>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {/* MY MIND-VAULT */}
+            <MindVaultCard summaries={vaultSummaries} />
           </div>
 
           {/* RIGHT COLUMN */}
@@ -353,11 +381,14 @@ function StandardDashboard() {
               <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Quick Actions</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <QuickActionCard href="/pillars" icon={<BookOpen size={22} />} label="Pillars" sub="Browse content" color={BLUE} />
-                <QuickActionCard href="/quizzes" icon={<Trophy size={22} />} label="Knowledge Checks" sub="Test yourself" color="#4ade80" />
+                <QuickActionCard href="/quizzes" icon={<Trophy size={22} />} label="Knowledge Checks" sub="Check yourself" color="#4ade80" />
                 <QuickActionCard href="/progress" icon={<TrendingUp size={22} />} label="Progress" sub="View analytics" color="#a78bfa" />
                 <QuickActionCard href="/charting" icon={<Target size={22} />} label="Charting" sub="Track sessions" color="#fb923c" />
               </div>
             </div>
+
+            {/* Baseline Profile */}
+            {baselineProfile && <GoalieProfileCard profile={baselineProfile} />}
 
             {/* Mind Vault */}
             <Link href="/mind-vault" style={{ textDecoration: 'none' }}>
@@ -462,14 +493,14 @@ function ContinueLearningCard({ pillar }: { pillar: { sport: { id: string; name:
 
   return (
     <Link href={`/pillars/${pillar.sport.id}`} style={{ textDecoration: 'none' }}>
-      <div className="continue-hover" style={{ background: `linear-gradient(135deg,rgba(2,18,44,.95) 0%,${color}18 60%,${color}0a 100%)`, border: `1px solid ${color}30`, borderRadius: '20px', padding: '24px', cursor: 'pointer', boxShadow: `0 4px 24px rgba(0,0,0,.3)` }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px' }}>
+      <div className="continue-hover" style={{ background: `linear-gradient(135deg,rgba(2,18,44,.95) 0%,${color}18 60%,${color}0a 100%)`, border: `1px solid ${color}30`, borderRadius: '20px', padding: 'clamp(16px,4vw,24px)', cursor: 'pointer', boxShadow: `0 4px 24px rgba(0,0,0,.3)` }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'clamp(12px,3vw,18px)' }}>
           <div style={{ width: '58px', height: '58px', borderRadius: '18px', background: `${color}1c`, border: `1px solid ${color}38`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 24px ${color}33` }}>
             <Icon size={26} color={color} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 800, color, background: `${color}18`, border: `1px solid ${color}28`, borderRadius: '20px', padding: '3px 10px', letterSpacing: '.5px', textTransform: 'uppercase', animation: 'pulse-ring 2.5s ease-in-out infinite' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px 8px', marginBottom: '8px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', fontSize: '11px', fontWeight: 800, color, background: `${color}18`, border: `1px solid ${color}28`, borderRadius: '20px', padding: '3px 10px', letterSpacing: '.5px', textTransform: 'uppercase', animation: 'pulse-ring 2.5s ease-in-out infinite' }}>
                 <Play size={9} fill={color} /> In Progress
               </span>
               <span style={{ fontSize: '22px', fontWeight: 900, color }}>{pct}%</span>
@@ -488,6 +519,72 @@ function ContinueLearningCard({ pillar }: { pillar: { sport: { id: string; name:
         </div>
       </div>
     </Link>
+  );
+}
+
+/** The goalie's own vault at a glance: how much is in it and where, with a way in. */
+function MindVaultCard({ summaries }: { summaries: MindVaultCategorySummary[] | null }) {
+  const VIOLET = '#a78bfa';
+  const total = (summaries ?? []).reduce((sum, s) => sum + s.entryCount, 0);
+  const topCategories = (summaries ?? [])
+    .filter((s) => s.entryCount > 0)
+    .sort((a, b) => b.entryCount - a.entryCount)
+    .slice(0, 4);
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.12) 0%, rgba(2,18,44,0.95) 55%, rgba(109,40,217,0.08) 100%)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '20px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', padding: 'clamp(14px,4vw,20px) clamp(16px,4vw,24px)', borderBottom: '1px solid rgba(167,139,250,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px', minWidth: 0 }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Brain size={18} color={VIOLET} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>MY MIND-VAULT</h2>
+            <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)', margin: 0 }}>Your personal performance foundation</p>
+          </div>
+        </div>
+        {summaries !== null && total > 0 && (
+          <div style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.32)', borderRadius: '20px', padding: '5px 14px', flexShrink: 0 }}>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: VIOLET, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              {total} {total === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: 'clamp(16px,4vw,24px)' }}>
+        {summaries === null ? (
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Loading your vault…</p>
+        ) : total === 0 ? (
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, maxWidth: '340px', margin: '0 auto 20px' }}>
+              Your MIND-VAULT is where only the most valuable foundational thoughts and behaviors are stored — for game performance and for life.
+            </p>
+            <Link href="/mind-vault" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(167,139,250,0.14)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '12px', padding: '10px 20px', fontSize: '13px', fontWeight: 800, color: VIOLET, textDecoration: 'none' }}>
+              Start your vault <ArrowRight size={14} />
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
+              {topCategories.map((summary) => {
+                const info = getMindVaultCategoryInfo(summary.category);
+                const href = `/mind-vault/${summary.category === 'cannot_accept' ? 'cannot-accept' : summary.category}`;
+                return (
+                  <Link key={summary.category} href={href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', background: 'rgba(167,139,250,0.07)', border: '1px solid rgba(167,139,250,0.16)', borderRadius: '12px', padding: '11px 14px', textDecoration: 'none' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{info?.name ?? summary.category}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: VIOLET, fontVariantNumeric: 'tabular-nums' }}>{summary.entryCount}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link href="/mind-vault" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: VIOLET, textDecoration: 'none' }}>
+              Open my Mind-Vault <ArrowRight size={14} />
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -523,6 +620,76 @@ function QuickActionCard({ href, icon, label, sub, color }: { href: string; icon
         </div>
       </div>
     </Link>
+  );
+}
+
+function GoalieProfileCard({ profile }: { profile: BaselineIntelligenceProfile }) {
+  const GREEN = '#4ade80';
+  const YELLOW = '#fbbf24';
+
+  const PACING_META: Record<string, { color: string; label: string }> = {
+    introduction: { color: YELLOW, label: 'Introduction' },
+    development: { color: BLUE, label: 'Development' },
+    refinement: { color: GREEN, label: 'Refinement' },
+  };
+
+  const pm = PACING_META[profile.pacingLevel] || PACING_META.introduction;
+  const barPct = scaleToPercentage(profile.overallScore, 4, 1) ?? 0;
+  const topStrength = profile.identifiedStrengths?.[0];
+  const topGap = profile.identifiedGaps?.[0];
+
+  return (
+    <div style={{ position: 'relative', background: 'rgba(2,18,44,.85)', border: '1px solid rgba(55,181,255,.14)', borderRadius: '20px', padding: '20px', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${pm.color}88,transparent)` }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '30px', height: '30px', borderRadius: '9px', background: `${pm.color}1a`, border: `1px solid ${pm.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Brain size={15} color={pm.color} />
+          </div>
+          <div>
+            <p style={{ fontSize: '14px', fontWeight: 800, color: '#fff', margin: 0 }}>Your Goalie Profile</p>
+            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,.3)', margin: 0 }}>Baseline Assessment</p>
+          </div>
+        </div>
+        <span style={{ background: `${pm.color}18`, border: `1px solid ${pm.color}30`, color: pm.color, padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>
+          {pm.label}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '10px' }}>
+        <span style={{ fontSize: '38px', fontWeight: 900, color: pm.color, lineHeight: 1 }}>{profile.overallScore.toFixed(1)}</span>
+        <span style={{ fontSize: '13px', color: 'rgba(255,255,255,.3)', fontWeight: 600 }}>/4.0</span>
+      </div>
+
+      <div style={{ height: '6px', background: 'rgba(255,255,255,.07)', borderRadius: '99px', overflow: 'hidden', marginBottom: '5px' }}>
+        <div style={{ height: '100%', width: `${barPct}%`, background: pm.color, borderRadius: '99px', boxShadow: `0 0 8px ${pm.color}55`, transition: 'width 0.8s ease' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,.2)', fontWeight: 600, marginBottom: '12px' }}>
+        <span>Intro</span><span>Development</span><span>Refinement</span>
+      </div>
+
+      {(topStrength || topGap) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
+          {topStrength && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.45)' }}>
+                Strength: <strong style={{ color: 'rgba(255,255,255,.75)', fontWeight: 600 }}>{topStrength.categoryName}</strong>
+              </span>
+            </div>
+          )}
+          {topGap && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: YELLOW, flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.45)' }}>
+                Focus area: <strong style={{ color: 'rgba(255,255,255,.75)', fontWeight: 600 }}>{topGap.categoryName}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -29,10 +29,10 @@ function QuizzesPageContent() {
   const loadQuizzes = async () => {
     try {
       setLoading(true);
-      const quizzesResult = await videoQuizService.getVideoQuizzes({
-        where: [{ field: 'status', operator: '==', value: 'published' }],
-        limit: 100,
-      });
+      // Active and published, the same pair the admin list calls "Active". This
+      // used to ask for `status == 'published'`, a field the quiz form never
+      // writes, so the page was empty for every goalie (item 4 of the 4 Oct run).
+      const quizzesResult = await videoQuizService.getPublishedVideoQuizzes({ limit: 100 });
       if (quizzesResult.success && quizzesResult.data) {
         const quizzesWithStats = await Promise.all(
           quizzesResult.data.items.map(async quiz => {
@@ -123,7 +123,7 @@ function QuizzesPageContent() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '16px' }}>
             {filteredQuizzes.map(quiz => {
               const dc = difficultyColor(quiz.difficulty);
               return (
