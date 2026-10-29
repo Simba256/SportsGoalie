@@ -9,6 +9,7 @@ import Link from 'next/link';
 
 import { AdminRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/lib/auth/context';
+import { fromLocalDateKey } from '@/lib/utils/local-date';
 import {
   analyticsService,
   PlatformAnalytics,
@@ -71,7 +72,7 @@ function AdminDashboardContent() {
   const firstName = (user?.displayName || user?.email || '').split(' ')[0].split('@')[0];
 
   const chartData = engagement.map((d) => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: fromLocalDateKey(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     users: d.activeUsers,
     quizzes: d.quizAttempts,
     score: d.averageScore,

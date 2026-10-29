@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { ArrowLeft, Save, Trophy, Dumbbell, MapPin, CalendarDays, Users, Tag } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
+import { toLocalDateTimeInputValue } from '@/lib/utils/local-date';
 
 const BLUE  = '#37b5ff';
 const MUTED = 'rgba(255,255,255,0.38)';
@@ -20,7 +21,7 @@ export default function NewSessionPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: 'game' as 'game' | 'practice',
-    date: new Date().toISOString().slice(0, 16),
+    date: toLocalDateTimeInputValue(),
     opponent: '',
     location: '',
     tags: [] as string[],
