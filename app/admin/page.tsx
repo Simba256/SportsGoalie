@@ -114,7 +114,7 @@ function AdminDashboardContent() {
         </div>
 
         {/* KPI Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: '16px' }}>
           <KpiCard title="Total Users" value={analytics?.users.total ?? 0} subtitle={`+${analytics?.users.newThisMonth ?? 0} this month`} icon={<Users size={20} />} trend={analytics?.users.newThisMonth ? 'up' : undefined} loading={loading} />
           <KpiCard title="Active Students" value={analytics?.users.activeStudentCount ?? 0} subtitle={`${analytics?.engagement.activeUsersToday ?? 0} active today`} icon={<Activity size={20} />} loading={loading} />
           <KpiCard title="Quiz Attempts" value={analytics?.engagement.totalQuizAttempts ?? 0} subtitle={`${analytics?.engagement.averageQuizScore ?? 0}% avg score`} icon={<Trophy size={20} />} trend={analytics?.engagement.averageQuizScore && analytics.engagement.averageQuizScore > 70 ? 'up' : 'down'} loading={loading} />

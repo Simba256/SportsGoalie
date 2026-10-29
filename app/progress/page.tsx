@@ -159,21 +159,23 @@ function ProgressContent() {
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(16px,3vw,28px) clamp(14px,4vw,24px) 48px' }}>
         <style>{`
-          .progress-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-          @media (min-width: 768px) { .progress-stats { grid-template-columns: repeat(4, 1fr); } }
-          .progress-two-col { display: grid; grid-template-columns: 1fr; gap: 16px; }
-          @media (min-width: 768px) { .progress-two-col { grid-template-columns: 1fr 1fr; } }
-          .progress-perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-          @media (min-width: 640px) { .progress-perf-grid { grid-template-columns: repeat(4, 1fr); } }
-          .progress-streak-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-          @media (min-width: 768px) { .progress-streak-grid { grid-template-columns: 2fr 3fr; } }
-          .progress-pillar-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-          @media (min-width: 640px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr; } }
-          @media (min-width: 1024px) { .progress-pillar-grid { grid-template-columns: 1fr 1fr 1fr; } }
-          .progress-eff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-          @media (min-width: 768px) { .progress-eff-grid { grid-template-columns: repeat(5, 1fr); } }
-          .progress-hist-sum { display: grid; grid-template-columns: 1fr; gap: 10px; }
-          @media (min-width: 480px) { .progress-hist-sum { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+          .progress-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+          @media (min-width: 520px) { .progress-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          .progress-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+          @media (min-width: 768px) { .progress-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          .progress-two-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+          @media (min-width: 768px) { .progress-two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+          .progress-perf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+          @media (min-width: 640px) { .progress-perf-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          .progress-streak-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+          @media (min-width: 768px) { .progress-streak-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); } }
+          .progress-pillar-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+          @media (min-width: 640px) { .progress-pillar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+          @media (min-width: 1024px) { .progress-pillar-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+          .progress-eff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+          @media (min-width: 768px) { .progress-eff-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+          .progress-hist-sum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+          @media (min-width: 480px) { .progress-hist-sum { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
         `}</style>
 
         {/* Stat Cards */}
@@ -197,12 +199,12 @@ function ProgressContent() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '24px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px', flexWrap: 'wrap' }}>
+        <div className="progress-tabs" style={{ marginBottom: '24px', background: 'rgba(2,18,44,0.8)', border: '1px solid rgba(55,181,255,0.15)', borderRadius: '12px', padding: '5px' }}>
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              style={{ flex: 1, minWidth: '80px', padding: '9px 16px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+              style={{ minWidth: 0, padding: '9px 8px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
                 background: activeTab === t.key ? BLUE : 'transparent',
                 color: activeTab === t.key ? '#000f28' : 'rgba(255,255,255,0.5)',
               }}
@@ -537,13 +539,13 @@ function ProgressContent() {
 
 function BigStatCard({ label, value, sub, icon }: { label: string; value: string | number; sub: string; icon: React.ReactNode }) {
   return (
-    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>{label}</p>
-        <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+    <div style={{ background: 'rgba(2,18,44,0.82)', border: '1px solid rgba(55,181,255,0.18)', borderRadius: '16px', padding: 'clamp(12px, 3.5vw, 20px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px', minHeight: '140px', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+        <p style={{ fontSize: 'clamp(9px, 2.4vw, 10px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 'clamp(0.3px, 0.2vw, 2px)', color: 'rgba(255,255,255,0.4)', minWidth: 0, overflowWrap: 'anywhere' }}>{label}</p>
+        <div style={{ width: 'clamp(28px, 8vw, 34px)', height: 'clamp(28px, 8vw, 34px)', borderRadius: '9px', background: 'rgba(55,181,255,0.12)', border: '1px solid rgba(55,181,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       </div>
       <div>
-        <p style={{ fontSize: '42px', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>{value}</p>
+        <p style={{ fontSize: 'clamp(32px, 9vw, 42px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>{value}</p>
         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>{sub}</p>
       </div>
     </div>

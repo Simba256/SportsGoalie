@@ -215,11 +215,11 @@ export default function SessionDetailPage() {
   })();
 
   return (
-    <div className="min-h-screen p-6" style={{ background: '#041830' }}>
+    <div className="min-h-screen p-4 sm:p-6" style={{ background: '#041830' }}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1 basis-64">
             {/* Back button */}
             <button
               type="button"
@@ -231,9 +231,9 @@ export default function SessionDetailPage() {
               <ArrowLeft className="w-4 h-4" />
             </button>
 
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white break-words min-w-0">
                   {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
                   {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
                 </h1>
@@ -244,7 +244,7 @@ export default function SessionDetailPage() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <div className="flex items-center flex-wrap gap-x-4 gap-y-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm">
@@ -273,7 +273,7 @@ export default function SessionDetailPage() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0 ml-auto">
             <button
               type="button"
               title="Edit Session"

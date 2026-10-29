@@ -214,7 +214,7 @@ export function NewSessionModal({ open, onClose, session, onSaved }: NewSessionM
           {/* Details grid */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <p style={{ fontSize: '10px', fontWeight: 700, color: LABEL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Details</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '10px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <Label htmlFor="modal-date" style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <CalendarDays size={11} color={BLUE} /> Date & Time <span style={{ color: BLUE }}>*</span>

@@ -312,7 +312,7 @@ export default function TrainingHubPage() {
               <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '24px' }}>
                 CATEGORIES
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
                 {CATEGORIES.map(cat => {
                   const Icon = cat.Icon;
                   return (

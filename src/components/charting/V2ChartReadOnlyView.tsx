@@ -268,7 +268,7 @@ function PeriodsSection({ periods, flat }: { periods: NonNullable<V2Fields['v2Pe
   return (
     <Section flat={flat}>
       <SectionHeader icon={BarChart3} title="Periods" subtitle="Post-game, charted from memory" />
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${filled.length}, 1fr)`, gap: '8px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '8px' }}>
         {filled.map(([key, label]) => {
           const p = periods[key]!;
           const goalsAgainst = p.goalsAgainst ?? 0;

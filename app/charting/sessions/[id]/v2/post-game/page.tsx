@@ -712,8 +712,8 @@ export default function V2PostGamePage() {
               ? { background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.32)', boxShadow: '0 2px 20px rgba(249,115,22,0.1)' }
               : { background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', boxShadow: '0 2px 20px rgba(245,158,11,0.08)' }
           }>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0 basis-56">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={
                   priorityArea.urgency === 'critical' ? { background: 'rgba(239,68,68,0.22)' }
                   : priorityArea.urgency === 'high' ? { background: 'rgba(249,115,22,0.22)' }

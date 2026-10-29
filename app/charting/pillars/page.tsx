@@ -191,7 +191,7 @@ export default function PillarChartsIndexPage() {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px', paddingBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '14px', paddingBottom: '24px' }}>
           {cards.map((card) => {
             const IconComponent = PILLAR_ICONS[card.info.icon] || Target;
             const hasEntries = card.entryCount > 0;
