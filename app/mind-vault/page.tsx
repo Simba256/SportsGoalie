@@ -101,7 +101,9 @@ export default function MindVaultPage() {
               <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
                 <div style={{ height: '100%', background: BLUE, borderRadius: '99px', width: `${safeMomentum}%`, transition: 'width 0.5s' }} />
               </div>
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', fontWeight: 600 }}>Keep your streak alive!</p>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', fontWeight: 600 }}>
+                {loading ? ' ' : `${activeCategories} of ${MIND_VAULT_CATEGORIES.length} sections started`}
+              </p>
             </div>
           </div>
         </div>
