@@ -307,10 +307,19 @@ export default function TrainingLogPage() {
     }
   };
 
-  // "Save Category" — mark category items as done, stay on page
-  const handleSaveCategory = () => {
-    setItems(prev => prev.map(i => i.category === activeCategory ? { ...i, done: true } : i));
-    toast.success(`${CATEGORY_META[activeCategory].label} saved`);
+  // "Save Category" — mark category items as done, write the log, stay on page.
+  // This used to change the screen only, so the toast said saved while nothing
+  // reached Firestore and a reload came back with 0 items done.
+  const handleSaveCategory = async () => {
+    if (saving) return;
+    const nextItems = items.map(i => i.category === activeCategory ? { ...i, done: true } : i);
+    setItems(nextItems);
+    try {
+      await persistItems(nextItems);
+      toast.success(`${CATEGORY_META[activeCategory].label} saved`);
+    } catch {
+      // error already shown in persistItems
+    }
   };
 
   // "Save Log" (last category) — mark final category done, persist, navigate home
@@ -472,13 +481,15 @@ export default function TrainingLogPage() {
                 border: `1.5px solid ${CATEGORY_META[activeCategory].color}50`,
                 color: CATEGORY_META[activeCategory].color,
                 fontSize: '15px', fontWeight: 700,
-                cursor: 'pointer',
+                cursor: saving ? 'wait' : 'pointer',
+                opacity: saving ? 0.7 : 1,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 boxShadow: `0 4px 18px ${CATEGORY_META[activeCategory].color}20`,
               }}
             >
               <CheckCircle2 style={{ width: '16px', height: '16px' }} />
               Save {CATEGORY_META[activeCategory].label}
+              disabled={saving}
             </button>
           )
         )}

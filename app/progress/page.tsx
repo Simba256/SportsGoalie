@@ -40,7 +40,8 @@ import Link from 'next/link';
 import { useAnalytics, type PillarBreakdown } from '@/hooks/useAnalytics';
 import { useAuth } from '@/lib/auth/context';
 import { EventVoice } from '@/components/audio/EventVoice';
-import { dynamicChartingService } from '@/lib/database';
+import { dynamicChartingService, formTemplateService } from '@/lib/database';
+import { countBoardCheckIns } from '@/lib/charting/pillar-boards';
 import { PILLARS } from '@/types';
 import { getScoreBand, getScoreBandRangeLabel, SCORE_BANDS, type ScoreTier } from '@/lib/config/score-bands';
 
@@ -67,14 +68,20 @@ function ProgressContent() {
   const { user } = useAuth();
   // Pillar-chart check-ins aren't Knowledge Checks, so they never reach the
   // figures above; the count is fetched here so submitted check-ins still show.
+  // Only check-ins on a board the Progress Boards page lists are counted, so this
+  // number is the sum of that page's cards.
   const [checkInCount, setCheckInCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    dynamicChartingService.getDynamicEntriesByStudent(user.id).then((r) => {
-      if (!cancelled && r.success && r.data) setCheckInCount(r.data.length);
-    });
+    Promise.all([
+      formTemplateService.getActiveTemplatesForSport('Hockey'),
+      dynamicChartingService.getDynamicEntriesByStudent(user.id),
+    ]).then(([templates, entries]) => {
+      if (cancelled || !templates.success || !templates.data || !entries.success || !entries.data) return;
+      setCheckInCount(countBoardCheckIns(templates.data, entries.data));
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, [user]);
 
@@ -174,7 +181,7 @@ function ProgressContent() {
           <BigStatCard label="Learning Time" value={data.totalTimeMinutes >= 60 ? `${Math.round(data.totalTimeMinutes / 60)}h ${data.totalTimeMinutes % 60}m` : `${data.totalTimeMinutes}m`} sub="Total time invested" icon={<Clock size={17} color={BLUE} />} />
           <BigStatCard label="Knowledge Checks" value={data.totalQuizzes} sub={`${data.uniqueSkills} unique`} icon={<Trophy size={17} color={BLUE} />} />
           <BigStatCard label="Avg Grasp Level" value={`${data.avgScore}%`} sub={`Best: ${data.bestScore}%`} icon={<Target size={17} color={BLUE} />} />
-          <BigStatCard label="Learning Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} days`} icon={<Flame size={17} color={BLUE} />} />
+          <BigStatCard label="Learning Streak" value={`${data.currentStreak}d`} sub={`Best: ${data.longestStreak} ${data.longestStreak === 1 ? 'day' : 'days'}`} icon={<Flame size={17} color={BLUE} />} />
         </div>
 
         {checkInCount !== null && checkInCount > 0 && (
