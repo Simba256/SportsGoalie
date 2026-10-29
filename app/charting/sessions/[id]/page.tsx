@@ -26,6 +26,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { toDateSafe } from '@/lib/utils/timestamp';
 import { DynamicSessionAnalytics } from '@/components/charting/DynamicSessionAnalytics';
+import { NewSessionModal } from '@/components/charting/NewSessionModal';
+import { V2SessionSummary } from '@/components/charting/V2SessionSummary';
+import { isV2GameEntry, v2GameProgress, v2SectionState } from '@/lib/charting/v2-sections';
 
 export default function SessionDetailPage() {
   const { user } = useAuth();
@@ -41,6 +44,7 @@ export default function SessionDetailPage() {
   const [dynamicEntry, setDynamicEntry] = useState<DynamicChartingEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showEdit, setShowEdit] = useState(false);
 
   const loadSessionData = useCallback(async () => {
     if (!sessionId || !user) return;
@@ -137,6 +141,8 @@ export default function SessionDetailPage() {
         return 'bg-green-500';
       case 'in-progress':
         return 'bg-blue-500';
+      case 'partial':
+        return 'bg-amber-500';
       case 'pre-game':
         return 'bg-yellow-500';
       default:
@@ -165,6 +171,16 @@ export default function SessionDetailPage() {
 
   const myEntry = entries.find((e) => e.submittedBy === user?.id);
   const adminEntries = entries.filter((e) => e.submitterRole === 'admin');
+
+  // The stored status moves to in-progress as soon as one section is saved, so a
+  // V2 game is labelled from what it actually holds: all three sections done is
+  // completed, some of them is partial.
+  const displayStatus = (() => {
+    if (session.type !== 'game' || !isV2GameEntry(myEntry)) return session.status;
+    const progress = v2GameProgress(myEntry);
+    if (progress === 'complete') return 'completed';
+    return progress === 'partial' ? 'partial' : session.status;
+  })();
   const sessionDateObj = (() => {
     const rawDate = session.date as unknown;
     if (rawDate && typeof rawDate === 'object' && 'toDate' in rawDate && typeof (rawDate as { toDate?: unknown }).toDate === 'function') {
@@ -221,7 +237,7 @@ export default function SessionDetailPage() {
                   {session.type === 'game' ? '🥅 Game' : '🏒 Practice'}
                   {session.opponent && (session.type === 'game' ? ` vs ${session.opponent}` : ` - ${session.opponent}`)}
                 </h1>
-                <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
+                <Badge className={getStatusColor(displayStatus)}>{displayStatus}</Badge>
                 {session.result && (
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '99px', padding: '3px 10px', textTransform: 'capitalize' }}>
                     {session.result}
@@ -261,6 +277,7 @@ export default function SessionDetailPage() {
             <button
               type="button"
               title="Edit Session"
+              onClick={() => setShowEdit(true)}
               style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(55,181,255,0.2)', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(55,181,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)'; }}
@@ -343,10 +360,9 @@ export default function SessionDetailPage() {
             </p>
 
             {(() => {
-              const entry = myEntry as unknown as Record<string, unknown> | undefined;
-              const preGameDone  = !!entry?.v2PreGame;
-              const periodsDone  = !!entry?.v2Periods;
-              const postGameDone = !!entry?.v2PostGame;
+              // A section is done once it holds an answer, not merely once it was saved.
+              const { preGame: preGameDone, periods: periodsDone, postGame: postGameDone } =
+                v2SectionState(myEntry as unknown as Parameters<typeof v2SectionState>[0]);
 
               type StepConfig = {
                 key: string;
@@ -494,8 +510,19 @@ export default function SessionDetailPage() {
           </div>
         )}
 
+        {/* Session Analytics - V2 game chart */}
+        {myEntry && isV2GameEntry(myEntry) && (
+          <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.14)' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-white/50" />
+              <h3 className="text-lg font-bold text-white">Session Analytics</h3>
+            </div>
+            <V2SessionSummary entry={myEntry} />
+          </div>
+        )}
+
         {/* Session Analytics - Only show for legacy charting system */}
-        {!activeTemplate && (
+        {!activeTemplate && !isV2GameEntry(myEntry) && (
           <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #04213f 0%, #0a2d52 100%)', border: '1px solid rgba(55,181,255,0.14)' }}>
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-white/50" />
@@ -695,6 +722,13 @@ export default function SessionDetailPage() {
           </div>
         )}
       </div>
+
+      <NewSessionModal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        session={session}
+        onSaved={() => setRefreshKey((prev) => prev + 1)}
+      />
     </div>
   );
 }
